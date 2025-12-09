@@ -315,8 +315,8 @@ var oldInput = document.getElementById("oldInput");
 var newInput = document.getElementById("newInput");
 var diffBtn = document.getElementById("diffBtn");
 var runner = new WebPerlRunner({
-  webperlBasePath: "./vendor/wasm-latex-tools/webperl",
-  perlScriptsPath: "./vendor/wasm-latex-tools/perl"
+  webperlBasePath: "/./vendor/wasm-latex-tools/webperl",
+  perlScriptsPath: "/./vendor/wasm-latex-tools/perl"
 });
 function setStatus(msg) {
   console.log("> ", msg);
