@@ -318,6 +318,10 @@ var runner = new WebPerlRunner({
   webperlBasePath: "./vendor/wasm-latex-tools/core/webperl",
   perlScriptsPath: "./vendor/wasm-latex-tools/core/perl"
 });
+function setStatus(msg) {
+  console.log("> ", msg);
+  if (statusEl) statusEl.textContent = msg;
+}
 function ensureWrapped(content) {
   const hasDocClass = /\\documentclass/.test(content);
   const hasBeginDoc = /\\begin\\{document\\}/.test(content);
@@ -334,43 +338,49 @@ function ensureWrapped(content) {
   ].join("\n");
 }
 async function initTools() {
-  statusEl.textContent = "Loading diff tools...";
-  await runner.initialize();
-  statusEl.textContent = "Ready.";
+  try {
+    setStatus("Loading diff tools...");
+    await runner.initialize();
+    setStatus("Ready.");
+  } catch (e) {
+    console.error(e);
+    setStatus("Failed to initialize diff tools.");
+  }
 }
 async function compilePdf(diffTex) {
   const PDFTeX = window.PDFTeX;
+  if (!PDFTeX) {
+    throw new Error("PDFTeX not available. Check that vendor/texlive.js/pdftex.js is loaded.");
+  }
   const engine = new PDFTeX();
   const urlOrBlob = await engine.compile(diffTex);
-  if (typeof urlOrBlob === "string") {
-    window.open(urlOrBlob, "_blank");
-  } else {
-    const blobUrl = URL.createObjectURL(urlOrBlob);
-    window.open(blobUrl, "_blank");
-  }
+  if (typeof urlOrBlob === "string") return urlOrBlob;
+  return URL.createObjectURL(urlOrBlob);
 }
 async function generateDiffPdf() {
+  console.log("Clicked...");
   const oldText = oldInput.value;
   const newText = newInput.value;
   if (!oldText.trim() || !newText.trim()) {
-    statusEl.textContent = "Both inputs are required.";
+    setStatus("Both inputs are required.");
     return;
   }
-  statusEl.textContent = "Running latexdiff...";
-  const diffTool = new LatexDiff(runner);
-  const oldWrapped = ensureWrapped(oldText);
-  const newWrapped = ensureWrapped(newText);
-  const diff = await diffTool.diff(oldWrapped, newWrapped, {
-    type: "UNDERLINE",
-    flatten: true
-  });
-  statusEl.textContent = "Compiling PDF...";
   try {
-    await compilePdf(diff.output);
-    statusEl.textContent = "PDF opened.";
+    setStatus("Running latexdiff...");
+    const diffTool = new LatexDiff(runner);
+    const oldWrapped = ensureWrapped(oldText);
+    const newWrapped = ensureWrapped(newText);
+    const diff = await diffTool.diff(oldWrapped, newWrapped, {
+      type: "UNDERLINE",
+      flatten: true
+    });
+    setStatus("Compiling PDF...");
+    const pdfUrl = await compilePdf(diff.output);
+    window.open(pdfUrl, "_blank");
+    setStatus("PDF opened.");
   } catch (e) {
     console.error(e);
-    statusEl.textContent = "LaTeX compile error.";
+    setStatus("Error during diff or compile.");
   }
 }
 diffBtn.addEventListener("click", generateDiffPdf);
