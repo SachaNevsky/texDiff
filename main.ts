@@ -13,6 +13,7 @@ const runner = new WebPerlRunner({
 });
 
 function setStatus(msg: string) {
+    console.log("> ", msg)
     if (statusEl) statusEl.textContent = msg;
 }
 
@@ -59,6 +60,7 @@ async function compilePdf(diffTex: string) {
 }
 
 async function generateDiffPdf() {
+    console.log("Clicked...")
     const oldText = oldInput.value;
     const newText = newInput.value;
     if (!oldText.trim() || !newText.trim()) {
