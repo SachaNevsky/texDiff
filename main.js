@@ -341,18 +341,51 @@ async function initTools() {
   try {
     setStatus("Loading diff tools...");
     await runner.initialize();
+    await waitForPDFTeX();
     setStatus("Ready.");
   } catch (e) {
     console.error(e);
     setStatus("Failed to initialize diff tools.");
   }
 }
+function waitForPDFTeX() {
+  return new Promise((resolve, reject) => {
+    let attempts = 0;
+    const maxAttempts = 50;
+    const checkPDFTeX = () => {
+      if (window.PDFTeX) {
+        resolve();
+      } else if (attempts >= maxAttempts) {
+        reject(new Error("PDFTeX failed to load"));
+      } else {
+        attempts++;
+        setTimeout(checkPDFTeX, 100);
+      }
+    };
+    checkPDFTeX();
+  });
+}
 async function compilePdf(diffTex) {
   const PDFTeX = window.PDFTeX;
-  if (!PDFTeX) throw new Error("PDFTeX not available.");
-  const engine = new PDFTeX();
-  const urlOrBlob = await engine.compile(diffTex);
-  return typeof urlOrBlob === "string" ? urlOrBlob : URL.createObjectURL(urlOrBlob);
+  if (!PDFTeX) {
+    throw new Error("PDFTeX not available.");
+  }
+  console.log("Creating PDFTeX engine...");
+  try {
+    const engine = new PDFTeX();
+    console.log("Compiling LaTeX...");
+    const urlOrBlob = await engine.compile(diffTex);
+    if (typeof urlOrBlob === "string") {
+      return urlOrBlob;
+    } else if (urlOrBlob instanceof Blob) {
+      return URL.createObjectURL(urlOrBlob);
+    } else {
+      throw new Error("Unexpected compile result type");
+    }
+  } catch (error) {
+    console.error("PDFTeX compilation error:", error);
+    throw new Error(`PDF compilation failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 async function generateDiffPdf() {
   console.log("Clicked...");
@@ -367,18 +400,40 @@ async function generateDiffPdf() {
     const diffTool = new LatexDiff(runner);
     const oldWrapped = ensureWrapped(oldText);
     const newWrapped = ensureWrapped(newText);
+    console.log("Running diff with options:", {
+      type: "UNDERLINE",
+      flatten: true
+    });
     const diff = await diffTool.diff(oldWrapped, newWrapped, {
       type: "UNDERLINE",
       flatten: true
     });
+    console.log("Diff completed, output length:", diff.output.length);
+    console.log("First 500 chars of diff output:", diff.output.substring(0, 500));
     setStatus("Compiling PDF...");
     const pdfUrl = await compilePdf(diff.output);
+    console.log("PDF URL generated:", pdfUrl);
     window.open(pdfUrl, "_blank");
     setStatus("PDF opened.");
   } catch (e) {
-    console.error(e);
-    setStatus("Error during diff or compile.");
+    console.error("Error details:", e);
+    const errorMsg = e instanceof Error ? e.message : String(e);
+    setStatus(`Error: ${errorMsg}`);
+  }
+}
+var isInitializing = false;
+var isInitialized = false;
+async function safeInit() {
+  if (isInitialized || isInitializing) return;
+  isInitializing = true;
+  try {
+    await initTools();
+    isInitialized = true;
+  } catch (e) {
+    console.error("Initialization failed:", e);
+  } finally {
+    isInitializing = false;
   }
 }
 diffBtn.addEventListener("click", generateDiffPdf);
-initTools();
+safeInit();

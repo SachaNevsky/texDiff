@@ -1,42 +1,106 @@
-var PDFTeX = function(opt_workerPath) {
+// Simple Promise polyfill for the library's expected API
+var promise = {
+  Promise: function () {
+    var resolveCallback;
+    var rejectCallback;
+    var isDone = false;
+    var result;
+
+    var p = new Promise(function (resolve, reject) {
+      resolveCallback = resolve;
+      rejectCallback = reject;
+    });
+
+    p.done = function (value) {
+      if (!isDone) {
+        isDone = true;
+        result = value;
+        if (resolveCallback) resolveCallback(value);
+      }
+      return p;
+    };
+
+    p.fail = function (error) {
+      if (!isDone) {
+        isDone = true;
+        if (rejectCallback) rejectCallback(error);
+      }
+      return p;
+    };
+
+    return p;
+  },
+
+  chain: function (functions) {
+    var p = new promise.Promise();
+
+    var runNext = function (index) {
+      if (index >= functions.length) {
+        p.done(true);
+        return;
+      }
+
+      var result = functions[index]();
+      if (result && typeof result.then === 'function') {
+        result.then(function () {
+          runNext(index + 1);
+        }).catch(function (err) {
+          p.fail(err);
+        });
+      } else {
+        runNext(index + 1);
+      }
+    };
+
+    runNext(0);
+    return p;
+  }
+};
+
+var PDFTeX = function (opt_workerPath) {
   if (!opt_workerPath) {
-    opt_workerPath = 'pdftex-worker.js';
+    // Check for global config first
+    if (window.TEXLIVE_CONFIG && window.TEXLIVE_CONFIG.workerPath) {
+      opt_workerPath = window.TEXLIVE_CONFIG.workerPath;
+    } else {
+      opt_workerPath = 'pdftex-worker.js';
+    }
   }
   var worker = new Worker(opt_workerPath);
   var self = this;
   var initialized = false;
 
-  self.on_stdout = function(msg) {
+  self.on_stdout = function (msg) {
     console.log(msg);
   }
 
-  self.on_stderr = function(msg) {
+  self.on_stderr = function (msg) {
     console.log(msg);
   }
 
 
-  worker.onmessage = function(ev) {
+  worker.onmessage = function (ev) {
     var data = JSON.parse(ev.data);
     var msg_id;
 
-    if(!('command' in data))
+    if (!('command' in data))
       console.log("missing command!", data);
-    switch(data['command']) {
+    switch (data['command']) {
       case 'ready':
         onready.done(true);
         break;
       case 'stdout':
       case 'stderr':
-        self['on_'+data['command']](data['contents']);
+        self['on_' + data['command']](data['contents']);
         break;
       default:
         //console.debug('< received', data);
         msg_id = data['msg_id'];
-        if(('msg_id' in data) && (msg_id in promises)) {
+        if (('msg_id' in data) && (msg_id in promises)) {
           promises[msg_id].done(data['result']);
         }
         else
-          console.warn('Unknown worker message '+msg_id+'!');
+          console.warn('Unknown worker message ' + msg_id + '!');
     }
   }
 
@@ -44,11 +108,11 @@ var PDFTeX = function(opt_workerPath) {
   var promises = [];
   var chunkSize = undefined;
 
-  var sendCommand = function(cmd) {
+  var sendCommand = function (cmd) {
     var p = new promise.Promise();
-    var msg_id = promises.push(p)-1;
+    var msg_id = promises.push(p) - 1;
 
-    onready.then(function() {
+    onready.then(function () {
       cmd['msg_id'] = msg_id;
       //console.debug('> sending', cmd);
       worker.postMessage(JSON.stringify(cmd));
@@ -57,28 +121,28 @@ var PDFTeX = function(opt_workerPath) {
     return p;
   };
 
-  var determineChunkSize = function() {
+  var determineChunkSize = function () {
     var size = 1024;
-    var max = undefined; 
+    var max = undefined;
     var min = undefined;
     var delta = size;
     var success = true;
     var buf;
 
-    while(Math.abs(delta) > 100) {
-      if(success) {
+    while (Math.abs(delta) > 100) {
+      if (success) {
         min = size;
-        if(typeof(max) === 'undefined')
+        if (typeof (max) === 'undefined')
           delta = size;
         else
-          delta = (max-size)/2;
+          delta = (max - size) / 2;
       }
       else {
         max = size;
-        if(typeof(min) === 'undefined')
-          delta = -1*size/2;
+        if (typeof (min) === 'undefined')
+          delta = -1 * size / 2;
         else
-          delta = -1*(size-min)/2;
+          delta = -1 * (size - min) / 2;
       }
       size += delta;
 
@@ -90,7 +154,7 @@ var PDFTeX = function(opt_workerPath) {
           data: buf,
         });
       }
-      catch(e) {
+      catch (e) {
         success = false;
       }
     }
@@ -99,12 +163,12 @@ var PDFTeX = function(opt_workerPath) {
   };
 
 
-  var createCommand = function(command) {
-    self[command] = function() {
+  var createCommand = function (command) {
+    self[command] = function () {
       var args = [].concat.apply([], arguments);
 
       return sendCommand({
-        'command':  command,
+        'command': command,
         'arguments': args,
       });
     }
@@ -118,17 +182,17 @@ var PDFTeX = function(opt_workerPath) {
   createCommand('FS_createLazyFilesFromList'); // parent, list, parent_url, canRead, canWrite
   createCommand('set_TOTAL_MEMORY'); // size
 
-  var curry = function(obj, fn, args) {
-    return function() {
+  var curry = function (obj, fn, args) {
+    return function () {
       return obj[fn].apply(obj, args);
     }
   }
 
-  self.compile = function(source_code) {
+  self.compile = function (source_code) {
     var p = new promise.Promise();
 
-    self.compileRaw(source_code).then(function(binary_pdf) {
-      if(binary_pdf === false)
+    self.compileRaw(source_code).then(function (binary_pdf) {
+      if (binary_pdf === false)
         return p.done(false);
 
       pdf_dataurl = 'data:application/pdf;charset=binary;base64,' + window.btoa(binary_pdf);
@@ -138,12 +202,12 @@ var PDFTeX = function(opt_workerPath) {
     return p;
   }
 
-  self.compileRaw = function(source_code) {
-    if(typeof(chunkSize) === "undefined")
+  self.compileRaw = function (source_code) {
+    if (typeof (chunkSize) === "undefined")
       chunkSize = determineChunkSize();
 
     var commands;
-    if(initialized)
+    if (initialized)
       commands = [
         curry(self, 'FS_unlink', ['/input.tex']),
       ];
@@ -153,16 +217,16 @@ var PDFTeX = function(opt_workerPath) {
         curry(self, 'FS_createLazyFilesFromList', ['/', 'texlive.lst', './texlive', true, true]),
       ];
 
-    var sendCompile = function() {
+    var sendCompile = function () {
       initialized = true;
       return sendCommand({
         'command': 'run',
         'arguments': ['-interaction=nonstopmode', '-output-format', 'pdf', 'input.tex'],
-//        'arguments': ['-debug-format', '-output-format', 'pdf', '&latex', 'input.tex'],
+        //        'arguments': ['-debug-format', '-output-format', 'pdf', '&latex', 'input.tex'],
       });
     };
 
-    var getPDF = function() {
+    var getPDF = function () {
       console.log(arguments);
       return self.FS_readFile('/input.pdf');
     }
