@@ -8,8 +8,8 @@ const newInput = document.getElementById("newInput") as HTMLTextAreaElement;
 const diffBtn = document.getElementById("diffBtn") as HTMLButtonElement;
 
 const runner = new WebPerlRunner({
-    webperlBasePath: "./vendor/wasm-latex-tools/core/webperl",
-    perlScriptsPath: "./vendor/wasm-latex-tools/core/perl",
+    webperlBasePath: "./vendor/wasm-latex-tools/webperl",
+    perlScriptsPath: "./vendor/wasm-latex-tools/perl",
 });
 
 function setStatus(msg: string) {
