@@ -315,8 +315,8 @@ var oldInput = document.getElementById("oldInput");
 var newInput = document.getElementById("newInput");
 var diffBtn = document.getElementById("diffBtn");
 var runner = new WebPerlRunner({
-  webperlBasePath: "/./vendor/wasm-latex-tools/webperl",
-  perlScriptsPath: "/./vendor/wasm-latex-tools/perl"
+  webperlBasePath: "./vendor/wasm-latex-tools/webperl",
+  perlScriptsPath: "./vendor/wasm-latex-tools/perl"
 });
 function setStatus(msg) {
   console.log("> ", msg);
@@ -324,8 +324,8 @@ function setStatus(msg) {
 }
 function ensureWrapped(content) {
   const hasDocClass = /\\documentclass/.test(content);
-  const hasBeginDoc = /\\begin\\{document\\}/.test(content);
-  const hasEndDoc = /\\end\\{document\\}/.test(content);
+  const hasBeginDoc = /\\begin\{document\}/.test(content);
+  const hasEndDoc = /\\end\{document\}/.test(content);
   if (hasDocClass && hasBeginDoc && hasEndDoc) return content;
   return [
     "\\documentclass{article}",

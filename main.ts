@@ -1,4 +1,3 @@
-
 // main.ts
 import { WebPerlRunner, LatexDiff } from "wasm-latex-tools";
 
@@ -8,8 +7,8 @@ const newInput = document.getElementById("newInput") as HTMLTextAreaElement;
 const diffBtn = document.getElementById("diffBtn") as HTMLButtonElement;
 
 const runner = new WebPerlRunner({
-    webperlBasePath: '/./vendor/wasm-latex-tools/webperl',
-    perlScriptsPath: '/./vendor/wasm-latex-tools/perl'
+    webperlBasePath: './vendor/wasm-latex-tools/webperl',
+    perlScriptsPath: './vendor/wasm-latex-tools/perl'
 });
 
 function setStatus(msg: string) {
@@ -19,8 +18,8 @@ function setStatus(msg: string) {
 
 function ensureWrapped(content: string): string {
     const hasDocClass = /\\documentclass/.test(content);
-    const hasBeginDoc = /\\begin\\{document\\}/.test(content);
-    const hasEndDoc = /\\end\\{document\\}/.test(content);
+    const hasBeginDoc = /\\begin\{document\}/.test(content);
+    const hasEndDoc = /\\end\{document\}/.test(content);
     if (hasDocClass && hasBeginDoc && hasEndDoc) return content;
     return [
         "\\documentclass{article}",
@@ -44,16 +43,23 @@ async function initTools() {
     }
 }
 
+interface PDFTEXEngine {
+    compile(tex: string): Promise<string | Blob>;
+}
+
+declare global {
+    interface Window {
+        PDFTeX?: new () => PDFTEXEngine;
+    }
+}
 
 async function compilePdf(diffTex: string) {
-    // @ts-ignore
-    const PDFTeX = (window as any).PDFTeX;
+    const PDFTeX = window.PDFTeX;
     if (!PDFTeX) throw new Error("PDFTeX not available.");
     const engine = new PDFTeX();
     const urlOrBlob = await engine.compile(diffTex);
     return typeof urlOrBlob === "string" ? urlOrBlob : URL.createObjectURL(urlOrBlob);
 }
-
 
 async function generateDiffPdf() {
     console.log("Clicked...")
