@@ -1,68 +1,48 @@
-// pre.js - Wrapper to handle PDFTeX worker initialization
-// This file should be loaded BEFORE pdftex.js
+// pre.js - Initialize Module object for texlive.js
+// This must be loaded BEFORE pdftex.js
 
-(function () {
-  // Store original Worker constructor
-  var OriginalWorker = window.Worker;
+// Create Module object that pdftex.js expects
+var Module = {
+  preRun: [],
+  postRun: [],
+  print: function (text) {
+    console.log('PDFTeX stdout:', text);
+  },
+  printErr: function (text) {
+    console.error('PDFTeX stderr:', text);
+  },
+  setStatus: function (text) {
+    if (text) {
+      console.log('PDFTeX status:', text);
+    }
+  },
+  totalDependencies: 0,
+  monitorRunDependencies: function (left) {
+    this.totalDependencies = Math.max(this.totalDependencies, left);
+    Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies - left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+  }
+};
 
-  // Create a wrapper that adds better error handling
-  window.Worker = function (scriptURL, options) {
-    console.log('Creating worker with URL:', scriptURL);
+// Store original Worker constructor for later wrapping
+var OriginalWorker = window.Worker;
 
-    var worker = new OriginalWorker(scriptURL, options);
+// Create a wrapper that adds better error handling
+window.Worker = function (scriptURL, options) {
+  console.log('Creating worker with URL:', scriptURL);
 
-    // Wrap the onmessage handler to catch JSON parse errors
-    var originalOnMessage = null;
+  var worker = new OriginalWorker(scriptURL, options);
 
-    Object.defineProperty(worker, 'onmessage', {
-      get: function () {
-        return originalOnMessage;
-      },
-      set: function (handler) {
-        originalOnMessage = function (event) {
-          try {
-            // Try to parse if it's a string
-            if (typeof event.data === 'string') {
-              try {
-                var parsed = JSON.parse(event.data);
-                // Create new event with parsed data
-                var newEvent = {
-                  data: JSON.stringify(parsed),
-                  origin: event.origin,
-                  lastEventId: event.lastEventId,
-                  source: event.source,
-                  ports: event.ports
-                };
-                handler.call(this, newEvent);
-              } catch (parseError) {
-                // If JSON parse fails, check if it's actually valid data
-                console.warn('Worker message parse error (might be binary data):', parseError);
-                // Pass through anyway - might be ArrayBuffer or other data
-                handler.call(this, event);
-              }
-            } else {
-              // Not a string, pass through as-is (ArrayBuffer, etc.)
-              handler.call(this, event);
-            }
-          } catch (error) {
-            console.error('Error in worker message handler:', error);
-          }
-        };
-      }
-    });
-
-    // Add error handler
-    worker.onerror = function (error) {
-      console.error('Worker error:', error);
-      console.error('Worker script URL:', scriptURL);
-    };
-
-    return worker;
+  // Add error handler
+  worker.onerror = function (error) {
+    console.error('Worker error:', error);
+    console.error('Worker script URL:', scriptURL);
   };
 
-  // Preserve the original constructor properties
-  window.Worker.prototype = OriginalWorker.prototype;
-})();
+  return worker;
+};
+
+// Preserve the original constructor properties
+window.Worker.prototype = OriginalWorker.prototype;
 
 // Initialize texlive configuration if not already set
 if (!window.TEXLIVE_CONFIG) {

@@ -374,13 +374,20 @@ async function compilePdf(diffTex) {
   try {
     const engine = new PDFTeX();
     console.log("Compiling LaTeX...");
-    const urlOrBlob = await engine.compile(diffTex);
+    console.log("LaTeX source length:", diffTex.length);
+    const compilePromise = engine.compile(diffTex);
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("Compilation timeout after 30 seconds")), 3e4);
+    });
+    const urlOrBlob = await Promise.race([compilePromise, timeoutPromise]);
+    console.log("Compilation result type:", typeof urlOrBlob);
+    console.log("Compilation result:", urlOrBlob);
     if (typeof urlOrBlob === "string") {
       return urlOrBlob;
     } else if (urlOrBlob instanceof Blob) {
       return URL.createObjectURL(urlOrBlob);
     } else {
-      throw new Error("Unexpected compile result type");
+      throw new Error("Unexpected compile result type: " + typeof urlOrBlob);
     }
   } catch (error) {
     console.error("PDFTeX compilation error:", error);
