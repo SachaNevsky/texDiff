@@ -44,20 +44,16 @@ async function initTools() {
     }
 }
 
+
 async function compilePdf(diffTex: string) {
-    // texlive.js attaches PDFTeX to window via pdftex.js
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const PDFTeX = (window as any).PDFTeX;
-    if (!PDFTeX) {
-        throw new Error("PDFTeX not available. Check that vendor/texlive.js/pdftex.js is loaded.");
-    }
+    if (!PDFTeX) throw new Error("PDFTeX not available.");
     const engine = new PDFTeX();
-    // The demo shows compile() returning a blob URL or Blob. [4](https://manuels.github.io/texlive.js/)
     const urlOrBlob = await engine.compile(diffTex);
-    if (typeof urlOrBlob === "string") return urlOrBlob;
-    return URL.createObjectURL(urlOrBlob);
+    return typeof urlOrBlob === "string" ? urlOrBlob : URL.createObjectURL(urlOrBlob);
 }
+
 
 async function generateDiffPdf() {
     console.log("Clicked...")

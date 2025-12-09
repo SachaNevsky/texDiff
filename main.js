@@ -349,13 +349,10 @@ async function initTools() {
 }
 async function compilePdf(diffTex) {
   const PDFTeX = window.PDFTeX;
-  if (!PDFTeX) {
-    throw new Error("PDFTeX not available. Check that vendor/texlive.js/pdftex.js is loaded.");
-  }
+  if (!PDFTeX) throw new Error("PDFTeX not available.");
   const engine = new PDFTeX();
   const urlOrBlob = await engine.compile(diffTex);
-  if (typeof urlOrBlob === "string") return urlOrBlob;
-  return URL.createObjectURL(urlOrBlob);
+  return typeof urlOrBlob === "string" ? urlOrBlob : URL.createObjectURL(urlOrBlob);
 }
 async function generateDiffPdf() {
   console.log("Clicked...");
