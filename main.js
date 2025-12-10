@@ -482,6 +482,7 @@ async function generateDiffPdf() {
 var isInitializing = false;
 var isInitialized = false;
 async function safeInit() {
+  console.log("Init...");
   if (isInitialized || isInitializing) return;
   isInitializing = true;
   try {
