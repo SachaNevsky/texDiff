@@ -368,6 +368,17 @@ function waitForPDFTeX() {
     checkPDFTeX();
   });
 }
+function dataURLtoBlob(dataURL) {
+  const parts = dataURL.split(",");
+  const contentType = parts[0].split(":")[1].split(";")[0];
+  const raw = window.atob(parts[1]);
+  const rawLength = raw.length;
+  const uInt8Array = new Uint8Array(rawLength);
+  for (let i = 0; i < rawLength; ++i) {
+    uInt8Array[i] = raw.charCodeAt(i);
+  }
+  return new Blob([uInt8Array], { type: contentType });
+}
 async function compilePdf(diffTex) {
   const PDFTeX = window.PDFTeX;
   if (!PDFTeX) {
@@ -383,8 +394,10 @@ async function compilePdf(diffTex) {
     if (!pdfDataUrl) {
       throw new Error("Compilation returned no result");
     }
-    console.log("PDF compiled successfully");
-    return pdfDataUrl;
+    console.log("PDF compiled successfully, converting to blob URL");
+    const blob = dataURLtoBlob(pdfDataUrl);
+    const blobUrl = URL.createObjectURL(blob);
+    return blobUrl;
   } catch (error) {
     console.error("PDFTeX compilation error:", error);
     throw new Error(`PDF compilation failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -414,9 +427,12 @@ async function generateDiffPdf() {
     console.log("Diff completed, output length:", diff.output.length);
     console.log("First 500 chars of diff output:", diff.output.substring(0, 500));
     setStatus("Compiling PDF...");
-    const pdfDataUrl = await compilePdf(diff.output);
+    const pdfBlobUrl = await compilePdf(diff.output);
     console.log("PDF compiled, displaying...");
-    pdfViewer.src = pdfDataUrl;
+    if (pdfViewer.src && pdfViewer.src.startsWith("blob:")) {
+      URL.revokeObjectURL(pdfViewer.src);
+    }
+    pdfViewer.src = pdfBlobUrl;
     pdfContainer.style.display = "block";
     setStatus("PDF generated successfully!");
   } catch (e) {
