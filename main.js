@@ -314,12 +314,14 @@ var statusEl = document.getElementById("status");
 var oldInput = document.getElementById("oldInput");
 var newInput = document.getElementById("newInput");
 var diffBtn = document.getElementById("diffBtn");
+var downloadTexBtn = document.getElementById("downloadTexBtn");
 var pdfContainer = document.getElementById("pdfContainer");
 var pdfViewer = document.getElementById("pdfViewer");
 var runner = new WebPerlRunner({
   webperlBasePath: "./vendor/wasm-latex-tools/webperl",
   perlScriptsPath: "./vendor/wasm-latex-tools/perl"
 });
+var latestDiffTex = "";
 window.addEventListener("error", (event) => {
   const message = event.message || "";
   const filename = event.filename || "";
@@ -419,6 +421,19 @@ function dataURLtoBlob(dataURL) {
   }
   return new Blob([uInt8Array], { type: contentType });
 }
+function cleanDiffTeX(diffTex) {
+  let cleaned = diffTex.replace(/\\usepackage\[T1\]\{fontenc\}/g, "").replace(/\\usepackage\{lmodern\}/g, "").replace(/\\usepackage\{textcomp\}/g, "").replace(/\\usepackage\{color\}/g, "\\usepackage{xcolor}").replace(/\\usepackage(\[.*?\])?\{ulem\}/g, "").replace(/\\usepackage(\[.*?\])?\{changebar\}/g, "").replace(/\\DIFadd\{([^}]*)\}/g, "{\\color{blue}\\textbf{$1}}").replace(/\\DIFdel\{([^}]*)\}/g, "{\\color{red}\\sout{$1}}").replace(/\\sout\{([^}]*)\}/g, "{\\color{red}[deleted: $1]}");
+  if (!cleaned.includes("\\usepackage{xcolor}") && cleaned.includes("\\color{")) {
+    cleaned = cleaned.replace(
+      /\\documentclass/,
+      "\\documentclass"
+    ).replace(
+      /\\begin\{document\}/,
+      "\\usepackage{xcolor}\n\\begin{document}"
+    );
+  }
+  return cleaned;
+}
 async function compilePdf(diffTex) {
   const PDFTeX = window.PDFTeX;
   if (!PDFTeX) {
@@ -427,9 +442,12 @@ async function compilePdf(diffTex) {
   try {
     const workerPath = window.TEXLIVE_CONFIG?.workerPath || "./vendor/texlive.js/pdftex-worker.js";
     const engine = new PDFTeX(workerPath);
-    const pdfDataUrl = await engine.compile(diffTex);
+    const cleanedTex = cleanDiffTeX(diffTex);
+    latestDiffTex = cleanedTex;
+    downloadTexBtn.style.display = "inline-block";
+    const pdfDataUrl = await engine.compile(cleanedTex);
     if (!pdfDataUrl || pdfDataUrl === "false") {
-      throw new Error("Compilation failed - no PDF produced. This may be due to missing LaTeX packages in the texlive distribution.");
+      throw new Error("Compilation failed - no PDF produced. Check the LaTeX syntax or package availability.");
     }
     const blob = dataURLtoBlob(pdfDataUrl);
     const blobUrl = URL.createObjectURL(blob);
@@ -438,6 +456,17 @@ async function compilePdf(diffTex) {
     console.error("PDFTeX compilation error:", error);
     throw new Error(`PDF compilation failed: ${error instanceof Error ? error.message : String(error)}`);
   }
+}
+function downloadTextFile(content, filename) {
+  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 async function generateDiffPdf() {
   const oldText = oldInput.value;
@@ -455,15 +484,14 @@ async function generateDiffPdf() {
       type: "CFONT",
       flatten: true
     });
-    let simplifiedDiff = diff.output.replace(/\\usepackage\[T1\]\{fontenc\}/g, "").replace(/\\usepackage\{lmodern\}/g, "");
     setStatus("Compiling PDF...");
-    const pdfBlobUrl = await compilePdf(simplifiedDiff);
+    const pdfBlobUrl = await compilePdf(diff.output);
     if (pdfViewer.src && pdfViewer.src.startsWith("blob:")) {
       URL.revokeObjectURL(pdfViewer.src);
     }
     pdfViewer.src = pdfBlobUrl;
     pdfContainer.style.display = "block";
-    setStatus("PDF generated successfully!");
+    setStatus("PDF generated successfully! Click 'Download diff.tex' to save the LaTeX source.");
   } catch (e) {
     console.error("Error details:", e);
     const errorMsg = e instanceof Error ? e.message : String(e);
@@ -485,4 +513,12 @@ async function safeInit() {
   }
 }
 diffBtn.addEventListener("click", generateDiffPdf);
+downloadTexBtn.addEventListener("click", () => {
+  if (latestDiffTex) {
+    downloadTextFile(latestDiffTex, "diff.tex");
+    setStatus("diff.tex downloaded!");
+  } else {
+    setStatus("No diff available to download. Generate a diff first.");
+  }
+});
 safeInit();

@@ -5,6 +5,7 @@ const statusEl = document.getElementById("status") as HTMLSpanElement;
 const oldInput = document.getElementById("oldInput") as HTMLTextAreaElement;
 const newInput = document.getElementById("newInput") as HTMLTextAreaElement;
 const diffBtn = document.getElementById("diffBtn") as HTMLButtonElement;
+const downloadTexBtn = document.getElementById("downloadTexBtn") as HTMLButtonElement;
 const pdfContainer = document.getElementById("pdfContainer") as HTMLDivElement;
 const pdfViewer = document.getElementById("pdfViewer") as HTMLIFrameElement;
 
@@ -12,6 +13,9 @@ const runner = new WebPerlRunner({
     webperlBasePath: './vendor/wasm-latex-tools/webperl',
     perlScriptsPath: './vendor/wasm-latex-tools/perl'
 });
+
+// Store the latest diff output
+let latestDiffTex: string = '';
 
 // ============================================================================
 // AGGRESSIVE ERROR SUPPRESSION
@@ -201,6 +205,42 @@ function dataURLtoBlob(dataURL: string): Blob {
     return new Blob([uInt8Array], { type: contentType });
 }
 
+function cleanDiffTeX(diffTex: string): string {
+    // Remove problematic package imports that texlive.js doesn't support
+    let cleaned = diffTex
+        // Remove font encoding packages
+        .replace(/\\usepackage\[T1\]\{fontenc\}/g, '')
+        .replace(/\\usepackage\{lmodern\}/g, '')
+        .replace(/\\usepackage\{textcomp\}/g, '')
+
+        // Remove or replace color package with xcolor if present
+        .replace(/\\usepackage\{color\}/g, '\\usepackage{xcolor}')
+
+        // Remove changebar and ulem packages (not available)
+        .replace(/\\usepackage(\[.*?\])?\{ulem\}/g, '')
+        .replace(/\\usepackage(\[.*?\])?\{changebar\}/g, '')
+
+        // Simplify any complex commands to basic LaTeX
+        .replace(/\\DIFadd\{([^}]*)\}/g, '{\\color{blue}\\textbf{$1}}')
+        .replace(/\\DIFdel\{([^}]*)\}/g, '{\\color{red}\\sout{$1}}')
+
+        // Replace sout with strikethrough simulation if not available
+        .replace(/\\sout\{([^}]*)\}/g, '{\\color{red}[deleted: $1]}');
+
+    // Ensure xcolor is included if we're using colors
+    if (!cleaned.includes('\\usepackage{xcolor}') && cleaned.includes('\\color{')) {
+        cleaned = cleaned.replace(
+            /\\documentclass/,
+            '\\documentclass'
+        ).replace(
+            /\\begin\{document\}/,
+            '\\usepackage{xcolor}\n\\begin{document}'
+        );
+    }
+
+    return cleaned;
+}
+
 async function compilePdf(diffTex: string): Promise<string> {
     const PDFTeX = window.PDFTeX;
     if (!PDFTeX) {
@@ -211,10 +251,17 @@ async function compilePdf(diffTex: string): Promise<string> {
         const workerPath = window.TEXLIVE_CONFIG?.workerPath || './vendor/texlive.js/pdftex-worker.js';
         const engine = new PDFTeX(workerPath);
 
-        const pdfDataUrl = await engine.compile(diffTex);
+        // Clean the TeX before compilation
+        const cleanedTex = cleanDiffTeX(diffTex);
+
+        // Save the cleaned version for download
+        latestDiffTex = cleanedTex;
+        downloadTexBtn.style.display = 'inline-block';
+
+        const pdfDataUrl = await engine.compile(cleanedTex);
 
         if (!pdfDataUrl || pdfDataUrl === 'false') {
-            throw new Error("Compilation failed - no PDF produced. This may be due to missing LaTeX packages in the texlive distribution.");
+            throw new Error("Compilation failed - no PDF produced. Check the LaTeX syntax or package availability.");
         }
 
         const blob = dataURLtoBlob(pdfDataUrl);
@@ -225,6 +272,18 @@ async function compilePdf(diffTex: string): Promise<string> {
         console.error("PDFTeX compilation error:", error);
         throw new Error(`PDF compilation failed: ${error instanceof Error ? error.message : String(error)}`);
     }
+}
+
+function downloadTextFile(content: string, filename: string) {
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 }
 
 async function generateDiffPdf() {
@@ -248,13 +307,8 @@ async function generateDiffPdf() {
             flatten: true
         });
 
-        // Simplify the diff output to remove problematic packages
-        let simplifiedDiff = diff.output
-            .replace(/\\usepackage\[T1\]\{fontenc\}/g, '')
-            .replace(/\\usepackage\{lmodern\}/g, '');
-
         setStatus("Compiling PDF...");
-        const pdfBlobUrl = await compilePdf(simplifiedDiff);
+        const pdfBlobUrl = await compilePdf(diff.output);
 
         // Clean up previous blob URL if exists
         if (pdfViewer.src && pdfViewer.src.startsWith('blob:')) {
@@ -265,7 +319,7 @@ async function generateDiffPdf() {
         pdfViewer.src = pdfBlobUrl;
         pdfContainer.style.display = 'block';
 
-        setStatus("PDF generated successfully!");
+        setStatus("PDF generated successfully! Click 'Download diff.tex' to save the LaTeX source.");
     } catch (e) {
         console.error("Error details:", e);
         const errorMsg = e instanceof Error ? e.message : String(e);
@@ -291,4 +345,13 @@ async function safeInit() {
 }
 
 diffBtn.addEventListener("click", generateDiffPdf);
+downloadTexBtn.addEventListener("click", () => {
+    if (latestDiffTex) {
+        downloadTextFile(latestDiffTex, 'diff.tex');
+        setStatus("diff.tex downloaded!");
+    } else {
+        setStatus("No diff available to download. Generate a diff first.");
+    }
+});
+
 safeInit();
