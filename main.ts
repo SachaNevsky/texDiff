@@ -13,17 +13,60 @@ const runner = new WebPerlRunner({
     perlScriptsPath: './vendor/wasm-latex-tools/perl'
 });
 
-// Comprehensive console suppression
+// ============================================================================
+// AGGRESSIVE ERROR SUPPRESSION
+// ============================================================================
+
+// Intercept global error handler
+window.addEventListener('error', (event) => {
+    const message = event.message || '';
+    const filename = event.filename || '';
+
+    // Suppress known non-critical errors
+    if (message.includes('JSON.parse: unexpected character') ||
+        message.includes('FS is not defined') ||
+        message.includes('Could not create /tmp') ||
+        message.includes('Could not create /home') ||
+        message.includes('mkdir failed') ||
+        filename.includes('pre.js') ||
+        filename.includes('post.js') ||
+        filename.includes('perlrunner.html')) {
+        event.preventDefault();
+        event.stopPropagation();
+        return false;
+    }
+}, true);
+
+// Intercept unhandled promise rejections
+window.addEventListener('unhandledrejection', (event) => {
+    const reason = String(event.reason || '');
+
+    if (reason.includes('Invalid PDF structure') ||
+        reason.includes('InvalidPDFException') ||
+        reason.includes('JSON.parse') ||
+        reason.includes('FS is not defined')) {
+        event.preventDefault();
+        return false;
+    }
+});
+
+// Override console methods
 const originalConsoleError = console.error;
 console.error = function (...args: unknown[]) {
     const message = String(args[0] || '');
+    const stack = args[1] && typeof args[1] === 'object' ? String((args[1] as any).stack || '') : '';
+
     if (message.includes('Could not create /tmp') ||
         message.includes('Could not create /home') ||
         message.includes('mkdir failed') ||
         message.includes('FS is not defined') ||
         message.includes('JSON.parse: unexpected character') ||
         message.includes('Invalid PDF structure') ||
-        message.includes('Invalid or corrupted PDF')) {
+        message.includes('Invalid or corrupted PDF') ||
+        message.includes('InvalidPDFException') ||
+        stack.includes('pre.js') ||
+        stack.includes('post.js') ||
+        stack.includes('perlrunner.html')) {
         return;
     }
     originalConsoleError.apply(console, args);
@@ -32,6 +75,7 @@ console.error = function (...args: unknown[]) {
 const originalConsoleLog = console.log;
 console.log = function (...args: unknown[]) {
     const message = String(args[0] || '');
+
     if (message.includes('Could not create') ||
         message.includes('mkdir failed') ||
         message.includes('asm.js is deprecated') ||
@@ -43,7 +87,14 @@ console.log = function (...args: unknown[]) {
         message.includes('Document Class:') ||
         message.includes('//texmf-dist/') ||
         message.includes('./input.tex') ||
-        message.includes('Successfully compiled asm.js')) {
+        message.includes('Successfully compiled asm.js') ||
+        message.includes('No file input.aux') ||
+        message.includes('[Loading MPS to PDF converter') ||
+        message.includes('Output written on input.pdf') ||
+        message.includes('Transcript written on input.log') ||
+        message.match(/^\([\/\.]/) || // Lines starting with (/ or (.
+        message.match(/^\)/) || // Lines starting with )
+        message === '<empty string>') {
         return;
     }
     originalConsoleLog.apply(console, args);
@@ -52,31 +103,19 @@ console.log = function (...args: unknown[]) {
 const originalConsoleWarn = console.warn;
 console.warn = function (...args: unknown[]) {
     const message = String(args[0] || '');
+
     if (message.includes('asm.js is deprecated') ||
         message.includes('Invalid absolute docBaseUrl') ||
-        message.includes('Indexing all PDF objects')) {
+        message.includes('Indexing all PDF objects') ||
+        message.includes('Warning:')) {
         return;
     }
     originalConsoleWarn.apply(console, args);
 };
 
-// Suppress worker errors
-const originalAddEventListener = Worker.prototype.addEventListener;
-Worker.prototype.addEventListener = function (type: string, listener: any, options?: any) {
-    if (type === 'error') {
-        const wrappedListener = (event: any) => {
-            const message = String(event?.message || '');
-            if (message.includes('JSON.parse') ||
-                message.includes('FS is not defined')) {
-                event.preventDefault?.();
-                return;
-            }
-            return listener.call(this, event);
-        };
-        return originalAddEventListener.call(this, type, wrappedListener, options);
-    }
-    return originalAddEventListener.call(this, type, listener, options);
-};
+// ============================================================================
+// APPLICATION CODE
+// ============================================================================
 
 function setStatus(msg: string) {
     console.log("> ", msg)
@@ -117,7 +156,6 @@ function waitForPDFTeX(): Promise<void> {
 
         const checkPDFTeX = () => {
             if (window.PDFTeX) {
-                console.log("PDFTeX is ready!");
                 resolve();
             } else if (attempts >= maxAttempts) {
                 reject(new Error("PDFTeX failed to load"));
@@ -169,22 +207,15 @@ async function compilePdf(diffTex: string): Promise<string> {
         throw new Error("PDFTeX not available.");
     }
 
-    console.log("Creating PDFTeX engine...");
-
     try {
         const workerPath = window.TEXLIVE_CONFIG?.workerPath || './vendor/texlive.js/pdftex-worker.js';
         const engine = new PDFTeX(workerPath);
-
-        console.log("Compiling LaTeX...");
-        console.log("LaTeX source length:", diffTex.length);
 
         const pdfDataUrl = await engine.compile(diffTex);
 
         if (!pdfDataUrl || pdfDataUrl === 'false') {
             throw new Error("Compilation failed - no PDF produced. This may be due to missing LaTeX packages in the texlive distribution.");
         }
-
-        console.log("PDF compiled successfully, converting to blob URL");
 
         const blob = dataURLtoBlob(pdfDataUrl);
         const blobUrl = URL.createObjectURL(blob);
@@ -197,7 +228,6 @@ async function compilePdf(diffTex: string): Promise<string> {
 }
 
 async function generateDiffPdf() {
-    console.log("Clicked...")
     const oldText = oldInput.value;
     const newText = newInput.value;
     if (!oldText.trim() || !newText.trim()) {
@@ -211,11 +241,6 @@ async function generateDiffPdf() {
         const oldWrapped = ensureWrapped(oldText);
         const newWrapped = ensureWrapped(newText);
 
-        console.log("Running diff with options:", {
-            type: "CFONT",
-            flatten: true
-        });
-
         // Use CFONT type which uses basic LaTeX commands (color, textbf)
         // This doesn't require external packages like ulem or changebar
         const diff = await diffTool.diff(oldWrapped, newWrapped, {
@@ -223,18 +248,13 @@ async function generateDiffPdf() {
             flatten: true
         });
 
-        console.log("Diff completed, output length:", diff.output.length);
-
         // Simplify the diff output to remove problematic packages
         let simplifiedDiff = diff.output
             .replace(/\\usepackage\[T1\]\{fontenc\}/g, '')
             .replace(/\\usepackage\{lmodern\}/g, '');
 
-        console.log("Simplified diff for compilation");
-
         setStatus("Compiling PDF...");
         const pdfBlobUrl = await compilePdf(simplifiedDiff);
-        console.log("PDF compiled, displaying...");
 
         // Clean up previous blob URL if exists
         if (pdfViewer.src && pdfViewer.src.startsWith('blob:')) {
@@ -257,7 +277,6 @@ let isInitializing = false;
 let isInitialized = false;
 
 async function safeInit() {
-    console.log("Init...")
     if (isInitialized || isInitializing) return;
     isInitializing = true;
 
