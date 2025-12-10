@@ -35,10 +35,10 @@ function ensureWrapped(content: string): string {
 async function initTools() {
     try {
         setStatus("Loading diff tools...");
-        await runner.initialize();
+        await runner.initialize(); // WebPerl WASM + Perl scripts
 
-        // Wait for SwiftLaTeX to be available
-        await waitForSwiftLaTeX();
+        // Wait for PDFTeX to be available
+        await waitForPDFTeX();
 
         setStatus("Ready.");
     } catch (e) {
@@ -47,63 +47,77 @@ async function initTools() {
     }
 }
 
-function waitForSwiftLaTeX(): Promise<void> {
+function waitForPDFTeX(): Promise<void> {
     return new Promise((resolve, reject) => {
         let attempts = 0;
-        const maxAttempts = 50;
+        const maxAttempts = 50; // 5 seconds max
 
-        const checkSwiftLaTeX = () => {
-            // @ts-ignore
-            if (typeof PdfTeXEngine !== 'undefined') {
+        const checkPDFTeX = () => {
+            if (window.PDFTeX) {
                 resolve();
             } else if (attempts >= maxAttempts) {
-                reject(new Error("SwiftLaTeX failed to load"));
+                reject(new Error("PDFTeX failed to load"));
             } else {
                 attempts++;
-                setTimeout(checkSwiftLaTeX, 100);
+                setTimeout(checkPDFTeX, 100);
             }
         };
 
-        checkSwiftLaTeX();
+        checkPDFTeX();
     });
 }
 
+interface PDFTEXEngine {
+    compile(tex: string): Promise<string | Blob>;
+}
+
+interface PDFTEXConstructor {
+    new(): PDFTEXEngine;
+    isReady?: boolean;
+}
+
+declare global {
+    interface Window {
+        PDFTeX?: PDFTEXConstructor;
+        TEXLIVE_CONFIG?: {
+            workerPath?: string;
+        };
+    }
+}
+
 async function compilePdf(diffTex: string): Promise<string> {
-    // @ts-ignore
-    if (typeof PdfTeXEngine === 'undefined') {
-        throw new Error("SwiftLaTeX not available.");
+    const PDFTeX = window.PDFTeX;
+    if (!PDFTeX) {
+        throw new Error("PDFTeX not available.");
     }
 
-    console.log("Creating SwiftLaTeX engine...");
+    console.log("Creating PDFTeX engine...");
 
     try {
-        // @ts-ignore
-        const engine = new PdfTeXEngine();
-        await engine.loadEngine();
-
+        const engine = new PDFTeX();
         console.log("Compiling LaTeX...");
         console.log("LaTeX source length:", diffTex.length);
 
-        // Write the main tex file
-        engine.writeMemFSFile("main.tex", diffTex);
+        // Add timeout for compilation
+        const compilePromise = engine.compile(diffTex);
+        const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error("Compilation timeout after 30 seconds")), 30000);
+        });
 
-        // Compile
-        const result = await engine.compileLaTeX();
+        const urlOrBlob = await Promise.race([compilePromise, timeoutPromise]);
 
-        console.log("Compilation result:", result);
+        console.log("Compilation result type:", typeof urlOrBlob);
+        console.log("Compilation result:", urlOrBlob);
 
-        if (result.status === 0) {
-            // Read the PDF from memory
-            const pdfData = engine.readMemFSFile("main.pdf");
-            const blob = new Blob([pdfData], { type: 'application/pdf' });
-            return URL.createObjectURL(blob);
+        if (typeof urlOrBlob === "string") {
+            return urlOrBlob;
+        } else if (urlOrBlob instanceof Blob) {
+            return URL.createObjectURL(urlOrBlob);
         } else {
-            const log = engine.readMemFSFile("main.log");
-            console.error("Compilation log:", new TextDecoder().decode(log));
-            throw new Error("LaTeX compilation failed");
+            throw new Error("Unexpected compile result type: " + typeof urlOrBlob);
         }
     } catch (error) {
-        console.error("SwiftLaTeX compilation error:", error);
+        console.error("PDFTeX compilation error:", error);
         throw new Error(`PDF compilation failed: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
@@ -149,6 +163,7 @@ async function generateDiffPdf() {
     }
 }
 
+// Prevent multiple initializations
 let isInitializing = false;
 let isInitialized = false;
 
