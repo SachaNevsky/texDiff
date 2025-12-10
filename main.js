@@ -422,15 +422,26 @@ function dataURLtoBlob(dataURL) {
   return new Blob([uInt8Array], { type: contentType });
 }
 function cleanDiffTeX(diffTex) {
-  let cleaned = diffTex.replace(/\\usepackage\[T1\]\{fontenc\}/g, "").replace(/\\usepackage\{lmodern\}/g, "").replace(/\\usepackage\{textcomp\}/g, "").replace(/\\usepackage\{color\}/g, "\\usepackage{xcolor}").replace(/\\usepackage(\[.*?\])?\{ulem\}/g, "").replace(/\\usepackage(\[.*?\])?\{changebar\}/g, "").replace(/\\DIFadd\{([^}]*)\}/g, "{\\color{blue}\\textbf{$1}}").replace(/\\DIFdel\{([^}]*)\}/g, "{\\color{red}\\sout{$1}}").replace(/\\sout\{([^}]*)\}/g, "{\\color{red}[deleted: $1]}");
-  if (!cleaned.includes("\\usepackage{xcolor}") && cleaned.includes("\\color{")) {
-    cleaned = cleaned.replace(
-      /\\documentclass/,
-      "\\documentclass"
-    ).replace(
-      /\\begin\{document\}/,
-      "\\usepackage{xcolor}\n\\begin{document}"
-    );
+  let cleaned = diffTex;
+  cleaned = cleaned.replace(/\\RequirePackage\{color\}/g, "").replace(/\\usepackage\{xcolor\}/g, "").replace(/\\usepackage\{color\}/g, "").replace(/\\usepackage\[T1\]\{fontenc\}/g, "").replace(/\\usepackage\{lmodern\}/g, "").replace(/\\usepackage\{textcomp\}/g, "").replace(/\\usepackage(\[.*?\])?\{ulem\}/g, "").replace(/\\usepackage(\[.*?\])?\{changebar\}/g, "");
+  cleaned = cleaned.replace(/\\definecolor\{RED\}\{rgb\}\{1,0,0\}/g, "");
+  cleaned = cleaned.replace(/\\definecolor\{BLUE\}\{rgb\}\{0,0,1\}/g, "");
+  cleaned = cleaned.replace(/\\color\{red\}/g, "");
+  cleaned = cleaned.replace(/\\color\{blue\}/g, "");
+  cleaned = cleaned.replace(/\{\s*\\protect\\color\{[^}]+\}\s*/g, "{");
+  cleaned = cleaned.replace(/\\DeclareOldFontCommand\{\\sf\}\{\\normalfont\\sffamily\}\{\\mathsf\}/g, "");
+  const simpleCommands = `
+%DIF SIMPLIFIED COMMANDS (no color package needed)
+\\providecommand{\\DIFadd}[1]{\\textbf{[ADDED: #1]}}
+\\providecommand{\\DIFdel}[1]{\\tiny [DELETED: #1]}
+\\providecommand{\\DIFaddFL}[1]{\\textbf{[ADDED: #1]}}
+\\providecommand{\\DIFdelFL}[1]{\\tiny [DELETED: #1]}
+`;
+  const endPreambleMarker = "%DIF END PREAMBLE EXTENSION ADDED BY LATEXDIFF";
+  if (cleaned.includes(endPreambleMarker)) {
+    cleaned = cleaned.replace(endPreambleMarker, endPreambleMarker + simpleCommands);
+  } else {
+    cleaned = cleaned.replace(/\\begin\{document\}/, simpleCommands + "\n\\begin{document}");
   }
   return cleaned;
 }
@@ -468,6 +479,14 @@ function downloadTextFile(content, filename) {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+function downloadPdfFile(blobUrl, filename) {
+  const link = document.createElement("a");
+  link.href = blobUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
 async function generateDiffPdf() {
   const oldText = oldInput.value;
   const newText = newInput.value;
@@ -489,9 +508,18 @@ async function generateDiffPdf() {
     if (pdfViewer.src && pdfViewer.src.startsWith("blob:")) {
       URL.revokeObjectURL(pdfViewer.src);
     }
-    pdfViewer.src = pdfBlobUrl;
-    pdfContainer.style.display = "block";
-    setStatus("PDF generated successfully! Click 'Download diff.tex' to save the LaTeX source.");
+    try {
+      pdfViewer.src = pdfBlobUrl;
+      pdfContainer.style.display = "block";
+    } catch (e) {
+      console.warn("Could not display PDF in iframe, but download should work");
+    }
+    window.__lastPdfBlobUrl = pdfBlobUrl;
+    setStatus("PDF generated! Click 'Download diff.tex' for LaTeX source or 'Download PDF' for the compiled file.");
+    const downloadPdfBtn2 = document.getElementById("downloadPdfBtn");
+    if (downloadPdfBtn2) {
+      downloadPdfBtn2.style.display = "inline-block";
+    }
   } catch (e) {
     console.error("Error details:", e);
     const errorMsg = e instanceof Error ? e.message : String(e);
@@ -521,4 +549,16 @@ downloadTexBtn.addEventListener("click", () => {
     setStatus("No diff available to download. Generate a diff first.");
   }
 });
+var downloadPdfBtn = document.getElementById("downloadPdfBtn");
+if (downloadPdfBtn) {
+  downloadPdfBtn.addEventListener("click", () => {
+    const pdfBlobUrl = window.__lastPdfBlobUrl;
+    if (pdfBlobUrl) {
+      downloadPdfFile(pdfBlobUrl, "diff.pdf");
+      setStatus("diff.pdf downloaded!");
+    } else {
+      setStatus("No PDF available to download. Generate a diff first.");
+    }
+  });
+}
 safeInit();

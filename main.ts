@@ -206,36 +206,55 @@ function dataURLtoBlob(dataURL: string): Blob {
 }
 
 function cleanDiffTeX(diffTex: string): string {
-    // Remove problematic package imports that texlive.js doesn't support
-    let cleaned = diffTex
-        // Remove font encoding packages
+    // The texlive.js distribution has very limited package support
+    // We need to work with what's available: basic LaTeX commands only
+
+    let cleaned = diffTex;
+
+    // Remove all package imports except inputenc
+    cleaned = cleaned
+        .replace(/\\RequirePackage\{color\}/g, '')
+        .replace(/\\usepackage\{xcolor\}/g, '')
+        .replace(/\\usepackage\{color\}/g, '')
         .replace(/\\usepackage\[T1\]\{fontenc\}/g, '')
         .replace(/\\usepackage\{lmodern\}/g, '')
         .replace(/\\usepackage\{textcomp\}/g, '')
-
-        // Remove or replace color package with xcolor if present
-        .replace(/\\usepackage\{color\}/g, '\\usepackage{xcolor}')
-
-        // Remove changebar and ulem packages (not available)
         .replace(/\\usepackage(\[.*?\])?\{ulem\}/g, '')
-        .replace(/\\usepackage(\[.*?\])?\{changebar\}/g, '')
+        .replace(/\\usepackage(\[.*?\])?\{changebar\}/g, '');
 
-        // Simplify any complex commands to basic LaTeX
-        .replace(/\\DIFadd\{([^}]*)\}/g, '{\\color{blue}\\textbf{$1}}')
-        .replace(/\\DIFdel\{([^}]*)\}/g, '{\\color{red}\\sout{$1}}')
+    // Remove color definitions
+    cleaned = cleaned.replace(/\\definecolor\{RED\}\{rgb\}\{1,0,0\}/g, '');
+    cleaned = cleaned.replace(/\\definecolor\{BLUE\}\{rgb\}\{0,0,1\}/g, '');
 
-        // Replace sout with strikethrough simulation if not available
-        .replace(/\\sout\{([^}]*)\}/g, '{\\color{red}[deleted: $1]}');
+    // Remove or simplify all color commands since we don't have the color package
+    // Replace \color{red} and \color{blue} commands - remove them or use text markers
+    cleaned = cleaned.replace(/\\color\{red\}/g, '');
+    cleaned = cleaned.replace(/\\color\{blue\}/g, '');
+    cleaned = cleaned.replace(/\{\s*\\protect\\color\{[^}]+\}\s*/g, '{');
 
-    // Ensure xcolor is included if we're using colors
-    if (!cleaned.includes('\\usepackage{xcolor}') && cleaned.includes('\\color{')) {
-        cleaned = cleaned.replace(
-            /\\documentclass/,
-            '\\documentclass'
-        ).replace(
-            /\\begin\{document\}/,
-            '\\usepackage{xcolor}\n\\begin{document}'
-        );
+    // Simplify font commands
+    cleaned = cleaned.replace(/\\DeclareOldFontCommand\{\\sf\}\{\\normalfont\\sffamily\}\{\\mathsf\}/g, '');
+
+    // Replace DIFadd and DIFdel with simple text markers
+    // Note: The definitions from latexdiff are already there, we just need to ensure they work
+    // without color package
+
+    // Redefine the DIF commands to work without color package
+    const simpleCommands = `
+%DIF SIMPLIFIED COMMANDS (no color package needed)
+\\providecommand{\\DIFadd}[1]{\\textbf{[ADDED: #1]}}
+\\providecommand{\\DIFdel}[1]{\\tiny [DELETED: #1]}
+\\providecommand{\\DIFaddFL}[1]{\\textbf{[ADDED: #1]}}
+\\providecommand{\\DIFdelFL}[1]{\\tiny [DELETED: #1]}
+`;
+
+    // Find where to insert the new commands (after the preamble definitions)
+    const endPreambleMarker = '%DIF END PREAMBLE EXTENSION ADDED BY LATEXDIFF';
+    if (cleaned.includes(endPreambleMarker)) {
+        cleaned = cleaned.replace(endPreambleMarker, endPreambleMarker + simpleCommands);
+    } else {
+        // Insert before \begin{document}
+        cleaned = cleaned.replace(/\\begin\{document\}/, simpleCommands + '\n\\begin{document}');
     }
 
     return cleaned;
@@ -286,6 +305,15 @@ function downloadTextFile(content: string, filename: string) {
     URL.revokeObjectURL(url);
 }
 
+function downloadPdfFile(blobUrl: string, filename: string) {
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 async function generateDiffPdf() {
     const oldText = oldInput.value;
     const newText = newInput.value;
@@ -300,8 +328,7 @@ async function generateDiffPdf() {
         const oldWrapped = ensureWrapped(oldText);
         const newWrapped = ensureWrapped(newText);
 
-        // Use CFONT type which uses basic LaTeX commands (color, textbf)
-        // This doesn't require external packages like ulem or changebar
+        // Use CFONT type which uses basic LaTeX commands
         const diff = await diffTool.diff(oldWrapped, newWrapped, {
             type: "CFONT",
             flatten: true
@@ -315,11 +342,24 @@ async function generateDiffPdf() {
             URL.revokeObjectURL(pdfViewer.src);
         }
 
-        // Display PDF in iframe
-        pdfViewer.src = pdfBlobUrl;
-        pdfContainer.style.display = 'block';
+        // Try to display PDF in iframe, but don't fail if it doesn't work
+        try {
+            pdfViewer.src = pdfBlobUrl;
+            pdfContainer.style.display = 'block';
+        } catch (e) {
+            console.warn("Could not display PDF in iframe, but download should work");
+        }
 
-        setStatus("PDF generated successfully! Click 'Download diff.tex' to save the LaTeX source.");
+        // Store the blob URL for download
+        (window as any).__lastPdfBlobUrl = pdfBlobUrl;
+
+        setStatus("PDF generated! Click 'Download diff.tex' for LaTeX source or 'Download PDF' for the compiled file.");
+
+        // Show download PDF button
+        const downloadPdfBtn = document.getElementById('downloadPdfBtn') as HTMLButtonElement;
+        if (downloadPdfBtn) {
+            downloadPdfBtn.style.display = 'inline-block';
+        }
     } catch (e) {
         console.error("Error details:", e);
         const errorMsg = e instanceof Error ? e.message : String(e);
@@ -345,6 +385,7 @@ async function safeInit() {
 }
 
 diffBtn.addEventListener("click", generateDiffPdf);
+
 downloadTexBtn.addEventListener("click", () => {
     if (latestDiffTex) {
         downloadTextFile(latestDiffTex, 'diff.tex');
@@ -353,5 +394,19 @@ downloadTexBtn.addEventListener("click", () => {
         setStatus("No diff available to download. Generate a diff first.");
     }
 });
+
+// Add download PDF button handler
+const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+if (downloadPdfBtn) {
+    downloadPdfBtn.addEventListener("click", () => {
+        const pdfBlobUrl = (window as any).__lastPdfBlobUrl;
+        if (pdfBlobUrl) {
+            downloadPdfFile(pdfBlobUrl, 'diff.pdf');
+            setStatus("diff.pdf downloaded!");
+        } else {
+            setStatus("No PDF available to download. Generate a diff first.");
+        }
+    });
+}
 
 safeInit();
