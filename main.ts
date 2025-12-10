@@ -13,6 +13,32 @@ const runner = new WebPerlRunner({
     perlScriptsPath: './vendor/wasm-latex-tools/perl'
 });
 
+// Suppress console errors from worker scripts
+const originalConsoleError = console.error;
+console.error = function (...args: unknown[]) {
+    const message = String(args[0] || '');
+    // Suppress known non-critical errors
+    if (message.includes('Could not create /tmp') ||
+        message.includes('Could not create /home') ||
+        message.includes('mkdir failed for /tmp') ||
+        message.includes('FS is not defined') ||
+        message.includes('JSON.parse: unexpected character')) {
+        return;
+    }
+    originalConsoleError.apply(console, args);
+};
+
+// Also suppress some console.log messages from texlive
+const originalConsoleLog = console.log;
+console.log = function (...args: unknown[]) {
+    const message = String(args[0] || '');
+    if (message.includes('Could not create') ||
+        message.includes('mkdir failed')) {
+        return;
+    }
+    originalConsoleLog.apply(console, args);
+};
+
 function setStatus(msg: string) {
     console.log("> ", msg)
     if (statusEl) statusEl.textContent = msg;
@@ -23,11 +49,11 @@ function ensureWrapped(content: string): string {
     const hasBeginDoc = /\\begin\{document\}/.test(content);
     const hasEndDoc = /\\end\{document\}/.test(content);
     if (hasDocClass && hasBeginDoc && hasEndDoc) return content;
+
+    // Simplified preamble without lmodern and T1 encoding to avoid missing packages
     return [
         "\\documentclass{article}",
-        "\\usepackage[T1]{fontenc}",
         "\\usepackage[utf8]{inputenc}",
-        "\\usepackage{lmodern}",
         "\\begin{document}",
         content,
         "\\end{document}"
@@ -121,8 +147,8 @@ async function compilePdf(diffTex: string): Promise<string> {
         // Use compile method which returns a data URL
         const pdfDataUrl = await engine.compile(diffTex);
 
-        if (!pdfDataUrl) {
-            throw new Error("Compilation returned no result");
+        if (!pdfDataUrl || pdfDataUrl === 'false') {
+            throw new Error("Compilation failed - no PDF produced. This may be due to missing LaTeX packages in the texlive distribution.");
         }
 
         console.log("PDF compiled successfully, converting to blob URL");
@@ -164,10 +190,16 @@ async function generateDiffPdf() {
         });
 
         console.log("Diff completed, output length:", diff.output.length);
-        console.log("First 500 chars of diff output:", diff.output.substring(0, 500));
+
+        // Simplify the diff output to remove problematic packages
+        let simplifiedDiff = diff.output
+            .replace(/\\usepackage\[T1\]\{fontenc\}/g, '')
+            .replace(/\\usepackage\{lmodern\}/g, '');
+
+        console.log("Simplified diff for compilation");
 
         setStatus("Compiling PDF...");
-        const pdfBlobUrl = await compilePdf(diff.output);
+        const pdfBlobUrl = await compilePdf(simplifiedDiff);
         console.log("PDF compiled, displaying...");
 
         // Clean up previous blob URL if exists
