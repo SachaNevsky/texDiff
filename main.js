@@ -341,28 +341,54 @@ async function initTools() {
   try {
     setStatus("Loading diff tools...");
     await runner.initialize();
+    await waitForSwiftLaTeX();
     setStatus("Ready.");
   } catch (e) {
     console.error(e);
     setStatus("Failed to initialize diff tools.");
   }
 }
+function waitForSwiftLaTeX() {
+  return new Promise((resolve, reject) => {
+    let attempts = 0;
+    const maxAttempts = 50;
+    const checkSwiftLaTeX = () => {
+      if (typeof PdfTeXEngine !== "undefined") {
+        resolve();
+      } else if (attempts >= maxAttempts) {
+        reject(new Error("SwiftLaTeX failed to load"));
+      } else {
+        attempts++;
+        setTimeout(checkSwiftLaTeX, 100);
+      }
+    };
+    checkSwiftLaTeX();
+  });
+}
 async function compilePdf(diffTex) {
-  if (typeof pdftex === "undefined") {
-    throw new Error("PDFTeX not available from CDN.");
+  if (typeof PdfTeXEngine === "undefined") {
+    throw new Error("SwiftLaTeX not available.");
   }
-  console.log("Compiling LaTeX with CDN pdftex...");
-  console.log("LaTeX source length:", diffTex.length);
+  console.log("Creating SwiftLaTeX engine...");
   try {
-    const result = await pdftex(diffTex);
-    if (result && result.pdf) {
-      const blob = new Blob([result.pdf], { type: "application/pdf" });
+    const engine = new PdfTeXEngine();
+    await engine.loadEngine();
+    console.log("Compiling LaTeX...");
+    console.log("LaTeX source length:", diffTex.length);
+    engine.writeMemFSFile("main.tex", diffTex);
+    const result = await engine.compileLaTeX();
+    console.log("Compilation result:", result);
+    if (result.status === 0) {
+      const pdfData = engine.readMemFSFile("main.pdf");
+      const blob = new Blob([pdfData], { type: "application/pdf" });
       return URL.createObjectURL(blob);
     } else {
-      throw new Error("PDF compilation did not return expected result");
+      const log = engine.readMemFSFile("main.log");
+      console.error("Compilation log:", new TextDecoder().decode(log));
+      throw new Error("LaTeX compilation failed");
     }
   } catch (error) {
-    console.error("PDFTeX compilation error:", error);
+    console.error("SwiftLaTeX compilation error:", error);
     throw new Error(`PDF compilation failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
