@@ -314,6 +314,8 @@ var statusEl = document.getElementById("status");
 var oldInput = document.getElementById("oldInput");
 var newInput = document.getElementById("newInput");
 var diffBtn = document.getElementById("diffBtn");
+var pdfContainer = document.getElementById("pdfContainer");
+var pdfViewer = document.getElementById("pdfViewer");
 var runner = new WebPerlRunner({
   webperlBasePath: "./vendor/wasm-latex-tools/webperl",
   perlScriptsPath: "./vendor/wasm-latex-tools/perl"
@@ -354,6 +356,7 @@ function waitForPDFTeX() {
     const maxAttempts = 50;
     const checkPDFTeX = () => {
       if (window.PDFTeX) {
+        console.log("PDFTeX is ready!");
         resolve();
       } else if (attempts >= maxAttempts) {
         reject(new Error("PDFTeX failed to load"));
@@ -372,23 +375,16 @@ async function compilePdf(diffTex) {
   }
   console.log("Creating PDFTeX engine...");
   try {
-    const engine = new PDFTeX();
+    const workerPath = window.TEXLIVE_CONFIG?.workerPath || "./vendor/texlive.js/pdftex-worker.js";
+    const engine = new PDFTeX(workerPath);
     console.log("Compiling LaTeX...");
     console.log("LaTeX source length:", diffTex.length);
-    const compilePromise = engine.compile(diffTex);
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Compilation timeout after 30 seconds")), 3e4);
-    });
-    const urlOrBlob = await Promise.race([compilePromise, timeoutPromise]);
-    console.log("Compilation result type:", typeof urlOrBlob);
-    console.log("Compilation result:", urlOrBlob);
-    if (typeof urlOrBlob === "string") {
-      return urlOrBlob;
-    } else if (urlOrBlob instanceof Blob) {
-      return URL.createObjectURL(urlOrBlob);
-    } else {
-      throw new Error("Unexpected compile result type: " + typeof urlOrBlob);
+    const pdfDataUrl = await engine.compile(diffTex);
+    if (!pdfDataUrl) {
+      throw new Error("Compilation returned no result");
     }
+    console.log("PDF compiled successfully");
+    return pdfDataUrl;
   } catch (error) {
     console.error("PDFTeX compilation error:", error);
     throw new Error(`PDF compilation failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -418,10 +414,11 @@ async function generateDiffPdf() {
     console.log("Diff completed, output length:", diff.output.length);
     console.log("First 500 chars of diff output:", diff.output.substring(0, 500));
     setStatus("Compiling PDF...");
-    const pdfUrl = await compilePdf(diff.output);
-    console.log("PDF URL generated:", pdfUrl);
-    window.open(pdfUrl, "_blank");
-    setStatus("PDF opened.");
+    const pdfDataUrl = await compilePdf(diff.output);
+    console.log("PDF compiled, displaying...");
+    pdfViewer.src = pdfDataUrl;
+    pdfContainer.style.display = "block";
+    setStatus("PDF generated successfully!");
   } catch (e) {
     console.error("Error details:", e);
     const errorMsg = e instanceof Error ? e.message : String(e);

@@ -5,6 +5,8 @@ const statusEl = document.getElementById("status") as HTMLSpanElement;
 const oldInput = document.getElementById("oldInput") as HTMLTextAreaElement;
 const newInput = document.getElementById("newInput") as HTMLTextAreaElement;
 const diffBtn = document.getElementById("diffBtn") as HTMLButtonElement;
+const pdfContainer = document.getElementById("pdfContainer") as HTMLDivElement;
+const pdfViewer = document.getElementById("pdfViewer") as HTMLIFrameElement;
 
 const runner = new WebPerlRunner({
     webperlBasePath: './vendor/wasm-latex-tools/webperl',
@@ -35,7 +37,7 @@ function ensureWrapped(content: string): string {
 async function initTools() {
     try {
         setStatus("Loading diff tools...");
-        await runner.initialize(); // WebPerl WASM + Perl scripts
+        await runner.initialize();
 
         // Wait for PDFTeX to be available
         await waitForPDFTeX();
@@ -50,10 +52,11 @@ async function initTools() {
 function waitForPDFTeX(): Promise<void> {
     return new Promise((resolve, reject) => {
         let attempts = 0;
-        const maxAttempts = 50; // 5 seconds max
+        const maxAttempts = 50;
 
         const checkPDFTeX = () => {
             if (window.PDFTeX) {
+                console.log("PDFTeX is ready!");
                 resolve();
             } else if (attempts >= maxAttempts) {
                 reject(new Error("PDFTeX failed to load"));
@@ -68,12 +71,12 @@ function waitForPDFTeX(): Promise<void> {
 }
 
 interface PDFTEXEngine {
-    compile(tex: string): Promise<string | Blob>;
+    compile(tex: string): Promise<string>;
+    compileRaw(tex: string): Promise<string>;
 }
 
 interface PDFTEXConstructor {
-    new(): PDFTEXEngine;
-    isReady?: boolean;
+    new(workerPath?: string): PDFTEXEngine;
 }
 
 declare global {
@@ -94,28 +97,21 @@ async function compilePdf(diffTex: string): Promise<string> {
     console.log("Creating PDFTeX engine...");
 
     try {
-        const engine = new PDFTeX();
+        const workerPath = window.TEXLIVE_CONFIG?.workerPath || './vendor/texlive.js/pdftex-worker.js';
+        const engine = new PDFTeX(workerPath);
+
         console.log("Compiling LaTeX...");
         console.log("LaTeX source length:", diffTex.length);
 
-        // Add timeout for compilation
-        const compilePromise = engine.compile(diffTex);
-        const timeoutPromise = new Promise<never>((_, reject) => {
-            setTimeout(() => reject(new Error("Compilation timeout after 30 seconds")), 30000);
-        });
+        // Use compile method which returns a data URL
+        const pdfDataUrl = await engine.compile(diffTex);
 
-        const urlOrBlob = await Promise.race([compilePromise, timeoutPromise]);
-
-        console.log("Compilation result type:", typeof urlOrBlob);
-        console.log("Compilation result:", urlOrBlob);
-
-        if (typeof urlOrBlob === "string") {
-            return urlOrBlob;
-        } else if (urlOrBlob instanceof Blob) {
-            return URL.createObjectURL(urlOrBlob);
-        } else {
-            throw new Error("Unexpected compile result type: " + typeof urlOrBlob);
+        if (!pdfDataUrl) {
+            throw new Error("Compilation returned no result");
         }
+
+        console.log("PDF compiled successfully");
+        return pdfDataUrl;
     } catch (error) {
         console.error("PDFTeX compilation error:", error);
         throw new Error(`PDF compilation failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -151,11 +147,14 @@ async function generateDiffPdf() {
         console.log("First 500 chars of diff output:", diff.output.substring(0, 500));
 
         setStatus("Compiling PDF...");
-        const pdfUrl = await compilePdf(diff.output);
-        console.log("PDF URL generated:", pdfUrl);
+        const pdfDataUrl = await compilePdf(diff.output);
+        console.log("PDF compiled, displaying...");
 
-        window.open(pdfUrl, "_blank");
-        setStatus("PDF opened.");
+        // Display PDF in iframe
+        pdfViewer.src = pdfDataUrl;
+        pdfContainer.style.display = 'block';
+
+        setStatus("PDF generated successfully!");
     } catch (e) {
         console.error("Error details:", e);
         const errorMsg = e instanceof Error ? e.message : String(e);
@@ -163,7 +162,6 @@ async function generateDiffPdf() {
     }
 }
 
-// Prevent multiple initializations
 let isInitializing = false;
 let isInitialized = false;
 
