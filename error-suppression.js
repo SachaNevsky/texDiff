@@ -1,3 +1,4 @@
+// error-suppression.js - Must be loaded before other scripts
 (function () {
     // Global error handler
     window.addEventListener('error', function (event) {

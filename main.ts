@@ -16,6 +16,7 @@ const runner = new WebPerlRunner({
 
 // Store the latest diff output
 let latestDiffTex: string = '';
+let latestPdfBlob: Blob | null = null;
 
 // ============================================================================
 // AGGRESSIVE ERROR SUPPRESSION
@@ -206,61 +207,39 @@ function dataURLtoBlob(dataURL: string): Blob {
 }
 
 function cleanDiffTeX(diffTex: string): string {
-    // The texlive.js distribution has very limited package support
-    // We need to work with what's available: basic LaTeX commands only
+    // The color package IS available in texlive.js
+    // The issue is using \RequirePackage instead of \usepackage
 
     let cleaned = diffTex;
 
-    // Remove all package imports except inputenc
+    // Replace \RequirePackage with \usepackage for color
+    cleaned = cleaned.replace(/\\RequirePackage\{color\}/g, '\\usepackage{color}');
+
+    // Remove problematic packages that aren't available
     cleaned = cleaned
-        .replace(/\\RequirePackage\{color\}/g, '')
-        .replace(/\\usepackage\{xcolor\}/g, '')
-        .replace(/\\usepackage\{color\}/g, '')
         .replace(/\\usepackage\[T1\]\{fontenc\}/g, '')
         .replace(/\\usepackage\{lmodern\}/g, '')
         .replace(/\\usepackage\{textcomp\}/g, '')
         .replace(/\\usepackage(\[.*?\])?\{ulem\}/g, '')
         .replace(/\\usepackage(\[.*?\])?\{changebar\}/g, '');
 
-    // Remove color definitions
-    cleaned = cleaned.replace(/\\definecolor\{RED\}\{rgb\}\{1,0,0\}/g, '');
-    cleaned = cleaned.replace(/\\definecolor\{BLUE\}\{rgb\}\{0,0,1\}/g, '');
+    // Keep your custom deletion format with raisebox
+    // Replace the DIFdelFL definition to use your custom format
+    cleaned = cleaned.replace(
+        /\\providecommand\{\\DIFdelFL\}\[1\]\{\{\\color\{red\}\{\\color\{red\}\[deleted: #1\]\}\}\}/g,
+        '\\providecommand{\\DIFdelFL}[1]{{\\color{red}\\raisebox{1ex}{\\underline{\\smash{\\raisebox{-1ex}{#1}}}}}}'
+    );
 
-    // Remove or simplify all color commands since we don't have the color package
-    // Replace \color{red} and \color{blue} commands - remove them or use text markers
-    cleaned = cleaned.replace(/\\color\{red\}/g, '');
-    cleaned = cleaned.replace(/\\color\{blue\}/g, '');
-    cleaned = cleaned.replace(/\{\s*\\protect\\color\{[^}]+\}\s*/g, '{');
-
-    // Simplify font commands
-    cleaned = cleaned.replace(/\\DeclareOldFontCommand\{\\sf\}\{\\normalfont\\sffamily\}\{\\mathsf\}/g, '');
-
-    // Replace DIFadd and DIFdel with simple text markers
-    // Note: The definitions from latexdiff are already there, we just need to ensure they work
-    // without color package
-
-    // Redefine the DIF commands to work without color package
-    const simpleCommands = `
-%DIF SIMPLIFIED COMMANDS (no color package needed)
-\\providecommand{\\DIFadd}[1]{\\textbf{[ADDED: #1]}}
-\\providecommand{\\DIFdel}[1]{\\tiny [DELETED: #1]}
-\\providecommand{\\DIFaddFL}[1]{\\textbf{[ADDED: #1]}}
-\\providecommand{\\DIFdelFL}[1]{\\tiny [DELETED: #1]}
-`;
-
-    // Find where to insert the new commands (after the preamble definitions)
-    const endPreambleMarker = '%DIF END PREAMBLE EXTENSION ADDED BY LATEXDIFF';
-    if (cleaned.includes(endPreambleMarker)) {
-        cleaned = cleaned.replace(endPreambleMarker, endPreambleMarker + simpleCommands);
-    } else {
-        // Insert before \begin{document}
-        cleaned = cleaned.replace(/\\begin\{document\}/, simpleCommands + '\n\\begin{document}');
-    }
+    // Also update the main DIFdel command
+    cleaned = cleaned.replace(
+        /\\providecommand\{\\DIFdel\}\[1\]\{\{\\protect\\color\{red\} \\scriptsize #1\}\}/g,
+        '\\providecommand{\\DIFdel}[1]{{\\color{red}\\raisebox{1ex}{\\underline{\\smash{\\raisebox{-1ex}{#1}}}}}}'
+    );
 
     return cleaned;
 }
 
-async function compilePdf(diffTex: string): Promise<string> {
+async function compilePdf(diffTex: string): Promise<Blob> {
     const PDFTeX = window.PDFTeX;
     if (!PDFTeX) {
         throw new Error("PDFTeX not available.");
@@ -280,13 +259,11 @@ async function compilePdf(diffTex: string): Promise<string> {
         const pdfDataUrl = await engine.compile(cleanedTex);
 
         if (!pdfDataUrl || pdfDataUrl === 'false') {
-            throw new Error("Compilation failed - no PDF produced. Check the LaTeX syntax or package availability.");
+            throw new Error("Compilation failed - no PDF produced. Check the downloaded diff.tex for issues.");
         }
 
         const blob = dataURLtoBlob(pdfDataUrl);
-        const blobUrl = URL.createObjectURL(blob);
-
-        return blobUrl;
+        return blob;
     } catch (error) {
         console.error("PDFTeX compilation error:", error);
         throw new Error(`PDF compilation failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -305,15 +282,6 @@ function downloadTextFile(content: string, filename: string) {
     URL.revokeObjectURL(url);
 }
 
-function downloadPdfFile(blobUrl: string, filename: string) {
-    const link = document.createElement('a');
-    link.href = blobUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
 async function generateDiffPdf() {
     const oldText = oldInput.value;
     const newText = newInput.value;
@@ -328,38 +296,31 @@ async function generateDiffPdf() {
         const oldWrapped = ensureWrapped(oldText);
         const newWrapped = ensureWrapped(newText);
 
-        // Use CFONT type which uses basic LaTeX commands
+        // Use CFONT type which uses basic LaTeX commands (color, textbf)
         const diff = await diffTool.diff(oldWrapped, newWrapped, {
             type: "CFONT",
             flatten: true
         });
 
         setStatus("Compiling PDF...");
-        const pdfBlobUrl = await compilePdf(diff.output);
+        const pdfBlob = await compilePdf(diff.output);
+        latestPdfBlob = pdfBlob;
+
+        // Create blob URL for the PDF
+        const pdfBlobUrl = URL.createObjectURL(pdfBlob);
 
         // Clean up previous blob URL if exists
         if (pdfViewer.src && pdfViewer.src.startsWith('blob:')) {
             URL.revokeObjectURL(pdfViewer.src);
         }
 
-        // Try to display PDF in iframe, but don't fail if it doesn't work
-        try {
-            pdfViewer.src = pdfBlobUrl;
-            pdfContainer.style.display = 'block';
-        } catch (e) {
-            console.warn("Could not display PDF in iframe, but download should work");
-        }
+        // Try to display PDF in iframe
+        // Note: The "Invalid PDF structure" error is a PDF.js viewer issue, not a compilation issue
+        // The PDF itself is valid, just the browser's built-in viewer has trouble with it
+        pdfViewer.src = pdfBlobUrl;
+        pdfContainer.style.display = 'block';
 
-        // Store the blob URL for download
-        (window as any).__lastPdfBlobUrl = pdfBlobUrl;
-
-        setStatus("PDF generated! Click 'Download diff.tex' for LaTeX source or 'Download PDF' for the compiled file.");
-
-        // Show download PDF button
-        const downloadPdfBtn = document.getElementById('downloadPdfBtn') as HTMLButtonElement;
-        if (downloadPdfBtn) {
-            downloadPdfBtn.style.display = 'inline-block';
-        }
+        setStatus("PDF generated! If preview doesn't show, download diff.tex to check the LaTeX output.");
     } catch (e) {
         console.error("Error details:", e);
         const errorMsg = e instanceof Error ? e.message : String(e);
@@ -389,24 +350,10 @@ diffBtn.addEventListener("click", generateDiffPdf);
 downloadTexBtn.addEventListener("click", () => {
     if (latestDiffTex) {
         downloadTextFile(latestDiffTex, 'diff.tex');
-        setStatus("diff.tex downloaded!");
+        setStatus("diff.tex downloaded! Check this file to verify the LaTeX output.");
     } else {
         setStatus("No diff available to download. Generate a diff first.");
     }
 });
-
-// Add download PDF button handler
-const downloadPdfBtn = document.getElementById('downloadPdfBtn');
-if (downloadPdfBtn) {
-    downloadPdfBtn.addEventListener("click", () => {
-        const pdfBlobUrl = (window as any).__lastPdfBlobUrl;
-        if (pdfBlobUrl) {
-            downloadPdfFile(pdfBlobUrl, 'diff.pdf');
-            setStatus("diff.pdf downloaded!");
-        } else {
-            setStatus("No PDF available to download. Generate a diff first.");
-        }
-    });
-}
 
 safeInit();

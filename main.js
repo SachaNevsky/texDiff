@@ -322,6 +322,7 @@ var runner = new WebPerlRunner({
   perlScriptsPath: "./vendor/wasm-latex-tools/perl"
 });
 var latestDiffTex = "";
+var latestPdfBlob = null;
 window.addEventListener("error", (event) => {
   const message = event.message || "";
   const filename = event.filename || "";
@@ -423,26 +424,16 @@ function dataURLtoBlob(dataURL) {
 }
 function cleanDiffTeX(diffTex) {
   let cleaned = diffTex;
-  cleaned = cleaned.replace(/\\RequirePackage\{color\}/g, "").replace(/\\usepackage\{xcolor\}/g, "").replace(/\\usepackage\{color\}/g, "").replace(/\\usepackage\[T1\]\{fontenc\}/g, "").replace(/\\usepackage\{lmodern\}/g, "").replace(/\\usepackage\{textcomp\}/g, "").replace(/\\usepackage(\[.*?\])?\{ulem\}/g, "").replace(/\\usepackage(\[.*?\])?\{changebar\}/g, "");
-  cleaned = cleaned.replace(/\\definecolor\{RED\}\{rgb\}\{1,0,0\}/g, "");
-  cleaned = cleaned.replace(/\\definecolor\{BLUE\}\{rgb\}\{0,0,1\}/g, "");
-  cleaned = cleaned.replace(/\\color\{red\}/g, "");
-  cleaned = cleaned.replace(/\\color\{blue\}/g, "");
-  cleaned = cleaned.replace(/\{\s*\\protect\\color\{[^}]+\}\s*/g, "{");
-  cleaned = cleaned.replace(/\\DeclareOldFontCommand\{\\sf\}\{\\normalfont\\sffamily\}\{\\mathsf\}/g, "");
-  const simpleCommands = `
-%DIF SIMPLIFIED COMMANDS (no color package needed)
-\\providecommand{\\DIFadd}[1]{\\textbf{[ADDED: #1]}}
-\\providecommand{\\DIFdel}[1]{\\tiny [DELETED: #1]}
-\\providecommand{\\DIFaddFL}[1]{\\textbf{[ADDED: #1]}}
-\\providecommand{\\DIFdelFL}[1]{\\tiny [DELETED: #1]}
-`;
-  const endPreambleMarker = "%DIF END PREAMBLE EXTENSION ADDED BY LATEXDIFF";
-  if (cleaned.includes(endPreambleMarker)) {
-    cleaned = cleaned.replace(endPreambleMarker, endPreambleMarker + simpleCommands);
-  } else {
-    cleaned = cleaned.replace(/\\begin\{document\}/, simpleCommands + "\n\\begin{document}");
-  }
+  cleaned = cleaned.replace(/\\RequirePackage\{color\}/g, "\\usepackage{color}");
+  cleaned = cleaned.replace(/\\usepackage\[T1\]\{fontenc\}/g, "").replace(/\\usepackage\{lmodern\}/g, "").replace(/\\usepackage\{textcomp\}/g, "").replace(/\\usepackage(\[.*?\])?\{ulem\}/g, "").replace(/\\usepackage(\[.*?\])?\{changebar\}/g, "");
+  cleaned = cleaned.replace(
+    /\\providecommand\{\\DIFdelFL\}\[1\]\{\{\\color\{red\}\{\\color\{red\}\[deleted: #1\]\}\}\}/g,
+    "\\providecommand{\\DIFdelFL}[1]{{\\color{red}\\raisebox{1ex}{\\underline{\\smash{\\raisebox{-1ex}{#1}}}}}}"
+  );
+  cleaned = cleaned.replace(
+    /\\providecommand\{\\DIFdel\}\[1\]\{\{\\protect\\color\{red\} \\scriptsize #1\}\}/g,
+    "\\providecommand{\\DIFdel}[1]{{\\color{red}\\raisebox{1ex}{\\underline{\\smash{\\raisebox{-1ex}{#1}}}}}}"
+  );
   return cleaned;
 }
 async function compilePdf(diffTex) {
@@ -458,11 +449,10 @@ async function compilePdf(diffTex) {
     downloadTexBtn.style.display = "inline-block";
     const pdfDataUrl = await engine.compile(cleanedTex);
     if (!pdfDataUrl || pdfDataUrl === "false") {
-      throw new Error("Compilation failed - no PDF produced. Check the LaTeX syntax or package availability.");
+      throw new Error("Compilation failed - no PDF produced. Check the downloaded diff.tex for issues.");
     }
     const blob = dataURLtoBlob(pdfDataUrl);
-    const blobUrl = URL.createObjectURL(blob);
-    return blobUrl;
+    return blob;
   } catch (error) {
     console.error("PDFTeX compilation error:", error);
     throw new Error(`PDF compilation failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -478,14 +468,6 @@ function downloadTextFile(content, filename) {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
-}
-function downloadPdfFile(blobUrl, filename) {
-  const link = document.createElement("a");
-  link.href = blobUrl;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
 }
 async function generateDiffPdf() {
   const oldText = oldInput.value;
@@ -504,22 +486,15 @@ async function generateDiffPdf() {
       flatten: true
     });
     setStatus("Compiling PDF...");
-    const pdfBlobUrl = await compilePdf(diff.output);
+    const pdfBlob = await compilePdf(diff.output);
+    latestPdfBlob = pdfBlob;
+    const pdfBlobUrl = URL.createObjectURL(pdfBlob);
     if (pdfViewer.src && pdfViewer.src.startsWith("blob:")) {
       URL.revokeObjectURL(pdfViewer.src);
     }
-    try {
-      pdfViewer.src = pdfBlobUrl;
-      pdfContainer.style.display = "block";
-    } catch (e) {
-      console.warn("Could not display PDF in iframe, but download should work");
-    }
-    window.__lastPdfBlobUrl = pdfBlobUrl;
-    setStatus("PDF generated! Click 'Download diff.tex' for LaTeX source or 'Download PDF' for the compiled file.");
-    const downloadPdfBtn2 = document.getElementById("downloadPdfBtn");
-    if (downloadPdfBtn2) {
-      downloadPdfBtn2.style.display = "inline-block";
-    }
+    pdfViewer.src = pdfBlobUrl;
+    pdfContainer.style.display = "block";
+    setStatus("PDF generated! If preview doesn't show, download diff.tex to check the LaTeX output.");
   } catch (e) {
     console.error("Error details:", e);
     const errorMsg = e instanceof Error ? e.message : String(e);
@@ -544,21 +519,9 @@ diffBtn.addEventListener("click", generateDiffPdf);
 downloadTexBtn.addEventListener("click", () => {
   if (latestDiffTex) {
     downloadTextFile(latestDiffTex, "diff.tex");
-    setStatus("diff.tex downloaded!");
+    setStatus("diff.tex downloaded! Check this file to verify the LaTeX output.");
   } else {
     setStatus("No diff available to download. Generate a diff first.");
   }
 });
-var downloadPdfBtn = document.getElementById("downloadPdfBtn");
-if (downloadPdfBtn) {
-  downloadPdfBtn.addEventListener("click", () => {
-    const pdfBlobUrl = window.__lastPdfBlobUrl;
-    if (pdfBlobUrl) {
-      downloadPdfFile(pdfBlobUrl, "diff.pdf");
-      setStatus("diff.pdf downloaded!");
-    } else {
-      setStatus("No PDF available to download. Generate a diff first.");
-    }
-  });
-}
 safeInit();
