@@ -341,53 +341,25 @@ async function initTools() {
   try {
     setStatus("Loading diff tools...");
     await runner.initialize();
-    await waitForPDFTeX();
     setStatus("Ready.");
   } catch (e) {
     console.error(e);
     setStatus("Failed to initialize diff tools.");
   }
 }
-function waitForPDFTeX() {
-  return new Promise((resolve, reject) => {
-    let attempts = 0;
-    const maxAttempts = 50;
-    const checkPDFTeX = () => {
-      if (window.PDFTeX) {
-        resolve();
-      } else if (attempts >= maxAttempts) {
-        reject(new Error("PDFTeX failed to load"));
-      } else {
-        attempts++;
-        setTimeout(checkPDFTeX, 100);
-      }
-    };
-    checkPDFTeX();
-  });
-}
 async function compilePdf(diffTex) {
-  const PDFTeX = window.PDFTeX;
-  if (!PDFTeX) {
-    throw new Error("PDFTeX not available.");
+  if (typeof pdftex === "undefined") {
+    throw new Error("PDFTeX not available from CDN.");
   }
-  console.log("Creating PDFTeX engine...");
+  console.log("Compiling LaTeX with CDN pdftex...");
+  console.log("LaTeX source length:", diffTex.length);
   try {
-    const engine = new PDFTeX();
-    console.log("Compiling LaTeX...");
-    console.log("LaTeX source length:", diffTex.length);
-    const compilePromise = engine.compile(diffTex);
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Compilation timeout after 30 seconds")), 3e4);
-    });
-    const urlOrBlob = await Promise.race([compilePromise, timeoutPromise]);
-    console.log("Compilation result type:", typeof urlOrBlob);
-    console.log("Compilation result:", urlOrBlob);
-    if (typeof urlOrBlob === "string") {
-      return urlOrBlob;
-    } else if (urlOrBlob instanceof Blob) {
-      return URL.createObjectURL(urlOrBlob);
+    const result = await pdftex(diffTex);
+    if (result && result.pdf) {
+      const blob = new Blob([result.pdf], { type: "application/pdf" });
+      return URL.createObjectURL(blob);
     } else {
-      throw new Error("Unexpected compile result type: " + typeof urlOrBlob);
+      throw new Error("PDF compilation did not return expected result");
     }
   } catch (error) {
     console.error("PDFTeX compilation error:", error);

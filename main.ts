@@ -36,10 +36,7 @@ async function initTools() {
     try {
         setStatus("Loading diff tools...");
         await runner.initialize(); // WebPerl WASM + Perl scripts
-
-        // Wait for PDFTeX to be available
-        await waitForPDFTeX();
-
+        // No need to wait for PDFTeX - CDN version loads automatically
         setStatus("Ready.");
     } catch (e) {
         console.error(e);
@@ -86,35 +83,23 @@ declare global {
 }
 
 async function compilePdf(diffTex: string): Promise<string> {
-    const PDFTeX = window.PDFTeX;
-    if (!PDFTeX) {
-        throw new Error("PDFTeX not available.");
+    // @ts-ignore - texlive.js CDN exposes this globally
+    if (typeof pdftex === 'undefined') {
+        throw new Error("PDFTeX not available from CDN.");
     }
 
-    console.log("Creating PDFTeX engine...");
+    console.log("Compiling LaTeX with CDN pdftex...");
+    console.log("LaTeX source length:", diffTex.length);
 
     try {
-        const engine = new PDFTeX();
-        console.log("Compiling LaTeX...");
-        console.log("LaTeX source length:", diffTex.length);
+        // @ts-ignore
+        const result = await pdftex(diffTex);
 
-        // Add timeout for compilation
-        const compilePromise = engine.compile(diffTex);
-        const timeoutPromise = new Promise<never>((_, reject) => {
-            setTimeout(() => reject(new Error("Compilation timeout after 30 seconds")), 30000);
-        });
-
-        const urlOrBlob = await Promise.race([compilePromise, timeoutPromise]);
-
-        console.log("Compilation result type:", typeof urlOrBlob);
-        console.log("Compilation result:", urlOrBlob);
-
-        if (typeof urlOrBlob === "string") {
-            return urlOrBlob;
-        } else if (urlOrBlob instanceof Blob) {
-            return URL.createObjectURL(urlOrBlob);
+        if (result && result.pdf) {
+            const blob = new Blob([result.pdf], { type: 'application/pdf' });
+            return URL.createObjectURL(blob);
         } else {
-            throw new Error("Unexpected compile result type: " + typeof urlOrBlob);
+            throw new Error("PDF compilation did not return expected result");
         }
     } catch (error) {
         console.error("PDFTeX compilation error:", error);
