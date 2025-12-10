@@ -331,10 +331,18 @@ console.error = function(...args) {
 var originalConsoleLog = console.log;
 console.log = function(...args) {
   const message = String(args[0] || "");
-  if (message.includes("Could not create") || message.includes("mkdir failed")) {
+  if (message.includes("Could not create") || message.includes("mkdir failed") || message.includes("asm.js is deprecated") || message.includes("LazyFiles on gzip")) {
     return;
   }
   originalConsoleLog.apply(console, args);
+};
+var originalConsoleWarn = console.warn;
+console.warn = function(...args) {
+  const message = String(args[0] || "");
+  if (message.includes("asm.js is deprecated")) {
+    return;
+  }
+  originalConsoleWarn.apply(console, args);
 };
 function setStatus(msg) {
   console.log("> ", msg);
@@ -431,11 +439,11 @@ async function generateDiffPdf() {
     const oldWrapped = ensureWrapped(oldText);
     const newWrapped = ensureWrapped(newText);
     console.log("Running diff with options:", {
-      type: "UNDERLINE",
+      type: "CHANGEBAR",
       flatten: true
     });
     const diff = await diffTool.diff(oldWrapped, newWrapped, {
-      type: "UNDERLINE",
+      type: "CHANGEBAR",
       flatten: true
     });
     console.log("Diff completed, output length:", diff.output.length);
