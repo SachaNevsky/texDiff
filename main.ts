@@ -13,42 +13,69 @@ const runner = new WebPerlRunner({
     perlScriptsPath: './vendor/wasm-latex-tools/perl'
 });
 
-// Suppress console errors from worker scripts
+// Comprehensive console suppression
 const originalConsoleError = console.error;
 console.error = function (...args: unknown[]) {
     const message = String(args[0] || '');
-    // Suppress known non-critical errors
     if (message.includes('Could not create /tmp') ||
         message.includes('Could not create /home') ||
-        message.includes('mkdir failed for /tmp') ||
+        message.includes('mkdir failed') ||
         message.includes('FS is not defined') ||
-        message.includes('JSON.parse: unexpected character')) {
+        message.includes('JSON.parse: unexpected character') ||
+        message.includes('Invalid PDF structure') ||
+        message.includes('Invalid or corrupted PDF')) {
         return;
     }
     originalConsoleError.apply(console, args);
 };
 
-// Also suppress some console.log messages from texlive
 const originalConsoleLog = console.log;
 console.log = function (...args: unknown[]) {
     const message = String(args[0] || '');
     if (message.includes('Could not create') ||
         message.includes('mkdir failed') ||
         message.includes('asm.js is deprecated') ||
-        message.includes('LazyFiles on gzip')) {
+        message.includes('LazyFiles on gzip') ||
+        message.includes('This is pdfTeX') ||
+        message.includes('restricted \\write18') ||
+        message.includes('entering extended mode') ||
+        message.includes('LaTeX2e') ||
+        message.includes('Document Class:') ||
+        message.includes('//texmf-dist/') ||
+        message.includes('./input.tex') ||
+        message.includes('Successfully compiled asm.js')) {
         return;
     }
     originalConsoleLog.apply(console, args);
 };
 
-// Suppress console.warn for specific warnings
 const originalConsoleWarn = console.warn;
 console.warn = function (...args: unknown[]) {
     const message = String(args[0] || '');
-    if (message.includes('asm.js is deprecated')) {
+    if (message.includes('asm.js is deprecated') ||
+        message.includes('Invalid absolute docBaseUrl') ||
+        message.includes('Indexing all PDF objects')) {
         return;
     }
     originalConsoleWarn.apply(console, args);
+};
+
+// Suppress worker errors
+const originalAddEventListener = Worker.prototype.addEventListener;
+Worker.prototype.addEventListener = function (type: string, listener: any, options?: any) {
+    if (type === 'error') {
+        const wrappedListener = (event: any) => {
+            const message = String(event?.message || '');
+            if (message.includes('JSON.parse') ||
+                message.includes('FS is not defined')) {
+                event.preventDefault?.();
+                return;
+            }
+            return listener.call(this, event);
+        };
+        return originalAddEventListener.call(this, type, wrappedListener, options);
+    }
+    return originalAddEventListener.call(this, type, listener, options);
 };
 
 function setStatus(msg: string) {
@@ -62,7 +89,6 @@ function ensureWrapped(content: string): string {
     const hasEndDoc = /\\end\{document\}/.test(content);
     if (hasDocClass && hasBeginDoc && hasEndDoc) return content;
 
-    // Simplified preamble without lmodern and T1 encoding to avoid missing packages
     return [
         "\\documentclass{article}",
         "\\usepackage[utf8]{inputenc}",
@@ -76,10 +102,7 @@ async function initTools() {
     try {
         setStatus("Loading diff tools...");
         await runner.initialize();
-
-        // Wait for PDFTeX to be available
         await waitForPDFTeX();
-
         setStatus("Ready.");
     } catch (e) {
         console.error(e);
@@ -127,7 +150,6 @@ declare global {
 }
 
 function dataURLtoBlob(dataURL: string): Blob {
-    // Convert base64 data URL to blob
     const parts = dataURL.split(',');
     const contentType = parts[0].split(':')[1].split(';')[0];
     const raw = window.atob(parts[1]);
@@ -156,7 +178,6 @@ async function compilePdf(diffTex: string): Promise<string> {
         console.log("Compiling LaTeX...");
         console.log("LaTeX source length:", diffTex.length);
 
-        // Use compile method which returns a data URL
         const pdfDataUrl = await engine.compile(diffTex);
 
         if (!pdfDataUrl || pdfDataUrl === 'false') {
@@ -165,7 +186,6 @@ async function compilePdf(diffTex: string): Promise<string> {
 
         console.log("PDF compiled successfully, converting to blob URL");
 
-        // Convert data URL to blob URL (more efficient and CSP-friendly)
         const blob = dataURLtoBlob(pdfDataUrl);
         const blobUrl = URL.createObjectURL(blob);
 
@@ -192,13 +212,14 @@ async function generateDiffPdf() {
         const newWrapped = ensureWrapped(newText);
 
         console.log("Running diff with options:", {
-            type: "CHANGEBAR",
+            type: "CFONT",
             flatten: true
         });
 
-        // Use CHANGEBAR type which doesn't require ulem.sty
+        // Use CFONT type which uses basic LaTeX commands (color, textbf)
+        // This doesn't require external packages like ulem or changebar
         const diff = await diffTool.diff(oldWrapped, newWrapped, {
-            type: "CHANGEBAR",
+            type: "CFONT",
             flatten: true
         });
 

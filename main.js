@@ -323,7 +323,7 @@ var runner = new WebPerlRunner({
 var originalConsoleError = console.error;
 console.error = function(...args) {
   const message = String(args[0] || "");
-  if (message.includes("Could not create /tmp") || message.includes("Could not create /home") || message.includes("mkdir failed for /tmp") || message.includes("FS is not defined") || message.includes("JSON.parse: unexpected character")) {
+  if (message.includes("Could not create /tmp") || message.includes("Could not create /home") || message.includes("mkdir failed") || message.includes("FS is not defined") || message.includes("JSON.parse: unexpected character") || message.includes("Invalid PDF structure") || message.includes("Invalid or corrupted PDF")) {
     return;
   }
   originalConsoleError.apply(console, args);
@@ -331,7 +331,7 @@ console.error = function(...args) {
 var originalConsoleLog = console.log;
 console.log = function(...args) {
   const message = String(args[0] || "");
-  if (message.includes("Could not create") || message.includes("mkdir failed") || message.includes("asm.js is deprecated") || message.includes("LazyFiles on gzip")) {
+  if (message.includes("Could not create") || message.includes("mkdir failed") || message.includes("asm.js is deprecated") || message.includes("LazyFiles on gzip") || message.includes("This is pdfTeX") || message.includes("restricted \\write18") || message.includes("entering extended mode") || message.includes("LaTeX2e") || message.includes("Document Class:") || message.includes("//texmf-dist/") || message.includes("./input.tex") || message.includes("Successfully compiled asm.js")) {
     return;
   }
   originalConsoleLog.apply(console, args);
@@ -339,10 +339,25 @@ console.log = function(...args) {
 var originalConsoleWarn = console.warn;
 console.warn = function(...args) {
   const message = String(args[0] || "");
-  if (message.includes("asm.js is deprecated")) {
+  if (message.includes("asm.js is deprecated") || message.includes("Invalid absolute docBaseUrl") || message.includes("Indexing all PDF objects")) {
     return;
   }
   originalConsoleWarn.apply(console, args);
+};
+var originalAddEventListener = Worker.prototype.addEventListener;
+Worker.prototype.addEventListener = function(type, listener, options) {
+  if (type === "error") {
+    const wrappedListener = (event) => {
+      const message = String(event?.message || "");
+      if (message.includes("JSON.parse") || message.includes("FS is not defined")) {
+        event.preventDefault?.();
+        return;
+      }
+      return listener.call(this, event);
+    };
+    return originalAddEventListener.call(this, type, wrappedListener, options);
+  }
+  return originalAddEventListener.call(this, type, listener, options);
 };
 function setStatus(msg) {
   console.log("> ", msg);
@@ -439,11 +454,11 @@ async function generateDiffPdf() {
     const oldWrapped = ensureWrapped(oldText);
     const newWrapped = ensureWrapped(newText);
     console.log("Running diff with options:", {
-      type: "CHANGEBAR",
+      type: "CFONT",
       flatten: true
     });
     const diff = await diffTool.diff(oldWrapped, newWrapped, {
-      type: "CHANGEBAR",
+      type: "CFONT",
       flatten: true
     });
     console.log("Diff completed, output length:", diff.output.length);
