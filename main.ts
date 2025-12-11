@@ -16,7 +16,7 @@ const runner = new WebPerlRunner({
 
 // Store the latest diff output
 let latestDiffTex: string = '';
-let latestPdfBlob: Blob | null = null;
+let currentPdfBlobUrl: string | null = null;
 
 // ============================================================================
 // AGGRESSIVE ERROR SUPPRESSION
@@ -193,22 +193,37 @@ declare global {
 }
 
 function dataURLtoBlob(dataURL: string): Blob {
-    const parts = dataURL.split(',');
-    const contentType = parts[0].split(':')[1].split(';')[0];
-    const raw = window.atob(parts[1]);
-    const rawLength = raw.length;
-    const uInt8Array = new Uint8Array(rawLength);
+    try {
+        // More robust data URL parsing
+        const parts = dataURL.split(',');
+        if (parts.length !== 2) {
+            throw new Error('Invalid data URL format');
+        }
 
-    for (let i = 0; i < rawLength; ++i) {
-        uInt8Array[i] = raw.charCodeAt(i);
+        const mimeMatch = parts[0].match(/:(.*?);/);
+        const contentType = mimeMatch ? mimeMatch[1] : 'application/pdf';
+
+        // Remove any whitespace from base64 string
+        const base64Data = parts[1].trim().replace(/\s/g, '');
+
+        const raw = window.atob(base64Data);
+        const rawLength = raw.length;
+        const uInt8Array = new Uint8Array(rawLength);
+
+        for (let i = 0; i < rawLength; ++i) {
+            uInt8Array[i] = raw.charCodeAt(i);
+        }
+
+        return new Blob([uInt8Array], { type: contentType });
+    } catch (error) {
+        console.error("Failed to convert data URL to blob:", error);
+        throw new Error(`Data URL conversion failed: ${error}`);
     }
-
-    return new Blob([uInt8Array], { type: contentType });
 }
 
 function cleanDiffTeX(diffTex: string): string {
     // The color package IS available in texlive.js
-    // The issue is using \RequirePackage instead of \usepackage
+    // Replace \RequirePackage with \usepackage
 
     let cleaned = diffTex;
 
@@ -224,13 +239,11 @@ function cleanDiffTeX(diffTex: string): string {
         .replace(/\\usepackage(\[.*?\])?\{changebar\}/g, '');
 
     // Keep your custom deletion format with raisebox
-    // Replace the DIFdelFL definition to use your custom format
     cleaned = cleaned.replace(
         /\\providecommand\{\\DIFdelFL\}\[1\]\{\{\\color\{red\}\{\\color\{red\}\[deleted: #1\]\}\}\}/g,
         '\\providecommand{\\DIFdelFL}[1]{{\\color{red}\\raisebox{1ex}{\\underline{\\smash{\\raisebox{-1ex}{#1}}}}}}'
     );
 
-    // Also update the main DIFdel command
     cleaned = cleaned.replace(
         /\\providecommand\{\\DIFdel\}\[1\]\{\{\\protect\\color\{red\} \\scriptsize #1\}\}/g,
         '\\providecommand{\\DIFdel}[1]{{\\color{red}\\raisebox{1ex}{\\underline{\\smash{\\raisebox{-1ex}{#1}}}}}}'
@@ -239,7 +252,7 @@ function cleanDiffTeX(diffTex: string): string {
     return cleaned;
 }
 
-async function compilePdf(diffTex: string): Promise<Blob> {
+async function compilePdf(diffTex: string): Promise<string> {
     const PDFTeX = window.PDFTeX;
     if (!PDFTeX) {
         throw new Error("PDFTeX not available.");
@@ -256,14 +269,37 @@ async function compilePdf(diffTex: string): Promise<Blob> {
         latestDiffTex = cleanedTex;
         downloadTexBtn.style.display = 'inline-block';
 
+        console.log("Starting PDF compilation...");
         const pdfDataUrl = await engine.compile(cleanedTex);
+        console.log("Compilation complete, data URL length:", pdfDataUrl?.length);
 
-        if (!pdfDataUrl || pdfDataUrl === 'false') {
-            throw new Error("Compilation failed - no PDF produced. Check the downloaded diff.tex for issues.");
+        if (!pdfDataUrl || pdfDataUrl === 'false' || pdfDataUrl.length < 100) {
+            throw new Error("Compilation failed - no valid PDF data produced");
+        }
+
+        // Verify the data URL starts correctly
+        if (!pdfDataUrl.startsWith('data:application/pdf') && !pdfDataUrl.startsWith('data:;base64,')) {
+            console.error("Invalid data URL format:", pdfDataUrl.substring(0, 100));
+            throw new Error("Invalid PDF data format returned");
         }
 
         const blob = dataURLtoBlob(pdfDataUrl);
-        return blob;
+        console.log("Created blob, size:", blob.size, "bytes");
+
+        if (blob.size < 100) {
+            throw new Error("Generated PDF is too small, likely corrupted");
+        }
+
+        // Clean up previous blob URL
+        if (currentPdfBlobUrl) {
+            URL.revokeObjectURL(currentPdfBlobUrl);
+        }
+
+        // Create new blob URL
+        const blobUrl = URL.createObjectURL(blob);
+        currentPdfBlobUrl = blobUrl;
+
+        return blobUrl;
     } catch (error) {
         console.error("PDFTeX compilation error:", error);
         throw new Error(`PDF compilation failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -280,6 +316,22 @@ function downloadTextFile(content: string, filename: string) {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+}
+
+function openPdfInNewTab(blobUrl: string) {
+    // Open in new tab instead of iframe to avoid blob URL issues with PDF.js
+    const newWindow = window.open(blobUrl, '_blank');
+    if (!newWindow) {
+        setStatus("PDF generated! Please allow pop-ups to view the PDF, or use the iframe below.");
+        // Fallback to iframe if popup blocked
+        pdfViewer.src = blobUrl;
+        pdfContainer.style.display = 'block';
+    } else {
+        setStatus("PDF opened in new tab!");
+        // Also show in iframe as backup
+        pdfViewer.src = blobUrl;
+        pdfContainer.style.display = 'block';
+    }
 }
 
 async function generateDiffPdf() {
@@ -303,28 +355,14 @@ async function generateDiffPdf() {
         });
 
         setStatus("Compiling PDF...");
-        const pdfBlob = await compilePdf(diff.output);
-        latestPdfBlob = pdfBlob;
+        const pdfBlobUrl = await compilePdf(diff.output);
 
-        // Create blob URL for the PDF
-        const pdfBlobUrl = URL.createObjectURL(pdfBlob);
-
-        // Clean up previous blob URL if exists
-        if (pdfViewer.src && pdfViewer.src.startsWith('blob:')) {
-            URL.revokeObjectURL(pdfViewer.src);
-        }
-
-        // Try to display PDF in iframe
-        // Note: The "Invalid PDF structure" error is a PDF.js viewer issue, not a compilation issue
-        // The PDF itself is valid, just the browser's built-in viewer has trouble with it
-        pdfViewer.src = pdfBlobUrl;
-        pdfContainer.style.display = 'block';
-
-        setStatus("PDF generated! If preview doesn't show, download diff.tex to check the LaTeX output.");
+        // Open PDF in new tab
+        openPdfInNewTab(pdfBlobUrl);
     } catch (e) {
         console.error("Error details:", e);
         const errorMsg = e instanceof Error ? e.message : String(e);
-        setStatus(`Error: ${errorMsg}`);
+        setStatus(`Error: ${errorMsg}. Check diff.tex for details.`);
     }
 }
 
@@ -350,7 +388,7 @@ diffBtn.addEventListener("click", generateDiffPdf);
 downloadTexBtn.addEventListener("click", () => {
     if (latestDiffTex) {
         downloadTextFile(latestDiffTex, 'diff.tex');
-        setStatus("diff.tex downloaded! Check this file to verify the LaTeX output.");
+        setStatus("diff.tex downloaded! Compile this locally if PDF viewer issues persist.");
     } else {
         setStatus("No diff available to download. Generate a diff first.");
     }

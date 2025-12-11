@@ -322,7 +322,7 @@ var runner = new WebPerlRunner({
   perlScriptsPath: "./vendor/wasm-latex-tools/perl"
 });
 var latestDiffTex = "";
-var latestPdfBlob = null;
+var currentPdfBlobUrl = null;
 window.addEventListener("error", (event) => {
   const message = event.message || "";
   const filename = event.filename || "";
@@ -412,15 +412,25 @@ function waitForPDFTeX() {
   });
 }
 function dataURLtoBlob(dataURL) {
-  const parts = dataURL.split(",");
-  const contentType = parts[0].split(":")[1].split(";")[0];
-  const raw = window.atob(parts[1]);
-  const rawLength = raw.length;
-  const uInt8Array = new Uint8Array(rawLength);
-  for (let i = 0; i < rawLength; ++i) {
-    uInt8Array[i] = raw.charCodeAt(i);
+  try {
+    const parts = dataURL.split(",");
+    if (parts.length !== 2) {
+      throw new Error("Invalid data URL format");
+    }
+    const mimeMatch = parts[0].match(/:(.*?);/);
+    const contentType = mimeMatch ? mimeMatch[1] : "application/pdf";
+    const base64Data = parts[1].trim().replace(/\s/g, "");
+    const raw = window.atob(base64Data);
+    const rawLength = raw.length;
+    const uInt8Array = new Uint8Array(rawLength);
+    for (let i = 0; i < rawLength; ++i) {
+      uInt8Array[i] = raw.charCodeAt(i);
+    }
+    return new Blob([uInt8Array], { type: contentType });
+  } catch (error) {
+    console.error("Failed to convert data URL to blob:", error);
+    throw new Error(`Data URL conversion failed: ${error}`);
   }
-  return new Blob([uInt8Array], { type: contentType });
 }
 function cleanDiffTeX(diffTex) {
   let cleaned = diffTex;
@@ -447,12 +457,27 @@ async function compilePdf(diffTex) {
     const cleanedTex = cleanDiffTeX(diffTex);
     latestDiffTex = cleanedTex;
     downloadTexBtn.style.display = "inline-block";
+    console.log("Starting PDF compilation...");
     const pdfDataUrl = await engine.compile(cleanedTex);
-    if (!pdfDataUrl || pdfDataUrl === "false") {
-      throw new Error("Compilation failed - no PDF produced. Check the downloaded diff.tex for issues.");
+    console.log("Compilation complete, data URL length:", pdfDataUrl?.length);
+    if (!pdfDataUrl || pdfDataUrl === "false" || pdfDataUrl.length < 100) {
+      throw new Error("Compilation failed - no valid PDF data produced");
+    }
+    if (!pdfDataUrl.startsWith("data:application/pdf") && !pdfDataUrl.startsWith("data:;base64,")) {
+      console.error("Invalid data URL format:", pdfDataUrl.substring(0, 100));
+      throw new Error("Invalid PDF data format returned");
     }
     const blob = dataURLtoBlob(pdfDataUrl);
-    return blob;
+    console.log("Created blob, size:", blob.size, "bytes");
+    if (blob.size < 100) {
+      throw new Error("Generated PDF is too small, likely corrupted");
+    }
+    if (currentPdfBlobUrl) {
+      URL.revokeObjectURL(currentPdfBlobUrl);
+    }
+    const blobUrl = URL.createObjectURL(blob);
+    currentPdfBlobUrl = blobUrl;
+    return blobUrl;
   } catch (error) {
     console.error("PDFTeX compilation error:", error);
     throw new Error(`PDF compilation failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -468,6 +493,18 @@ function downloadTextFile(content, filename) {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+function openPdfInNewTab(blobUrl) {
+  const newWindow = window.open(blobUrl, "_blank");
+  if (!newWindow) {
+    setStatus("PDF generated! Please allow pop-ups to view the PDF, or use the iframe below.");
+    pdfViewer.src = blobUrl;
+    pdfContainer.style.display = "block";
+  } else {
+    setStatus("PDF opened in new tab!");
+    pdfViewer.src = blobUrl;
+    pdfContainer.style.display = "block";
+  }
 }
 async function generateDiffPdf() {
   const oldText = oldInput.value;
@@ -486,19 +523,12 @@ async function generateDiffPdf() {
       flatten: true
     });
     setStatus("Compiling PDF...");
-    const pdfBlob = await compilePdf(diff.output);
-    latestPdfBlob = pdfBlob;
-    const pdfBlobUrl = URL.createObjectURL(pdfBlob);
-    if (pdfViewer.src && pdfViewer.src.startsWith("blob:")) {
-      URL.revokeObjectURL(pdfViewer.src);
-    }
-    pdfViewer.src = pdfBlobUrl;
-    pdfContainer.style.display = "block";
-    setStatus("PDF generated! If preview doesn't show, download diff.tex to check the LaTeX output.");
+    const pdfBlobUrl = await compilePdf(diff.output);
+    openPdfInNewTab(pdfBlobUrl);
   } catch (e) {
     console.error("Error details:", e);
     const errorMsg = e instanceof Error ? e.message : String(e);
-    setStatus(`Error: ${errorMsg}`);
+    setStatus(`Error: ${errorMsg}. Check diff.tex for details.`);
   }
 }
 var isInitializing = false;
@@ -519,7 +549,7 @@ diffBtn.addEventListener("click", generateDiffPdf);
 downloadTexBtn.addEventListener("click", () => {
   if (latestDiffTex) {
     downloadTextFile(latestDiffTex, "diff.tex");
-    setStatus("diff.tex downloaded! Check this file to verify the LaTeX output.");
+    setStatus("diff.tex downloaded! Compile this locally if PDF viewer issues persist.");
   } else {
     setStatus("No diff available to download. Generate a diff first.");
   }
