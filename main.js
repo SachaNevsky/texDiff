@@ -436,6 +436,9 @@ function cleanDiffTeX(diffTex) {
   let cleaned = diffTex;
   cleaned = cleaned.replace(/\\RequirePackage\{color\}/g, "\\usepackage{color}");
   cleaned = cleaned.replace(/\\usepackage\[T1\]\{fontenc\}/g, "").replace(/\\usepackage\{lmodern\}/g, "").replace(/\\usepackage\{textcomp\}/g, "").replace(/\\usepackage(\[.*?\])?\{ulem\}/g, "").replace(/\\usepackage(\[.*?\])?\{changebar\}/g, "");
+  cleaned = cleaned.replace(/\\DeclareOldFontCommand\{\\sf\}\{\\normalfont\\sffamily\}\{\\mathsf\}\s*%DIF PREAMBLE\s*/g, "");
+  cleaned = cleaned.replace(/\\sf\s+/g, "\\textsf{");
+  cleaned = cleaned.replace(/\{\s*\\protect\\color\{blue\}\s+#1\s*\}/g, "{\\protect\\color{blue}\\textsf{#1}}");
   cleaned = cleaned.replace(
     /\\providecommand\{\\DIFdelFL\}\[1\]\{\{\\color\{red\}\{\\color\{red\}\[deleted: #1\]\}\}\}/g,
     "\\providecommand{\\DIFdelFL}[1]{{\\color{red}\\raisebox{1ex}{\\underline{\\smash{\\raisebox{-1ex}{#1}}}}}}"
@@ -443,6 +446,10 @@ function cleanDiffTeX(diffTex) {
   cleaned = cleaned.replace(
     /\\providecommand\{\\DIFdel\}\[1\]\{\{\\protect\\color\{red\} \\scriptsize #1\}\}/g,
     "\\providecommand{\\DIFdel}[1]{{\\color{red}\\raisebox{1ex}{\\underline{\\smash{\\raisebox{-1ex}{#1}}}}}}"
+  );
+  cleaned = cleaned.replace(
+    /\\providecommand\{\\DIFadd\}\[1\]\{\{\\protect\\color\{blue\}\s+\\sf\s+#1\}\}/g,
+    "\\providecommand{\\DIFadd}[1]{{\\color{blue}\\textbf{#1}}}"
   );
   return cleaned;
 }
@@ -458,10 +465,13 @@ async function compilePdf(diffTex) {
     latestDiffTex = cleanedTex;
     downloadTexBtn.style.display = "inline-block";
     console.log("Starting PDF compilation...");
+    console.log("Cleaned LaTeX (first 500 chars):", cleanedTex.substring(0, 500));
     const pdfDataUrl = await engine.compile(cleanedTex);
     console.log("Compilation complete, data URL length:", pdfDataUrl?.length);
+    console.log("Data URL starts with:", pdfDataUrl?.substring(0, 100));
     if (!pdfDataUrl || pdfDataUrl === "false" || pdfDataUrl.length < 100) {
-      throw new Error("Compilation failed - no valid PDF data produced");
+      console.error("PDFTeX returned:", pdfDataUrl);
+      throw new Error("Compilation failed - PDFTeX returned: " + pdfDataUrl);
     }
     if (!pdfDataUrl.startsWith("data:application/pdf") && !pdfDataUrl.startsWith("data:;base64,")) {
       console.error("Invalid data URL format:", pdfDataUrl.substring(0, 100));

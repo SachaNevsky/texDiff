@@ -238,6 +238,13 @@ function cleanDiffTeX(diffTex: string): string {
         .replace(/\\usepackage(\[.*?\])?\{ulem\}/g, '')
         .replace(/\\usepackage(\[.*?\])?\{changebar\}/g, '');
 
+    // Remove the problematic \DeclareOldFontCommand that's causing font loading issues
+    cleaned = cleaned.replace(/\\DeclareOldFontCommand\{\\sf\}\{\\normalfont\\sffamily\}\{\\mathsf\}\s*%DIF PREAMBLE\s*/g, '');
+
+    // Replace \sf with \textsf (more compatible)
+    cleaned = cleaned.replace(/\\sf\s+/g, '\\textsf{');
+    cleaned = cleaned.replace(/\{\s*\\protect\\color\{blue\}\s+#1\s*\}/g, '{\\protect\\color{blue}\\textsf{#1}}');
+
     // Keep your custom deletion format with raisebox
     cleaned = cleaned.replace(
         /\\providecommand\{\\DIFdelFL\}\[1\]\{\{\\color\{red\}\{\\color\{red\}\[deleted: #1\]\}\}\}/g,
@@ -247,6 +254,12 @@ function cleanDiffTeX(diffTex: string): string {
     cleaned = cleaned.replace(
         /\\providecommand\{\\DIFdel\}\[1\]\{\{\\protect\\color\{red\} \\scriptsize #1\}\}/g,
         '\\providecommand{\\DIFdel}[1]{{\\color{red}\\raisebox{1ex}{\\underline{\\smash{\\raisebox{-1ex}{#1}}}}}}'
+    );
+
+    // Simplify DIFadd to not use \sf at all - just use color
+    cleaned = cleaned.replace(
+        /\\providecommand\{\\DIFadd\}\[1\]\{\{\\protect\\color\{blue\}\s+\\sf\s+#1\}\}/g,
+        '\\providecommand{\\DIFadd}[1]{{\\color{blue}\\textbf{#1}}}'
     );
 
     return cleaned;
@@ -270,11 +283,14 @@ async function compilePdf(diffTex: string): Promise<string> {
         downloadTexBtn.style.display = 'inline-block';
 
         console.log("Starting PDF compilation...");
+        console.log("Cleaned LaTeX (first 500 chars):", cleanedTex.substring(0, 500));
         const pdfDataUrl = await engine.compile(cleanedTex);
         console.log("Compilation complete, data URL length:", pdfDataUrl?.length);
+        console.log("Data URL starts with:", pdfDataUrl?.substring(0, 100));
 
         if (!pdfDataUrl || pdfDataUrl === 'false' || pdfDataUrl.length < 100) {
-            throw new Error("Compilation failed - no valid PDF data produced");
+            console.error("PDFTeX returned:", pdfDataUrl);
+            throw new Error("Compilation failed - PDFTeX returned: " + pdfDataUrl);
         }
 
         // Verify the data URL starts correctly
