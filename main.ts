@@ -243,7 +243,7 @@ function cleanDiffTeX(diffTex: string): string {
 
     // Replace \sf with \textsf (more compatible)
     cleaned = cleaned.replace(/\\sf\s+/g, '\\textsf{');
-    cleaned = cleaned.replace(/\{\s*\\protect\\color\{blue\}\s+#1\s*\}/g, '{\\protect\\color{blue}\\textsf{#1}}');
+    cleaned = cleaned.replace(/\{\s*\\protect\\color\{blue\}\s+#1\s*\}/g, '{\\protect\\color{blue}\\textsf{#1}}}');
 
     // Keep your custom deletion format with raisebox
     cleaned = cleaned.replace(

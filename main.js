@@ -438,7 +438,7 @@ function cleanDiffTeX(diffTex) {
   cleaned = cleaned.replace(/\\usepackage\[T1\]\{fontenc\}/g, "").replace(/\\usepackage\{lmodern\}/g, "").replace(/\\usepackage\{textcomp\}/g, "").replace(/\\usepackage(\[.*?\])?\{ulem\}/g, "").replace(/\\usepackage(\[.*?\])?\{changebar\}/g, "");
   cleaned = cleaned.replace(/\\DeclareOldFontCommand\{\\sf\}\{\\normalfont\\sffamily\}\{\\mathsf\}\s*%DIF PREAMBLE\s*/g, "");
   cleaned = cleaned.replace(/\\sf\s+/g, "\\textsf{");
-  cleaned = cleaned.replace(/\{\s*\\protect\\color\{blue\}\s+#1\s*\}/g, "{\\protect\\color{blue}\\textsf{#1}}");
+  cleaned = cleaned.replace(/\{\s*\\protect\\color\{blue\}\s+#1\s*\}/g, "{\\protect\\color{blue}\\textsf{#1}}}");
   cleaned = cleaned.replace(
     /\\providecommand\{\\DIFdelFL\}\[1\]\{\{\\color\{red\}\{\\color\{red\}\[deleted: #1\]\}\}\}/g,
     "\\providecommand{\\DIFdelFL}[1]{{\\color{red}\\raisebox{1ex}{\\underline{\\smash{\\raisebox{-1ex}{#1}}}}}}"
