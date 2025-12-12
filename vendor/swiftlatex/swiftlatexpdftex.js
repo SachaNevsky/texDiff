@@ -243,51 +243,8 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 		const savepath = texlive200_cache[cacheKey];
 		return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
 	}
-	const remote_url = self.texlive_endpoint + "pdftex/" + cacheKey;
-	let xhr = new XMLHttpRequest();
-	xhr.open("GET", remote_url, false);
-	xhr.timeout = 15e4;
-	xhr.responseType = "arraybuffer";
-	console.log("Start downloading texlive file " + remote_url);
-	try {
-		xhr.send();
-	} catch (err) {
-		console.log("TexLive Download Failed " + remote_url);
-		return 0;
-	}
-	if (xhr.status === 200) {
-		let arraybuffer = xhr.response;
-		const fileid = xhr.getResponseHeader("fileid");
-		const savepath = TEXCACHEROOT + "/" + fileid;
-		FS.writeFile(savepath, new Uint8Array(arraybuffer));
-		texlive200_cache[cacheKey] = savepath;
-		return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
-	} else if (xhr.status === 301) {
-		console.log("TexLive File not exists " + remote_url);
-		texlive404_cache[cacheKey] = 1;
-		return 0;
-	}
-	return 0;
 
-	// if (format === '10' && reqname.endsWith('.fmt')) {
-	// 	const local_url = self.texlive_endpoint + reqname;
-	// 	let xhr = new XMLHttpRequest();
-	// 	xhr.open("GET", local_url, false);
-	// 	xhr.responseType = "arraybuffer";
-	// 	console.log("Loading local format file " + local_url);
-	// 	try {
-	// 		xhr.send();
-	// 		if (xhr.status === 200) {
-	// 			let arraybuffer = xhr.response;
-	// 			const savepath = TEXCACHEROOT + "/" + reqname;
-	// 			FS.writeFile(savepath, new Uint8Array(arraybuffer));
-	// 			texlive200_cache[cacheKey] = savepath;
-	// 			return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
-	// 		}
-	// 	} catch (err) {
-	// 		console.log("Local format file failed, trying remote: " + err);
-	// 	}
-	// }
+
 	// const remote_url = self.texlive_endpoint + "pdftex/" + cacheKey;
 	// let xhr = new XMLHttpRequest();
 	// xhr.open("GET", remote_url, false);
@@ -303,7 +260,7 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	// if (xhr.status === 200) {
 	// 	let arraybuffer = xhr.response;
 	// 	const fileid = xhr.getResponseHeader("fileid");
-	// 	const savepath = TEXCACHEROOT + "/" + (fileid || reqname);
+	// 	const savepath = TEXCACHEROOT + "/" + fileid;
 	// 	FS.writeFile(savepath, new Uint8Array(arraybuffer));
 	// 	texlive200_cache[cacheKey] = savepath;
 	// 	return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
@@ -313,6 +270,52 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	// 	return 0;
 	// }
 	// return 0;
+
+
+	if (format === '10' && reqname.endsWith('.fmt')) {
+		const local_url = self.texlive_endpoint + reqname;
+		let xhr = new XMLHttpRequest();
+		xhr.open("GET", local_url, false);
+		xhr.responseType = "arraybuffer";
+		console.log("Loading local format file " + local_url);
+		try {
+			xhr.send();
+			if (xhr.status === 200) {
+				let arraybuffer = xhr.response;
+				const savepath = TEXCACHEROOT + "/" + reqname;
+				FS.writeFile(savepath, new Uint8Array(arraybuffer));
+				texlive200_cache[cacheKey] = savepath;
+				return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
+			}
+		} catch (err) {
+			console.log("Local format file failed, trying remote: " + err);
+		}
+	}
+	const remote_url = self.texlive_endpoint + "pdftex/" + cacheKey;
+	let xhr = new XMLHttpRequest();
+	xhr.open("GET", remote_url, false);
+	xhr.timeout = 15e4;
+	xhr.responseType = "arraybuffer";
+	console.log("Start downloading texlive file " + remote_url);
+	try {
+		xhr.send();
+	} catch (err) {
+		console.log("TexLive Download Failed " + remote_url);
+		return 0;
+	}
+	if (xhr.status === 200) {
+		let arraybuffer = xhr.response;
+		const fileid = xhr.getResponseHeader("fileid");
+		const savepath = TEXCACHEROOT + "/" + (fileid || reqname);
+		FS.writeFile(savepath, new Uint8Array(arraybuffer));
+		texlive200_cache[cacheKey] = savepath;
+		return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
+	} else if (xhr.status === 301) {
+		console.log("TexLive File not exists " + remote_url);
+		texlive404_cache[cacheKey] = 1;
+		return 0;
+	}
+	return 0;
 }
 
 let pk404_cache = {};
