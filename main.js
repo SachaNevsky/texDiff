@@ -375,6 +375,14 @@ async function initSwiftLaTeX() {
     await waitForSwiftLaTeX();
     pdfEngine = new window.PdfTeXEngine();
     await pdfEngine.loadEngine();
+    try {
+      const formatResponse = await fetch("./vendor/swiftlatex/swiftlatexpdftex.fmt");
+      const formatData = await formatResponse.arrayBuffer();
+      pdfEngine.writeMemFSFile("/tex/swiftlatexpdftex.fmt", new Uint8Array(formatData));
+      console.log("Format file pre-loaded successfully");
+    } catch (err) {
+      console.warn("Failed to pre-load format file:", err);
+    }
     console.log("SwiftLaTeX engine loaded successfully");
   } catch (error) {
     console.error("Failed to initialize SwiftLaTeX:", error);
