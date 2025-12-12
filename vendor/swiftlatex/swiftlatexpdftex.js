@@ -288,7 +288,9 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 
 	// Special handling for format files - try local path first
 	if (reqname === 'swiftlatexpdftex.fmt' || reqname.endsWith('.fmt')) {
-		const local_url = './' + reqname;
+		const local_url = './vendor/swiftlatex/' + reqname;
+		console.log("1) " + './vendor/swiftlatex/' + reqname)
+		console.log("2) " + reqname)
 		let xhr = new XMLHttpRequest();
 		xhr.open("GET", local_url, false);
 		xhr.responseType = "arraybuffer";
