@@ -286,6 +286,20 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 		return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
 	}
 
+	const skipDownload = [
+		'main.aux',           // Generated during compilation
+		'pdftex.map',         // Font map file (optional for basic rendering)
+	];
+
+	if (skipDownload.includes(reqname) ||
+		reqname.endsWith('.vf') ||
+		reqname.endsWith('.pgc') ||
+		reqname.endsWith('.pk')) {
+		console.log(`Skipping download for: ${reqname}`);
+		texlive404_cache[cacheKey] = 1;
+		return 0;
+	}
+
 	// Special handling for format files - try local path first
 	if (reqname === 'swiftlatexpdftex.fmt'
 		|| reqname === 'article.cls'
@@ -297,16 +311,18 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 		|| reqname === 'l3backend-pdftex.def'
 		|| reqname === 'l3backend-pdfmode.def'
 		|| reqname === "supp-pdf.mkii"
-		|| reqname === 'main.aux' //
-		|| reqname === "cmss10" //
+		|| reqname === "cmss10"
+		|| reqname === "cmr10"
+		|| reqname === "cmr7"
 		|| reqname.endsWith('.fmt') || reqname.endsWith('.sty') || reqname.endsWith('.clo') || reqname.endsWith('.cls') || reqname.endsWith('.cfg') || reqname.endsWith('.def')) {
-		// const local_url = './vendor/swiftlatex/' + reqname;
+
 		let local_url = "";
-		if (reqname === "cmss10") {
-			local_url = "cmss10.tfm"
+		if (reqname === "cmss10" || reqname === "cmr10" || reqname === "cmr7") {
+			local_url = reqname + ".tfm";
 		} else {
 			local_url = reqname;
 		}
+
 		let xhr = new XMLHttpRequest();
 		xhr.open("GET", local_url, false);
 		xhr.responseType = "arraybuffer";
