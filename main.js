@@ -321,50 +321,25 @@ var runner = new WebPerlRunner({
   webperlBasePath: "./vendor/wasm-latex-tools/webperl",
   perlScriptsPath: "./vendor/wasm-latex-tools/perl"
 });
+var pdfEngine = null;
 var latestDiffTex = "";
 var currentPdfBlobUrl = null;
 window.addEventListener("error", (event) => {
   const message = event.message || "";
   const filename = event.filename || "";
-  if (message.includes("JSON.parse: unexpected character") || message.includes("FS is not defined") || message.includes("Could not create /tmp") || message.includes("Could not create /home") || message.includes("mkdir failed") || filename.includes("pre.js") || filename.includes("post.js") || filename.includes("perlrunner.html")) {
+  if (message.includes("Could not create /tmp") || message.includes("Could not create /home") || message.includes("mkdir failed") || filename.includes("perlrunner.html")) {
     event.preventDefault();
     event.stopPropagation();
     return false;
   }
 }, true);
-window.addEventListener("unhandledrejection", (event) => {
-  const reason = String(event.reason || "");
-  if (reason.includes("Invalid PDF structure") || reason.includes("InvalidPDFException") || reason.includes("JSON.parse") || reason.includes("FS is not defined")) {
-    event.preventDefault();
-    return false;
-  }
-});
-var originalConsoleError = console.error;
-console.error = function(...args) {
-  const message = String(args[0] || "");
-  const stack = args[1] && typeof args[1] === "object" ? String(args[1].stack || "") : "";
-  if (message.includes("Could not create /tmp") || message.includes("Could not create /home") || message.includes("mkdir failed") || message.includes("FS is not defined") || message.includes("JSON.parse: unexpected character") || message.includes("Invalid PDF structure") || message.includes("Invalid or corrupted PDF") || message.includes("InvalidPDFException") || stack.includes("pre.js") || stack.includes("post.js") || stack.includes("perlrunner.html")) {
-    return;
-  }
-  originalConsoleError.apply(console, args);
-};
 var originalConsoleLog = console.log;
 console.log = function(...args) {
   const message = String(args[0] || "");
-  if (message.includes("Could not create") || message.includes("mkdir failed") || message.includes("asm.js is deprecated") || message.includes("LazyFiles on gzip") || message.includes("This is pdfTeX") || message.includes("restricted \\write18") || message.includes("entering extended mode") || message.includes("LaTeX2e") || message.includes("Document Class:") || message.includes("//texmf-dist/") || message.includes("./input.tex") || message.includes("Successfully compiled asm.js") || message.includes("No file input.aux") || message.includes("[Loading MPS to PDF converter") || message.includes("Output written on input.pdf") || message.includes("Transcript written on input.log") || message.match(/^\([\/\.]/) || // Lines starting with (/ or (.
-  message.match(/^\)/) || // Lines starting with )
-  message === "<empty string>") {
+  if (message.includes("Could not create") || message.includes("mkdir failed")) {
     return;
   }
   originalConsoleLog.apply(console, args);
-};
-var originalConsoleWarn = console.warn;
-console.warn = function(...args) {
-  const message = String(args[0] || "");
-  if (message.includes("asm.js is deprecated") || message.includes("Invalid absolute docBaseUrl") || message.includes("Indexing all PDF objects") || message.includes("Warning:")) {
-    return;
-  }
-  originalConsoleWarn.apply(console, args);
 };
 function setStatus(msg) {
   console.log("> ", msg);
@@ -387,110 +362,80 @@ async function initTools() {
   try {
     setStatus("Loading diff tools...");
     await runner.initialize();
-    await waitForPDFTeX();
+    setStatus("Initializing SwiftLaTeX...");
+    await initSwiftLaTeX();
     setStatus("Ready.");
   } catch (e) {
     console.error(e);
-    setStatus("Failed to initialize diff tools.");
+    setStatus("Failed to initialize tools.");
   }
 }
-function waitForPDFTeX() {
+async function initSwiftLaTeX() {
+  try {
+    await waitForSwiftLaTeX();
+    pdfEngine = new window.PDFTeXEngine();
+    await pdfEngine.loadEngine();
+    console.log("SwiftLaTeX engine loaded successfully");
+  } catch (error) {
+    console.error("Failed to initialize SwiftLaTeX:", error);
+    throw error;
+  }
+}
+function waitForSwiftLaTeX() {
   return new Promise((resolve, reject) => {
     let attempts = 0;
-    const maxAttempts = 50;
-    const checkPDFTeX = () => {
-      if (window.PDFTeX) {
+    const maxAttempts = 100;
+    const checkSwiftLaTeX = () => {
+      if (window.PDFTeXEngine) {
+        console.log("SwiftLaTeX is ready!");
         resolve();
       } else if (attempts >= maxAttempts) {
-        reject(new Error("PDFTeX failed to load"));
+        reject(new Error("SwiftLaTeX failed to load. Make sure pdftex.js is loaded."));
       } else {
         attempts++;
-        setTimeout(checkPDFTeX, 100);
+        setTimeout(checkSwiftLaTeX, 100);
       }
     };
-    checkPDFTeX();
+    checkSwiftLaTeX();
   });
-}
-function dataURLtoBlob(dataURL) {
-  try {
-    const parts = dataURL.split(",");
-    if (parts.length !== 2) {
-      throw new Error("Invalid data URL format");
-    }
-    const mimeMatch = parts[0].match(/:(.*?);/);
-    const contentType = mimeMatch ? mimeMatch[1] : "application/pdf";
-    const base64Data = parts[1].trim().replace(/\s/g, "");
-    const raw = window.atob(base64Data);
-    const rawLength = raw.length;
-    const uInt8Array = new Uint8Array(rawLength);
-    for (let i = 0; i < rawLength; ++i) {
-      uInt8Array[i] = raw.charCodeAt(i);
-    }
-    return new Blob([uInt8Array], { type: contentType });
-  } catch (error) {
-    console.error("Failed to convert data URL to blob:", error);
-    throw new Error(`Data URL conversion failed: ${error}`);
-  }
 }
 function cleanDiffTeX(diffTex) {
   let cleaned = diffTex;
   cleaned = cleaned.replace(/\\RequirePackage\{color\}/g, "\\usepackage{color}");
-  cleaned = cleaned.replace(/\\usepackage\[T1\]\{fontenc\}/g, "").replace(/\\usepackage\{lmodern\}/g, "").replace(/\\usepackage\{textcomp\}/g, "").replace(/\\usepackage(\[.*?\])?\{ulem\}/g, "").replace(/\\usepackage(\[.*?\])?\{changebar\}/g, "");
-  cleaned = cleaned.replace(/\\DeclareOldFontCommand\{\\sf\}\{\\normalfont\\sffamily\}\{\\mathsf\}\s*%DIF PREAMBLE\s*/g, "");
-  cleaned = cleaned.replace(/\\sf\s+/g, "\\textsf{");
-  cleaned = cleaned.replace(/\{\s*\\protect\\color\{blue\}\s+#1\s*\}/g, "{\\protect\\color{blue}\\textsf{#1}}}");
-  cleaned = cleaned.replace(
-    /\\providecommand\{\\DIFdelFL\}\[1\]\{\{\\color\{red\}\{\\color\{red\}\[deleted: #1\]\}\}\}/g,
-    "\\providecommand{\\DIFdelFL}[1]{{\\color{red}\\raisebox{1ex}{\\underline{\\smash{\\raisebox{-1ex}{#1}}}}}}"
-  );
-  cleaned = cleaned.replace(
-    /\\providecommand\{\\DIFdel\}\[1\]\{\{\\protect\\color\{red\} \\scriptsize #1\}\}/g,
-    "\\providecommand{\\DIFdel}[1]{{\\color{red}\\raisebox{1ex}{\\underline{\\smash{\\raisebox{-1ex}{#1}}}}}}"
-  );
-  cleaned = cleaned.replace(
-    /\\providecommand\{\\DIFadd\}\[1\]\{\{\\protect\\color\{blue\}\s+\\sf\s+#1\}\}/g,
-    "\\providecommand{\\DIFadd}[1]{{\\color{blue}\\textbf{#1}}}"
-  );
+  cleaned = cleaned.replace(/\\usepackage\[T1\]\{fontenc\}/g, "");
+  cleaned = cleaned.replace(/\\usepackage\{lmodern\}/g, "");
   return cleaned;
 }
 async function compilePdf(diffTex) {
-  const PDFTeX = window.PDFTeX;
-  if (!PDFTeX) {
-    throw new Error("PDFTeX not available.");
+  if (!pdfEngine) {
+    throw new Error("PDF engine not initialized");
   }
   try {
-    const workerPath = window.TEXLIVE_CONFIG?.workerPath || "./vendor/texlive.js/pdftex-worker.js";
-    const engine = new PDFTeX(workerPath);
     const cleanedTex = cleanDiffTeX(diffTex);
     latestDiffTex = cleanedTex;
     downloadTexBtn.style.display = "inline-block";
-    console.log("Starting PDF compilation...");
-    console.log("Cleaned LaTeX (first 500 chars):", cleanedTex.substring(0, 500));
-    const pdfDataUrl = await engine.compile(cleanedTex);
-    console.log("Compilation complete, data URL length:", pdfDataUrl?.length);
-    console.log("Data URL starts with:", pdfDataUrl?.substring(0, 100));
-    if (!pdfDataUrl || pdfDataUrl === "false" || pdfDataUrl.length < 100) {
-      console.error("PDFTeX returned:", pdfDataUrl);
-      throw new Error("Compilation failed - PDFTeX returned: " + pdfDataUrl);
+    console.log("Starting SwiftLaTeX compilation...");
+    console.log("LaTeX length:", cleanedTex.length, "characters");
+    pdfEngine.writeMemFSFile("main.tex", cleanedTex);
+    const result = await pdfEngine.compileLaTeX();
+    console.log("Compilation result:", result);
+    if (result.status !== 0) {
+      console.error("Compilation failed with status:", result.status);
+      if (result.log) {
+        console.error("Compilation log:", result.log);
+      }
+      throw new Error(`LaTeX compilation failed with status ${result.status}`);
     }
-    if (!pdfDataUrl.startsWith("data:application/pdf") && !pdfDataUrl.startsWith("data:;base64,")) {
-      console.error("Invalid data URL format:", pdfDataUrl.substring(0, 100));
-      throw new Error("Invalid PDF data format returned");
+    const pdfData = pdfEngine.readMemFSFile("main.pdf");
+    if (!pdfData || pdfData.length === 0) {
+      throw new Error("No PDF was generated");
     }
-    const blob = dataURLtoBlob(pdfDataUrl);
-    console.log("Created blob, size:", blob.size, "bytes");
-    if (blob.size < 100) {
-      throw new Error("Generated PDF is too small, likely corrupted");
-    }
-    if (currentPdfBlobUrl) {
-      URL.revokeObjectURL(currentPdfBlobUrl);
-    }
-    const blobUrl = URL.createObjectURL(blob);
-    currentPdfBlobUrl = blobUrl;
-    return blobUrl;
+    console.log("PDF generated successfully, size:", pdfData.length, "bytes");
+    const blob = new Blob([pdfData], { type: "application/pdf" });
+    return blob;
   } catch (error) {
-    console.error("PDFTeX compilation error:", error);
-    throw new Error(`PDF compilation failed: ${error instanceof Error ? error.message : String(error)}`);
+    console.error("PDF compilation error:", error);
+    throw error;
   }
 }
 function downloadTextFile(content, filename) {
@@ -507,7 +452,7 @@ function downloadTextFile(content, filename) {
 function openPdfInNewTab(blobUrl) {
   const newWindow = window.open(blobUrl, "_blank");
   if (!newWindow) {
-    setStatus("PDF generated! Please allow pop-ups to view the PDF, or use the iframe below.");
+    setStatus("PDF generated! Please allow pop-ups to view. Preview below.");
     pdfViewer.src = blobUrl;
     pdfContainer.style.display = "block";
   } else {
@@ -530,15 +475,22 @@ async function generateDiffPdf() {
     const newWrapped = ensureWrapped(newText);
     const diff = await diffTool.diff(oldWrapped, newWrapped, {
       type: "CFONT",
-      flatten: true
+      flatten: true,
+      oldContent: oldWrapped,
+      input: newWrapped
     });
-    setStatus("Compiling PDF...");
-    const pdfBlobUrl = await compilePdf(diff.output);
+    setStatus("Compiling PDF with SwiftLaTeX...");
+    const pdfBlob = await compilePdf(diff.output);
+    if (currentPdfBlobUrl) {
+      URL.revokeObjectURL(currentPdfBlobUrl);
+    }
+    const pdfBlobUrl = URL.createObjectURL(pdfBlob);
+    currentPdfBlobUrl = pdfBlobUrl;
     openPdfInNewTab(pdfBlobUrl);
   } catch (e) {
     console.error("Error details:", e);
     const errorMsg = e instanceof Error ? e.message : String(e);
-    setStatus(`Error: ${errorMsg}. Check diff.tex for details.`);
+    setStatus(`Error: ${errorMsg}. Download diff.tex for details.`);
   }
 }
 var isInitializing = false;
@@ -551,6 +503,7 @@ async function safeInit() {
     isInitialized = true;
   } catch (e) {
     console.error("Initialization failed:", e);
+    setStatus("Initialization failed. Please refresh the page.");
   } finally {
     isInitializing = false;
   }
@@ -559,9 +512,9 @@ diffBtn.addEventListener("click", generateDiffPdf);
 downloadTexBtn.addEventListener("click", () => {
   if (latestDiffTex) {
     downloadTextFile(latestDiffTex, "diff.tex");
-    setStatus("diff.tex downloaded! Compile this locally if PDF viewer issues persist.");
+    setStatus("diff.tex downloaded!");
   } else {
-    setStatus("No diff available to download. Generate a diff first.");
+    setStatus("No diff available. Generate a diff first.");
   }
 });
 safeInit();
