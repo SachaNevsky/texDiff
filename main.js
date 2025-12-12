@@ -373,7 +373,7 @@ async function initTools() {
 async function initSwiftLaTeX() {
   try {
     await waitForSwiftLaTeX();
-    pdfEngine = new window.PDFTeXEngine();
+    pdfEngine = new window.PdfTeXEngine();
     await pdfEngine.loadEngine();
     console.log("SwiftLaTeX engine loaded successfully");
   } catch (error) {
@@ -386,11 +386,11 @@ function waitForSwiftLaTeX() {
     let attempts = 0;
     const maxAttempts = 100;
     const checkSwiftLaTeX = () => {
-      if (window.PDFTeXEngine) {
+      if (window.PdfTeXEngine) {
         console.log("SwiftLaTeX is ready!");
         resolve();
       } else if (attempts >= maxAttempts) {
-        reject(new Error("SwiftLaTeX failed to load. Make sure pdftex.js is loaded."));
+        reject(new Error("SwiftLaTeX failed to load. Make sure PdfTeXEngine.js is loaded."));
       } else {
         attempts++;
         setTimeout(checkSwiftLaTeX, 100);

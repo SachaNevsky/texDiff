@@ -27,7 +27,7 @@ let currentPdfBlobUrl: string | null = null;
 
 declare global {
     interface Window {
-        PDFTeXEngine: any;
+        PdfTeXEngine: any;
     }
 }
 
@@ -102,7 +102,7 @@ async function initSwiftLaTeX() {
         await waitForSwiftLaTeX();
 
         // Initialize SwiftLaTeX engine
-        pdfEngine = new window.PDFTeXEngine();
+        pdfEngine = new window.PdfTeXEngine();
 
         // Load the engine
         await pdfEngine.loadEngine();
@@ -120,11 +120,11 @@ function waitForSwiftLaTeX(): Promise<void> {
         const maxAttempts = 100;
 
         const checkSwiftLaTeX = () => {
-            if (window.PDFTeXEngine) {
+            if (window.PdfTeXEngine) {  // Changed from PDFTeXEngine
                 console.log("SwiftLaTeX is ready!");
                 resolve();
             } else if (attempts >= maxAttempts) {
-                reject(new Error("SwiftLaTeX failed to load. Make sure pdftex.js is loaded."));
+                reject(new Error("SwiftLaTeX failed to load. Make sure PdfTeXEngine.js is loaded."));
             } else {
                 attempts++;
                 setTimeout(checkSwiftLaTeX, 100);
