@@ -287,7 +287,7 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	}
 
 	// Special handling for format files - try local path first
-	if (reqname === 'swiftlatexpdftex.fmt' || reqname.endsWith('.fmt') || reqname === 'article.cls' || reqname.endsWith('.cls')) {
+	if (reqname === 'swiftlatexpdftex.fmt' || reqname.endsWith('.fmt') || reqname === 'article.cls' || reqname.endsWith('.cls') || reqname === 'size10.clo' || reqname.endsWith('.clo')) {
 		// const local_url = './vendor/swiftlatex/' + reqname;
 		const local_url = reqname;
 		let xhr = new XMLHttpRequest();
