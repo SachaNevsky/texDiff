@@ -330,7 +330,7 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 		try {
 			xhr.send();
 			if (xhr.status === 200) {
-				console.log("Successfully loaded local format file");
+				console.log(`Successfully loaded ${local_url}`);
 				let arraybuffer = xhr.response;
 				const savepath = TEXCACHEROOT + "/" + reqname;
 				FS.writeFile(savepath, new Uint8Array(arraybuffer));
