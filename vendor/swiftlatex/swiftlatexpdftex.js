@@ -296,6 +296,9 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 		|| reqname === 'pdftex.def'
 		|| reqname === 'l3backend-pdftex.def'
 		|| reqname === 'l3backend-pdfmode.def'
+		|| reqname === "supp-pdf.mkii"
+		|| reqname === 'main.aux' //
+		|| reqname === "cmss10" //
 		|| reqname.endsWith('.fmt') || reqname.endsWith('.sty') || reqname.endsWith('.clo') || reqname.endsWith('.cls') || reqname.endsWith('.cfg') || reqname.endsWith('.def')) {
 		// const local_url = './vendor/swiftlatex/' + reqname;
 		const local_url = reqname;
