@@ -292,7 +292,8 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 		|| reqname === 'size10.clo'
 		|| reqname === 'inputenc.sty'
 		|| reqname === 'color.sty'
-		|| reqname.endsWith('.fmt') || reqname.endsWith('.sty') || reqname.endsWith('.clo') || reqname.endsWith('.cls')) {
+		|| reqname === 'color.cfg'
+		|| reqname.endsWith('.fmt') || reqname.endsWith('.sty') || reqname.endsWith('.clo') || reqname.endsWith('.cls') || reqname.endsWith('.cfg')) {
 		// const local_url = './vendor/swiftlatex/' + reqname;
 		const local_url = reqname;
 		let xhr = new XMLHttpRequest();
