@@ -301,7 +301,12 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 		|| reqname === "cmss10" //
 		|| reqname.endsWith('.fmt') || reqname.endsWith('.sty') || reqname.endsWith('.clo') || reqname.endsWith('.cls') || reqname.endsWith('.cfg') || reqname.endsWith('.def')) {
 		// const local_url = './vendor/swiftlatex/' + reqname;
-		const local_url = reqname;
+		let local_url = "";
+		if (reqname === "cmss10") {
+			local_url = "cmss10.tfm"
+		} else {
+			local_url = reqname;
+		}
 		let xhr = new XMLHttpRequest();
 		xhr.open("GET", local_url, false);
 		xhr.responseType = "arraybuffer";
