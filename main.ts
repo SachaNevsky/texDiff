@@ -14,10 +14,8 @@ const runner = new WebPerlRunner({
     perlScriptsPath: './vendor/wasm-latex-tools/perl'
 });
 
-// SwiftLaTeX engine instance
 let pdfEngine: any = null;
 
-// Store the latest diff output
 let latestDiffTex: string = '';
 let currentPdfBlobUrl: string | null = null;
 
