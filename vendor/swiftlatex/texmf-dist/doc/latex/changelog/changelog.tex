@@ -1,0 +1,357 @@
+\documentclass{ltxguidex}
+% for demonstrating translations
+\usepackage[german, american]{babel}
+%\babelprovide{chinese}
+%\usepackage{translations}
+%\DeclareLanguage{Chinese}
+%\DeclareTranslation{Chinese}{changelog-added}{新增}
+
+\usepackage{fontspec}
+\errorcontextlines=10
+\usepackage{changelog}
+\usepackage{changepage}
+\newcommand{\cl}{\ctan{changelog}}
+\newcommand{\keepachangelog}{\https{keepachangelog.com}}
+
+\makeatletter
+\renewcommand{\SX@explpreset}{
+	language=[LaTeX]TeX,
+	numbers=none,
+}
+\makeatother
+
+\setmainfont{Tiempos Text}
+\usepackage{FiraSans}
+\usepackage{FiraMono}
+\lstset{basewidth=0.6em}
+
+
+\NewDocumentEnvironment{ctandescription}{}
+	{\NewDocumentCommand{\pkg}{m}{\item[\ctan{##1}]}
+	\begin{description}}
+	{\end{description}}
+
+\author{Rebecca Turner\thanks{Brandeis University; \email{rebeccaturner@brandeis.edu}}}
+\title{The \cl\ Package}
+\date{2019/07/06 2.1.0}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+	Changelogs are important. Unfortunately, there are few facilities
+	for typesetting changelogs in \LaTeX. \cl\ defines a |changelog|
+	environment to make changelogs simple and intuitive.
+	
+	For rationale, read \keepachangelog.
+\end{abstract}
+
+\begin{note}
+	Browse the sources, contribute, or complain at \\
+	\https{github.com/9999years/latex-changelog}
+\end{note}
+
+\tableofcontents
+\vfill
+\pagebreak
+
+\section{I don't want to read this documentation}
+
+Perfectly understandable. \cl\ comes in a ``simple'' flavor:
+
+\begin{LTXexample}
+\begin{changelog}[author=Rebecca Turner, simple, sectioncmd=\section*]
+\begin{version}[v=1.0.0, date=2018-12-28]
+  \item Cool features
+  \item Bug fixes
+\end{version}
+\shortversion{v=0.1.0, date=2018-10-25, changes=Initial beta}
+\end{changelog}
+\end{LTXexample}
+
+And a more organized variant based on \keepachangelog:
+
+\begin{LTXexample}
+\begin{changelog}[author=Rebecca Turner, sectioncmd=\section*]
+\begin{version}[v=1.0.0, date=2018-12-28]
+  \added
+    \item Cool features
+  \fixed
+    \item Bug fixes
+\end{version}
+\shortversion{v=0.1.0, date=2018-10-25, changes=Initial beta}
+\end{changelog}
+\end{LTXexample}
+
+\section{Intro}
+
+\subsection{Why?}
+
+Read \href{https://olivierlacan.com/}{Olivier Lacan}'s lovely site
+\keepachangelog. To excerpt:
+
+\begin{adjustwidth}{1in}{1in}
+	\subsubsection{What is a changelog?}
+	A changelog is a file which contains a curated, chronologically
+	ordered list of notable changes for each version of a project.
+
+	\subsubsection{Why keep a changelog?}
+	To make it easier for users and contributors to see precisely what
+	notable changes have been made between each release (or version) of
+	the project.
+
+	\subsubsection{Who needs a changelog?}
+	People do. Whether consumers or developers, the end users of
+	software are human beings who care about what's in the software.
+	When the software changes, people want to know why and how.
+\end{adjustwidth}
+
+\subsection{The competition}
+
+It's always good to know the competition. Unfortunately, there isn't much
+here. Know of another package with similar functionality? Drop me a line or
+open a pull request!
+
+\begin{ctandescription}
+	\pkg{vhistory} provides a decent-looking changelog. However, it's
+		designed for short changes and provides a less-than-elegant
+		interface. Additionally, it's based on the \ctan{ltxtable}
+		package, meaning it makes restrictions on the contents of
+		version information and writes the table to a file.
+
+	\pkg{holtxdoc} has a decent changelog feature (via
+		Oberdiek's |History| and |Version| environments),
+		but \ctan{holtxdoc} ``contains some private macros and setup
+		for my needs. Thus do not use it.'' In addition, Oberdiek's
+		changelogs don't support multiple authors.
+
+	\pkg{gitlog} is an interesting idea, but \ctan{gitlog} ``is a
+		proof-of-concept release to allow users an early
+		evaluation\dots''
+
+		Also,
+		\href{https://keepachangelog.com/en/1.0.0/}{friends don't
+		let friends dump git logs into changelogs}.
+\end{ctandescription}
+
+\section{The \texttt{changelog} environment}
+
+\begin{desc}
+|\begin{changelog}[<options>]...\end{changelog}|
+\end{desc}
+Wraps |description| while providing the |version| environment and the
+\cs{shortversion} command. In addition to the options shown below,
+\meta{options} may contain any of the options for |version| as a form of
+``partial application''; this may be useful if, for example, most of your
+versions have the same author.
+
+\begin{keys}
+	\key{section}[\bool][true]
+		Insert a \cs{section} before the changelog?
+	\key{sectioncmd}[\m{command}][\cs{section}]
+		Which sectioning command to use?
+	\key{title}[\m{txt}][Changelog]
+		What to title the changelog section?
+	\key{label}[\m{label}][sec:changelog]
+		What to \cs{label} the section?
+\end{keys}
+
+\begin{desc}
+|\begin{version}[<options>]...\end{version}|
+\end{desc}
+Gives a single version; wraps |itemize|.
+
+If the \option{date} option is absent, the date isn't printed.
+
+If the \option{v}/\option{version} option is absent, the date is used in its
+place.
+
+If both \option{version} and \option{date} are absent, the version is shown
+as \texttt{Unreleased} and \cs{today} is used for the date. \cs{today} isn't
+ideal (which is to say, not
+\href{https://en.wikipedia.org/wiki/ISO_8601}{\textsc{iso} 8601} compliant)
+but it's well-known and easy to redefine.\footnote{Try the \ctan{datetime2}
+package or
+\href{https://tex.stackexchange.com/questions/152392/date-format-yyyy-mm-dd}{any
+of the other solutions here.}}
+
+\m{options} may include:
+
+\begin{keys}
+	\key{version}[\m{version string}]
+		The version string for this version
+	\key{v}[\m{version string}]
+		An alias for \option{version}
+	\key{author}[\m{author(s)}]
+		The author(s) of this version
+	\key{date}[\m{date string}]
+		The date of this version's release
+	\key{yanked}[\bool][false]
+		Indicates that the release was revoked due to a ``serious bug or
+		security issue''; prints a visible notice next to the version number
+	\key{simple}[\bool][false]
+		Indicates this version isn't split up into \cs{added}, \cs{changed},
+		etc.\ categories; if this option is given, a |version| environment acts
+		like a plain |itemize|
+	\key{short}[\bool][false]
+		Renders a short version, like |\shortversion|'s \option{changes} option;
+		useful if you need to put verbatim material in the changes which would
+		otherwise cause an error due to being used in an argument.
+\end{keys}
+
+\begin{desc}
+|\shortversion{<options>}|
+\end{desc}
+A short, one-line version. In addition to |version|'s options, the following
+options are available for \cs{shortversion}:
+
+\begin{keys}
+	\key{changes}[\m{change text}] The changes to display for this version
+\end{keys}
+
+\subsection{Helper commands}
+
+The \cl\ package defines several ``helper commands.'' These commands
+introduce a \textit{set} of changes within the version. There must be at
+least one \cs{item} between one of these commands and the end of the
+|version| environment.
+
+Note that these commands are \emph{only} available when not using
+the \option{simple} option!
+
+\begin{desc}|\added|\end{desc}Introduces a list of \cs{item}s that represent added
+	features
+\begin{desc}|\changed|\end{desc}Introduces a list of \cs{item}s that represent
+	changed features
+\begin{desc}|\deprecated|\end{desc}Introduces a list of \cs{item}s that represent
+	deprecated features
+\begin{desc}|\removed|\end{desc}Introduces a list of \cs{item}s that represent
+	features which have been removed
+\begin{desc}|\fixed|\end{desc}Introduces a list of \cs{item}s that represent bug
+	fixes
+\begin{desc}|\security|\end{desc}Introduces a list of \cs{item}s that represent
+	security-fixes and closed security holes
+
+\subsection{Customization}
+
+The |changelog| environment wraps |changelogdescription| (which is
+defined by default to be just the |description| environment), and the
+|version| environment wraps |changelogitemize|. One could customize
+these in depth with \ctan{enumitem}, as in:
+
+\begin{latexcode}
+\usepackage{enumitem}
+\renewenvironment{changelogitemize}
+	{\begin{itemize}[label=---]}
+	{\end{itemize}}
+\end{latexcode}
+
+\begin{desc}
+|\changelogyanked|
+\end{desc}
+Prints the ``revoked release'' notice:
+\changelogyanked. See:
+\href{https://keepachangelog.com/en/1.0.0/#yanked}{yanked releases on
+\texttt{keepachangelog.com}}.
+
+\section{Translations}
+
+Want to use \cl\ in a non-English document? Great! Thanks to a contribution
+by Holger Schieferdecker (see section~\ref{s:contrib} below), \cl\ comes
+with translations for English, German, and support for adding new
+translations. To use built-in translations, simply load \ctan{babel} with
+the desired language:
+\begin{otherlanguage}{german}
+\begin{LTXexample}
+% In the preamble:
+% \usepackage[german]{babel}
+
+\begin{changelog}[section=false, author=Holger Schieferdecker]
+  \begin{version}[v=1.0.0]
+    \added
+      \item Features!
+  \end{version}
+\end{changelog}
+\end{LTXexample}
+\end{otherlanguage}
+
+\subsection{Creating new translations}
+
+\cl\ uses the \ctan{translations} package to provide translations, and a
+complete translation looks like this:
+\begin{latexcode}
+\documentclass{article}
+\usepackage[english]{babel}
+\usepackage{translations}
+\DeclareTranslation{English}{changelog-Added}{Added}
+\DeclareTranslation{English}{changelog-Changed}{Changed}
+\DeclareTranslation{English}{changelog-Deprecated}{Deprecated}
+\DeclareTranslation{English}{changelog-Removed}{Removed}
+\DeclareTranslation{English}{changelog-Fixed}{Fixed}
+\DeclareTranslation{English}{changelog-Security}{Security}
+\DeclareTranslation{English}{changelog-Miscellaneous}{Miscellaneous}
+\DeclareTranslation{English}{changelog-Unreleased}{Unreleased}
+\DeclareTranslation{English}{changelog-Yanked}{YANKED}
+\begin{document}
+% ...
+\end{document}
+\end{latexcode}
+Refer to the
+\href{http://mirrors.ctan.org/macros/latex/contrib/translations/translations_en.pdf}{\texttt{translations}
+package documentation} and the
+\href{http://mirrors.ctan.org/macros/latex/required/babel/base/babel.pdf}{\texttt{babel}
+package documentation} for more information.
+
+If you create a translation, please \href{mailto:637275@gmail.com}{send me
+an email} and I'll incorporate the translation into \cl's next release!
+
+\section{Contributors}%
+\label{s:contrib}
+
+\begin{description}
+	\item[Rebecca Turner] Original implementation.
+	\item[Holger Schieferdecker]
+	Internationalization support and German translations.
+\end{description}
+
+\section{Changelog}
+
+This is this package's actual changelog --- not an example!
+
+\begin{changelog}[author=Rebecca Turner, section=false]
+\begin{version}[v=2.1.0, date=2019-06-29,
+	author={Holger Schieferdecker}]
+\added
+	\item Internationalization support.
+	\item German translations.
+\end{version}
+
+\begin{version}[v=2.0.0, date=2019-04-15]
+\added
+	\item Better error handling; more informative messages for empty
+	\texttt{version} or \texttt{changelog} environments.
+	\item \option{short} option in versions.
+\removed
+	\item Removed \texttt{color} package option.
+\fixed
+	\item Added dependencies for \ctan{xparse} and \ctan{xkeyval}, which had
+	erroneously been excluded from the package.
+\end{version}
+
+\begin{version}[v=1.0.0, date=2018-12-28]
+\added
+	\item The ``simple'' option for changelogs which aren't split up
+	into sections of added, changed, removed, etc.\ features
+\changed
+	\item Instead of commands like \cs{added} introducing an item, they
+	introduce a list of items; this is what \keepachangelog\
+	actually intended; previous implementations were incorrect to
+	display an ``Added'' (or whatever) marker next to each item.
+\end{version}
+
+\shortversion{v=0.2.1, date=2018-10-26, changes=Documented \option{yanked}
+	option}
+\shortversion{v=0.2.0, date=2018-10-26, changes=First stable release}
+\shortversion{v=0.1.0, date=2018-10-25, changes=Initial beta}
+\end{changelog}
+
+\end{document}

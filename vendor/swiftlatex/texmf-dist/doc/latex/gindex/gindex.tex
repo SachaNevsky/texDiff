@@ -1,0 +1,226 @@
+%
+% Copyright (C) 2019 Javier Bezos http://www.texnia.com
+%
+% This file may be distributed and/or modified under the conditions of
+% the MIT License. A version can be found at the end of this file.
+%
+% Repository: https://github.com/jbezos/gindex
+%
+
+\documentclass[a4paper]{ltxguide}
+
+\title{\textsf{gindex}\\\large Version 0.2}
+
+\author{Javier Bezos\\\texttt{http://www.texnia.com}}
+
+\date{2019-10-07}
+
+\raggedright
+\parskip=.8ex
+\advance\oddsidemargin-.7cm
+\advance\textwidth2cm
+\addtolength{\textheight}{3.5cm}
+\addtolength{\topmargin}{-2cm}
+
+\usepackage{xcolor,bera}
+
+\definecolor{notes}{rgb}{.75, .3, .3}%
+
+\makeatletter
+\def\@begintheorem#1#2{%
+  \list{}{}%
+  \global\advance\@listdepth\m@ne
+  \item[{\sffamily\bfseries\color{notes}\MakeUppercase{#1}}]}%
+\makeatother
+\newtheorem{warning}{Warning}
+\newtheorem{note}{Note}
+\newtheorem{example}{Example}
+
+\begin{document}
+
+\vspace*{1cm}
+{\fontsize{48}{48}\selectfont \color{notes}{gindex}\par}
+{\LARGE Formatting indexes with \LaTeX\par}
+\vspace*{1ex}
+Version 0.2 (2019-10-07)\par
+\texttt{https://github.com/jbezos/gindex}\par
+Javier Bezos (\texttt{http://www.texnia.com})\par
+
+\vspace*{6ex}
+
+This package works in conjunction with a \textit{\bfseries g}eneric
+\verb|ist| file, which provides a way to \textit{\bfseries g}enerate
+the format of index entries from within \LaTeX. With standard classes,
+it works out of the box with some predefined values, which you can (and
+in fact should) redefine with |\renewcommand|.
+
+Note it is version 0.2. Changes of the existing features are unlikely
+to happen (but who knows), but new features, on the other hand, will be
+added in the near future.
+
+What it does is to generate blocks like this for each first-level entry:
+\begin{verbatim}
+  \setcounter{indexsubitems}{2}%     The number of subitems
+  \indexitem{blah1}{1}%
+    \indexsubitem{subblah1}{3}%
+    \indexsubitem{subblah2}{5}%
+  \indexnoitem{}{}%                  Usually dummy
+\end{verbatim}
+
+As you can see, when |\indexitem| is executed, you know the number of
+subitems, which is necessary for some styles. Subsubitems are allowed,
+but not counted. Only subitems are counted.
+
+The default values are:
+\begin{verbatim}
+\newcommand\indexitem[2]{\item #1\ifx\\#2\\\else, #2\fi}
+\newcommand\indexsubitem[2]{\subitem #1\ifx\\#2\\\else, #2\fi}
+\newcommand\indexsubsubitem[2]{\subsubitem #1\ifx\\#2\\\else, #2\fi}
+\end{verbatim}
+For example, to replace the comma by a quad:
+\begin{verbatim}
+\renewcommand\indexitem[2]{\item #1\ifx\\#2\\\else\quad #2\fi}
+\end{verbatim}
+
+It is guaranteed that these command can take up to 5 arguments. If you
+define |\indexitem| with all of them, the parameters in the previous
+example will be:
+\begin{enumerate}
+  \item |blah1|
+  \item |1|
+  \item |\indexsubitem|
+  \item |subblah1|
+  \item |3|
+\end{enumerate}
+This explains the line |\indexnoitem{}{}| above, which by default does
+nothing. By inspecting the third parameter you decide how to format the
+current parameter (of course, in most cases you must emit it again at
+the end of your definition of |\indexitem|). See the example below.
+
+There is a tool to define the most usual entry format, which is uesd in
+the following way:
+\begin{verbatim}
+\renewcommand\indexitem[2]{%
+  \indexitemhang{0pt}%       First line left margin
+                {10pt}%      Second, third...  lines left margin
+                {}%          After entry if no locator
+                {: }%        Entry-locator separator
+                {#1}%        Entry
+                {#2}}%       Locator
+\end{verbatim}
+
+Other macros are:
+\begin{itemize}
+\item \verb|\indexpreamble|, executed just after
+  \verb|\begin{theindex}| (\verb|\relax| by default).
+\item \verb|\indexpostamble|, executed before 
+  \verb|\end{theindex}| (\verb|\relax| by default).
+\item \verb|\indexskip|, which is \verb|\indexspace| by default, 
+with similar purpose.
+\item \verb|\indexheading|, which is added by |gindexh.ist| but no by
+|gindex.ist|, is defined as follows:
+\begin{verbatim}
+\newcommand\indexheading[1]{%
+  {\bfseries\hfil
+   \MakeUppercase{#1}%
+   \hfil}%
+  \nopagebreak}
+\end{verbatim}
+\item \verb|\indexrangesep|, which by default is |-|.
+\item \verb|\indexpagessep|, which by default is |, |.
+\end{itemize}
+
+Remember to set the style to |gindex| when running \textsf{makeindex}:
+\begin{verbatim}
+  makeindex -s gindex yourfile
+\end{verbatim}
+Or if you want |\indexheading|'s to be included:
+\begin{verbatim}
+  makeindex -s gindexh yourfile
+\end{verbatim}
+
+Note also there is usually no need to run \textsf{makeindex} to fine
+tune the format.
+
+\begin{example}
+ With the following definitions, items and subitems are typeset, as
+ usual, as separate paragraphs. However, if the item has no locator,
+ and there is exactly one subitem, they are joined with a comma as
+ separator (the code is somewhat low-level):
+\begin{verbatim}
+\renewcommand\indexitem[5]{%
+  \def\next{%
+    \indexitemhang{0pt}{20pt}{:}{, }{#1}{#2}%
+    #3{#4}{#5}}%
+  \ifnum\value{indexsubitems}=1\relax
+    \ifx\\#2\\%
+      \def\next{%
+        \indexitemhang{0pt}{20pt}{:}{, }{#1, #4}{#5}}%
+    \fi
+  \fi
+  \next}
+
+\renewcommand\indexsubitem[2]{%
+  \indexitemhang{0pt}{40pt}{}{, }{--- #1}{#2}}
+\end{verbatim}
+\end{example}
+
+If an item starts with |\indexspecial|, what follows replaces the
+current item.
+\begin{example}
+With |gindex.ist|, you can generate your own headings. If you are sure
+there is nothing before |a '''| and |l '''| (actually, it can be
+anything provided it is sorted at the right place), the following two
+entries will ``group'' the items under two headings.
+\begin{verbatim}
+\index{a '''@\indexspecial\indexheading{a-k}}
+\index{l '''@\indexspecial\indexheading{l-z}}
+\end{verbatim}
+\end{example}
+
+
+
+\section{Internals}
+
+The |ind| files is generated by |gindex.ist| with generic macros like:
+\begin{verbatim}
+  \addindexitem{bla1}{1}
+    \addindexsubitem{subbla1}{3}
+    \addindexsubitem{subbla2}{5}
+\end{verbatim}
+What \textsf{gindex} does is to convert them to the above format. Some
+parameters should be cuntomized in the |ist| file, however. These are:
+\begin{verbatim}
+headings_flag   0
+actual          '@'
+quote           '"'
+level           '!'
+page_precedence "rRnaA"
+keyword         "\\indexentry"
+\end{verbatim}
+As to |headings_flag|, its value is |-1| with |gindexh| and the
+recommended way to deal with case is with |\indexheading|
+
+\end{document}
+
+MIT License
+-----------
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

@@ -1,0 +1,126 @@
+\ifx\@boxes@loaded\undefined
+\newdimen\YdimenA
+\newdimen\YdimenB
+\newbox\YboxA
+% ======================================================================
+% ======================== BOITES ======================================
+% ======================================================================
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% \borderandboxit
+%   the first parameter is a dimension giving a border width,
+% the second is the rule width for the box,
+% and the third is a box of text.
+% \borderandboxit takes its third parameter and surrounds it with 
+% a border of space on all sides then with rules.
+% The second parameter gives the thickness of the rules to use.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\def\borderandboxit#1#2#3{\vbox{\hrule \@height#2%
+  \hbox{\vrule \@width#2 \hskip#1 \hskip-#2%
+  \vbox{\vskip#1\relax#3\vskip#1}\hskip#1\hskip-#2%
+        \vrule \@width#2}\hrule \@height#2}}
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%
+% \boxrulethickness  is a new dimension that gives the thickness
+%   of the rules to be used for the boxes defined by the current
+% family of ruled boxes.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%
+\newdimen\boxrulethickness \boxrulethickness=.4pt
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% \Square
+%   the parameter is a dimension.
+% An empty square ruled box (with rules of the \boxrulethickness),
+% the length of whose side is the given dimension, is set with
+% the bottom side on the current baseline.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\def\Square#1{\leavevmode\borderandboxit{\z@}%
+  \boxrulethickness{\hbox to #1{\vbox to #1{\vss}\hss}}}
+\def\@carr#1#2{{\vcenter{\vbox{\hrule height.#2pt
+        \hbox{\vrule width.#2pt height#1pt \kern#1pt
+           \vrule width.#2pt}
+        \hrule height.#2pt}}}}
+\def\carre{\mathchoice\@carr34\@carr34\@carr{2.1}3\@carr{1.5}3}
+
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% \boxit
+%   the parameter is a box of text.
+% \boxit takes its parameter and surrounds it with approximately
+% \fboxsep of space on all sides then with rules.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\def\boxit#1{\borderandboxit{\fboxsep}\boxrulethickness{#1}}
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% \boxaround
+%   the parameter is text (including possibly several paragraphs).
+% \boxaround allows its parameter to be several paragraphs;
+% it does some vertical spacing, then forms a box to the columnwidth
+% around the text.  The left and right margin around the text 
+% inside the box is \boxaroundhmargin; \boxaroundvmargin gives
+% the upper and lower margin.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\newdimen\boxaroundhmargin \newdimen\boxaroundvmargin
+\boxaroundhmargin=3pt        % by default, this isn't much
+\boxaroundvmargin=3pt        % by default, this isn't much
+ 
+\long\def\boxaround#1{\vskip6pt
+% {\YdimenA=\hsize \advance\YdimenA by-\boxaroundhmargin
+  {\YdimenA=\columnwidth \advance\YdimenA by-\boxaroundhmargin
+   \advance\YdimenA by-\boxaroundhmargin   % once for each side
+%  \setbox\YboxA=\hbox to \hsize{\hss
+   \setbox\YboxA=\hbox to \columnwidth{\hss
+%                    \vbox{\hsize=\YdimenA
+                     \vbox{\columnwidth=\YdimenA
+                           \vskip\boxaroundvmargin #1
+                           \vskip\boxaroundvmargin}\hss}%
+   \borderandboxit{\z@}\boxrulethickness{\box\YboxA}}%
+  \vskip2pt plus\z@ minus\z@}
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% \reservedbox
+%   parameters are two dimensions which give the width and
+% height respectively of a reserved box.
+%   This macro inserts a ruled vbox of the given dimensions.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\def\reservedbox#1#2{\par
+ {\YdimenA=#1 \YdimenB=#2
+  \setbox\YboxA=\hbox to \YdimenA{\hss\vrule height \YdimenB width \z@}%
+  \vbox to #2{\vss\hbox{\hss\borderandboxit{\z@}%
+              \boxrulethickness{\box\YboxA}\hss}\vss}%
+ }                   % extra level to localize change of dimens 
+}
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% \reservedcolbox
+%   the parameter gives a dimension.
+% forms a \reservedbox with a width of \the\columnwidth and a
+% height determined by the parameter.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%\def\reservedcolbox#1{\reservedbox{\hsize}{#1}}
+\def\reservedcolbox#1{\reservedbox{\columnwidth}{#1}}
+\let\@boxes@loaded=\reservedcolbox
+\else
+\typeout{boxes.sty already loaded}
+\fi

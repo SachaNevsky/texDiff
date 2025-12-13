@@ -1,0 +1,1829 @@
+%% LyX 2.3.3 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[english]{article}
+\usepackage{lmodern}
+\renewcommand{\sfdefault}{lmss}
+\renewcommand{\ttdefault}{lmtt}
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\synctex=-1
+\usepackage{color}
+\usepackage{babel}
+\usepackage{wrapfig}
+\usepackage{booktabs}
+\usepackage{calc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{esint}
+\usepackage[unicode=true,pdfusetitle,
+ bookmarks=true,bookmarksnumbered=true,bookmarksopen=true,bookmarksopenlevel=2,
+ breaklinks=true,pdfborder={0 0 1},backref=section,colorlinks=true,pdfpagemode=FullScreen]
+ {hyperref}
+\hypersetup{
+ pdfborderstyle=}
+
+\makeatletter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
+%% Because html converters don't know tabularnewline
+\providecommand{\tabularnewline}{\\}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Textclass specific LaTeX commands.
+\newenvironment{example}%
+{\begin{center}\ttfamily}{\end{center}}
+\newenvironment{lyxcode}
+	{\par\begin{list}{}{
+		\setlength{\rightmargin}{\leftmargin}
+		\setlength{\listparindent}{0pt}% needed for AMS classes
+		\raggedright
+		\setlength{\itemsep}{0pt}
+		\setlength{\parsep}{0pt}
+		\normalfont\ttfamily}%
+	 \item[]}
+	{\end{list}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+\usepackage{babel}
+\usepackage[def-file=diffcoeff-doc]{diffcoeff}
+
+\makeatother
+
+\begin{document}
+\title{\texttt{diffcoeff}~\\
+ a \LaTeX{} package to ease\texttt{ }the~\\
+ writing of differential coefficients \\
+ in all their variety\\
+ Version 3.2}
+\author{Andrew Parsloe\\
+{\small{}(ajparsloe@gmail.com)}}
+\maketitle
+\begin{abstract}
+\noindent This package allows the easy and consistent writing of ordinary,
+partial and other derivatives of arbitrary (algebraic or numeric) order.
+For mixed partial derivatives, the total order of differentiation is calculated
+by the package. Optional arguments allow for points of evaluation (ordinary
+derivatives), or variables held constant (partial derivatives), and the
+placement of the differentiand (numerator or appended). The package uses
+\texttt{xtemplate,} allowing systematic fine-tuning of the display and
+generation and use of variant forms, including derivatives built from $D$,
+$\Delta$ or $\delta$. A command for differentials ensures the $\dl x$
+(or $\dl.up.x$) used in integrals is consistent with the form used in
+derivatives. The package requires the \LaTeX 3 bundles \texttt{l3kernel}
+and \texttt{l3packages}. 
+\end{abstract}
+\tableofcontents{}
+
+\section{Introduction}
+
+The \LaTeX{} package \texttt{diffcoeff.sty} is written in the expl3 language
+of \LaTeX 3\texttt{ }and requires the bundles \texttt{l3kernel} and \texttt{l3packages}
+(the latter for the \texttt{xparse}, \texttt{l3keys2e} and \texttt{xtemplate}
+packages\texttt{)}. The package is invoked in the usual way by entering 
+\begin{lyxcode}
+\textbackslash usepackage\{diffcoeff\}
+\end{lyxcode}
+in the preamble of your document. There are two package options. The first
+is a switch, \texttt{ISO}, which turns on formatting conforming to ISO
+recommendations: 
+\begin{lyxcode}
+\textbackslash usepackage{[}ISO{]}\{diffcoeff\}
+\end{lyxcode}
+The effect of this is discussed in Section~\ref{sec:Changing-defaults}.
+The second is a filename for a file of extension \texttt{.def} containing
+definitions of variant forms of derivative: 
+\begin{lyxcode}
+\textbackslash usepackage{[}def-file=<filename>{]}\{diffcoeff\}
+\end{lyxcode}
+This is discussed in Subsection~\ref{subsec:The-.def-file}. Of course
+both options can be used in the same call if desired: 
+\begin{lyxcode}
+\textbackslash usepackage{[}ISO,def-file=<filename>{]}\{diffcoeff\}
+\end{lyxcode}
+For the present document, the call is 
+\begin{lyxcode}
+\textbackslash usepackage{[}def-file=diffcoeff-doc{]}\{diffcoeff\}
+\end{lyxcode}
+with the file \texttt{diffcoeff-doc.def} in the same directory as \texttt{diffcoeff.tex}.
+
+\subsection{Version comparison}
+
+Unlike version 1, version 2 and later are built on the the \texttt{xtemplate}
+package (included in the \texttt{l3packages} bundle) which makes certain
+facilities available which it would be silly not to exploit. Hence the
+coding in the later versions is completely different and there are consequences.
+\begin{enumerate}
+\item The \texttt{\textbackslash diffset} command, formerly used to tweak the
+display of derivatives, has been superseded by the \texttt{\textbackslash diffdef}
+command. \texttt{\textbackslash diffset} now sends a message warning of
+its obsolescence to the terminal and \LaTeX{} log but is otherwise functionless.
+It should not interfere with the compilation of a document but any intended
+fine-tuning of the display by means of the \texttt{\textbackslash diffset}
+command\texttt{ }will not eventuate. The warning message is: \texttt{Obsolete
+command: \textbackslash diffset has been superseded by the \textbackslash diffdef
+command. See the diffcoeff documentation for further information.} The
+\texttt{\textbackslash diffdef} command is discussed in Subsection~\ref{subsec:diffdef}. 
+\item The optional trailing argument used to indicate a point of evaluation or
+variables held constant is now delimited by square brackets, \texttt{{[}}
+and \texttt{{]}}, as other optional arguments are. For compatibility with
+version 1, braces can still be used but their use to delimit an \emph{optional}
+argument is now deprecated in \texttt{xparse} on which \texttt{diffcoeff}
+depends. Presumably at some stage this provision will be removed from \texttt{xparse}.
+For future-proofing documents use square brackets. 
+\item The commands \texttt{\textbackslash Diff}, \texttt{\textbackslash diffd}
+and \texttt{\textbackslash Diffd} used to construct derivatives from $D$,
+$\delta$ and $\Delta$ in version 1, are still available in versions 2
+and 3, but deprecated. A new optional argument in the \texttt{\textbackslash diff}
+command offers these and a host of other possibilities and is now the preferred
+method of forming such variants; see Subsection~\ref{subsec:D-delta-Delta}.
+\item Version 3 adds a command, \texttt{\textbackslash dl} (from \emph{d}ifferentia\emph{l})
+to write differentials like $dx$ that occur in integrals and in other
+contexts in a manner consistent with the form used in derivatives. After
+all, if one is using upright `d's in derivatives, similarly upright `d's
+should occur in these other contexts.\footnote{This rather obvious lack in version 2 was pointed out to me by Sergio Callegari.}
+\item Version 3.1 enables the differential command to be used before forms like
+\texttt{\textbackslash vec\{x\}} (an overlooked possibility causing an
+error in version 3).
+\item Version 3 also provides some simple spacing commands that can be useful
+for tweaking standard spacing.
+\item Version 3.2 fixes a bug in which an ordinary derivative as the differentiand
+of a partial derivative displayed as a partial derivative. It now displays,
+as it should, as an ordinary derivative. 
+\item In version 3.2, the differential command \texttt{\textbackslash dl} now
+also allows negative spacing before it.
+\end{enumerate}
+
+\subsubsection*{Note on terminology}
+
+I refer throughout to the quantity or function being differentiated as
+the \emph{differentiand} (in line with \emph{integrand}, \emph{operand},
+etc.).
+
+\section{A Rogues' Gallery of derivatives}
+
+\label{sec:Rogues'-gallery}Browsing through texts on statistical mechanics,
+relativity and classical mechanics I find the following choice examples
+of derivatives `disporting every which way'.
+
+Multi-character variables of differentiation un-parenthesized:
+
+\begin{equation}
+\diffp{\frac{\psi}{\Theta}}{\frac{1}{\Theta}},\quad\diffp{E/T}{1/T},\quad\diffp{\ln f}{\ln x_{0}},\quad\diffp\psi{a_{i},\frac{1}{\Theta}},\quad\diffp{\mathcal{L}}{\eta_{,i}^{(r)}}.\label{eq:eg1}
+\end{equation}
+Multi-character variables of differentiation parenthesized: 
+\begin{equation}
+\diffp H{\displaystyle \diffp S{q_{k}}[]},\quad\diffp\varepsilon{(1/\Theta)}.\label{eq:eg2}
+\end{equation}
+Higher-order derivatives where the parentheses do not or do include the
+operator: 
+\begin{equation}
+\diffp[2]q{\frac{1}{\Theta}},\quad\diffp[2]q{1/\Theta},\quad\diffp[2]\varepsilon{a_{i}},\quad\diff.wrapall.[2]{\phi^{i}(x^{i})}{x^{i}}.\label{eq:eg3}
+\end{equation}
+Should the $d$ or $\partial$ be included within the parentheses, as in
+the last of (\ref{eq:eg3}), or not, as in the others? Logic says `yes';
+practice suggests (generally) `no'.
+
+Indicating a point of evaluation is similarly varied: 
+\begin{equation}
+\diff.pvrule.\phi\varepsilon[\varepsilon=\varepsilon_{0}],\quad\diff.pvrule.[2]\phi\varepsilon[\varepsilon=\varepsilon_{0}],\quad\diff.psqbra.{b^{\beta}}{a^{\alpha}}[b=0],\quad\diff.paren.uv[v=0].\label{eq:eg4}
+\end{equation}
+ISO 80000-2 (item 2.11.13) favours the last of these -- parentheses --
+for ordinary derivatives. Presumably, partial derivatives should follow
+suit, although parentheses are also used to indicate variables held constant:
+\begin{equation}
+\diffp*{\frac{P}{T}}U[V],\quad\diffp S{N_{2}}[U,V,N_{1}],\quad\diffp S/T[V].\label{eq:eg5}
+\end{equation}
+
+Other symbols besides $d$ and $\partial$ are used to denote derivative-like
+quantities. From introductory calculus, classical mechanics and thermodynamics
+come $\delta$ and $\Delta$, from fluid mechanics comes $D$: 
+\begin{equation}
+\diff.delta.yx,\quad\diff.D.\rho t,\quad\diff.pDelta.UT[V],\quad\diff.Delta.U/T,\quad\diff.delta.{\mathcal{L}}{\eta^{(r)}}.\label{eq:eg6}
+\end{equation}
+
+There are those, like the International Organization for Standardization
+(ISO), who stipulate (or prefer) an upright `d' for their derivatives:
+\begin{equation}
+\diff.up.yx.\label{eq:eg11}
+\end{equation}
+When the differentiand is too big or awkward to sit in the numerator and
+is appended to the operator, the $d$ or $\partial$ in the numerator is
+generally centred -- but not always. In texts prior to the age of computerised
+typesetting one will sometimes find the symbol pushed to the \emph{left}:
+\begin{equation}
+\diff.pleft.*{\diffp{x^{i^{*}}}{x^{k^{*}}}{}}{x^{l^{*}}},\quad\diff.left.*{\left(\frac{m\mathbf{q}_{x}}{\sqrt{1-q^{2}}}\right)}{t}.\label{eq:eg12}
+\end{equation}
+The observant will note an italic adjustment with the first expression,
+so that the $\partial$ in the numerator and the $\partial$ in the denominator
+line up in a slanting column, but no such adjustment for the $d$-s in
+the second derivative.
+
+And finally, the operator in the numerator may differ from that in the
+denominator. For instance, in tensor calculus acceleration is sometimes
+written 
+\[
+\diff.nabla.{v^{i}}t=\diff{v^{i}}t+\Gamma_{k\hphantom{i}h}^{\hphantom{k}i}v^{h}\diff{y^{k}}t
+\]
+where $\nabla v^{i}$ is the `absolute differential' of the velocity $v^{i}$.
+
+Version 2 or later of the \texttt{diffcoeff} package has the generative
+power to cope with all these variations -- see Section~\ref{sec:Changing-defaults}
+-- although it is unlikely an author should need to call on this capacity
+to anything like the extent required for this Rogues' Gallery.
+
+\section{Ordinary derivatives \label{sec:Ordinary-derivatives}}
+
+Writing\textbf{ }\texttt{\textbackslash diff\{y\}\{x\}} will produce $\diff{y}{x}$
+in text style (i.e., placed between \texttt{\$ \$}) or 
+\[
+\diff{y}{x}
+\]
+in display style (i.e., placed between \texttt{\textbackslash{[} \textbackslash{]}}
+). In fact \texttt{\textbackslash diff yx} (omitting the braces) will
+produce these results, with a saving on keystrokes. The braces are needed
+only when an argument -- differentiand, variable of differentiation --
+is more than a single token. 
+\begin{itemize}
+\item If you want upright `$\mathrm{d}$'s as default, as ISO 80000-2 recommends,
+rather than the math-italic `$d$'s used here, this can easily be done;
+see Section~\ref{sec:Changing-defaults} on changing default settings. 
+\end{itemize}
+For inclusion in a line of text you might prefer to use a slash-fraction
+form of derivative. That is achieved by inserting a slash, `/', between
+numerator and denominator arguments: \texttt{\textbackslash diff\{\textbackslash ln
+x\}/x} produces $\diff{\ln x}/x$. (Braces are required for the numerator
+in this case since it contains more than one token.)
+
+\subsection{Order of differentiation}
+
+An optional first argument allows the order of differentiation to be specified.
+The order need not be a number; an algebraic order of differentiation is
+perfectly acceptable as is a mix of the two:
+\begin{example}
+\textbackslash diff{[}2{]}yx $\Longrightarrow\quad{\displaystyle \diff[2]yx,}$\medskip{}
+
+\textbackslash diff{[}n+1{]}yx $\Longrightarrow\quad{\displaystyle \diff[n+1]yx}.$
+\end{example}
+
+As mentioned, the braces can be and have been omitted around the $x$ and
+$y$; the square brackets around the optional argument, the order of differentiation,
+are essential. For a first-order derivative, no optional argument is needed
+and entering \texttt{1} as the optional argument has no effect:
+\begin{example}
+\textbackslash diff{[}1{]}yx $\Longrightarrow\quad{\displaystyle \diff[1]yx.}$
+\end{example}
+
+\noindent In slash style, \texttt{\textbackslash diff{[}2{]}y/x} produces
+$\diff[2]y/x$, and \texttt{\textbackslash diff{[}n+1{]}y/x} produces
+$\diff[n+1]y/x$.
+
+\subsection{Multi-character variables of differentiation}
+
+Differentiating a function of a function may involve a multi-character
+differentiation variable. For instance, to differentiate $\ln\sin x$ in
+$x$ means forming the product
+\begin{example}
+\textbackslash diff\{\textbackslash ln\textbackslash sin x\}\{\textbackslash sin
+x\}\textbackslash diff\{\textbackslash sin x\}x $\Longrightarrow\quad{\displaystyle \diff{\ln\sin x}{\sin x}\diff{\sin x}x.}$
+\end{example}
+
+\noindent Forming the \emph{second} derivative of $\ln\sin x$ will now
+involve forming (among other quantities)
+\begin{example}
+\noindent \textbackslash diff{[}2{]}\{\textbackslash ln\textbackslash sin
+x\}\{\textbackslash sin x\} $\Longrightarrow\quad{\displaystyle \diff[2]{\ln\sin x}{\sin x}.}$
+\end{example}
+
+\noindent Parentheses have been inserted automatically by \texttt{diffcoeff}
+around $\sin x$ in the denominator to avoid any visual hint that we are
+differentiating in the sine of the square of $x$.
+
+The question is: are the parentheses in the right place? Logically, no.
+They should include the $d$: $(d\sin x)^{2}$ -- it is the differential
+$d\sin x$ that is of the second order. But as the examples in the Rogues'
+Gallery show -- see particularly (\ref{eq:eg3}) -- the inclination seems
+to be to do otherwise. This may be because one wants, in any case, to parenthesise
+the variable. A second, outer pair of parentheses then seems too fussy
+and detracts from comprehending the symbol `at a glance': 
+\[
+\diff.wrapall.[2]{f(x)}{(1/x)}.
+\]
+
+Customary but illogical notations are familiar in mathematics -- think
+of the position of the superscripts in an identity like $\sin^{2}\theta+\cos^{2}\theta=1$.
+But, like other features of the derivative, the manner of this wrapping
+in parentheses of long variables for \emph{higher order} derivatives is
+customisable; see Section~\ref{sec:Changing-defaults}.
+
+For first order derivatives, parenthesising does not occur. If you want
+the variable of differentiation to be parenthesised, you need to insert
+them yourself:
+\begin{example}
+\textbackslash diff \{f(x)\}\{1/x\}, \textbackslash quad\textbackslash diff
+\{f(x)\}\{(1/x)\} $\Longrightarrow\quad{\displaystyle \diff{f(x)}{1/x},\quad\diff{f(x)}{(1/x)}.}$
+\end{example}
+
+
+\subsubsection{Minutiae of spacing}
+
+You may find the spacing between the `d' and the `f' in the last example
+uncomfortably close. The \texttt{diffcoeff} package offers four simple
+spacing commands to fine-tune the display. These are 
+\begin{description}
+\item [{\texttt{\textbackslash negmu}}] insert spacing of $-1$ mu 
+\item [{\texttt{\textbackslash nilmu}}] insert spacing of $0$ mu 
+\item [{\texttt{\textbackslash onemu}}] insert spacing of $1$ mu 
+\item [{\texttt{\textbackslash twomu}}] insert spacing of $2$ mu 
+\end{description}
+Thus for the last example, inserting \texttt{\textbackslash nilmu} and
+\texttt{\textbackslash onemu} in the appropriate places produces
+\begin{example}
+\textbackslash diff \{\textbackslash nilmu f(x)\}\{\textbackslash onemu
+1/x\}, \textbackslash quad \textbackslash diff \{\textbackslash nilmu
+f(x)\}\{(1/x)\} $\Longrightarrow\quad{\displaystyle \diff{\nilmu f(x)}{\onemu1/x},\quad\diff{\nilmu f(x)}{(1/x)}.}$
+\end{example}
+
+
+\subsection{Appending the differentiand: \texttt{\textbackslash diff{*}}}
+
+Some differentiands are too big or awkward to be placed neatly in the numerator
+of a derivative and it is natural to append them to a preceding differential
+operator. One way to do this is to leave the numerator argument empty in
+the \texttt{\textbackslash diff} command and follow the command with the
+differentiand. A better way is to star the \texttt{\textbackslash diff}
+command. This tells \texttt{diffcoeff} to append the differentiand. Thus
+suppose the differentiand is a polynomial, say $ax^{2}+bx+c$. Add a star
+(an asterisk) to the \texttt{\textbackslash diff} command:
+\begin{example}
+\textbackslash diff{*}\{(ax\textasciicircum 2+bx+c)\}x $\Longrightarrow\quad{\displaystyle \diff*{(ax^{2}+bx+c)}x.}$
+\end{example}
+
+A virtue of using an asterisk is that if one isn't sure whether a differentiand
+should be appended or not, it is an easy matter to simply insert or delete
+the asterisk to compare the results. For example, a second derivative is
+an iterated derivative -- one in which a derivative forms the differentiand
+of another derivative:
+\begin{example}
+\textbackslash diff{[}2{]}yx = \textbackslash diff{*}\{\textbackslash diff
+yx\}x $\Longrightarrow\quad{\displaystyle \diff[2]yx=\diff*{\diff yx}x},$
+\end{example}
+
+\noindent which is more elegant to my eye than
+\begin{example}
+\noindent \textbackslash diff{[}2{]}yx = \textbackslash diff\{\textbackslash diff
+yx\}x $\Longrightarrow\quad{\displaystyle \diff[2]yx=\diff{\diff yx}x},$
+\end{example}
+
+\noindent although whether the \emph{meaning} is clearer is moot.\emph{
+}It is easy to switch between the two forms on the right, simply by inserting
+or removing the asterisk.
+
+In slash style with the star option, the polynomial example becomes
+\begin{example}
+\textbackslash diff{*}\{(ax\textasciicircum 2+bx+c)\}/x $\Longrightarrow\quad\text{\ensuremath{{\displaystyle (\diff{}/{x})(ax^{2}+bx+c)}}, }$
+\end{example}
+
+\noindent where the parentheses around the differential operator are automatically
+inserted by \texttt{diffcoeff}. Like other elements of automatic formatting,
+this is user-adjustable; see Section~\ref{sec:Changing-defaults}.
+
+\subsection{Point of evaluation\label{subsec:Point-of-evaluation}}
+
+If you want to specify a point at which the derivative is evaluated, append
+a final optional argument. Note that there \emph{must be no space} before
+the left square bracket of the argument:
+\begin{example}
+\textbackslash diff{[}2{]}yx{[}0{]} $\Longrightarrow\quad{\displaystyle \diff[2]yx[0]}$
+\end{example}
+
+\noindent If a space does slip in before the final optional argument, it
+will not cause a \LaTeX{} error. Instead, the argument will be treated as
+a square-bracketed mathematical expression following the derivative, and
+typeset as such. 
+\begin{itemize}
+\item If you prefer to use subscripted \emph{parentheses} around the derivative
+to indicate a point of evaluation -- as ISO 80000-2 recommends -- then
+this can easily be done; see Section~\ref{sec:Changing-defaults} on changing
+default settings. Or use the \texttt{ISO} package option; see the introduction. 
+\end{itemize}
+Because the slash form spreads the derivative out horizontally, parentheses
+are preferred here to indicate a point of evaluation:
+\begin{example}
+\textbackslash diff\{\textbackslash ln sin x\}/\{sin x\}{[}x=\textbackslash pi/6{]}
+$\Longrightarrow\quad{\displaystyle \diff{\ln\sin x}/{\sin x}[x=\pi/6]}$
+\end{example}
+
+\noindent A vertical rule (or `pipe') can become too remote from the opening
+$d$ of the differential coefficient: $\diff.svrule.{\ln\sin x}/{\sin x}[x=\pi/6]$;
+parentheses tie the whole cluster of symbols together.
+
+\subsubsection{Superscripts}
+
+It is easy to add a superscript to a derivative to indicate evaluation
+at two points and the difference between the values:
+\begin{example}
+\textbackslash diff \{\textbackslash sin x\}x{[}0{]}\textasciicircum\{\textbackslash pi/2\}
+${\displaystyle \Longrightarrow\quad\diff{\sin x}x[0]^{\pi/2}}$
+\end{example}
+
+\noindent If you want only the superscript, no subscript, include the final
+optional argument but leave it empty. Thus, for a particle of mass $m$
+moving along a line, distance $x$ at time $t$, the kinetic energy is:
+\begin{example}
+\noindent \textbackslash tfrac 12 m \textbackslash diff x/t{[}{]}\textasciicircum 2
+$\Longrightarrow\quad{\displaystyle \tfrac{1}{2}m\diff x/t[]^{2}}.$
+\end{example}
+
+
+\section{Partial derivatives\label{sec:Partial-derivatives}}
+\noindent \begin{flushleft}
+Partial derivatives follow the same pattern as ordinary derivatives, with
+some extensions. The command this time is \texttt{\textbackslash diffp}.
+Thus \texttt{\textbackslash diffp\{F\}\{x\}}, or, with a saving on keystrokes,\texttt{
+\textbackslash diffp Fx}, produces $\diffp Fx$ in text style and 
+\[
+\diffp{F}{x}
+\]
+in display style. (As for \texttt{\textbackslash diff}, the omission of
+braces is possible when the differentiand or the differentiation variable
+are single tokens.) As for \texttt{\textbackslash diff}, there is a slash
+form, generally preferred for inline use, \texttt{\textbackslash diffp
+F/x}, displaying as $\diffp F/x$. Given that \texttt{\textbackslash partial}
+takes 8 keystrokes to type, the slash form \emph{does }economise on keystrokes
+for a partial derivative. 
+\par\end{flushleft}
+
+\begin{flushleft}
+Again an optional argument allows the specification of the order of differentiation
+and it may be numeric or algebraic or a mix of the two: 
+\par\end{flushleft}
+\begin{example}
+\textbackslash diffp{[}3{]}F/x , \textbackslash quad \textbackslash diffp{[}n{]}F/x
+$\Longrightarrow\quad{\displaystyle {\displaystyle {\displaystyle \diffp[3]F/x}},\quad{\displaystyle \diffp[n]F/x.}}$\medskip{}
+ \textbackslash diffp{[}n+1{]}Fx $\Longrightarrow\quad{\displaystyle {\displaystyle \diffp[n+1]Fx,}}$
+\end{example}
+
+
+\subsection{Variables held constant}
+
+In a subject like thermodynamics, there is a need to indicate which variable
+or variables are held constant when the differentiation occurs. To show
+this, append a final square-bracketed optional argument and ensure that
+it follows \emph{immediately} on the preceding mandatory argument. A space
+here will detach the argument from the derivative and result in it being
+treated as a mathematical expression following the derivative. Thus to
+differentiate the entropy $S$ in temperature $T$ while holding the volume
+$V$ constant, write
+\begin{example}
+\textbackslash diffp ST{[}V{]} $\Longrightarrow\quad{\displaystyle \diffp ST[V]}$
+\end{example}
+
+\noindent In slash form the same expression looks like
+\begin{example}
+\noindent \textbackslash diffp S/T{[}V{]} $\Longrightarrow\quad{\displaystyle \diffp{S}/{T}[V]}.$
+\end{example}
+
+This use of a parenthesised, subscripted form to indicate a variable or
+variables held constant, leaves open the question: how do we represent
+a point of evaluation? ISO 80000-2 makes no recommendation for \emph{partial}
+derivatives; presumably we follow the same practice as their recommendation
+for ordinary derivatives:
+\begin{example}
+\textbackslash diffp \{F(x,y)\}x{[}(0,0){]} $\Longrightarrow\quad{\displaystyle \diffp{F(x,y)}x[(0,0)]}$
+\end{example}
+
+However, you may prefer (as many do) to use a vertical rule for this purpose:
+\[
+\diff.pvrule.{F(x,y)}x[(0,0)]
+\]
+Making this possibility available is discussed in Section~\ref{sec:Changing-defaults}.
+
+An empty final argument produces a parenthesised derivative with no subscript:
+\begin{example}
+\textbackslash diffp yx{[}{]}${\displaystyle \Longrightarrow\quad\diffp yx[]}.$
+\end{example}
+
+\noindent This can be useful sometimes, e.g. for writing Lagrange's equations
+of motion in analytic mechanics:
+\begin{example}
+\noindent \textbackslash diffp L\{q\_k\}-\textbackslash diff{*}\{\textbackslash diffp
+L\{\textbackslash dot\{q\}\_k\}{[}{]}\}t = 0 $\Longrightarrow\quad{\displaystyle \diffp L{q_{k}}-\diff*{\diffp L{\dot{q}_{k}}[]}t}=0.$
+\end{example}
+
+
+\subsubsection{Text-style derivatives}
+
+The \texttt{diffcoeff} package assumes that derivatives formed as `numerator
+over denominator' will be used in display-style expressions, and that the
+slash form will be used for inline use (text style). This is the familiar
+practice in the literature. If one \emph{does} use the first form in an
+inline expression where a variable is held constant, say \texttt{\textbackslash diffp
+ST{[}V{]}} as here $\diffp ST[V]$, the result is unsatisfactory, the subscript
+too tight on the closing parenthesis and too much space between parentheses
+and derivative. The matter is easily resolved using `variant forms' --
+see Subsection~\ref{subsec:Text-and-script-style} below -- giving, for
+our example, $\diff.ptxt.ST[V]$.
+
+\subsection{Appending the differentiand\label{subsec:Partial-appending}}
+
+For a long or awkward differentiand, it is generally better to \emph{append}
+it to a preceding differential operator, rather than create a fractional
+form with the long expression in the numerator. As with ordinary derivatives,
+this is achieved by adding an asterisk to (i.e. by starring) the \texttt{\textbackslash diffp}
+command.
+\begin{example}
+\textbackslash diffp{*}{[}2{]}\{\textbackslash Phi(x,y,z)\}x $\Longrightarrow\quad{\displaystyle \diffp*[2]{\Phi(x,y,z)}x.}$
+\end{example}
+
+\noindent Alternatively you could leave the first mandatory argument empty
+and manually append the differentiand, but by deleting or inserting an
+asterisk, it is easy to compare the two forms, differentiand-in-the-numerator,
+differentiand-appended, and see which is preferable.
+
+In slash form, parentheses are automatically inserted around the differential
+operator when the differentiand is appended,
+\begin{example}
+\textbackslash diffp{*}{[}n{]}\{f(x)\}/x $\Longrightarrow\quad{\displaystyle \diffp*[n]{f(x)}/x,}$
+\end{example}
+
+\noindent although this behaviour can be changed (Section~\ref{sec:Changing-defaults}
+again).
+
+If you wish to both append the differentiand \emph{and} indicate variables
+held constant, then the starred form is much the easier way to achieve
+this. Thus, to express a relation in thermodynamics,
+\begin{example}
+\textbackslash diffp{*}\{\textbackslash frac PT\}U{[}V{]} = \textbackslash diffp{*}\{\textbackslash frac
+1T\}V{[}U{]} $\Longrightarrow\quad{\displaystyle \diffp*{\frac{P}{T}}U[V]=\diffp*{\frac{1}{T}}V[U]}$
+\end{example}
+
+\noindent where the starring automatically takes care of the parentheses
+and subscripts.
+
+\subsection{Iterated derivatives}
+
+Derivatives can be the differentiands of derivatives, as seen above when
+writing Lagrange's equations,
+\begin{example}
+\textbackslash diffp L\{q\_k\}-\textbackslash diff{*}\{\textbackslash diffp
+L\{\textbackslash dot\{q\}\_k\}{[}{]}\}t = 0 $\Longrightarrow\quad{\displaystyle \diffp L{q_{k}}-\diff*{\diffp L{\dot{q}_{k}}[]}t}=0.$
+\end{example}
+
+\noindent However, in versions of \texttt{diffcoeff} before version 3.2,
+an ordinary derivative within a partial derivative rendered as a partial
+derivative. That is now corrected, the ordinary derivative rendering correctly:
+\begin{example}
+\textbackslash diffp{*}\{\textbackslash diff\{x\textasciicircum\textbackslash mu\}\{\textbackslash lambda\}\}\{x\textasciicircum\textbackslash sigma\}
+$\Longrightarrow\quad{\displaystyle \diffp*{\diff{x^{\mu}}{\lambda}}{x^{\sigma}}}$
+\end{example}
+
+
+\subsection{Mixed partial derivatives}
+
+The new thing with partial derivatives, not present with ordinary derivatives,
+is \emph{mixed} partial derivatives, where there is more than one variable
+of differentiation. If each variable is differentiated only to the first
+order, then it is easy to specify the derivative. Suppose $F$ is a function
+of three variables, $x$, $y$ and $z$. Then
+\begin{example}
+\textbackslash diffp F\{x,y,z\} $\Longrightarrow\quad{\displaystyle \diffp F{x,y,z}}.$
+\end{example}
+
+The variables of differentiation are listed in order in a comma list forming
+the second mandatory argument. The total order of differentiation (3 in
+this example) is inserted automatically -- \texttt{diffcoeff} does the
+calculation. There is also a slash form:
+\begin{example}
+\textbackslash diffp F/\{x,y,z\} $\Longrightarrow\quad{\displaystyle \diffp F/{x,y,z}}.$
+\end{example}
+
+If we want to differentiate variables to higher order, then their orders
+need to be specified explicitly. To do so use a comma list for the optional
+argument:
+\begin{example}
+\textbackslash diffp{[}2,3{]}F\{x,y,z\} $\Longrightarrow\quad{\displaystyle \diffp[2,3]F{x,y,z}.}$
+\end{example}
+
+\noindent Notice that the overall order of the derivative -- 6 -- is
+again automatically calculated and inserted as a superscript on the $\partial$
+symbol in the numerator. In this example, the comma list of orders has
+only two members, even though there are three variables. It is assumed
+that the orders given in the comma list apply in sequence to the variables,
+the first order to the first variable, the second to the second variable,
+and so on, and that any subsequent orders not listed in the optional argument
+are, by default, 1. Thus we need to specify only 2 and 3 in the example;
+the order of differentiation of $z$ is 1 by default. But you \emph{cannot}
+use an order specification like \texttt{{[} , ,2{]}}. Instead write \texttt{{[}1,1,2{]}}.\textbf{
+}It is only the \emph{tail} of an order specification which can be omitted.
+
+\subsubsection{Minutiae of spacing (again)\label{subsec:Minutiae-of-spacing}}
+
+In Chapter 18 of the \emph{The\TeX book}, Knuth suggests inserting a thin
+space, \texttt{\textbackslash ,} (or 3 mu), between differentials in appropriate
+contexts, giving as an example $dx\,dy=r\,dr\,d\theta$. In the denominator
+of a derivative, however, that degree of extra spacing seems too great
+(to my eye), interfering with seeing the derivative `as a whole', 
+\[
+\diff.pwide.F{x,y,z},
+\]
+especially for the slash-form of derivative: $\diff.pwide.F/{x,y,z}$.
+Some spacing is desirable, but less; by default \texttt{diffcoeff} inserts
+2 mu between the differentials in the fraction form of derivative and 1
+mu in the slash form.
+
+Should a differentiation occur to higher order and so a variable acquire
+a superscript, an adjustment is made to the extra spacing. By default 1
+mu is subtracted from the default spacing. Thus in 
+\[
+\diffp[2]F{x,y,z},
+\]
+2 mu of spacing is inserted between the $\partial y$ and $\partial z$,
+but because the superscript already provides some separation between them,
+only 1 mu is inserted between $\partial x^{2}$ and $\partial y$.
+
+The values used for the spacing and its adjustment in the presence of a
+superscript can be adjusted by the user; see Section~\ref{sec:Changing-defaults}.
+Some other minutiae of spacing are discussed below in Subsection~\ref{subsec:Comma-list-of-vars}
+when the variables themselves are super- or subscripted (as happens in
+tensor calculus, for instance).
+
+\subsubsection{Algebraic orders of differentiation}
+
+Calculation of the overall order of differentiation still occurs even when
+some or all of the individual orders are algebraic variables rather than
+numbers. For example, differentiating in three variables to orders \texttt{1,
+m+1, m-1},
+\begin{example}
+\textbackslash diffp{[}1,m+1,m-1{]}\{F(x,y,z)\}\{x,y,z\} $\Longrightarrow\quad{\displaystyle \diffp[1,m+1,m-1]{F(x,y,z)}{x,y,z}.}$
+\end{example}
+
+
+\subsubsection{Error messages}
+
+Should you specify \emph{more} orders in the comma list of the order specification
+than there are variables, compilation will fail and an error message will
+be sent to the terminal and \LaTeX{} log . For example, if on line 53 (say)
+of my document I specify \texttt{{[}1,m-1,m+1,2{]}} for the orders of differentiation
+but list only \texttt{\{x,y,z\}} for the variables, the message will be 
+\begin{lyxcode}
+!~Package~diffcoeff~Error:~4~orders~of~differentiation~
+
+specified~for~3~variables;~orders~{[}1,m+1,m-1,2{]}
+
+(on~line~53)~for~variables~x,y,z.
+\end{lyxcode}
+Should you try using a \emph{number} raised to a power in an order specification,
+it will cause an error. For example, if on line 53 (say) of my document
+I try to form \texttt{\textbackslash diffp{[}2\textasciicircum 2{]}f\{x,y,z\}}
+compilation will fail with the message 
+\begin{lyxcode}
+!~Package~diffcoeff~Error:~number~followed~by~\textasciicircum ~in~the~
+
+order~specification~{[}2\textasciicircum n,1,1{]}~on~line~53.~Diffcoeff~
+
+cannot~calculate~the~overall~order~of~differentiation~
+
+in~this~case.~Use~the~order-override~option~to~enter~
+
+the~overall~order.
+\end{lyxcode}
+Similarly, you cannot use multiplication (\texttt{\textbackslash times}
+or \texttt{{*}})\texttt{ }or division (\texttt{/} or \texttt{\textbackslash div})
+signs after \emph{numbers} in an order specification; only \texttt{+} or
+\texttt{-} or a left parenthesis (see below) are allowed.
+
+\subsubsection{The order-override option}
+
+\noindent Perhaps the differentiations are to orders \texttt{{[}2km,m-1,m+1{]}}:
+\begin{example}
+\noindent \textbackslash diffp{[}2km,m-1,m+1{]}\{F(x,y,z)\}\{x,y,z\} $\Longrightarrow\quad{\displaystyle \diffp[2km,m-1,m+1]{F(x,y,z)}{x,y,z}.}$
+\end{example}
+
+\noindent Here the overall order is presented as \texttt{2km+2m}. You might
+prefer this to be presented as \texttt{2m(k+1)}. Although \texttt{diffcoeff}
+takes some steps to present the overall order appropriately, it is not
+a computer algebra system and does not factorise expressions. If you want
+to present the order in a manner distinct from that presented by \texttt{diffcoeff},
+use the \emph{order-override option}.
+
+This is a second optional argument immediately following the order specification.
+For our last example, filling the override option with \texttt{2m(k+1)}
+gives the desired result:
+\begin{example}
+\textbackslash diffp{[}2km,m-1,m+1{]}{[}2m(k+1){]}\{F(x,y,z)\}\{x,y,z\}
+$\Longrightarrow\quad{\displaystyle \diffp[2km,m-1,m+1][2m(k+1)]{F(x,y,z)}{x,y,z}}.$
+\end{example}
+
+\noindent As another example, left to its own devices, \texttt{diffcoeff}
+produces
+\begin{example}
+\noindent \textbackslash diffp{[}m/2+n/2,m/2,n/2{]}F\{x,y,z\} $\Longrightarrow\quad{\displaystyle \diffp[m/2+n/2,m/2,n/2]F{x,y,z},}$
+\end{example}
+
+\noindent whereas we would like the total order to be presented as $m+n$.
+Using the override option,
+\begin{example}
+\noindent \textbackslash diffp{[}m/2+n/2,m/2,n/2{]}{[}m+n{]}F\{x,y,z\}
+$\Longrightarrow\quad{\displaystyle \diffp[m/2+n/2,m/2,n/2][m+n]F{x,y,z}}.$
+\end{example}
+
+The order-override option does exactly that: overrides the presentation
+of the calculated order with the manually given one. In fact the calculation
+algorithm does not get called at all when the override option is used so
+that one can in this way present the total order in whatever manner one
+wishes or, indeed, add essentially arbitrary material as a superscript
+to the $\partial$ symbol in the numerator.
+
+\subsubsection{Comma list of variables of differentiation\label{subsec:Comma-list-of-vars}}
+
+In tensor calculus the differentiations are almost always in terms of super-
+or subscripted coordinates. In many other contexts this is the case too
+-- the reciprocal of the temperature in thermodynamics or generalized
+coordinates in analytical mechanics. This is why a comma list is used in
+\texttt{diffcoeff} for specifying variables of differentiation for mixed
+partial derivatives. Although it would be nice to write the minimal \texttt{\{xy\}}
+rather than \texttt{\{x,y}\} when two variables $x$ and $y$ are involved,
+the extra writing is trivial and the comma list allows a simpler handling
+of multi-character variables. For instance in tensor calculus we get expressions
+like
+\begin{example}
+\textbackslash diffp\{A\_i\}\{ x\textasciicircum j,x\textasciicircum k
+\} $\Longrightarrow\quad{\displaystyle \diffp{A_{i}}{x^{j},x^{k}}.}$
+\end{example}
+
+\noindent It is easier to write \texttt{\{x\textasciicircum j,x\textasciicircum k\}}
+here than, say, \texttt{\{\{x\textasciicircum j\}\{x\textasciicircum k\}\}}
+to distinguish the variables. It does mean that should the variable of
+differentiation include a comma then that comma needs to be enclosed in
+braces. There are plenty of instances of this out in the world (see, e.g.,
+the last equation of (\ref{eq:eg1})) but it is overall a rare occurrence.
+
+\paragraph*{Minutiae of spacing (yet again):}
+
+In Subsection~\ref{subsec:Minutiae-of-spacing} above, I discussed a slight
+reduction in the space inserted between the terms occurring in the denominator
+of a mixed partial derivative when a higher order differentiation is involved.
+The superscript appearing on a differentiation variable in that case \emph{of
+itself} introduced a spacing adjustment between the terms. But the present
+discussion involves only first order differentiations and no such reduction
+is automatically made by \texttt{diffcoeff}. However it is still possible
+to explicitly make such an adjustment with the \texttt{\textbackslash negmu}
+command, which inserts \texttt{-1 mu} of spacing. For our example,
+\begin{example}
+\textbackslash diffp\{A\_i\}\{ x\textasciicircum j\textbackslash negmu,x\textasciicircum k
+\} $\Longrightarrow\quad{\displaystyle \diffp{A_{i}}{x^{j}\negmu,x^{k}},}$
+\end{example}
+
+\noindent the \texttt{\textbackslash negmu} decreasing the spacing between
+the terms from the default 2 mu to 1 mu.
+
+\subsubsection{Overkill territory}
+
+Two previous examples illustrate limitations of the algorithm that calculates
+the overall order of differentiation: \texttt{2m/2+2n/2} is not simplified
+to \texttt{m+n} and \texttt{2km+2m} is not factorised to \texttt{2m(k+1)}.
+But there is much that the algorithm \emph{can} handle -- for instance,
+the simple use of parentheses:
+\begin{example}
+\textbackslash diffp{[}2m-(k+1),2(k+1)-m{]}\{F(x,y,z)\}\{x,y,z\} $\Longrightarrow\quad{\displaystyle \diffp[2m-(k+1),2(k+1)-m]{F(x,y,z)}{x,y,z}}.$
+\end{example}
+
+
+\paragraph*{Dynamic use of parentheses}
+
+\noindent For parenthetic expressions to be evaluated as in this example
+-- the \emph{dynamic} use of parentheses -- the left parenthesis must
+be preceded at most by a sign or a number; the right parenthesis must be
+followed at most by a sign.
+
+If a right parenthesis is followed by a \emph{variable}, say by \texttt{m}
+as in the order spec. \texttt{{[}(2n+1)m,(2n-1)m{]}}, it will throw an
+error and halt compilation. A message will be sent to the terminal and
+the \LaTeX{} log like the following (which assumes the order spec. was on
+line 53 of the document): 
+\begin{lyxcode}
+!~Package~diffcoeff~Error:~)~followed~by~m~in~the~
+
+order~specification~{[}(2n+1)m,(2n-1)m{]}~on~line~53.~
+
+Diffcoeff~cannot~calculate~the~overall~order~of~
+
+differentiation~in~this~case.~Use~the~order-override~
+
+option~to~enter~the~overall~order.
+\end{lyxcode}
+This is a limitation on the dynamic use of parentheses -- but they \emph{can}
+be nested.
+
+\paragraph*{Static use of parentheses}
+
+If a left parenthesis is preceded by a \emph{variable} (i.e., not a sign
+or a number) this signals to \texttt{diffcoeff} the \emph{static} use of
+parentheses. No attempt is made to evaluate what is between them and they
+are treated simply as an extension of the variable. For example,
+\begin{example}
+\textbackslash diffp{[}f(k+1)+1,f(k-1)-1{]}\{F(x,y)\}\{x,y\} $\Longrightarrow\quad{\displaystyle \diffp[f(k+1)+1,f(k-1)-1]{F(x,y)}{x,y}}.$
+\end{example}
+
+\noindent In the static case you \emph{can} follow the right parenthesis
+by a variable without generating an error.\emph{ }You can nest them, and
+you can include static parentheses within a dynamic pair; for example,
+\begin{example}
+\noindent \textbackslash diffp{[}2(3+f(k))+1,1-3(f(k)-2){]}\{F(x,y)\}\{x,y\}
+$\Longrightarrow\quad{\displaystyle \diffp[2(3+f(k))+1,1-3(f(k)-2)]{F(x,y)}{x,y}}.$
+\end{example}
+
+\noindent However, the reverse is not possible: you can't have dynamic
+parentheses within a static pair.
+
+\paragraph*{Other refinements}
+
+Exponents and subscripts on a \emph{variable} are fine in an order specification,
+so long as the exponent or subscript consists of a \emph{single} token:
+\begin{example}
+\textbackslash diffp{[}m\textasciicircum 2+2(k-1),m\textasciicircum 2-(k+1){]}F\{x,y,z,w\}
+$\Longrightarrow\quad{\displaystyle \diffp[m^{2}+2(k-1),m^{2}-(k+1)]F{x,y,z,w}}.$
+\end{example}
+
+\noindent Braced arguments containing \emph{multiple} tokens as exponents
+or subscripts to variables will generally not halt compilation but will
+usually give nonsensical results, as will \emph{signs} treated as superscripts
+or subscripts. Neither circumstance is checked for by \texttt{diffcoeff}.
+
+\paragraph*{Override}
+
+There are limitations on what order specifications the \texttt{diffcoeff}
+package can `digest'; equally, it can digest a wide variety of such constructs,
+but it is \emph{not} a computer algebra system. In all those cases where
+it fails to calculate or present a correct total order, the order-override
+option is available. Yes, this is not as convenient as having the overall
+order calculated automatically but (let's remind ourselves) we are deep
+in overkill territory. Mixed partial derivatives are used far less often
+than the pure derivatives, and when they \emph{are} used it is nearly always
+to orders 1 or 2 in the variables. Mixed partial derivatives to exotic
+orders of differentiation are rarely used, so that the limitations of the
+calculational algorithm are of little real moment -- and the override
+option is always available for such cases.
+
+\subsection{Parentheses around multi-character variables}
+
+In thermodynamics and statistical mechanics one may want to differentiate
+in the reciprocal of the temperature, $1/T$ (or $1/\Theta$):
+\begin{example}
+\textbackslash diffp{[}2{]}q\{\textbackslash frac 1\textbackslash Theta\}
+$\Longrightarrow\quad{\displaystyle \diffp[2]q{\frac{1}{\Theta}}.}$
+\end{example}
+
+\noindent In this case and for other \emph{higher order} derivatives of
+multi-character variables of differentiation, the parentheses are inserted
+automatically by \texttt{diffcoeff}. Precisely where parentheses should
+be placed is moot. The placement in this example is not strictly logical,
+although it feels intuitive, but the placement can be customised (Section~\ref{sec:Changing-defaults}).
+
+Parentheses are automatically inserted like this only for higher order
+derivatives. When the differentiation is to first order, parenthesising
+is up to the user:
+\begin{example}
+\textbackslash diffp q\{(\textbackslash frac 1\textbackslash Theta),V\}
+$\Longrightarrow{\displaystyle \quad\diffp q{(\frac{1}{\Theta}),V}.}$
+\end{example}
+
+
+\subsection{Jacobians}
+
+\texttt{diffcoeff} provides a command \texttt{\textbackslash jacob} for
+constructing Jacobians. For example
+\begin{example}
+\textbackslash jacob\{u,v,w\}\{x,y,z\} $\Longrightarrow\quad{\displaystyle \jacob{u,v,w}{x,y,z}.}$
+\end{example}
+
+The comma lists can contain any number of variables. \texttt{\textbackslash jacob}
+does \emph{not} check that the two arguments contain the same number of
+variables, so it is perfectly possible to form an object like \texttt{\textbackslash jacob\{u,v,w\}\{x,y\}}
+which as far as I know has no meaning.
+
+\section{Changing defaults; variant forms\label{sec:Changing-defaults}}
+
+To write the range of different examples displayed in the Rogues' Gallery
+(Section~\ref{sec:Rogues'-gallery}) I have had to make extensive use
+of forms of derivative other than the default. \texttt{Diffcoeff} is built
+on the facilities offered by the \texttt{xtemplate} package (included in
+the \LaTeX 3 bundle \texttt{l3packages)}. These facilities are harnessed
+by means of a command, \texttt{\textbackslash diffdef}, and a further
+optional argument of the \texttt{\textbackslash diff} command.\texttt{ }
+
+How a derivative is displayed in a document is determined by specifying
+values in a `key = value' list. This is done with the \texttt{\textbackslash diffdef}
+command, which also allows a name to be associated with the list. By using
+that name as an argument in the \texttt{\textbackslash diff} command,
+a derivative is formed shaped by those values. Examples will make the process
+clear.
+
+\subsection{Default values: ordinary derivatives}
+
+Table~\ref{tab:Ordinary-derivatives} lists the keys available for forming
+derivatives and the default values\footnote{Note that a mu is a `math unit', 1/18 of an em in the math font used.}
+they have been assigned. These default values have been chosen to coincide
+with those relevant for \emph{ordinary} derivatives -- apart from the
+keys \texttt{denom-term-sep}, \texttt{/-denom-term-sep} and \texttt{term-sep-adjust
+}which are ignored for ordinary derivatives but apply to the case of mixed
+partial derivatives when there is more than one variable of differentiation.
+Keys with an opening slash, /, apply only to the slash form of the derivative;
+keys with an opening asterisk, {*}, apply only when the differentiand is
+appended.
+
+\begin{wraptable}[22]{o}{0.5\columnwidth}%
+\noindent \begin{centering}
+\vspace{-4.5ex}
+ \caption{{\small{}Defaults (ordinary derivatives})\label{tab:Ordinary-derivatives}}
+\par\end{centering}
+\noindent \centering{}\abovetopsep=.5ex{}%
+\begin{tabular}{lr}
+\toprule 
+{\small{}key} & {\small{}default}\tabularnewline
+\midrule 
+{\small{}op-symbol} & \texttt{\small{}d}\tabularnewline
+{\small{}op-symbol-alt} & \texttt{\small{}= op-symbol}\tabularnewline
+{\small{}op-order-sep} & \texttt{\small{}1 mu}\tabularnewline
+{\small{}{*}-op-left} & \texttt{\small{}false}\tabularnewline
+{\small{}{*}-italic-nudge} & \texttt{\small{}3 mu}\tabularnewline
+{\small{}{*}/-op-wrap} & \texttt{\small{}true}\tabularnewline
+{\small{}long-var-wrap} & \texttt{\small{}d(v)}\tabularnewline
+{\small{}denom-term-sep} & \texttt{\small{}2 mu}\tabularnewline
+{\small{}/-denom-term-sep} & \texttt{\small{}1 mu}\tabularnewline
+term-sep-adjust & \texttt{-1 mu}\tabularnewline
+{\small{}left-delim} & \texttt{\small{}\textbackslash left .}\tabularnewline
+{\small{}right-delim} & \texttt{\small{}\textbackslash right |}\tabularnewline
+{\small{}elbowroom} & \texttt{\small{}0 mu}\tabularnewline
+{\small{}subscr-nudge} & \texttt{\small{}0 mu}\tabularnewline
+{\small{}/-left-delim} & \texttt{\small{}(}\tabularnewline
+{\small{}/-right-delim} & \texttt{\small{})}\tabularnewline
+{\small{}/-elbowroom} & \texttt{\small{}0 mu}\tabularnewline
+{\small{}/-subscr-nudge} & \texttt{\small{}0 mu}\tabularnewline
+\bottomrule
+\end{tabular}\end{wraptable}%
+Note that these settings are, in general, font dependent. The values given
+are (in the author's opinion) appropriate for the default \LaTeX{} math
+fonts. There are also likely to be variations required for whether a derivative
+is used in a display-style or text-style or script-style expression. That
+matter is discussed below in Subsection~\ref{subsec:Text-and-script-style}.
+All values specifying a space require the unit (\texttt{mu}) to be given;
+a number alone does not suffice.
+\begin{description}
+\item [{op-symbol}] the operator symbol; for ordinary derivatives, generally
+one of \texttt{d} or \texttt{\textbackslash mathrm\{d\}}, \texttt{D} or
+\texttt{\textbackslash mathrm\{D\}}, \texttt{\textbackslash delta} or
+\texttt{\textbackslash Delta}; for partial derivatives \texttt{\textbackslash partial};
+default = \texttt{d}
+\item [{op-symbol-alt}] if different from \textbf{op-symbol} then used in the
+denominator while \textbf{op-symbol} is used in the numerator; e.g. for
+$\diff.nabla.{v^{i}}t$, \texttt{op-symbol = \textbackslash nabla} and
+\texttt{op-symbol-alt = d}; otherwise (and usually) defaults to \textbf{op-symbol}
+\end{description}
+~\vspace{-5ex}
+
+\begin{description}
+\item [{op-order-sep}] extra horizontal space added between the op-symbol and
+the superscripted order of differentiation in higher order derivatives;
+compare $d^{2}$ with $d^{\mkern1mu 2}$, $\partial^{2}$ with $\partial^{\mkern1mu 2}$
+where the first symbol in each case has no extra space and the second has
+an extra 1 mu; default = \texttt{1 mu}
+\item [{{*}-op-left}] a choice of \texttt{true} or \texttt{false} indicating
+whether the op-symbol is left-aligned or not when the differentiand is
+appended; generally it is centred; does not apply to slash forms of the
+derivative; default = \texttt{false}
+\item [{{*}-italic-nudge}] if \textbf{{*}-op-left} is \texttt{true}, makes an
+italic adjustment in the numerator, so that the op-symbols in numerator
+and denominator align in the same slanting column; for an upright \texttt{d}
+this would be set to \texttt{0 mu}; default = \texttt{3 mu}
+\item [{{*}/-op-wrap}] a choice of \texttt{true} or \texttt{false} for slash
+forms of the derivative when the differentiand is appended, dictating whether
+the derivative is wrapped in parentheses, as here $\diffp*{F(x,y)}/x$,
+or not; default = \texttt{true}
+\item [{long-var-wrap}] to avoid ambiguity in higher order derivatives it may
+be advisable to wrap multi-token variables of differentiation in parentheses;
+default = \texttt{d(v)}; the choices are 
+\begin{description}
+\item [{\texttt{dv}}] no wrapping, e.g. $dx_{i}^{2}$ or $d\frac{1}{\Theta}^{2}$,
+$\partial x_{i}^{2}$ or $\partial\frac{1}{\Theta}^{2}$, 
+\item [{\texttt{d(v)}}] wrap the variable only, e.g. $d(x_{i})^{2}$ or $d(\frac{1}{\Theta})^{2}$,
+$\partial(x_{i})^{2}$ or $\partial(\frac{1}{\Theta})^{2}$
+\item [{\texttt{(dv)}}] wrap the op-symbol and variable, e.g. $(dx_{i})^{2}$
+or $(d\frac{1}{\Theta})^{2}$, $(\partial x_{i})^{2}$ or $(\partial\frac{1}{\Theta})^{2}$
+\end{description}
+\item [{denom-term-sep}] (mixed partial derivatives only) horizontal spacing
+inserted between the differentials in the denominator of a mixed partial
+derivative to avoid a solid cluster like $\partial x\partial y\partial z$;
+with the default 2 mu this is $\dl.p.x\dl.p.2y\dl.p.2z$; default = \texttt{2
+mu}
+\item [{/-denom-term-sep}] (mixed partial derivatives only) horizontal spacing
+inserted between the differentials in the denominator of a slash-form mixed
+partial derivative; because a slash-form derivative is already spread out
+horizontally, the default spacing is less than for the \texttt{\textbackslash frac}
+form derivative; default = \texttt{1 mu}
+\item [{term-sep-adjust}] (mixed partial derivatives only) adjustment (i.e.
+reduction) to \textbf{(/-)denom-term-sep} when differentiation in a variable
+occurs to an order other than 1; if, e.g., $\dl.p.x^{2}\dl.p.1y\dl.p.2z$
+is the denominator of a mixed partial derivative in three variables, because
+of the superscript the spacing between $\partial x^{2}$ and $\partial y$
+is reduced by\textbf{ term-sep-adjust} from the spacing between $\partial y$
+and $\partial z$; default = \texttt{-1 mu}
+\item [{left-delim}] the left member of a delimiter pair wrapping the derivative,
+the right member of which is subscripted to indicate a point of evaluation
+or variables held constant; default = \texttt{\textbackslash left .}
+\item [{right-delim}] the right member of a delimiter pair wrapping the derivative
+and subscripted to indicate a point of evaluation or variables held constant;
+default = \texttt{\textbackslash right |}
+\item [{elbowroom}] adjustment to the whitespace between the left and right
+delimiters and the enclosed derivative; negative values reduce the space;
+default = \texttt{0 mu}
+\item [{subscr-nudge}] horizontal adjustment of the subscript's placing relative
+to the \textbf{right-delim}iter, e.g., a negative value compensates for
+the curving inwards of a large right parenthesis; may be font dependent;
+default = \texttt{0 mu}
+\item [{/-left-delim}] for the slash form of derivative, the left member of
+a delimiter pair wrapping the derivative and subscripted to indicate a
+point of evaluation or variables held constant; default = \texttt{(}
+\item [{/-right-delim}] for the slash form of derivative, the right member of
+a delimiter pair wrapping the derivative, the right member of which is
+subscripted to indicate a point of evaluation or variables held constant;
+default = \texttt{)}
+\item [{/-elbowroom}] adjustment to the whitespace between the left and right
+delimiters and the enclosed slash-form derivative; default = \texttt{0
+mu} 
+\item [{/-subscr-nudge}] for the slash form of derivative, horizontal adjustment
+of the subscript's placing relative to the /-\textbf{right-delim}iter;
+may be font dependent; default = \texttt{0 mu} 
+\end{description}
+
+\subsection{ISO defaults}
+
+You may not like the default settings that come with \texttt{diffcoeff}.
+The package does not follow ISO 80000-2 -- it does not use upright `d's
+nor does it wrap an ordinary differential coefficient in subscripted parentheses
+to indicate a point of evaluation. Both `defects' can be remedied by calling
+the package with the option \texttt{ISO}:\footnote{One can also use \texttt{ISO=true} to turn the option on and \texttt{ISO=false
+}to turn the option off. } 
+\begin{lyxcode}
+\textbackslash usepackage{[}ISO{]}\{diffcoeff\}
+\end{lyxcode}
+\begin{wraptable}[9]{o}{0.4\columnwidth}%
+\centering{}\vspace{-4ex}
+ \caption{{\small{}ISO default changes}\label{tab:ISO-setting-changes}}
+\abovetopsep=.5ex %
+\begin{tabular}{lr}
+\toprule 
+{\small{}key}  & {\small{}default}\tabularnewline
+\midrule 
+{\small{}op-symbol}  & \texttt{\small{}\textbackslash mathrm\{d\}}\tabularnewline
+{\small{}op-order-sep}  & \texttt{\small{}0 mu}\tabularnewline
+{\small{}left-delim}  & \texttt{\small{}\textbackslash left (}\tabularnewline
+{\small{}right-delim}  & \texttt{\small{}\textbackslash right )}\tabularnewline
+{\small{}subscr-nudge}  & \texttt{\small{}-6 mu}\tabularnewline
+\bottomrule
+\end{tabular}\end{wraptable}%
+
+The uppercase is essential -- an option \texttt{iso} is not recognised.
+The \texttt{ISO} option results in changes to the default settings of Table~\ref{tab:Ordinary-derivatives}
+as listed in Table~\ref{tab:ISO-setting-changes}. Any settings not mentioned
+in Table~\ref{tab:ISO-setting-changes} retain the values presented in
+Table~\ref{tab:Ordinary-derivatives}. Note that the subscript nudge figure
+specified here is \emph{not} part of the standard, which makes no recommendation
+about the subscript's positioning. But: the \texttt{-6 mu} figure with
+a default or latin modern font gives a better representation of what is
+displayed in the standard than a zero figure.
+
+Because the `d' is upright with the \texttt{ISO} option, no extra space
+is required between the symbol and the superscript in a higher order derivative.
+Hence the zero value for the \texttt{op-order-sep}. ISO recommends subscripted
+parentheses to indicate a point of evaluation. Hence the other entries
+in the table. Because a large right parenthesis (penultimate setting) bends
+inwards, to the left, a negative value for the last entry ensures the subscript
+does not become detached from the derivative, looking lost in a sea of
+whitespace.
+
+Note that the \texttt{ISO} option will also produce upright `D's in derivatives
+formed from `D'; see Subsection~\ref{subsec:D-delta-Delta} below.
+
+\subsection{Partial derivatives}
+
+\begin{wraptable}{o}{0.4\columnwidth}%
+\centering{}\vspace{-4.5ex}
+ \caption{{\small{}Default changes: partial derivatives}\label{tab:Partial-deriv-defaults}}
+\abovetopsep=.5ex %
+\begin{tabular}{lr}
+\toprule 
+{\small{}key}  & {\small{}default}\tabularnewline
+\midrule 
+{\small{}op-symbol }  & \texttt{\small{}\textbackslash partial}\tabularnewline
+{\small{}left-delim}  & \texttt{\small{}\textbackslash left (}\tabularnewline
+{\small{}right-delim}  & \texttt{\small{}\textbackslash right )}\tabularnewline
+{\small{}subscr-nudge }  & \texttt{\small{}-6 mu}\tabularnewline
+\bottomrule
+\end{tabular}\end{wraptable}%
+
+The default values given in Table~\ref{tab:Ordinary-derivatives}, when
+they are relevant, apply to \emph{ordinary} derivatives. For partial derivatives,
+the defaults are those of Table~\ref{tab:Partial-deriv-defaults}. All
+other keys take the default values listed in Table~\ref{tab:Ordinary-derivatives}.
+The last three entries here are not an attempt at ISO compatibility but
+reflect the use of subscripted parentheses with partial derivatives to
+indicate variables held constant, for instance in the Maxwell relations
+of thermodynamics, one of which is 
+\[
+\diffp SV[T]=\diffp PT[V].
+\]
+
+
+\subsection{Setting your own defaults: \texttt{\textbackslash diffdef\label{subsec:diffdef}}}
+
+Versions 2 and later of the \texttt{diffcoeff} package provide a command,
+\texttt{\textbackslash diffdef}, that enables users to set their own defaults.\texttt{ }For
+example, if you wish to use upright `d's but not follow the ISO's use of
+subscripted parentheses to indicate a point of evaluation, enter in the
+preamble of your document the command\vspace{-2ex}
+
+\begin{lyxcode}
+\noindent %
+\noindent\begin{minipage}[t]{1\columnwidth}%
+\begin{lyxcode}
+\textbackslash diffdef~\{\}~~~~
+\begin{lyxcode}
+\{~~~~~~
+\begin{lyxcode}
+op-symbol~~~~=~\textbackslash mathrm\{d\},~~~~
+
+op-order-sep~=~0~mu
+\end{lyxcode}
+\}
+\end{lyxcode}
+\end{lyxcode}
+%
+\end{minipage}
+\end{lyxcode}
+\noindent Since a list of settings, like this one, is a comma-\emph{separated}
+list, no comma is required for the last entry. That entry is a consequence
+of the first: upright symbols do not require any extra separation between
+the `d' and the superscript in a higher order derivative.
+
+The other point to note is the empty pair of braces after the \texttt{\textbackslash diffdef}
+command. \emph{They matter}. Their emptiness is what determines that it
+is the \emph{default} values that are changed. If they contain some content,
+then that content provides a \emph{name} for the particular set of values
+in the following list. The \texttt{diffcoeff} package exploits this facility
+to cope with the wide variety of forms displayed in the Rogues' Gallery
+of Section~\ref{sec:Rogues'-gallery}.
+
+\subsection{Variant forms}
+
+For this package I needed to have a number of variant forms available to
+illustrate the wide variety of ways in which derivatives are displayed.
+The \texttt{\textbackslash diffdef} command in which the first argument
+is \emph{filled} provides one half of the means of doing this. I've given
+the single-letter name \texttt{p} to the following settings:
+
+\noindent %
+\noindent\begin{minipage}[t]{1\columnwidth}%
+\begin{lyxcode}
+\textbackslash diffdef~\{~p~\}
+
+~~\{
+
+~~~~op-symbol~~~~=~\textbackslash partial~,
+
+~~~~left-delim~~~=~\textbackslash left~(~~,
+
+~~~~right-delim~~=~\textbackslash right~)~,
+
+~~~~subscr-nudge~=~-6~mu
+
+~~\}
+\end{lyxcode}
+%
+\end{minipage}
+
+The second half of providing variant forms is to insert this name, \texttt{p},
+between dots (periods, full stops) as the \emph{first} argument of the
+\texttt{\textbackslash diff} command. Thus, repeating an example at the
+end of Subsection~\ref{subsec:Partial-appending},
+\begin{example}
+\textbackslash diff.p.{*}\{\textbackslash frac PT\}U{[}V{]} = \textbackslash diff.p.{*}\{\textbackslash frac
+1T\}V{[}U{]} $\Longrightarrow\quad{\displaystyle \diff.p.*{\frac{P}{T}}U[V]=\diff.p.*{\frac{1}{T}}V[U]}$
+\end{example}
+
+\noindent The effect is exactly the same as previously, when the \texttt{\textbackslash diffp}
+command was used. Indeed, \texttt{diffcoeff} identifies \texttt{\textbackslash diffp}
+with \texttt{\textbackslash diff.p.}, saving a few keystrokes and maintaining
+compatibility with version 1 of the package. In \LaTeXe{} synatx, 
+\begin{lyxcode}
+\textbackslash newcommand~\{~\textbackslash diffp~\}~\{~\textbackslash diff.p.~\}
+\end{lyxcode}
+Note that this identification of \texttt{\textbackslash diffp} with \texttt{\textbackslash diff.p. }means
+there is no equivalent dot-delimited argument available for \texttt{\textbackslash diffp}.
+The dot-delimited argument applies only to \texttt{\textbackslash diff}.
+
+For example, to illustrate the upright-d form of derivative, without changing
+the default math-italic form (which I prefer), one might enter in the preamble 
+\begin{lyxcode}
+\noindent %
+\noindent\begin{minipage}[t]{1\columnwidth}%
+\begin{lyxcode}
+\textbackslash diffdef~\{~up~\}~
+
+~~\{
+
+~~~~op-symbol~~~~=~\textbackslash mathrm\{d\},
+
+~~~~op-order-sep~=~0~mu
+
+~~\}
+\end{lyxcode}
+%
+\end{minipage}
+\end{lyxcode}
+Apart from the key = value settings, the critical feature here is the name,
+\texttt{up} (which is at your discretion and could equally be \texttt{upright}
+or \texttt{roman} or even \texttt{Fred} if you so fancied). This ensures
+that the changed settings apply only to this particular variant and do
+not `infect' the overall defaults. To use this variant, all that is needed
+is to add the name, between dots, to the \texttt{\textbackslash diff}
+command:
+\begin{example}
+\textbackslash diff.up.yx $\Longrightarrow\quad{\displaystyle \diff.up.yx}.$
+\end{example}
+
+\noindent Each variant derivative inherits all the default values that
+it does not explicitly countermand. Thus a point of evaluation is indicated
+by a vertical rule which is the \texttt{diffcoeff} default\footnote{\noindent But not the ISO recommendation.}:
+\begin{example}
+\noindent \textbackslash diff.up.{*}\{\textbackslash frac\{F(x)\}\{G(x)\}\}x{[}x=1{]}
+$\Longrightarrow\quad{\displaystyle \diff.up.*{\frac{F(x)}{G(x)}}x[x=1]}$
+\end{example}
+
+\noindent Dot-delimited arguments must always be the \emph{first} argument
+of the \texttt{\textbackslash diff} command, even preceding an asterisk
+(star) as in this example.
+
+As another example, suppose for the subscripted indication of variables
+held constant in a partial derivative that you want to see what things
+look like if the subscript is \emph{not }nudged in towards the right parenthesis.
+In that case define a variant form 
+\begin{lyxcode}
+\textbackslash diffdef~\{~padrift~\}~\{~subscr-nudge~=~0~mu~\}
+\end{lyxcode}
+I have attached a name, \texttt{padrift},\texttt{ }to this setting,
+\begin{example}
+\textbackslash diff.padrift.Fx{[}y{]} $\Longrightarrow{\displaystyle \diff.padrift.Fx[y]}$
+\end{example}
+
+\noindent since, to my eye, the subscript seems detached from the expression
+it qualifies -- is it perhaps a typo? -- and `adrift in a sea of whitespace'.
+This is to be compared with the default
+\begin{example}
+\noindent \textbackslash diffp Fx{[}y{]} $\Longrightarrow{\displaystyle \diffp Fx[y]}$
+\end{example}
+
+\noindent where the subscript is tucked in close to the right parenthesis
+and is clearly connected to it and the expression it delimits.
+
+Some might want to distinguish notationally a point of evaluation for a
+partial derivative from variables held constant, perhaps using a vertical
+rule for the former and (the default) parentheses for the latter. It would
+suffice then to add to the preamble 
+\begin{lyxcode}
+\noindent %
+\noindent\begin{minipage}[t]{1\columnwidth}%
+\begin{lyxcode}
+\textbackslash diffdef~\{~pvrule~\}~\{~op-symbol~=~\textbackslash partial~\}~
+\end{lyxcode}
+%
+\end{minipage}
+\end{lyxcode}
+(or some other name of your choosing). This gives
+\begin{example}
+\textbackslash diff.pvrule.\{F(x,y)\}x{[}x=1{]}$\Longrightarrow{\displaystyle \diff.pvrule.{F(x,y)}x[x=1]}$
+\end{example}
+
+
+\subsubsection{Text-style and script-style derivatives\label{subsec:Text-and-script-style}}
+
+As noted earlier, the \texttt{diffcoeff} package assumes that derivatives
+of fraction-like form will be used in display-style expressions and that
+the slash form will be used for inline use (text style). This is the usual
+practice. But if one does want to use the fraction form in an inline expression,
+say \texttt{\textbackslash diffp ST{[}V{]}} displaying as $\diffp ST[V]$,
+then some tweaking of settings is necessary: the subscript is obviously
+too close to the right parenthesis and, to my eye, there is too much `elbowroom'
+between the derivative and the enclosing parentheses. Hence define
+
+\noindent %
+\noindent\begin{minipage}[t]{1\columnwidth}%
+\begin{lyxcode}
+\textbackslash diffdef~\{~ptxt~\}~
+
+~~\{
+
+~~~~op-symbol~~~~~~=~\textbackslash partial,
+
+~~~~denom-term-sep~=~1~mu~~~~,
+
+~~~~left-delim~~~~~=~\textbackslash left~(~,
+
+~~~~right-delim~~~~=~\textbackslash right~),
+
+~~~~elbowroom~~~~~~=~-2~mu~~~,
+
+~~~~subscr-nudge~~~=~-3~mu~~~
+
+~~\}
+\end{lyxcode}
+%
+\end{minipage}
+
+This gives, for the same example, \texttt{\textbackslash diff.ptxt.ST{[}V{]}}
+displaying as $\diff.ptxt.ST[V]$, where the subscript is better positioned
+and there is a better fit between parentheses and derivative.
+
+\subsubsection{Derivatives from D, \textbackslash delta, \textbackslash Delta\label{subsec:D-delta-Delta}}
+
+In addition to \texttt{\textbackslash diff.p.},\texttt{ diffcoeff} has
+three other \emph{built-in} variant forms that are commonly used: \texttt{\textbackslash diff.D.},
+\texttt{\textbackslash diff.delta.}, and \texttt{\textbackslash diff.Delta.},
+corresponding to derivatives formed from $D$, $\delta$ and $\Delta$
+respectively.
+
+In fluid dynamics the \emph{material }or \emph{substantive} derivative
+uses an uppercase $D$ in place of $d$. For example, the continuity equation
+is,
+\begin{example}
+\textbackslash diff.D.\{\textbackslash rho\}t=\textbackslash diffp\textbackslash rho
+t + \textbackslash mathbf\{u\textbackslash cdot\}\textbackslash nabla\textbackslash rho
+$\Longrightarrow{\displaystyle \diff.D.\rho t=\diffp\rho t+\mathbf{u\cdot}\nabla\rho}$
+\end{example}
+
+\noindent where \texttt{\textbackslash diff.D.} produces the D-derivative.
+If you want upright `D's, then the \texttt{ISO} package option will produce
+that effect. Alternatively, \vspace{-2ex}
+
+\begin{lyxcode}
+\noindent %
+\noindent\begin{minipage}[t]{1\columnwidth}%
+\begin{lyxcode}
+\textbackslash diffdef~\{~Up~\}~
+
+~~\{
+
+~~~~op-symbol~~~~=~\textbackslash mathrm\{D\},
+
+~~~~op-order-sep~=~0~mu
+
+~~\}
+\end{lyxcode}
+%
+\end{minipage}
+\end{lyxcode}
+\noindent provides a variant with upright `D's.
+
+In introductory calculus texts the simple $\delta$-derivative is used.
+This is achieved with the \texttt{\textbackslash diff.delta.} command
+\begin{example}
+\textbackslash diff.delta.yx $\Longrightarrow{\displaystyle \diff.delta.yx}.$
+\end{example}
+
+\noindent This form also features in analytical mechanics (in the Rogues'
+Gallery, the final example at (\ref{eq:eg6})).
+
+Similarly, \texttt{\textbackslash diff.Delta.} forms a derivative from
+$\Delta$:
+\begin{example}
+\textbackslash diff.Delta.y/x $\Longrightarrow{\displaystyle \diff.Delta.y/x,}$
+\end{example}
+
+\noindent where the slash form of the derivative is shown in this instance.
+
+Higher order forms of these derivatives, points of evaluation, appending
+the differentiand with a star argument, all follow exactly as for the `pure'
+\texttt{\textbackslash diff} command.
+
+\paragraph{The commands \textbackslash Diff, \textbackslash diffd, \textbackslash Diffd}
+
+For compatibility with version 1 of \texttt{diffcoeff}, the commands \texttt{\textbackslash Diff},
+\texttt{\textbackslash diffd} and \texttt{\textbackslash Diffd} are available
+and also produce the $D$, $\delta$ and $\Delta$ derivatives. Just as
+\texttt{\textbackslash diffp} is identified with \texttt{\textbackslash diff.p.}
+for partial derivatives, these commands are identified with \texttt{\textbackslash diff.D.},
+\texttt{\textbackslash diff.delta.}, and \texttt{\textbackslash diff.Delta}
+through commands equivalent to\footnote{In fact the actual commands in \texttt{diffcoeff.sty} use the syntax of
+the \texttt{xparse} package, e.g. \texttt{\textbackslash NewDocumentCommand
+\{ \textbackslash Diff \} \{ \} \{ }\textbackslash diff.D. \}, and similarly
+for the others.} 
+\begin{lyxcode}
+\textbackslash newcommand\{\textbackslash Diff\}\{\textbackslash diff.D.\}
+
+\textbackslash newcommand\{\textbackslash diffd\}\{\textbackslash diff.delta.\}
+
+\textbackslash newcommand\{\textbackslash Diffd\}\{\textbackslash diff.Delta.\}
+\end{lyxcode}
+Unless one is using such variant forms frequently, it seems simpler to
+remember that they are available as dot-delimited arguments to the \texttt{\textbackslash diff}
+command, using the obvious name in each case, rather than having to remember
+the precise camel-case form of name of the \texttt{\textbackslash Diff},
+\texttt{\textbackslash diffd} and \texttt{\textbackslash Diffd} commands.
+
+\subsection{The \texttt{.def} file\label{subsec:The-.def-file}}
+
+This mechanism of variant formation is how I have been able to illustrate
+in the Rogues' Gallery, Section~\ref{sec:Rogues'-gallery}, the wide variety
+of different usages culled from the literature. But the thought arises:
+if a variant is to be used only once or twice, isn't this a lot of bother?
+Why not just construct the variant derivative `by hand' out of \texttt{\textbackslash frac}
+and \texttt{\textbackslash mkern} for example? The reason for making such
+definitions is that they can be transferred from document to document.
+For instance, definitions placed in the preamble can be copied to the preamble
+of another document.
+
+But that is hardly optimal. Instead, \texttt{diffcoeff} allows such definitions
+to be placed in a text file with the the extension \texttt{.def} and a
+name of your choosing. For the present document the file is called \texttt{diffcoeff-doc.def}
+and has been placed in the same directory as \texttt{diffcoeff.tex}. To
+use these definitions, the \texttt{diffcoeff} package is called with the
+command 
+\begin{lyxcode}
+\textbackslash usepackage{[}def-file=diffcoeff-doc{]}\{diffcoeff\}
+\end{lyxcode}
+But even this process still means copying a definition file from directory
+to directory as one works on different documents. The solution is to make
+a definition file available for \emph{all} documents and the way to do
+that is by placing it in the texmf tree, preferably not the one created
+by your \TeX{} distribution (perhaps MiKTeX or TexLive), but your own \emph{personal}
+texmf tree.
+
+\texttt{\vspace{2ex}
+ }
+
+\noindent %
+\noindent\fbox{\begin{minipage}[t]{1\linewidth - 2\fboxsep - 2\fboxrule}%
+\textbf{Personal texmf tree? }
+
+This is a directory for `waifs and strays' of the \TeX{} system that are
+not included in standard distributions like MiK\TeX{} or \TeX Live. For
+instance, it is the place for personal packages designed for your own particular
+circumstances or preferences, and is structured like the standard MiK\TeX{}
+or \TeX Live hierarchy but placed in another location so that there is
+no chance of its being overwritten when MiK\TeX{} or \TeX Live are updated.
+However, those distributions need to be alerted to its existence. For MiK\TeX ,
+open the MiK\TeX{} console, click on \textsf{Settings} and then the \textsf{Directories}
+tab. Click the \textsf{+} button and navigate to your personal texmf tree
+to add it to the MiK\TeX{} search path. Having added it, you will then need
+to refresh the filename database by clicking on the \textsf{Tasks} menu
+and selecting the obvious entry. I am not familiar with \TeX Live but presume
+a similar process will apply there.%
+\end{minipage}}
+
+\medskip{}
+
+\noindent Provided your \LaTeX{} distribution knows about your personal
+texmf tree, then a \texttt{.def} file placed within it, will be accessible
+to all documents.
+
+\subsubsection{Structure of the \texttt{.def} file}
+
+The best way to see what a \texttt{.def} file looks like is to view \texttt{diffcoeff-doc.def
+}in a text editor.\footnote{This file should be in the same directory as \texttt{diffcoeff.pdf} and
+\texttt{diffcoeff.tex} in your \LaTeX{} distribution.}
+
+If you want your variant definitions to use defaults different from those
+supplied with the \texttt{diffcoeff} package, then the first definition
+in the \texttt{.def} file should be the one setting the new defaults, with
+an \emph{empty} first argument to the \texttt{\textbackslash diffdef}
+command: 
+\begin{lyxcode}
+\noindent %
+\noindent\begin{minipage}[t]{1\columnwidth}%
+\begin{lyxcode}
+\textbackslash diffdef~\{\}~~~~
+\begin{lyxcode}
+\{~~~~~~
+\begin{lyxcode}
+key-1~=~value-1,~~~~
+
+key-2~=~value-2,
+
+...
+
+key-n~=~value-n
+\end{lyxcode}
+\}
+\end{lyxcode}
+\end{lyxcode}
+%
+\end{minipage}
+\end{lyxcode}
+The key-value list is a comma-separated list; hence the last entry doesn't
+need to end with a comma. Nudge and separation values need to include the
+unit, \texttt{mu}; a numerical value alone will result in error.\texttt{ }Because
+a \texttt{.def} file\texttt{ }is a \LaTeX{} file, comments need to start
+with a \texttt{\%} character.
+
+\subsubsection{\texttt{diffcoeff.def}}
+
+Note that if the \texttt{diffcoeff} package is invoked without an explicit
+\texttt{def-file= <filename>} option statement, as here, 
+\begin{lyxcode}
+\textbackslash usepackage\{diffcoeff\}
+\end{lyxcode}
+then it will search in the texmf tree (the \LaTeX{} distribution's and your
+personal one) and the document directory for a file \texttt{diffcoeff.def}
+and if found will load that. This file should contain definitions of those
+variants you are likely to use in multiple documents. In my personal texmf
+tree (which I've put at \texttt{D:\textbackslash texmf\textbackslash}
+on a Windows machine) the file \texttt{diffcoeff.def} is located in the
+directory \texttt{D:\textbackslash texmf\textbackslash tex\textbackslash latex\textbackslash diffcoeff\textbackslash}.
+(The backslashes are replaced by forward slashes on linux machines.)
+
+Variants likely to be of value only to a specific document should be added
+to the preamble of that document. Alternatively, they could be added to
+\texttt{diffcoeff.def} but that added-to file saved to the document directory
+under a \emph{different} name -- e.g. I've saved the variants required
+for the present document under the name \texttt{diffcoeff-doc.def}. Many
+of these variants were created solely to illustrate points in the present
+document and I have no intention of using them in my own work. Consequently
+my \texttt{diffcoeff.def} file is smaller, containing only a selection
+from \texttt{diffcoeff-doc.def}.
+
+\section{Differentials in integrals, etc.}
+
+Forms like $dx$ occur not only in derivatives but also in other contexts,\footnote{I thank Sergio Callegari for drawing my attention to this rather obvious
+point, and its omission from previous versions of \texttt{diffcoeff}.} for example, the expression for a total differential like 
+\[
+\dl P=\diffp Px\dl x+\diffp Py\dl y+\diffp Pz\dl z,
+\]
+or an integral like $\int\sin x\dl2x$, or a multi-variable integral like
+\[
+\iiintop_{-\infty}^{\infty}V(x,y,z)\dl3x\dl2y\dl2z.
+\]
+Surely we want the `d's in these expressions to correspond to their form
+(upright or math italic) in derivatives? If, for instance, the \texttt{ISO}
+package option has been set, one doesn't want to be writing \texttt{\textbackslash mathrm\{d\}}
+in every (or indeed any) integral. To this end, \texttt{diffcoeff} provides
+a command \texttt{\textbackslash dl} to write the `d' in a differential
+in a manner consistent with the default form used in derivatives. In the
+present document, the default form is math-italic and so
+\begin{example}
+\textbackslash dl x $\Longrightarrow\dl x.$
+\end{example}
+
+\noindent It is also possible\footnote{\noindent From version 3.1 of \texttt{diffcoeff}; version 3.0 of the package
+produced a \LaTeX{} error.} to use the command before, for instance, \texttt{\textbackslash vec\{x\}}
+or \texttt{\textbackslash mathbf\{x\}}:
+\begin{example}
+\textbackslash dl \textbackslash vec\{x\} $\Longrightarrow\dl\vec{x}$~~~~\textbackslash dl
+\textbackslash mathbf\{x\} $\Longrightarrow\dl0\mathbf{x}.$
+\end{example}
+
+
+\subsection{Options}
+
+There are two options available with the differential command.
+
+The first is the dotted name option discussed in Section~\ref{sec:Changing-defaults}.
+Thus, to illustrate a differential with an upright `d', write
+\begin{example}
+\textbackslash dl.up.x $\Longrightarrow\dl.up.x.$
+\end{example}
+
+\noindent This presumes that a variant derivative with upright `d's has
+been defined and the definition is available, either in the preamble or
+in an accessible \texttt{.def} file, as discussed in the previous section.
+Alternatively, if you have defined your default derivative to use upright
+`d's (perhaps with the \texttt{ISO} option) then \texttt{\textbackslash dl}
+alone will suffice to produce an upright `d'.
+
+Since the variant \texttt{\textbackslash diff.p.} is defined in \texttt{diffcoeff.sty}
+itself, \texttt{\textbackslash dl.p.} is always available and at 6 keystrokes
+offers a slightly shorter way of writing \texttt{\textbackslash partial}
+(8 keystrokes). But the only reason one might use this variant `in earnest'
+is because of the convenience offered by the second option to the \texttt{\textbackslash dl}
+command.
+
+\subsubsection{Spacing}
+
+This second option inserts spacing before the `d'. If \texttt{\textbackslash dl}
+is followed by a digit (0, 1, 2, ..., 9) it will insert a horizontal space
+of that number of mu before the `d'; (\texttt{\textbackslash dl0x} has
+the same effect as \texttt{\textbackslash dl x}.)\texttt{ }Thus, an alternative
+way of writing an example in Chapter~18 of \emph{The \TeX book} is
+\begin{example}
+\textbackslash dl x\textbackslash dl3y=r\textbackslash dl3r\textbackslash dl3\textbackslash theta
+$\Longrightarrow\dl x\dl3y=r\dl3r\dl3\theta.$
+\end{example}
+
+\noindent To my eye this is too much space; I prefer
+\begin{example}
+\noindent \textbackslash dl x\textbackslash dl2y=r\textbackslash dl2r\textbackslash dl2\textbackslash theta
+$\Longrightarrow\dl x\dl2y=r\dl2r\dl2\theta$
+\end{example}
+
+\noindent I used \texttt{\textbackslash dl3x\textbackslash dl2y\textbackslash dl2z}
+when writing the triple integral above, \emph{no} extra spacing when writing
+the total differential expression, since the differentials are already
+distinct from the preceding fraction forms $\diff.ptxt.Px$ etc., and \texttt{\textbackslash dl2x}
+when writing $\int\sin x\dl2x$.
+
+Note that only \emph{one} digit can be used. If two are used, as here,
+\begin{example}
+\textbackslash dl20x $\Longrightarrow\dl20x$
+\end{example}
+
+\noindent the effect is unlikely to be what is wanted.
+
+From version 3.2 of \texttt{diffcoeff} it is possible to also add \emph{negative}
+space before the differential, which might be useful in special contexts,
+perhaps to construct a symbol:
+\begin{example}
+/\textbackslash dl-9x $\Longrightarrow/\dl-9x.$
+\end{example}
+
+\noindent For negative space before the differential, add a minus sign
+before the (single) digit.
+
+The spacing digit option \emph{follows} the dot-delimited name option.
+For example, to illustrate spacing in the denominator of a mixed partial
+derivative, I have earlier used \texttt{\textbackslash dl.p.x\textbackslash dl.p.2y\textbackslash dl.p.2z},
+and the variation to that spacing when a higher-order differentiation occurs:
+\begin{example}
+\textbackslash dl.p.x\textasciicircum 2\textbackslash dl.p.1y\textbackslash dl.p.2z
+$\Longrightarrow\dl.p.x^{2}\dl.p.1y\dl.p.2z.$
+\end{example}
+
+
+\section{Rationale}
+
+Version 1 of the \texttt{diffcoeff} package arose from a need to simplify
+the parsing of differential coefficients for another program I was working
+on which was struggling to `read' all the possible permutations of \texttt{\textbackslash frac}
+or \texttt{\textbackslash tfrac} or \texttt{\textbackslash dfrac} or
+slash forms of the derivative, of \texttt{d} or \texttt{\textbackslash mathrm\{d\}}
+or \texttt{\textbackslash partial} or \texttt{D} or \texttt{\textbackslash mathrm\{D\}}
+or \texttt{\textbackslash nabla},\texttt{ }and of points of evaluation
+delimited by vertical rules or parentheses.\texttt{ }Although regular expressions
+coped with most of these cases, it was \emph{messy}.
+
+There are other packages which have commands for the derivative (e.g.,
+\texttt{bropd}, \texttt{commath},\texttt{ esdiff}, \texttt{physymb}) but
+none quite gave what I wanted -- although they probably cope with most
+users' needs. \texttt{esdiff} came closest to what I was seeking but failed
+when it came to combining algebraic and numeric orders of differentation
+in a mixed partial derivative (and made heavier use of braces than I would
+like in that case too).
+
+\subsection{\texttt{diffcoeff.sty}}
+
+I have tried to make using \texttt{diffcoeff} intuitive. Looking at the
+other packages mentioned, writing something like \texttt{\textbackslash diff{[}n{]}\{f\}\{x\}}
+(which can be trimmed to \texttt{\textbackslash diff{[}n{]}fx} for single-token
+arguments) seems `natural' -- only \texttt{physymb} deviates from the
+pattern. 
+\begin{itemize}
+\item It seems consistent with this pattern to use a comma list for specifying
+the orders of differentiation of the variables in a higher order mixed
+partial derivative (and its suppression when all are of order 1) 
+\item Having specified the orders, surely the program itself should calculate
+the overall order? \texttt{esdiff} does this for numerical orders; \texttt{diffcoeff}
+does this for both numeric and algebraic orders, 
+\end{itemize}
+\begin{example}
+\textbackslash diffp{[}m-(k+1),m+(k-1){]}\{F(x,y,z)\}\{x,y,z\}
+
+$\Longrightarrow{\displaystyle \diffp[m-(k+1),m+(k-1)]{F(x,y,z)}{x,y,z}},$
+\end{example}
+
+\begin{itemize}
+\item and where it fails, either to calculate at all or to present the result
+in a preferred form, offers the order-override option: 
+\end{itemize}
+\begin{example}
+\textbackslash diffp{[}m+(k+1),m+(k-1){]}{[}2(m+k+1){]}\{F(x,y,z,w)\}\{x,y,z,w\}
+
+$\Longrightarrow{\displaystyle \diffp[m+(k+1),m+(k-1)][2(m+k+1)]{F(x,y,z,w)}{x,y,z,w}}.$
+\end{example}
+
+\begin{itemize}
+\item I wished to avoid the unnecessary writing of superscripts, subscripts and
+brace pairs. In the examples just given, no superscript tokens \texttt{\textasciicircum}
+are written by the user despite the higher-order differentiation in $x$
+and $y$, and only the two inescapable brace pairs are required. 
+\item The use of a comma list for the second mandatory argument in a partial
+derivative -- the list of variables -- makes differentiations in super-
+or subscripted symbols (as occurs prolifically in tensor calculus) easier
+to both write and read by avoiding unnecessary brace pairs. 
+\end{itemize}
+\begin{example}
+\textbackslash diffp\{A\_i\}\{ x\textasciicircum j,x\textasciicircum k
+\} $\Longrightarrow\quad{\displaystyle \diffp{A_{i}}{x^{j},x^{k}}.}$
+\end{example}
+
+\begin{itemize}
+\item Should a point of evaluation or variables held constant be considered part
+of the derivative? Thermodynamic usage was decisive here. The partial derivative
+alone is ambiguous -- the parentheses and subscript are essential to understand
+what is being stated: 
+\[
+\diffp ST[V]
+\]
+Hence provision for these extra elements was included in the derivative
+commands. 
+\item Given the position of the subscripted symbol in the displayed derivative,
+it's positioning as the \emph{final} argument in the derivative commands
+feels inevitable. 
+\item Version 1 of \texttt{diffcoeff} used braces for this argument to avoid
+any possible confusion with a following mathematical expression. That use
+of braces is now deprecated in \texttt{xparse}. Consequently later versions
+of the package use square brackets, conforming with familiar \LaTeX{} practice.
+The only special remembering needed is avoidance of a space before the
+argument -- and if it does slip in, it won't cause a \LaTeX{} error. It
+will be treated as part of a following mathematical expression and displayed
+as such. 
+\item The star option also prompted the question: is it needed? After all, one
+can always leave the first mandatory argument empty and append the differentiand
+`by hand'. But once the provision for points of evaluation or variables
+held constant was incorporated into the derivative commands, the star option
+became the simplest way of handling appended differentiands since the parentheses
+for a variable held constant must wrap around the differential operator
+\emph{and} differentiand. Once available, it provides a simple way of switching
+between (and comparing) the appearance of differentiand-in-the-numerator
+and differentiand-appended. 
+\item The slash option was added to the derivative commands after seeing how
+widely such forms are used in texts at all levels. The placement of the
+slash, between the two mandatory arguments, seems more-or-less self-evident. 
+\item The final option added to \texttt{\textbackslash diff} (and not present
+in version 1) was the dot-delimited name option. Once \texttt{xtemplate}
+was used as the basis of the package this seemed the most straightforward
+way of making available, ready to hand, the wealth of variants that \texttt{xtemplate}
+makes possible. (It's just a pity that the second dot is needed, and a
+single-dot naming scheme can't be used, but \texttt{xparse} forces my hand
+here.) 
+\item Having added the dot-delimited name option, the use of a \texttt{.def}
+file to store variants or preferred defaults is more-or-less forced, otherwise
+one is faced with making these definitions anew for each new document (or
+locating a previous document and copying from that to the new one). 
+\item To handle possible differences between display-style and text-style (and
+script-style) derivatives (see Subsection~\ref{subsec:Text-and-script-style})
+I considered using \TeX 's \texttt{\textbackslash mathchoice} command.
+This command takes four arguments, corresponding to display-, text-, script-
+and scriptscript-styles and would require forming four derivatives each
+time a derivative is used, `just in case'. In fact fraction-form derivatives
+are used overwhelmingly in display-style expressions, the slash form being
+used for inline use. Given the ease of defining a fraction-form variant
+for text-style use, and the rareness of such use, employing variants seemed
+the way to go. It is the one adopted and avoids the computational burden
+associated with the use of \texttt{\textbackslash mathchoice}. 
+\item After version 2 of the package appeared on CTAN, it was pointed out to
+me that there was an issue of consistency between the form of `d' used
+in a derivative (upright or math-italic) and the form used in an integral.
+I had overlooked this matter completely and in version 3 of the package
+remedied the omission with the differential command \texttt{\textbackslash dl}.
+A spacing option for \texttt{\textbackslash dl} was almost inevitable.
+The demands of writing the present document forced another, the dot-delimited
+name option. 
+\end{itemize}
+
+\section{Commands}
+\begin{description}
+\item [{\texttt{\textbackslash diff}}] options: 
+\begin{enumerate}
+\item .\emph{name}. for the given settings 
+\item {*} append-differentiand switch 
+\item {[}\emph{order}{]} or {[}\emph{comma-list of orders}{]} of differentiation 
+\item {[}\emph{order-override}{]} 
+\item \{\emph{differentiand}\} (mandatory) 
+\item / slash-form switch 
+\item \{\emph{comma list of differentiation variables}\} (mandatory) 
+\item {[}\emph{point of evaluation/variables held constant}{]} 
+\item \{as for previous, but using braces\} (deprecated) 
+\end{enumerate}
+\item [{\texttt{\textbackslash diffdef}}] options: 
+\begin{enumerate}
+\item \{\emph{name}\} 
+\item \{\emph{key=value comma list}\} 
+\end{enumerate}
+\item [{\texttt{\textbackslash diffp}}] \texttt{= \textbackslash diff.p.} 
+\item [{\texttt{\textbackslash dl}}] options: 
+\begin{enumerate}
+\item .\emph{name}. (as for \texttt{\textbackslash diff}) 
+\item \emph{minus sign} (optional, use only if negative spacing before the `d'
+is wanted)
+\item \emph{digit} (insert spacing of this number of mu before the `d') 
+\end{enumerate}
+\item [{\texttt{\textbackslash negmu}}] insert a $-1$ mu space 
+\item [{\texttt{\textbackslash nilmu}}] insert a $0$ mu space 
+\item [{\texttt{\textbackslash onemu}}] insert a $1$ mu space 
+\item [{\texttt{\textbackslash twomu}}] insert a $2$ mu space
+\end{description}
+Deprecated: 
+\begin{description}
+\item [{\texttt{\textbackslash Diff}}] preferred form: \texttt{\textbackslash diff.D.} 
+\item [{\texttt{\textbackslash diffd}}] preferred form \texttt{\textbackslash diff.delta.}
+\item [{\texttt{\textbackslash Diffd}}] preferred form\texttt{ \textbackslash diff.Delta.}
+\end{description}
+
+\end{document}

@@ -1,0 +1,680 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Contents: Customising LaTeX output
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Personalización de \LaTeX}
+
+\begin{intro}
+Los documentos producidos mediante las órdenes que ha aprendido hasta este punto parecerán aceptables a una amplia audiencia.  Aunque no tienen un aspecto extraordinario, obedecen todas las reglas establecidas de composición correcta, lo que los hará fáciles de leer y plácidos a la vista.
+
+Sin embargo, hay situaciones donde \LaTeX{} no proporciona una orden o entorno que cubra sus necesidades, o la salida producida por algunas órdenes existentes puede no satisfacer sus expectativas.
+
+En este capítulo, se darán algunas pistas para enseñar a \LaTeX{} nuevos trucos y hacerle producir salidas con diferente aspecto del producido por omisión.
+\end{intro}
+
+
+\section{Nuevas órdenes, entornos y paquetes}
+
+Puede haber notado que todas las órdenes que presento en este libro se componen en una caja, y que se muestran en el índice al final del libro.  En lugar de usar directamente las órdenes \LaTeX{} necesarias para conseguirlo, he creado un \wi{paquete} en que defino nuevas órdenes y entornos con este propósito.  Ahora puedo escribir simplemente:
+
+\begin{example}
+\begin{lscommand}
+\ci{dum}
+\end{lscommand}
+\end{example}
+
+En este ejemplo, estoy usando tanto un nuevo entorno llamado\\ \ei{lscommand}, que es responsable de dibujar la caja alrededor de la orden, y una nueva orden llamada \ci{ci}, que compone el nombre de la orden y hace la correspondiente entrada en el índice.  Puede comprobarlo buscando la orden \ci{dum} en el índice al final del libro, donde pude encontrar una entrada para \ci{dum}, apuntando a cada página donde he mencionado la orden \ci{dum}.
+
+Si alguna vez decido que no me gusta que las órdenes se compongan en una caja, puedo simplemente cambiar la definición del entorno \texttt{lscommand} para crear un nuevo aspecto.  Esto es mucho más fácil que ir por todo el documento localizando todos los lugares en que he usado comandos \LaTeX{} genéricos para dibujar una caja alrededor de una palabra.
+
+
+\subsection{Órdenes nuevas}
+
+Para añadir sus órdenes nuevas, use la orden
+\begin{lscommand}
+\ci{newcommand}\verb|{|%
+       \emph{nombre}\verb|}[|\emph{núm}\verb|]{|\emph{definición}\verb|}|
+\end{lscommand}
+%command. 
+Básicamente, lo orden requiere dos argumentos: el \emph{nombre} de la orden que quiere crear, y la \emph{definición} de la orden.  El argumento \emph{núm} entre corchetes es opcional e indica el número de argumentos que toma la nueva orden (hasta 9 son posibles).  Si no se indica el valor es 0, es decir, no se permiten argumentos.
+
+Los siguientes dos ejemplos deberían ayudarle a entender la idea. El primer ejemplo define una nueva orden llamada \ci{intc}.  Es la abreviatura de ``La introducción no-tan-corta a \LaTeXe''.  Tal orden podría ser útil si tuviera que escribir el título del libro una y otra vez.
+
+\begin{example}
+\newcommand{\intc}{La 
+    introducción no-tan-corta a
+    \LaTeXe}
+Esto es ``\intc'' \ldots{} 
+``\intc''
+\end{example}
+
+El siguiente ejemplo ilustra cómo definir una orden nueva que toma un argumento. Los caracteres \verb|#1| se sustituyen por el argumento indicado.  Si quisiera usar un segundo argumento, use \verb|#2| y así sucesivamente.
+
+\begin{example}
+\newcommand{\txsit}[1]
+ {Esta es la Introducción
+   \emph{#1}-corta a \LaTeXe}
+% en el cuerpo del documento: 
+\begin{itemize}
+    \item \txsit{no-tan}
+    \item \txsit{súper}
+\end{itemize}
+\end{example}
+
+\LaTeX{} no le permitirá crear una nueva orden sobre una ya existente.  Pero hay una orden especial en el caso de que explícitamente quisiera reemplazarla: \ci{renewcommand}. Usa la misma sintaxis que la orden \verb|\newcommand|.
+
+En ciertos casos puede querer usar la orden \ci{providecommand}.  Funciona como \ci{newcommand} y hace que la orden sea definida si aún no existe, pero no hace nada si ya estaba definida.
+
+Hay algunos puntos que comentar sobre los espacios que siguen a las órdenes de \LaTeX{}.  Vea la página  \pageref{whitespace} para más información.
+
+\subsection{Nuevos entornos}
+
+Similar a la orden \verb|\newcommand|, hay una orden para crear sus propios entornos.  La orden \ci{newenvironment} usa la siguiente sintaxis:
+
+\begin{lscommand}
+\ci{newenvironment}\verb|{|%
+       \emph{nombre}\verb|}[|\emph{núm}\verb|]{|%
+       \emph{antes}\verb|}{|\emph{después}\verb|}|
+\end{lscommand}
+
+También \ci{newenvironment} puede tener un argumento opcional.  El material indicado en el argumento \emph{antes} se procesa antes de que se procese el texto del entorno.  El material en el argumento \emph{después} se procesa cuando se encuentra la orden \verb|\end{|\emph{nombre}\verb|}|.
+
+El ejemplo siguiente ilustra el uso de la orden \ci{newenvironment}.
+\begin{example}
+\newenvironment{king}
+ {\rule{1ex}{1ex}%
+      \hspace{\stretch{1}}}
+ {\hspace{\stretch{1}}%
+      \rule{1ex}{1ex}}
+
+\begin{king} 
+Mis humildes ideas\ldots
+\end{king}
+\end{example}
+
+El argumento \emph{núm} se usa igual que con la orden \verb|\newcommand|. \LaTeX{} se asegura de que usted no defina un entorno que ya existe; pero si quiere alguna vez cambiar un entorno existente, puede usar la orden \ci{renewenvironment}.  Usa la misma sintaxis que la orden \ci{newenvironment}.
+
+La orden usada en este ejemplo se explicará más tarde.  Para la orden \ci{rule} véase la página \pageref{sec:rule}, para \ci{stretch} vaya a la página \pageref{cmd:stretch}, y puede hallar más información sobre \ci{hspace} en la página \pageref{sec:hspace}.
+
+\subsection{Espacio extra}
+
+Al crear un entorno nuevo puede hallar dificultades en el manejo del espacio adicional, que puede llegar a tener efectos fatales.  Por ejemplo, cuando quiera crear un entorno para títulos que suprima su propia sangría así como la del siguiente párrafo.  La orden \ci{ignorespaces} en el bloque de comienzo del entorno hará que éste prescinda de cualquier espacio tras ejecutar el bloque de comienzo. El bloque final requiere un poco más de cuidado porque tiene lugar un proceso especial al final del entorno.  La orden \ci{ignorespacesafterend} hará que \LaTeX{} ejecute \ci{ignorespaces} después de que el proceso especial tenga lugar.
+
+\begin{example}
+\newenvironment{simple}%
+ {\noindent}%
+ {\par\noindent}
+
+\begin{simple}
+Mire el espacio\\a la izquierda.
+\end{simple}
+También\\aquí.
+\end{example}
+
+\begin{example}
+\newenvironment{correct}%
+ {\noindent\ignorespaces}%
+ {\par\noindent%
+   \ignorespacesafterend}
+
+\begin{correct}
+Sin espacio\\a la izquierda.
+\end{correct}
+También\\aquí.
+\end{example}
+
+\subsection{Línea de órdenes \LaTeX}
+
+Si trabaja en un sistema operativo estilo \textsc{posix} (GNU o \textsc{unix}), quizás use \ci{Makefile} para compilar sus documentos de \LaTeX{}.  Entonces podría ser interesante producir diferentes versiones del mismo documento llamando a \LaTeX{} con diversos parámetros en la línea de órdenes.  Si añade la siguiente estructura a su documento:
+
+\begin{verbatim}
+\usepackage{ifthen}
+\ifthenelse{\equal{\blancoynegro}{verdadero}}{
+  % modo "blanco y negro"; hacer algo..
+}{
+  % modo "color"; hacer algo diferente..
+}
+\end{verbatim}
+
+Ahora puede llamar a \LaTeX{} así:
+\begin{verbatim}
+latex '\newcommand{\blancoynegro}{verdadero}\input{test.tex}'
+\end{verbatim}
+
+Primero se define la orden \verb|\blancoynegro| y después se lee el \filenomo{} real.  Poniendo \verb|\blancoynegro| a falso se producirá la versión en color del documento.
+
+\subsection{Su propio paquete}
+
+Si define muchos nuevos entornos y órdenes, el preámbulo de su documento se hará muy largo.  En situaciones así es buena idea crear un paquete \LaTeX{} que contenga todas sus definiciones de órdenes y entornos.  Puede usar después la orden \ci{usepackage} para cargar el paquete en su documento actual o en otros similares.
+
+\begin{figure}[!htbp]
+\begin{lined}{\textwidth}
+\begin{verbatim}
+% Paquete Demo de Tobias Oetiker
+\ProvidesPackage{demopack}
+\newcommand{\intc}{La introducción no-tan-corta
+                   a \LaTeXe}
+\newcommand{\txsit}[1]{La introducción \emph{#1}-corta
+                       a \LaTeXe}
+\newenvironment{king}{\begin{quote}}{\end{quote}}
+\end{verbatim}
+\end{lined}
+\caption{Paquete de ejemplo.} \label{package}
+\end{figure}
+
+Escribir un paquete básicamente consiste en copiar el contenido del preámbulo de su documento en un \filenomo{} separado con un nombre que termine en \texttt{.sty}.  Hay una orden especial,
+\begin{lscommand}
+\ci{ProvidesPackage}\verb|{|\emph{nombre paquete}\verb|}|
+\end{lscommand}
+para usar justo al principio de su \filenomo{} de paquete. \verb|\ProvidesPackage| dice a  \LaTeX{} el nombre del paquete y le permite emitir un mensaje de error notable cuando intente incluir el paquete dos veces.  La figura~\ref{package} muestra un pequeño paquete de ejemplo que contiene órdenes definidas en ejemplos anteriores.
+
+\section{\Fontsnomo{} y tamaños}
+
+\subsection{Órdenes que cambian la \fontnomo{}}
+\index{\fontnomo{}}\index{tamaño de la \fontnomo{}} \LaTeX{} escoge la \fontnomo{} y el tamaño de \fontnomo{} apropiados basándose en la estructura lógica del documento (secciones, notas al pie, \ldots).   En algunos casos, quizá desee cambiar \fontsnomo{} y tamaños a mano.  Para hacerlo, puede usar las órdenes listadas en los cuadros~\ref{fonts} y~\ref{sizes}.  El tamaño real de cada \fontnomo{} es una cuestión de diseño y depende de la clase de documento y de sus opciones.  El cuadro~\ref{tab:pointsizes} muestra los tamaños absolutos en puntos para estas órdenes según se implementan en las clases de documentos normales.
+
+\begin{example}
+{\small Pequeña \textbf{negrita}
+ del África tropical,}
+{\Large grande y \textit{cursi}va
+ eres tú ya.}
+\end{example}
+
+Una característica importante de \LaTeXe{} es que los atributos de \fontnomo{} son independientes.  Esto significa que puede poner órdenes para cambiar el tamaño o incluso la \fontnomo{}, y todavía se mantendrán los atributos de negrita o cursiva establecidos anteriormente.
+
+En \emph{modo mates} puede usar las \emph{órdenes} de cambio de \fontnomo{} para salir temporalmente del \emph{modo mates} e introducir texto normal.  Si quiere cambiar a otra \fontnomo{} para composición de mates necesita otro conjunto especial de órdenes; véase el cuadro~\ref{mathfonts}.
+
+\begin{table}[!bp]
+\caption{\Fontsnomo{}.} \label{fonts}
+\begin{lined}{12cm}
+%
+% Alan suggested not to tell about the other form of the command
+% eg \verb|\sffamily| or \verb|\bfseries|. This seems a good thing to me.
+%
+\begin{tabular}{@{}rl@{\qquad}rl@{}}
+\fni{textrm}\verb|{...}|        &      \textrm{\wi{rematada}}&
+\fni{textsf}\verb|{...}|        &      \textsf{\wi{palo seco}}\\
+\fni{texttt}\verb|{...}|        &      \texttt{de máquina}\\[6pt]
+\fni{textmd}\verb|{...}|        &      \textmd{peso medio}&
+\fni{textbf}\verb|{...}|        &      \textbf{\wi{negrita}}\\[6pt]
+\fni{textup}\verb|{...}|        &       \textup{\wi{recta}}&
+\fni{textit}\verb|{...}|        &       \textit{\wi{cursiva}}\\
+\fni{textsl}\verb|{...}|        &       \textsl{\wi{oblicua}}&
+\fni{textsc}\verb|{...}|        &       \textsc{\wi{Versalitas}}\\[6pt]
+\ci{emph}\verb|{...}|          &            \emph{destacada} &
+\fni{textnormal}\verb|{...}|    &    \textnormal{por omisión}
+\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+
+\begin{table}[!bp]
+\index{font size}
+\caption{Tamaños de \fontnomo{}.} \label{sizes}
+\begin{lined}{12cm}
+\begin{tabular}{@{}ll}
+\fni{tiny}      & \tiny        \fontnomo{} minúscula \\
+\fni{scriptsize}   & \scriptsize  \fontnomo{} muy pequeña\\
+\fni{footnotesize} & \footnotesize  bastante pequeña \\
+\fni{small}        &  \small          \fontnomo{} pequeña \\
+\fni{normalsize}   &  \normalsize  \fontnomo{} normal \\
+\fni{large}        &  \large       \fontnomo{} grande
+\end{tabular}%
+\qquad\begin{tabular}{ll@{}}
+\fni{Large}        &  \Large       más grande \\[5pt]
+\fni{LARGE}        &  \LARGE       muy grande \\[5pt]
+\fni{huge}         &  \huge        enorme \\[5pt]
+\fni{Huge}         &  \Huge        la más
+\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+\begin{table}[!tbp]
+\caption{Tamaños absolutos en puntos para las clases normales.}\label{tab:pointsizes}
+\label{tab:sizes}
+\begin{lined}{12cm}
+\begin{tabular}{lrrr}
+\multicolumn{1}{c}{tamaño} &
+\multicolumn{1}{c}{10pt (por omisión) } &
+           \multicolumn{1}{c}{opción 11pt}  &
+           \multicolumn{1}{c}{opción 12pt}\\
+\verb|\tiny|       & 5pt  & 6pt & 6pt\\
+\verb|\scriptsize| & 7pt  & 8pt & 8pt\\
+\verb|\footnotesize| & 8pt & 9pt & 10pt \\
+\verb|\small|        & 9pt & 10pt & 11pt \\
+\verb|\normalsize| & 10pt & 11pt & 12pt \\
+\verb|\large|      & 12pt & 12pt & 14pt \\
+\verb|\Large|      & 14pt & 14pt & 17pt \\
+\verb|\LARGE|      & 17pt & 17pt & 20pt\\
+\verb|\huge|       & 20pt & 20pt & 25pt\\
+\verb|\Huge|       & 25pt & 25pt & 25pt\\
+\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+
+\begin{table}[!bp]
+\caption{\Fontsnomo{} para mates.} \label{mathfonts}
+\begin{lined}{0.7\textwidth}
+\begin{tabular}{@{}ll@{}}
+\fni{mathrm}\verb|{...}|&     $\mathrm{Fundici\acute{o}n\ Rematada}$\\
+\fni{mathbf}\verb|{...}|&     $\mathbf{Fundici\acute{o}n\ Negrita}$\\
+\fni{mathsf}\verb|{...}|&     $\mathsf{Fundici\acute{o}n\ Palo\ Seco}$\\
+\fni{mathtt}\verb|{...}|&     $\mathtt{Fundici\acute{o}n\ De\
+  M\acute{a}quina}$\\
+\fni{mathit}\verb|{...}|&     $\mathit{Fundici\acute{o}n\ Cursiva}$\\
+\fni{mathcal}\verb|{...}|&    $\mathcal{FUNDICI\acute{O}N\ CALIGR\acute{A}FICA}$\\
+\fni{mathnormal}\verb|{...}|& $\mathnormal{Fundici\acute{o}n\ Normal}$\\
+\end{tabular}
+
+%\begin{tabular}{@{}lll@{}}
+%\textit{Command}&\textit{Example}&    \textit{Output}\\[6pt]
+%\fni{mathcal}\verb|{...}|&    \verb|$\mathcal{B}=c$|&     $\mathcal{B}=c$\\
+%\fni{mathscr}\verb|{...}|&    \verb|$\mathscr{B}=c$|&     $\mathscr{B}=c$\\
+%\fni{mathrm}\verb|{...}|&     \verb|$\mathrm{K}_2$|&      $\mathrm{K}_2$\\
+%\fni{mathbf}\verb|{...}|&     \verb|$\sum x=\mathbf{v}$|& $\sum x=\mathbf{v}$\\
+%\fni{mathsf}\verb|{...}|&     \verb|$\mathsf{G\times R}$|&        $\mathsf{G\times R}$\\
+%\fni{mathtt}\verb|{...}|&     \verb|$\mathtt{L}(b,c)$|&   $\mathtt{L}(b,c)$\\
+%\fni{mathnormal}\verb|{...}|& \verb|$\mathnormal{R_{19}}\neq R_{19}$|&
+%$\mathnormal{R_{19}}\neq R_{19}$\\
+%\fni{mathit}\verb|{...}|&     \verb|$\mathit{ffi}\neq ffi$|& $\mathit{ffi}\neq ffi$
+%\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+En relación a las órdenes de tamaño de \fontnomo{}, las \wi{llaves} representan un papel significativo.  Se usan para construir \emph{grupos}.  Los grupos limitan el alcance de la mayoría de las órdenes de \LaTeX{}.\index{grupos}\index{agrupar}
+
+\begin{example}
+Adora los {\LARGE grandes y
+{\small pequeños} placeres}. 
+\end{example}
+ 
+Las órdenes de tamaño de \fontnomo{} también cambian el espaciado entre renglones, pero sólo si el párrafo termina dentro del ámbito de la orden de tamaño de \fontnomo{}.  La llave de cierre \verb|}| debería por tanto no llegar demasiado pronto.  Fíjese en la posición de la orden \ci{par} en los siguientes dos ejemplos.\footnote{\texttt{\bs{}par} equivale a un renglón en blanco.}
+
+
+\begin{example}
+{\Large ¡No lea esto!
+ No es verdad.
+ ¡Puede creerme!\par}
+\end{example}
+
+\begin{example}
+{\Large Tampoco esto es verdad.
+Mas recuerde qué mendaz soy.}\par
+\end{example}
+
+Si quiere activar una orden de cambio de tamaño para un párrafo entero de texto o incluso más, puede usar la sintaxis de entorno para las órdenes de cambio de \fontnomo{}.
+
+\begin{example}
+\begin{Large} 
+Esto no es verdad, pero
+qué diantres cabe esperar
+en estos tiempos...\par
+\end{Large}
+\end{example}
+
+Esto le ahorrará andar contando llaves.
+
+\subsection{¡Atención: peligro!}
+
+Como se comenta al principio de este capítulo, es peligroso sembrar el documento con órdenes explícitas como ésas, pues funcionan contra la idea básica de \LaTeX{}, que es separar la estructura de su documento del aspecto visual.  Esto significa que si usted usa la misma orden de cambio de \fontnomo{} en varios lugares para componer un tipo especial de información, debería usar \verb|\newcommand| para definir una ``orden lógica encubridora'' para la orden de cambio de \fontnomo{}.
+
+\begin{example}
+\newcommand{\ojo}[1]{%
+ \textbf{#1}}
+No \ojo{entre} en esta sala; está 
+ocupada por \ojo{máquinas} de 
+origen y propósito desconocidos.
+\end{example}
+
+Este enfoque tiene la ventaja de que usted puede decidir en una etapa posterior que quiere usar alguna representación visual de peligro distinta de \verb|\textbf|, sin tener que recorrer todo el documento identificando cada aparición de \verb|\textbf| y después deduciendo si ahí se usó para señalar un peligro o por alguna otra razón.
+
+
+\subsection{Consejo}
+
+Para concluir este viaje al mundo de las \fontsnomo{} y sus tamaños, acepte este humilde consejo:\nopagebreak
+
+\begin{quote}
+  \underline{\textbf{{\Huge¡}Recuerde\Huge!}} \textit{Cuantas}
+  \textsf{M\textbf{\LARGE Á} \texttt{S}} \textsl{\fontsnomo{}} \Huge use
+  \tiny en \footnotesize \textbf{un}  \small \texttt{documento},
+  \large \textit{tanto} \normalsize más \textsc{legible} y
+  \textsl{\textsf{lindo} \large s\Large e\LARGE r\huge á}.
+\end{quote}
+
+\section{Espaciado}
+ 
+\subsection{Espacio entre renglones}
+
+\index{espacio entre renglones} Si quiere usar mayor espacio entre renglones, puede cambiar su valor poniendo la orden
+\begin{lscommand}
+\ci{linespread}\verb|{|\emph{factor}\verb|}|
+\end{lscommand}
+en el preámbulo de su documento. Use \verb|\linespread{1.3}| para espaciado de ``uno y medio'' y \verb|\linespread{1.6}| para espaciado ``doble''.  Normalmente los renglones no se separan, así que el factor por omisión es~1.\index{doble espaciado de renglones}
+
+Tenga en cuenta que el efecto de la orden \ci{linespread} es bastante drástico y no apropiado para publicar un trabajo.  Así que si tiene una buena razón para cambiar el espacio entre renglones quizá prefiera usar la orden:
+\begin{lscommand}
+\verb|\setlength{\baselineskip}{1.5\baselineskip}|
+\end{lscommand}
+
+\begin{example}
+{\setlength{\baselineskip}%
+           {1.5\baselineskip}
+Este párrafo está compuesto con
+el salto de línea base puesto a
+1,5 de lo que era antes.  Fíjese
+en la orden par al final del
+párrafo.\par}
+
+Este párrafo tiene un propósito
+claro: mostrar que, una vez se
+cierran las llaves, todo vuelve
+a la normalidad.
+\end{example}
+
+\subsection{Formato de párrafo}\label{parsp}
+
+En \LaTeX{}, hay dos parámetros que influyen en el aspecto del párrafo.  Poniendo una definición
+\begin{code}
+\ci{setlength}\verb|{|\ci{parindent}\verb|}{0pt}| \\
+\verb|\setlength{|\ci{parskip}\verb|}{1ex plus 0.5ex minus 0.2ex}|
+\end{code}
+en el preámbulo del \filenomo{} de entrada, puede cambiar el aspecto de los párrafos.  Estas dos órdenes incrementan el espacio entre dos párrafos y establecen la sangría de párrafo a cero.
+
+Las partes \texttt{plus} y \texttt{minus} de la longitud de arriba dicen a \TeX{} que puede comprimir y expandir el salto entre párrafos la cantidad indicada, si es necesario para ajustar apropiadamente los párrafos en la página.
+
+En algunos países europeos los párrafos suelen separarse algo y no se sangran.  Pero tenga en cuenta que esto tiene su efecto en el índice general; sus renglones se espaciarán más en ese caso.  Para evitarlo, puede mover las dos órdenes del preámbulo a un lugar en su documento detrás de la orden \verb|\tableofcontents| o no usarlo en absoluto, porque verá que muchos libros profesionales usan sangría y no espacio para separar párrafos.
+
+Si quiere sangrar un párrafo que no está sangrado, puede usar
+\begin{lscommand}
+\ci{indent}
+\end{lscommand}
+al principio del párrafo. Obviamente,  sólo tendrá efecto cuando \verb|\parindent| no valga cero. Para sangrar el primer párrafo tras cada título de sección, use el paquete \pai{indentfirst} del lote `tools'.
+
+Para crear un párrafo no sangrado, puede usar
+\begin{lscommand}
+\ci{noindent}
+\end{lscommand}
+como primera orden del párrafo.  Puede ser útil si empieza un documento con texto de párrafo y no con una orden de sección.
+
+\subsection{Espacio horizontal}
+\label{sec:hspace}
+
+\LaTeX{} determina los espacios entre palabras y automáticamente.  Para añadir espacio horizontal, use:
+\index{horizontal!espacio}
+\begin{lscommand}
+\ci{hspace}\verb|{|\emph{longitud}\verb|}|
+\end{lscommand}
+Si dicho espacio debiera mantenerse incluso si cae al final o al principio de renglón, use \verb|\hspace*| en lugar de \verb|\hspace|. La \emph{longitud} en el caso más simple es sólo un número más una unidad.  Las unidades más importantes se listan en el cuadro~\ref{units}. \index{unidades}\index{dimensiones}
+
+\begin{example}
+Éste\hspace{1.5cm}es un espacio
+de 1,5 cm. 
+\end{example}
+\suppressfloats
+\begin{table}[tbp]
+\caption{Unidades \TeX{}.} \label{units}\index{unidades}
+\begin{lined}{9.5cm} 
+\begin{tabular}{@{}ll@{}}
+\texttt{mm} & milímetro $\approx 1/25$~pulgada \quad \demowidth{1mm} \\
+\texttt{cm} & centímetro = 10~mm  \quad \demowidth{1cm}                     \\
+\texttt{in} & pulgada $=$ 25,4~mm \quad \demowidth{1in}                    \\
+\texttt{pt} & punto $\approx 1/72$~pulgada $\approx \frac{1}{3}$~mm  \quad\demowidth{1pt}\\
+\texttt{em} & $\approx$ anchura de una `M' en la \fontnomo{} actual \quad \demowidth{1em}\\
+\texttt{ex} & $\approx$ altura de una `x' en la \fontnomo{} actual \quad \demowidth{1ex}
+\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+\label{cmd:stretch} 
+La orden
+\begin{lscommand}
+\ci{stretch}\verb|{|\emph{n}\verb|}|
+\end{lscommand} 
+genera espacio especial, que se expande hasta llenar todo el espacio sobrante en un renglón.  Si dos órdenes \verb|\hspace{\stretch{|\emph{n}\verb|}}| tienen lugar en el mismo renglón, los espacios crecen proporcionalmente a sus argumentos.
+
+\begin{example}
+x\hspace{\stretch{1}}
+x\hspace{\stretch{3}}x
+\end{example}
+
+Al usar espacio horizontal junto con texto, puede tener sentido hacer que el espacio ajuste su tamaño en relación con el tamaño de la \fontnomo{} actual.  Esto puede hacerse usando las unidades relativas a la \fontnomo{} \texttt{em} y \texttt{ex}:
+
+\begin{example}
+{\Large{}gran\hspace{1em}y}\\
+{\tiny{}pequeña\hspace{1em}y}
+\end{example}
+ 
+\subsection{Espacio vertical}
+
+\LaTeX{} determina automáticamente el espacio entre párrafos, secciones, subsecciones, etc. Si es necesario, puede añadirse espacio vertical adicional \emph{entre dos párrafos} con la orden:
+\begin{lscommand}
+\ci{vspace}\verb|{|\emph{longitud}\verb|}|
+\end{lscommand}
+
+Esta orden debería usarse normalmente entre dos renglones vacíos.  Si el espacio debe preservarse en lo alto o en lo bajo de la página, use la versión  de la orden con asterisco, \verb|\vspace*|, en lugar de \verb|\vspace|. \index{vertical!espacio}
+
+La orden \verb|\stretch|, acompañada de \verb|\pagebreak|, puede usarse para escribir texto en el último renglón de una página, o para centrar texto verticalmente en una página.
+\begin{code}
+\begin{verbatim}
+Algo de texto...
+
+\vspace{\stretch{1}}
+Esto va en la última línea de la página. \pagebreak
+\end{verbatim}
+\end{code}
+
+Espacio adicional entre dos líneas del \emph{mismo} párrafo o dentro de una tabla se indica con la orden
+\begin{lscommand}
+\ci{\bs}\verb|[|\emph{longitud}\verb|]|
+\end{lscommand}
+
+
+Con  \ci{bigskip} y \ci{smallskip} puede saltar una cantidad predefinida de espacio vertical sin tener que preocuparse de números exactos.
+
+\section{Composición de la página}
+
+\begin{figure}[!hp]
+\begin{center}
+\makeatletter\@mylayout\makeatother
+\end{center}
+\vspace*{3ex}
+\caption{Parámetros de composición de la página.}
+\label{fig:layout}
+\cih{footskip}
+\cih{headheight}
+\cih{headsep}
+\cih{marginparpush}
+\cih{marginparsep}
+\cih{marginparwidth}
+\cih{oddsidemargin}
+\cih{paperheight}
+\cih{paperwidth}
+\cih{textheight}
+\cih{textwidth}
+\cih{topmargin}
+\end{figure}
+\index{página!composición}
+\LaTeXe{} le permite indicar el \wi{tamaño del papel} en la orden \\ \verb|\documentclass|.  Después calcula los \wi{márgenes} adecuados, pero a veces usted no estará contento con los valores predefinidos. Naturalmente, puede cambiarlos. %no idea why this is needed here ...
+
+\thispagestyle{fancyplain}
+La figura~\ref{fig:layout} muestra todos los parámetros que pueden cambiarse.  La figura se creó con el paquete \pai{layout} del lote `tools'. \footnote{\CTANref|macros/latex/required/tools|}
+
+\textbf{¡ESPERE!} Antes de lanzarse al frenesí de  ``Hagamos esa página estrecha un poco más ancha'', dedique unos segundos a pensar. Como muchas cosas en \LaTeX, hay una buena razón para que el aspecto de la página sea como es.
+
+Por supuesto, comparada con su página recién salida de un paquete ofimático (como OpenOffice Writer o  MS Word), parece horrorosamente estrecha.  Pero eche un vistazo a su libro favorito\footnote{Me refiero a un libro real impreso y producido por una editorial con reputación.} y cuente el número de caracteres en una línea de texto normal.  Hallará que no hay más de en torno a 66 caracteres en cada renglón.  Ahora haga lo mismo con su página de \LaTeX{}; verá lo mismo.  La experiencia muestra que la lectura se vuelve difícil en cuanto hay más caracteres por renglón.  Es así porque a los ojos les resulta difícil moverse desde el final de un renglón al principio del siguiente.  Es la misma razón por la que los periódicos se componen en múltiples columnas. Así que si incrementa la anchura de su texto, tenga en cuenta que está haciendo la vida más difícil a los lectores de su documento.
+ 
+Si de cualquier forma quiere hacerlo, \LaTeX{} proporciona dos órdenes para cambiar estos parámetros.  Se usan normalmente en el preámbulo del documento.
+
+La primera orden asigna un valor fijo a cualquiera de los parámetros:
+\begin{lscommand}
+\ci{setlength}\verb|{|\emph{parámetro}\verb|}{|\emph{longitud}\verb|}|
+\end{lscommand}
+
+La segunda orden añade longitud a cualquier parámetro:
+\begin{lscommand}
+\ci{addtolength}\verb|{|\emph{parámetro}\verb|}{|\emph{longitud}\verb|}|
+\end{lscommand} 
+
+Esta segunda orden es de hecho más útil que la orden \ci{setlength}, pues puede usted así trabajar en relación a las valores establecidos. Para añadir un centímetro a la anchura total del texto, pongo las siguientes órdenes en el preámbulo del documento:
+\begin{code}
+\verb|\addtolength{\hoffset}{-0.5cm}|\\
+\verb|\addtolength{\textwidth}{1cm}|
+\end{code}
+
+En este  contexto, quizá quiera mirar el paquete \pai{calc}.  Le permite usar operaciones aritméticas en el argumento de \ci{setlength} y en otros lugares donde puede introducir valores numéricos en argumentos de funciones.
+
+\section{Más diversión con las longitudes}
+
+Siempre que sea posible, evite usar longitudes absolutas en los documentos \LaTeX{}.  Intente basar las cosas en la anchura o altura de otros elementos de la página.  Para la anchura de una figura puede referirse a \verb|\textwidth| al componer la página.
+
+Las siguientes 3 órdenes le permiten determinar la anchura, altura y profundidad de una cadena de texto.
+
+\begin{lscommand}
+\ci{settoheight}\verb|{|\emph{variable}\verb|}{|\emph{texto}\verb|}|\\
+\ci{settodepth}\verb|{|\emph{variable}\verb|}{|\emph{texto}\verb|}|\\
+\ci{settowidth}\verb|{|\emph{variable}\verb|}{|\emph{texto}\verb|}|
+\end{lscommand}
+
+El ejemplo siguiente muestra una posible aplicación de estas órdenes.
+
+\begin{example}
+\flushleft
+\newenvironment{vardesc}[1]{%
+  \settowidth{\parindent}{#1:\ }
+  \makebox[0pt][r]{#1:\ }}{}
+
+\begin{displaymath}
+a^2+b^2=c^2
+\end{displaymath}
+
+\begin{vardesc}{Donde}$a$, 
+$b$ -- son adyacentes al ángulo
+recto de un triángulo rectángulo.
+
+$c$ -- es la hipotenusa del
+triángulo, y 
+
+$d$ -- no sale aquí
+en absoluto. 
+\end{vardesc}
+\end{example}
+
+\section{Cajas}
+
+\LaTeX{} construye sus páginas colocando cajas.  En principio, cada letra es una cajita, que se pega a otras letras para formar palabras. Éstas se pegan de nuevo a otras palabras, pero con un pegamento especial, que es tan elástico que una serie de palabras puede comprimirse o expandirse para rellenar exactamente un renglón de la página.
+
+Esto es una simplificación de lo que realmente ocurre, pero realmente ocurre: \TeX{} trabaja con pegamento y cajas. Las letras no son las únicas cosas que son cajas.  Puede poner virtualmente cualquier cosa en una caja, incluso otras cajas.  Cada caja será manejada por \LaTeX{} como si fuera una simple letra.
+
+En los capítulos anteriores ya ha encontrado algunas cajas, aunque no lo parezcan.  Los entornos \ei{tabular} e \ci{includegraphics}, por ejemplo, producen cajas.  Esto significa que puede usted fácilmente colocar dos tablas o imágenes una al lado de la otra.  Basta con asegurarse de que su anchura combinada no excede la anchura del texto.
+
+Puede también empaquetar un párrafo de su elección en una caja con la orden
+
+\begin{lscommand}
+\ci{parbox}\verb|[|\emph{pos}\verb|]{|\emph{anchura}\verb|}{|\emph{texto}\verb|}|
+\end{lscommand}
+
+o el entorno
+
+\begin{lscommand}
+\verb|\begin{|\ei{minipage}\verb|}[|\emph{pos}\verb|]{|\emph{anchura}\verb|}| texto 
+\verb|\end{|\ei{minipage}\verb|}|
+\end{lscommand}
+
+El parámetro \texttt{pos} puede tomar una de las letras \texttt{c, t} o \texttt{b} para controlar la alineación vertical de la caja, relativa a la línea base del texto que la rodea. \texttt{anchura} toma como argumento la longitud que indica la anchura de la caja.  La principal diferencia entre una \ei{minipage} y una \ci{parbox} es que usted no puede usar todas las órdenes y entornos dentro de una \ei{parbox}, mientras que casi todo es posible en una \ei{minipage}.
+
+Mientras que \ci{parbox} empaqueta un párrafo entero partiendo renglones y todo, hay también una clase de órdenes encajonadoras que trabajan sólo con material alineado horizontalmente.  Ya conocemos una de ellas; se llama \ci{mbox}.  Simplemente empaqueta una serie de cajas en otra, y puede usarse para impedir a \LaTeX{} romper dos palabras.  Como puede  poner cajas dentro de cajas, estos empaquetadores de cajas horizontales le dan total flexibilidad.
+
+La orden
+\begin{lscommand}
+\ci{makebox}\verb|[|\emph{anchura}\verb|][|\emph{pos}\verb|]{|\emph{texto}\verb|}|
+\end{lscommand}
+
+donde \texttt{anchura} define la anchura de la caja resultante vista desde fuera,\footnote{Esto significa que puede ser más pequeña que el material dentro de ella.  Usted puede incluso poner la anchura 0pt de forma que el texto de dentro de la caja se componga sin afectar a las cajas de alrededor.}  tiene un efecto parecido. Además de las expresiones de longitud, puede también usar \ci{width}, \ci{height}, \ci{depth} y \ci{totalheight} en el parámetro de anchura.  Se establecen a partir de valores obtenidos midiendo el \emph{texto} compuesto.  El parámetro \emph{pos} toma una letra como valor: \textbf{c}enter (centro), flush\textbf{l}eft (izquierda), flush\textbf{r}ight (derecha) o \textbf{s}pread (expandir el texto hasta llenar la caja).
+
+La orden \ci{framebox} funciona exactamente igual que \ci{makebox}, pero dibuja una caja alrededor del texto.
+
+El ejemplo siguiente le muestra algunas cosas que podría hacer con las órdenes \ci{makebox} y \ci{framebox}.
+
+\begin{example}
+\makebox[\textwidth]{%
+    c e n t r a d o}\par
+\makebox[\textwidth][s]{%
+    e x p a n d i d o}\par
+\framebox[1.1\width]{A la medida} \par
+\framebox[0.8\width][r]{Muy ancho} \par
+\framebox[1cm][l]{Y otro también...} 
+¿Puede leer esto?
+\end{example}
+
+Ahora que controlamos lo horizontal, el siguiente paso obvio es ir por la vertical.\footnote{El control total sólo se obtiene controlando tanto lo horizontal como lo vertical\ldots}
+
+La orden
+\begin{lscommand}
+\ci{raisebox}\verb|{|\emph{sube}\verb|}[|\emph{extiende-sobre-línea-base}\verb|][|\emph{extiende-bajo-línea-base}\verb|]{|\emph{texto}\verb|}|
+\end{lscommand}
+le permite definir las propiedades verticales de una caja. Puede usar \ci{width}, \ci{height}, \ci{depth} y \ci{totalheight} en los tres primeros parámtros, para afectar al tamaño de la caja dentro del argumento \emph{texto}.
+
+
+\begin{example}
+\raisebox{0pt}[0pt][0pt]{\Large%
+\textbf{Aaaa\raisebox{-0.3ex}{a}%
+\raisebox{-0.7ex}{aa}%
+\raisebox{-1.2ex}{h}%
+\raisebox{-2.2ex}{h}%
+\raisebox{-4.5ex}{h}}}
+---gritó, pero ni siquiera el más
+próximo se dio cuenta de que 
+algo terrible le había sucedido...
+\end{example}
+
+\section{Líneas y puntales}
+\label{sec:rule}
+
+Hace unas páginas puede haber visto la orden
+
+\begin{lscommand}
+\ci{rule}\verb|[|\emph{sube}\verb|]{|\emph{anchura}\verb|}{|\emph{altura}\verb|}|
+\end{lscommand}
+
+Usada normalmente produce simplemente una caja negra.
+
+\begin{example}
+\rule{3mm}{.1pt}%
+\rule[-1mm]{5mm}{1cm}%
+\rule{3mm}{.1pt}%
+\rule[1mm]{1cm}{5mm}%
+\rule{3mm}{.1pt}
+\end{example}
+
+Esto es útil para dibujar líneas verticales y horizontales. La línea de la página del título, por ejemplo, ha sido creada con una orden \ci{rule}.
+
+Un caso especial es una línea sin anchura pero con cierta altura.  En composición profesional se llama \wi{puntal}.  Se usa para garantizar que un elemento de una página tiene una cierta altura mínima.  Podría usarlo en un entorno \texttt{tabular} para asegurarse de que una fila tiene cierta altura mínima.
+
+\begin{example}
+\begin{tabular}{|c|}
+\hline
+\rule{1pt}{4ex}Costeru...\\
+\hline
+\rule{0pt}{4ex}Puntal\\
+\hline
+\end{tabular}
+\end{example}
+
+\bigskip
+{\flushright Fin.\par}
+
+% Local Variables:
+% TeX-master: "lshort2e"
+% mode: latex
+% mode: flyspell
+% End:

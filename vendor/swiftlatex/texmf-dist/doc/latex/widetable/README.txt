@@ -1,0 +1,35 @@
+Package widetable version 2.x dated 2020
+
+This small package is intended to be a second resource when typesetting 
+tables that would look a little better if they were set with a specified width.
+It differs from tabularX since here all cells are widened by working on the 
+inter column glue, not on the measure of certain specified textual cells  as 
+it is done with tabularX.
+
+ 
+ This work may be distributed and/or modified under the
+ conditions of the LaTeX Project Public License, either version 1.3
+ of this license or (at your option) any later version.
+ The latest version of this license is in
+   http://www.latex-project.org/lppl.txt
+ and version 1.3 or later is part of all distributions of LaTeX
+ version 2003/12/01 or later.
+
+ This work has the LPPL maintenance status "maintained".
+
+ The Current Maintainer of this work is Claudio Beccari
+ claudio dot beccari at gmail dot com
+
+
+ The list of derived (unpacked) files belonging to the distribution
+ and covered by LPPL is defined by the unpacking scripts (with
+ extension .ins) which are part of the distribution.
+
+The main file of this work is
+            widteable.dtx    (autoextracting .dtx file)
+The derived files are
+            widetable.pdf    (obtained by pdflatexing widetale.dtx)
+            widetable.sty    (same as above)
+
+Claudio Beccari
+

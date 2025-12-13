@@ -1,0 +1,1408 @@
+\documentclass[a4paper]{article}
+\usepackage[english]{babel}
+\usepackage{ethiop}
+
+\newcommand{\eth}{\selectlanguage{ethiop}}
+
+\font\manual=logo10 % font used for the METAFONT logo, etc.
+\newcommand*\MF{{\manual META}\-{\manual FONT}}
+\newcommand*\babel{\textsf{babel}}
+\newcommand*\Babel{\textsf{Babel}}
+\newcommand*\EthTeX{Eth\kern-0,1em \TeX}
+\newcommand*\ethioplogo{\textsf{ethiop}}
+
+\newcommand{\servicemail}{%
+  \texttt{ethiop@informatik.uni-hamburg.de}%
+}
+
+\newcount\xpos
+
+\selectlanguage{english}
+\hyphenation{Ethio-pi-an}
+
+\begin{document}
+
+\selectlanguage{english}
+
+\title{\bf
+  Ethiopian Language Support\\
+  for the \Babel\ Package\\
+  {\large Version 0.7}}
+\author{
+  \hfill\hbox to 0pt{\hss Berhanu Beyene\hss}\hfill
+  \hfill\hbox to 0pt{\hss Manfred Kudlek\hss}\hfill\kern0pt\\
+  \hfill\hbox to 0pt{\hss Olaf Kummer\hss}\hfill
+  \hfill\hbox to 0pt{\hss Jochen Metzinger\hss}\hfill\kern0pt\\[\medskipamount]
+  Universit\"at Hamburg,
+  FB Informatik,
+  AB TGI\\
+  Vogt-K\"olln-Stra\ss e 30,
+  D-22527 Hamburg}
+\maketitle
+
+\begin{abstract}
+  The Ethiopian script differs considerably from the Latin script.
+  Most important, it consists of more than 350 different letters.
+  A new transcription method is presented that can be used for the
+  \LaTeX\ typesetting system. It was implemented on the basis
+  of the multilingual typesetting package \babel.
+
+  In addition to a guide to the concrete usage of our system, we provide
+  technical details of the implementation and sketch the
+  reasons for our design decisions. Linguistic and historical
+  information on the Ethiopian script is also included.
+\end{abstract}
+\selectlanguage{ethiop}
+\begin{abstract}
+  ya'iteyo.peyA .sehuf kalAtin .sehuf 'e^geg yatalaya naw:: 
+  golto yamitAyaw ka 350 balAy fidalAten yayAza mahonu naw:: 
+  'enazihen fidalAt 
+  \selectlanguage{english}\LaTeX\selectlanguage{ethiop}
+  batabAla ya.sehefat 'a.tA.tAl mAqanabAbariyA zadE ya'iteyo.peyAn 
+  .sehuf balAtin
+  quAnquA lama.sAf
+  yamiyAs^cel 'adis yA'a.sA.sAf zaya 
+  \selectlanguage{english}(Transcription)\selectlanguage{ethiop} 
+  tazagA^geto qarbuAl::
+
+  ya~nAn ya'a.sA.sAf zadE lama.taqam kamiyAs^cl 
+  mamariyA gAr; ya'a.taqAqamun tEknikAl zerezernA lamen yehEn 
+  ya'a.sA.sAf mangad lama.taqem 'endawasan 'asAytenAl:: sela 
+  'ityo.pyA quAnquAwo^c 'a.sA.sAf zadEnA yaquAnquA tArikAwi 
+  mara^gAwo^c bazih .tenAt lAy 'akelanbatAl::
+\end{abstract}
+\selectlanguage{english}
+
+\clearpage
+
+\section{Introduction}
+
+The \ethioplogo\ package \cite{BKKM97} is a collection of fonts
+and \TeX\ macros that enable you to typeset the characters
+of the languages of Ethiopia.
+
+\subsection{The origins of the Ethiopian script}
+
+The Ethiopian script has its origin in the South Semitic alphabet
+which has been used for Thamudene, Dedanite, Li\d{h}yanite,
+\d{S}afaitic, Minaean, Sabaean, \d{H}imyaritic, Qatabanic, and
+\d{H}a\d{d}ramautic. These are Semitic languages once spoken
+in the present state of Yemen. The alphabet was without vocalization.
+The South Semitic characters are known from stone monuments only,
+whereas the present Ethiopian characters originate from
+paper documents. The writing direction of South Semitic was from
+right to left or alternating (Bustrofedon).
+
+In the $2^{nd}$ half of the $1^{st}$ milliennium BC Semitic groups
+(Ge'ez, {\eth g`ez}) from South Arabia established a kingdom at Aksum.
+After 350 AD a vocalization was introduced.
+
+Today the Ethiopian script is an official writing system in two
+states, Ethio\-pia ({\eth 'ityo.peyA}) and Eri\-trea ({\eth 'ErtrA}).
+There exist 86 languages (4 of them extinct)
+from 4 language families with around 200 dialects in Ethiopia and
+Eritrea. The writing system is used for a number of languages
+in these states, see Tab.~\ref{tab:speakers} for the most
+important languages (figures taken from \cite{ethno96}).
+Note that Amarinya, Guraginya, Afarinya,
+Hadiyyinya, Kambaatinya, Orominya (O\-ro\-miffa),
+Sidaminya, Somalinya and some others are the expressions in Amharic
+for the different languages whereas the names in the second column of
+Tab.~\ref{tab:speakers} are from \cite{ethno96}.
+
+\subsection{The origins of this package}
+
+The current Ethiopian \LaTeX\ environment started
+as a project assignment at the university of Hamburg in
+1995. Luckily, we did not need to start from scratch,
+because there were some Ethiopian fonts already.
+
+The fonts are based on \EthTeX\ which was originally distributed
+by Abass B. Alameneh. The genuine \EthTeX\ package can be
+found on CTAN in the directory \texttt{language/ethiopia/ethtex/}
+or in \cite{ethio97}. We changed the existing letters a little to make
+them more robust at low resolutions, but the most effort went into
+adding new characters that were not present in the original fonts.
+Still more important is the addition of \TeX-ligatures to
+the fonts in order to support our input transcription.
+
+When we chose our transcription scheme, it became apparent that
+we would have to activate some of the input characters.
+Although we wrote our own set of macros to handle the
+activation, we soon decided not to introduce yet another
+incompatible mechanism for this task. Instead we used
+the \babel\ package by Johannes L. Braams \cite{Bra97} as
+framework for the implementation of the input transcription.
+The \TeX\ macros are derived from the file
+\texttt{language.skeleton} provided with that package, which
+also allows a more well-rounded support of multiple
+languages.
+
+Since the original \EthTeX\ package used a special editor
+that is not available for all platforms, it was not easily
+portable. Moreover, a special version of \LaTeX\,2.09 was
+generated, thereby preventing an upgrade to the now current
+\LaTeXe. By rewriting the language support completely and
+by embedding the Ethiopian fonts into the framework of
+the \babel\ package we got a more robust and portable
+system that will be usable with future \LaTeX\ versions.
+
+\begin{table}[t]
+\begin{center}
+\begin{tabular}{|l|ll|r|}
+\hline
+  Language     & Languages       & &
+    \multicolumn{1}{|l|}{No.~of speakers} \\
+  family       &                 & &
+    \multicolumn{1}{|l|}{in 1000} \\
+               &                 & &
+    \multicolumn{1}{|l|}{(year 91--95)} \\
+\hline
+  Semitic      & Ge'ez           & {\eth g`ez}        & only in church \\
+               & Amharic         & {\eth 'amAr~nA}    & 20\,000 \\
+               & Gurage          & {\eth gurAge~nA}   &  1\,850 \\
+               & Tigre           & {\eth tegra}       &       ? \\
+               & Tigrinya        & {\eth tegre~nA}    &  6\,050 \\
+\hline
+  Cushitic     & Afar            & {\eth 'afAr~nA}    &     750 \\
+               & Hadiyya         & {\eth hadiy~nA}    &  1\,000 \\
+               & Kambaata        & {\eth kambAt~nA}   &  1\,000 \\
+               & Oromo           & {\eth 'OrOm~nA}    & 14\,000 \\
+               & Sidamo          & {\eth sidAm~nA}    &  1\,500 \\
+               & Somali          & {\eth sOmAl~nA}    &  2\,050 \\
+\hline
+  Omotic       & Gamo/Gofa/Dawro & {\eth gAm~nA}      &     780 \\
+               & Wolaytta        & {\eth walAyet~nA}  &  2\,000 \\
+\hline
+  East Sudanic &                 &                    &       ? \\
+\hline
+\end{tabular}
+\end{center}
+\caption{\label{tab:speakers}Languages and number of speakers}
+\end{table}
+
+Our transcription method does not provide support for the direct
+entry of Ethiopian characters. Instead a natural encoding
+has been developed that allows us to enter Ethiopian
+text via Latin letters. This encoding is based on 
+scientific transcription techniques and is closely related
+to other encoding standards. One of these standards is
+SERA, which is mainly intended for the recording and
+transmission of Ethiopian text within an ACSII environment.
+However, the SERA encoding was not realizable as an
+input encoding for \TeX.
+
+Unicode, too, is an important text format, which
+provides a unified framework for \textit{all}
+languages by encoding characters with 16 bits instead of~8.
+The \TeX\ extension $\Omega$ can handle Unicode
+input. A rudimentary support for $\Omega$ has already 
+been included in this package. Note that the Ethiopian
+script is not a full part of Unicode. Although it has
+been approved by the Unicode committee and has passed the
+ISO/JTC1/SC2 ballot, it still awaits the ISO/JTC1 ballot and
+the final publication.
+
+
+\section{Installation}
+
+Installing the \ethioplogo\ package is not overly difficult,
+especially if you adhere to the following instructions.
+
+\begin{enumerate}
+\item Check the prerequisites for this package.
+
+\begin{itemize}
+\item Make sure you have installed \TeX\ and \MF.
+\item Make sure that the files \texttt{cmbase.mf} and \texttt{romand.mf}
+from the Computer Modern fonts are accessible to \MF.
+\item Make sure that you have installed \LaTeXe\ with
+a release date of 1996/12/01 or later. \LaTeXe\
+can be found on CTAN in the directory \texttt{macros/latex/}.
+\item Make sure that you have installed the \babel\ package with
+a release date of 1997/01/23 (version 3.6h) or later. \Babel\
+can be found on CTAN in the directory \texttt{macros/latex/packages/babel/}.
+\end{itemize}
+
+\item If a previous version of this package is installed, remove
+all the files, especially the font files that were generated 
+by \MF{} after the first installation.
+
+\item Depending on how you obtained this package it might be
+necessary to unpack/uncompress an archive. Now the files mentioned
+in \texttt{MANIFEST} should be present.
+
+\item If you do not intend to use the $\Omega$ typesetting system,
+you may delete the files contained in the directory \texttt{omega/}.
+
+\item Generate the \TeX\ files from their \texttt{docstrip}
+source. To do this, run
+\begin{verbatim}
+tex ethiop.ins
+\end{verbatim}
+in the directory where the files \texttt{ethiop.ins} and
+\texttt{ethiop.dtx} reside. (By default this is \texttt{latex/}.)
+
+\item The files \texttt{ethiop.ins} and \texttt{ethiop.dtx}
+can be removed, or you can run
+\begin{verbatim}
+latex ethiop.dtx
+\end{verbatim}
+to generate the source code documentation. \textit{This is not
+required.}
+
+\item Move the files to their destination.
+
+\begin{tabular}{@{}lll@{}}
+The files        & are                   & and are needed by \\[1ex]
+\texttt{*.tfm}   & font metrics                       & \TeX \\
+\texttt{*.fd}    & font definitions                   & \TeX \\
+\texttt{*.sty}   & style files                        & \TeX \\
+\texttt{*.ldf}   & \babel\ language
+                   definitions                        & \TeX \\
+\texttt{*.tex}   & \TeX\ sources                      & \TeX \\
+\texttt{*.mf}    & \MF\ sources                       & \MF \\
+\texttt{*.otp}   & $\Omega$ translation processes     & otp2ocp \\
+\texttt{*.ocp}   & compiled \texttt{*.otp} files      & $\Omega$ \\
+\texttt{*.ovp}   & $\Omega$ virtual font descriptions & ovp2ovf \\
+\texttt{*.ovf}   & $\Omega$ virtual font files        & dvi-drivers \\
+\texttt{*.ofm}   & $\Omega$ font metrics              & $\Omega$ \\
+\end{tabular}
+
+The exact location where the files belong depends on your
+installation. As a first approximation, install them
+near other files with the same extension.
+
+For some installations it might be possible or even necessary
+to place all the files in the directory where the user
+documents will be placed. \textit{This is not recommended.}
+
+\item Remove the font files that might be left over from a
+previous version of ethiop, that is all files
+\texttt{eth*.gf} and \texttt{eth*.pk}.
+
+\item Verify the installation by generating this documentation
+file from its source \texttt{ethiodoc.tex}. Run \LaTeX\ twice
+to get the references right.
+\begin{verbatim}
+latex ethiodoc.tex
+latex ethiodoc.tex
+\end{verbatim}
+The resulting file \texttt{ethiodoc.dvi} should be identical
+to this text except for the date of translation.
+\end{enumerate}
+
+It is highly probable that after doing all of the above,
+you have a working Ethiopian language package set up.
+But maybe you ran into trouble during the installation.
+In this case try the following:
+
+\begin{itemize}
+\item  If the run on \texttt{ethiop.ins} fails, the files
+    might have been corrupted during transmission or one of
+    the necessary files might not be accessible to \TeX.
+\item  If \LaTeX\ complains about a missing input file, check whether
+    the files \texttt{*.fd} and \texttt{*.sty} are accessible and readable.
+\item  If \LaTeX\ complains about a missing font, check the
+    placement of the files \texttt{*.tfm}.
+\item  If \LaTeX\ issues warning messages, you might have an old version
+    of \LaTeX\ or \babel.
+\item  If \LaTeX\ issues strange errors, you might have an old version
+    of \LaTeX\ or \babel.
+\item  If \LaTeX\ issues strange errors, the files might have been
+    corrupted during transmission. Conversions of CR, LF, and
+    so on might cause this problem.
+\item  If the previewer or the printer driver complains about missing
+    fonts and does not automatically call \MF\ to generate
+    these font, either adapt your installation or generate
+    the fonts by hand. Depending on your installation you
+    must run something like
+\begin{verbatim}
+mf '\mode=localfont; input etha10'
+\end{verbatim}
+    for each of the fonts.
+\item  If \MF\ is called and complains about missing source
+    files, check whether these (\texttt{*.mf}) are placed
+    correctly.
+\item  If \MF\ is called and complains about missing source
+    files, check whether the Computer Modern fonts have been
+    properly installed.
+\item  If \MF\ is called and complains about strange paths,
+    you are probably generating the
+    font at a lower resolution than 200\,dpi.
+    There is little you can do except ignoring the errors or
+    telling \MF\ to do so. Please report such errors only
+    if they occur at resolutions above 200\,dpi.
+\item  If the previewer or the printer driver complains about missing
+    characters, check whether you have deleted all files from
+    previous versions of this font.
+\item  If the previewer or the printer driver complains about a
+    checksum error, check whether you have deleted all files from
+    previous versions of this font.
+\end{itemize}
+
+If that does not help, have a look at our web page located at
+{\small\verb|http://www.|\discretionary{}{}{}%
+       \verb|informatik.uni-hamburg.de|%
+       \verb|/TGI/mitarbeiter/wimis/kummer/ethiop_eng.html|}%
+\hspace{0,33333em plus 3em}%
+to read about possible updates and bug reports. If this
+does not provide any clue and your friendly \TeX nician is unavailable,
+we will try to help you, if time permits. Send a mail to
+\servicemail, hopefully we will get back to you.
+
+Please do \textbf{not} report bugs to Johannes L. Braams (the
+maintainer of \babel) or to the \LaTeX\ team. They are \textbf{not}
+responsible for our bugs and they are \textbf{very} busy already.
+
+
+\section{Usage}
+
+An important fact about the Ethiopian script is that
+it uses more than 350 different characters. Hence the text
+entry itself is a big problem. But we must also deal with
+other topics like punctuation and spacing that arise when
+using this package.
+
+We will describe here the use of the \ethioplogo\ package
+without the $\Omega$ system. The $\Omega$ support can be found
+in section~\ref{omegasec}.
+
+\subsection{Including the package}
+
+The \babel\ language support is selected by adding the line
+\begin{verbatim}
+\usepackage[english]{babel}
+\end{verbatim}
+to the preamble of a document. Of course a different language
+might also be selected. But since the \ethioplogo\ package is not yet
+a part of the \babel\ package, you must select it with
+\begin{verbatim}
+\usepackage{ethiop}
+\end{verbatim}
+in the preamble of a document. There is no need to include
+\babel\ explicitly unless we want to use two or more languages.
+If both \ethioplogo\ and \babel\ are included, we can use the ordinary
+language switching mechanism of \babel\ to take us
+from one language to the other. For example
+\begin{verbatim}
+\selectlanguage{english}'adis 'ababA
+\selectlanguage{ethiop}'adis 'ababA
+\selectlanguage{english}'adis 'ababA.
+\end{verbatim}
+will give you:
+\selectlanguage{english}'adis 'ababA
+\selectlanguage{ethiop}'adis 'ababA
+\selectlanguage{english}'adis 'ababA.
+
+
+\subsection{Typing the text}
+
+In Tab.~\ref{tab:ethiopchar} you can see the Ethiopian
+characters that are accessible using this package.
+
+All characters with {\tt .d} are only used for {\it Orominya (Oromiffa)},
+all with {\tt 'q}, {\tt 'k}, {\tt 'h}, {\tt 'g} and
+{\tt mua}, {\tt mui}, {\tt muE}, {\tt mue} only for
+{\it Guraginya (Chaha)}, all with {\tt .q} only for {\it Tigrinya},
+and all with {\tt fu}, {\tt pu} only for {\it Wolayttinya}.
+
+\begin{table}[p]
+  \begin{center}
+    \selectlanguage{ethiop}
+    \def\sci|#1|{\selectlanguage{english}%
+      \mdseries #1%
+      \selectlanguage{ethiop}}
+    \begin{tabular}{|c|r|ccccccc|ccccc|}
+      \cline{3-14}
+      \multicolumn{2}{r|}{}&
+        \sci|a|&\sci|u|&\sci|i|&\sci|\=a|&\sci|\=e|&\sci|e|&\sci|o|&
+        \sci|wa|&\sci|wi|&\sci|w\=a|&\sci|w\=e|&\sci|we|\\
+      \cline{3-14}
+      \multicolumn{2}{r|}{}&
+        \verb|a|&\verb|u|&\verb|i|&\verb|A|&\verb|E|&\verb|e|&\verb|o|&
+        \verb|ua|&\verb|ui|&\verb|uA|&\verb|uE|&\verb|ue|\\
+      \multicolumn{2}{r|}{}&
+        &\verb|U|&\verb|I|&&&&\verb|O|&&\verb|uI|&
+        \multicolumn{3}{r|}{\textrm{\small\itshape\mdseries if preferred}}\\
+      \hline
+      \sci|h|   &\verb| h|& ha&hU&hI&hA&hE&he&hO&&&huA&&\\
+      \sci|l|   &\verb| l|& la&lU&lI&lA&lE&le&lO&&&luA&&\\
+      \sci|\d h|&\verb|.h|& .ha&.hU&.hI&.hA&.hE&.he&.hO&&&.huA&&\\
+      \sci|m|   &\verb| m|& ma&mU&mI&mA&mE&me&mO&mua&muI&muA&muE&mue\\
+      \sci|\'s| &\verb|'s|& 'sa&'sU&'sI&'sA&'sE&'se&'sO&&&'suA&&\\
+      \sci|r|   &\verb| r|& ra&rU&rI&rA&rE&re&rO&&&ruA&&\\
+      \sci|s|   &\verb| s|& sa&sU&sI&sA&sE&se&sO&&&suA&&\\
+      \sci|\v s|&\verb|^s|& ^sa&^sU&^sI&^sA&^sE&^se&^sO&&&^suA&&\\
+      \sci|q|   &\verb| q|& qa&qU&qI&qA&qE&qe&qO&qua&quI&quA&quE&que\\
+      \sci|\d q|&\verb|.q|& .qa&.qU&.qI&.qA&.qE&.qe&.qO&
+                            .qua&.quI&.quA&.quE&.que\\
+      \sci|b|   &\verb| b|& ba&bU&bI&bA&bE&be&bO&bua&buI&buA&buE&bue\\
+      \sci|v|   &\verb| v|& va&vU&vI&vA&vE&ve&vO&&&vuA&&\\
+      \sci|t|   &\verb| t|& ta&tU&tI&tA&tE&te&tO&&&tuA&&\\
+      \sci|\v c|&\verb|^c|& ^ca&^cU&^cI&^cA&^cE&^ce&^cO&&&^cuA&&\\
+      \sci|\b h|&\verb|_h|& _ha&_hU&_hI&_hA&_hE&_he&_hO&
+                            _hua&_huI&_huA&_huE&_hue\\
+      \sci|n|   &\verb| n|& na&nU&nI&nA&nE&ne&nO&&&nuA&&\\
+      \sci|\~n| &\verb|~n|& ~na&~nU&~nI&~nA&~nE&~ne&~nO&&&~nuA&&\\
+      \sci|'|   &\verb|'| & 'a&'U&'I&'A&'E&'e&'O&'ua&&&&\\
+      \sci|k|   &\verb| k|& ka&kU&kI&kA&kE&ke&kO&
+                            kua&kuI&kuA&kuE&kue\\
+      \sci|\b k|&\verb|_k|& _ka&_kU&_kI&_kA&_kE&_ke&_kO&
+                            _kua&_kuI&_kuA&_kuE&_kue\\
+      \sci|w|   &\verb| w|& wa&wU&wI&wA&wE&we&wO&&&&&\\
+      \sci|`|   &\verb| `|& `a&`U&`I&`A&`E&`e&`O&&&&&\\
+      \sci|z|   &\verb| z|& za&zU&zI&zA&zE&ze&zO&&&zuA&&\\
+      \sci|\v z|&\verb|^z|& ^za&^zU&^zI&^zA&^zE&^ze&^zO&&&^zuA&&\\
+      \sci|y|   &\verb| y|& ya&yU&yI&yA&yE&ye&yO&yua&&&&\\
+      \sci|d|   &\verb| d|& da&dU&dI&dA&dE&de&dO&&&duA&&\\
+      \sci|\d d|&\verb|.d|& .da&.dU&.dI&.dA&.dE&.de&.dO&&&.duA&&\\
+      \sci|\v g|&\verb|^g|& ^ga&^gU&^gI&^gA&^gE&^ge&^gO&&&^guA&&\\
+      \sci|g|   &\verb| g|& ga&gU&gI&gA&gE&ge&gO&
+                            gua&guI&guA&guE&gue\\
+      \sci|\d g|&\verb|.g|& .ga&.gU&.gI&.gA&.gE&.ge&.gO&
+                            .gua&.guI&.guA&.guE&.gue\\
+      \sci|\d t|&\verb|.t|& .ta&.tU&.tI&.tA&.tE&.te&.tO&&&.tuA&&\\
+      \sci|$\check{\textrm{\d c}}$|&\verb|^C|&
+                            ^Ca&^CU&^CI&^CA&^CE&^Ce&^CO&&&^CuA&&\\
+      \sci|\d p|&\verb|.p|& .pa&.pU&.pI&.pA&.pE&.pe&.pO&&&.puA&&\\
+      \sci|\d s|&\verb|.s|& .sa&.sU&.sI&.sA&.sE&.se&.sO&&&.suA&&\\
+      \sci|\d c|&\verb|.c|& .ca&.cU&.cI&.cA&.cE&.ce&.cO&&&&&\\
+      \sci|f|   &\verb| f|& fa&fU&fI&fA&fE&fe&fO&fua&fuI&fuA&fuE&fue\\
+      \sci|p|   &\verb| p|& pa&pU&pI&pA&pE&pe&pO&pua&puI&puA&puE&pue\\
+      \cline{10-14}
+      \sci|\'q| &\verb|'q|& 'qa&'qU&'qI&'qA&'qE&'qe&'qO\\
+      \cline{12-14}
+      \sci|\'k| &\verb|'k|& 'ka&'kU&'kI&'kA&'kE&'ke&'kO&&&
+      \multicolumn{3}{|l|}{{\selectlanguage{english}\texttt{\char126 mA}}\hfill ~mA}\\
+      \sci|\'h| &\verb|'h|& 'ha&'hU&'hI&'hA&'hE&'he&'hO&&&
+      \multicolumn{3}{|l|}{{\selectlanguage{english}\texttt{\char126 ri}}\hfill ~ri}\\
+      \sci|\'g| &\verb|'g|& 'ga&'gU&'gI&'gA&'gE&'ge&'gO&&&
+      \multicolumn{3}{|l|}{{\selectlanguage{english}\texttt{\char126 fi}}\hfill ~fi}\\
+      \cline{1-9}\cline{12-14}
+    \end{tabular}
+    \selectlanguage{english}%
+    \caption{The Ethiopian characters}
+    \label{tab:ethiopchar}
+  \end{center}
+\end{table}
+
+We will now explain how the characters are entered.
+Every character represents a syllable that consists of a
+consonant followed by a vowel. If possible, every character
+is encoded in a way that matches its pronounciation or its
+scientific transcription as closely as possible.
+
+As an example we choose the letter {\eth da} which is pronounced
+\textit{da} and entered as \verb:da:. You will find the
+character in the character table in row \texttt{d} and
+column \texttt{a}.
+
+The letter {\eth de} might represent the syllable \textit{de},
+but it might also denote the consonant
+\textit{d} without an accompanying vowel. To reflect this,
+it is possible to enter either \verb:de: or \verb:d: at
+the users choice.
+
+If accented characters are used in the
+scientific transcription of an Ethiopian syllable, they are
+entered without the accent, but prefixed with an appropriate
+special character. {\eth ^ca} has \textit{\v ca} as its transcription,
+hence we will enter it as \verb:^ca: which is as close
+to the proper transcription as we can get.
+
+Long vowels are usually indicated by a bar,
+\textit{d\=e} can serve as an example. But since long vowels
+are fairly frequent, we do not want to use two letters for their
+representation. Instead we will employ the uppercase letters
+for this purpose, which leads us to \verb:dE: as our transcription
+of the aforementioned syllable {\eth dE}.
+
+When a vowel does not have both a short and a long form, like
+the \textit{i} in \textit{di}, there is no need to insist on the
+proper case for the vowel. Hence we might enter either \texttt{di}
+or \texttt{dI} and get {\eth dI} in both cases.
+
+Some consonants may be followed by a diphtong,
+i.e.\ a combination of two vowels. A diphtong occurs e.g.\ in
+{\eth duA} which is best transcribed \textit{dw\=a}.
+We will code it as \verb:duA:, thereby slightly deviating
+from the standard transcription. But this is unavoidable,
+because if we enter \verb:dwA:, we will get an ambiguity
+with \texttt{d\,wA} which we want to result in {\eth dwA}.
+The SERA encoding, which is developed by
+Daniel Yacob, Yitna Firdyiwek, and Yonas Fisseha,
+suggests \verb:dWA:, which has been considered as an alternative
+to the present encoding. It did not show any
+significant advantages, however.
+
+For the consonant series\quad{\eth
+^Ca ^CU ^CI ^CA ^CE ^Ce ^CO ^CuA}\quad there exists a variant
+form that looks like\quad{\eth\ethvariantCtrue
+^Ca ^CU ^CI ^CA ^CE ^Ce ^CO ^CuA}\quad and
+denotes the same syllables. The variant series can be activated by 
+issuing the command \verb|\ethvariantCtrue| once.
+The original letterforms can then be restored by typing
+\verb|\ethvariantCfalse|. This option will only
+be needed in comparative studies, usually the standard
+series should be preferred.
+
+In the lower right corner of Tab.~\ref{tab:ethiopchar} you can 
+see an inlay with the three characters {\eth ~mA}, {\eth ~ri}, and
+{\eth ~fi}. These characters are probably the remnants of
+three complete series of seven syllables that were once used.
+
+We added these three in order to
+completely cover the character set of the proposed Unicode
+standard for code positions 1200h to 137Fh. The encoding of
+these characters is not fixed yet and may change at any
+time in the future. At the moment the encoding is based on
+the characters' appearance, but we are aware that the
+pronounciation is different today.
+
+
+\subsection{Punctuation}
+
+Although the punctuation characters look different from
+the punctuation of the Latin script, they have essentially the
+same meaning. We made some compromises between
+visual similarity and similar interpretation when
+we chose the encoding of the punctuation characters.
+In Tab.~\ref{tab:ethioppunc}--\ref{tab:ethiopspecial}
+we have collected the appropriate inputs for each of the
+characters.
+
+\selectlanguage{ethiop}:-\selectlanguage{english}
+
+\begin{table}[htb]
+  \begin{center}
+    \begin{tabular}{l|ccccc|cc|cccc|c}
+      input&
+      \verb|:=|&
+      \verb|:-|&
+      \verb|::|&
+      \verb:,:&
+      \verb:;:&
+      \verb:|:&
+      \verb;:|:;&
+      \verb:?:&
+      \verb:'?:&
+      \verb:!:&
+      \verb:'!:&
+      \verb:...:\\
+    \hline
+      output&
+      \selectlanguage{ethiop}:=\selectlanguage{english}&
+      \selectlanguage{ethiop}:-\selectlanguage{english}&
+      \selectlanguage{ethiop}::\selectlanguage{english}&
+      \selectlanguage{ethiop},\selectlanguage{english}&
+      \selectlanguage{ethiop};\selectlanguage{english}&
+      \selectlanguage{ethiop}|\selectlanguage{english}&
+      \selectlanguage{ethiop}:|:\selectlanguage{english}&
+      \selectlanguage{ethiop}?\selectlanguage{english}&
+      \selectlanguage{ethiop}'?\selectlanguage{english}&
+      \selectlanguage{ethiop}!\selectlanguage{english}&
+      \selectlanguage{ethiop}'!\selectlanguage{english}&
+      \selectlanguage{ethiop}...\selectlanguage{english}\\
+    \end{tabular}
+  \end{center}
+  \caption{The Ethiopian punctuation characters}
+  \label{tab:ethioppunc}
+  \vspace{\floatsep}
+  \begin{center}
+    {\selectlanguage{ethiop}
+    \begin{tabular}{l|cccc|cccc}
+      \selectlanguage{english}input&
+      \verb:<:&\verb:<<:&\verb:>:&\verb:>>:&
+      \verb:':&\verb:'':&\verb:`:&\verb:``:\\
+    \hline
+      \selectlanguage{english}output&
+      <&<<&>&>>&'&''&`&``\\
+    \end{tabular}
+    }
+  \end{center}
+  \caption{The Ethiopian quotation characters}
+  \label{tab:ethiopquot}
+  \vspace{\floatsep}
+  \begin{center}
+    {\selectlanguage{ethiop}
+    \begin{tabular}{l|cc|cc|cc|c}
+      \selectlanguage{english}input&
+      \verb:(:&\verb:):&\verb:[:&\verb:]:&\verb:\{:&\verb:\}:&
+      \verb:\$:\\
+    \hline
+      \selectlanguage{english}output&
+      (&)&[&]&\{&\}&\$\\
+    \end{tabular}
+    }
+  \end{center}
+  \caption{Special characters}
+  \label{tab:ethiopspecial}
+\end{table}
+
+The punctuation characters match their SERA equivalents closely.
+
+
+\subsection{Spaces}
+
+When the Ethiopian script is printed today, an interword gap
+is signalled by a white space, in the same way as it is
+done for the Latin script. This kind of spacing can
+be used simply as in ordinary \LaTeX\ documents.
+
+But in former times word breaks used to be denoted by the
+character {\eth :} and even today this method is used for
+handwriting. To get the appropriate effect look at the following
+\LaTeX\ source
+\begin{verbatim}
+'abAs : 'alamenahe: 'abAs :'alamenahe:
+'abAs:'alamenahe:'abAs:'alamenahe:
+'abAs:'alamenahe:'abAs:'alamenahe:
+'abAs:'alamenahe:'abAs:'alamenahe::
+\end{verbatim}
+which results in
+\begin{quote}
+\eth
+'abAs : 'alamenahe: 'abAs :'alamenahe:
+'abAs:'alamenahe:'abAs:'alamenahe:
+'abAs:'alamenahe:'abAs:'alamenahe:
+'abAs:'alamenahe:'abAs:'alamenahe::
+\end{quote}
+in the output. As you can see, line breaks are allowed after
+the {\eth :} even if there is no space character in the
+source. Space characters immediately following or preceeding
+a \texttt{:} in the input are ignored as we can see from
+the first line. Therefore newlines in the input
+will not cause any problem either.
+
+
+\subsection{Line breaking}
+
+The ordinary spaces as well as the white space surrounding
+an~{\eth :}~can be stretched a little,
+so that it is possible to achieve proper justification.
+Nevertheless, the lack of hyphenation in the Ethiopian language
+makes itself felt from time to time, when \TeX\ cannot find
+suitable breakpoints for a paragraph.
+
+There are a few standard solutions to this problem, the easiest
+is to use a \texttt{sloppypar} enviroment which allows \TeX\ to
+stretch the interword spaces more than usual. But this does not
+work when some words are simply too long. In that case
+one may want to rewrite the sentence that causes the bad
+break, maybe only by changing a few words.
+
+However, the text might not be easily changable, e.g.~because
+it is a quote from some other source, or the author insists
+on that very phrase. In that case you an insert a \verb|\-|
+into a suitable breakpoint where the text will be split
+between two lines. Unlike the usual \TeX\ behaviour,
+no hyphen will be added at the breakpoint. This kind of
+line breaking is especially well suited when the
+character~{\eth :}~is used for interword spaces.
+
+But maybe even the insertion of break points is impossible.
+In this case, some explicit
+\verb|\hspace| must be added in a suitable position or
+a raggedright layout must be selected during the whole document or
+part thereof.
+
+
+\subsection{Numbers}
+
+Since today Arabic numbers are more frequently used than
+the original Ethio\-pian numbers, the \ethioplogo\ package
+outputs the Arabic numbers when the letters \texttt{0}
+up to \texttt{9} occur in the source code.
+
+But Ethiopian numbers can be typeset, too, by
+using the command \verb|\ethnum|. If we enter \verb|\ethnum{1}|
+we get {\eth\ethnum{1}} as the result. But the macro
+\verb|\ethnum| can do more than that. In fact it can convert all
+numbers up to 999\,999 to their Ethiopian equivalents:
+\verb|\ethnum{999999}| gives {\eth\ethnum{999999}}.
+We can see that the program knows quite a lot about
+the representation of large numbers.
+
+\begin{table}[thp]
+  \begin{center}
+    \begin{tabular}{l|ccccccccc}
+      Arabic&
+      1&2&3&4&5&6&7&8&9\\
+    \hline
+      Ethiopian&
+      {\eth\ethnum{1}}&{\eth\ethnum{2}}&{\eth\ethnum{3}}&
+      {\eth\ethnum{4}}&{\eth\ethnum{5}}&{\eth\ethnum{6}}&
+      {\eth\ethnum{7}}&{\eth\ethnum{8}}&{\eth\ethnum{9}}\\
+    \end{tabular}
+
+    \bigskip
+
+    \begin{tabular}{l|ccccccccc|cc}
+      Arabic&
+      10&20&30&40&50&60&70&80&90&100&10000\\
+    \hline
+      Ethiopian&
+      {\eth\ethnum{10}}&{\eth\ethnum{20}}&{\eth\ethnum{30}}&
+      {\eth\ethnum{40}}&{\eth\ethnum{50}}&{\eth\ethnum{60}}&
+      {\eth\ethnum{70}}&{\eth\ethnum{80}}&{\eth\ethnum{90}}&
+      {\eth\ethnum{100}}&{\eth\ethnum{10000}}\\
+    \end{tabular}
+  \end{center}
+  \caption{The Ethiopian numbers}
+  \label{tab:ethiopnum}
+\end{table}
+
+In \LaTeX\ we must output the contents of a counter
+from time to time. This can be accomplished using the
+macro \verb|\ethiop|. Saying \verb|\ethiop{subsection}| will
+cause \TeX\ to print {\eth\ethiop{subsection}}, since this
+is subsection \arabic{subsection}.
+
+
+\subsection{Math mode}
+
+One of \TeX's most important features is its math mode.
+We can use math within Ethiopian text, but
+by default all letters in mathematical formulas will
+be taken from the ordinary \TeX\ fonts.
+
+Ethiopian letters can be used in a formula, although this
+will require slightly more work. When the macro
+\verb|\ethmath| appears in math mode while the
+Ethiopian language is selected, its single argument will
+appear in the proper size typeset with the Ethiopian fonts.
+
+For example
+\begin{verbatim}
+$$b+\frac{d}{f^g}\iff
+  \ethmath{ba}+\frac{\ethmath{da}}{\ethmath{fa}^{\ethmath{ga}}}$$
+\end{verbatim}
+will result in
+\selectlanguage{ethiop}
+$$b+\frac{d}{f^g}\iff
+  \ethmath{ba}+\frac{\ethmath{da}}{\ethmath{fa}^{\ethmath{ga}}}$$
+\selectlanguage{english}%
+where you should note the varying fonts in the first and second
+subformula. Actually all the work is done by the macro
+\verb|\ethmath| that outputs the Ethiopian characters.
+
+
+\subsection{Ethiopian dates}
+
+The Ethiopian calendar is based on the Julian calendar with
+twelve months of 30~days and one month of 5~days. Every fourth
+year is a leap year, which means that the last month will have
+6~days. The calendar system is implemented in our package,
+so it is possible to type \verb|\today| and get {\eth\today}.
+(This is the date on which this document has
+been translated. Compare it to the date on the title page!)
+
+
+\subsection{Two examples}
+
+We provide the first sample text to illustrate the appearance of
+our font. The \LaTeX\ source of the text begins with
+\begin{verbatim}
+\subsubsection*{`amala~nAytun mArq}
+
+pAduwA bametbAl web ya'i.tAliyA katamA si~nor bAptisetA 
+yatasa~nu 'and tegu_h `sarAta~nA yenofu nabar:: 'enih sawe 
+hulat qon^go sEto^c le^g^c nabaruA^caw::
+\end{verbatim}
+and gives the following result:
+
+\selectlanguage{ethiop}
+\subsubsection*{`amala~nAytun mArq}
+
+pAduwA bametbAl web ya'i.tAliyA katamA si~nor bAptisetA 
+yatasa~nu 'and tegu_h 'sarAta~nA yenoru nabar:: 'enih sawe 
+hulat qon^go sEto^c le^g^c nabaruA^caw::
+kuAduA.helinA yatabAla^cew webatuAnA
+.tabAyua yatamuAlA naw:: puafEluA 
+webatuA 'enda 'e_hetuA 'amuAlto selAlesa.tAt ba`amala~nAnatuA 
+tetAwaqAla^c::
+
+puafEluA lAbAtuA yabakuir le^g bamahonuA bazih 'alabelAbit 
+melAsuA sAbiyA menAlbAt bAl 'a.tetA qumo-qar 'enedAthon 'abAtuA 
+segAt 'aderobA^caw nabar::
+
+yafarut 'alqaram laqon^gowA kavEreno 'eska quidA_hualA sigorf 
+la`amal~nAwA 'a.tagabuA yamiders saw .tafA:: 
+\selectlanguage{english}
+
+The next example will clarify the usage of bold and
+slanted Ethiopian fonts. Italic characters are mapped to
+slanted characters. The font selection works just as in
+ordinary \LaTeX\ with NFSS. The source text
+\begin{verbatim}
+'adis 'ababA \textbf{'adis 'ababA}
+\textsl{'adis 'ababA \textbf{'adis 'ababA}}
+\end{verbatim}
+gives us
+\selectlanguage{ethiop}
+'adis 'ababA \textbf{'adis 'ababA}
+\textsl{'adis 'ababA \textbf{'adis 'ababA}}
+\selectlanguage{english}
+as the output.
+
+
+\subsection{Using \ethioplogo\ with Arab\TeX}
+
+Starting with version 3.6i, \babel\ is now compatible with
+Arab\TeX. But still there are some problems with the many active 
+characters which are used by \ethioplogo, so that the two packages
+do not work right away.
+
+But it is possible to use Arab\TeX\ with \ethioplogo\ by
+including the special style \texttt{etharab.sty} after 
+Arab\TeX\ has been loaded. Some internal macros of Arab\TeX\ are
+redefined, so this is not guaranteed to work with every version
+of Arab\TeX, but it has been successfully used with version
+3.06g3 of Arab\TeX.
+
+\begin{verbatim}
+\documentclass{article}
+\usepackage{arabtex}
+\usepackage[english]{babel}
+\usepackage{ethiop}
+\usepackage{etharab}
+\begin{document}
+  \selectlanguage{english}
+  The Arabic (<al.har_t>) and the Ethiopian script 
+  (\selectlanguage{ethiop}sel.tAnE\selectlanguage{english})
+  may occur within one sentence.
+\end{document}
+\end{verbatim}
+
+We do not provide the output of the example, because this document is
+intended to be translatable even in the absence of Arab\TeX.
+In fact, everything works as usual, Arabic text can be inserted
+using the \texttt{arabtext} environment or using
+\verb:<>: pairs. However, these commands must not be used in 
+arguments to other commands or in command definitions. If that
+is desired the complete commands or command definitions must be
+enclosed in a \texttt{noethiop} environment.
+\begin{verbatim}
+\begin{noethiop}
+\section{<al.har_t> -- cultivation}
+\end{noethiop}
+\end{verbatim}
+provides an example. If Ethiopian characters are needed, too,
+then a little trick is in order.
+\begin{verbatim}
+\def\temptext{%
+  \selectlanguage{ethiop}sel.tAnE\selectlanguage{english}}
+\begin{noethiop}
+\section{<al.har_t> -- cultivation -- \temptext}
+\end{noethiop}
+\end{verbatim}
+But there should be really, really few occasions for 
+such ugly code.
+
+
+\section{Advanced topics}
+
+Although the usage of the \ethioplogo\ package is not really difficult
+once one gets used to it, there are a few points to be
+aware of. We will highlight the internal structure
+of the package first, to make it more plausible why some
+problems just cannot be easily patched away.
+
+
+\subsection{Implementation notes}
+
+Because we have to deal with so many characters, we
+placed them in two separate fonts. The two codetables
+are shown in Tab.~\ref{codetab:etha} and
+Tab.~\ref{codetab:ethb}, together with the recommended
+input strings. (Remember that there might be different
+ways to achieve the same result.)
+
+\begingroup
+  \catcode`\~=12\relax
+  \catcode`\^=12\relax
+  \catcode`\_=12\relax
+  \def\x{\endgroup
+    \let\plaintilde=~
+    \let\plainhatacc=^
+    \let\plainbaracc=_
+  }
+\x
+
+\newcommand{\codetable}[2]{%
+  \begin{table}[p]
+    \begin{center}
+      \global\xpos=0
+      ~%
+      \kern-2cm
+      \begin{tabular}{@{}r|l|l|l|l|l|l|l|l|}%
+        \multicolumn{1}{r}{}&
+        \multicolumn{1}{l}{~\texttt{0}}&
+        \multicolumn{1}{l}{~\texttt{1}}&
+        \multicolumn{1}{l}{~\texttt{2}}&
+        \multicolumn{1}{l}{~\texttt{3}}&
+        \multicolumn{1}{l}{~\texttt{4}}&
+        \multicolumn{1}{l}{~\texttt{5}}&
+        \multicolumn{1}{l}{~\texttt{6}}&
+        \multicolumn{1}{l}{~\texttt{7}}\\
+        \cline{2-9}%
+        \input{#1}%
+      \end{tabular}%
+      \kern-2cm
+      ~%
+    \end{center}
+    \caption{\label{codetab:eth#2}The Ethiopian codetable ETH\uppercase{#2}}
+  \end{table}
+}
+
+\newcommand{\outputcode}[1]{%
+  \ifx\relax#1\relax
+    %\rule{1em}{1ex}%
+  \else
+    \rule[-4pt]{0pt}{14pt}%
+    {\def~{\plaintilde}%
+     \def^{\plainhatacc}%
+     \def_{\plainbaracc}%
+     \texttt{#1}}%
+    ~\hfill
+    {\foreignlanguage{ethiop}{#1}}%
+  \fi
+}
+
+\newcommand{\docode}[2]{%
+  \ifnum\xpos=0 \relax
+    \texttt{#1}~&%
+  \fi
+  \outputcode{#2}%
+  \global\advance\xpos by 1
+  \ifnum\xpos=8 \relax
+    \global\xpos=0
+    \\\cline{2-9}%
+  \else
+    &%
+  \fi
+}
+
+\codetable{codeetha.tex}{a}
+
+\renewcommand{\docode}[2]{%
+  \ifnum\xpos=0 \relax
+    \texttt{#1}~&%
+  \fi
+  \ifnum#1>48 \relax
+    \ifnum#1<69 \relax
+      \hfill
+      \foreignlanguage{ethiop}{\fontfamily{ethb}\selectfont\char#1}%
+    \else
+      \ifnum#1>191 \relax
+        \ifnum#1<200 \relax
+          \hfill
+          \foreignlanguage{ethiop}{\fontfamily{ethb}\selectfont\char#1}%
+        \else
+          \outputcode{#2}%
+        \fi
+      \else
+        \outputcode{#2}%
+      \fi
+    \fi
+  \else
+    \outputcode{#2}%
+  \fi
+  \global\advance\xpos by 1
+  \ifnum\xpos=8 \relax
+    \global\xpos=0
+    \\\cline{2-9}%
+  \else
+    &%
+  \fi
+}
+
+\codetable{codeethb.tex}{b}
+
+In the first font we preferred to place characters that
+result from a \TeX\ ligature (which must not be confused
+with a ligature from ordinary printing) in the positions
+0--31 and 128--255. These characters usually cannot be
+entered from a keyboard and hence it is safe to assume that
+they resulted from a ligature.
+
+Only the characters in the primary font are accessible
+by entering ordinary characters and forming ligatures.
+For the other characters it is necessary to explicitly
+select the secondary font within the \TeX\ code.
+But this requires the execution of \TeX\ macros, hence
+the activation of some characters was required. The
+activated characters can inspect the following
+characters and request the necessary font change.
+In fact, this method of enlarging the number of
+available characters is quite general and might be used for
+other languages, too, e.g.\ to provide a unified
+input mechanism for all Latin characters.
+
+For a complete documentation of the input parsing mechanism
+we refer the interested reader to the commented source code
+in \texttt{ethiop.dtx}, which can also be typeset by
+\LaTeX\ to get a more readable version.
+
+A long calculation is required to convert the
+Gregorian date provided by the \TeX\ primitives
+\verb|\year|, \verb|\month|, and \verb|\day| to the
+Ethiopian date. The implementation in \TeX\ is straightforward,
+but hardly readable, because \TeX's expressiveness for
+formulas is very weak. As calendar routines are provided
+for all the other \babel\ language definitions, it was obvious
+that this problem had to be addressed.
+
+
+\subsection{Common pitfalls}
+
+After discussing some of the internals of the
+\ethioplogo\ package, we are now prepared to examine
+some of the problems that result from our implementation.
+
+First of all the characters \verb|~|,
+\verb|^|, \verb|'|, \verb|_|, and \verb|.| are
+made active. This is unavoidable, but there are some
+drawbacks.
+\begin{itemize}
+\item We cannot use~\verb|^|\verb|^| for entering special characters.
+  Usually this is done in package files only, so we do not
+  get into real trouble, since \babel\ activates the
+  characters only at the beginning of the document.
+\item We cannot use a~\verb|.| in numbers and \TeX\ dimensions
+  while Ethiopian text is being typeset. We can circumvent
+  this problem by using a~\verb|,| instead of the~\verb|.| when
+  entering numbers for \TeX.
+  Note, that we can use the~\verb|.| without
+  problems when we have temporarily switched to a language
+  other than Ethiopian, e.g.\ English.
+\end{itemize}
+We could expect that the activation of~\verb|^| and~\verb|_|
+spoils \TeX's math mode, but this is not the case.
+In fact math mode behaves just like before, with subscripts
+and superscripts in their proper position.
+
+The complex calendarical calculation require the allocation
+of a large number of counters to hold the intermediate
+results.
+\begin{itemize}
+\item In connection with other counter intensive packages
+\LaTeX\ may run out of counters when using the
+\ethioplogo\ package. Maybe we can get rid of two or three of the
+counters in the next version, but it will still remain
+a problem.
+\end{itemize}
+This problem is actually due to the lack of temporary
+counters in \LaTeX, which are not provided, even though this
+is done for all the other types of registers.
+
+Since our package is not yet an integral part of the
+\babel\ system, we have some other difficulties to overcome.
+\begin{itemize}
+\item The \ethioplogo\ package cannot be loaded
+via an option to \babel. Instead an explicit
+\verb|\usepackage{ethiop}| has to be used.
+
+\item We do not know what the future will bring. While this
+package \textit{might} work with future versions of
+\babel, there is no guarantee that it will. So you should keep
+your old version of \babel\ until you are sure it works
+with the \ethioplogo\ package or until an updated version of
+\ethioplogo\ is issued.
+\end{itemize}
+
+Typing errors will usually not result in
+an error message. Instead a black rectangle will appear
+in the output, if some illegal character is encountered.
+\begin{itemize}
+\item Because it is allowed to enter consonants without a
+trailing vowel, there are plenty of typos that
+simply result in the wrong letters being printed.
+\end{itemize}
+So look at your finished document carefully.
+
+
+\subsection{Support of the $\Omega$ typesetting system}
+\label{omegasec}
+
+The advantage of using $\Omega$ for typesetting the
+Ethiopian language is that it can handle text
+files encoded in Unicode. Therefore the complex,
+timeconsuming and error-prone conversion process
+needed our transliteration within \TeX\ can be
+skipped.
+
+$\Omega$ can still profit from \babel's support for
+captions, dates etc.
+In $\Omega$ you can simply enter the Ethiopian charaters
+as their Unicode equivalents. They will be converted to
+our fonts by means of virtual fonts.
+
+You will have to experiment when you want to use $\Omega$
+with \ethioplogo. Tests have been only rudimentary so far.
+There are some currently unused files that may help you.
+\texttt{ethotlit.otp} simulates the old transliteration process
+in $\Omega$. \texttt{ethohyph.otp} allows word breaking between every
+syllable.
+
+Let us note a few differences between our package and
+Unicode.
+\begin{itemize}
+\item The letter {\eth huA} (\verb|huA|) is not present in Unicode. 
+It is mentioned in \cite{Wedekind95}. 
+It is used in the language of Agew ({\eth 'agaw},
+also known as Awngi). \cite{Wedekind95} also uses {\eth _kuA}
+(\verb|_kuA|) as an alternative representation for the same
+sound.
+
+An example word would be {\eth sOhuA}, which means in Agew
+\emph{to eat}.
+
+\item The letter {\eth mui} (\verb|mui|) is equipped with a additional tail
+at the lower left in Unicode.
+
+\item The four series {\eth 'q} (\verb|'q|),
+{\eth 'k} (\verb|'k|),
+{\eth 'h} (\verb|'h|), and
+{\eth 'g} (\verb|'g|) are not present in Unicode.
+They are suggested as possible extensions, but will
+not occur in Unicode in the near future, as it seems.
+\end{itemize}
+
+
+
+\section{Changes}
+
+Version 0.2 was the first version to be publicly released,
+but we will shortly list the changes that this version made
+to \EthTeX.
+
+\begin{itemize}
+\item Several letters were added, most notably the Leslau extensions
+\verb|'q|, \verb|'k|, \verb|'h|, and \verb|'g|. Some diphtongs
+were added, too.
+
+\item The multi-letter encoding was chosen and implemented
+using \babel.
+
+\item The calendar algorithms were programmed.
+\end{itemize}
+
+
+\subsection*{Version 0.3}
+
+\begin{itemize}
+\item The letter {\eth huA} (\verb|huA|) was added.
+
+\item Some bugs regarding subscripts and superscripts 
+in ordinary math mode were fixed.
+
+\item The command \verb|\ethmath| was added to allow 
+Ethiopian characters in math mode.
+
+\item Fonts in 5 point size were added to allow
+Ethiopian characters in subscripts and superscripts.
+\end{itemize}
+
+
+\subsection*{Version 0.4}
+
+\begin{itemize}
+\item The punctuation characters {\eth |} and
+{\eth :|:} were added.
+
+\item The syllables {\eth ~mA} (\verb|~mA|), {\eth ~ri} (\verb|~ri|), and
+{\eth ~fi} (\verb|~fi|) were added. Now all characters of the proposed
+Unicode standard for the code positions U+0x1200h to U+0x137F are 
+included.
+
+\item \verb|\ethvariantCtrue| and \verb|\ethvariantCfalse| were
+introduced. At the same time the shorthand \verb|_C| was removed.
+The variant forms of the series \verb|^C| can only be reached via
+the aforementioned commands from now on.
+\end{itemize}
+
+
+\subsection*{Version 0.5}
+
+\begin{itemize}
+\item Problems with activating \verb|'| in math mode have been
+solved.
+\end{itemize}
+
+\subsection*{Version 0.6}
+
+\begin{itemize}
+\item \texttt{etharab.sty} has been added to allow cooperation
+with Arab\TeX.
+\end{itemize}
+
+\subsection*{Version 0.7}
+
+\begin{itemize}
+\item As suggested by Donald~E.~Knuth, some
+faulty parameters in the files \texttt{etha8.mf} and
+\texttt{ethb8.mf} were corrected.
+
+\item As suggested by Donald~E.~Knuth, individual glyphs
+for the characters {\eth :|:} and {\eth :-} were added.
+In previous versions these characters were combined from
+other glyphs.
+
+\item The \ethioplogo\ package may now be loaded
+before or after \babel, as desired. Previous versions
+required that \ethioplogo\ had to be loaded after
+\babel.
+
+\item Limited $\Omega$ support has been added.
+\end{itemize}
+
+
+\section{Copyright and Liability Notice}
+
+This software is available under the GNU General Public License,
+which you can find in the \texttt{COPYING} distributed with
+\ethioplogo.
+
+We distribute \ethioplogo\ in the hope that it will be useful,
+but \emph{without any warranty}; without even the implied warranty of
+merchantability or fitness for a particular purpose.
+
+The authors of \ethioplogo\ are \emph{not liable} for any direct, 
+indirect, incidential or consequential damage including, 
+but not limited to, loss of data, loss of profits, or
+system failure, which arises out of use or inability to
+use \ethioplogo.
+This clause does not apply to gross negligence or premeditation.
+
+Although we do not require this as a part of our license,
+we would be very happy if you send us any changes you make.
+
+
+\section{Closing Remarks}
+
+Much work has been done during the development of
+this package, but much work had been done before and
+there are still open points.
+
+\subsection{To Do}
+
+What remains to be done?
+
+\begin{itemize}
+\item Bugs must be removed. We know that there are
+  some, but we do not know which. Please report bugs to
+  \servicemail, we will be happy to make some updates.
+\item More languages must be added. To do this, we must
+  get to know the names for `bibliography', `chapter',
+  `index' and so on for as many of the languages of
+  Ethiopia as possible. Suggestions for these and other
+  non-technical improvements can also be sent to
+  \servicemail.
+\item It must be possible to typeset whole books in the
+  Ethiopian script. Although this is possible at the moment,
+  there are several problems that occur with the
+  different \LaTeX\ structures like \verb|\part|,
+  \verb|\section|, or even \verb|\item|.
+\item We need to find out more about the conventions for
+  typesetting in the Ethiopian script.
+\end{itemize}
+
+\subsection{Thanks}
+
+We would like to thank Abass B. Alameneh, Johannes L.
+Braams, Donald E. Knuth, and Leslie Lamport for their
+efforts. The programs provided by them made our
+package possible.
+
+Paul Seelig from the Debian team provided the neccessary 
+motivation for finally releasing \ethioplogo\ under the GNU GPL.
+
+Daniel Yacob gave encouraging and constructive
+feedback on our project.
+Michal Jerabek did some extensive field testing of our package.
+
+While we are on the subject, here is a list containing
+some of the names that appeared in this text.
+You can already guess it, they are written in
+the Ethiopian script. But which name is which?
+
+\selectlanguage{ethiop}
+\begin{center}
+\begin{tabular}{ccc}
+berhAnu bayana   & yOhAnes brAms   & mAnfrEd kudlEk \\
+'abAs 'alamenahe & 'OlAf kumar     & lasli lampOrt \\
+yO_ken me.sngar  & dOnAld knut     & dan'El yA`eqob \\
+\end{tabular}
+\end{center}
+\selectlanguage{english}
+
+\begin{thebibliography}{99}
+\bibitem{Ale94} Alamneh, Abass: \EthTeX.\newline
+\verb|ftp://ftp.dante.de/tex-archive/languages/ethiopia/ethtex/|
+
+\bibitem{BeBoCoFe77} Bender, M.L.; Bowen, J.D.; Cooper,  R.L.;
+Ferguson, C.A.: Language in Ethiopia. Oxford University Press, London 1997.
+
+\bibitem{BKKM97} Beyene, Berhanu; Kudlek, Manfred; Kummer, Olaf;
+Metzinger, Jochen: The \ethioplogo\ package. Fachbereich Informatik,
+Universit\"at Hamburg, 1997.\newline
+\verb|ftp://ftp.dante.de/tex-archive/languages/ethiopia/ethiop/|
+
+\bibitem{Bra97} Braams, Johannes L.: The \babel\ package.\newline
+\verb|ftp://ftp.dante.de/tex-archive/macros/latex/packages/babel/|
+
+\bibitem{ethio97} EthiO Systems: \EthTeX.\newline
+\verb|http://www.neosoft.com/~ethiosys/ethtex/ethtex.html|
+
+\bibitem{ethno96}  Summer Institute of Linguistics: Ethnologue.
+Dallas, Texas, 1996.\newline
+\verb|http://www.sil.org/ethnologue/|
+
+\bibitem{Gui01} Guidi, Ignazio: Vocabolario Amaharico-Italiano.
+Casa Editrice Italiana, Roma, 1901.
+
+\bibitem{Ham73} Hammerschmidt, Ernst: \"Athiopische Handschriften
+vom \d T\=an\=asee 1. Franz Steiner Verlag, Wiesbaden, 1973.
+
+\bibitem{Knu86a} Knuth, Donald E.: The \TeX book. Addison Wesley,
+Reading, Massachusetts, 1986.
+
+\bibitem{Knu86b} Knuth, Donald E.: The \MF book. Addison Wesley,
+Reading, Massachusetts, 1986.
+
+\bibitem{Lam86} Lamport, Leslie: \LaTeX~--
+A Document Preparation System. Addison Wesley,
+Reading, Massachusetts, 1986.
+
+\bibitem{Les65} Leslau, Wolf: Ethiopians Speak, Studies in 
+Cultural Background, Vol. 2. University of California Press, Berkeley 1965.
+
+\bibitem{Les87} Leslau, Wolf: Comparative Dictionary of Ge'ez
+(Classical Ethiopic). Otto Harrassowitz, Wiesbaden, 1987.
+
+\bibitem{LiHo62} Littmann, Enno; H\"ofner, Maria: W\"orterbuch der
+Tigr\=e-Sprache. Franz Steiner Verlag, Wiesbaden, 1962.
+
+\bibitem{SERA93} The Unicode Technical Report \#1~--
+Draft Proposal on Ethiopian Script. Houston, TX, August 1993.
+
+\bibitem{Wedekind95} Wedekind Ch.; Wedekind K.:
+A Survey of Awngi. In:  Survey of Little-known Languages of Ethiopia,
+Linguistic Report No.~28. Institute of Ethiopian Studies,
+Addis Ababa University. May 1995.
+
+\bibitem{woldeki66} \selectlanguage{ethiop}'aklila berhan walda
+kirkos:= sela g`eznA 'amAr~nA quAnquA tArik:: negd mAtemiyA bet,
+'adis 'ababA 1958::\selectlanguage{english}
+
+\bibitem{TWol70}\selectlanguage{ethiop}takla wald dastA:= 
+ya'amAr~nA mazgaba qAlAt:: 'artistik mAtamiyA bEt, 'adis 'ababA 1970::
+\selectlanguage{english}
+
+\bibitem{sera97} Yaqob, Daniel: SERA FAQ.\newline
+\verb|http://www.cs.indiana.edu/hyplan/dmulholl/fidel/sera.html|
+\end{thebibliography}
+
+\end{document}

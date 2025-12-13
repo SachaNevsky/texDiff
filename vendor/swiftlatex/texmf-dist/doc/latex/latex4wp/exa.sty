@@ -1,0 +1,118 @@
+% exa.sty
+% modified after example.sty by J.Schrod, xitijsch@ddathd21.bitnet
+% Guido Gonzato, guido.gonzato@univr.it
+
+\chardef\escape=0
+\chardef\open=1
+\chardef\close=2
+\chardef\letter=11
+\chardef\other=12
+%\chardef\active=13              % is defined in Plain already
+
+\chardef\uscode=\catcode`\_      % top level macro file!
+
+\catcode`\_=\letter
+
+\oddsidemargin=0pt
+\evensidemargin=\oddsidemargin
+
+\newwrite\example_file
+\def\example_name{\jobname.tmp }        % <-- space!
+
+\newdimen\ExampleWidth
+      \ExampleWidth=\textwidth
+      \advance\ExampleWidth by \marginparwidth  % stick into margins
+      \advance\ExampleWidth by \columnsep       % between columns
+      \divide\ExampleWidth by 2
+
+\def\ExampleSet{%
+   \begin{boxedminipage}[c]{0.5\textwidth}%
+      \hrule height\z@
+      \def\markboth##1##2{}%
+      \def\markright##1{}%
+      \def\addcontentsline##1##2##3{}%
+      \input \example_name
+      \par
+      \hrule height\z@
+   \end{boxedminipage}%
+   }
+
+\begingroup
+   \catcode`\^^I=\active
+   \gdef\@vobeytabs{\catcode`\^^I\active \let^^I\@xobeytab}
+   \global\let^^I=\@xobeytab%           % for \write's
+\endgroup
+\def\@xobeytab{\space\space\space\space\space\space\space\space}
+
+\def\ExampleVerb{%
+   \begin{minipage}[c]{0.5\textwidth}%
+      \hrule height\z@
+      \begingroup
+         \small
+         \parindent\z@
+         \rightskip\@flushglue
+         \@makeother\"\@verbatim
+         \frenchspacing \@vobeyspaces \@vobeytabs
+         \input \example_name
+         \endverbatim
+      \endgroup
+      %\hrule height\z@
+   \end{minipage}%
+   }
+
+\def\example{
+   \par
+   \immediate\openout\example_file\example_name
+   \begingroup
+      \@makeother\"\let\do\@makeother \dospecials
+      \obeylines \obeyspaces
+      \@ignoretrue \copy_line
+   }
+
+\begingroup
+   \catcode`\|=\escape  % | is temporary escape character
+   \catcode`\[=\open    % [ and ] are temporary grouping symbols
+   \catcode`\]=\close
+   \catcode`\{=\other   % these are `other' in verbatim mode
+   \catcode`\}=\other
+   \catcode`\\=|other
+   |gdef|end_of_example[\end{example}]
+|endgroup
+
+\begingroup
+   \obeylines \gdef\copy_line#1^^M{\write_line{#1}}%
+\endgroup
+
+\def\write_line#1{%
+   \def\Next{#1}%
+   \ifx \Next\end_of_example
+      \def\Next{\end{example}}% % finish example
+   \else
+      \ifx \Next\empty
+         \if@ignore             % ignore empty lines at the beginning
+         \else                  % but write them out later
+            \immediate\write\example_file{\Next}%
+         \fi
+      \else
+         \immediate\write\example_file{\Next}%
+         \@ignorefalse          % at least one non-empty line written
+      \fi
+      \let\Next\copy_line       % next line of example
+   \fi
+   \Next
+   }
+
+\def\endexample{%
+   \endgroup
+   \immediate\closeout\example_file
+   \penalty \predisplaypenalty
+   \vskip \abovedisplayskip
+   % \leftline{\ExampleVerb \hskip\columnsep \ExampleSet}%
+   \leftline{\ExampleVerb \hfill \ExampleSet}%
+   \penalty \postdisplaypenalty
+   \vskip \belowdisplayskip
+   }
+
+\catcode`\_=\uscode
+
+\endinput

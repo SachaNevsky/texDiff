@@ -1,0 +1,93 @@
+#!/bin/bash
+#
+VERSION="v1.0 (C) Josef Kleber (LPPL)"
+INPUT=""
+OUTPUT="_milog_.csv"
+DATE=""
+PDF="milog"
+CSV="true"
+LATEX="true"
+#
+while getopts "i:o:d:p:cl" flag
+do
+  case "$flag" in
+    i) INPUT="$OPTARG";;
+    o) OUTPUT="$OPTARG";;
+    p) PDF="$OPTARG";;
+    d) DATE="$OPTARG";;
+    c) LATEX="false";;
+    l) CSV="false";;
+  esac
+done
+#
+if [ "$DATE" = "" ]
+then
+  regex='^[0-9]{6}$'
+  YEARMONTH=`echo "$INPUT" | cut -d'.' -f1`
+  if [[ "$YEARMONTH" =~ $regex ]]
+  then
+    YEAR=`echo "$YEARMONTH" | cut -c1-4`
+    MONTH=`echo "$YEARMONTH" | cut -c5-6`
+    DATE="$MONTH/$YEAR"
+  fi
+fi
+#
+if [ "$CSV" = "true" ]
+then
+  echo "reading $INPUT"
+  cat "$INPUT" | \
+  # delete first 3 lines
+  head -n -4 | \
+  # delete last 3 lines
+  tail -n +4 | \
+  # deal with "empty" lines
+  sed -e 's/;;;;;;;;;$/{};{};{};{};{};{};{};{};{}/' | \
+  # delete some columns we don't need
+  cut -d ';' -f 2-4,8-10 | \
+  # replace the last ';' with ';{}'
+  sed -e 's/;$/;{}/' | \
+  # replace header keys
+  sed -e 's/Datum/tag/' -e 's/von/beginn/' -e 's/bis/ende/' -e 's/Pausen/pause/' -e 's/Netto/dauer/' -e 's/Visum/bemerkung/' | \
+  # change 'Ruhetag' lines
+  sed -e 's/\(.*\);Ruhetag;Ruhetag;.*/\1;{};{};{};{};Ruhetag/' | \
+  # change 'Ferien/Urlaub' lines
+  sed -e 's#\(.*\);Ferien/Urlaub;Ferien/Urlaub;.*#\1;{};{};{};{};Urlaub#' | \
+  # change 'Krank' lines
+  sed -e 's/\(.*\);Krank;Krank;.*/\1;{};{};{};{};Krank/' | \
+  # change 'Feiertag' lines
+  sed -e 's/\(.*\);Feiertag;Feiertag;.*/\1;{};{};{};{};Feiertag/' | \
+  # change last line with total hours
+  sed -e 's/^;;;;\(.*\)/nan;nan;nan;nan;\1;nan/' | \
+  # replace '0:00' with '{}'
+  sed -e 's/0:00/{}/g' | \
+  # change order of columns and field seperator (';' -> '\t')
+  awk 'BEGIN { OFS="\t"; FS=";" } { print $1, $2, $4, $3, $5, $6 }' >"$OUTPUT"
+  echo "writing $OUTPUT"
+fi
+#
+if [ "$LATEX" = "true" ]
+then
+  if [ "$CSV" = "false" ]
+  then
+    if [ -z "$INPUT" ]
+    then
+      OUTPUT="_milog_.csv"
+    else
+      OUTPUT="$INPUT"
+    fi
+  fi
+  cat >"$PDF.tex" <<EOF
+\documentclass{milog}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{libertine}
+\begin{document}
+\milog[month={$DATE}]{$OUTPUT}
+\end{document}
+EOF
+  echo "creating $PDF.pdf"
+  pdflatex "$PDF" 2>&1 >/dev/null
+  rm "$PDF".tex "$PDF".aux "$PDF".log
+fi
+#
+exit 0

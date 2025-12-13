@@ -1,0 +1,13 @@
+\usepackage {colortbl}
+\begin{tabular}{lrr}
+  \large\textbf{Table title}\\[2mm]
+  \textbf{Description}
+           & \textbf{Column 1}
+              & \textbf{Column 2}\\[1mm]
+  Row one  & mmmmmm & mmmmm  \\
+  Row two  &  mmmmm & mmmm   \\
+  Row three& mmmmmm & mmmmmm \\
+  Row four & mmmmmm & mmmmm  \\
+\cline{2-3}
+  Totals   & mmmmmm & mmmmmm
+\end{tabular}

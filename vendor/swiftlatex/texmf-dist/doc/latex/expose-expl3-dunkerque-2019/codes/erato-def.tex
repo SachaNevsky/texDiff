@@ -1,0 +1,103 @@
+% Time-stamp: <2019-08-26 11:48:16 administrateur>
+% ReCréation : 2019-08-23T10:40:31+0200
+\ExplSyntaxOn
+
+\NewDocumentCommand{ \eratosthene } { m } {
+  \group_begin:
+  \int_new:N \l_ERA_diviseur_max_int
+  \int_set:Nn \l_ERA_diviseur_max_int { \fp_to_int:n { floor( sqrt ( #1 ))} }
+  \intarray_new:Nn \__ERA_qt_ia { #1 }
+  \intarray_new:Nn \__ERA_dv_ia { #1 }
+  % commande auxiliaire --------------------------------------------------------
+  \cs_set:Nn \ERA_marquer_de_a_par:nnn {
+    \int_set:Nn \l_tmpa_int { ##1 / ##3}
+    
+    \int_step_inline:nnnn { ##1 } { ##3 } { ##2 } {
+      \int_compare:nNnT { \intarray_item:Nn  \__ERA_dv_ia { ####1 } } = { 0 }
+      { \intarray_gset:Nnn \__ERA_dv_ia  { ####1 } { ##3 }
+        \intarray_gset:Nnn \__ERA_qt_ia  { ####1 } { \l_tmpa_int } }
+      \int_incr:N \l_tmpa_int }
+  }
+  % ----------------------------------------------------------------------------
+  % marquer les pairs
+  \int_set:Nn \l_tmpa_int { 1 }
+
+  \int_step_inline:nnnn { 2 } { 2 } { #1 }
+  { \intarray_gset:Nnn \__ERA_dv_ia  { ##1 } { 2 }
+    \intarray_gset:Nnn \__ERA_qt_ia  { ##1 } { \l_tmpa_int }
+    \int_incr:N \l_tmpa_int }
+  
+  % marquer les impairs jusqu'à racine de #1
+  \int_set:Nn \l_tmpb_int { 3 }
+
+  \int_while_do:nNnn { \l_tmpb_int } < { \l_ERA_diviseur_max_int }
+  { \ERA_marquer_de_a_par:nnn { \l_tmpb_int } { #1 } { \l_tmpb_int }
+    \int_do_until:nNnn {\intarray_item:Nn  \__ERA_dv_ia { \l_tmpb_int }} = { 0 }
+    { \int_add:Nn \l_tmpb_int { 2 } } }
+  
+  % marquer les derniers impairs
+  \int_step_inline:nnnn { 3 } { 2 } { #1 }
+  { \int_compare:nNnT { \intarray_item:Nn  \__ERA_dv_ia { ##1 } } = { 0 }
+    { \intarray_gset:Nnn \__ERA_dv_ia  { ##1 } { ##1 }
+      \intarray_gset:Nnn \__ERA_qt_ia  { ##1 } { 1 } } }
+  
+  % nettoyage
+  \cs_undefine:N \l_ERA_diviseur_max_int
+  \group_end: }
+
+%%% -----------------------------------------------------------------------
+
+\cs_new:Nn \ERA_presenter_nieme:n {
+  \group_begin:
+  \int_set:Nn \l_tmpa_int { \intarray_item:Nn \__ERA_qt_ia { #1 } }
+  \int_set:Nn \l_tmpb_int { \int_mod:nn { #1 } { 10 } }
+  
+  \framebox[4em] {\strut \footnotesize
+    \int_compare:nNnTF { \l_tmpa_int } = { 1 }
+      {\textbf}           % premier
+      {\textcolor{gray}}  % composé
+    {\int_to_arabic:n { #1 }}
+    \int_compare:nNnT { \l_tmpa_int } > { 1 }
+    { \int_set:Nn \l_tmpa_int { \intarray_item:Nn \__ERA_dv_ia { #1 } }
+      ~\({}^{\langle \int_to_arabic:n { \l_tmpa_int } \rangle}\) } }
+  \kern-\fboxrule
+  % saut de paragraphe tous les 10  
+  \int_compare:nNnT { \l_tmpb_int } = { 0 }
+  { \par \nointerlineskip \kern-\fboxrule \noindent }
+  \group_end: }
+
+\NewDocumentCommand { \EcrireCribleEratosthene } { m }{
+  \par \noindent \int_step_inline:nn { #1 } { \ERA_presenter_nieme:n {##1} } }
+
+
+\NewDocumentCommand { \EcrireDiviseurs } { s m } {
+  \group_begin:
+  \int_new:N \l_ERA_nv_qt_int         % quotient
+  \int_set:Nn \l_ERA_nv_qt_int { #2 } 
+  \int_new:N \l_ERA_vx_dv_int         % ancient diviseur
+  \int_set:Nn \l_ERA_vx_dv_int { 0 }  
+  \int_new:N \l_ERA_nv_dv_int         % nouveau diviseur
+  \int_set:Nn \l_ERA_nv_dv_int { \intarray_item:Nn \__ERA_dv_ia { #2 } }
+
+  \IfBooleanF{#1}{\par}
+  \( \int_to_arabic:n { #2 } = 
+  \int_while_do:nNnn { \l_ERA_nv_qt_int } > { 1 }
+  { \int_compare:nNnT { \l_ERA_vx_dv_int } > { 0 } { \times }
+    \int_to_arabic:n { \l_ERA_nv_dv_int }
+    \int_set:Nn \l_ERA_vx_dv_int { \l_ERA_nv_dv_int }
+    \int_set:Nn \l_ERA_nv_qt_int {
+      \intarray_item:Nn \__ERA_qt_ia { \l_ERA_nv_qt_int } }
+    \int_set:Nn \l_ERA_nv_dv_int {
+      \intarray_item:Nn \__ERA_dv_ia { \l_ERA_nv_qt_int } } }
+  \)
+  \cs_undefine:N \l_ERA_nv_qt_int
+  \cs_undefine:N \l_ERA_vx_dv_int
+  \cs_undefine:N \l_ERA_nv_dv_int
+  \group_end: }
+
+\ExplSyntaxOff
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

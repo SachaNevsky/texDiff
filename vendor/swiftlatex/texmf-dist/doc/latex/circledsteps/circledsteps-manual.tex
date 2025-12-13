@@ -1,0 +1,194 @@
+\documentclass{ltxdoc}
+\usepackage{doc}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{a4wide}
+\usepackage{tikz}
+\usepackage[siunitx, RPvoltages]{circuitikz}
+\ctikzset{%
+    american,
+    cute inductors,
+}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,  % false: boxed links; true: colored links
+    linkcolor=blue,           % color of internal links
+    urlcolor=blue,            % color of external links
+}
+\usepackage{showexpl}
+\lstset{pos=l, overhang=0pt,hsep=\columnsep,vsep=\bigskipamount,
+    rframe=single,numbers=left,numberstyle=\tiny,numbersep=.3em, xleftmargin=1em,
+    columns=flexible, language=[LaTeX]TEX,breaklines=true,
+    basicstyle=\small\ttfamily,tabsize=3, width=0.4\linewidth}
+\usepackage{circledsteps}
+
+\title{The \texttt{circledsteps} package: circled numbers, circled steps and more}
+\author{Romano Giannetti <romano.giannetti@gmail.com>}
+% when we have lot of insets, this is better:
+\parindent=0pt\parskip=6pt plus 6pt minus 2pt\relax
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+This package was born thanks to the discussion on \href{https://tex.stackexchange.com/questions/7032/good-way-to-make-textcircled-numbers}{tex.stackexchange.com}, and with the help of the several authors that contributed to the answers. The base idea is to have a command that can create arbitrary ``circled'' text (numbers or letters) and that can work in normal text \textbf{and} in a node in a \texttt{tikzpicure} or derivative. That forbid to use \texttt{Ti\emph{k}Z} itself for the circles --- you can't safely nest \texttt{tikzpicture}s.
+
+This package provides two things: the first one, macros to generate the circled text that use the original \texttt{pict2e} method, and then a (simple, to be taken as an example) set of macro to generate sequential circled numbers that can be referenced afterward.
+
+The package loads (if not already loaded) the packages \texttt{pict2e}, \texttt{pictures}, \texttt{xcolor} and \texttt{pgfkeys} (the latter one is automatically loaded by \texttt{tikz}; you do not need \texttt{tikz} to use just \texttt{circledsteps}). Moreover, \texttt{etoolbox} is loaded to modify \texttt{pict2e} to have filled ovals.
+
+The manual is for version~\cstepsversion. The main changes between version are listed below.
+\begin{description}
+    \item[v1.3] Minor fixes to the manual; added a warning in case the patching of \texttt{picture.sty} fails.
+    \item[v1.2] Added optional argument to the commands and make them sensitive to math mode (thanks to \texttt{@tallmarmot} for the suggestion and example code); fixed several bugs.
+
+        Added \texttt{fill color} for the circles background.
+    \item[v1.1] Default to normal colors; keep the ``red/blue'' theme as optional.
+        If you use the package option \texttt{redblue} or \texttt{legacy} you will have the same effect than
+        \begin{lstlisting}[]
+    \pgfkeys{/csteps/inner color=red, /csteps/outer color=blue}
+        \end{lstlisting}
+    \item[v1.0] Initial release.
+\end{description}
+
+
+\section{Basic commands}
+
+The basic commands are:
+
+\begin{tabular}{>{\ttfamily\textbackslash}ll}
+    \toprule
+    Circled[]\{\} & circled text using the package colors, text on the baseline\\
+    CircledTop[]\{\} & circled text using the package colors, circle on the baseline\\
+    CircledText[]\{\} & circled text using the current color\footnotemark{}\\
+    \bottomrule
+\end{tabular}
+\footnotetext{it may fail when used in headers or footers, in the sense it can select the wrong color in case of page breaks.}
+
+The parameters for the output are controlled using \texttt{pgfkeys}; you can change them with \verb|\pgfkeys| or \verb|\tikzset|; you can obviously limit the effect of change using normal \LaTeX{} scoping rules. Also, you can specify parameters (without the initial \texttt{/csteps/} as optional arguments to the commands.
+
+The pseudo-color \texttt{none} means that the current color is used for both the text and the circle.
+
+\begin{tabular}{>{\ttfamily}lll}
+    \toprule
+    \textbf{Parameter} & \textbf{Meaning} & \textbf{Default value} \\
+    \midrule
+    /csteps/inner ysep  & vertical spacing & 4pt\\
+    /csteps/inner xsep  & horizontal spacing & 4pt\\
+    /csteps/inner color & color of the text  & none\\
+    /csteps/outer color & color of the circle & none\\
+    /csteps/fill color & background color of the circle & none\\
+    \bottomrule
+\end{tabular}
+
+The usage of the package is better explained with examples.
+
+
+\begin{LTXexample}
+This is normal text: \Circled{1} is on the baseline, \CircledTop{2} is on top.\par
+This is more evident if you have descendents, like p: \Circled{p} and \CircledTop{p}.\par
+You can set options as optional arguments, like \Circled[inner color=red]{R} or \CircledTop[outer color=green]{g}.\par
+Math mode is detected too: \Circled{A} and $\Circled{A}^{\Circled{A}}$.
+\end{LTXexample}
+
+
+\begin{LTXexample}
+For big horizontal things the circle becomes oval: \Circled{200} or \CircledTop{199}.
+\end{LTXexample}
+
+
+\begin{LTXexample}
+Inside \texttt{tikz} they work ok:
+
+\tikzset{/csteps/outer color=green!30!black}
+\begin{tikzpicture}[scale=0.8, rotate=30,
+    text width=3cm, transform shape]
+    \node [draw,color=purple]{text \Circled{1}
+        \Circled[inner color=blue]{2}};
+\end{tikzpicture}
+\end{LTXexample}
+
+
+\begin{LTXexample}
+\pgfkeys{/csteps/inner ysep=10pt}
+\pgfkeys{/csteps/inner xsep=10pt}
+If you like more breathing space:
+\Circled{1}  \Circled{2} \Circled{p} \Circled{200} \Circled{199}.
+\par\bigskip
+\end{LTXexample}
+
+\begin{LTXexample}
+\pgfkeys{/csteps/inner color=green}
+\pgfkeys{/csteps/outer color=gray}
+If you want to change colors it's easy:
+\Circled{1}  \Circled{2} \Circled{p} \Circled{200} \Circled{199}.
+\par\bigskip
+\end{LTXexample}
+
+\begin{LTXexample}
+\pgfkeys{/csteps/inner color=yellow}
+\pgfkeys{/csteps/outer color=red}
+\pgfkeys{/csteps/fill color=black}
+And you can have filled circles and ovals:
+\Circled{\textbf{1}} \Circled{\textbf{199}}.
+\par\bigskip
+\end{LTXexample}
+
+
+\begin{LTXexample}
+You can have inline numbers like \CircledText{1} or
+exponents\textsuperscript{\CircledText{2}} and so on.
+\textcolor{red}{They follow the current color:  \CircledText{1} and \CircledText{2} automatically,} as you can see:  \CircledText{$1+1\approx3$}. In-text circled numbers look better when a bit smaller, though, as you can see in {\small\CircledText{1}} for example.
+\end{LTXexample}
+
+You can have also quite nice math mode effects, thanks to suggestion from \texttt{@tallmarmot}:
+
+\begin{LTXexample}
+    \[\Circled[outer color=red]{x}\]
+    \[\int\limits_{-1}^1\!\mathrm{d}x\,f_{\ell_1}(x)\]
+    \[\Circled[outer color=blue]{\int\limits_{-1}^1}\!
+        \Circled[outer color=orange]{\mathrm{d}x}
+    f_{\Circled[outer color=red]{\ell}_{\Circled[outer color=cyan]{1}}}(x)\]
+\end{LTXexample}
+
+
+\section{Automatically generated numbers}
+
+The command \verb|\cstep| will generate a circled number, starting from \texttt{1}, that can be referenced with the normal \verb|\label|/\verb|\ref| mechanism.\footnote{Notice that in the example the numbers in the references on the right are blue due to \texttt{hyperref} configuration!} You can reset the numbering with
+\verb|\startcstep|. For example:
+
+\input{ctikzexample.tex}
+
+\lstinputlisting{ctikzexample.tex}
+
+
+\bigskip
+
+\section{Personalize it!}
+
+The definition of \verb|CircledTexT| is simply the following one; you can get idea and define your own easily (beware of spaces at the end of the lines, though!):
+
+\begin{lstlisting}
+\newcommand{\CircledText}[2][]{%
+    \CircledParamOpts{inner color=none, outer color=none, #1}{1}{#2}%
+}
+\end{lstlisting}
+
+where \verb|\CircledParamOpts| is a macro with three arguments: the first one is the list of options (without the \texttt{/csteps/} part), the second one is 1 is you want the circle content on the baseline and 0 if you want it on top of it, and finally the third one is the text to be ``circled''.
+
+Also the implementation of the \verb|\cstep| command and relatives is quite simple, and you can play a lot with it to change things (formats, colors, the type of numbering, and so on):
+
+\begin{lstlisting}
+\newcounter{cstepcnt}
+\newcommand{\startcstep}{\setcounter{cstepcnt}{0}}
+\newcommand{\resetcstep}{\setcounter{cstepcnt}{0}}
+\newcommand{\cstep}{%
+    \refstepcounter{cstepcnt}%
+    \Circled{\scriptsize\arabic{cstepcnt}}%
+}
+\renewcommand{\thecstepcnt}{\arabic{cstepcnt}}
+\end{lstlisting}
+
+
+\end{document}

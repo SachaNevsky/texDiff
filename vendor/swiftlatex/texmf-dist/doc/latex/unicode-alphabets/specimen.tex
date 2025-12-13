@@ -1,0 +1,128 @@
+% !TEX TS-program = lualatex
+\documentclass{book}
+\usepackage[
+	a4paper,
+	margin=1in,
+	landscape
+]{geometry}
+
+\usepackage{csvsimple}
+\usepackage{xltabular}
+\usepackage{booktabs}
+\usepackage{pgfkeys}
+\usepackage{stringstrings}
+\usepackage[
+	hidelinks,
+]{hyperref}
+
+\include{csvsimple.tmp.patch}
+
+\title{Unicode Alphabets for \LaTeX\\\bigskip\large Specimen}
+\author{Mikkel Eide Eriksen}
+
+\usepackage{fontspec}
+\newfontfamily\mufifont{Palemonas MUFI}
+\newfontfamily\silfont{Doulos SIL}
+\newfontfamily\titusfont{TITUS Cyberbit Basic}
+\newfontfamily\unzfont{LOB.Ensisheim}
+
+\usepackage[
+%	CYFI,
+	MUFI,
+	SIL,
+	TITUS,
+	UNZ,
+%	disable entity macros,
+	fonts={
+%		CYFI=\titusfont,
+		MUFI=\mufifont,
+		SIL=\silfont,
+		TITUS=\titusfont,
+		UNZ=\unzfont,
+	},
+]{unicode-alphabets}
+
+\makeatletter
+\newcommand\specset[1]{\pgfkeys{/specimen/.cd,#1}}
+
+\newcommand\spec@showfont[1]{%
+	{%
+		#1%
+		\edef\currentfontname{\f@family}\currentfontname
+	}%
+}
+
+\specset{
+	character set/.code={
+		\csedef{spec@charset}{#1}%
+		\caselower[q]{\spec@charset}%
+		\csedef{spec@code}{\thestring}%
+		\csedef{spec@csvfile}{unicode-alphabets.\spec@code.csv}%
+	},
+	font url/.store in=\spec@font@url,
+}
+
+\newcommand\specimen[1]{%
+	\specset{#1}%
+	\chapter*{\spec@charset}
+	\addcontentsline{toc}{chapter}{\spec@charset}
+
+	Using the font \spec@showfont{\csuse{alph@font@\spec@code}} from \url{\spec@font@url}.
+
+	\begingroup
+	\def\mytablerow{\texttt{\csvcoli} & \csuse{\csuse{spec@code}}{\csvcoli} & \ifbool{alph@\spec@code @has@entities}{\csvcolii & \csvcoliii}{\csvcolii}}
+	\ifbool{alph@\spec@code @has@entities}{%
+		\def\spec@columns{r @{ } c @{ } l @{ } X}%
+	}{%
+		\def\spec@columns{r @{ } c @{ } X}%
+	}%
+	\expanded{\unexpanded{\begin{xltabular}{\linewidth}}{\spec@columns}}
+	\toprule
+	Code & & \ifbool{alph@\spec@code @has@entities}{&}{} \hfill \spec@charset\\
+	Point & Glyph & \ifbool{alph@\spec@code @has@entities}{ Entity Name &}{} Unicode Name\\
+	\midrule
+	\endhead
+	\bottomrule
+	\endfoot
+	\csvloop{
+		file={\spec@csvfile},
+		late after line=\\,
+		head to column names prefix=spec@,
+		command=\mytablerow,
+	}
+	\end{xltabular}
+	\endgroup
+}
+
+\makeatother
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\specimen{
+	character set=MUFI,
+	font url=http://mufi.info/,
+}
+
+\specimen{
+	character set=SIL,
+	font url=https://software.sil.org/charis/download/,
+}
+
+\specimen{
+	character set=TITUS,
+	font url=http://titus.fkidg1.uni-frankfurt.de/unicode/tituut.asp,
+}
+
+\begingroup
+\catcode`\_=12 % unz entities have underscores
+\specimen{
+	character set=UNZ,
+	font url=http://www.ligafaktur.de/,
+}
+\catcode`\_=8
+\endgroup
+
+\end{document}

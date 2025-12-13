@@ -1,0 +1,234 @@
+% Time-stamp: <2019-09-24 10:45:10 administrateur>
+% Création : 2019-08-24T14:40:52+0200
+
+Il s'agit maintenant de fournir quelques commandes de document permettant de
+créer un exemple du crible d'Eratosthène comme ceci:
+\begin{center}\label{lecrible100}
+  \eratosthene{100}
+  \EcrireCribleEratosthene{100}
+\end{center}
+
+Ce sera l'occasion d'évoquer un des \og objets de haut niveau\fg
+fourni par \Expliii. Non, je ne parle pas de programmation objet!
+
+Une fois encore, je place le code dans un ``bête''
+fichier~\texttt{.tex} d'où les bien connus désormais
+\Macro{ExplSyntaxOn} et \Macro{ExplSyntaxOff} en début et fin de
+fichier.
+
+\section{Buts et algorithmes}
+\label{sec:butsalgo}
+
+L'objet dont il est question est appelé \English{intarray}. Il est
+global et, une fois créé, ne peut être détruit\footnote{C'est du moins
+  ce que je comprends à la lecture \TO que j'ai voulu rapide\TF du
+  source. En tout cas \Expliii ne fournit pas d'outil pour ce
+  faire.}. Dans certains langages on parle de \emph{vecteurs} mais il
+s'agit ici d'un vecteur d'\glspl{entier} (relatifs) et d'entiers
+seulement.  Sa taille doit être donnée à la création et ne peut pas
+être changée.
+
+Avec la commande \Macro{eratosthene}, on crée deux \emph{vecteurs
+  d'entiers}. Le premier, \Macro{__ERA_dv_ia}, contient en \(n\)\ieme
+place le plus petit diviseur premier de~\(n\). Le second,
+\Macro{__ERA_qt_ia}, contient en \(n\)\ieme place le quotient de~\(n\)
+et de ce diviseur premier dont je viens de parler.
+
+La commande  \Macro{eratosthene} ne prend qu'un argument, un entier
+naturel, qui est la taille des deux vecteurs sus-définis.
+
+Une fois les vecteurs créés, on pourra les utiliser pour écrire le
+crible d'Eratosthène comme vu précédemment ou, pour donner un autre
+exemple, obtenir la décomposition d'un entier comme produit de ses
+diviseurs premiers.
+
+\section{Création des vecteurs}
+\label{sec:creationvecteurs}
+
+\Fragment[commande \texttt{eratosthene},
+initialisation]{5}{10}{./codes/erato-def}
+
+En \Ligne{6} j'ouvre un groupe avec \Macro{group_begin+} qui sera
+fermé juste avant l'accolade fermante marquant la fin de la définition
+de \Macro{eratosthene} en \Ligne{45}.
+
+Dans ce groupe je vais créer un \emph{entier} avec
+\Macro{int_new+N}. Il est créé globalement mais je le détruis en
+\Ligne{44} avec \Macro{cs_undefine+N}. Il ne survivra donc pas à la
+macro.
+
+Je crée également les deux vecteurs en lignes~\(9\) et~\(10\) à l'aide
+de \Macro{intarray_new+Nn} qui prend en 2\ieme argument la taille du
+vecteur qui est l'argument passé à \Macro{eratosthene}. Initialement
+ces vecteurs ne contiennent que des zéros.
+
+Les noms des vecteurs devraient se terminer par \texttt{_intarray}
+mais je me suis permis un raccourci en \texttt{_ia}. Leurs noms
+commencent avec le double souligné puisque ce sont des
+\glspl{variable} \emph{privées}. \texttt{ERA} est le sigle de ce
+pseudo-module.
+
+En \Ligne{8} je donne à la \gls{variable}
+\Macro{l_ERA_diviseur_max_int} la partie entière de la racine carrée
+de la taille des vecteurs \TO valeur donnée par~|#1|\TF en
+\emph{transtypant} le résultat de l'opération |floor(| |sqrt (| |#1|
+|))| qui est un \gls{flottant} en un \gls{entier}. 
+
+\subsection{Une commande auxiliaire}
+
+Je crée maintenant, à l'intérieur de la définition de
+\Macro{eratosthene} la commande \Macro{ERA_marquer_de_a_par+nnn} que,
+de fait, je n'utiliserai qu'une fois, en \Ligne{33}, et dont, par
+conséquent, j'aurais pu faire l'économie, au risque d'embrouiller
+considérablement le code suivant. 
+
+\Fragment[commande \texttt{eratosthene},
+auxiliaire]{12}{20}{./codes/erato-def}
+
+Je crée cette commande localement grâce à \Macro{cs_set+Nn}, elle ne
+survivra donc pas au groupe. Je commence, dans la définition de
+\Macro{ERA_marquer_de_a_par+nnn}, par donner comme valeur à la
+\gls{variable} \emph{locale} \Macro{l_tmpa_int} le quotient entier des
+1\ier et 3\ieme arguments de la commande.
+
+Puis, lignes~\(15\) à~\(19\), j'utilise \Macro{int_step_inline+nnnn}
+pour accomplir le travail. C'est une boucle \POUR. L'index \TO
+implicite et anonyme\TF parcourt les entiers en partant du premier
+argument de cette dernière macro jusqu'au troisième argument avec un
+pas donné par le deuxième. Le 4\ieme argument est le code \emph{en
+  ligne} dans lequel |#1| est l'indice de la boucle. Enfin, |#1|
+serait l'indice de la boucle si on utilisait directement la macro
+\Macro{int_step_inline+nnnn} au niveau du document. Ici comme je
+l'utilise dans une définition incluse elle-même dans une définition,
+je dois doubler les dièses deux fois d'où le |####1| que l'on voit
+dans le code.
+
+En \Ligne{19}, j'incrémente \Macro{l_tmpa_int}. De la \Ligne{16} à la
+\Ligne{18}, j'ai un test \SIALORS avec \Macro{int_compare+nNnT}:
+les actions des lignes~\(17\) et~\(18\) ne seront accomplies que s'il
+est vrai que la |####1|-ième composante du vecteur \Macro{__ERA_dv_ia}
+est nulle \CAD que ce nombre n'a pas encore été traité. Dans ce cas,
+je place la valeur du pas~|##3| \TO c'est le plus petit diviseur
+premier du nombre considéré\TF à la bonne place dans le vecteur des
+diviseurs et je place le quotient à la place idoine dans le vecteur
+des quotients. L'incrémentation faite en-dessous me dispense de
+calculer ce quotient à l'aide d'une division entière.
+
+Comme le nom l'indique la macro \Macro{intarray_gset+Nnn} réalise une
+affectation \textbf{g}lobale dans le vecteur donné en 1\ier argument. C'est
+bien ce que je veux. Le 2\ieme argument donne l'indice, le 3\ieme la
+valeur à y placer.
+
+\subsection{Traitement des entiers pairs}
+\label{sec:lespairs}
+
+Je retourne maintenant au niveau de la définition de la commande
+\Macro{eratosthene} et je commence par traiter les nombres pairs.
+
+\Fragment[commande \texttt{eratosthene},
+nombres pairs]{23}{28}{./codes/erato-def}
+
+À ce moment de l'action, les deux  vecteurs ne contiennent que des
+zéros, cela nous dispense du test tel qu'il apparaît dans la macro
+auxiliaire vue ci-dessus. De plus, le premier quotient (\(2/2\)) est
+clairement~\(1\) d'où la \Ligne{23}.
+
+On retrouve ensuite \Macro{int_step_inline+nnnn} pour traiter les
+nombres pairs en partant de~\(2\), avec un pas de~\(2\), et en
+finissant à la taille des vecteurs~|#1|.
+
+\subsection{Traitement des entiers impairs}
+\label{sec:lesimpairs}
+
+Le traitement des entiers impairs se fera en deux étapes, la deuxième
+étant d'une simplicité déconcertante.
+
+\Fragment[commande \texttt{eratosthene},
+impairs]{31}{36}{./codes/erato-def}
+
+Nous avons déjà vu tout ce que j'utilise ici. On notera, lignes~\(35\)
+et~\(36\), la boucle permettant, en avançant de~\(2\) en~\(2\), de
+trouver le prochain nombre impair non traité avec
+\Macro{int_do_until+nNnn} analogue, pour réaliser une boucle sur les
+entiers, de \Macro{bool_do_until+Nn} présentée page~\pageref{booldountilNn}. 
+
+La dernière boucle traite les nombres impairs qui n'ont pas encore été
+vus. On pourrait améliorer la chose en commençant avec le premier
+impair non-vu, une fois encore je laisse ça en exercice!  
+
+\Fragment[commande \texttt{eratosthene}]{39}{42}{./codes/erato-def}
+
+\section{Deux exemples d'utilisation}
+\label{sec:utilisationcrible}
+
+Les deux vecteurs ayant été créés, on peut les utiliser. Je donne deux
+exemples: l'écriture du \og crible\fg, l'écriture d'un nombre comme
+produit de ses facteurs premiers \TO version améliorable\TF.
+
+\subsection{Écriture du crible}
+\label{sec:ecriturecrible}
+
+Je présente maintenant la commande permettant de créer le tableau
+présenté en page~\pageref{lecrible100}.
+
+\Fragment[écriture du crible, commande de
+document]{69}{70}{./codes/erato-def}
+
+L'unique argument de \Macro{EcrireCribleEratosthene} doit être un
+entier positif plus petit que la taille des deux vecteurs créés
+auparavant sinon on aura une erreur d'accès aux vecteurs dû à un
+indice hors bornes.
+
+Bien entendu, cette commande se contente de refiler le boulot à la
+commande interne \Macro{ERA_presenter_nieme+n} par l'intermédiaire de
+la boucle \Macro{int_step_inline+nn}.
+
+Soulevons le capot.
+
+\Fragment[écriture du crible, commande interne]{50}{67}{./codes/erato-def}
+
+Pour la création du tableau, je copie servilement le code que fourni
+Christian \textsc{Tellechea} dans~\autocite{tellechea}. J'utilise
+quand même la macro \Macro{framebox} fournie par \LaTeXe{} car
+personne n'est obligé de réinventer la roue chaque matin!
+
+\subsection{Décomposition d'un nombre en facteurs premiers}
+\label{sec:facteurspremiers}
+
+Regardons à présent la commande permettant d'obtenir:
+\EcrireDiviseurs{78} \qquad \EcrireDiviseurs*{75} \qquad
+\EcrireDiviseurs*{64}
+\par\noindent
+avec le code
+\par\noindent
+|\EcrireDiviseurs{78}| |\qquad| |\EcrireDiviseurs*{75}| |\qquad| |\EcrireDiviseurs*{64}|.
+
+Voici le code: 
+\Fragment[facteurs premiers]{73}{96}{./codes/erato-def}
+
+Comme on l'aura remarqué, la commande \Macro{EcrireDiviseurs} admet
+une variante étoilée. On l'obtient facilement avec
+\Macro{NewDocumentCommand} en donnant comme descriptif de 1\ier
+argument le~|s| que l'on voit en \Ligne{73}.
+
+Avec \Macro{IfBooleanF} de la \Ligne{82}, on ne place un saut de
+paragraphe \TO avec \Macro{par}\TF que s'il n'y a \textsb{pas}
+d'étoile.
+
+Pour réagir à la présence ou l'absence d'un lexème \TO une étoile~|*|
+avec le descripteur d'argument~|s|, n'importe quel lexème avec~|t| \TF
+on dispose également de \Macro{IfBooleanT} et de \Macro{IfBooleanTF}.
+
+On retrouve les mêmes techniques de création d'\glspl{entier} dans un
+groupe et leur destruction en sortie du corps de la définition de la
+commande. J'évite les entiers de brouillon fournis par \Expliii{} car
+je préfère, pour ne pas me perdre, des noms plus explicites. De toute
+façon, j'ai besoin d'au moins trois entiers locaux. On devrait pouvoir
+écrire la décomposition de \(75\) sous la forme \(75=3\times5^{2}\) à
+l'aide d'un \gls{entier} supplémentaire. Là encore, l'exercice etc.
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "dun19expl3"
+%%% End:

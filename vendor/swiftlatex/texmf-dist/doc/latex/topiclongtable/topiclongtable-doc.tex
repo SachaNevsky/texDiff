@@ -1,0 +1,303 @@
+%
+% This work is sponsored by Human Predictions, LLC (<http://www.humanpredictions.com>).
+%
+% This work is maintained by Paolo Brasolin (<paolo.brasolin@gmail.com>).
+%
+% This work is licensed under MIT License.
+%
+% This work is a LaTeX package consisting of the following files:
+%   * README.md
+%   * topiclongtable.sty
+%   * topiclongtable-doc.tex
+%   * topiclongtable-doc.pdf
+%
+\documentclass[full,kernel]{l3doc}
+
+\usepackage{topiclongtable}
+
+\begin{document}
+
+\title{%
+  The \pkg{topiclongtable} package%
+  \thanks{Development of this package was sponsored by Human Predictions,
+    LLC (\href{http://www.humanpredictions.com}{www.humanpredictions.com}).}\\
+  Autocollapsing cells in longtables
+}
+
+\author{
+  Paolo Brasolin\\
+  \href{mailto:paolo.brasolin@gmail.com}{paolo.brasolin@gmail.com}
+}
+
+\date{2019/07/09 v1.3.1}
+
+\maketitle
+
+\begin{documentation}
+
+
+This \LaTeX\ package extends \env{longtable}s implementing
+\env{topiclongtable}s, in which vertically adjacent cells merge if
+and only if they have the same content and the cells on their left
+are merged.  Furthermore the merging is well behaved, in that it
+does not happen after page breaks and correct separation lines are
+drawn automatically.
+
+The typical use case is a table that spans multiple pages and
+contains a list of hierarchically organized topics (hence the package
+name).
+
+
+
+
+\section*{Usage}
+
+To use the package install it in your tree (or put \file{topiclongtable.sty} in your work folder) and require it in your preamble:
+
+\begin{verbatim}
+  \usepackage{topiclongtable}
+\end{verbatim}
+
+
+
+
+\subsection*{Environment}
+
+\begin{function}[updated=2019-07-08]{topiclongtable}
+  \begin{syntax}
+    \tn[no-index]{begin}\{\env{topiclongtable}\}\marg{column specification}
+    \ \ \meta{cells specification}
+    \tn[no-index]{end}\{\env{topiclongtable}\}
+  \end{syntax}
+  The \env{topiclongtable} environment extends \env{longtable}.
+  They share the same syntax and all features of the latter are
+  available in the former.
+
+  To use \pkg{topiclongtable} macros you must \emph{prepend} \enquote{\texttt{F}}
+  to the first column specification and \enquote{\texttt{T}} to all others:
+  \begin{verbatim}
+    \begin{topiclongtable}{|Fl|Tl|Tl|Tr|Tl|Tr}
+      % ...
+    \end{topiclongtable}
+  \end{verbatim}
+\end{function}\smallskip
+
+
+
+
+\subsection*{Macros}
+
+\begin{function}{\Topic}
+  \begin{syntax}
+    \tn{Topic}\oarg{content}
+  \end{syntax}
+  This is the main macro of the package; you can use it to wrap the
+  optional \meta{content} of a cell in order to allow it to merge with
+  adjacent cells.
+\end{function}\smallskip
+
+The behaviour of \tn{Topic} can be observed in the following complete example:
+\begin{verbatim}
+  \begin{topiclongtable}{|Fl|Tl|Tl|Tl|}
+    \Topic[Topic 1] & \Topic[Subtopic 1] & \Topic[Subsubtopic 1] & Foo \\
+    \Topic          & \Topic             & \Topic[Subsubtopic 2] & Bar \\ 
+    \Topic          & \Topic[Subtopic 1] & \Topic[Subsubtopic 2] & Baz \\ 
+    \Topic[Topic 2] & \Topic[Subtopic 1] & \Topic[Subsubtopic 3] & Qux \\ 
+    \Topic          & \Topic[Subtopic 2] & \Topic[Subsubtopic 4] & Zod \\ 
+    \Topic          & \Topic             & \Topic                & Bop \\
+  \end{topiclongtable}
+\end{verbatim}
+\begin{topiclongtable}{|Fl|Tl|Tl|Tl|}
+  \Topic[Topic 1] & \Topic[Subtopic 1] & \Topic[Subsubtopic 1] & Foo \\
+  \Topic          & \Topic             & \Topic[Subsubtopic 2] & Bar \\ 
+  \Topic          & \Topic[Subtopic 1] & \Topic[Subsubtopic 2] & Baz \\ 
+  \Topic[Topic 2] & \Topic[Subtopic 1] & \Topic[Subsubtopic 3] & Qux \\
+  \Topic          & \Topic[Subtopic 2] & \Topic[Subsubtopic 4] & Zod \\ 
+  \Topic          & \Topic             & \Topic                & Bop \\
+\end{topiclongtable}
+
+Here is a breakdown of the manifested behaviour:
+\begin{itemize}[nosep]
+  \item the parameter is optional;
+  \item merging happens when it is omitted (rows 1--3 on column 1);
+  \item merging happens when its value is equal to the one above
+  (rows 2--3 on columns 2 and 3);
+  \item merging does not happen (rows 3--4 on column 2) when the
+  cells on the left are not merged (rows 3--4 on column 1).
+\end{itemize}
+
+
+\begin{function}{\TopicLine}
+  \begin{syntax}
+    \tn{TopicLine}
+  \end{syntax}
+  \tn{TopicLine} can be used at the start of a row to automatically
+  draw the horizontal lines that separates it from the row above
+  and correctly accounts for merged cells.
+
+  By default no horizontal lines are drawn on top and bottom of
+  table chunks to allow for maximal flexibility. You can use longtable
+  footer and headers to easily draw them (or whichever footer/header
+  you may desire) as shown in the next example.
+\end{function}\smallskip
+
+Here is the previous example with lines added:
+\begin{verbatim}
+  \begin{topiclongtable}{|Fl|Tl|Tl|Tl|}
+    \hline\endhead
+    \hline\endfoot
+    \TopicLine \Topic[T1] & \Topic[ST1] & \Topic[SST1] & Foo \\
+    \TopicLine \Topic     & \Topic      & \Topic[SST2] & Bar \\ 
+    \TopicLine \Topic     & \Topic[ST1] & \Topic[SST2] & Baz \\ 
+    \TopicLine \Topic[T2] & \Topic[ST1] & \Topic[SST3] & Qux \\ 
+    \TopicLine \Topic     & \Topic[ST2] & \Topic[SST4] & Zod \\ 
+    \TopicLine \Topic     & \Topic      & \Topic       & Bop \\
+  \end{topiclongtable}
+\end{verbatim}
+\begin{topiclongtable}{|Fl|Tl|Tl|Tl|}
+  \hline\endhead
+  \hline\endfoot
+  \TopicLine \Topic[T1] & \Topic[ST1] & \Topic[SST1] & Foo \\
+  \TopicLine \Topic     & \Topic      & \Topic[SST2] & Bar \\ 
+  \TopicLine \Topic     & \Topic[ST1] & \Topic[SST2] & Baz \\ 
+  \TopicLine \Topic[T2] & \Topic[ST1] & \Topic[SST3] & Qux \\ 
+  \TopicLine \Topic     & \Topic[ST2] & \Topic[SST4] & Zod \\ 
+  \TopicLine \Topic     & \Topic      & \Topic       & Bop \\
+\end{topiclongtable}
+
+
+
+
+\subsection*{Settings}
+
+All settings described in this section are global and can be changed between tables.
+
+\begin{function}{\TopicSetContinuationCode}
+  \begin{syntax}
+    \tn{TopicSetContinuationCode}\marg{\TeX\ code}
+  \end{syntax}
+  Cells \emph{continuing} from the previous page can be explicitly
+  marked.  You can set a code fragment to append to such cells using
+  \tn{TopicSetContinuationCode}:
+  \begin{verbatim}
+    \TopicSetContinuationCode{\ (cont.)}
+  \end{verbatim}
+  By default no mark is appended and you can reset to the default
+  using
+  \begin{verbatim}
+     \TopicSetContinuationCode{}
+  \end{verbatim}
+\end{function}\smallskip
+
+Consider this example across two pages:
+\begin{verbatim}
+  \TopicSetContinuationCode{\ (cont.)}
+  \begin{topiclongtable}{|Fl|Tl|Tl|Tl|}
+    \hline\endhead
+    \hline\endfoot
+    \TopicLine \Topic[A] & \Topic[B] &  1 \\
+    \TopicLine \Topic    & \Topic    &  2 \\
+    % ...
+    \TopicLine \Topic    & \Topic[C] & 10 \\ 
+    \TopicLine \Topic    & \Topic    & 11 \\ 
+    % ...
+    \TopicLine \Topic    & \Topic    & 20 \\ 
+  \end{topiclongtable}
+\end{verbatim}
+\TopicSetContinuationCode{\ (cont.)}
+\begin{topiclongtable}{|Fl|Tl|Tl|}
+  \hline\endhead
+  \hline\endfoot
+  \TopicLine \Topic[A] & \Topic[B] &  1 \\
+  \TopicLine \Topic    & \Topic    &  2 \\ 
+  \TopicLine \Topic    & \Topic    &  3 \\ 
+  \TopicLine \Topic    & \Topic    &  4 \\ 
+  \TopicLine \Topic    & \Topic    &  5 \\ 
+  \TopicLine \Topic    & \Topic    &  6 \\ 
+  \TopicLine \Topic    & \Topic    &  7 \\ 
+  \TopicLine \Topic    & \Topic    &  8 \\ 
+  \TopicLine \Topic    & \Topic    &  9 \\ 
+  \TopicLine \Topic    & \Topic[C] & 10 \\ 
+  \TopicLine \Topic    & \Topic    & 11 \\ 
+  \TopicLine \Topic    & \Topic    & 12 \\ 
+  \TopicLine \Topic    & \Topic    & 13 \\ 
+  \TopicLine \Topic    & \Topic    & 14 \\ 
+  \TopicLine \Topic    & \Topic    & 15 \\ 
+  \TopicLine \Topic    & \Topic    & 16 \\ 
+  \TopicLine \Topic    & \Topic    & 17 \\ 
+  \TopicLine \Topic    & \Topic    & 18 \\ 
+  \TopicLine \Topic    & \Topic    & 19 \\ 
+  \TopicLine \Topic    & \Topic    & 20 \\ 
+\end{topiclongtable}
+\TopicSetContinuationCode{}
+
+\begin{function}{\TopicSetVPos}
+  \begin{syntax}
+    \tn{TopicSetVPos}\marg{vertical position specification}
+  \end{syntax}
+  You can set the vertical position for \tn{Topic} cells by using
+  \tn{TopicSetVPos}.  Allowed \meta{vertical position specification}s
+  are \enquote{\texttt{b}} (bottom), \enquote{\texttt{c}} (center)
+  and the default \enquote{\texttt{t}} (top). All \tn{Topic} cells
+  will align in the same way:
+\end{function}\smallskip
+
+Here is an example of \emph{bottom} alignment:
+\begin{verbatim}
+  \TopicSetVPos{b}
+  \begin{topiclongtable}{|Fl|Tl|Tl|Tl|}
+    \hline\endhead
+    \hline\endfoot
+    \TopicLine \Topic[T1] & \Topic[ST1] & Foo \\
+    \TopicLine \Topic     & \Topic[ST2] & Bar \\ 
+    \TopicLine \Topic     & \Topic      & Baz \\ 
+  \end{topiclongtable}
+\end{verbatim}
+\TopicSetVPos{b}
+\begin{topiclongtable}{|Fl|Tl|Tl|Tl|}
+  \hline\endhead
+  \hline\endfoot
+  \TopicLine \Topic[T1] & \Topic[ST1] & \Topic[SST1] & Foo \\
+  \TopicLine \Topic     & \Topic      & \Topic[SST2] & Bar \\ 
+  \TopicLine \Topic     & \Topic[ST1] & \Topic[SST2] & Baz \\ 
+\end{topiclongtable}
+\TopicSetVPos{t}
+
+\begin{function}{\TopicSetWidth}
+  \begin{syntax}
+    \tn{TopicSetVPos}\marg{cell width specification}
+  \end{syntax}
+  You can set the width of the \tn{Topic} cells by using
+  \tn{TopicSetWidth}.  Allowed \meta{cell width specification}s are
+  \enquote{\texttt{=}} (fit column width) and the default
+  \enquote{\texttt{*}} (fit natural content width).
+\end{function}\smallskip
+
+Note \enquote{\texttt{=}} will be useful mostly when coupled with
+column specifiers like \texttt{p}\Arg{width} to force the overflowing
+content inside the column width:
+\begin{verbatim}
+  \TopicSetWidth{=}
+  \begin{topiclongtable}{|Fp{.5in}|Tl|}
+    \hline\endhead
+    \hline\endfoot
+    \TopicLine \Topic[Fits column width] & A \\
+    \TopicLine \Topic                    & B \\
+    \TopicLine \Topic                    & C \\
+  \end{topiclongtable}
+\end{verbatim}
+\TopicSetWidth{=}
+\begin{topiclongtable}{|Fp{.5in}|Tl|}
+  \hline\endhead
+  \hline\endfoot
+  \TopicLine \Topic[Fits column width] & A \\
+  \TopicLine \Topic                    & B \\
+  \TopicLine \Topic                    & C \\
+\end{topiclongtable}
+\TopicSetWidth{*}
+
+\end{documentation}
+
+\PrintIndex
+
+\end{document}

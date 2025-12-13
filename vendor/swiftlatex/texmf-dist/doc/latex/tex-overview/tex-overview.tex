@@ -1,0 +1,1167 @@
+%% Engine needed: LuaTeX ≥ 0.90.0
+%% Format needed: LaTeX2ε
+%% use an up-to-date TeX Live2016 to be sure
+
+% this document has version number 0.2-ish.
+\input{tex-overview-aux} %% everything that is not content-related
+
+\begin{document}
+\savegeometry{normal}
+\begin{abstract}
+In the world of \TeX, there are many developments and ambiguous names. This paper tries to give an overview of the development of \TeX\ and related programs. Contributions are very welcome!\footnote{The latest source code of this document is availble at \url{http://github.com/alt/tex-overview}. Please feel free to patch there or mail me any suggestions and comments. I'll be happy to extend and correct this document!}
+
+{\centering \Large \hyperref[textextview]{Link for the impatient.}\\[2ex]}
+\end{abstract}
+
+\section*{Introduction}
+This document is for people that have stumbled upon different software names icluding something related to \TeX\ and are confused by the many different terms – at least I was, so mabye others are, too … 
+
+The base frame and main idea for this overview was taken from the article \textit{A brief history of \TeX,~volume~II} by Arthur Reutenauer in the proceedings of \textsf{EuroBacho\TeX~2007} and his talk there (see~references on page~\pageref{sec:refs}). Additional information is taken from original documentation of the software and some review articles. For information of very old stuff, the \textsf{historic~archive} maintained by Ulrik Vieth and hosted on \url{ftp.tug.org} (see~refs) was very useful, especially in the reconstruction of \LaTeX\ versions. Many thanks for that great archive!
+
+All information is up to the date of this generated PDF and up to the information I~found. Everything here is without guarantee – this is just to get an overview. Consult the references for further (and/or~correct) information! 
+
+In the tree views, every node has a tooltip that shows up when you hover the mouse over it. For the case that your PDF viewer does not support this, there is a list of all the descriptions on page~\pageref{sec:text}.
+
+\setlength{\columnsep}{1.5cm}
+\newgeometry{bottom=3.5cm}
+\newgeometry{margin=1cm}
+\newpage
+\tableofcontents
+
+%\restoregeometry
+
+\section{The Difference Between Editor, Engine, Format, and Distribution}
+There are four kinds of terms that are often confused especially by new users. This will try to explain them very shortly:
+\begin{description}
+\item[editor] Typically, a user interfaces with any *\TeX\ via an editor as a front end. Although they might look fancy with a lot of graphical interfaces, an editor is just a program that allows the user to create and change a text file. This can be done with any program, but specialized editors offer additional features. It is important to keep in mind that an editor alone can \emph{not} convert a \verb|.tex| file into a pdf or any other output format, but always needs the programs as discussed below, most notably an engine that does all the work. This might often be hidden from the user's direct view by buttons which offer convenient ways to execute everything that is necessary.
+\item[engine] This is the program that does all the actual work. The original program is \TeX, the most famous derivative is pdf\TeX, while Lua\TeX\ is the latest successor. Normally,~a~user does not interface directly with the program, but uses an editor to parse a text file to it.
+\item[format] A format is a (large) collection of abbreviations (macros) that make the life easy when working with \TeX. The most commonly used formats are \LaTeX, Con\TeX t and plain\TeX. The latter one is a minimal set of macros provided by Don Knuth. Formats can be combined with different engines, exploiting the special abilities of these engines. A format is in the beginning a collection of text files, but can be compiled into a binary format that can be read much faster by the engine.
+\item[distribution] In addition to formats, a large set of supplementary files can be used to work with \TeX, called \emph{packages} for \LaTeX, \emph{modules} for Con\TeX t, and many external programs have proven useful for the work with \TeX. Distributions such as \TeX~Live and MiK\TeX\ strive to provide a full set of such programs and macros by using a package manager to take care of package dependencies and updating. Many Linux distributions, as well as cygwin for Windows, repackage a \TeX\ distribution (mostly \TeX~Live) using the Linux distribution's package system.
+\end{description}
+
+\newpage
+\section{How to read this document}
+This document consists of several graphs showing the development of software more or less directly related to \TeX. The graphs try to show the time  development (downwards), as well as dependencies, changes, etc.
+
+I tried to make the graphs more readable by using colors for different categories. The decisions about what is important and what is “normal” reflect my personal opinion only.
+
+\begin{description}
+\item[{\let\nodecolor\normalimportant \tikz \node[coolnode]{normal};}] That is, not very important in my opinion, no huge user group, but still maybe important for special needs. Was used by a major community at least some time back, but is not of great impact nowadays.
+
+\item[{\let\nodecolor\vip \tikz \node[coolnode]{important};}] Engines or formats that had or have a great impact on (everyday) typesetting for a large community.
+
+\item[{\let\nodecolor\experimental \tikz \node[coolnode]{experimental};}] Developments that might still be under construction or were never used by a large community. Nevertheless, these might be very important to the development of other engines or for use of special typesetting.
+
+\item[{\let\nodecolor\planned \tikz \node[coolnode]{planned};}] Things that are planned to raise one day and are in the phase of preparation, i.\,e. there may be some code but not in the final form yet.
+
+\item[{\let\nodecolor\package \tikz \node[coolnode]{package};}] \LaTeX-packages or single \TeX-files (useable as packages or modules) that seemed worth mentioning. There won't be many of this; just some that might elsewise be confused for something else.
+
+\item[{\let\nodecolor\distro \tikz \node[coolnode]{distribution};}] Software bundles that bring \TeX\ and friends to the normal user.
+
+\item[{\let\nodecolor\histdistro \tikz \node[coolnode]{hist. dist.};}] Historical distributions that have no use today but were important for bringing \TeX\ to older computer systems.
+
+\item[{\let\nodecolor\program \tikz \node[coolnode]{program};}] Programs that are not directly connected to \TeX\ (but interesting in the context of using \TeX) or separate helper programs.
+
+\item[{\let\nodecolor\fonttechnology \tikz \node[coolnode]{font};}] Something related to a font. Neither a program nor libraries that provide access to fonts nor the actual files, but rather the abstract definition or specification.
+
+\end{description}
+
+Some of the graphs have quite many entries, which is the reason why there are two versions of them: A short one listing only the most important things and a full version with everything I could find.
+
+In most cases I did not mention the authors of the programs/packages. This is not to diminish their effort but only for brevity (long names make things harder to read). I did not write any of the below-mentioned programs or packages. The authors are given in the documents linked in the references.
+
+\section{How to contribute}
+I hope one day this document would become the standard reference for questions like ”Which program do I need for~…?“, ”What's the difference between …\TeX\ and …\TeX?“, ”Why is it called …?“ etc.
+
+To get to this point, I need some help of people who know more about the \TeX\ world than I do. It is up to you to contribute texts, references, links, descriptions, hints etc. I'll be happy about anything I can add here. Also, if you have suggestions about the layout or corrections to the content, let me know.
+
+\newpage
+\section{Problems with PDF viewers}
+This document shows additional information via tooltips. At least that's what it should do. Unfortunately, there is no unique way to get hover-over tooltips to work in all PDF viewers, but each of them has its own way to present the information. For now, the information are provided as a hyperlink which points nowhere meaningful. But most viewers can shows this information in a way the user can understand.
+
+The following list summarizes my experience with different PDF viewers, all but the Adobe Reader XI tested on an Arch Linux. Your experince might differ; if you have any annotations to this list, I'll happily add them – especially if the document breaks anything completely.
+
+\begin{description}
+\item[evince 3.20.0] Shows the document correctly and completely.
+
+\item[Adobe Reader 9] Shows the document correctly and completely, surprisingly.
+
+\item[Adobe Reader XI] Shows the document correctly and completely, surprisingly. (Tested on Windows 7)
+
+\item[\TeX works 0.6.1 r3614278] Shows the document completely, but the tooltips shows some characters at the beginning. Ignore those and it's fine.
+
+\item[okular 0.25.0] As \TeX works, but does not break the tooltips, therefore information is lost.
+
+\item[xpdf 3.04] Shows the tooltips only in the status bar, thus hiding most of the information in the graphs.
+
+\end{description}
+
+\subsection*{About this document}
+This document is typeset in the \TeX\ Gyre Pagella font using the Lua\LaTeXe\ format with \verb|expl3| and \verb|xpackages| based on Lua\TeX\ 0.\the\luatexversion.\luatexrevision.
+
+In case you wonder why the typesetting is so ugly, especially the margins: Those are chosen to be small so that much text fits on one page which in this case increases the overview. I do not expect anybody to ever print this document, therefore I ignore the need of margins. In the tooltips, you will not see any colons even if they would make sense – this is because a colon leads to an error and the tooltip will not be displayed.
+
+\addtocontents{toc}{\string\vspace{.2cm}}
+\addtocontents{toc}{\string\begin{multicols}{2}}
+
+\clearpage
+\topart{Tree Views}
+\newgeometry{margin=1cm}  %% to save space; no need for margins if only a tree is shown
+
+\label{sec:tree}
+\Large
+\centering
+
+%%% TEX  %%%
+\label{textextview}
+\tograph*({\tostruct[\TeX]{\TeX\ – the program}}){
+	\setlayer0
+	\tonode[\vip](tex)(7,\layer)<Born in 1978 by Donald Erwin Knuth.>{\TeX}
+	
+	\tonode[\program](ant)(13,\layer)<Ant is Not TeX. A typesetting system inspired by TeX. Only *inspired*, so it has nothing to do with TeX in terms of common code.>{ANT}
+	\todraw[dotted](tex)(ant)
+
+	\tonode[\program](hex)(0,\layer)<An experimental reimplementation of TeX in Haskell.>{HeX}
+	\todraw[dotted](tex)(hex)
+	
+	\steplayer[-1.5]
+	\tonode(tex-xet)(4,\layer)<The first extension to TeX, 1987. It was able to typeset in two directions, but only with a mark in the DVI to change the direction.>{\TeX-\XeT}
+	\todraw(tex)(tex-xet)
+
+	\tonode(nihongo)(10,\layer)<A true multibyte extension of TeX. Could handle all Japanese characters in one font.>{Nihongo \TeX}
+	\todraw(tex)(nihongo)
+	
+	\tonode(jtex)(15,\layer)<An extension of TeX for typesetting Japanese. (1987, Yasuki Saito)>{j\TeX}
+		\todraw(tex)(jtex)
+
+	\steplayer[-2]
+
+	\tonode(tex--xet)(4,\layer)<TeX--XeT was able to really put the glyphs on the right place in the DVI.>{\TeX-{}-\XeT}
+		\todraw(tex-xet)(tex--xet)
+
+	\tonode[\vip](tex3)(7,\layer)<Ability to handle 8-bit input. 1989. TeX development was frozen in 1991 and only bugfixes were made. Now in version 3.14159265 (published 01-2014), it gets closer to pi with every bugfix. Don Knuth wishes the version number to be pi when he dies.>{\TeX3}
+		\todraw*(tex)(tex3)
+
+	\steplayer[-1.5]
+
+	\tonode(ptex)(12,\layer)<Extension of Nihongo TeX to enable vertical typesetting. (“p” for “publishing”)  Distributed as WEB change files. Primary author is D. E. Knuth, latest version (TeX Live 2016) is pTeX 3.14159265-p3.7.>{p\TeX}
+		\todraw(nihongo)(ptex)
+		\todraw(tex3)(ptex)
+
+	\steplayer[-1.5]
+	
+	\tonode(enctex)(5.9,\layer)<A small extension to TeX, started 1997. Adds 10 new primitives relating input re-encoding>{enc\TeX}
+	\todraw(tex3)(enctex)
+	
+	\tonode(mltex)(8,\layer)<Extension to TeX (started 1990) that allows hyphenation of words with accented letters. (Therefore the name, MultiLingual TeX.) Distributed as a change file to the original WEB sources of TeX.>{ML\TeX}
+	\todraw(tex3)(mltex)
+	
+	\tonode[\experimental](uptex)(14,\layer)<Unicode-aware version of pTeX – “Unicode-publishing”-TeX. Current version in TeX Live 2015 is 3.14159265-p3.7-u1.21.>{up\TeX}
+		\todraw(ptex)(uptex)
+	\steplayer[-2]
+
+	\tonode[\experimental](omega)(1,\layer)<Support for 16bit-Unicode-input. Still constrained on the output encoding. Started 1994.>{$\Omega$}
+		\todraw(tex3)(omega)
+	
+	\tonode[\vip](etex)(4,\layer)<An extension to TeX, provided by the NTS team as an intermediate project until NTS would be ready. eTeX is a full TeX and backward compatible. The number of TeX's registers is increased and various new primitives useful to programmers are added.>{$\varepsilon$-\TeX}
+		\todraw(tex--xet)(etex)
+		\todraw'(tex3)(etex)
+
+	\tonode(tex2pdf)(7,\layer)<Early name for pdfTeX. Don't confuse with converters like dvi2pdf.>{\TeX2PDF}
+		\todraw(enctex)(tex2pdf)
+		\todraw(mltex)(tex2pdf)
+	
+	\tonode(nts)(12,\layer)<A project to completely reimplement TeX in Java. Now NTS is officially declared dead.>{\NTS}
+		\todraw(tex3)(nts)
+
+	\steplayer[-1]
+
+	\tonode(texgx)(10,\layer)<“GX” stands for Graphic eXtension, a font technology available only on Mac OS. TeXGX was able to handle these fonts.>{\TeX{}gX}
+		\todraw(tex3)(texgx)
+
+	\steplayer[-1]
+
+	\tonode[\experimental](omega2)(0,\layer)<A short-time try to pick up the development of Omega again in 2006. Seemed more like a good plan and is now regarded as obsolete. LuaTeX is kind of a successor.>{$\Omega_2$}
+		\todraw(omega)(omega2)
+
+	\steplayer[-0.5]
+	
+	\tonode[\experimental](vtex)(3.6,\layer)<VTeX (VisualTeX) can produce PDF, HTML, SVG, DVI or ps output directly from input. In contrast to pdfTeX, it includes a full PostScript interpreter, thus capable to include EPS figures, PStricks etc. First official version I found is from February 15, 1999; VTeX 6.3; last official version seems to be from Oct 1, 2005; VTeX 8.61. Commercial product.>{V\TeX}
+		\todraw(etex)(vtex)
+
+	\steplayer[-0.5]
+
+	\tonode(eptex)(13.7,\layer)<A merge of e-TeX with pTeX written by Hironori Kitagawa. Additional support for 256 math fonts, and some pdfTeX functionality. Latest Version (TeX Live 2016) is 3.14159265-p3.7-160201-2.6.>{ε-p\TeX}
+		\todraw(ptex)(eptex)
+		\todraw(etex)(eptex)
+
+	\steplayer[-1.5]
+
+	\tonode(euptex)(15.2,\layer)<Merger of e-TeX and upTeX features. Current Version (TeX Live 2016) 3.14159265-p3.7-u1.21-160201-2.6.>{ε-up\TeX}
+		\todraw(etex)(euptex)
+		\todraw(uptex)(euptex)
+
+	\steplayer[-.5]
+
+	\tonode(aleph)(1,\layer)<Originally named epsilon-Omega, an attempt to stabilize Omega while merging epsilon extensions. Authors are John Plaice and Yannis Haralambous, now maintained for severe bugfixes by Taco Hoekwater. Latest version number is 3.14159265-1.15-2.1-0.1.>{$\aleph$ (Aleph)}
+		\todraw(omega)(aleph)
+		\todraw(etex)(aleph)
+	
+	\tonode[\vip](pdftex)(7,\layer)<A new engine to directly produce PDF-files from TeX, without the need of DVI-PS-PDF. This allows to use microtypographic extensions and many other features of the PDF format like page transitions etc.>{pdf\TeX}
+		\todraw(tex2pdf)(pdftex)
+		\todraw'(tex3)(pdftex)
+	
+	\steplayer[-1]
+
+	\tonode[\experimental](extex)(12,\layer)<Planned implementation of a high-quality typesetting system, written in Java. Based on experiences in NTS, eTeX, pdfTeX and Omega. Started in 2003, current version in repository is 0.0. (i. e. not very far ...)>{$\epsilon\chi$\TeX}
+		\todraw(nts)(extex)
+		\todraw(omega)(extex)
+		\todraw(etex)(extex)
+		\todraw(pdftex)(extex)
+
+	\steplayer[-1]
+	
+	\tonode[\vip](pdfetex)(6,\layer)<Merging the pdfTeX engine with the eTeX-extensions. This engine can produce DVI (with or without the eTeX-extensions) as well as PDF (again, with or without extensions). Current Version number 3.14159265-2.6-1.40.17.>{pdf($\epsilon$)-\TeX}
+		\todraw*(etex)(pdfetex)
+		\todraw*(pdftex)(pdfetex)
+
+	\tonode[\vip](XeTeX)(10,\layer)<This extension enables full multilingual support for left-to-right typesetting, right-to-left and almost any other possible direction. Unicode encoding is fully supported (utf8 as native encoding). XeTeX also features support for OpenType, AAT, TrueType and Graphite-fonts (via the operation system). In contrary to pdfTeX or LuaTeX, no external configuration file is needed to use fonts. Since version 3.1415926-2.2-0.9997.4, code from pdf(e)TeX for margin kerning has been added. Latest version number is 3.14159265-2.6-0.99996. XeTeX version numbers will converge to 1.>{\XeTeX}
+		\todraw(texgx)(XeTeX)
+		\todraw*(etex)(XeTeX)
+		\todraw'(pdfetex)(XeTeX)
+	
+	\steplayer[-2]
+
+	\tonode[\experimental](eetex)(8,\layer)<Experimental extension to pdfeTeX by Taco Hoekwater, created 2000. Distributed as change file. Now dead due to his development of LuaTeX.>{ee\TeX}
+		\todraw(pdfetex)(eetex)
+	
+	\steplayer[-1]
+
+	\tonode[\program](lua)(0,\layer)<A script language; has nothing to do with TeX.>{Lua}
+	
+	\tonode[\vip](luatex)(4,\layer)<LuaTeX supports utf8, OpenType and many more things. TeX Live 2016 ships version beta-0.95.0. LuaTeX features an embedded scripting language, Lua, making it easy to extend and to change the TeX interna, so most of the programming can be done in Lua instead of TeX-hackery.>{Lua\TeX}
+		\todraw(aleph)(luatex)
+		\todraw*(pdfetex)(luatex)
+		\todraw[dashed](lua)(luatex)
+
+	\steplayer[-2]
+	\tonode[\program](luajit)(0,\layer)<A just-in-time compiler for Lua.>{LuaJIT}
+		\todraw(lua)(luajit)
+
+	\tonode[\experimental](luajittex)(4,\layer)<LuaJITTeX is a LuaTeX based on LuaJIT.>{LuaJIT\TeX}
+		\todraw(luajittex)(luatex)
+		\todraw[dashed](luajit)(luajittex)
+
+	\steplayer[-2.5]
+	\tonode[\experimental](itex)(7,\layer)<iTeX is the official successor of TeX3, announced by Don Knuth at the TUG conference 2010. (It was a joke, ok.) Not to be confused with William Cheswick's application for the iPad.>{i\TeX}
+}
+\vfill
+
+{\flushleft The chronological order may not be exact in this graph. I had to work hard on the arrangement to show both chronological order and code dependence, and for now only the code dependence is (should be) correct.
+
+} 
+
+\clearpage
+
+%%% TeX, iniTeX, virTeX %%%
+
+\tograph(\tostruct[ini\TeX\ et al.]{ini\TeX, Vir\TeX, et al.}){
+	\tonode(initex)(-3,\layer)<The program TeX without preloaded format (“initial TeX”), intended for format creation. (Format dump possible.)>{ini\TeX}
+
+	\tonode(virtex)(0,\layer)<The program TeX without preloaded format (“virgin TeX”), intended for production use. (Format dump not possible.) No longer part of TeX Live.>{Vir\TeX}
+
+	\tonode(tex)(3,\layer)<In this special context, TeX means the program with the plain format preloaded. (Format dump not possible.)>{\TeX}
+
+	\todraw(initex)(tex)
+	\todraw(tex)(virtex)
+
+\steplayer[-2]
+
+	\tonode(inimf)(-4,\layer)<The program metafont without preloaded format (“initial metafont”), intended for format creation. (Format dump possible.)>{iniMETAFONT}
+
+	\tonode(virmf)(0,\layer)<The program metafont without preloaded format (“virgin metafont”), intended for production use. (Format dump not possible.) No (longer?) part of TeX Live.>{VirMETAFONT}
+
+	\tonode(mf)(4,\layer)<In this special context, mf means the program with the plain format preloaded. (Format dump not possible.)>{METAFONT}
+
+	\todraw(inimf)(mf)
+	\todraw(mf)(virmf)
+
+}
+
+{\flushleft All other engines have the same functionality, but no special names given: |luatex --ini| is the INITEX version of Lua\TeX\ etc.
+
+}
+
+%%% plain TeX %%%
+\tograph(\tostruct[plain\TeX]{plain\TeX\ – the first format}){
+	\tonode(plaintex)(0,\layer)<The basic format offered by Don Knuth to provide a minimal set of macros to work with.>{plain\TeX}
+\steplayer[-2]
+
+	\tonode[\experimental](ecplain)(-2,\layer)<A plainTeX using EC fonts. Latest changes in May 2002 for pdfTeX.>{ec-plain}
+	\tonode[\experimental](csplain)(2,\layer)<A plainTeX using cs-fonts.>{csplain}
+	\todraw(plaintex)(ecplain)
+	\todraw(plaintex)(csplain)
+
+\steplayer[-2]
+	\tonode[\experimental](eplain)(0,\layer)<Extensions of plainTeX to provide often-used utilities. Not thought for document preparation as LaTex is; you can use it as a standalone format or as extension to a given format. First version that is still available is 2.1 from 1992. Latest version 3.5 is from 2013-02-13.>{Eplain}
+	\todraw(plaintex)(eplain)
+}
+\clearpage
+
+%%% LATEX %%%
+\tograph*(\tostruct[\LaTeX]{\LaTeX\ – Lamport's \TeX\ format}){
+
+	\tonode(latex090)(-5.5,\layer)<First version still on web (historic archive, see refs) is 0.90, for use with TeX 0.95. No installation help found. Apparently one needs the files lplain.tex and latex.tex to create the format.>{\LaTeX\ 0.90}
+	
+	\tonode(latex091)(-2,\layer)<Version 0.91 for use with TeX 0.97 (C) 1983 by Leslie Lamport. Most changes to previous version are in the file lplain.tex.>{\LaTeX\ 0.91}
+	\todraw(latex090)(latex091)
+	
+	\tonode(latex092)(2,\layer)<First version with the @ as letter for internal names. Seeminlgy first version with a manual. For use with TeX Version 0.999999. (no joke, that's the version number given in the latex.tex file!) (C) 1983 by Leslie Lamport, conversion to 0.92 from 0.91 by Arthur Keller.>{\LaTeX\ 0.92}
+	\todraw(latex091)(latex092)
+
+	\tonode(latex09210)(6,\layer)<Adaptation of 0.92 for TeX version 1.0. (C) 1983 by Leslie Lamport, conversion to 0.92 from 0.91 by Arthur Keller.>{\LaTeX\ 0.92 - 1.0}
+	\todraw(latex092)(latex09210)
+	\steplayer[-2.3]
+
+	\tonode(latex2010)(-5,\layer)<Seemingly heavy changes compared to 0.92. Version for TeX 1.0. Release of 11 Dec 1983. There were never public versions 1.x >{\LaTeX\ 2.0 - 1.0}
+	\todraw(latex09210.south)(latex2010.north)
+	
+	\tonode(latex205)(0,\layer)<No sure information found so far.>{\LaTeX\ 2.05}
+	\todraw(latex2010)(latex205)
+	
+	\tonode(latex206a)(5,\layer)<Release of version 2.06a of the LaTeX macros. September 1984.>{\LaTeX\ 2.06a}
+	\todraw(latex205)(latex206a)
+	
+	\steplayer[-2.5]
+	\tonode[\vip](latex209)(0,\layer)<The first official version by Leslie Lamport, 1985.>{\LaTeX\ 2.09}
+	\todraw(latex206a)(latex209)
+	
+	\steplayer[-2]
+	\tonode(slitex)(2,\layer)<A variation of LaTeX2.09 to provide an easy way for producing presentations. In LaTeX2e absorbed as a documentclass (slides).>{SLI\TeX}
+	\todraw(latex209)(slitex)
+	
+	\tonode(amslatex11)(6,\layer)<A port of Spivak's AMS-TeX to LaTeX 2.09 by Frank Mittelbach and Rainer Schöpf, released 1990.>{\AMS\LaTeX\ 1.1}
+	\todraw(latex209)(amslatex11)
+	
+	\steplayer[-1.7]
+	\tonode[\vip](latex2ε)(0,\layer)<June 1994, New release of LaTeX to avoid incompatible dialects of LaTeX 2.09. Introduced by the LaTeX3-Team. This is the latest stable version of LaTeX at the moment. Support for pdfTeX, XeTeX and LuaTeX is given, where small changes allow for the special abilities of the engines. Most adaption to the engines is done on package level (fonts, encodings etc.) or with additional files during format creation.>{\LaTeX\,2\raisebox{-.5ex}ε}
+	\todraw*(latex209)(latex2ε)
+	\todraw[dashed](slitex)(latex2ε)
+	\todraw[dashed](amslatex11)(latex2ε)
+
+	\tonode[\experimental](lambda)(-7.5,\layer)<A LaTeX based format for the omega engine.>{$\Lambda$}
+	\todraw(latex209)(lambda)
+	\steplayer[-1.5]
+
+	\tonode[\experimental](lamed)(-7.5,\layer)<A LaTeX based format for the aleph engine.>{Lamed}
+	\todraw(lambda)(lamed)
+
+	\steplayer[+1]
+	\tonode(amslatex12)(6,\layer)<A port of version 1.1 to LaTeX 2e by Downes and Jones.>{\AMS\LaTeX 1.2}
+	\tonode[\experimental](alatex)(-4.2,\layer)<A slightly changed LaTeX format by Matt Swift to offer modularity at format level. Acts as normal LaTeX if not explicitly told to do different. “A” for “alternate”, “abstract” or the indefinite article.>{A\LaTeX}
+	\todraw(amslatex11)(amslatex12)
+	\todraw(latex2ε)(amslatex12)
+	\todraw(latex2ε)(alatex)
+	\steplayer[-1.5]
+
+	\tonode(amslatex21)(8,\layer)<Latest AMSLaTeX version is 2.2 from 2001. Intermediate versions are not shown.>{\AMS\LaTeX 2.2}
+	\todraw(amslatex12)(amslatex21)
+	\steplayer[-1.5]
+
+	\tonode(platex)(-4.6,\layer)<A LaTeX based format for the pTeX engine.>{p\LaTeX}
+	\todraw(latex2ε)(platex)
+	
+	\steplayer[-1.5]
+
+	\tonode[\package](expl3)(1.5,\layer)<The expl3 bundle is the ground stock of LaTeX3. It is a bundle of packages that can be used with LaTeX2e, but are planned to become the kernel of LaTeX3. They provide the low-levle structures, programming structures and everything needed for package authors.>{expl3}
+
+	\tonode[\package](xpackages)(4.5,\layer)<The xpackages are a bundle of packages intended to become the ground stock of packages for the high-levle and user-level interface in LaTeX3. Based on expl3, they can be used with LaTeX2e already.>{xpackages}
+	\steplayer[-1.5]
+
+	\tonode[\planned](latex2x)(0,\layer)<A (somewhat) planned experimental step towards LaTeX3. LaTeX2x is a normal LaTeX2e, but with expl3 and xpackages compiled in the format. It is *not* intended for everyday use but only for experimenting with LaTeX3. Might be concentrated on LuaTeX, but XeTeX and pdfTeX variants will be available.>{\LaTeX2x}
+	\todraw(latex2x)(latex2ε)
+	\todraw(latex2x)(expl3)
+	\todraw(latex2x)(xpackages)
+	\steplayer[-2]
+
+	\tonode[\planned](latex22)(0,\layer)<Inofficial suggestion by Philipp Stephani on the LuaLaTeX list. LaTex2.2 should still be a full LaTeX2e, but with the expl3 bundle in the format. In fact, this is what LaTeX2x is planned to be.>{\LaTeX2.2}
+	\todraw(latex2x)(latex22)
+	\steplayer[-2]
+
+	\tonode[\planned](latex25)(0,\layer)<Will Robertson suggested in an interview (see refs) an interim unstable version on the way to LaTeX3 with version number 2.5 that should bring package authors towards using LaTeX3 syntax. This version should be backwards *incompatible* to LaTeX2e. (This version does not exist in any official plannings, but I liked the idea, so it is mentioned here ;) )>{\LaTeX2.5}
+	\todraw(latex22)(latex25)
+	
+	\steplayer[-3]
+	\tonode[\planned](latex3)(0,\layer)<The long-time successor of LaTeX2e. It is planned to implement a very elaborate low-level programming language. (Almost done by now.) The expl3-package provides an implementation that can be used on top of LaTeX2e. Several LaTeX packages already make heavy use of expl3. (As does this document.) LaTeX3 makes use of eTeX primitives and therefore needs this engine or successors. Special adaptions of LuaTeX features are starting to evolve.>{\LaTeX{}3}
+	\todraw(latex25)(latex3)
+
+	\steplayer[-3]
+	\tonode[\experimental](timeslatex)(-5,\layer)<Some LaTeX 2.09 derivate, need more information.>{times\LaTeX}
+}
+
+%%% CONTEXT %%%
+\clearpage
+\tograph*(\tostruct[\ConTeXt]{\ConTeXt: con\,tex\,t – text with tex}){
+	\tonode(inrstex)(-3,\layer)<“Extended Plain TeX for use with MLTeX.”>{INRS\TeX}
+	\steplayer[-2]
+
+	\tonode(pragmatex)(0,\layer)<Former name of ConTeXt. Based, besides others, on INRSTeX.>{pragmatex}
+	\todraw(inrstex)(pragmatex)
+	\steplayer[-2]
+
+	\tonode(MKi)(0,\layer)<Original ConTeXt with Dutch low level interface. “MK” stands for “Mark”, meaning “version”.>{\ConTeXt\ MKI}
+	\todraw(MKi)(pragmatex)
+	\steplayer[-2]
+
+	\tonode[\vip](MKii)(0,\layer)<ConTeXt with English low level interface. Works with any TeX-engine, as LaTeX does; TeX, e-TeX, pdfTeX, Aleph, XeTeX, ... For the end user, no difference to MKI.>{\ConTeXt\ MKII}
+	\todraw(MKi)(MKii)
+	\steplayer[-2]
+	
+	\tonode[\vip](MKiv)(0,\layer)<Specially designed for LuaTeX. MKIII was “skipped” for “practical reasons”, as Hans Hagens says, and “MKii, MKvi, MKvi all have 4 chars (which is why I skipped the v, but who knows if MKv will show up some day”)>{\ConTeXt\ MKIV}
+	\todraw*(MKii)(MKiv)
+	\steplayer[-2]
+
+	\tonode[\experimental](MKvi)(0,\layer)<Latest experimental version of ConTeXt.>{\ConTeXt\ MKVI}
+	\todraw(MKiv)(MKvi)
+}
+
+%% go on with the rare formats
+\clearpage
+%%%% formats %%%%
+\tostruct[Other Formats]{Other Formats}
+%%% AMSTeX %%%
+\tograph(\tostruct(1)[\texorpdfstring{
+AMS}{AMS}-\TeX]{AMS-\TeX}){
+	\tonode(amstex20)(0,\layer)<A macro package provided by the American Mathematical Society. Version 2.0 from 1990. No information found for versions pre-2.0.>{\AMS-\TeX  2.0}
+	\steplayer[-1]
+
+	\tonode(lamstex)(5,\layer)<“LamSTeX{} is an extension of AmSTeX, and thus almost completely compatible with plain TeX”, as the documentation says. See references for details.>{\LamSTeX  2.0}
+	\todraw(amstex20)(lamstex)
+	\steplayer[-1]
+
+	\tonode(amstex21)(0,\layer)<Version 2.1 released 1991.>{\AMS-\TeX  2.1}
+
+	\todraw(amstex20)(amstex21)
+	\steplayer[-2]
+
+	\tonode(amstex22)(0,\layer)< Latest version is 2.2 from 2001.>{\AMS-\TeX 2.2}
+	\todraw(amstex21)(amstex22)
+}
+
+%%% BLUe' Format %%%
+\tograph(\tostruct(1)[BLUe]{BLUe}){
+	\tonode(blue)(0,0)<A macro package based on plainTeX. Shareware, last version on CTAN from June 1996.>{BLUe}
+}
+
+%%% HP TeX %%%
+\tograph(\tostruct(1)[HP\TeX]{HP\TeX}){
+	\tonode(hptex)(0,0)<A format specially written for HP hardware, written 1984.>{HP \TeX}
+}
+
+%%% JadeTeX %%%
+\tograph(\tostruct(1)[Jade\TeX]{Jade\TeX}){
+	\tonode(jadetex)(0,0)<A macro package for processing Jade/OpenJade output, based on LaTeX.>{Jade\TeX}
+}
+
+%%% Lollipop %%%
+\tograph(\tostruct(1)[Lollipop]{Lollipop}){
+	\tonode(lollipop09)(0,0)<First release, October 1992.>{Lollipop 0.9}
+	\steplayer[-2]
+	\tonode(lollipop095)(0,\layer)<Latest, unofficial, release, January 1993.>{Lollipop 0.95}
+	\todraw(lollipop09)(lollipop095)
+	\steplayer[-2]
+	\tonode(lollipop098)(0,\layer)<Resurrection of this old format, now by Victor Eijkhout and Vafa Khalighi. Put to CTAN on 04.09.2014.>{Lollipop 0.98}
+	\todraw(lollipop098)(lollipop095)
+}
+
+%%% MacroTeX %%%
+\tograph(\tostruct(1)[Macro\TeX]{Macro\TeX}){
+	\tonode(macrotex)(0,0)<Information needed.>{Macro\TeX}
+}
+
+%%% MEX %%%
+\tograph(\tostruct(1)[MeX]{MeX}){
+	\tonode(mex)(0,0)<Polish-based format based on PlainTeX. Different versions exist called mex, pdfmex, htmex and utf8mex. All are based on pdfTeX. Contained in TeX Live.>{MeX}
+}
+
+%%% PHYS(E) %%%
+\tograph(\tostruct(1)[PHYS(E)]{PHYS(E)}){
+	\tonode(physe)(0,0)<Documentation says “The TeX formats PHYSE and PHYS are extensions of the PLAIN format
+and should simplify the writing of physics papers.” Latest version I found is from 1986. PHYS is for german, PHYSE for english usage.>{PHYS(E)}
+}
+
+%%% PHYZZX %%%
+\tograph(\tostruct(1)[PHYZZX]{PHYZZX}){
+	\tonode(phyzzx)(0,0)<Documentation says “PHYZZX is a macropackage which is designed to make typing papers destined for Physical Review or Nuclear Physics as simple as possible.” Created 1984, latest version I found is from 1988.>{PHYZZX}
+}
+
+%%% StarTeX %%%
+\tograph(\tostruct(1)[Star\TeX]{Star\TeX\ – Starter's \TeX}){
+	\tonode(startex)(0,0)<A format designed to help students with short documents. Using html-like notation, <command> instead of \ command>{Star\TeX}
+}
+
+%%% Texinfo %%%
+\tograph(\tostruct(1)[Texinfo]{Texinfo}[\normalimportant]){
+	\tonode(texinfo)(0,0)<The official documentation format of the GNU project. Uses TeX to provide documentations.>{Texinfo}
+}
+
+%%% TeXsis %%%
+\tograph(\tostruct(1)[TeXsis]{\TeX sis}[\normalimportant]){
+	\tonode(texsis)(0,0)<A plainTeX-based format for physicists. Latest version is 2.18 from 21 April 2001.>{\TeX sis}
+}
+
+%%% XMLTeX %%%
+\tograph(\tostruct(1)[XML\TeX]{XML\TeX}){
+  \tonode(xmltex)(0,\layer)<A format (based on machines like pdfTeX, XeTeX and maybe LuaTeX) that converts XML input to DVI or PDF output. Can also be based on other formats when parsed at format-building time.>{XML\TeX}
+}
+
+%%% YTeX %%%
+\tograph(\tostruct(1)[Y\TeX]{Y\TeX}[\experimental]){
+	\tonode(ytex)(0,0)<A macro package developed at MIT. Pronounced “why-TeX”, “upsilon-TeX” or “oops-TeX”. Tries to offer an easy structure for novices as well as a powerfull macro libraries for experienced users.>{Y\TeX}
+}
+
+%%% ZzTeX %%%
+\tograph(\tostruct(1)[Zz\TeX]{Zz\TeX}[\normalimportant]){
+	\tonode(zztex)(0,0)<“a macro package for producing books, jour-
+nals, and technical documentation”, named “after a rock group from Texas.” The author Paul C. Anagnostopoulos found LaTeX too unflexible. Appeared around 1992.
+>{Zz\TeX}
+}
+
+\clearpage
+
+\tostruct[Distributions]{Distributions}[\distro]
+\parbox{\textwidth}{\normalsize
+This section will feature the main distributions of \TeX\ and related programs. Of course, not every Linux Distribution's \TeX\ package can be listed here, but only official upstream distributions.
+}
+
+\ExplSyntaxOn
+\fp_gset:Nn\layerdist_num{-1.5}
+\ExplSyntaxOff
+
+\tograph(\tostruct(1)[\TeX\ Live]{\TeX\ Live}){
+	\tonode(web2c)(0,\layer)<An Implementation and Distribution of TeX which translates the original WEB sources to a C code.>{Web2C}
+	\steplayer
+%% PCTeX? (Breitenloher) [need more information]
+%% True TeX (MS DOS) [need more information]
+
+	\tonode[\histdistro](emtex)(3,\layer)<Eberhard Mattes' TeX Distribution for MS-DOS and OS2.>{em\TeX} %% d-latex, latex … (trennmuster)
+	\todraw.(web2c)(emtex)
+	\steplayer
+
+	\tonode[\histdistro](tetex)(3,\layer)<Maintained by Thomas Esser (hence the te in teTeX) from 1994 to May 2006.>{te\TeX}
+	\tonode[\histdistro](4alltexcd)(-3,\layer)<The (vague) past ... (?)>{4All\TeX CD }
+	\todraw.(web2c)(tetex)
+	\todraw.(web2c)(4alltexcd)
+	\steplayer[-1.5]
+
+	\tonode(fptex)(3,\layer)<A free TeX distribution for Win32 based on teTeX, by Fabrice Popineau. Still active, provides up-to-date binaries for Windows. Special support for Japanese Typesetting.>{fp\TeX}
+	\todraw(fptex)(tetex)
+
+	\tonode(gnutex)(6.5,\layer)<A temporary attempt to distribute TeX and related programs according to the GPL. Not a change of teTeX, but a new approach inspired by teTeX. As most (La)TeX packages are not GPL compatible, it was quite “crippled” and never made it into the real world.>{GNU\TeX\ 0.x}
+	\todraw(gnutex)(tetex)
+
+	\steplayer[-1.5]
+
+	\tonode[\histdistro](xemtex)(4.5,\layer)<A TeX distribution for Windows, based on fpTeX with XEmacs/AucTeX as IDE for (La)TeX. XemTeX was sponsored by the French government.>{XEm\TeX}
+	\todraw(xemtex)(fptex)
+
+	\steplayer[-0.5]
+
+	\tonode[\histdistro](tlpre2008)(0,\layer)<First version 1996 (UNIX only, later also Windows binaries), and then a long story of ongoing work – see the documentation for a detailed history. Some of the binaries (still) identify themselfes as *TeXk. The “k” stands for “Karl” meaning that they were compiled with kpathsea.>{\TeX\ Live 1996\,–\,2007}
+	\todraw(tetex)(tlpre2008)
+	\todraw(4alltexcd)(tlpre2008)
+	\todraw.(web2c)(tlpre2008)
+	\steplayer
+
+	\tonode(tl2008)(0,\layer)<A new package manager and network installer are available. So installation via the net is possible as well as package updates. Missing packages are not installed on-the-fly. The last one of the modern machines is added, LuaTeX>{\TeX\ Live 2008}
+	\todraw.(tl2008)(tlpre2008)
+
+	\tonode[\histdistro](gwtex)(5,\layer)<A (re)distribution for Mac OS based on TeX Live (earlier on teTeX) by Gerben Wierda. Provides TeX-related packages for the i-Installer. Unsupported from 2007 on.>{gw\TeX}
+	\todraw(tlpre2008)(gwtex)
+
+	\steplayer
+
+	\tonode(tl2009)(0,\layer)<Dropped Omega and Lambda. Aleph and Lamed are kept.>{\TeX\ Live 2009}
+	\todraw(tl2009)(tl2008)
+	\steplayer
+
+	\tonode(tl2010)(0,\layer)<Release of 2010.>{\TeX\ Live 2010}
+	\todraw(tl2010)(tl2009)
+
+
+	\tonode(tlcontrib)(-5,\layer)<An extension to TeX Live that contains packages that TeX Live cannot hold due to not-free lizence, binary update, not on CTAN, or intermediate release. Useable via the TeX Live manager. Latest version can handle several TL sources.>{TLContrib}
+	\todraw.(tl2010)(tlcontrib)
+	\steplayer
+
+	\tonode(tl2011)(0,\layer)<2011 release of TeX Live.>{\TeX~Live 2011}
+	\todraw(tl2011)(tl2010)
+	\todraw.(tl2011)(tlcontrib)
+
+	\steplayer
+
+	\tonode(tl2012)(0,\layer)<Release of TeX Live for 2012.>{\TeX~Live 2012}
+	\todraw(tl2012)(tl2011)
+	\todraw.(tl2012)(tlcontrib)
+
+	\tonode(texportal)(-4,\layer)<A TeX Live port for Android OS. Based on binaries from the TeXAndroid project; not all binaries are available at the moment.>{\TeX Portal}
+	\todraw(tl2012)(texportal)
+
+\steplayer
+
+	\tonode(tl20132016)(0,\layer)<Ongoing yearly releases for 2013, 2014, 2015, 2016, without dramatic changes.>{\TeX~Live 2013\,–\,2016}
+	\todraw(tl2012)(tl20132016)
+
+	\tonode(mactex)(5,\layer)<Once based on teTeX, MacTeX is now TeX Live-based. For Mac OS X only, it provides a native installer, the TeXShop editor and Mac-specific tools.>{Mac\TeX}
+	\todraw(tl20132016)(mactex)
+
+	\tonode(basictex)(8,\layer)<“BasicTeX is a subset of TeX Live of size 100 megabytes instead of 2 gigabytes.”>{Basic\TeX}
+	\todraw(mactex)(basictex)
+}
+
+\tograph(\tostruct(1)[MiK\TeX]{MiK\TeX}){
+	\tonode(mt)(0,\layer)<MiKTeX is a TeX distribution originally for Windows only. Copyright by Christian Schenk goes back to 2001. Regarding the name, the author stated “mik used to be my login name. It is an acronym for Micro-kid. Hence the capital K in MiKTeX.”>{MiK\TeX}
+	\steplayer
+
+	\tonode(mt26)(0,\layer)<Windows only. featuring  pdftex 1.40.4, mpost 1.000>{MiK\TeX\ 2.6}
+	\todraw(mt)(mt26)
+	\steplayer
+
+	\tonode(mt27)(0,\layer)<Windows only. featuring  XeTeX 0.999.6, pdftex 1.40.9, mpost 1.005>{MiK\TeX\ 2.7}
+	\todraw(mt27)(mt26)
+	\steplayer
+
+	\tonode(mt28)(0,\layer)<Windows only. featuring  XeTeX 0.9995.1, pdftex 1.40.10, mpost 1.005>{MiK\TeX\ 2.8}
+	\todraw(mt28)(mt27)
+	\steplayer
+
+	\tonode(mt29)(0,\layer)<Windows only (stable version). Beta version for GNU/Linux available. Featuring XeTeX 0.9997.4, pdftex 1.40.11, LuaTeX 0.60.2, mpost 1.211. Offers both LaTeX and ConTeXt (MK IV) formats.>{MiK\TeX\ 2.9}
+	\todraw(mt29)(mt28)
+	\steplayer
+	
+	\tonode(protext)(3,\layer)<A distribution based on MiKTeX (since 2004) with a comfortable install procedure, Editor etc. Provides an easy installation for a full (La)TeX environment.>{ProTeXt}
+	\todraw(protext)(mt29)
+
+\steplayer
+
+	\tonode[\experimental](mt30)(0,\layer)<Planned version, no fixed release date yet.>{MiK\TeX\ 3.0}
+	\todraw(mt30)(mt29)
+}
+
+\tograph(\tostruct(1)[\TeX\ collection]{\TeX\ collection}){
+	\tonode(texcollection)(0,\layer)<A meta-distribution. Provided on DVD by the TUG, this distribution ships with TeX Live, MacTeX and ProTeX as well as with a full CTAN snapshot.>{\TeX\ Collection}
+
+}
+
+\tograph(\tostruct(1)[standalone Con\TeX t]{standalone Con\TeX t}){
+	\tonode(minimals)(-3,\layer)<standalone ConTeXt provides a distribution of latest (beta and stable) ConTeXt versions with binaries and formats. Efficient upgrading is possible as well as parallel use with another TeX distribution. Was renamed from “minimals” into standalone in 2011.>{Standalone}
+}
+
+\tograph(\tostruct(1)[Decus \TeX]{Decus \TeX}){
+	\tonode[\histdistro](decustex)(0,\layer)<A TeX/LaTeX distribution for VMS. Started at least in 1988.>{Decus \TeX}
+}
+
+\tograph(\tostruct(1)[Ker\TeX]{Ker\TeX}){
+	\tonode(kertex)(0,\layer)<A lightweight TeX distribution including all of Don Knuth's programs and fonts, dvips, MetaPost, bibtex and more. It is pure C89 and under a BSD like license. Latest version 0.9999.8.2.>{Ker\TeX}
+}
+
+\tograph(\tostruct(1)[W32\TeX]{W32\TeX}){
+	\tonode(w32tex)(0,\layer)<A distributon to provide binaries for MS Windows, with special support for Japanese. First version (up to the changelog) 2009/08/02. Still up-to-date.>{W32\TeX}
+}
+
+\tograph(\tostruct(1)[OzTeX]{OzTeX}){
+	\tonode[\histdistro](oztex)(0,\layer)<A commercial distribution for Mac OS. No longer supported.>{Oz\TeX}
+}
+
+\tograph(\tostruct(1)[For Amiga]{For Amiga}){
+	\tonode[\histdistro](amigatex)(-2,\layer)<By Thomas Rockicki and Radical Eye Software. Commercial distribution for Amiga.>{Amiga-TeX}
+	\tonode[\histdistro](pastex)(2,\layer)<A free distribution for Amiga. Distributed as 5 floppy disks (TeX) plus 2 floppy disks (Metafont). Available from the Aminet.>{pasTeX}
+}
+
+\tograph(\tostruct(1)[N\TeX]{N\TeX}){
+	\tonode[\histdistro](ntex)(0,\layer)<A distribution for Linux and other Unix systems. Latest version is 2.3.2, released at 23-Aug-1998. No longer developed.>{N\TeX}
+}
+
+\newpage
+%\ExplSyntaxOn
+%  \dim_set:Nn\pdfpagewidth{13cm}       %% make a smaller paper so the header won’t feel so alone on the big, cold paper
+%  \dim_set:Nn\pdfpageheight{6cm}
+%\newgeometry{left=1cm,top=1cm,width=11cm}
+\ExplSyntaxOff
+\newpage
+\tostruct[Pandora's Box]{Pandora's Box}
+\parbox{\textwidth}{\normalsize
+The following pages will be a hodge-podge of many things that are related to \TeX\ and used in the process of generating documents in different file formats, i.\,e. conversion tools, bibliography tools etc. Feel free to contribute, I'll choose case-by-case if I'll add something or won't include it. Text editors or viewers will \emph{not} be included!
+}
+  \restoregeometry
+\ExplSyntaxOn
+  \dim_set:Nn\pdfpagewidth{21cm}     %% back to a4
+  \dim_set:Nn\pdfpageheight{29.7cm}
+\ExplSyntaxOff
+
+%%% META* %%%
+\tograph(\tostruct(1)[META*]{META*}[\program]){
+	\tonode(metafont)(0,\layer)<The program for creating the fonts originally used by TeX.>{METAFONT}
+	\steplayer
+
+	\tonode(metafog)(4,\layer)<A program to convert metafont shapes to Type1 contours. Uses mathematically correct transformations instead of autotracing.>{Metafog}
+	\todraw(metafog)(metafont)
+
+	\tonode(metatype1)(-4,\layer)<A program to produce Type1 fonts from METAFONT source code.>{MetaType1}
+	\todraw(metatype1)(metafont)
+	\steplayer[-1]
+
+	\tonode(metapost)(0,\layer)<A graphic generating program written by John Hobby, inspired by METAFONT. MetaPost can produce PostScript graphics as well as SVG. Latest (experimental) version is 1.750 as of spring 2011.>{MetaPost}
+	\todraw(metapost)(metafont)
+	\steplayer[-1]
+
+	\tonode[\normalimportant](mptopdf)(-4,\layer)<Actually a pdfTeX-generated format, this program can be used to compile MetaPost source code directly into PDF output. Metafun is supported, too.>{mptopdf}
+	\todraw.(metapost)(mptopdf)
+
+	\tonode[\experimental](mflua)(3.5,\layer)<A (so far) experimental implementation of METAFONT with Lua embedded for better extraction of information from METAFONT. TeX Live 2016 ships version 2.7182818-0.5.>{MFLua}
+	\todraw(mflua)(metafont)
+	\steplayer[-0.5]
+
+	\tonode[\experimental](mfluajit)(6.5,\layer)<As MFLua, but based on LuaJIT.>{MFLuaJIT}
+	\todraw(mfluajit)(mflua)
+	\steplayer[-1.5]
+
+	\tonode[\normalimportant](metappeal)(4,\layer)<“Metappeal is an extension to Plain MetaPost, providing a lightweight framework 
+for consistent development in MetaPost.”>{Metappeal}
+	\todraw(metappeal)(metapost)
+	\steplayer[-1]
+
+	\tonode[\experimental](megapost)(0,\layer)<A planned extension of MetaPost “that will extend the range
+and precision of the internal data types.”>{MegaPost}
+	\todraw(metapost)(megapost)
+	\steplayer[-1]
+
+	\tonode[\normalimportant](metafun)(3,\layer)<“MetaFun is Hans Hagen's extension to (or module for) the MetaPost language.” A format for MetaPost that is useable with ConTeXt.>{MetaFun}
+	\todraw(metafun)(metapost)
+}
+
+%%% BIBTEX %%%
+\tograph(\tostruct(1)[Bib\TeX]{Bib\TeX}){
+	\tonode(bibtex)(0,0)<A helper program to sort a bibliography list.>{\BibTeX}
+	\steplayer[-1]
+
+	\tonode(nbibtex)(4,\layer)<“NbibTeX helps authors take better advantage of BibTeX data” says the homepage.>{NbibTeX}
+	\todraw(nbibtex)(bibtex)
+	\steplayer[-0.5]
+
+	\tonode(bibtex8)(0,\layer)<The documentation says: “An 8-bit Implementation of BibTeX 0.99 with a Very Large Capacity”>{\BibTeX8}
+	\todraw(bibtex8)(bibtex)
+
+	\tonode(mlbibtex)(-4,\layer)<Mentioned in the kpathsea-manual. No idea what it is. BibTeX for MLTeX?>{MlBibTeX}
+	\todraw(mlbibtex)(bibtex)
+	\steplayer
+	
+	\tonode(bibtexu)(0,\layer)<A Unicode-aware version of BibTeX>{\BibTeX u}
+	\todraw(bibtex8)(bibtexu)
+
+	\tonode(jbibtex)(-4,\layer)<jBibTeX was developed by Shoichi Matsui around 1988. It is included in the p\TeX\ distribution since 1995.>{j\BibTeX}
+	\todraw(bibtex8)(jbibtex)
+
+	\tonode(pybtex)(3,\layer)<A python implementation of BibTeX.>{Pybtex}
+	\todraw(pybtex)(bibtexu)
+	\steplayer
+
+	\tonode(pbibtex)(-4,\layer)<Kind of a successor of jBibTeX, pBibTeX is a Japanese-aware version of BibTeX supporting Japanese bibliography lists. Special support for Japanese (input/output) encodings and punctiation.>{p\BibTeX}
+	\todraw(jbibtex)(pbibtex)
+	\steplayer
+
+	\tonode(upbibtex)(-6,\layer)<Can be found in the development repositories, but no documentation found.>{up\BibTeX}
+	\todraw(pbibtex)(upbibtex)
+	\steplayer
+	
+	\tonode(biber)(0,\layer)<A perl implementation of a BibTeX-like program, designed as backend for BibLaTeX. “biber” is an animal handling bibliographies. (german for “beaver”, hence the beaver in the biber logo) TeX Live 2016 ships version 2.5.>{biber}
+	\todraw(bibtexu)(biber)
+	
+	\steplayer
+
+	\tonode[\package](biblatex)(3,\layer)<A LaTeX package as frontend for biber (can also be used with BibTeXu/8).>{Bib\LaTeX}
+	\todraw.(biber)(biblatex)
+	\todraw.(bibtexu)(biblatex)
+
+	\tonode[\package](librarian)(7,\layer)<A TeX file (useable with all formats) that typesets BibTeX-style bibliographies without the need of BibTeX. Therefore, it provides a format-independent typesetting of bibliographies.>{Librarian}
+}
+
+%%% dvipdfm and  similar ones %%%
+\tograph(\tostruct(1)[{(x)dvipdf(m)(x)}]{(x)dvipdf(m)(x)}){
+	\tonode(dvipdf)(0,0)<A shellscript from Ghostscript that uses dvips and gs for conversion.>{dvipdf}
+	\tonode(xdv2pdf)(4,0)<No idea so far what this is, but it is mentioned in the fontspec manual as possible driver for XeTeX.>{xdv2pdf}
+	\steplayer
+
+	\tonode(dvipdfm)(0,\layer)<Converts DVI files to PDF files. Does /not/ build on dvipdf, but is an independent implementation.>{dvipdfm}
+	\steplayer
+
+	\tonode(dvipdfmx)(0,\layer)<Extended version of dvipdfm. Support for multi-byte encodings and more pdfTeX features. Still active. Combined work of dvipdfm-jpn and dvipdfm-kor.>{dvipdfmx}
+	\todraw(dvipdfm)(dvipdfmx)
+	\steplayer
+
+	\tonode(xdvipdfmx)(0,\layer)<Converts XDVI files produced by XeTeX to PDF files. Normally always executed after a XeTeX run, so the user won't notice that an xdvi document was created in between.>{xdvipdfmx}
+	\todraw(dvipdfmx)(xdvipdfmx)
+}
+
+\tograph(\tostruct(1)[Fonts]{Fonts}[\fonttechnology]
+\parbox{\textwidth}{\large
+This section tries to cover the development of fonts – the most important thing for a typesetting system are font mechanisms, after all …\\[4ex]}
+){
+	\tonode(bitmap)(0,\layer)<Bitmap fonts contain the shape of the letters as a number of dots. If you zoom in, a bitmap letter will show pixels. Hence one needs a special version for every resolution.>{Bitmap fonts}
+	\steplayer[-3]
+
+	\tonode(type1)(-2,\layer)<Outline font. The shape of a letter is described as mathematical curves so the letter can be made arbitrarely large without getting pixeled.>{PostScript Type 1}
+	\tonode(truetype)(2,\layer)<Available on Windows and Mac OS. Outline font technology with quadratic B splines.>{TrueType}
+	\tonode(freetype)(6,\layer)<TrueType implementation for Unix.>{FreeType}
+	\todraw(freetype)(truetype)
+	\steplayer[-3]
+
+	\tonode(gx)(6,\layer)<“Graphis eXtension”. A font format only available for Mac OS.>{TrueType GX}
+	\todraw(truetype)(gx)
+	\steplayer[-3]
+
+	\tonode(opentype)(-2,\layer)<Extension of the TrueType font format, adding support for PostScript font data. Developed by Microsoft and Adobe.>{OpenType}
+	\todraw(truetype)(opentype)
+	\todraw(type1)(opentype)
+
+	\tonode(aat)(6,\layer)<“Apple Advanced Typography” fonts are succesors of the GX fonts. Only available for Mac OS, too.>{AAT}
+	\todraw(aat)(gx)
+}
+
+\newpage
+\tograph(\tostruct(1)[Work Flow]{Work Flow – Under Construction!}[\vip]
+{
+\flushleft
+\large This section tries to give a rough overview over the connection of different file types and how they are used by the different programs. We concentrate on the ”modern“ version of the programs, i.\,e.~Lua\TeX, biber etc. The graph so far shows:
+
+\begin{itemize}
+\item basic files used/produced in every Lua\LaTeX run,
+\item files used for complex documents with TOC, LOT and LOF,
+\item files and programs associated with bibliographies,
+\item files produced by the beamer class
+\end{itemize}
+
+A next version might show the files produced using Ti{\textit k}Z and externalizing etc.
+
+\global\let\necessary\vip
+\global\let\additional\experimental
+\global\let\automatic\normalimportant
+\global\let\program\program
+\global\let\temporary\package
+The preliminary nomenclature is:
+\begin{itemize}
+\item[{\let\nodecolor\necessary \tikz \node[coolnode]{necessary\strut};}] necessary input files
+\item[{\let\nodecolor\temporary \tikz \node[coolnode]{temporary\strut};}] temporary storage files: written in one run, read in the next one
+\item[{\let\nodecolor\additional \tikz \node[coolnode]{additional\strut};}] additional input files
+\item[{\let\nodecolor\automatic \tikz \node[coolnode]{automatic\strut};}] automatically produced files
+\item[{\let\nodecolor\program \tikz \node[coolnode]{program\strut};}] program that is used – editor, processing tool, viewer, …
+\end{itemize}
+
+%% yes, this is stupid, but for now that's how it is …:
+}
+){
+	\tonode[\necessary](texfile)(0,\layer)<The .tex file. A plain text file that typically contains all of the document information.>{.tex}
+
+	\steplayer
+	\tonode[\necessary](styfile)(-1,\layer)<Style files contain additional code with arbitrary functionality. There are at least zillions of .sty files.>{.sty}
+
+	\tonode[\necessary](clsfile)(-2.5,\layer)<Every LaTeX document has to load one class file, containing the basic layout.>{.cls}
+
+	\steplayer
+
+	\tonode[\necessary](bibfile)(-3,\layer)<The .bib file contains information about the biblography.>{.bib}
+
+	\tonode[\additional](auxfile)(2,\layer)<Every LaTeX run will produce an aux file that stores information for the next run.>{.aux}
+
+	\tonode[\additional](tocfile)(4,\layer)<If a table of contents is used, the necessary information are stored here.>{.toc}
+
+	\tonode[\additional](lotfile)(5.5,\layer)<If a list of figures is used, the necessary information are stored here.>{.lot}
+
+	\tonode[\additional](loffile)(7,\layer)<If a list of tables is used, the necessary information are stored here.>{.lof}
+
+	\steplayer
+
+	\tonode[\additional](snmfile)(5,\layer)<Help file used by beamer.>{.snm}
+
+	\tonode[\additional](navfile)(6.5,\layer)<Help file used by beamer.>{.nav}
+
+	\tonode[\additional](outfile)(8,\layer)<Help file used by beamer.>{.out}
+
+	\steplayer
+	\tonode[\additional](bibrunfile)(-3.5,\layer)<Temp file produced by the biblatex package to store information for bibliography settings.>{.run.xml}
+
+	\tonode[\additional](bcffile)(-5.5,\layer)<Temp file produced by the biblatex package to store information for bibliography settings.>{.bcf}
+
+	\tonode[\additional](bblfile)(-7,\layer)<File with the formatted and sorted bib entries.>{.bbl}
+
+	\steplayer[-2]
+
+	\tonode[\necessary](fmtfile)(4,\layer)<Pre-compiled format file (containing the code that maken LaTeX LaTeX and adaptions to LuaTeX) that is loaded in each run.>{lualatex.fmt}
+
+	\steplayer
+
+	\tonode[\program](lualatex)(3,\layer)<Call on the script/binary lualatex starts LuaTeX.>{lualatex}
+
+	\tonode[\program](luatex)(0,\layer)<The actual binary, using the format file.>{luatex}
+
+	\todraw[->](lualatex)(luatex)
+	\todraw[->](fmtfile)(luatex)
+	\todraw[->](texfile)(luatex)
+	\todraw[->](styfile)(luatex)
+	\todraw[->](clsfile)(luatex)
+	\todraw[->](bibfile)(luatex)
+	\todraw[<->](auxfile)(luatex)
+	\todraw[<->](tocfile)(luatex)
+	\todraw[<->](lotfile)(luatex)
+	\todraw[<->](loffile)(luatex)
+	\todraw[<->](navfile)(luatex)
+	\todraw[<->](snmfile)(luatex)
+	\todraw[<->](outfile)(luatex)
+	\todraw[<->](bibrunfile)(luatex)
+	\todraw[<->](bcffile)(luatex)
+	\todraw[->](bblfile)(luatex)
+
+
+
+	\tonode[\program](biber)(-3,\layer)<Processes the information in the .bib file accourding to settings in the .tex file that has been stored in the .aux file.>{biber}
+	\todraw[->](auxfile)(biber)
+	\todraw[->](bibfile)(biber)
+	\todraw[->](biber)(bblfile)
+	\todraw[<->](bibrunfile)(biber)
+
+	\steplayer[-3]
+
+	\tonode[\automatic](logfile)(3,\layer)<Log file with information about the recent tex run.>{.log}
+	\todraw[->](luatex)(logfile)
+
+	\tonode[\automatic](synctex)(6,\layer)<SyncTeX file to synchronize between input file and pdf. Used by graphical editors to help navigation.>{.synctex.gz}
+	\todraw[->](luatex)(synctex)
+
+	\tonode[\additional](blgfile)(-3,\layer)<Log file produced by the biber run.>{.blg}
+	\todraw[->](biber)(blgfile)
+
+	\steplayer
+
+	\tonode[\automatic](pdffile)(0,\layer)<The resulting, ready-compiled document is most often a PDF document. Production of DVI documents is also mostly possible, but seldom used.>{.pdf}
+	\todraw[->](luatex)(pdffile)
+
+}
+
+\clearpage
+\topart{Text Views}
+\label{sec:text}
+
+\large
+\addtokomafont{section}{\huge}
+\addtokomafont{subsection}{\LARGE}
+\addtokomafont{subsubsection}{\Large}
+
+\newgeometry{margin=1.5cm,twocolumn} %% a bit more space for text views, but not too much …
+\settextviews  %% these are generated automatically by the code above, see the -aux.tex document
+\addtocontents{toc}{\string\end{multicols}}
+\onecolumn
+
+\addtocontents{toc}{\string\vspace{.2cm}}
+\tostruct[Program Names]{Program Names}[\normalimportant]
+\flushleft  %% centering was still active until here
+The following list tries to explain what happens if a programm is called by a given name. E.\,g. calling the command \texttt{latex} on the command line will start the PDFε-\TeX\ engine\footnote{Actually it's only called PDF\TeX\ now, but it is always the version that includes ε-\TeX\ extensions. Here, always the full name is used for clearness.} in DVI mode with the format \LaTeX\,2\raisebox{-.5ex}ε. This will list the names used in the \emph{official} (upstream) \TeX~Live~2016 distribution, which should mostly (but not necessarily all) be the same in MiK\TeX.
+
+\begin{longtabu}{>{\ttfamily\large}lX}
+\rowcolor[gray]{0.8}\LARGE \bfseries program \strut & \LARGE  meaning\\
+\\[-2ex]
+\totablesec{engines / no preloaded format}
+initex & INI\TeX\ (same as \texttt{tex --ini})\\
+inimf & INIMF (same as \texttt{mf --ini}\\
+texlua & Lua\TeX\ in Lua mode\\
+texluac & Lua\TeX\ as byte compiler\\
+texluajit & LuaJIT\TeX\ in Lua mode\\
+texluac & LuaJIT\TeX\ as byte compiler\\
+
+\totablesec{plain formats}
+tex & \TeX\ with the plain format\\
+	
+aleph & Aleph with the plain format\\
+csplain & PDFε-\TeX\ with the csplain format and DVI output\\
+dviluatex & Lua\TeX\ with the plain format and DVI output\\
+eplain & PDFε-\TeX\ with the eplain format and DVI output\\
+eptex & ε-p\TeX\ with the plain format\\
+euptex & ε-up\TeX\ with the plain format\\
+etex & PDFε-\TeX\ with the plain format and DVI output\\
+luatex & Lua\TeX\ with the plain format and PDF output\\
+luajittex & LuaJIT\TeX\ with the plain format and PDF output\\
+mltex & PDFε-\TeX\ with ML\TeX\ extensions enabled, DVI output\\
+pdfcsplain & PDFε-\TeX\ with the csplain format and PDF output\\
+pdfetex & PDFε-\TeX\ with the plain format and PDF output\\
+pdftex & PDFε-\TeX\ with the plain format and PDF output\\
+ptex & p\TeX\ with the plain format\\
+xetex & \XeTeX\ with the plain format\\
+
+\totablesec{\LaTeXe}
+latex & PDFε-\TeX\ with the \LaTeXe\ format and DVI output\\
+dvilualatex & Lua\TeX\ with the \LaTeXe\ format and DVI output\\
+lamed & Aleph with the Lamed format\\
+lualatex & Lua\TeX\ with the \LaTeXe\ format and PDF output\\
+mllatex & PDFε-\TeX\ with ML\TeX\ extensions enabled, \LaTeXe\ format and DVI output\\
+pdflatex & PDFε-\TeX\ with the \LaTeXe\ format and PDF output\\
+
+platex & ε-p\TeX\ with the p\LaTeX\ format and DVI output\\
+uplatex & ε-up\TeX\ with the up\LaTeX\ format and DVI output\\
+xelatex & \XeTeX\ with the \LaTeXe\ format\\
+
+\totablesec{Con\TeX t}
+texexec & PDFε-\TeX\ with Con\TeX t MKII format and PDF output\\
+texexec --interface = de & dito, with german interface (only an example, more languages available)\\
+texexec --xtx & \XeTeX\ with Con\TeX t MKII format\\
+context & Lua\TeX\ with Con\TeX t MKIV format and PDF output\\
+context --interface = de & dito, with german interface (only an example)\\
+contextjit & Con\TeX t with LuaJIT\TeX \\
+
+\totablesec{other formats}
+amstex & PDFε-\TeX\ with the \AMS\TeX\ format and DVI output\\
+jadetex & PDFε-\TeX\ with the Jade\TeX\ format and DVI output\\
+lamed & Aleph with the Lamed (\LaTeXe) format and DVI output\\
+lollipop & PDFε-\TeX\ with the LOLLIPOP format and PDF output\\
+lualollipop & Lua\TeX\ with the LOLLIPOP format and PDF output (removed in TL2016)\\
+mex & PDFε-\TeX\ with the MeX format and DVI output\\
+pdfjadetex & PDFε-\TeX\ with the Jade\TeX\ format and PDF output\\
+pdfmex & PDFε-\TeX\ with the MeX format and PDF output\\
+pdfxmltex & PDFε-\TeX\ with the XML\TeX\ format\\%%  FIXME: what output? …
+texsis & PDFε-\TeX\ with the \TeX sis format and DVI output\\
+utf8mex & PDFε-\TeX\ with the UTF8MeX format and DVI output\\
+xelollipop & \XeTeX\ with the LOLLIPOP format and PDF output (removed in TL2016)\\
+xmltex & PDFε-\TeX\ with the XML\TeX\ format \\%%  FIXME: what output? …
+
+\totablesec{metafont}
+mf & the METAFONT program\\
+mflua & MFLua \\
+mfluajit & MFLuaJIT \\
+mp & the METAPOST program\\
+mptopdf & PDFε-\TeX\ with the mptopdf format and PDF output\\
+\end{longtabu}
+
+\normalsize
+\addtocontents{toc}{\string\vspace{.2cm}}
+\appendix
+\clearpage
+\topart{Appendix}
+
+%%
+%% This is kind-of-a bibliography.
+%%
+\tostruct{References}
+\label{sec:refs}
+\obeylines
+
+The references are in order of occurance in the above document. i.\,e. if you want information about Lua\TeX, it will be below e.\,g. ε\TeX. Everything that is not listet as ”book“ is freely available on the internet. (TUGboat articles will become freely accessible about one year after publication.)
+
+	\tobibsection{Books}
+	\tobib{D.E. Knuth, D.~Bibby, and I.~Makai. \textit{The \TeX book}\\ Addison-Wesley Reading, MA, 1986.}
+	\tobib{F.~Mittelbach, M.~Goossens, J.~Braams, D.~Carlisle, C.~Rowley, C.~Detig, and
+	  J.~Schrod. \textit{The \LaTeX\ companion.} \\ Addison-Wesley, 2004.}
+
+	\tobibsection{Overview Articles / Pages}
+	\tobib{Arthur Reutenauer. \textit{A Brief History of \TeX}. Talk at EuroBacho\TeX\ 2007.}%
+	  <http://www.gust.org.pl/bachotex/EuroBachoTeX2007/presentations/bhot.pdf/view>
+	\tobib{\textit{A Brief History of \LaTeX}}<http://www.xent.com/FoRK-archive/feb98/0307.html>
+	\tobib{Hans Hagen: \textit{16 years of Con\TeX t}. Article in TUGboat Vol. 32, Number 1, 2011.}
+	\tobib{Short Article About Omega And Aleph}<http://www.tex.ac.uk/cgi-bin/texfaq2html?label=omegaleph>
+	\tobib{Interviews with Will Robertson, Hans Hagen et.\,al.}<http://www.tug.org/interviews>
+	\tobib{The levels of \TeX\ – explains shortly the differences between engines, distributions, front ends etc.}<http://tug.org/levels.html>
+	\tobib{Things with “\TeX” in the name – a page with a similar aim as this document, and many interesting links}<http://www.tex.ac.uk/cgi-bin/texfaq2html?label=texthings>
+	
+	\tobibsection{Archives}
+	\tobib{CTAN – Comprehensive \TeX\ Archive Network:}<http://www.ctan.org>
+	\tobib{Historic Archive of \TeX\ Distributions:}<ftp://ftp.tug.org/historic>
+
+	\tobibsection{Engines}
+	\tobib{ANT project page}<http://ant.berlios.de>
+	\tobib{HeX project page}<http://luispedro.org/software/hex>
+	\tobib{Yasuki S AITO. Report on JTEX: A Japanese TEX. TUGboat 8 (1987), no. 2, 103\,–\,116.}%
+		<http://www.tug.org/TUGboat/Articles/tb08-2/tb18saito.pdf>
+	\tobib{p\TeX\ page}<http://ascii.asciimw.jp/pb/ptex/>
+	\tobib{p\TeX\ sources and documentation}<http://dante.ctan.org/tex-archive/help/Catalogue/entries/ptex.html>
+	\tobib{enc\TeX\ page}<http://www.olsak.net/enctex.html>
+	\tobib{ML\TeX\ source (CH file)}<http://www.tex.ac.uk/tex-archive/systems/generic/mltex/mltex.ch>
+	\tobib{pdf\TeX\ project page}<http://tug.org/applications/pdftex/>
+	\tobib{\NTS\ project page}<http://nts.tug.org>
+	\tobib{V\TeX\ – official homepage of micropress-inc}<http://www.micropress-inc.com/>	
+	\tobib{\XeTeX\ project page}<http://tug.org/XeTeX/>
+	\tobib{$\epsilon\chi$\TeX\ project page}<http://www.extex.org>	
+	\tobib{ee\TeX\ project page}<http://tex.aanhet.net/eetex>	
+	\tobib{Lua\TeX\ project page}<http://www.luatex.org>
+	\tobib{LuaJIT\TeX\ project page}<http://foundry.supelec.fr/gf/project/luajittex/>
+	\tobib{\textit{i\TeX—Document formatting in an ereader world.} TUGboat 32 (2011), no. 2, 158\,–\,163.}
+	\tobib{i\TeX\ announcement by Don Knuth at the TUG 2010}<http://river-valley.tv/tug-2010/an-earthshaking-announcement>
+	
+	\tobibsection{Formats}
+	\tobib{Eplain homepage}<http://www.tug.org/eplain/>
+	\tobib{EC plain on CTAN}<http://www.ctan.org/tex-archive/macros/ec-plain>
+	\tobib{\LaTeX\ project page}<http://www.latex-project.org>
+	\tobib{\AMS\LaTeX: Documentation on CTAN}<http://www.ctan.org/tex-archive/macros/amstex/doc/>
+	\tobib{\LaTeX2.2 – mail from Philipp Stephani on LuaLaTeX-dev list (last paragraph)}<http://tug.org/pipermail/lualatex-dev/2011-January/001033.html>
+	\tobib{\LaTeX3 project}<http://www.latex-project.org/latex3.html>
+	\tobib{\ConTeXt\ wiki}<http://wiki.contextgarden.net>
+	\tobib{A\LaTeX: Discussion in TUGboat Vol. 16 (1995), No. 3, p. 269ff.}<http://www.tug.org/TUGboat/Articles/tb16-3/tb48swif.pdf>
+	\tobib{BLUe on CTAN}<http://www.ctan.org/tex-archive/macros/blu>
+	\tobib{\AMS-\TeX\ on CTAN}<http://www.ctan.org/tex-archive/macros/amstex>
+	\tobib{INRS\TeX\ on CTAN}<http://www.ctan.org/tex-archive/macros/inrstex>
+	\tobib{L\AMS-\TeX: Announcement of publication in \TeX line13, ISSN 0961-3978}<http://www.tex.ac.uk/tex-archive/digests/texline/no13/lamstex>
+	\tobib{HP \TeX\ on CTAN}<http://www.ctan.org/tex-archive/macros/hptex>
+	\tobib{Jade\TeX\ project page}<http://jadetex.sourceforge.net>
+	\tobib{PHYSE and PHYS on CTAN}<http://ctan.org/tex-archive/macros/physe>
+	\tobib{PHYZZX on CTAN}<http://ctan.org/tex-archive/macros/phyzzx>
+	\tobib{Star\TeX\ on CTAN}<http://www.ctan.org/tex-archive/macros/startex>
+	\tobib{Texinfo project page}<http://www.gnu.org/software/texinfo>
+	\tobib{\TeX sis project page}<http://www.texsis.org>
+	\tobib{XML\TeX\ manual}<http://www.dcarlisle.demon.co.uk/xmltex/manual.html>
+	\tobib{Y\TeX\ on CTAN}<http://tug.ctan.org/tex-archive/macros/ytex>
+	\tobib{Zz\TeX: Article in TUGboat 13 (1992), No. 4}<http://www.tug.org/TUGboat/tb13-4/tb37anag.pdf>
+
+	\tobibsection{Distributions}
+	\tobib{fp\TeX: Announcment at TUG 1999}<http://www.tug.org/tug99/program/node39.html>
+	\tobib{\TeX\ Live development history}<http://tug.org/texlive/doc/texlive-en/texlive-en.html>
+	\tobib{gw\TeX\ project page}<http://ii2.sourceforge.net/tex-index.html>
+	\tobib{Brief History of gwTeX}<http://www.tug.org/twg/mactex/award/2007/gerben/aboutgwtex.html>
+	\tobib{Frank Mittelbach: \textit{Reflections on the history of the \LaTeX\ Project Public License (LPPL)—A software license for \LaTeX\ and more.} In: TUGboat Vol. 32 (2011) No.~1, p.~83~ff.}<http://www.tug.org/TUGboat/Contents/contents32-1.html>
+	\tobib{TLContrib project page}<http://tlcontrib.metatex.org/>
+	\tobib{Mac\TeX\ project page}<http://www.tug.org/mactex>
+	\tobib{\TeX Portal project page}<https://github.com/anhoavu/TeXPortal>
+	\tobib{\TeX Android project page}<https://github.com/anhoavu/TeXAndroid>
+	\tobib{MiKTeX project page}<http://miktex.org/>
+	\tobib{Christian Schenk about the name of MiKTeX (mailing list archive)}<http://sourceforge.net/mailarchive/message.php?msg_id=26826076>
+	\tobib{Pro\TeX t project page}<http://www.tug.org/protext>
+	\tobib{\TeX Collection page}<http://www.tug.org/texcollection>
+	\tobib{Con\TeX t minimals on Con\TeX t garden wiki}<http://wiki.contextgarden.net/ConTeXt_Minimals>
+	\tobib{Ker\TeX\ project page}<http://www.kergis.com/en/kertex.html>
+	\tobib{Win32 project page}<http://w32tex.org/>
+	\tobib{Oz\TeX\ project page}<http://www.trevorrow.com/oztex>
+	\tobib{\TeX\ on Amiga}<http://serpens.de/~zza/amigafaq/AmigaFAQg_49.html>
+	\tobib{N\TeX\ project page}<http://www.langbein.org/software/ntex>
+
+	\tobibsection{Fonts}
+	\tobib{Type1 Fonts specifications}<http://partners.adobe.com/public/developer/en/font/T1_SPEC.PDF>
+	\tobib{The FreeType project}<http://freetype.org/index2.html>
+	\tobib{OpenType specifications}<http://www.microsoft.com/typography/otspec/default.htm>
+
+	\tobibsection{Everything Else}
+	\tobib{MetaPost developments in TUGboat Vol. 29 (2008), No. 3, p. 380ff.}<http://www.tug.org/TUGboat/Contents/contents29-3.html>
+	\tobib{dvipdfmx project page}<http://project.ktug.or.kr/dvipdfmx/>
+
+\clearpage
+\section{List of Contributors}
+I have to thank some people for helping me to improve this document. Of course I thank all the people provinding the above-mentioned programs and references.
+
+\begin{itemize}
+\item Paul Isambert, for usefull discussions and testing.
+\item Heiko Oberdiek, for solving a bug that broke the document with Acrobat Reader.
+\item Peter Dyballa, for detailed historic information.
+\item Mojca Miklavec, for many information, especially on Con\TeX t-related stuff.
+\item Hironori Kitagawa, for information about Japanese-specific programs.
+
+\item Many people that stumbled upon my questions on different mailinglist, mostly texhax.
+\end{itemize}
+
+\section{To do list}
+\begin{itemize}
+\item (maybe) Add copyright and licence mark to each software.
+\end{itemize}
+\end{document}

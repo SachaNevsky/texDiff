@@ -1,0 +1,174 @@
+\NeedsTeXFormat{LaTeX2e}%  ecrit pour pour LaTeX-2
+%
+\ProvidesPackage{theatre}[2016/07/04 Extension theatre V0.1]%    par LeChi
+%
+% % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % %
+% % %                                   % % %
+% % % environnement de theatre          % % %
+% % %                                   % % %
+% % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % %
+\RequirePackage{enumitem}%    pour pouvoir personnaliser les listes
+\newdimen{\TheatreSerrerRepliques}%    
+\setlength{\TheatreSerrerRepliques}{-2.5ex}%
+\newdimen{\TheatreEntreNomEtReplique}%   
+\setlength{\TheatreEntreNomEtReplique}{0.5ex}%
+\newdimen{\TheatreEcarterRepliques}%  
+\setlength{\TheatreEcarterRepliques}{0ex}% 
+\def\TheatreTailleRoleCpte{small}%taille du compteur    
+\def\TheatreTailleRoleNom{small}% taille du nom du role au-dessus de la replique
+%
+\newcounter{TheatreCpteReplique}%compteur de replique  
+\setcounter{TheatreCpteReplique}{1}%  initialisation du compteur 
+%
+% % %----------------------------------------
+%
+% % % Pour eviter les lignes veuves et orphelines en fin et debut de page    
+%
+\widowpenalty=10000% empeche au maximum la coupure avant la derniere ligne  
+\clubpenalty=10000 % empeche au maximum la coupure apres la premiere ligne  
+\raggedbottom% empeche l'etirement des ressorts verticaux   
+%
+% % %----------------------------------------
+%
+% % % Garder les parametres par defauts lors d'insertion de l'environnement theater   
+%
+\newdimen\TheatreXparindent% indentation de la premiere ligne
+\newdimen\TheatreXparskip%
+\let\TheatreXparagraph\paragraph% garder le style de paragraphe   
+\renewcommand{\paragraph}[2][\theTheatreCpteReplique{}~~]{\TheatreXparagraph{#1#2}\hspace{0pt}}%   
+%
+% % %----------------------------------------
+%
+% % % L'environnement proprement dit 
+%
+\newenvironment{theatre}%   
+    {%    commandes avant l'environnement 
+   \setlength{\TheatreXparindent}{\parindent} \setlength{\parindent}{0pt}%  
+   \setlength{\TheatreXparskip}{\parskip} \setlength{\parskip}{0pt}% plus0.25ex minus0.25ex}%   
+    }% 
+    {%    commandes apres l'environnement 
+   \setlength{\parindent}{\TheatreXparindent}%
+   \setlength{\TheatreXparskip}{\parskip}%    
+    }% 
+%
+% % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % %
+% % %                                   % % %
+% % % Macros issues de l'environnement  % % %
+% % %                                   % % %
+% % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % %
+%
+\newcommand{\TheatreNomDuRole}[1]{\textsc{\textbf{#1}}}%
+%
+% % %----------------------------------------
+%
+\newcommand{\TheatreIniCpteReplique}[1]{\setcounter{TheatreCpteReplique}{#1}}%   
+%
+% % %----------------------------------------
+% % % creer un role   
+% parametres : nomcourt, nom a imprimer, petite taille, grande taille, couleur   
+\makeatletter%   
+\newcommand*{\TheatreCreerUnRole}[5]{%   
+% % %------------ 
+% Definitions des hauteurs des grandes et petites fontes
+    \@namedef{#1htpt}{#3}% 
+    \@namedef{#1htgd}{#4}% 
+% % %------------ 
+% Definition de la couleur du texte du role   
+    \@namedef{#1couleur}{#5}%   
+% % %------------ 
+% Definition du nom du role qui sera imprime  
+    \@namedef{#1nt}{#2}%   
+% % %------------ 
+% Definition de la commande d'insertion d'une replique en fonte de petite taille 
+\expandafter\newcommand\csname rpt#1\endcsname[2][\empty]{%   
+ \ifx##1\empty%  
+  \begin{sloppypar}%  
+   \paragraph{\TheatreNomDuRole{\@nameuse{#1nt}}}% 
+    {\newline\vspace{\TheatreEntreNomEtReplique}%  
+\begin{\@nameuse{#1htpt}}{\color{\@nameuse{#1couleur}}{##2}}\end{\@nameuse{#1htpt}}%   
+    }% 
+  \end{sloppypar}%    
+  \vspace{\TheatreSerrerRepliques}\vspace{\TheatreEcarterRepliques}%  
+  \stepcounter{TheatreCpteReplique}%    
+ \else%
+  \begin{sloppypar}%  
+  \paragraph{\TheatreNomDuRole{\@nameuse{#1nt}}}%  
+   {##1\newline\vspace{\TheatreEntreNomEtReplique}%
+    \begin{\@nameuse{#1htpt}}{\color{\@nameuse{#1couleur}}{##2}}\end{\@nameuse{#1htpt}}%    
+    }% 
+  \end{sloppypar}%    
+  \vspace{\TheatreSerrerRepliques}\vspace{\TheatreEcarterRepliques}%  
+  \stepcounter{TheatreCpteReplique}%    
+ \fi%  
+}%
+%
+% % %------------
+% Definition de la commande d'insertion d'une replique en fonte de grande taille 
+\expandafter\newcommand\csname rgd#1\endcsname[2][\empty]{%   
+ \ifx##1\empty%  
+  \begin{sloppypar}%  
+   \paragraph{\TheatreNomDuRole{\@nameuse{#1nt}}}% 
+    {\vspace{\TheatreEntreNomEtReplique}\\*%  
+\begin{\@nameuse{#1htgd}}{\color{\@nameuse{#1couleur}}{##2}}\end{\@nameuse{#1htgd}}%   
+    }% 
+  \end{sloppypar}%    
+  \vspace{\TheatreSerrerRepliques}\vspace{\TheatreEcarterRepliques}%  
+  \stepcounter{TheatreCpteReplique}%    
+ \else%
+  \begin{sloppypar}%  
+   \paragraph{\TheatreNomDuRole{\@nameuse{#1nt}}}% 
+    {##1\vspace{\TheatreEntreNomEtReplique}\\*%    
+\begin{\@nameuse{#1htgd}}{\color{\@nameuse{#1couleur}}{##2}}\end{\@nameuse{#1htgd}}%   
+    }% 
+  \end{sloppypar}%    
+  \vspace{\TheatreSerrerRepliques}\vspace{\TheatreEcarterRepliques}%  
+  \stepcounter{TheatreCpteReplique}%    
+ \fi%  
+}%
+}%
+\makeatother%    
+%
+% % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % %
+% % %                                   % % %
+% % % styles de description de          % % %
+% % % mouvenents des acteurs            % % %
+% % %                                   % % %
+% % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % %
+%
+\newcommand{\TheatreMvt}[2][]{%
+ \ifx##1\empty%  
+  \vspace{-1.5\TheatreSerrerRepliques}%
+  \begin{\TheatreMvtHt}\newline{\color{\TheatreMvtCouleur}\emph{#2}}\end{\TheatreMvtHt}%\vspace{-2ex}%  
+  \vspace{-0.5\TheatreSerrerRepliques}%
+ \else%
+  \vspace{-1.5\TheatreSerrerRepliques}%
+  \begin{\TheatreMvtHt}{\color{\TheatreMvtCouleur}\textsc{#1}\newline\emph{#2}}\end{\TheatreMvtHt}%\vspace{-2ex}% 
+  \vspace{-0.5\TheatreSerrerRepliques}%
+ \fi%  
+}%
+%
+% % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % %
+% % %                                   % % %
+% % % styles pour les commentaires      % % %
+% % %                                   % % %
+% % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % %
+%
+\newcommand{\TheatreComment}[2][]{% 
+ \ifx##1\empty%  
+  \vspace{-1.5\TheatreSerrerRepliques}%
+  \begin{\TheatreCommentHt}{\color{\TheatreCommentCouleur}\emph{#2}}\end{\TheatreCommentHt}%  
+  \vspace{-1.5\TheatreSerrerRepliques}%
+ \else%
+  \vspace{-1.5\TheatreSerrerRepliques}%
+  \begin{\TheatreCommentHt}{\color{\TheatreCommentCouleur}\textsc{#1}\newline\emph{#2}}\end{\TheatreCommentHt}%   
+  \vspace{-1.5\TheatreSerrerRepliques}%
+ \fi%  
+}%

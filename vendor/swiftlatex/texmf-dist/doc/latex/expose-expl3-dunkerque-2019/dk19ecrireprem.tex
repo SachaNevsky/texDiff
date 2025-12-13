@@ -1,0 +1,400 @@
+% Time-stamp: <2019-09-24 10:47:32 administrateur>
+% Création : 2019-08-24T14:29:55+0200
+\section{Rappel}
+\label{sec:rappel}
+
+Je commence par redonner le code de Donald E. \textsc{Knuth} mais je
+laisse le lecteur rechercher l'article précité de Denis \textsc{Roegel}
+pour y trouver toutes les explications nécessaires.
+
+\VerbatimInput[frame=lines, framesep=0.75\baselineskip, 
+label={\textsc{Knuth} \textemdash{} \emph{définitions}},
+labelposition=topline]{./codes/knuth-def.tex}
+
+L'appel |\primes{15}| permet d'obtenir
+\og \primes{15}\fg.
+
+\section{Version avec \Expliii}
+\label{sec:versionexpl3}
+
+
+Commençons par quelques remarques: comme le code est écrit dans un
+fichier \texttt{.tex} \TO et non dans un \gls{module} \TF je dois
+commencer par enclencher la syntaxe propre à \Expliii{}, ce que je
+fais dès la première ligne qui n'est pas un commentaire à usage
+interne \TO d'où le décalage de numéro \TF dans le premier fragment
+ci-dessous:
+%
+\Fragment{3}{5}{./codes/henel-def}
+
+\subsection{Une macro privée pour écrire les nombres}
+\label{sec:macro+ecrire+entier}
+
+Sur la ligne~\(5\), on lit la définition d'une macro \emph{interne}
+\CAD d'une macro qui n'a pas vocation à être appelée directement dans
+un document rédigé par l'utilisateur final. On y voit déjà quelques
+différences avec du code \LaTeXe{} que je vais préciser maintenant:
+\begin{itemize}
+\item les caractères |_| et~|:| sont promus au rang de lettres mais
+  par l'arobase~|@| cher aux programmeurs en~\LaTeXe{};
+  
+\item les espaces du code ne donneront pas d'espace dans le
+  document. Voilà qui soulage grandement le programmeur puisque
+  disparait la phase de recherche des \TdSTrad{blancs
+    inopportuns}{spurious blanks}.
+\end{itemize}
+
+Autre remarque, d'ordre typographique, la présentation que j'adopte
+dans ce document \TO pour des raisons de place\TF n'est pas la
+présentation recommandée par l'équipe du projet \LaTeX3. On devrait
+plutôt, en effet, adopter la présentation qui suit\index{présentation
+  du code}:
+%
+\begin{Verbatim}[frame=lines, framesep=0.75\baselineskip]
+\cs_new:Nn \__yh_ecrire_nombre:n 
+  { 
+    \(\np{\int_to_arabic:n{ #1 }}\) 
+  }
+\end{Verbatim}
+%
+dont on m'accordera, j'espère, qu'elle occupe plus d'espace.
+
+La commande que je définis s'appelle
+\Macro{__yh_ecrire_nombre:n}. Ce nom comporte plusieurs parties:
+\begin{enumerate}
+  
+\item les \og |__|\fg initiaux signalent que cette commande est
+  \emph{privée} \CAD que son usage est réservée au \gls{module} \TO
+  ici le simple fichier contenant le code\TF et n'est pas
+  nécessairement documentée. Le programmeur ne s'engage à rien sur
+  cette commande et un utilisateur du \gls{module} ne doit pas
+  s'attendre à ce que le comportement de cette commande reste stable
+  au fil des versions ni même à ce qu'elle soit toujours
+  disponible. Il ne s'agit ici que d'une \textsb{convention} car
+  \TeX{} est resté ce qu'il est et la gestion des espaces de noms
+  n'est pas implémentée\footnote{L'équipe des développeurs de
+    \Expliii{} nous dit, dans \autocite[p.~1]{expl3progr} que celà
+    pourrait se faire mais avec un surcoût prohibitif.};
+  
+\item \og |yh|\fg remplace ici ce qui est \TO dans un \gls{module}\TF
+  le nom du \gls{module} ou, à tout le moins, une chaine de caractères
+  réservée pour ce \gls{module};
+  
+\item vient le nom explicite de la commande: \og |ecrire_nombre|\fg
+  dans lequel le souligné~\og |_|\fg sert de séparateur de mots;
+  
+\item suivi du caractère~\og |:|\fg qui introduit la \gls{signature}
+  de la commande qui est, ici, \og |n|\fg. Cela nous indique que la
+  commande est une \gls{fonction} \TO c'est le vocabulaire défini par le
+  projet \LaTeX3\TF qui attend un seul argument fourni entre
+  accolades.
+\end{enumerate}
+
+La fonction \Macro{cs_new:Nn} utilise la \gls{signature} de la
+commande qui suit pour déterminer le nombre et le type des arguments
+que demande cette commande. Elle vérifie que la commande n'est pas
+déjà définie et produit une erreur si c'est le cas. De plus, elle
+définit la commande de manière globale \TO penser à \Macro{gdef} avec
+les pouvoirs de \Macro{newcommand}\TF.
+
+Elle possède plusieurs variantes dont, \PX{}, \Macro{cs_new:cn} qui
+attend comme premier argument le \emph{nom} de la commande plutôt que
+la commande elle-même. J'aurais obtenu le même résultat avec:
+%
+\begin{Verbatim}[frame=lines, framesep=0.75\baselineskip]
+\cs_new:cn { __yh_ecrire_nombre:n } { \(\np{\int_to_arabic:n{ #1 }}\) }
+\end{Verbatim}
+%
+code que je livre compacté.
+
+Le 2\ieme argument de \Macro{cs_new:Nn} doit être fourni entre
+accolades, c'est la définition de la commande. Ici j'utilise
+\Macro{np} de l'extension \Pkg{numprint} en mode mathématique en
+ligne \TO à l'aide du bien connu couple |\(| et~|\)| \TF  afin
+d'obtenir \og \(\np{3257}\)\fg au lieu de \og \(3257\)\fg.
+
+La \gls{fonction} \Macro{int_to_arabic:n} appartient au \gls{module}
+\Mdl{int}, partie du noyau de \LaTeX3, qui regroupe les commandes
+traitant les \glspl{entier}. Elle prend un argument dont elle fournit
+la représentation en chiffres \emph{arabes}.
+
+\subsection{Commande vérifiant qu'un entier impair est premier}
+\label{sec:macro+impair+premier}
+
+La commande \Macro{yh_impair_est_premier:nT} ne se déclare pas comme
+privée, dans un \gls{module} elle devrait avoir une interface et une
+sortie stable et être documentée car son nom ne commence pas par~|__|
+mais ça aurait pu être le cas.
+
+\(2\) étant le seul nombre pair premier, la question de la primarité
+ne se pose vraiment que pour les entiers impairs. Je pourrai donc
+n'essayer que des diviseurs impairs.
+
+La \gls{signature} de cette \gls{fonction}, \CAD |nT|, nous indique
+qu'elle attend deux arguments entre accolades, que le 1\ier sera un
+test qui renverra soit~\VRAI{} soit~\FAUX{} et que, \emph{dans le seul
+  cas} où le test est~\VRAI{}, le code contenu dans la 2\ieme paire
+d'accolades sera considéré.
+
+Regardons le code:
+%
+\Fragment{7}{25}{./codes/henel-def}
+
+Dans la partie d'initialisation \TO lignes~\(8\) à~\(10\)\TF, je crée
+deux \glspl{booleen} \TO \Macro{yh_continue_bool} et
+\Macro{yh_est_premier_bool}\TF à l'aide de la \gls{fonction}
+\Macro{bool_set_true:N} qui, dans le même temps, leur donne la
+valeur~\VRAI.
+
+Les \glspl{fonction} dont le nom contient |set| définissent les
+commandes sans vérification et, à moins que le nom contienne |gset|
+\TO |g| comme \og global\fg\TF, elles créent ces commandes
+\emph{localement} \CAD{} dans le groupe où a lieu la définition.
+
+Ici, contrairement à ma devise\footnote{À savoir: \og ceinture et
+  bretelles\fg.}, je coure le risque que ces deux \glspl{booleen}
+existent déjà, risque dont je pense qu'il est faible. On verra plus
+bas ce que j'aurais pu faire pour sécuriser la définition.
+
+Ces deux \glspl{booleen} ne sont pas des \glspl{fonction} mais des
+\glspl{variable} \CAD{} des macros \TO au sens de \TeX{}\TF dont le
+seul objet est de contenir une valeur et non pas de \emph{faire}
+quelque chose. C'est pour cela que leurs noms n'ont pas de
+\gls{signature} et ne se termine pas par~|:| qui signalerait une
+\gls{fonction} sans argument.
+
+Dernière étape de l'initialisation, avec \Macro{int_set:Nn} je donne
+à la variable entière \textbf{l}ocale temporaire \Macro{l_tmpa_int}
+la valeur~\(1\). Plusieurs \glspl{module} du noyau de \LaTeX3
+fournissent deux variables locales dont les noms comportent |tmpa|
+et~|tmpb| respectivement et deux variables \textbf{g}lobales \TO avec
+les noms équivalents\TF.
+
+Suivant la convention générale qui veut que le nom d'une
+\gls{variable} se termine par son type \TO c'est le cas des deux
+\glspl{booleen} que j'ai définis\TF, les variables temporaires
+fournies par un \gls{module} du noyau ont une finale qui donne le type
+comme \Macro{l_tmpa_int}. Cependant, contrairement à cette même
+convention de nommage, les variables temporaires n'ont pas, en tête de
+nom, le nom du module. On aura voulu éviter quelque chose comme
+\Macro*{int_l_tmpa_int} dont on peut penser que c'est légèrement
+redondant.
+
+En ligne~\(12\), je commence une boucle \TANTQUE avec
+\Macro{bool_do_while:Nn} qui attend un premier argument constitué d'un
+seul lexème \TO ici \Macro{yh_continue_bool} qui est~\VRAI à l'entrée
+dans la boucle\TF et un deuxième argument entre accolades: le corps de
+la boucle.
+
+Le corps de cette boucle commence avec l'accolade ouvrante du bout de
+la ligne~\(12\) et s'achève avec la 2\ieme accolade fermante de la
+ligne~\(24\).
+
+Je commence par ajouter~\(2\) à la valeur courante de
+\Macro{l_tmpa_int} à l'aide de la \gls{fonction} \Macro{int_add:Nn};
+\Macro{l_tmpa_int} est ici le candidat diviseur.
+
+\Macro{bool_if:nTF} est une forme de~\SIALORSSINON: on a bien les deux
+branches de l'alternative puisque la signature se termine en~|TF|. Il
+s'agit de savoir si le candidat est bien un diviseur de l'entier
+représenté par~|#2|. Pour ce faire, j'utilise la \gls{fonction}
+\Macro{int_compare_p:nNn} dont le 2\ieme argument est un opérateur de
+comparaison \CAD |>|, |<| ou~|=|. Le 3\ieme argument est
+simplement~\(0\). Le premier, lui, est le reste de la division de~|#2|
+par \Macro{l_tmpa_int} que l'on obtient à l'aide de la \gls{fonction}
+\Macro{int_mod:nn}.
+
+Si le reste est nul, on exécute le code du 2\ieme argument de
+\Macro{bool_if:nTF}. On positionne les deux \glspl{booleen} à~\FAUX{}
+puisque |#2|, divisible par \Macro{l_tmpa_int}, n'est pas premier et
+qu'il n'est donc pas nécessaire de reprendre la boucle.
+
+Si le reste n'est pas nul, je compare l'entier~|#2| et le carré du
+candidat \TO on peut utiliser les opérateurs \emph{classiques}
+d'opérations: |+|, |-|, |*|, |/| car, derrière ce code, c'est le
+mécanisme de la macro \Macro{numexpr} de \hologo{eTeX} qui est à
+l'œuvre\TF. Si le carré est plus grand, c'est que |#2|~est premier et
+qu'il est temps de s'arrêter d'où les valeurs données aux deux
+\glspl{booleen}. Le 3\ieme argument du \Macro{bool_if:nTF} s'arrête
+avec la 1\iere accolade fermante de la ligne~\(24\).
+
+À la sortie de la boucle, si |#2| n'est pas premier il n'y a rien à
+faire, s'il est premier, on le retourne. Cela est accompli à l'aide
+de la \gls{fonction} \Macro{bool_if:nT} qui réalise un saut
+conditionnel \SIALORS.
+
+\subsubsection{Compléments}
+\label{sec:complementbouclesaut}
+
+Outre les deux \glspl{fonction} \Macro{bool_if:nTF} et
+\Macro{bool_if:nT}, \Expliii fournit également la \gls{fonction}
+\Macro{bool_if:nF} qui réalise un saut conditionnel \SISINON. Dans le
+manuel, on verra que la signature se termine
+par~\underline{\texttt{\emph{TF}}} pour signaler la présence des trois
+signatures~|T|, |F| et~|TF|.
+
+Par ailleurs, \Expliii fournit essentiellement quatre boucles:
+\begin{itemize}
+\item \Macro{bool_do_while:Nn}, déjà rencontrée. C'est un \TANTQUE
+  dont le corps est exécuté puis le test effectué \CAD qu'en toutes
+  circonstances, le corps est exécuté au moins une fois;
+
+\item \Macro{bool_do_until:Nn}, qui inverse le sens du test. C'est un
+  \JUSQUA dont le corps est exécuté au moins une fois;\label{booldountilNn}
+  
+\item \Macro{bool_while_do:Nn}, \TANTQUE qui commence par le
+  test. Il se peut donc que le corps ne soit pas exécuté;
+  
+\item \Macro{bool_until_do:Nn}, \JUSQUA commençant par le
+  test.
+\end{itemize}
+
+Ces quatres \glspl{fonction} ont des variantes de signatures~|cn|
+et~|nn|. Avec~|cn|, le 1\ier argument est le nom d'un \gls{booleen};
+avec~|n|, c'est une expression booléenne comme \TO exemple tiré de
+\autocite{l3interfaces}\TF
+%
+\begin{Verbatim}[frame=lines, framesep=0.75\baselineskip]
+\int_compare_p:n { 1 = 1 } &&
+  (
+    \int_compare_p:n { 2 = 3 } ||
+    \int_compare_p:n { 4 <= 4 } ||
+    \str_if_eq_p:nn { abc } { def }
+  ) &&
+! \int_compare_p:n { 2 = 4 }
+\end{Verbatim}
+%
+qui permet de mesurer la complexité acceptée.
+
+\subsection{Écrire la liste des nombres premiers}
+\label{sec:ecrirelistepremiers}
+
+Avant d'aborder la commande destinée à l'utilisateur \TO dont je dirai
+que c'est une \emph{commande de document}, comme le suggère le nom de
+la macro qui permettra de la créer tout à l'heure. L'extension
+\Pkg{xparse}~\autocite{xparse} parle de \English{document-level
+    command}\TF, je présente deux nouvelles macros utilitaires \TO
+qui elles aussi auraient pu être \emph{privées}\TF à savoir
+\Macro{yh_ecrire_separateur:n} et \Macro{yh_ecrire_si_premier:n}.
+
+\subsubsection{Deux macros utilitaires}
+
+\Fragment{27}{32}{./codes/henel-def}
+
+On voit dans le code ci-dessus, en ligne~\(27\), une pré-déclaration
+de \Macro{yh_ecrire_separateur:n} qui permet juste de s'assurer que ce
+nom est bien disponible.
+
+La macro suivante \Macro{yh_ecrire_si_premier:n} fait exactement ce
+que son nom suggère. 
+
+Passons maintenant à la commande principale.
+
+\subsubsection{La commande de document}
+\label{sec:commandededocument}
+
+\Fragment{34}{59}{./codes/henel-def}
+
+Le code permettant de définir cette commande utilise l'extension
+\Pkg{xparse}~\autocite{xparse} et sa macro \Macro{NewDocumentCommand}.
+
+La syntaxe de déclaration d'argument change quelque peu! Le |m|,
+2\ieme argument de la macro, indique que l'on définit une commande
+requérant un unique argument obligatoire fourni entre accolades \TO
+|m| pour \English{mandatory} \CAD \og obligatoire\fg\TF.
+% Le 1\ier argument est attendu \textsb{entre accolades} \TO pas de
+% fantaisie à la \LaTeXe{}, du genre |\new|\0|com|\0|mand|
+% |\truc|\dots{}, ici\TF. FAUX!
+Le 1\ier argument est, comme on s'y attend, le nom de la commande
+créée.
+
+Le corps de la définition commence en ligne~\(35\) en ouvrant un
+groupe avec \Macro{group_begin:}  et finit en ligne~\(59\) en fermant
+le groupe avec \Macro{group_end:}.
+
+\paragraph{Initialisation}
+
+Dans le groupe, je crée en lignes~\(37\) et~\(38\) deux \glspl{entier}
+locaux \TO d'où le |l| initial\TF mais qui seront créés
+\emph{globalement}, car il n'y a pas moyen de faire autrement. Leur
+caractère local est donc conventionnel mais signale que l'on ne doit
+pas s'attendre à ce qu'ils aient une valeur pertinente à l'extérieur
+du groupe.
+
+Pour respecter ce caractère local, je donne à ces \glspl{entier}, une
+valeur avec \Macro{int_set:Nn} et pas avec \Macro{int_gset:Nn} qui, de
+fait, n'est qu'un alias de la première, à moins que ce soit
+l'inverse\footnote{Je ne suis pas allé vérifier dans le
+  source~\autocite{source3}.}.
+
+Afin que, en sortie de commande, ces deux \glspl{entier} ne soient
+plus accessibles \TO \textsl{Vous êtes priés de laisser ces lieux dans l'état
+où vous auriez aimé les trouver en entrant!} \TF, je les annihile en
+lignes~\(57\) et~\(58\) à l'aide de \Macro{cs_undefine:N}.
+
+Il est temps à présent de définir, localement, avec \Macro{cs_set:Nn},
+la fonction \Macro{yh_ecrire_separateur:n}, ce que je fais en
+ligne~\(41\) et~\(42\). Comme la définition est faite dans une
+définition, on doit, bien entendu, recourir au doublement des
+\emph{dièses} d'où le |##1| dans le code de cette fonction.
+
+Dans les 1\ier et 3\ieme arguments de \Macro{int_compare:nNnTF} on
+peut écrire \emph{naturellement} des opérations sur les entiers. Je ne
+m'en prive pas.
+
+Les tildes~|~| que l'on voit apparaitre en ligne~\(42\) permettent de
+coder un espace qui apparaitra dans le document final. Par contre, il
+faut utiliser autre chose pour coder un espace insécable \TO la
+solution est la macro \Macro{nobreakspace}\TF.
+
+Je suis obligé de regarder si le séparateur est le dernier car, en
+français\footnote{Encore que, si j'ai bien compris un article récent
+  paru dans la presse britanique, même à Oxford on a fini par
+  renoncer à la virgule devant le \emph{and} précédant le dernier mot
+  d'une énumération. \textsl{Tout fout l'camp, ma bonne dame!}} il ne
+doit pas y avoir de virgule devant le \emph{et}.
+
+Comme l'annonce la ligne~\(43\) je ne calcule pas les deux premiers
+nombres premiers \TO Donald \textsc{Knuth} ne le faisait pas\TF et je
+ne vérifie pas que l'utilisateur demande au moins trois nombres \TO
+même remarque\TF; pour faire comme dans les livres sérieux, je laisse
+cette amélioration comme exercice pour le lecteur.
+
+Je prépare maintenant la boucle en initialisant, localement, le
+\emph{candidat premier} à~\(3\). On a déjà vu \Macro{int_set:Nn}.
+Et je rentre dans la boucle en ligne~\(50\) pour en sortir en
+ligne~\(55\). La seule nouveauté de ce fragment de code est l'emploi
+de \Macro{int_incr:N} qui permet d'incrémenter localement le compteur
+\Macro{l_compteur_int}.
+
+J'ai déjà expliqué ci-dessus l'utilité des lignes~\(57\) à~\(59\).
+
+\subsection{Utilisation de la commande de document}
+\label{sec:utilisation}
+
+Il me reste à utiliser cette commande dans ce document:
+|\ListePremiers{15}| produit \og \ListePremiers{15}\fg.
+
+Au passage, on notera avec satisfaction que |\primes| et
+|\ListePremiers| sont d'accord quant aux quinze premiers nombres
+premiers. C'est rassurant.
+
+\subsection{Quelques commentaires subjectifs}
+\label{sec:commentairessubjectifs}
+
+J'accorde sans peine qu'avec \Expliii le code est plus verbeux qu'avec
+\TeX{} tout seul. Je ne peux, cependant, m'empêcher de penser qu'il
+est plus clair. Pour ma part, le gain énorme que je vois en passant
+cette fois de \LaTeXe{} à \Expliii{} c'est le systématisme du nommage
+des macros, \glspl{fonction} ou \glspl{variable}. L'équipe du projet
+\LaTeX3 en fait d'ailleurs, elle-même, un ``\emph{argument de
+  vente}''.
+
+La puissance de \Macro{NewDocumentCommand} \TO que l'on a à peine
+effleuré ci-dessus\TF, à elle seule, peut inciter à passer à
+\Expliii{} pour créer ses propres macros.
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "dun19expl3"
+%%% End:

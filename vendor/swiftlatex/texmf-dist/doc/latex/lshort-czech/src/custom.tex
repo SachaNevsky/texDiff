@@ -1,0 +1,926 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Contents: Customising LaTeX output
+% $Id: custom.tex 243 2009-09-22 05:38:48Z oetiker $
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Přizpůsobování \LaTeX u}
+
+\begin{intro}
+Příkazy, které jsme už probrali, budou většině lidí
+stačit. I~když vygenerované dokumenty nebudou elegantní, budou dodržovat
+zavedená pravidla sazby, takže se budou dobře číst a~budou příjemné na pohled.
+
+Stává se ale, že \LaTeX{} neposkytuje příkaz nebo prostředí pro
+vaše potřeby, nebo vám nevyhovují výstupy vytvořené těmito prostředky.
+
+V~této kapitole naznačíme, jak \LaTeX{} naučit novým trikům a~jak
+docílit výstupů, které vypadají jinak než ty produkované standardně.
+\end{intro}
+
+
+\section{Nové příkazy, prostředí a~balíky}
+
+Možná jste si všimli, že všechny příkazy v~této knize jsou sázeny v~boxu
+a~že jsou uvedeny v~indexu na konci knihy. Místo implementace 
+pomocí základních \LaTeX ových příkazů jsem vytvořil \wi{balík},
+ve kterém jsem nadefinoval nové příkazy a~prostředí. A~tak teď můžu
+jednoduše napsat:
+
+\begin{example}
+\begin{lscommand}
+\ci{dum}
+\end{lscommand}
+\end{example}
+
+V~tomto příkladě používám nové prostředí nazvané \ei{lscommand},
+které nakreslí okolo názvu příkazu box,
+a~nový příkaz \ci{ci}, který vysází jméno příkazu neproporcionálním fontem se zpětným lomítkem a~vytvoří
+příslušnou indexovou položku. Když se v~indexu na konci knihy
+podíváte na položku \ci{dum}, najdete seznam stran, kde je příkaz
+\ci{dum} zmíněný.
+
+Kdykoliv se rozhodnu, že jména příkazů v~boxu sázet nechci, dosáhnu
+toho jednoduše změnou definice prostředí \texttt{lscommand}. To je
+mnohem jednodušší než %muset 
+být nucen projít celý dokument a~hledat všechna
+místa, kde jsem použil obecný \LaTeX ový příkaz kreslící
+box okolo slova.
+
+\subsection{Nové příkazy}
+
+Své vlastní příkazy můžete přidávat pomocí příkazu
+\begin{lscommand}
+\ci{newcommand}\verb|{|%
+       \emph{name}\verb|}[|\emph{num}\verb|]{|\emph{definition}\verb|}|
+\end{lscommand}
+Tento příkaz vyžaduje dva argumenty: jméno (\emph{name}) příkazu, který
+chcete vytvořit a~jeho definici (\emph{definition}). Argument \emph{num}
+v~hranatých závorkách je nepovinný a~specifikuje počet argumentů nového
+příkazu (argumentů může být až devět). Pokud tento argument není zadán,
+bere se jeho hodnota jako 0, tj. nový příkaz nemá žádné argumenty.
+
+Následující dva příklady ukazují použití. První z~nich definuje příkaz
+\ci{tnss} (zkratka anglického názvu tohoto dokumentu: \emph{The Not So Short
+Introduction to \LaTeXe}). Podobný příkaz se vám bude hodit, budete-li
+potřebovat sázet název knihy na mnoha místech.
+
+\begin{example}
+\newcommand{\tnss}{The not
+    so Short Introduction to
+    \LaTeXe}
+This is ``\tnss''\ldots{} 
+``\tnss''
+\end{example}
+
+Další příklad ukazuje, jak nadefinovat nový příkaz s~jedním argumentem.
+Značka \verb|#1| bude nahrazena argumentem, který při použití příkazu
+specifikujete. Chcete-li použít více než jeden argument, můžete použít
+\verb|#2|, \verb|#3|, atd.
+
+\begin{example}
+\newcommand{\txsit}[2]
+ {Toto je \emph{#1} #2 úvod
+ do \LaTeXe}
+% v těle dokumentu: 
+\begin{itemize}
+\item \txsit{nepříliš}{stručný}
+\item \txsit{velmi}{obsáhlý}
+\end{itemize}
+\end{example}
+
+\LaTeX{} vám nedovolí vytvořit nový příkaz, který by \uv{přepsal}
+příkaz už existující. Pokud ale existující příkaz opravdu přepsat
+chcete, můžete použít příkaz \ci{renewcommand}. Jeho syntax je stejná
+jako u~příkazu \verb|\newcommand|.
+
+Může se vám hodit i~další příkaz -- \ci{providecommand}. Jeho použití
+je stejné jako u~\ci{newcommand}, ale v~případě, že příkaz už byl
+definován dříve, \ci{providecommand} nic neudělá.
+
+Poznámky o~mezerách následujících za \LaTeX ovými příkazy si můžete prohlédnout
+na straně \pageref{mezery}.
+
+\subsection{Nová prostředí}
+Stejně jako můžete vytvářet nové příkazy (pomocí \verb|\newcommand|), můžete
+vytvářet i~svá vlastní prostředí. Slouží k~tomu příkaz \ci{newenvironment},
+jehož syntax je:
+
+\begin{lscommand}
+\ci{newenvironment}\verb|{|%
+       \emph{name}\verb|}[|\emph{num}\verb|]{|%
+       \emph{before}\verb|}{|\emph{after}\verb|}|
+\end{lscommand}
+
+I~\ci{newenvironment} může mít nepovinný parametr. Materiál specifikovaný
+v~argumentu \emph{before} (před) bude zpracován před tím, než se zpracuje text
+v~prosředí. Materiál v~argumentu \emph{after} (za) bude zpracován ve chvíli,
+kdy \LaTeX\ narazí na příkaz \verb|\end{|\emph{name}\verb|}|.
+
+Následující příklad ukazuje použití příkazu \ci{newenvironment}.
+
+\begin{example}
+\newenvironment{kral}
+ {\rule{1ex}{1ex}%
+      \hspace{\stretch{1}}}
+ {\hspace{\stretch{1}}%
+      \rule{1ex}{1ex}}
+
+\begin{kral} 
+Mí ubozí poddaní\ldots
+\end{kral}
+\end{example}
+
+Argument \emph{num} má stejný význam jako u~příkazu \verb|\newcommand|.
+\LaTeX{} vás nenechá nadefinovat prostředí, které už existuje. Pokud
+opravdu chcete změnit existující prostředí, použijte příkaz
+\ci{renewenvironment}. Jeho syntax je stejná jako u~příkazu
+\ci{newenvironment}.
+
+Příkazy použité v~tomto příkladu budou vysvětleny později, konkrétně
+příkaz \ci{rule} na straně~\pageref{sec:rule}, \ci{stretch} na straně~\pageref{cmd:stretch} a~\ci{hspace} na straně~\pageref{sec:hspace}.
+
+
+\subsection{Mezery navíc}
+Při definování nového prostředí se vám snadno může stát, že do dokumentu
+\uv{zavlečete} mezery, které tam nepatří. Tyto mezery můžou způsobit
+velké komplikace, např. pokud chcete vytvořit prostředí pro nadpisy,
+které potlačí odsazení jak v~samotném nadpisu, tak v~(jednom) následujícím
+odstavci. Příkaz \ci{ignorespaces} v~bloku \ci{begin} daného prostředí
+způsobí, že budou ignorovány všechny mezery, které se vyskytnou po
+provedení bloku \ci{begin}. U~bloku \ci{end} je situace trochu komplikovanější,
+protože na konci prostředí dochází ke speciálnímu zpracování.
+Po použití příkazu \ci{ignorespacesafterend} \LaTeX{} sám vyvolá \ci{ignorespaces}
+po skončení zmíněného speciálního ,závěrečného` zpracování.
+
+\begin{example}
+\newenvironment{jednoduche}%
+ {\noindent}%
+ {\par\noindent}
+
+\begin{jednoduche}
+Všimněte si mezery\\vlevo.
+\end{jednoduche}
+To samé\\zde.
+\end{example}
+
+\begin{example}
+\newenvironment{spravne}%
+ {\noindent\ignorespaces}%
+ {\par\noindent%
+   \ignorespacesafterend}
+
+\begin{spravne}
+Žádná mezera\\vlevo.
+\end{spravne}
+To samé\\zde.
+\end{example}
+
+\subsection{Příkazová řádka \LaTeX u}
+Pokud \LaTeX\ používáte na UNIXovém operačním systému, možná si práci
+automatizujete prostřednictvím makefilů. V~tom případě pro vás může
+být zajímavé automatizovaně produkovat různé verze stejného dokumentu
+pomocí volání \LaTeX u s~parametry předávanými na příkazové řádce.
+Pokud do svého dokumentu přidáte následující strukturu\dots
+
+\begin{verbatim}
+\usepackage{ifthen}
+\ifthenelse{\equal{\blackandwhite}{true}}{
+  % "černobíly" režim; zde něco napišme..
+}{
+  % "barevný" režim; zde napišme něco jiného..
+}
+\end{verbatim}
+
+\dots\ a~potom \LaTeX{} spustíte takto\dots
+\begin{verbatim}
+latex '\newcommand{\blackandwhite}{true}\input{test.tex}'
+\end{verbatim}
+
+\dots pak \LaTeX\ nejdříve nadefinuje příkaz \verb|\blackandwhite| a~potom 
+načte vlastní soubor (\verb+test.tex+) příkazem \ci{input}. Nastavením \verb|\blackandwhite|
+na hodnotu \emph{false} zařídíme, že se vytvoří barevná verze dokumentu.
+
+\subsection{Váš vlastní balík}
+
+Pokud si nadefinujete hodně nových prostředí a~příkazů, preambule
+vašeho dokumentu se pořádně prodlouží. Je proto lepší vytvořit
+\LaTeX ový balík, který bude obsahovat definice všech vašich příkazů
+a~prostředí. Pomocí \ci{usepackage} potom můžete tento balík
+ve svém dokumentu zpřístupnit.
+
+\begin{figure}[!htbp]
+\begin{lined}{\textwidth}
+\begin{verbatim}
+% Demo Package by Tobias Oetiker
+\ProvidesPackage{demopack}
+\newcommand{\tnss}{The not so Short Introduction 
+                   to \LaTeXe}
+\newcommand{\txsit}[1]{The \emph{#1} Short 
+                       Introduction to \LaTeXe}
+\newenvironment{king}{\begin{quote}}{\end{quote}}
+\end{verbatim}
+\end{lined}
+\caption{Pokusný balík.} \label{package}
+\end{figure}
+
+Vytvoření balíku v~zásadě znamená zkopírování obsahu preambule
+vašeho dokumentu do zvláštního souboru, jehož jméno končí na
+\texttt{.sty}. Speciální příkaz\dots
+\begin{lscommand}
+\ci{ProvidesPackage}\verb|{|\emph{package name}\verb|}|
+\end{lscommand}
+\noindent použijete na úplném začátku souboru vašeho balíku.
+\verb|\ProvidesPackage| říká \LaTeX u jméno balíku a~\LaTeX{}
+tak bude moci zobrazit smysluplnou chybovou hlášku v~případě,
+že se pokusíte balík vložit do dokumentu dvakrát. Na obrázku~\ref{package}
+je malý pokusný balík, který obsahuje příkazy definované v~předchozích
+příkladech.
+
+\section{Fonty a~velikosti}
+
+\subsection{Příkazy na změnu fontů}
+\index{font}\index{font -- velikost} \LaTeX{} vybere příslušný font a~jeho velikost
+na základě logické struktury dokumentu (sekce, poznámky pod čarou, \ldots).
+Může se ale stát, že %ale 
+budete chtít změnit font nebo jeho velikost \uv{manuálně}.
+Můžete toho dosáhnout pomocí příkazů uvedených v~tabulkách~\ref{fonts} a~\ref{sizes}.
+Skutečná velikost každého fontu je otázkou designu a~závisí na třídě dokumentu
+a~jejích nastaveních. Tabulka~\ref{tab:pointsizes} ukazuje absolutní (bodové) velikosti 
+pro tyto příkazy tak, jak jsou implementovány ve standardních třídách dokumentu.
+
+\begin{example}
+{\small Malí
+a~\textbf{smělí} Římané vládli}
+{\Large celé velké
+\textit{Itálii}.}
+\end{example}
+
+Důležitým rysem \LaTeXe{} je, že atributy fontů jsou nezávislé.
+Můžete změnit aktuální font nebo jeho velikost, ale nastavení
+tučnosti nebo sklonu písma zůstane nezměněno.
+
+V~\emph{matematickém módu} můžete pomocí \emph{příkazů} měnících font
+dočasně opustit \emph{matematický režim} a~zapsat obyčejný text.
+Pokud chcete změnit font pro zápis matematiky, budete potřebovat
+jinou speciální sadu příkazů, viz tabulka~\ref{mathfonts}.
+
+\begin{table}[!bp]
+\caption{Fonty.} \label{fonts}
+\begin{lined}{12cm}
+%
+% Alan suggested not to tell about the other form of the command
+% eg \verb|\sffamily| or \verb|\bfseries|. This seems a good thing to me.
+%
+\begin{tabular}{@{}rl@{\qquad}rl@{}}
+\fni{textrm}\verb|{...}|        &      \textrm{\index{vzpřímené písmo}vzpřímené}&
+\fni{textsf}\verb|{...}|        &      \textsf{\index{bezpatkové písmo}bezpatkové}\\
+\fni{texttt}\verb|{...}|        &      \texttt{psací stroj}\\[6pt]
+\fni{textmd}\verb|{...}|        &      \textmd{střední}&
+\fni{textbf}\verb|{...}|        &      \textbf{\index{tučné písmo}tučné}\\[6pt]
+\fni{textup}\verb|{...}|        &       \textup{\index{vzpřímené}vzpřímené písmo}&
+\fni{textit}\verb|{...}|        &       \textit{\wi{italika}}\\
+\fni{textsl}\verb|{...}|        &       \textsl{\index{skloněné}skloněné písmo}&
+\fni{textsc}\verb|{...}|        &       \textsc{\wi{kapitálky}}\\[6pt]
+\ci{emph}\verb|{...}|          &            \emph{zvýrazněné} &
+\fni{textnormal}\verb|{...}|    &    \textnormal{základní font}
+\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+
+\begin{table}[!bp]
+\index{velikost fontu}
+\caption{Velikosti fontů.} \label{sizes}
+\begin{lined}{12cm}
+\begin{tabular}{@{}ll}
+\fni{tiny}      & \tiny        drobný font \\
+\fni{scriptsize}   & \scriptsize  velmi malý font\\
+\fni{footnotesize} & \footnotesize  docela malý font \\
+\fni{small}        &  \small            malý font \\
+\fni{normalsize}   &  \normalsize  normální font \\
+\fni{large}        &  \large       velký font
+\end{tabular}%
+\qquad\begin{tabular}{ll@{}}
+\fni{Large}        &  \Large       větší font \\[5pt]
+\fni{LARGE}        &  \LARGE       velmi velký \\[5pt]
+\fni{huge}         &  \huge        obří \\[5pt]
+\fni{Huge}         &  \Huge        největší
+\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+\begin{table}[!tbp]
+\caption{Absolutní bodové velikosti ve standardních třídách.}\label{tab:pointsizes}
+\label{tab:sizes}
+\begin{lined}{12cm}
+\begin{tabular}{lrrr}
+\multicolumn{1}{l}{Velikost} &
+\multicolumn{1}{c}{10pt (výchozí) } &
+           \multicolumn{1}{c}{volba 11pt}  & %možnost
+           \multicolumn{1}{c}{volba 12pt}\\ %možnost
+\verb|\tiny|       & 5pt  & 6pt & 6pt\\
+\verb|\scriptsize| & 7pt  & 8pt & 8pt\\
+\verb|\footnotesize| & 8pt & 9pt & 10pt \\
+\verb|\small|        & 9pt & 10pt & 11pt \\
+\verb|\normalsize| & 10pt & 11pt & 12pt \\
+\verb|\large|      & 12pt & 12pt & 14pt \\
+\verb|\Large|      & 14pt & 14pt & 17pt \\
+\verb|\LARGE|      & 17pt & 17pt & 20pt\\
+\verb|\huge|       & 20pt & 20pt & 25pt\\
+\verb|\Huge|       & 25pt & 25pt & 25pt\\
+\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+
+\begin{table}[!bp]
+\caption{Matematické fonty.} \label{mathfonts}
+\begin{lined}{0.7\textwidth}
+\begin{tabular}{@{}ll@{}}
+\fni{mathrm}\verb|{...}|&     
+%Základní patkový font\\ 
+$\mathrm{Základní\ patkový\ font}$\\
+\fni{mathbf}\verb|{...}|&     
+%Tučný font\\
+$\mathbf{Tučný\ font}$\\
+\fni{mathsf}\verb|{...}|&     
+%Bezpatkový font\\
+$\mathsf{Bezpatkový\ font}$\\
+\fni{mathtt}\verb|{...}|&     
+%Font psacího stroje\\
+$\mathtt{Font\ psacího\ stroje}$\\
+\fni{mathit}\verb|{...}|&     
+%Italika\\
+$\mathit{Italika}$\\
+\fni{mathcal}\verb|{...}|&    
+%$\mathcal{KALIGRAFIE}$\\
+$\mathcal{KALIGRAFICKÝ\ FONT}$\\
+\fni{mathnormal}\verb|{...}|& 
+%Normální font\\
+$\mathnormal{Normální\ font}$\\
+\end{tabular}
+
+%\begin{tabular}{@{}lll@{}}
+%\textit{Command}&\textit{Example}&    \textit{Output}\\[6pt]
+%\fni{mathcal}\verb|{...}|&    \verb|$\mathcal{B}=c$|&     $\mathcal{B}=c$\\
+%\fni{mathscr}\verb|{...}|&    \verb|$\mathscr{B}=c$|&     $\mathscr{B}=c$\\
+%\fni{mathrm}\verb|{...}|&     \verb|$\mathrm{K}_2$|&      $\mathrm{K}_2$\\
+%\fni{mathbf}\verb|{...}|&     \verb|$\sum x=\mathbf{v}$|& $\sum x=\mathbf{v}$\\
+%\fni{mathsf}\verb|{...}|&     \verb|$\mathsf{G\times R}$|&        $\mathsf{G\times R}$\\
+%\fni{mathtt}\verb|{...}|&     \verb|$\mathtt{L}(b,c)$|&   $\mathtt{L}(b,c)$\\
+%\fni{mathnormal}\verb|{...}|& \verb|$\mathnormal{R_{19}}\neq R_{19}$|&
+%$\mathnormal{R_{19}}\neq R_{19}$\\
+%\fni{mathit}\verb|{...}|&     \verb|$\mathit{ffi}\neq ffi$|& $\mathit{ffi}\neq ffi$
+%\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+Nejen v~souvislosti s~příkazy měnícími velikost fontů hrají zvláštní
+roli \wi{složené závorky}, pomocí nichž se vytváří \emph{skupiny}. Skupiny
+omezují rozsah platnosti většiny \LaTeX ových příkazů.\index{grouping}
+
+\begin{example}
+Má rád {\LARGE velká
+a~{\small malá} písmena}. 
+\end{example}
+
+Příkazy pro změnu velikosti fontu také mění mezery mezi řádky odstavce,
+ale jenom tehdy, když daný odstavec skončí dříve než rozsah platnosti
+příkazu pro změnu velikosti fontu. Zavírací složená závorka \verb|}|
+by tedy neměla být zapsána \uv{příliš brzy}. V~následujících příkladech
+si všimněte umístění příkazu \ci{par}.\footnote{Příkaz \texttt{\bs{}par}
+má stejný účinek jako prázdný řádek.}
+ 
+\begin{example}
+{\Large Toto nečtěte!
+ Není to pravda.
+ Můžete mi věřit!\par}
+\end{example}
+
+\begin{example}
+{\Large Ani toto není pravda.
+Ale nezapomeňte,
+že jsem lhář.}\par
+\end{example}
+
+Pokud chcete aktivovat příkaz pro změnu velikosti fontu pro celý odstavec
+nebo ještě větší úsek, může se vám hodit syntaxe pro prostředí.
+
+\begin{example}
+\begin{Large} 
+Toto není pravda.
+Na druhou stranu,
+co dnes je\ldots
+\end{Large}
+\end{example}
+
+\noindent Ušetříte si počítání spousty složených závorek.
+
+\subsection{Pozor, pozor}
+
+Jak jsme řekli na začátku této kapitoly, není dobré zahltit dokument
+explicitními příkazy typu změny velikosti fontu. To je totiž v~protikladu
+k~základnímu přístupu \LaTeX u, který odděluje logické a~vizuální
+značení dokumentu. Správné naopak je, chcete-li použít stejný příkaz
+pro změnu fontu na více místech v~dokumentu k~vysázení speciálního
+druhu informace, nadefinovat pomocí \verb|\newcommand| \uv{příkaz -- logický obalovač}
+pro příkaz změny fontu.
+
+\begin{example}
+\newcommand{\oops}[1]{%
+ \textbf{#1}}
+\oops{Nevstupujte} do tohoto
+cizího pokoje, jsou v~něm
+\oops{stroje} neznámého
+původu a~účelu.
+\end{example}
+
+Tento přístup má tu výhodu, že když se někdy později rozhodnete,
+že budete nebezpečí značit jinak než pomocí \verb|\textbf|, stačí
+v~dokumentu udělat jedinou změnu -- v~definici příkazu \verb|\oops|.
+Není tedy nutné projít všechny výskyty \verb|\textbf| v~celém
+dokumentu a~pro každý z~nich zkoumat, jestli bylo důvodem zvýraznění
+daného textu nebezpečí, nebo něco jiného.
+
+\subsection{Rada}
+
+Malá rada na závěr tohoto výletu do země fontů a~jejich velikostí:\nopagebreak
+
+\begin{quote}
+  \underline{\textbf{Nezapomeňte\Huge!}} \textit{Čím}
+  \textsf{V\textbf{\LARGE Í} \texttt{C}\textsl{E}} fontů v~\Huge dokumentu
+  \tiny použijete,
+  \large \textit{tím} \textsc{čitelnější}
+a~\textsl{\textsf{příjemnější} \textbf{na pohled} b\large u\Large d\LARGE e}. :-)
+\end{quote}
+
+\section{Mezery}
+ 
+\subsection{Řádkové mezery}
+
+\index{řádkové mezery} Chcete-li mít ve svém dokumentu větší řádkové mezery,
+uveďte v~preambuli příkaz
+\begin{lscommand}
+\ci{linespread}\verb|{|\emph{factor}\verb|}|
+\end{lscommand}
+Použijte \verb|\linespread{1.3}| nebo \verb|\linespread{1.6}| pro řádkování \uv{jeden a~půl},
+resp. pro dvojnásobné řádkování.
+Implicitně řádkové mezery roztažené nejsou (jejich \uv{faktor roztažení} je~1).
+\index{double line spacing}
+
+Všimněte si, že příkaz \ci{linespread} je docela drastický a~pro publikování
+se moc nehodí. Pokud opravdu máte důvod změnit velikost řádkových mezer,
+mohli byste spíš použít příkaz:
+
+\begin{lscommand}
+\verb|\setlength{\baselineskip}{1.5\baselineskip}|
+\end{lscommand}
+
+\begin{example}
+{\setlength{\baselineskip}%
+           {1.5\baselineskip}
+Tento odstavec je vysázen
+s~meziřádkovými mezerami
+roztaženými jedenapůlkrát
+oproti předchozímu stavu.
+Všimněte si příkazu par
+na konci odstavce.\par}
+
+Účelem tohoto odstavce je
+ukázat, že po uzavírací
+složené závorce se všechno
+vrací zpět do normálu.
+\end{example}
+
+\subsection{Formátování odstavce}\label{parsp}
+
+Dva \LaTeX ové parametry ovlivňují vzhled odstavce. Napsáním definice
+podobné této
+
+\begin{code}
+\ci{setlength}\verb|{|\ci{parindent}\verb|}{0pt}| \\
+\verb|\setlength{|\ci{parskip}\verb|}{1ex plus 0.5ex minus 0.2ex}|
+\end{code}
+do preambule vašeho vstupního souboru můžete změnit vzhled odstavců.
+Tyto dva příkazy zvětší mezery mezi dvěma odstavci a~zároveň
+nastaví velikost odsazení prvního řádku odstavce na nulu.
+
+\texttt{plus} a~\texttt{minus} ve specifikaci délky výše říkají
+\TeX u, že délka meziodstavcových mezer může být stažena nebo roztažena
+o~specifikované množství. Ke stažení nebo roztažení mezer dojde
+ve chvíli, kdy by odstavec s~neroztaženými mezerami nešlo správně vysázet.
+
+V~kontinentální Evropě je zvykem odstavce oddělovat vertikálními mezerami
+a~neodsazovat první řádek odstavce. Ale pozor, změnou vertikálních
+mezer ovlivníte i~obsah, jehož řádky budou pak mít větší mezery.
+Lze se tomu vyhnout tím, že přesuneme dva zmíněné příkazy z~preambule
+někam do vašeho dokumentu za příkazem \verb|\tableofcontents|.
+Možná ještě lépe zvětšení mezer v~obsahu zabráníte tím, že výše zmíněné dva
+příkazy vůbec nepoužijete. Většina profesionálních publikací totiž
+mezery mezi odstavce nevkládá a~místo toho odsazuje první řádek.
+ 
+Chcete-li odsadit první řádek odstavce, který by jinak odsazen nebyl,
+začněte odstavec
+\begin{lscommand}
+\ci{indent}
+\end{lscommand}
+\noindent Tato odsazení
+budou samozřejmě mít efekt pouze tehdy, má-li \verb|\parindent|
+nenulovou hodnotu.\footnote{K~odsazení prvního odstavce sekce, použijte
+balík \pai{indentfirst} z~kolekce ,tools`.}
+
+Neodsazované odstavce vytvoříte uvedením
+\begin{lscommand}
+\ci{noindent}
+\end{lscommand}
+\noindent na úplném začátku odstavce. To se může hodit např. tehdy,
+když zahajujete tělo dokumentu \uv{obyčejným textem} a~ne novou sekcí.
+
+\subsection{Horizontální mezery}
+
+\label{sec:hspace}
+\LaTeX{} stanovuje mezery mezi slovy a~větami automaticky.
+Přidat horizontální mezeru manuálně lze pomocí\index{horizontal!space}
+\begin{lscommand}
+\ci{hspace}\verb|{|\emph{length}\verb|}|
+\end{lscommand}
+Pokud se má daná mezera vysázet i~tehdy, když připadne na konec nebo
+začátek řádku, použijte \verb|\hspace*| místo \verb|\hspace|.
+Parametr \emph{length} je v~nejjednodušším případě jen číslo následované jednotkou.
+Nejdůležitější jednotky jsou uvedené v~tabulce~\ref{units}. 
+\index{jednotky}\index{dimensions}
+
+\begin{example}
+Toto\hspace{1.5cm}je mezera
+velikosti 1.5 cm. 
+\end{example}
+\suppressfloats
+\begin{table}[tbp]
+\caption{\TeX ové jednotky.} \label{units}\index{units}
+\begin{lined}{9.5cm} 
+\begin{tabular}{@{}ll@{}}
+\texttt{mm} & milimetr $\approx 1/25$~inch \quad \demowidth{1mm} \\
+\texttt{cm} & centimetr = 10~mm  \quad \demowidth{1cm}                     \\
+\texttt{in} & palec $=$ 25.4~mm \quad \demowidth{1in}                    \\
+\texttt{pt} & bod $\approx 1/72$~inch $\approx \frac{1}{3}$~mm  \quad\demowidth{1pt}\\
+\texttt{em} & zhruba šířka písmene `M' v~aktuálním fontu \quad \demowidth{1em}\\
+\texttt{ex} & zhruba výška písmene `x' v~aktuálním fontu \quad \demowidth{1ex}
+\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+\label{cmd:stretch} 
+Příkaz
+\begin{lscommand}
+\ci{stretch}\verb|{|\emph{n}\verb|}|
+\end{lscommand} 
+\noindent vytváří speciální \uv{natahovací} mezeru. Mezera se natáhne až
+do konce aktuálního řádku. Pokud na stejném řádku uvedeme 
+\verb|\hspace{\stretch{|\emph{n}\verb|}}| několikrát, natahovací mezery si rozdělí
+všechen zbývající prostor na řádku v~poměru jejich natahovacích faktorů.
+
+
+\begin{example}
+x\hspace{\stretch{1}}
+x\hspace{\stretch{3}}x
+\end{example}
+
+Když používáme horizontální mezery společně s~textem, může být výhodné
+velikost mezer specifikovat v~závislosti na velikosti aktuálního fontu.
+Toho lze dosáhnout použitím \uv{relativních jednotek} \texttt{em}
+a~\texttt{ex}.
+
+\begin{example}
+{\Large{}velká\hspace{1em}y}\\
+{\tiny{}malá\hspace{1em}y}
+\end{example}
+ 
+\subsection{Vertikální mezery}
+I~mezery mezi odstavci, sekcemi, podsekcemi, \ldots\ určí \LaTeX\ automaticky.
+Dodatečné vertikální mezery \emph{mezi dvěma odstavci} lze přidat
+příkazem:
+\begin{lscommand}
+\ci{vspace}\verb|{|\emph{length}\verb|}|
+\end{lscommand}
+
+Použijete-li tento příkaz, měli byste ho uvést mezi dvěma prázdnými řádky.
+Pokud chcete, aby tato mezera nezmizela v~případě, že se ocitne na samém
+začátku nebo konci stránky, použijte ohvězdičkovanou verzi příkazu,
+\verb|\vspace*|, místo \verb|\vspace|.
+\index{vertical space}
+
+Příkaz \verb|\stretch|, v~kombinaci s~příkazem
+\verb|\pagebreak|, lze použít pro umístění textu
+na poslední řádku na stránce nebo pro vertikální
+vycentrování textu na stránce.
+\begin{code}
+\begin{verbatim}
+Nějaký text\ldots
+
+Příkaz \verb|\stretch|, v~kombinaci s~příkazem
+\verb|\pagebreak|, lze použít pro umístění textu
+na poslední řádku na stránce nebo pro vertikální
+vycentrování textu na stránce. Nějaký text\ldots
+
+\vspace{\stretch{1}}
+Toto bude vysázeno na poslední řádku na stránce\pagebreak
+\end{verbatim}
+\end{code}
+
+Dodatečnou mezeru mezi dvěma řádky \emph{stejného} odstavce nebo
+uvnitř tabulky získáme pomocí příkazu
+\begin{lscommand}
+\ci{\bs}\verb|[|\emph{length}\verb|]|
+\end{lscommand}
+
+Pomocí příkazů \ci{bigskip}, \ci{medskip} a~\ci{smallskip} můžete přeskočit oblast
+o~předdefinované vertikální velikosti, aniž byste se museli starat
+o~přesné rozměry.
+
+
+\section{Layout stránky}
+
+\begin{figure}[!hp]
+\begin{center}
+\makeatletter\@mylayout\makeatother
+\end{center}
+\vspace*{1.8cm}
+\caption{Parametry rozložení stránky.}
+\label{fig:layout}
+\cih{footskip}
+\cih{headheight}
+\cih{headsep}
+\cih{marginparpush}
+\cih{marginparsep}
+\cih{marginparwidth}
+\cih{oddsidemargin}
+\cih{paperheight}
+\cih{paperwidth}
+\cih{textheight}
+\cih{textwidth}
+\cih{topmargin}
+\end{figure}
+\index{rozložení stránky}
+\LaTeXe{} vám umožňuje v~příkazu \verb|\documentclass| specifikovat \wi{velikost papíru}.
+\LaTeXe{} sám pak automaticky použije správné velikosti okrajů stránky.
+Pokud vám předdefinované hodnoty nevyhovují, můžete je samozřejmě změnit.
+%no idea why this is needed here ...
+\thispagestyle{fancyplain}%
+Obrázek~\ref{fig:layout} ukazuje všechny parametry, které můžete změnit.
+Obrázek byl vytvořen pomocí balíku \pai{layout} z~kolekce tools.%
+\footnote{\CTANref|macros/latex/required/tools|}
+
+\textbf{Ale pozor!} Předtím, že začnete svůj dokument \uv{vylepšovat}
+ve stylu \uv{Jen trochu rozšířím tu úzkou stránku}, všechno si promyslete.
+Podobně jako další standardní \LaTeX ová nastavení má i~standardní
+vzhled stránky svůj dobrý důvod.
+
+Ano, v~porovnání se stránkou textu napsanou v~Microsoft Wordu vypadá vaše
+\LaTeX ová stránka příliš úzká. Ale zato se nápadně podobá standardně
+sázeným knihám.\footnote{Máme na mysli knihu od solidního
+nakladatele.} Podobně jako ony má i~váš dokument zhruba šedesát šest znaků
+na řádku, což je hodnota standardně považovaná za hranici, po jejímž
+překročení se dokument špatně čte. Důvodem je, že je obtížné přesunout
+oči z~konce jednoho řádku na začátek toho následujícího. Proto také bývá text
+v~novinách dělený do sloupců.
+
+Pokud tedy zvětšíte šířku vašich řádek, nezapomínejte, že tím můžete
+komplikovat čtení zájemcům o~váš dokument. Ale teď už dost varování,
+slíbili jsme, že vám řekneme, jak text rozšířit\ldots
+
+\LaTeX{} poskytuje dva příkazy pro změnu těchto parametrů. Obvykle
+se tyto příkazy uvádějí v~preambuli dokumentu.
+
+První příkaz do libovolného z~parametrů přiřadí pevnou hodnotu:
+\begin{lscommand}
+\ci{setlength}\verb|{|\emph{parameter}\verb|}{|\emph{length}\verb|}|
+\end{lscommand}
+
+Druhý příkaz zvětší hodnotu libovolného parametru:
+\begin{lscommand}
+\ci{addtolength}\verb|{|\emph{parameter}\verb|}{|\emph{length}\verb|}|
+\end{lscommand} 
+
+Tento druhý příkaz je užitečnější než příkaz \ci{setlength}, protože
+jeho efekt je relativní vzhledem k~existujícím hodnotám. Pro rozšíření
+celkové šířky textu jsem uvedl následující příkaz do preambule dokumentu:
+\begin{code}
+\verb|\addtolength{\hoffset}{-0.5cm}|\\
+\verb|\addtolength{\textwidth}{1cm}|
+\end{code}
+
+V~tomto kontextu by se vám mohl hodit balík \pai{calc}. Ten
+umožňuje použít aritmetické výrazy jak v~argumentu \ci{setlength}
+tak v~ostatních místech, kde se v~argumentech předávají číselné
+hodnoty.
+
+\section{Další hrátky s~délkami}
+
+Absolutním délkám se v~\LaTeX ovém dokumentu snažím vyhnout.
+Délky raději odvozuji ze šířky nebo výšky dalších stránkových
+elementů. Např. šířka obrázku specifikovaná jako
+\verb|1\textwidth| znamená \uv{jedenkrát přes celou šířku stránky}.
+
+Následující tři příkazy nastavují šířku, výšku a~hloubku textového řetězce \emph{text} do délkového rozměru \emph{variable}.
+
+\begin{lscommand}
+\ci{settoheight}\verb|{|\emph{variable}\verb|}{|\emph{text}\verb|}|\\
+\ci{settodepth}\verb|{|\emph{variable}\verb|}{|\emph{text}\verb|}|\\
+\ci{settowidth}\verb|{|\emph{variable}\verb|}{|\emph{text}\verb|}|
+\end{lscommand}
+
+\noindent Následující příklad ukazuje jedno z~možných použití těchto příkazů.
+
+\begin{example}
+\flushleft
+\newenvironment{vardesc}[1]{%
+  \settowidth{\parindent}{#1:\ }
+  \makebox[0pt][r]{#1:\ }}{}
+
+\begin{displaymath}
+a^2+b^2=c^2
+\end{displaymath}
+
+\begin{vardesc}{Kde}$a$, 
+$b$ -- jsou strany sousedící
+s~pravým úhlem pravoúhlého
+trojúhelníku.  
+
+$c$ -- je přepona tohoto
+trojúhelníku a~cítí se osamělá.
+
+$d$ -- se zde nakonec vůbec
+neobjevuje. To je divné, ne?
+\end{vardesc}
+\end{example}
+
+Odsazení prvních řádků se nastaví na délku slova ,,Kde:\verb*+ +``, tedy $c$ a~$d$ jsou vysázeny pod písmenkem $a$ v~části ,,$a$, $b$``.
+
+\section{Boxy}
+\LaTeX{} vytváří stránky dokumentu posunováním boxů. Každé písmeno
+je nejdříve malým boxem. Boxy s~písmeny se potom spojují k~sobě a~vznikají
+slova. Slova jsou potom spojována s~dalšími slovy, a~to pomocí speciálních,
+\uv{elastických} mezer. Tyto elastické mezery \LaTeX{} může natahovat
+nebo zkracovat, pokud mu to umožní vysázet daný text lépe.
+
+Toto je velmi zjednodušený popis toho, co se při sazbě opravdu děje, ale
+podstatné je, že \TeX{} pracuje s~elastickými mezerami a~boxy. Písmena
+nejsou jediné věci, které se mohou ocitnout v~boxu. Do boxu můžete
+umístit téměř všechno, včetně dalších boxů. S~každým boxem 
+potom \LaTeX{} zachází jako s~jednotlivým písmenem.
+
+V~předchozích kapitolách jste se už s~boxy setkali, jen jsem vás na ně
+neupozornil. Boxy jsou produkovány např. prostředím \ei{tabular} nebo
+příkazem \ci{includegraphics}. Díky tomu můžete jednoduše umístit dvě tabulky
+nebo obrázky vedle sebe. Musíte jen zajistit, že dohromady jejich
+šířky nepřekročí \ci{textwidth}.
+
+Pomocí příkazu
+
+\begin{lscommand}
+\ci{parbox}\verb|[|\emph{pos}\verb|]{|\emph{width}\verb|}{|\emph{text}\verb|}|
+\end{lscommand}
+
+\noindent nebo prostředí
+
+\begin{lscommand}
+\verb|\begin{|\ei{minipage}\verb|}[|\emph{pos}\verb|]{|\emph{width}\verb|}| text
+\verb|\end{|\ei{minipage}\verb|}|
+\end{lscommand}
+
+\noindent můžete do boxu umístit odstavec textu. 
+Parametr \texttt{pos} určuje vertikální zarovnání boxu vzhledem k~účaří
+obklopujícího textu a~může nabývat jedné
+ze tří hodnot: \texttt{c, t} nebo \texttt{b}.\footnote{Parametry jsou: \emph{c}enter (střed),
+\emph{t}op (horní strana), \emph{b}ottom (spodní strana).}
+\texttt{width} je délka určující šířku boxu. Hlavní rozdíl
+mezi \ei{minipage} a~\ci{parbox} je ten, že uvnitř \ei{parbox} nemůžete
+použít některé příkazy a~prostředí, zatímco uvnitř \ei{minipage} můžete
+použít skoro vše.
+
+Zatímco \ci{parbox} zabalí do boxu celý odstavec, který předtím rozdělí
+na jednotlivé řádky textu, existuje také skupina příkazů pro umístění
+materiálu do boxu, která pracuje jen s~horizontálně zarovnaným materiálem.
+Jeden z~těchto příkazů už známe -- \ci{mbox}. Tento příkaz jednoduše zabalí
+posloupnost boxů do nového boxu. \ci{mbox} můžeme použít, abychom \LaTeX u
+zabránili rozdělit od sebe dvě slova. Díky tomu, že boxy mohou být umístěny
+do dalších boxů, tyto příkazy pro \uv{zaboxování} horizontálního materiálu
+jsou velmi flexibilní.
+
+\begin{lscommand}
+\ci{makebox}\verb|[|\emph{width}\verb|][|\emph{pos}\verb|]{|\emph{text}\verb|}|
+\end{lscommand}
+
+\noindent \texttt{width} definuje šířku výsledného boxu tak, jak bude
+\uv{vidět zvenku}.\footnote{Tato definovaná šířka může být menší než
+šířka materiálu vytvořeného z~\texttt{text}. Můžete dokonce nastavit
+\texttt{width} na 0pt a~docílit tím toho,
+že vysázení textu uvnitř boxu neovlivní okolní boxy, tedy posun referenčního bodu.} Jako parametr
+\emph{width} můžete kromě dimenzních výrazů předat i~\ci{width}, \ci{height},
+\ci{depth} nebo \ci{totalheight}, jejichž hodnota je nastavena 
+změřením vysázeného \emph{text}. V~parametru \emph{pos} se předává
+jednopísmenná hodnota: \textbf{c}enter, flush\textbf{l}eft (zarovnej doleva),
+flush\textbf{r}ight (zarovnej doprava), nebo \textbf{s}pread (zarovnej
+text tak, aby vyplnil celý box).
+
+% \noindent \texttt{width} defines the width of the resulting box as
+% seen from the outside.\footnote{This means it can be smaller than the
+% material inside the box. You can even set the
+% width to 0pt so that the text inside the box will be typeset without
+% influencing the surrounding boxes.}  Besides the length
+% expressions, you can also use \ci{width}, \ci{height}, \ci{depth}, and
+% \ci{totalheight} in the width parameter. They are set from values
+% obtained by measuring the typeset \emph{text}. The \emph{pos} parameter takes
+% a one letter value: \textbf{c}enter, flush\textbf{l}eft,
+% flush\textbf{r}ight, or \textbf{s}pread the text to fill the box.
+
+Příkaz \ci{framebox} dělá to samé jako \ci{makebox}, ale navíc ještě okolo
+textu nakreslí rámeček.
+
+Některé způsoby, jak příkazy \ci{makebox} a~\ci{framebox} použít, ukazuje následující příklad.
+
+\begin{example}
+\makebox[\textwidth]{%
+    v~y c~e~n t~r~o v~a n~é}\par
+\makebox[\textwidth][s]{%
+    r~o~z t~á~h n~u t~é}\par
+\framebox[1.1\width]{Počítám, že
+    mám rámeček!} \par
+\framebox[0.8\width][r]{Hrome, 
+    jsem příliš široký} \par
+\framebox[1cm][l]{no a~co,
+    tak jsem} 
+Zvládnete toto přečíst? Já ne!
+\end{example}
+
+Horizontální efekty jsme se tedy právě naučili, teď se podívejme
+na vertikální.\footnote{Pro úplnou kontrolu nad boxy potřebujeme
+jak horizontální, tak vertikální efekty.} Příkaz
+
+\begin{lscommand}
+\ci{raisebox}\verb|{|\emph{lift}\verb|}[|\emph{extend-above-baseline}\verb|][|\emph{extend-below-baseline}\verb|]{|\emph{text}\verb|}|
+\end{lscommand}
+
+\noindent vám umožní nadefinovat vnitřní vlastnosti boxu.
+Pokud se v~prvních třech parametrech potřebujete odkázat na šířku,
+výšku nebo hloubku aktuálního boxu, můžete použít \ci{width}, \ci{height},
+\ci{depth} nebo \ci{totalheight}.
+
+\begin{example}
+\raisebox{0pt}[0pt][0pt]{\Large%
+\textbf{
+Aaaa\raisebox{-0.3ex}{a}%
+\raisebox{-0.7ex}{aa}%
+\raisebox{-1.2ex}{r}%
+\raisebox{-2.2ex}{g}%
+\raisebox{-4.5ex}{h}}}
+vykřikla, ale ani její soused
+v~řadě nespozoroval, že se jí
+přihodilo něco hrozného.
+\end{example}
+
+\section{Linky}
+\label{sec:rule}
+
+O~několik stránek dříve jste si možná všimli příkazu
+
+\begin{lscommand}
+\ci{rule}\verb|[|\emph{lift}\verb|]{|\emph{width}\verb|}{|\emph{height}\verb|}|
+\end{lscommand}
+
+\noindent Jeho pomocí se obyčejně kreslí jednoduchý černý box.
+
+\begin{example}
+\rule{3mm}{.1pt}%
+\rule[-1mm]{5mm}{1cm}%
+\rule{3mm}{.1pt}%
+\rule[1mm]{1cm}{5mm}%
+\rule{3mm}{.1pt}
+\end{example}
+
+\noindent To se hodí pro kreslení vertikálních nebo horizontálních
+čar. Čáru na titulní stránce jsme např. nakreslili právě pomocí
+tohoto příkazu.
+
+\bigskip
+\begin{flushright}
+Konec knihy.\par 
+Hodně zdaru při \TeX ování!
+\end{flushright}
+
+%
+
+% Local Variables:
+% TeX-master: "lshort2e"
+% mode: latex
+% mode: flyspell
+% End:

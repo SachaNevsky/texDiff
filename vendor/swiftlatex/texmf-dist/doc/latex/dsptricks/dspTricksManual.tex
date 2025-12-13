@@ -1,0 +1,921 @@
+% User manual for the DSPTricks package
+% (c) Paolo Prandoni, 2014
+% v1.0, July 2014
+% For more information, authors@sp4comm.org
+
+\documentclass[a4paper,10pt]{ltxdoc}
+\usepackage{float}
+\usepackage{fancyvrb}
+\usepackage{enumitem}
+\usepackage[utopia]{mathdesign}
+\usepackage{url}
+\usepackage{dsptricks,dspfunctions,dspblocks}
+
+
+\def\dspt{{DSPTricks}}
+\def\dspf{{DSPFunctions}}
+\def\dspb{{DSPBlocks}}
+\def\psTricks{{PSTricks}}
+
+\setlength\parindent{0pt}
+
+\newenvironment{optList}{%
+  \begin{description}[labelindent=2em,font=\rm,itemsep=-1mm,leftmargin=2cm]}%
+  {\end{description}}
+
+\def\vblock{\begin{Verbatim}[frame=single,%
+        numbers=left,numbersep=2pt,%
+        fontsize=\footnotesize,%
+        xleftmargin=0mm,xrightmargin=0mm]}
+\def\evblock{\end{Verbatim}}
+\def\vopts{frame=single,%
+        numbers=left,numbersep=2pt,%
+        fontsize=\footnotesize,%
+        xleftmargin=15mm,xrightmargin=6mm}
+
+\newenvironment{centerfig}{%
+  \begin{figure}[H]
+    \begin{center}}{
+    \end{center}
+  \end{figure}}
+
+\begin{document}
+
+\title{\dspt \\ A Set of Macros for Digital Signal Processing Plots}
+\author{Paolo Prandoni}
+\date{}
+\maketitle
+
+
+
+The package \dspt\ is a set of \LaTeX\ macros for plotting the kind of graphs and figures that are usually employed in digital signal processing publications\footnote{The original macros have been written by the author while working on the manuscript for~\cite{PV}.}; the package relies on \psTricks~\cite{TVZ93,HV} to generate its graphic output.
+%\footnote{Please note that these macros have been written rather quickly and chiefly for personal use. Use at your own risk and caveat emptor.}
+
+The basic \dspt\ plot is a boxed chart displaying a discrete-time or a continuous-time signal, or a superposition of both; discrete-time signals are plotted using the ``lollipop'' formalism while continuous-time functions are rendered as smooth curves. Other types of plots that commonly occur in the signal processing literature, and for which \dspt\ offers macros, are frequency plots and pole-zero plots. The companion package \dspf\ defines some signals commonly used in basic signal processing in terms of PostScript primitives, while the package \dspb\ provides a set of macros to design simple signal processing block diagrams.
+
+
+
+\section{Drawing Signals}
+
+Signal plots in \dspt\ are defined by a Cartesian grid enclosed by a box; there are three fundamental types of plots:
+\begin{itemize}
+  \item discrete-time plots,
+  \item continuous-time plots,
+  \item frequency-domain plots;
+\end{itemize}
+discrete- and continuous-time plots can be mixed, whereas frequency-domain plots involve a re-labeling of the horizontal axis in trigonometric units.
+
+
+\subsection{The {\tt dspPlot} environment}
+Data plots are defined by the {\tt dspPlot} environment as \DescribeEnv{dspPlot}
+\begin{quote}
+  |\begin{dspPlot}|\oarg{options}\marg{xmin, xmax}\marg{ymin, ymax} \\
+  ...                                                               \\
+  |\end{dspPlot}|
+\end{quote}
+This sets up a data plot with the horizontal axis spanning the \meta{xmin}-\meta{xmax} interval and with the  vertical axis spanning the \meta{ymin}-\meta{ymax} interval. The following options are available for all data plots:
+
+\begin{optList}
+  \item[|width|=\meta{dim}]: width of the plot (using any units)
+  \item[|height|=\meta{dim}]: height of the plot. Width and height specify the size of the active plot area, i.e., of the \emph{boxed region} of the cartesian plane specified by the $x$ and $y$ ranges for the plot. This is possibly augmented by the space required by the optional labels and axis marks. You can set the default size for a plot by setting the \DescribeEnv{dspW, dspH} |\dspW| and |\dspH| lengths at the beginning of your document
+\end{optList}
+
+\begin{optList}
+  \item[|xtype| = |time| $\mid$ |freq| ]: type of plot: time domain (default) or digital frequency plot
+\end{optList}
+
+\begin{optList}
+  \item[|xticks| = |auto| $\mid$ |custom| $\mid$ |none| $\mid$ \meta{step}]: labeling of the horizontal axis
+  \item[|yticks| = |auto| $\mid$ |custom| $\mid$ |none| $\mid$ \meta{step}]: labeling of the vertical axis. When the option specifies a numeric value \meta{step}, that will be the spacing between two consecutive ticks on the axis\footnote{For digital frequency plots, |xticks| has a different meaning; see Section~\ref{freqPlots} for details.}. When |auto| is selected, the spacing will be computed automatically as a function of the axis range. When |none| is selected, no ticks will be drawn. When |custom| is selected, no ticks will be drawn but the plot will include the appropriate spacing for ticks to be drawn later via the |\dspCustomTicks| macro.
+  \item[|sidegap| = \meta{gap}]: extra space (in horizontal units) to the left and the right of the $x$-axis range. Useful in discrete-time plots not to have stems overlapping the plot's frame. By default, it's automatically determined as a function of the range; use a value of zero to eliminate the side gap.
+  \item[|xout| = |true| $\mid$ |false|]: normally, ticks and tick labels for the horizontal axis are placed on the axis, which may be inside the box; set this option to |true| if you want to place the ticks on the lower edge of the box in all cases.
+  \item[|inticks| = |true| $\mid$ |false|]: x-axis ticks are normally extending downwards; by setting this option to |true| ticks will be pointing upwards, i.e. they will be inside the plot box even when the x-axis coincides with the bottom of the box.
+\end{optList}
+
+\begin{optList}
+  \item[|xlabel| = \meta{label} ]: label for the horizontal axis; placed outside the plot box
+  \item[|ylabel| = \meta{label} ]: label for the vertical axis; placed outside the plot box, on the left
+  \item[|rlabel| = \meta{label} ]: additional label for the vertical axis; placed outside the plot box on the right
+\end{optList}
+
+
+
+
+Within a |dspPlot| environment you can use the plotting commands described in the next sections, as well as any \psTricks\ command; in the latter case, the \psTricks\  values for |xunit| and |yunit| are scaled to the axes (i.e., they correspond to the cartesian values of the plot). Other useful commands for all data plots are the following:
+\begin{itemize}
+  \item \DescribeEnv{dspClip} in order to make sure that all drawing commands are clipped to the bounding box defined by the box chart, you can enclose them individually in a predefined |dspClip| environment. See section~\ref{clipEx} for an example.
+  \item \DescribeMacro{dspPlotFrame} to redraw the framing box (useful to ``smooth out'' plots touching the frame) you can issue the command |\dspPlotFrame|
+  \item \DescribeMacro{dspCustomTicks} to draw arbitrarily placed ticks (and tick labels) on either axis, use
+        \begin{quote}
+        |\dspCustomTicks|\oarg{options}\marg{pos label pos label ...}
+        \end{quote}
+      where the axis is specified in the options field as either |axis=x| (default) or |axis=y| and where the argument is a list of space-separated coordinate-label pairs. If you use math mode for the labels, \emph{do not use spaces in your formulas} since that will confuse the list-parsing macros.
+  \item \DescribeMacro{dspText} place a text label anywhere in the plot using the axes coordinates:
+      \begin{quote}
+        |\dspText|(x, y)\marg{label}
+      \end{quote}
+\end{itemize}
+
+
+\subsection{Plotting Discrete-Time Signals}
+The following commands generate stem (or ``lollipop'') plots; available options in the commands are all standards \psTricks options plus other specialized options when applicable:
+
+\begin{itemize}
+  \item \DescribeMacro{dspTaps} to plot a set of discrete time points use
+    \begin{quote}
+      |\dspTaps|\oarg{options}\marg{data}
+    \end{quote}
+    where \meta{data} is a list of space-separated index-value pairs (e.g., values pre-computed by an external numerical package). Allowed options are the generic \psTricks\ plot options.
+
+  \item \DescribeMacro{dspTapsAt} to plot a set of discrete time points use
+    \begin{quote}
+      |\dspTapsAt|\oarg{options}\marg{start}\marg{data}
+    \end{quote}
+    where \meta{start} is the initial index value and \meta{data} is a list of space-separated signal values. Allowed options are the generic \psTricks\ plot options.
+
+  \item \DescribeMacro{dspTapsFile} for large data sets, you can use
+    \begin{quote}
+      |\dspTapsFile|\oarg{options}\marg{fileName}
+    \end{quote}
+    where now \meta{fileName} points to an external text file of space-separated index-value pairs.
+
+  \item \DescribeMacro{dspSignal} to plot a discrete-time signal defined in terms of PostScript primitives use
+    \begin{quote}
+      |\dspSignal|\oarg{options}\marg{PostScript code}
+    \end{quote}
+    The PostScript code must use the variable |x| as the independent variable; the |\dspPlot| environment sweeps |x| over all integers in the \meta{xmin}-\meta{xmax} interval defined for the plot; this can be changed for each individual signal by using the options \DescribeMacro{xmin,xmax} |xmin|=\meta{m} and/or |xmax|=\meta{n}. If you use \TeX\ macros in your PS code, make sure you include a space at the end of the macro definition. For instance, use |\def\gain\{0.75|\textvisiblespace|}|.
+
+  \item \DescribeMacro{dspSignalOpt} to perform a PostScript initialization sequence before evaluating the signal, use
+    \begin{quote}
+      |\dspSignalOpt|\oarg{options}\marg{init}\marg{PostScript code}
+    \end{quote}
+    where \meta{init} is a valid PostScript sequence (e.g. {\tt \{/A [1 2 3] def\}} to initialize an array of data).
+\end{itemize}
+
+
+For example:
+\vblock
+  \begin{dspPlot}{-3, 22}{-1.2, 1.2}
+    % for my postscript interpreter rand_max is 0x7FFFFFFF
+    \dspSignal[xmin=8]{rand 2147483647 div 0.5 sub 2 mul}
+    \dspTaps[linecolor=red]{3 1 4 1 5 1}
+    \dspTapsAt[linecolor=blue!60]{-2}{-.5 .5}
+  \end{dspPlot}
+\end{Verbatim}
+produces the following plot:
+
+\begin{centerfig}
+  \begin{dspPlot}{-3, 22}{-1.2, 1.2}
+    % for my postscript interpreter rand_max is 0x7FFFFFFF
+    \dspSignal[xmin=8]{rand 2147483647 div 0.5 sub 2 mul}
+    \dspTaps[linecolor=red]{3 1 4 1 5 1}
+    \dspTapsAt[linecolor=blue!60]{-2}{-.5 .5}
+  \end{dspPlot}
+\end{centerfig}
+
+If you are viewing this document in a PostScript viewer, you can see that the random signal is different every time you reload the page, since the taps values are computed on the fly by the PostScript interpreter.
+
+
+\subsection{Plotting Continuous-Time Signals}
+Continuous-time functions can be plotted with the following commands:
+
+\begin{itemize}
+  \item \DescribeMacro{dspFunc} You can draw a continuous-time signal by using the command
+    \begin{quote}
+      |\dspFunc|\oarg{options}\marg{PostScript code}
+    \end{quote}
+    again, the PostScript code must use |x| as the independent variable; the range for |x| is the \meta{xmin}-\meta{xmax} interval and can be controlled for each signal independently via the|xmin| and |xmax| options.
+
+  \item \DescribeMacro{dspFuncData} To plot a smooth function obtained by interpolating a list of space separated time-value pairs use
+    \begin{quote}
+      |\dspFuncData|\oarg{options}\marg{data}
+    \end{quote}
+    the interpolation is performed by the PostScript interpreter and can be controlled if necessary by using the appropriate \psTricks\ options.
+
+  \item \DescribeMacro{dspFuncFile} For a continuous-time smooth interpolation of a pre-computed set of data points, use
+    \begin{quote}
+      |\dspFuncFile|\oarg{options}\marg{fileName}
+    \end{quote}
+    where \meta{fileName} points to a text file containing the data points as a space-separated list of abscissae and ordinates.
+
+  \item \DescribeMacro{dspDiracs} To plot one or more Dirac deltas (symbolized by a vertical arrow) use
+    \begin{quote}
+      |\dspDiracs|\oarg{options}\marg{pos value pos value ...}
+    \end{quote}
+    where the argument is a list of space-separated time-value pairs.
+\end{itemize}
+
+In the following example, note the use of the |dspClip| environment when plotting the hyperbola\footnote{Make sure not to leave any blank space in between the beginning and end of the |dspClip| environment, otherwise the axis labels may fall out of alignment.}:\label{clipEx}
+\vblock
+\begin{dspPlot}[yticks=1,sidegap=0]{0,10}{0,5}
+  \begin{dspClip}\dspFunc{1 3 x sub div abs}\end{dspClip}
+  \dspDiracs[linecolor=red]{3 4}
+\end{dspPlot}
+\end{Verbatim}
+
+\begin{centerfig}
+  \begin{dspPlot}[yticks=1,sidegap=0]{0,10}{0,5}
+    \begin{dspClip}\dspFunc{1 3 x sub div abs}\end{dspClip}
+    \dspDiracs[linecolor=red]{3 4}
+  \end{dspPlot}
+\end{centerfig}
+
+
+
+
+\subsection{Plotting Discrete- and Continuous-Time Signals Together}
+
+In the following examples we mix discrete- and continuous-time signals in the same plot:
+\vblock
+\begin{dspPlot}[xticks=10,yticks=0.2]{-5, 20}{-0.4, 1.2}
+  \def\sincx{x 0 eq {1} {x RadtoDeg sin x div} ifelse}
+  \dspSignal[xmax=10]{\sincx}
+  \dspFunc[linewidth=0.5pt,xmax=10]{\sincx}
+  \dspFunc[linestyle=dashed,linewidth=0.5pt,xmin=10]{\sincx}
+\end{dspPlot}
+\end{Verbatim}
+
+\begin{centerfig}
+  \begin{dspPlot}[xticks=10,yticks=0.2]{-5, 20}{-0.4, 1.2}
+    \def\sincx{x 0 eq {1} {x RadtoDeg sin x div} ifelse}
+    \dspSignal[xmax=10]{\sincx}
+    \dspFunc[linewidth=0.5pt,xmax=10]{\sincx}
+    \dspFunc[linestyle=dashed,linewidth=0.5pt,xmin=10]{\sincx}
+  \end{dspPlot}
+\end{centerfig}
+
+
+\vblock
+\begin{dspPlot}[sidegap=0.5,yticks=none]{-6, 6}{-1.2, 1.2}
+  \def\signal{ 0.5235 mul RadtoDeg sin }
+  \def\quantize{ dup 0 gt {-0.5} {0.5} ifelse sub truncate }
+  \dspFunc[linecolor=gray,linewidth=2pt]{x \quantize \signal }
+  \dspFunc[linestyle=dotted,linewidth=1pt]{x \signal}
+  \dspSignal{x \signal}
+\end{dspPlot}
+\end{Verbatim}
+
+\begin{centerfig}
+  \begin{dspPlot}[sidegap=0.5,yticks=none]{-6, 6}{-1.2, 1.2}
+    \def\signal{ 0.5235 mul RadtoDeg sin }
+    \def\quantize{ dup 0 gt {-0.5} {0.5} ifelse sub truncate }
+    \dspFunc[linecolor=gray,linewidth=2pt]{x \quantize \signal }
+    \dspFunc[linestyle=dotted,linewidth=1pt]{x \signal}
+    \dspSignal{x \signal}
+  \end{dspPlot}
+\end{centerfig}
+
+
+
+\subsection{Plotting Digital Spectra}\label{freqPlots}
+
+Digital frequency\footnote{By ``digital spectrum'' of a discrete-time sequence $x[n]$ we refer to the Discrete-Time Fourier transform
+\[
+  X(e^{j\omega}) = \sum_{n = -\infty}^{\infty} x[n] e^{-j\omega n}
+\]} plots are set up by setting the option |xtype=freq| in the |dspPlot| environment; they are very similar to continuous-time plots, except for the following:
+
+\begin{itemize}
+  \item the horizontal axis represents angular frequency; its range is specified in normalized units so that, for instance, a range of {\tt \{-1,1\}} as the first argument to |dspPlot| indicates the frequency interval $[-\pi, \pi]$.
+  \item tick labels on the horizontal axis are expressed as integer fractions of $\pi$; in this sense, the |xticks| parameter, when set to a numeric value, indicates the denominator of said fractions.
+  \item |sidegap| is always zero in digital frequency plots.
+\end{itemize}
+
+All digital spectra are $2\pi$-periodic, hence the $[-\pi, \pi]$ interval is sufficient to completely represent the function. However, if you want to explicitly plot the function over a wider interval, it is your responsibility to make the plotted data $2\pi$-periodic; the \DescribeMacro{dspPeriodize} |\dspPeriodize| macro can help you do that, as shown in the examples below. Also, when writing PostScript code, don't forget to scale the $x$ variable appropriately; in particular, PostScript functions of an angle use units in degrees, so you need to multiply |x| by 180 before computing trigonometric functions.
+
+
+
+
+\vblock
+\def\lambda{0.9 }
+\def\magn{\lambda 1 sub dup mul 1 \lambda \lambda mul %
+  add  x 180 mul cos 2 mul \lambda mul sub div }
+\def\phase{\lambda x 180 mul sin mul -1 mul 1 \lambda %
+  x 180 mul cos mul sub atan 180 div 3.1415 mul }
+
+\begin{dspPlot}[xtype=freq,xticks=3,yticks=0.2, %
+  ylabel={Square magnitude $|H(e^{j\omega})|^2$}]{-1,1}{0,1.1}
+  \dspFunc{\magn }
+\end{dspPlot}
+
+\begin{dspPlot}[xtype=freq,xticks=3,yticks=custom, %
+  ylabel={Phase (radians)}]{-1,1}{-1.57,1.57}
+  \dspFunc[xmax=0]{\phase }
+  \dspFunc[xmin=0]{-\phase -1 mul}
+  \dspCustomTicks[axis=y]{-1.57 $-\pi/2$ 0 0 1.57 $\pi/2$}
+\end{dspPlot}
+\end{Verbatim}
+%
+
+
+  \def\lambda{0.9 }
+  \def\magn{\lambda 1 sub dup mul 1 \lambda \lambda mul %
+    add  x 180 mul cos 2 mul \lambda mul sub div }
+  \def\phase{\lambda x 180 mul sin mul -1 mul 1 \lambda %
+    x 180 mul cos mul sub atan 180 div 3.1415 mul }
+
+\DeleteShortVerb{\|}
+\begin{centerfig}
+  \begin{center}
+    \begin{dspPlot}[xtype=freq,xticks=3,yticks=0.2, %
+      ylabel={Square magnitude $|H(e^{j\omega})|^2$}]{-1,1}{0,1.1}
+      \dspFunc{\magn }
+    \end{dspPlot}
+
+    \begin{dspPlot}[xtype=freq,xticks=3,yticks=custom,ylabel={Phase (radians)}]{-1,1}{-1.57,1.57}
+      \dspFunc[xmax=0]{\phase }
+      \dspFunc[xmin=0]{-\phase -1 mul}
+      \dspCustomTicks[axis=y]{-1.57 $-\pi/2$ 0 0 1.57 $\pi/2$}
+    \end{dspPlot}
+  \end{center}
+\end{centerfig}
+\MakeShortVerb{\|}
+
+
+
+\newpage
+
+
+\vblock
+\begin{dspPlot}[xtype=freq,xticks=1,yticks=1,xout=true]{0,1}{-0.5,1.5}
+  \psframe[fillstyle=vlines,%
+            hatchcolor=lightgray,hatchangle=20,%
+            linecolor=lightgray]%
+            (0,1.1)(0.4,0.9)
+  \psframe[fillstyle=vlines,%
+            hatchcolor=lightgray,hatchangle=20,%
+            linecolor=lightgray]%
+            (0.6,0.3)(1,-0.3)
+  \psline[linewidth=0.5pt](0.4,-.5)(0.4,1.5)
+  \psline[linewidth=0.5pt](0.6,-.5)(0.6,1.5)
+  \dspFunc[linecolor=red]{x 3.14 mul 0.5 mul 10 exp 1 add 1 exch div}
+  \dspPlotFrame
+  \dspCustomTicks{0.4 $0.4\pi$ 0.6 $0.6\pi$}
+\end{dspPlot}
+\end{Verbatim}
+
+\begin{centerfig}
+  \begin{dspPlot}[xtype=freq,xticks=1,yticks=1,,xout=true]{0, 1}{-0.5,1.5}
+    \psframe[fillstyle=vlines,%
+              hatchcolor=lightgray,hatchangle=20,%
+              linecolor=lightgray]%
+              (0,1.1)(0.4,0.9)
+    \psframe[fillstyle=vlines,%
+              hatchcolor=lightgray,hatchangle=20,%
+              linecolor=lightgray]%
+              (0.6,0.3)(1,-0.3)
+    \psline[linewidth=0.5pt](0.4,-.5)(0.4,1.5)
+    \psline[linewidth=0.5pt](0.6,-.5)(0.6,1.5)
+    \dspFunc[linecolor=red]{x 3.14 mul 0.5 mul 10 exp 1 add 1 exch div}
+    \dspPlotFrame
+    \dspCustomTicks{0.4 $0.4\pi$ 0.6 $0.6\pi$}
+  \end{dspPlot}
+\end{centerfig}
+
+
+The following example shows how to repeat an arbitrary spectral shape over more than one period. First let's define (and plot) a non-trivial spectral shape making sure that the free variable $x$ appears only at the beginning of the PostScript code:
+\vblock
+% triangular shape:
+\def\triFun{abs 0.25 sub 1 0.25 sub div }
+% parabolic shape:
+\def\parFun{abs 0.25 div dup mul 1 exch sub }
+% composite shape (cutoff at 0.5pi)
+\def\comFun{
+  dup dup dup dup %
+  -0.5 lt {pop pop pop pop 0} {  % zero for x < -0.5
+     0.5 gt {pop pop pop 0 } {   % zero for x > 0.5
+      -0.25 lt {pop \triFun } {  % triangle between
+        0.25 gt {\triFun }       %    -.25 and -.5
+          {\parFun}              % else parabola
+        ifelse }%
+      ifelse }%
+    ifelse }%
+  ifelse }
+
+\begin{dspPlot}[xtype=freq,ylabel={$X(e^{j\omega})$}]{-1,1}{0,1.1}
+  \dspFunc{x \comFun }
+\end{dspPlot}
+\end{Verbatim}
+%
+
+
+% triangular shape:
+\def\triFun{abs 0.25 sub 1 0.25 sub div }
+% parabolic shape:
+\def\parFun{abs 0.25 div dup mul 1 exch sub }
+% composite shape (cutoff at 0.5pi)
+\def\comFun{
+  dup dup dup dup %
+  -0.5 lt {pop pop pop pop 0} {  % zero for x < -0.5
+     0.5 gt {pop pop pop 0 } {   % zero for x > 0.5
+      -0.25 lt {pop \triFun } {  % triangle between
+        0.25 gt {\triFun }       %    -.25 and -.5
+          {\parFun}              % else parabola
+        ifelse }%
+      ifelse }%
+    ifelse }%
+  ifelse }
+\begin{centerfig}
+  \begin{dspPlot}[xtype=freq,ylabel={$X(e^{j\omega})$}]{-1,1}{0,1.1}
+    \dspFunc{x \comFun }
+  \end{dspPlot}
+\end{centerfig}
+
+
+\DescribeMacro{dspPeriodize} Now we can periodize the function using the |\dspPeriodize| macro; plotting multiple periods becomes as simple as changing the axis range:
+\vblock
+\begin{dspPlot}[xtype=freq]{-2,2}{0,1.1}
+  \dspFunc{x \dspPeriodize  \comFun }
+\end{dspPlot}
+
+\begin{dspPlot}[xtype=freq,xticks=1]{-5,5}{0,1.1}
+  \dspFunc{x \dspPeriodize  \comFun }
+\end{dspPlot}
+\end{Verbatim}
+
+\begin{centerfig}
+  \begin{dspPlot}[xtype=freq]{-2,2}{0,1.1}
+    \dspFunc{x \dspPeriodize  \comFun }
+  \end{dspPlot}
+
+  \begin{dspPlot}[xtype=freq,xticks=1]{-5,5}{0,1.1}
+    \dspFunc{x \dspPeriodize  \comFun }
+  \end{dspPlot}
+\end{centerfig}
+
+
+%\end{document}
+
+\subsection{Plotting Analog Spectra}
+To plot analog spectra, just set up a plot environment as you would to plot a continuous-time signal, then set the option |xticks=custom| and place your own frequency labels using |\dspCustomTicks| as in the example below:
+
+\vblock
+\begin{dspPlot}[xtype=freq,xticks=custom,xlabel={freq. (Hz)},%
+    yticks=2,ylabel={$X(j\Omega)$}]{-10,10}{-1,5}
+  \dspFunc{x abs 4 gt {0} {x abs 2 div dup mul 4 exch sub} ifelse}
+  \dspCustomTicks{-4 $-\Omega_N$ 0 $0$  4 $\Omega_N$ 8 $\Omega_s$}
+\end{dspPlot}
+\end{Verbatim}
+
+\begin{centerfig}
+  \begin{dspPlot}[xtype=freq,xticks=custom,xlabel={freq. (Hz)},%
+      yticks=2,ylabel={$X(j\Omega)$}]{-10,10}{-1.5,5}
+    \dspFunc{x abs 4 gt {0} {x abs 2 div dup mul 4 exch sub} ifelse}
+    \dspCustomTicks{-4 $-\Omega_N$ 0 $0$  4 $\Omega_N$ 8 $\Omega_s$}
+  \end{dspPlot}
+\end{centerfig}
+
+
+
+\subsection{Common Signal Shapes and Helper Functions}
+To facilitate the creation of plots that commonly occur in signal processing theory, the package \dspf\ provides a PostScript implementation for the following set of functions; each macro acts on the free variable $x$ in a plot command (see examples below).
+
+\subsubsection*{Basic Shapes:}
+\begin{itemize}
+  \item |\dspRect{a}{b}| computes a rectangular (box) function centered in $a$ and with support $2b$, i.e. $\mbox{rect}((x-a)/b)$ where
+      \[
+        \mbox{rect}(x) = \left\{\begin{array}{ll}
+          1 & \mbox{if $|x|<1/2$} \\
+          0 & \mbox{otherwise}
+          \end{array}\right.
+      \]
+  \item |\dspTri{a}{b}| computes a triangle function centered in $a$ and with support $2b$
+  \item |\dspSinc{a}{b}| computes the scaled sinc function $\mbox{sinc}((x-a)/b)$, where
+    \[
+      \mbox{sinc}(x) = \frac{\sin(\pi x)}{\pi x}
+    \]
+  \item |\dspQuad{a}{b}| computes a quadratic function (inverted parabola) centered in $a$ and with support $2b$
+  \item |\dspExpDec{a}{b}| computes the decaying exponential response $b^(x-a)u[x-a]$
+  \item |\dspPorkpie{a}{b}| computes a ``porkpie hat'' shape centered in $a$ and with support $2b$
+  \item |\dspRaisedCos{a}{b}{r}| computes a raised cosine centered in $a$ with cutoff $b$ and rolloff $r$
+\end{itemize}
+
+\subsubsection*{Discrete Fourier Transform:}
+\begin{itemize}
+  \item |\dspDFTMAG{x_0 x_1 ... x_{N-1}}| computes the magnitude of the Discrete Fourier transform (DFT) of the provided data points\footnote{Please note that the underlying implementation of the macro is not optimized; the computing time will be quadratic in the number of data points.}; the input value should be an integer.
+      \[
+        X[k] = \vert \sum_{n=0}^{N-1}x[n]e^{j\frac{2\pi}{N}nk} \vert
+      \]
+  \item |\dspDFTRE{x_0 x_1 ... x_{N-1}}| computes the real part of the DFT
+  \item |\dspDFTIM{x_0 x_1 ... x_{N-1}}| computes the imaginary part of the DFT
+\end{itemize}
+
+
+\subsubsection*{Notable DTFTs:}
+\begin{itemize}
+  \item |\dspSincS{a}{N}| computes the Discrete-Time Fourier transform (DTFT) of a zero-centered, symmetric $2N+1$-tap rectangular signal:
+      \[
+        X(e^{j\omega}) = \frac{\sin(\omega(2N+1)/2)}{\sin(\omega/2)}
+      \]
+      The parameter $a$ can be used to shift the DTFT to the chosen center frequency.
+  \item |\dspSincC{a}{N}| computes the DTFT magnitude of a causal $N$-tap rectangular signal:
+      \[
+        \vert X(e^{j\omega})\vert =\frac{\sin(\omega(N/2))}{\sin(\omega/2)}
+      \]
+      The parameter $a$ can be used to shift the DTFT to the chosen center frequency.
+\end{itemize}
+
+\subsubsection*{Frequency Responses:}
+\begin{itemize}
+  \item |\dspFIRI{a_0 a_1 ... a_{N-1}}| computes the (real-valued) frequency response of a zero centered $(2N+1)$-tap Type-I FIR filter with coefficients
+      \[
+        a_{N-1}, a_{N-2}, \ldots, a_{1}, a_{0}, a_{1}, a_{2}, \ldots, a_{N-1}.
+      \]
+      The coefficient $a_0$ is the center tap and you need only specify the coefficients from $a_0$ to $a_{N-1}$.
+
+  \item |\dspTFM{a_0 a_1 ... a_{N-1}}{b_1 b_2 ... b_{M-1}}| computes the magnitude response of a generic digital filter defined by the constant-coefficient difference equation:
+    \[
+      y[n] = a_0 x[n] + ... + a_{N-1} x[n-N+1] - b_1 y[n-1] - ... - b_{M-1} y[n-M+1]
+    \]
+\end{itemize}
+
+For instance:
+
+\vblock
+\usepackage{dspFunctions}
+...
+\begin{dspPlot}[sidegap=1]{-2,10}{-1.2, 1.2}
+  \dspFunc{x \dspRect{-1}{1}}
+  \dspFunc{x \dspPorkpie{6}{2}}
+  \dspSignal[linecolor=gray]{x \dspSinc{2}{3} -1 mul}
+\end{dspPlot}
+\end{Verbatim}
+
+\begin{centerfig}
+  \begin{dspPlot}[sidegap=1]{-2,10}{-1.2, 1.2}
+    \dspFunc{x \dspRect{-1}{1}}
+    \dspFunc{x \dspPorkpie{6}{2}}
+    \dspSignal[linecolor=gray]{x \dspSinc{2}{3} -1 mul}
+  \end{dspPlot}
+\end{centerfig}
+
+
+We can generate a finite-length signal and plot its DFT magnitude as in this example, where the 32-point input signal is $\cos(2\pi/32 \cdot (27/5)n)$:
+
+\vblock
+\begin{dspPlot}{0, 31}{0, 18}
+  \dspSignalOpt{/A [ 0 1 31 {360 32 div 5.4 mul mul cos} for ] def}
+    {x \dspDFTMAG{ A aload pop }}
+\end{dspPlot}
+\end{Verbatim}
+
+\begin{centerfig}
+  \begin{dspPlot}{0, 31}{0, 18}
+    \dspSignalOpt{/A [ 0 1 31 {360 32 div 5.4 mul mul cos} for ] def}
+      {x \dspDFTMAG{ A aload pop }}
+  \end{dspPlot}
+\end{centerfig}
+
+
+
+The magnitude of simple FIR and IIR filter can be graphed easily like so:
+\vblock
+\begin{dspPlot}[xtype=freq,xout=true]{-1,1}{-0.5,1.5}
+  \dspFunc[linecolor=gray,linestyle=dashed]{x \dspSincS{0}{6} 13 div}
+  \dspFunc{x \dspFIRI{ 0.3501    0.2823    0.1252   -0.0215   -0.0876
+     -0.0868    0.0374} }
+\end{dspPlot}
+\end{Verbatim}
+
+\begin{centerfig}
+  \begin{dspPlot}[xtype=freq,xout=true]{-1,1}{-0.5,1.5}
+    \dspFunc[linecolor=gray,linestyle=dashed]{x \dspSincS{0}{6} 13 div}
+    \dspFunc{x \dspFIRI{ 0.3501    0.2823    0.1252   -0.0215   -0.0876   -0.0868    0.0374} }
+\end{dspPlot}
+\end{centerfig}
+
+\vblock
+\begin{dspPlot}[xtype=freq,xticks=4]{-1,1}{0,1.1}
+  % 8-th order Chebyshev filter example
+  % Coefficients from Matlab using [b a]=cheby1(8,0.5,0.25)
+  \dspFunc{x \dspTFM{0.000008952611389  0.000071620891113
+  0.000250673118897   0.000501346237795   0.000626682797244
+  0.000501346237795   0.000250673118897   0.000071620891113
+  0.000008952611389}{ 1.000000000000000  -5.975292291885454
+  16.581223292021008 -27.714232735429224  30.395097583553124
+  -22.347296704268793  10.745098004349103  -3.089246336974975
+  0.407076858898017}}
+\end{dspPlot}
+\end{Verbatim}
+
+\begin{centerfig}
+  \begin{dspPlot}[xtype=freq,xticks=4]{-1,1}{0,1.1}
+    % 8-th order Chebyshev filter example
+    % Coefficients from Matlab using [b a]=cheby1(8,0.5,0.25)
+    \dspFunc{x \dspTFM{0.000008952611389  0.000071620891113
+    0.000250673118897   0.000501346237795   0.000626682797244
+    0.000501346237795   0.000250673118897   0.000071620891113
+    0.000008952611389}{ 1.000000000000000  -5.975292291885454
+    16.581223292021008 -27.714232735429224  30.395097583553124
+    -22.347296704268793  10.745098004349103  -3.089246336974975
+    0.407076858898017}}
+  \end{dspPlot}
+\end{centerfig}
+
+
+
+\section{Drawing Regions of Convergence, Poles and Zeros}
+
+\DescribeEnv{dspPZPlot} Pole-zero plots are defined by the environment
+\begin{quote}
+  |\begin{dspPZPlot}|\oarg{options}\marg{M} \\
+  ...                                                               \\
+  |\end{dspPZPlot}|
+\end{quote}
+This plots a square section of the complex plane in which both axes span the $[-M, M]$ interval. Options for the plot are:
+
+\begin{optList}
+  \item[|width| = \meta{dim}]: width of the plot
+  \item[|height| = \meta{dim}]: height of the plot. Normally, since the range is the same for both the real and the imaginary axis, width and height should be equal. You can therefore specify just one of them and the other will be automatically set. If you explicitly specify both, you will be able to obtain an asymmetric figure. By default, width and height are equal to |\dspH|.
+\end{optList}
+
+\begin{optList}
+  \item[|xticks| = |auto| $\mid$ |none| $\mid$ \meta{d}]: labeling of the real axis
+  \item[|yticks| = |auto| $\mid$ |none| $\mid$ \meta{d}]: labeling of the imaginary axis. When the option specifies a numeric value \meta{d}, that will be the spacing between two consecutive ticks on the axis.
+  \item[|cunits| = |true| $\mid$ |false|]: if true, labels the real and imaginary axis with ``Re'' and ``Im'' respectively.
+\end{optList}
+
+\begin{optList}
+  \item[|circle| = \meta{r} ]: draws a circle centered in $z=0$ with radius $r$; by default $r=1$, so that the unit circle will be drawn; set to zero for no circle.
+  \item[|clabel| = \meta{label} ]: for a circle of radius $r$, places the selected label text at $z=r + j0$. By default the label is equal to the value of $r$.
+\end{optList}
+
+\begin{optList}
+  \item[|roc| = \meta{r} ]: draws a {\em causal} region of convergence with radius $r$.
+  \item[|antiroc| = \meta{r} ]: draws an {\em anticausal} region of convergence with radius $r$.
+\end{optList}
+
+
+
+\subsection{Poles and Zeros}
+\DescribeMacro{dspPZ} To plot a pole or a zero at $z=a+jb$ use
+\begin{quote}
+  |\dspPZ|\oarg{options}\marg{a, b} \\
+\end{quote}
+which plots a pole by default; to plot a zero use the option |type=zero|. To associate a label to the point, use the option |label=|\meta{text}; if \meta{text} is |none| no label is printed; if \meta{text} is |auto| (which is the default) the point's coordinates are printed; otherwise the specified text is printed. Finally, you can specify the position of the label using the option |lpos=|\meta{angle}; by default, the angle's value is 45 degrees.
+
+\vblock
+\begin{dspPZPlot}[clabel={$r_0$},roc=0.5]{1.5}
+  \dspPZPoint[label=none]{0.5,0.5}
+  \dspPZPoint[type=zero,label={$x[1]$},lpos=135]{0,1}
+  \dspPZPoint[type=zero,label={$x[0]$},lpos=90]{1.25, 0.78}
+\end{dspPZPlot}
+\end{Verbatim}
+
+\begin{centerfig}
+  \begin{dspPZPlot}[width=6cm,clabel={$r_0$},roc=0.5]{1.7}
+    \dspPZ[label=none]{0.5,0.5}
+    \dspPZ[type=zero,label={$x[1]$},lpos=135]{0,1}
+    \dspPZ[type=zero,label={$x[0]$},lpos=90]{1.25, 0.78}
+  \end{dspPZPlot}
+\end{centerfig}
+
+
+
+
+\section{Block Diagrams}
+\DescribeEnv{dspBlocks} Block diagrams rely heavily on \psTricks ' |psmatrix| environment, for which ample documentation is available. To set up a block diagram use the environment
+\begin{quote}
+  |\begin{dspBlocks}|\marg{x}\marg{y}\\
+  ...                                                               \\
+  |\end{dspBlocks}|
+\end{quote}
+where \meta{x} and \meta{y} define the horizontal and vertical spacing of the blocks in the diagram. Predefined functional blocks are listed in the table below and they can be used anywhere a node is required. Nodes are labeled in top-left matrix notation, i.e. the topmost leftmost node is at coordinates $(1,1)$ and indices increase rightward and downward. Connections between nodes can be drawn using \psTricks ' standard primitive |\ncline|; the package defines the following shorthands:
+\begin{itemize}
+  \item \DescribeMacro{BDConnHNext} to connect with an arrow a node at $(n,m)$ to its neighboring node at $(n,m+1)$ use |\BDConnHNext|\marg{n}\marg{m}
+  \item \DescribeMacro{BDConnH} to connect with an arrow a node at $(n,m)$ to a node on the same row at $(n,p)$ use |\BDConnH|\oarg{options}\marg{n}\marg{m}\marg{p}\marg{label}, which uses \meta{options} as line options and \meta{label} as the label for the connection
+  \item \DescribeMacro{BDConnV} to connect with an arrow a node at $(n,m)$ to a node on the same column at $(q,m)$ use |\BDConnV|\oarg{options}\marg{n}\marg{m}\marg{q}\marg{label}
+\end{itemize}
+
+\DeleteShortVerb{\|}
+\MakeShortVerb{\#}
+
+\begin{center}
+\begin{tabular}{|l|l|c|}
+\hline
+\bf function & \bf macro & \bf output \\
+\hline & & \\
+nodes         & #\BDsplit#              & \begin{dspBlocks}{1}{1}\BDsplit\end{dspBlocks} \\
+& & \\
+              & #\BDadd#                & \begin{dspBlocks}{1}{1}\BDadd\end{dspBlocks}   \\
+& & \\
+              & #\BDmul#                & \begin{dspBlocks}{1}{1}\BDmul\end{dspBlocks} \\
+& & \\ \hline & & \\
+delays        & #\BDdelay#              & \begin{dspBlocks}{1}{1}\BDdelay\end{dspBlocks} \\
+& & \\
+              & #\BDdelayN#\marg{N}     & \begin{dspBlocks}{1}{1}\BDdelayN{N}\end{dspBlocks} \\
+& & \\ \hline & & \\
+filters       & #\BDfilter#\marg{label} & \begin{dspBlocks}{1}{1}\BDfilter{$H(z)$}\end{dspBlocks} \\
+& & \\
+              & #\BDfilterMulti#\marg{labels}  & \begin{dspBlocks}{1}{1}\BDfilterMulti{multiple \\ lines}\end{dspBlocks} \\
+              & {\footnotesize (use #\\# to separate lines)}  & \\
+& & \\
+              & #\BDlowpass#         & \begin{dspBlocks}{1}{1}\BDlowpass[0.5em]\end{dspBlocks} \\
+              & {\footnotesize (you can specify the size of the block, eg #\BDlowpass[2em]#)}  & \\
+& & \\ \hline
+\end{tabular}
+
+\begin{tabular}{|l|l|c|}
+\hline
+\bf function & \bf macro & \bf output \\
+\hline & & \\
+sampler       & #\BDsampler#           & \begin{dspBlocks}{1}{1}\BDsampler\end{dspBlocks} \\
+& & \\
+              & #\BDsamplerFramed#   & \begin{dspBlocks}{1}{1}\BDsamplerFramed[0.5em]\end{dspBlocks} \\
+              & {\footnotesize (you can specify the size of the block, eg #\BDsamplerFramed[2em]#)}  & \\
+& & \\
+interpolator  & #\BDsinc#            & \begin{dspBlocks}{1}{1}\BDsinc[0.5em]\end{dspBlocks} \\
+              & {\footnotesize (you can specify the size of the block, eg #\BDsinc[2em]#)}  & \\
+& & \\ \hline & & \\
+upsampler     & #\BDupsmp#\marg{N}      & \begin{dspBlocks}{1}{1}\BDupsmp{3}\end{dspBlocks} \\
+& & \\
+downsampler   & #\BDdwsmp#\marg{N}      & \begin{dspBlocks}{1}{1}\BDdwsmp{3}\end{dspBlocks} \\
+& & \\ \hline
+\end{tabular}
+\end{center}
+
+
+\newpage
+
+
+\vblock
+\begin{dspBlocks}{.3}{1}
+% first row:
+$x[n]$   &          &          & \BDsplit & \BDdelay &%
+\BDsplit & \BDdelay & \BDsplit & \BDdelay & \BDsplit & \hspace{3em} & %
+         & \BDdelay &  \\
+%
+% second row:
+         &          &          &          &          &%
+\BDadd   &          & \BDadd   &          & \BDadd   & \hspace{3em} & %
+         &          & \BDadd & &  $y[n]$
+%
+% connections:
+  \ncline{1,1}{1,3}
+  \ncline{1,3}{1,5}
+  \ncline{1,5}{1,7}
+  \ncline{1,7}{1,9}
+  \ncline{1,9}{1,10}
+  \ncline[linestyle=dotted]{1,10}{1,12}
+  \ncline{1,12}{1,13}
+  \ncline{1,13}{1,14}
+  \ncline{2,10}{2,11}
+  \ncline[linestyle=dotted]{2,10}{2,13}
+  \ncline{1,4}{2,4}\tlput{$b_0$}
+  \BDConnH{2}{4}{6}{}
+  \BDConnV{1}{6}{2}{$b_1$}
+  \BDConnH{2}{6}{8}{}
+  \BDConnV{1}{8}{2}{$b_2$}
+  \BDConnH{2}{8}{10}{}
+  \BDConnV{1}{10}{2}{$b_3$}
+  \BDConnHNext{2}{13}
+  \BDConnV{1}{14}{2}{$b_{M-1}$}
+  \BDConnH{2}{14}{16}{}
+\end{dspBlocks}
+\end{Verbatim}
+
+\centerline{
+\begin{dspBlocks}{.3}{1}
+\begin{dspBlocks}{.3}{1}
+% first row:
+$x[n]$   &          &          & \BDsplit & \BDdelay &%
+\BDsplit & \BDdelay & \BDsplit & \BDdelay & \BDsplit & \hspace{3em} & %
+         & \BDdelay &  \\
+%
+% second row:
+         &          &          &          &          &%
+\BDadd   &          & \BDadd   &          & \BDadd   & \hspace{3em} & %
+         &          & \BDadd & &  $y[n]$
+%
+% connections:
+  \ncline{1,1}{1,3}
+  \ncline{1,3}{1,5}
+  \ncline{1,5}{1,7}
+  \ncline{1,7}{1,9}
+  \ncline{1,9}{1,10}
+  \ncline[linestyle=dotted]{1,10}{1,12}
+  \ncline{1,12}{1,13}
+  \ncline{1,13}{1,14}
+  \ncline{2,10}{2,11}
+  \ncline[linestyle=dotted]{2,10}{2,13}
+  \ncline{1,4}{2,4}\tlput{$b_0$}
+  \BDConnH{2}{4}{6}{}
+  \BDConnV{1}{6}{2}{$b_1$}
+  \BDConnH{2}{6}{8}{}
+  \BDConnV{1}{8}{2}{$b_2$}
+  \BDConnH{2}{8}{10}{}
+  \BDConnV{1}{10}{2}{$b_3$}
+  \BDConnHNext{2}{13}
+  \BDConnV{1}{14}{2}{$b_{M-1}$}
+  \BDConnH{2}{14}{16}{}
+\end{dspBlocks}
+\end{dspBlocks}
+}
+\vspace{1em}
+
+
+\vblock
+\begin{dspBlocks}{2}{0.4}
+  $x(t)$~~ & \BDlowpass[0.8em] & \BDsamplerFramed[0.8em] & ~~$x[n]$
+  \ncline{->}{1,1}{1,2}
+  \ncline{1,2}{1,3}^{$x_{LP}(t)$}
+  \ncline{->}{1,3}{1,4}
+\end{dspBlocks}
+\end{Verbatim}
+
+
+\centerline{
+\begin{dspBlocks}{2}{0.4}
+  $x(t)$~~ & \BDlowpass[0.8em] & \BDsamplerFramed[0.8em] & ~~$x[n]$
+  \ncline{->}{1,1}{1,2}
+  \ncline{1,2}{1,3}^{$x_{LP}(t)$}
+  \ncline{->}{1,3}{1,4}
+\end{dspBlocks}
+}
+\vspace{3em}
+
+If you need to label nodes for complex connections, you may need to revert to the actual code for the node element, eg:
+
+\vblock
+\begin{dspBlocks}{0.8}{0}
+  & & & [name=A1] \BDfilter{$H(z)$} & & $e^{-j\omega_c n}$ \\
+  $\hat{s}(t)$~~ & \BDsampler
+    & [name=A,mnode=dot,linewidth=2pt] &
+    & [name=B,mnode=circle] + & \BDmul &  [name=C]
+%
+  \psset{arrows=->}
+  \ncangle[angleA=90,angleB=180,linewidth=\BDwidth]{A}{A1}
+  \ncangle[angleA=0,angleB=90,linewidth=\BDwidth]{A1}{B}^{~~~~$j$}
+  \ncbar[angleA=-90,angleB=-90,linewidth=\BDwidth]{A}{B}
+  \ncline{-}{2,1}{2,2}
+  \ncline{-}{2,2}{2,3}^{~~~~~~$\hat{s}[n]$}
+  \ncline{2,5}{2,6}^{$\hat{c}[n]$}
+  \ncline{-}{2,6}{2,7}^{~~~$\hat{b}[n]$}
+  \ncline{1,6}{2,6}
+\end{dspBlocks}
+
+\vspace{7ex}
+
+\begin{dspBlocks}{1.2}{0}
+  [name=D,mnode=circle] $K \downarrow$ & \BDfilter{Slicer} &
+    \BDfilter{Descrambler} &
+    \hspace{1ex}\parbox{4ex}{\small \tt \bf ..01100\\ 01010...}
+  \psset{arrows=->}
+  \ncline{1,1}{1,2}^{$\hat{a}[n]$}
+  \ncline{1,2}{1,3}
+  \ncline{1,3}{1,4}
+\end{dspBlocks}
+\ncbarr[angleA=0,linewidth=1.2pt,linearc=0.2]{C}{D}
+\end{Verbatim}
+
+
+\begin{center}
+  \begin{dspBlocks}{0.8}{0}
+    & & & [name=A1] \BDfilter{$H(z)$} & & $e^{-j\omega_c n}$ \\
+    $\hat{s}(t)$~~ & \BDsampler
+      & [name=A,mnode=dot,linewidth=2pt] &
+      & [name=B,mnode=circle] + & \BDmul &  [name=C]
+%
+    \psset{arrows=->}
+    \ncangle[angleA=90,angleB=180,linewidth=\BDwidth]{A}{A1}
+    \ncangle[angleA=0,angleB=90,linewidth=\BDwidth]{A1}{B}^{~~~~$j$}
+    \ncbar[angleA=-90,angleB=-90,linewidth=\BDwidth]{A}{B}
+    \ncline{-}{2,1}{2,2}
+    \ncline{-}{2,2}{2,3}^{~~~~~~$\hat{s}[n]$}
+    \ncline{2,5}{2,6}^{$\hat{c}[n]$}
+    \ncline{-}{2,6}{2,7}^{~~~$\hat{b}[n]$}
+    \ncline{1,6}{2,6}
+  \end{dspBlocks}
+
+  \vspace{7ex}
+
+  \begin{dspBlocks}{1.2}{0}
+    [name=D,mnode=circle] $K \downarrow$ & \BDfilter{Slicer} &
+      \BDfilter{Descrambler} & \hspace{1ex}\parbox{4ex}{\small \tt \bf ..01100\\ 01010...}
+    \psset{arrows=->}
+    \ncline{1,1}{1,2}^{$\hat{a}[n]$}
+    \ncline{1,2}{1,3}
+    \ncline{1,3}{1,4}
+  \end{dspBlocks}
+  \ncbarr[angleA=0,linewidth=1.2pt,linearc=0.2]{C}{D}
+\end{center}
+
+\newpage
+
+\begin{thebibliography}{1}
+
+  \bibitem{TVZ93} Timothy Van Zandt, {\em PSTricks - PostScript macros for generic TEX}, \url{http://www.tug.org/application/PSTricks}, 1993.
+
+  \bibitem{HV} PSTricks Web pages, maintened by Herbert Vo{\ss}. \url{http://www.pstricks.de}
+
+  \bibitem{ps} Adobe Systems Incorporated, {\em PostScript Language Reference Manual}, Addison-Wesley, 3 edition, 1999.
+
+  \bibitem{BC}  Bill Casselman {\em Mathematical Illustrations}, Cambridge University Press, 2005.
+
+  \bibitem{fp} Michael Mehlich, {\em ``fp'': Fixed point arithmetic for TEX}, \url{CTAN:macros/latex/contrib/fp}.
+
+  \bibitem{PV} Paolo Prandoni and Martin Vetterli, {\em Signal Processing for Communications}, 2008, \url{http://www.sp4comm.org}
+
+\end{thebibliography}
+
+
+\end{document}

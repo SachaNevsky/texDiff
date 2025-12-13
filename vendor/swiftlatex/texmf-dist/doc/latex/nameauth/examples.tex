@@ -1,0 +1,1439 @@
+%--------:| ----------------------------------------------------------------
+%nameauth:| Name authority mechanism for consistency in text and index
+%  Author:| Charles P. Schaum
+%  E-mail:| charles dot schaum@comcast.net
+% License:| Released under the LaTeX Project Public License 1.3c or later
+%     See:| http://www.latex-project.org/lppl.txt
+%
+% This is an example file used with the nameauth package.
+% See README and nameauth.pdf for copyright info.
+%
+\documentclass[11pt]{article}
+%
+% This part of the document preamble exists only for backward compatibility in older
+% distributions of LaTeX. It includes the iftex package only if it exists.
+% If the iftex package is older than 2019, it includes the older packages
+% that aid using multiple engines.
+
+\IfFileExists{iftex.sty}{\usepackage{iftex}}{}
+\unless\ifdefined\RequireTUTeX
+  \usepackage{ifxetex}
+  \usepackage{ifluatex}
+  \usepackage{ifpdf}
+\fi
+%
+% This template can be used when creating both dvi and pdf output. We
+% do not actually use the tikz package in this example file. We set
+% the condition for using tikz with a Boolean flag.
+% 
+% If compatibility with specific dvi viewers is not an issue, then
+% one might ignore the use of \ifDoTikZ altogether.
+%
+\newif\ifDoTikZ
+\ifxetex
+  \usepackage{fontspec}
+  \usepackage{polyglossia}
+  \setdefaultlanguage{american}        % Use own language
+  \usepackage{tikz}
+  \DoTikZtrue	                         % Perhaps not needed
+\else
+  \ifluatex
+    \ifpdf
+      \usepackage{fontspec}
+      \usepackage{polyglossia}
+      \setdefaultlanguage{american}    % Use own language
+      \usepackage{tikz}
+      \DoTikZtrue                      % Perhaps not needed
+    \else
+      \IfFileExists{utf8-2018.def}{}
+      {\usepackage[utf8]{inputenc}}
+      \usepackage[TS1,T1]{fontenc}
+      \usepackage[american]{babel}     % Use own language
+      \usepackage{lmodern}
+%
+% There may be a need to include tikz using luatex in dvi mode;
+% that goes beyond the scope of the nameauth package.
+%
+    \fi
+  \else
+    \IfFileExists{utf8-2018.def}{}
+    {\usepackage[utf8]{inputenc}}
+    \usepackage[TS1,T1]{fontenc}
+    \usepackage[american]{babel}       % Use own language
+    \usepackage{lmodern}
+    \ifpdf                             % Perhaps not needed
+      \usepackage{tikz}
+      \DoTikZtrue                      % Perhaps not needed
+    \fi
+  \fi
+\fi
+%
+% Below are the remainder of package inclusions.
+% 
+\usepackage{booktabs}
+\usepackage[textwidth=137mm,textheight=237mm,right=30mm,marginparwidth=30mm,nohead]{geometry}
+\usepackage{makeidx}
+\usepackage{nameauth}
+\usepackage{verbatim}
+\usepackage[colorlinks=true]{hyperref}
+%
+% We set up indexing, put margin paragraphs on the left, set up the counter for
+% line numbering in verbatim environments, and set up \ifNoTag for use in the
+% life dates text tagging example.
+%
+\makeindex
+\reversemarginpar
+\newcounter{VerbLine}
+\newif\ifNoTag
+%
+% We establish name shorthands. Note the heavy use of \noexpand in the macro arguments
+% below. This is intrinsic to the proper function of such arguments.
+%
+\begin{nameauth}
+ \< Adams & John & \noexpand\textSC{Adams} & >
+ \< SDJR & Sammy & \noexpand\textSC{Davis}, \noexpand\textSC{Jr}. & >
+ \< Dem & & Demetrius, I & >
+ \< deSmet & Pierre-Jean & \noexpand\Fbox{\noexpand\AltCaps{d}e Smet} & >
+ \< HAR & & Harun, \noexpand\textSC{\noexpand\AltCaps{a}l-Rashid} & >
+ \< Harnack & Adolf & Harnack & >
+ \< Jeff & Thomas & \noexpand\JEFF & >
+ \< Mencius & & \noexpand\textSC{Mencius} & >
+ \< Scipio & \noexpand\SCIPi & \noexpand\SCIPii & >
+ \< Shak & \noexpand\WM & \noexpand\SHK & >
+ \< Sutorius & Quintus & \noexpand\SUTOR & >
+ \< Wash & George & Washington & >
+\end{nameauth}
+%
+% We set up a text tag here, but we will set more up in the body text.
+%
+\NameAddInfo{Demetrius, I}{ Soter}
+%
+% Below we establish sort tags for names. Note again the consistent use of \noexpand.
+%
+\PretagName[John]{\noexpand\textSC{Adams}}{Adams, John}
+\PretagName[Sammy]{\noexpand\textSC{Davis}, \noexpand\textSC{Jr}.}{Davis, Sammy, Jr.}
+\PretagName{Demetrius, I}{Demetrius 1}
+\PretagName[Pierre-Jean]{\noexpand\Fbox{\noexpand\AltCaps{d}e Smet}}{de Smet, Pierre-Jean}
+\PretagName{Harun, \noexpand\textSC{\noexpand\AltCaps{a}l-Rashid}}{Harun al-Rashid}
+\PretagName[Thomas]{\noexpand\JEFF}{Jefferson, Thomas}
+\PretagName{\noexpand\textSC{Mencius}}{Mencius}
+\PretagName{\noexpand\textSC{Meng}, Ke}{Meng Ke}
+\PretagName[\noexpand\SCIPi]{\noexpand\SCIPii}{Scipio Africanus}
+\PretagName[Quintus]{\noexpand\SUTOR}{Naevius Sutorius}
+\PretagName[\noexpand\WM]{\noexpand\SHK}{Shakespeare, William}
+\PretagName{Vlad, Ţepeş}{Vlad Tepes}
+\TagName[John]{\noexpand\textSC{Adams}}{, president}
+\TagName{Demetrius, I}{ Soter, king}
+\TagName[Thomas]{\noexpand\JEFF}{, president}
+\TagName{Vlad, II}{ Dracul}
+\TagName{Vlad, III}{ Dracula}
+\TagName[Martin]{Van Buren}{, president}
+\TagName[Ulysses S.]{Grant}{, president}
+\TagName[George]{Washington}{, president}
+%
+% We set up line numbering in verbatim environments.
+%
+\makeatletter
+\newcommand*\ClearNum{\def\verbatim@processline{\the\verbatim@line\par}}
+\newcommand*\StartNum{\setcounter{VerbLine}{0}\def\verbatim@processline{\stepcounter{VerbLine}\leavevmode\llap{\footnotesize\normalfont\theVerbLine\quad}\the\verbatim@line\par}}
+\newcommand*\ContinueNum{\def\verbatim@processline{\stepcounter{VerbLine}\leavevmode\llap{\footnotesize\normalfont\theVerbLine\quad}\the\verbatim@line\par}}
+\makeatother
+%
+% The default verbatim format is no line numbers.
+% We add title, author, and date.
+%
+\ClearNum
+\title{\bfseries Longer Examples}
+\author{Charles P. Schaum}
+\date{2020/02/26}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+\bigskip
+
+{\large\bfseries\hyperlink{Index}{Index}}
+\newpage
+
+\section{Particles}
+
+First we use variants with the \(\langle Alternate\rangle\) argument:
+\begin{quote}\small
+\StartNum
+\begin{verbatim}
+\NameAddInfo{Demetrius, I}{ Soter}
+\PretagName{Demetrius, I}{Demetrius 1}
+\TagName{Demetrius, I}{ Soter, king}
+\begin{nameauth}
+  \< Dem & & Demetrius, I & >
+\end{nameauth}
+\end{verbatim}
+
+\smallskip
+  \begin{tabular}{@{}ll}
+    \verb+\Dem[I Soter]+ & \Dem[I Soter]\\
+    \verb+\LDem+         & \LDem\\
+    \verb+\Dem+          & \Dem\\
+  \end{tabular}
+\end{quote}
+
+\begingroup%
+\makeatletter\renewcommand*\NamesFormat[1]{\begingroup%
+\protected@edef\temp{\endgroup{#1%
+\noexpand\NameQueryInfo[\unexpanded\expandafter{\the\@nameauth@toksa}]
+{\unexpanded\expandafter{\the\@nameauth@toksb}}
+[\unexpanded\expandafter{\the\@nameauth@toksc}]}}\temp}\makeatother
+\noindent For a more automated approach, we use ``text tags'' in the formatting macros:
+\begin{quote}\small
+\makeatletter\ContinueNum\makeatother
+\begin{verbatim}
+\makeatletter
+\renewcommand*\NamesFormat[1]{%
+  \begingroup%
+  \protected@edef\temp{\endgroup%
+    {#1\noexpand\NameQueryInfo
+      [\unexpanded\expandafter{\the\@nameauth@toksa}]
+      {\unexpanded\expandafter{\the\@nameauth@toksb}}
+      [\unexpanded\expandafter{\the\@nameauth@toksc}]%
+    }%
+  }%
+  \temp%
+}
+\makeatother
+\end{verbatim}
+
+\smallskip
+  \begin{tabular}{@{}ll}
+    \verb+\ForgetThis\Dem+ & \ForgetThis\Dem\\
+    \verb+\LDem+           & \LDem\\
+    \verb+\Dem+            & \Dem\\
+  \end{tabular}
+\end{quote}
+\endgroup
+\newpage
+
+\section{Roman Names}
+\begingroup
+We want all names in the index, so we define two macros that expand to be one or two components: \textit{praenomen} and \textit{nomen}; \textit{cognomen} and \textit{agnomen}. Below we want to index under the \textit{cognomen}. We begin by defining a name with macros using \verb+\noexpand+ to prevent error:
+\newif\ifSkipGens
+\newif\ifNoGens
+\newif\ifSkipAgnomen
+\newif\ifNoAgnomen
+\newcommand*\SCIPi{\ifNoGens Publius\else
+                   Publius Cornelius\fi}
+\newcommand*\SCIPii{\ifNoAgnomen Scipio\else
+                    Scipio Africanus\fi}
+\newcommand*\ScipioOnly{\SkipAgnomentrue\Scipio}
+%
+% This form of \NamesFormat produces the longest possible name form in the first mention.
+%
+\renewcommand*\NamesFormat[1]%
+  {\ifSkipGens\NoGenstrue\fi\ifSkipAgnomen\NoAgnomentrue\fi#1%
+  \global\SkipGensfalse\global\SkipAgnomenfalse}
+%
+% If we always wanted to skip the nomen or agnomen in subsequent references, we could
+% force either \NoGenstrue or \NoAgnomentrue in \MainNameHook. The form below is
+% neutral to such preferences and thus, one must set them manually.
+%
+\renewcommand*\MainNameHook[1]%
+  {\ifSkipGens\NoGenstrue\fi\ifSkipAgnomen\NoAgnomentrue\fi#1%
+  \global\SkipGensfalse\global\SkipAgnomenfalse}
+ \begin{quote}\small
+ \StartNum
+ \begin{verbatim}
+\begin{nameauth}
+  \< Scipio & \noexpand\SCIPi & \noexpand\SCIPii & >
+\end{nameauth}
+\PretagName[\noexpand\SCIPi]{\noexpand\SCIPii}{Scipio Africanus}
+\end{verbatim}
+ \end{quote}
+
+ We define the flags and macros by which the name will change. The global state of \verb+\NoGens+ and \verb+\NoAgnomen+ determine the index form. The local scope in the formatting hooks allows changes that are reset when exiting that scope.
+ \begin{quote}\small
+ \ContinueNum
+\begin{verbatim}
+\newif\ifSkipGens
+\newif\ifNoGens
+\newif\ifSkipAgnomen
+\newif\ifNoAgnomen
+\newcommand*\SCIPi{\ifNoGens Publius\else
+                   Publius Cornelius\fi}
+\newcommand*\SCIPii{\ifNoAgnomen Scipio\else
+                    Scipio Africanus\fi}
+\newcommand*\ScipioOnly{\SkipAgnomentrue\Scipio}
+\renewcommand*\NamesFormat[1]%^^A
+  {\ifSkipGens\NoGenstrue\fi\ifSkipAgnomen\NoAgnomentrue\fi#1%
+  \global\SkipGensfalse\global\SkipAgnomenfalse}
+\renewcommand*\MainNameHook[1]%^^A
+  {\ifSkipGens\NoGenstrue\fi\ifSkipAgnomen\NoAgnomentrue\fi#1%
+  \global\SkipGensfalse\global\SkipAgnomenfalse}
+\end{verbatim}
+\smallskip
+\ScipioOnly\ \verb+\ScipioOnly+ was born around 236 \textsc{bc} into the Scipio branch of the Cornelius clan, one of six large patrician clans. \SkipGenstrue\ScipioOnly\ \verb+\SkipGenstrue\ScipioOnly+ rose to fame with his military exploits in Hispania and Africa during the Second Punic War. Thereafter he was known as \SkipGenstrue\Scipio\ \verb+\SkipGenstrue\Scipio+.
+ \end{quote}
+ 
+ The index entry is fairly lengthy by necessity, governed by the global state of the Boolean flags, and expanding to:
+\begin{quote}
+ \texttt{\ShowIdxPageref[\noexpand\SCIPi]{\noexpand\SCIPii}}
+\end{quote}
+
+%
+% We can keep the redefined formatting macros above.
+%
+If we want to index under the \textit{nomen}, we take a slightly different approach:
+ \begin{quote}\small
+ \StartNum
+ \begin{verbatim}
+\begin{nameauth}
+  \< Sutorius & Quintus & \noexpand\SUTOR & >
+\end{nameauth}
+\PretagName[Quintus]{\noexpand\SUTOR}{Naevius Sutorius}
+\newcommand*\SUTOR{\ifNoGens
+                   \ifNoAgnomen
+                   Sutorius\else
+                   Sutorius Macro\fi
+                 \else\ifNoAgnomen
+                   Naevius Sutorius\else
+                   Naevius Sutorius Macro\fi\fi}
+\end{verbatim}
+\end{quote}
+\newcommand*\SUTOR{\ifNoGens
+                   \ifNoAgnomen
+                   Sutorius\else
+                   Sutorius Macro\fi
+                 \else\ifNoAgnomen
+                   Naevius Sutorius\else
+                   Naevius Sutorius Macro\fi\fi}
+
+\verb+\Sutorius              +\Sutorius
+
+\verb+\SkipGenstrue\Sutorius +\SkipGenstrue\Sutorius
+
+\endgroup
+\newpage
+
+\section{Alternate Formatting: Inflections}
+
+In this section we use a scope to contain \verb+\AltFormatActive+ as we show how to implement a simple grammatical inflection. Notice the similarities between handling the Roman names above and the grammatical inflections below this points to a general method when introducing variations into the name macro arguments, while keeping index entries consistent.
+
+\begingroup\AltFormatActive
+\newif\ifGenitive
+\newif\ifDoGen
+\renewcommand*\NamesFormat[1]
+  {\ifGenitive\DoGentrue\fi#1\global\Genitivefalse}
+\renewcommand*\MainNameHook[1]
+  {\ifGenitive\DoGentrue\fi\AltOff#1\global\Genitivefalse}
+\newcommand\JEFF{\ifDoGen\textSC{Jefferson's}\else\textSC{Jefferson}\fi}
+\begin{quote}\small
+\StartNum
+\begin{verbatim}
+\newif\ifGenitive
+\newif\ifDoGen
+\renewcommand*\NamesFormat[1]
+  {\ifGenitive\DoGentrue\fi#1\global\Genitivefalse}
+\renewcommand*\MainNameHook[1]
+  {\ifGenitive\DoGentrue\fi\AltOff#1\global\Genitivefalse}
+\begin{nameauth}
+  \< Jeff & Thomas & \noexpand\JEFF & >
+\end{nameauth}
+\PretagName[Thomas]{\noexpand\JEFF}{Jefferson, Thomas}
+\TagName[Thomas]{\noexpand\JEFF}{, president}
+\newcommand\JEFF{\ifDoGen\textSC{Jefferson's}\else
+  \textSC{Jefferson}\fi}
+
+Consider \Genitivetrue\Jeff\ influence. More on \Jeff\ later.
+\Genitivetrue\Jeff\ reputation has declined in recent decades.
+\end{verbatim}
+
+\smallskip
+Consider \Genitivetrue\Jeff\ legacy. More on \Jeff\ later.
+\Genitivetrue\Jeff\ reputation has declined in recent decades.
+\end{quote}
+\newpage
+
+ 
+\section{Continental Format Reference Work}
+
+Let us create a macro for entries in a reference work using the basic form of Continental formatting.
+
+\begin{quote}\small
+  \StartNum
+  \begin{verbatim}
+\AltFormatActive
+\PretagName[Greta]{\textSC{Garbo}}{Garbo, Greta}
+\PretagName[Heinz]{\textSC{Rühmann}}{Ruehmann, Heinz}
+\PretagName[Heinrich Wilhelm]{\textSC{Rühmann}}%
+  {Ruehmann, Heinrich Wilhelm}
+
+\newcommand{\RefArticle}[4]{%
+  \def\check{#2}%
+  \ifx\check\empty
+    \noindent\ForgetThis#1\ {#4}
+  \else
+    \noindent\ForceName#1\ ``\ForceName#2''
+    \ForceName#3\ {#4}
+  \fi
+}
+\end{verbatim}
+\end{quote}
+
+\PretagName[Greta]{\textSC{Garbo}}{Garbo, Greta}
+\PretagName[Heinz]{\textSC{Rühmann}}{Ruehmann, Heinz}
+\PretagName[Heinrich Wilhelm]{\textSC{Rühmann}}%
+  {Ruehmann, Heinrich Wilhelm}
+\newcommand{\RefArticle}[4]{%
+  \def\check{#2}%
+  \ifx\check\empty
+    \noindent\ForgetThis#1\ {#4}
+  \else
+    \noindent\ForceName#1\ ``\ForceName#2''
+    \ForceName#3\ {#4}
+  \fi
+}
+\verb+\RefArticle+ either formats the name from the first argument and appends the fourth argument, ignoring the others if the second is empty, or it formats the first three arguments and appends the fourth. We determine what those arguments mean by including specific naming macros.
+\begin{quote}\small
+  \ContinueNum
+  \begin{verbatim}
+\RefArticle%
+  {\Name[Greta]{\textSC{Garbo}}}%
+  {}{}%
+  {(18 September 1905\,--\,15 April 1990) was a Swedish
+   film actress during the 1920s and 1930s.}
+
+\RefArticle%
+  {%
+    \IndexRef[Heinrich Wilhelm]{\textSC{Rühmann}}%
+      {\textSC{Rühmann}, Heinz}%
+    \SubvertThis\FName[Heinrich Wilhelm]{\textSC{Rühmann}}%
+  }%
+  {\SubvertThis\FName[Heinz]{\textSC{Rühmann}}}%
+  {\Name[Heinz]{\textSC{Rühmann}}}%
+  {(7 March 1902\,--\,3 October 1994) was a German actor
+   in over 100 films.}
+   
+\AltFormatInactive
+\end{verbatim}
+\end{quote}
+
+\begin{quote}
+\RefArticle%
+  {\Name[Greta]{\textSC{Garbo}}}%
+  {}{}%
+  {(18 September 1905\,--\,15 April 1990) was a Swedish
+   film actress during the 1920s and 1930s.}
+
+\RefArticle%
+  {%
+    \IndexRef[Heinrich Wilhelm]{\textSC{Rühmann}}%
+      {\textSC{Rühmann}, Heinz}%
+    \SubvertThis\FName[Heinrich Wilhelm]{\textSC{Rühmann}}%
+  }%
+  {\SubvertThis\FName[Heinz]{\textSC{Rühmann}}}%
+  {\Name[Heinz]{\textSC{Rühmann}}}%
+  {(7 March 1902\,--\,3 October 1994) was a German actor
+   in over 100 films.}
+\end{quote}
+\endgroup
+\newpage
+
+\section{Beamer MWE}
+One must use the macros that control and detect names, otherwise name forms will change as one advances the slides:
+\begin{quote}\small
+\StartNum
+\begin{verbatim}
+\documentclass{beamer}
+\usepackage{nameauth}
+\mode<presentation>
+\beamerdefaultoverlayspecification{<+->}
+
+\begin{document}
+
+\begin{frame}{Move Text Without Retyping Names}
+  \begin{itemize}\footnotesize
+  \item<1-> Original\ForgetName[George]{Washington}%
+                    \ForgetName[George]{Washington's}\\
+            \Name[Martin]{Van Buren} changes
+            after the first overlay.
+  \begin{enumerate}
+  \item<2-> \IfMainName[George]{Washington's}{He}%
+            {\Name[George]{Washington}}
+            became the first president
+            of the United States.
+  \item<3-> \IfMainName[George]{Washington}{His}%
+            {\SkipIndex\Name*[George]{Washington's}}
+            military successes during the Seven Years War
+            readied him to command the army
+            of the Continental Congress.
+  \end{enumerate}
+  \item<1-> Reordered\ForgetName[George]{Washington}%
+                     \ForgetName[George]{Washington's}\\
+            \ForgetThis\Name[Ulysses S.]{Grant}
+            does not change.
+  \begin{enumerate}
+  \item<3-> \IfMainName[George]{Washington}{His}%
+            {\SkipIndex\Name*[George]{Washington's}}
+            military successes during the Seven Years War
+            readied him to command the army
+            of the Continental Congress.
+  \item<2-> \IfMainName[George]{Washington's}{He}%
+            {\Name[George]{Washington}}
+            became the first president
+            of the United States.
+  \end{enumerate}
+  \end{itemize}
+\end{frame}
+
+\end{document}
+\end{verbatim}
+\IndexName[George]{Washington}
+\IndexName[Martin]{Van Buren}
+\IndexName[Ulysses S.]{Grant}
+\end{quote}
+
+The overlays, numbered progressively from one to three, begin by deleting name control sequence patterns. Uncontrolled names will change. Name conditionals ensure specific, context-dependent forms based on what name has appeared. These conditionals allow the text to be order-independent.
+\newpage
+
+\section{Hooks: Intro}
+\label{sec:Hooksi}
+
+Something more complex than a font switch can occur in \verb+\NamesFormat+. Below we put the first mention of a name in boldface, with a margin note, if possible.
+\begin{quote}\small
+\StartNum
+\begin{verbatim}
+\let\OldFormat\NamesFormat
+\renewcommand*\NamesFormat[1]{\textbf{#1}\unless\ifinner
+  \marginpar{\raggedleft\scriptsize #1}\fi}
+\let\NamesFormat\OldFormat
+\PretagName{Vlad, Ţepeş}{Vlad Tepes} % for accented names
+\TagName{Vlad, II}{ Dracul}          % for index information 
+\TagName{Vlad, III}{ Dracula}
+\end{verbatim}
+
+Within the document after the preamble:\vspace{-\medskipamount}%
+\let\OldFormat\NamesFormat%
+\renewcommand*\NamesFormat[1]{\textbf{#1}\unless\ifinner
+  \marginpar{\raggedleft\scriptsize #1}\fi}%
+\ContinueNum
+\begin{verbatim}
+\Name{Vlad, III}[III Dracula], known as
+\AKA{Vlad III}{Vlad, Ţepeş} (the Impaler)
+after his death, was the son of \Name{Vlad, II}[II Dracul],
+a member of the Order of the Dragon. Later references to
+``\Name*{Vlad, III}'' and ``\Name{Vlad, III}'' appear thus.\end{verbatim}
+
+\Name{Vlad, III}[III Dracula], known as
+\AKA{Vlad III}{Vlad, Ţepeş} (the Impaler)
+after his death, was the son of \Name{Vlad, II}[II Dracul],
+a member of the Order of the Dragon. Later references to
+``\Name*{Vlad, III}'' and ``\Name{Vlad, III}'' appear thus.
+
+\let\NamesFormat\OldFormat
+\begin{verbatim}\let\NamesFormat\OldFormat
+\end{verbatim}
+\end{quote}
+
+Now we have reverted to the default \verb+\NamesFormat+ and we get:
+\begin{itemize}
+  \item \verb+\ForgetThis\Name{Vlad, III}[III Dracula]+\dotfill \ForgetThis\Name{Vlad, III}[III Dracula]
+  \item \verb+\Name*{Vlad, III}+\dotfill \Name*{Vlad, III}
+  \item \verb+\Name{Vlad, III}+\dotfill \Name{Vlad, III}
+\end{itemize}
+
+We also set up the cross-reference \verb+\IndexRef{Dracula}{Vlad III}+\IndexRef{Dracula}{Vlad III}.
+\newpage
+
+\section{Hooks: Life Dates}
+\label{sec:Hooksii}
+Here we add name conditionals and ``text tags'' to add information to names when desired. The example \verb+\NamesFormat+ below adds a text tag to the first occurrences of main-matter names. It uses internal macros of \verb+\@nameauth@Name+. To prevent errors, the Boolean values \texttt{\textbackslash if@nameauth@InName} and \texttt{\textbackslash if@nameauth@InAKA} are true only within the scope of \verb+\@nameauth@Name+ and \verb+\AKA+ respectively.
+
+Below we use the three token registers available in \textsf{nameauth} to use the name conditional macros. In \verb+\AKA+ these token registers are copies of the \textbf{last} three arguments, corresponding to the pseudonym. We assume that we will not be using the \texttt{alwaysformat} option, meaning that we only call this hook once for a first use of \verb+\AKA+. We also use a different formatting for the naming macros on the one hand and \verb+\AKA+ on the other:
+
+\begin{quote}\small
+\StartNum
+\begin{verbatim}
+\newif\ifNoTag% allows us to work around \ForgetName
+\let\OldFormat\NamesFormat
+\let\OldFrontFormat\FrontNamesFormat
+\makeatletter
+\renewcommand*\NamesFormat[1]{\begingroup%
+ \protected@edef\temp{\endgroup\textsc{#1}%
+ \unless\ifNoTag
+   \if@nameauth@InName
+     {\bfseries\noexpand\NameQueryInfo
+     [\unexpanded\expandafter{\the\@nameauth@toksa}]
+     {\unexpanded\expandafter{\the\@nameauth@toksb}}
+     [\unexpanded\expandafter{\the\@nameauth@toksc}]}\fi
+   \if@nameauth@InAKA
+     {\normalfont\noexpand\NameQueryInfo
+     [\unexpanded\expandafter{\the\@nameauth@toksa}]
+     {\unexpanded\expandafter{\the\@nameauth@toksb}}
+     [\unexpanded\expandafter{\the\@nameauth@toksc}]}\fi
+ \fi}\temp\global\NoTagfalse%
+}
+\makeatother
+\let\FrontNamesFormat\NamesFormat
+\end{verbatim}
+\end{quote}
+\let\OldFormat\NamesFormat%
+\let\OldFrontFormat\FrontNamesFormat%
+\makeatletter%
+\renewcommand*\NamesFormat[1]{\begingroup%
+  \protected@edef\temp{\endgroup\textsc{#1}%
+  \unless\ifNoTag
+    \if@nameauth@InName
+      {\bfseries\noexpand\NameQueryInfo
+      [\unexpanded\expandafter{\the\@nameauth@toksa}]
+      {\unexpanded\expandafter{\the\@nameauth@toksb}}
+      [\unexpanded\expandafter{\the\@nameauth@toksc}]}\fi
+    \if@nameauth@InAKA
+      {\normalfont\noexpand\NameQueryInfo
+      [\unexpanded\expandafter{\the\@nameauth@toksa}]
+      {\unexpanded\expandafter{\the\@nameauth@toksb}}
+      [\unexpanded\expandafter{\the\@nameauth@toksc}]}\fi
+  \fi}\temp\global\NoTagfalse}%
+\makeatother
+
+We print tags in the first use hooks unless \verb+\NoTag+ is set true. Please note that the conditional path here is placed within the \verb+\edef+. Putting it outside the \verb+\edef+, such as \verb+\unless\ifNoTag\temp\fi+, will cause errors. This method uses the $\epsilon$-\TeX{} primitives \verb+\noexpand+ and \verb+\unexpanded+ to avoid repetition of \verb+\expandafter+.
+
+Before we can refer to any text tags, we must create them. Using the approach above, we must include a leading space in the text tags. The leading space is needed only when a text tag appears. We also set up a cross-reference:
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\NameAddInfo[George]{Washington}{ (1732--99)}
+\NameAddInfo[Mustafa]{Kemal}{ (1881--1938)}
+\NameAddInfo{Atatürk}{ (in 1934, a special surname)}
+\IndexRef{Atatürk}{Kemal, Mustafa}
+\end{verbatim}
+\end{quote}
+\NameAddInfo[George]{Washington}{ (1732--99)}
+\NameAddInfo[Mustafa]{Kemal}{ (1881--1938)}
+\NameAddInfo{Atatürk}{ (in 1934, a special surname)}
+\IndexRef{Atatürk}{Kemal, Mustafa}
+
+Now we begin with the first example, where the name is in small caps, while the dates are in boldface because we use a naming macro. This formatting is used only to show the different decision paths:
+\newpage
+
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\ForgetThis\Wash held office 1789--97.\\
+No tags: \Wash.\\
+First use, dates suppressed: \NoTagtrue\ForgetThis\Wash.
+\end{verbatim}
+
+\smallskip
+\ForgetThis\Wash\ held office 1789--97.\\
+No tags: \Wash.\\
+First use, dates suppressed: \NoTagtrue\ForgetThis\Wash.
+\end{quote}
+
+Since we already set up a cross-reference with \verb+\IndexRef+, we can use the naming macros with ``Atatürk'' and get the desired formatting without any page references:
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\Name[Mustafa]{Kemal} was granted the name
+\Name{Atatürk}. We mention \Name[Mustafa]{Kemal}
+and \Name{Atatürk} again.
+
+First use, no tag:
+\NoTagtrue\ForgetThis\Name{Atatürk}.
+\end{verbatim}
+
+\smallskip
+\Name[Mustafa]{Kemal} was granted the name
+\Name{Atatürk}. We mention \Name[Mustafa]{Kemal}
+and \Name{Atatürk} again.
+
+First use, no tag:
+\NoTagtrue\ForgetThis\Name{Atatürk}.
+\end{quote}
+
+Since we set up distinct formatting (\verb+\normalfont+ instead of boldface) for name tags and cross-reference tags, we now simulate the \texttt{formatAKA} package option and use \verb+\ForceName+ with \verb+\AKA+:
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\makeatletter\@nameauth@AKAFormattrue\makeatother
+\ForgetThis\Name[Mustafa]{Kemal} was granted the name
+\ForceName\AKA[Mustafa]{Kemal}{Atatürk}. We mention
+\Name[Mustafa]{Kemal} and \AKA[Mustafa]{Kemal}{Atatürk} again.
+
+First use, no tag:
+\NoTagtrue\ForceName\AKA[Mustafa]{Kemal}{Atatürk}.
+\end{verbatim}
+
+\smallskip
+\makeatletter\@nameauth@AKAFormattrue\makeatother
+\ForgetThis\Name[Mustafa]{Kemal} was granted the name
+\ForceName\AKA[Mustafa]{Kemal}{Atatürk}. We mention
+\Name[Mustafa]{Kemal} and \AKA[Mustafa]{Kemal}{Atatürk} again.
+
+First use, no tag:
+\NoTagtrue\ForceName\AKA[Mustafa]{Kemal}{Atatürk}.
+\end{quote}
+
+We show an alternate part of this example on the next page that does not appear in the manual, but works identically to that above.
+\newpage
+
+We change the look of the page reference just to see if it works:
+
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\def\fett#1{\textbf{\sffamily #1}}
+\TagName[Mustafa]{Kemal}{|fett}
+\end{verbatim}
+\end{quote}
+\def\fett#1{\textbf{\sffamily #1}}
+\TagName[Mustafa]{Kemal}{|fett}
+
+This version does not use $\epsilon$-\TeX primitives. We ``forget'' names as needed and replay the text on the previous page with the new version:
+
+\makeatletter
+\renewcommand*\NamesFormat[1]{%
+  \let\ex\expandafter%
+  \textsc{#1}%
+  \if@nameauth@InName
+    \ifNoTag
+    \else
+      \bfseries%
+      \ex\ex\ex\ex\ex\ex\ex\NameQueryInfo\ex\ex\ex\ex\ex\ex\ex[%
+      \ex\ex\ex\the\ex\ex\ex\@nameauth@toksa\ex\ex\ex]%
+      \ex\ex\ex{\ex\the\ex\@nameauth@toksb\ex}%
+      \ex[\the\@nameauth@toksc]%
+    \fi\fi
+  \if@nameauth@InAKA
+    \ifNoTag
+    \else
+      \normalfont%
+      \ex\ex\ex\ex\ex\ex\ex\NameQueryInfo\ex\ex\ex\ex\ex\ex\ex[%
+      \ex\ex\ex\the\ex\ex\ex\@nameauth@toksa\ex\ex\ex]%
+      \ex\ex\ex{\ex\the\ex\@nameauth@toksb\ex}%
+      \ex[\the\@nameauth@toksc]%
+    \fi\fi
+  \global\NoTagfalse}
+\makeatother
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\newif\ifNoTag
+\makeatletter
+\renewcommand*\NamesFormat[1]{%
+  \let\ex\expandafter%
+  \textsc{#1}%
+  \if@nameauth@InName
+    \ifNoTag
+    \else
+      \bfseries%
+      \ex\ex\ex\ex\ex\ex\ex\NameQueryInfo\ex\ex\ex\ex\ex\ex\ex[%
+      \ex\ex\ex\the\ex\ex\ex\@nameauth@toksa\ex\ex\ex]%
+      \ex\ex\ex{\ex\the\ex\@nameauth@toksb\ex}%
+      \ex[\the\@nameauth@toksc]%
+    \fi\fi
+  \if@nameauth@InAKA
+    \ifNoTag
+    \else
+      \normalfont%
+      \ex\ex\ex\ex\ex\ex\ex\NameQueryInfo\ex\ex\ex\ex\ex\ex\ex[%
+      \ex\ex\ex\the\ex\ex\ex\@nameauth@toksa\ex\ex\ex]%
+      \ex\ex\ex{\ex\the\ex\@nameauth@toksb\ex}%
+      \ex[\the\@nameauth@toksc]%
+    \fi\fi
+  \global\NoTagfalse}
+\makeatother
+\end{verbatim}
+
+\smallskip
+With \verb+\Name+:\\
+\ForgetThis\Name[Mustafa]{Kemal} was granted the name
+\ForgetThis\Name{Atatürk}. We mention \Name[Mustafa]{Kemal}
+and \Name{Atatürk} again.
+
+First use, no tag: \NoTagtrue\ForgetThis\Name{Atatürk}.\bigskip
+
+With \verb+\AKA+:\\
+\makeatletter\@nameauth@AKAFormattrue\makeatother
+\ForgetThis\Name[Mustafa]{Kemal} was granted the name
+\ForceName\AKA[Mustafa]{Kemal}{Atatürk}. We mention
+\Name[Mustafa]{Kemal} and \AKA[Mustafa]{Kemal}{Atatürk} again.
+
+First use, no tag: \NoTagtrue\ForceName\AKA[Mustafa]{Kemal}{Atatürk}.
+\end{quote}
+
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\let\NamesFormat\OldFormat
+\let\FrontNamesFormat\OldFrontFormat
+\end{verbatim}
+\end{quote}
+\let\NamesFormat\OldFormat
+\let\FrontNamesFormat\OldFrontFormat
+\newpage
+
+\section{Hooks: Advanced}
+\label{sec:Hooksiii}
+We start alternate formatting in a new scope with \verb+\AltFormatActive+. The scope ends just before the index is printed.
+\AltFormatActive
+
+\begin{center}\bfseries Continental Format\end{center}
+
+\noindent Here we look in greater detail at how \textsf{nameauth} implements the advanced version of Continental formatting. Font changes in both text and the index occur with the short macros \verb+\textSC+, \verb+\textIT+, \verb+\textBF+, and \verb+\textUC+. Since they all look similar to \verb+\textSC+, we just show this one macro from the package source:
+\begin{quote}\small
+\StartNum
+\begin{verbatim}
+\newcommand*\textSC[1]{%
+  \if@nameauth@DoAlt\textsc{#1}\else#1\fi
+}
+\end{verbatim}
+\end{quote}
+
+We plan to have small caps on by default, then off in subsequent uses. We therefore use \verb+\AltFormatActive+ for the ``always on'' general condition, then redefine \verb+\MainNameHook+  because it is the subsequent use. We use \verb+\AltOff+ to suppress formatting. It works only in the formatting hooks. \verb+\AltOff+ toggles an internal flag that deactivates any changes:
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\newcommand*\AltOff{%
+  \if@nameauth@InHook\@nameauth@DoAltfalse\fi
+}
+\end{verbatim}
+\end{quote}
+
+Since the normal effects of \verb+\CapThis+ are disabled, \verb+\AltCaps+ does the job by capitalizing its argument in braces \texttt{\{~\}} when it is used in a macro hook and triggered by \verb+\CapThis+. The source looks like:
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\newcommand*\AltCaps[1]{%
+  \if@nameauth@InHook
+    \if@nameauth@DoCaps\MakeUppercase{#1}\else#1\fi
+  \else#1\fi
+}
+\end{verbatim}
+\end{quote}
+
+It is important that these macros not expand too soon. We therefore must put \verb+\noexpand+ once before \verb+\textSC+, etc., and once before \verb+\AltCaps+. This is because the name arguments in \textsf{nameauth} have to use \verb+\protected@edef+ to work consistently in different document classes.
+
+Before we alter the formatting hooks, we either can \verb+\let+ the hook macros to recall them later or we can use \verb+\begingroup+ and \verb+\endgroup+ to create a new scope that localizes any changes. We use scoping in this section.
+
+The final step \textbf{does not come} from the \textsf{nameauth} source. We must redefine the formatting hooks ourselves. One of the simplest ways to do this when using the \texttt{altformat} option or \verb+\AltFormatActive+ is:
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\renewcommand*\MainNameHook{\AltOff}
+\let\FrontNameHook\MainNameHook
+\end{verbatim}
+\end{quote}
+
+\renewcommand*\MainNameHook{\AltOff}\let\FrontNameHook\MainNameHook
+Use \verb+\let\FrontNamesFormat\MainNameHook+ to suppress formatting in the front matter.
+Continental formatting usually alters at least one element in the required name argument, as we see below:
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\begin{nameauth}
+  \< Adams   & John  & \noexpand\textSC{Adams}        & >
+  \< SDJR    & Sammy & \noexpand\textSC{Davis},
+                       \noexpand\textSC{Jr}.          & >
+  \< HAR     &       & Harun, \noexpand\textSC%
+                       {\noexpand\AltCaps{a}l-Rashid} & >
+  \< Mencius &       & \noexpand\textSC{Mencius}      & >
+\end{nameauth}
+\end{verbatim}
+\end{quote}
+
+Now we must ensure that these names are sorted properly in the index. When sorting names, be sure to use \verb+\noexpand+ before the control sequences in the macro arguments so they expand at the proper time:
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\PretagName[John]{\noexpand\textSC{Adams}}{Adams, John}
+\PretagName[Sammy]%
+  {\noexpand\textSC{Davis}, \noexpand\textSC{Jr}.}%
+  {Davis, Sammy, Jr.}
+\PretagName{Harun, \noexpand\textSC%
+  {\noexpand\AltCaps{a}l-Rashid}}{Harun al-Rashid}
+\PretagName{\noexpand\textSC{Mencius}}{Mencius}
+\end{verbatim}
+\end{quote}
+
+\begin{center}
+\small\noindent\begin{tabular}{llll}\toprule
+First & Next & Long & Short \\\midrule
+\verb+\Adams+ & \verb+\Adams+ & \verb+\LAdams+ & \verb+\SAdams+\\
+\Adams & \Adams & \LAdams & \SAdams\\\midrule
+\verb+\SDJR+ & \verb+\SDJR+ & \verb+\LSDJR+ & \verb+\SSDJR+\\
+\SDJR & \SDJR & \LSDJR & \SSDJR\\\midrule
+\verb+\HAR+ & \verb+\HAR+ & \verb+\LHAR+ & \verb+\SHAR+\\
+\HAR & \HAR & \LHAR & \SHAR\\\midrule
+\verb+\Mencius+ & \verb+\Mencius+ & \verb+\LMencius+ & \verb+\SMencius+\\
+\Mencius & \Mencius & \LMencius & \SMencius\\\bottomrule
+\end{tabular}
+\end{center}\bigskip
+
+Debugging tests:
+
+\begin{quote}\small
+\StartNum
+\begin{verbatim}
+\ShowPattern[John]{\noexpand\textSC{Adams}}
+\ShowPattern[Sammy]{\noexpand\textSC{Davis}, \noexpand\textSC{Jr}.}
+\ShowPattern{Harun, \noexpand\textSC{\noexpand\AltCaps{a}l-Rashid}}
+\ShowPattern{\noexpand\textSC{Mencius}}
+\ShowIdxPageref[John]{\noexpand\textSC{Adams}}
+\ShowIdxPageref[Sammy]{\noexpand\textSC{Davis}, \noexpand\textSC{Jr}.}
+\ShowIdxPageref{Harun, \noexpand\textSC{\noexpand\AltCaps{a}l-Rashid}}
+\ShowIdxPageref{\noexpand\textSC{Mencius}}
+\end{verbatim}
+\end{quote}
+
+\begin{center}
+\footnotesize\begin{tabular}{ll}\toprule
+First & \verb+\ShowPattern+ \\\midrule
+\ForgetThis\Adams & \ShowPattern[John]{\noexpand\textSC{Adams}}\\
+\ForgetThis\SDJR & \ShowPattern[Sammy]{\noexpand\textSC{Davis}, \noexpand\textSC{Jr}.}\\
+\ForgetThis\HAR & \ShowPattern{Harun, \noexpand\textSC{\noexpand\AltCaps{a}l-Rashid}}\\
+\ForgetThis\Mencius & \ShowPattern{\noexpand\textSC{Mencius}}\\\bottomrule
+\end{tabular}\bigskip
+
+\begin{tabular}{llll}\toprule
+First & \verb+\ShowIdxPageref+ & \verb+\ShowIdxPageref*+\\\midrule
+\ForgetThis\Adams & \ShowIdxPageref[John]{\noexpand\textSC{Adams}} & \ShowIdxPageref*[John]{\noexpand\textSC{Adams}}\\
+\ForgetThis\SDJR & \ShowIdxPageref[Sammy]{\noexpand\textSC{Davis}, \noexpand\textSC{Jr}.} & \ShowIdxPageref*[Sammy]{\noexpand\textSC{Davis}, \noexpand\textSC{Jr}.}\\
+\ForgetThis\HAR & \ShowIdxPageref{Harun, \noexpand\textSC{\noexpand\AltCaps{a}l-Rashid}} & \ShowIdxPageref*{Harun, \noexpand\textSC{\noexpand\AltCaps{a}l-Rashid}} \\
+\ForgetThis\Mencius & \ShowIdxPageref{\noexpand\textSC{Mencius}} & \ShowIdxPageref*{\noexpand\textSC{Mencius}}\\\bottomrule
+\end{tabular}
+\end{center}
+
+\newpage
+
+\begin{center}\bfseries Rolling Your Own: Basic\end{center}
+
+\noindent When redesigning formatting hooks, one often uses \verb+\AltFormatActive+ or the \texttt{altformat} option to enable alternate formatting and prevent \verb+\CapThis+ from breaking custom formatting macros.
+
+We recommend examining the internal package flag \verb+\@nameauth@DoAlt+, which activates alternate formatting, \verb+\@nameauth@DoCaps+, which handles capitalization, and \verb+\@nameauth@InHook+, which is true when the formatting hooks are called. Custom macros tend to look like:
+\begin{quote}\small
+\StartNum
+\begin{verbatim}
+\makeatletter
+\newcommand*\Fbox[1]{%
+  \if@nameauth@DoAlt\protect\fbox{#1}\else#1\fi
+}
+\makeatother
+\end{verbatim}
+\end{quote}
+\makeatletter
+\newcommand*\Fbox[1]{%
+  \if@nameauth@DoAlt\protect\fbox{#1}\else#1\fi
+}
+\makeatother
+
+Since \verb+\AltCaps+ is part of \textsf{nameauth}, you need not reinvent that wheel. Just use it. The final step is redefining the hooks, which can be as simple as:
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\renewcommand*\MainNameHook{\AltOff}
+\let\FrontNameHook\MainNameHook
+\end{verbatim}
+\end{quote}
+
+When sorting names, be sure to use \verb+\noexpand+ before the control sequences in the macro arguments so they expand at the proper time:
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\PretagName[Pierre-Jean]%
+  {\noexpand\Fbox{\noexpand\AltCaps{d}e Smet}}%
+  {de Smet, Pierre-Jean}
+
+\begin{nameauth}
+  \< deSmet & Pierre-Jean &
+     \noexpand\Fbox{\noexpand\AltCaps{d}e Smet} & >
+\end{nameauth}
+\end{verbatim}
+\end{quote}
+
+Now we show how the formatting hooks work in the body text. One can check the index to see that it is formatted properly and consistently.
+
+\begin{center}\footnotesize
+\begin{tabular}{llll}\toprule
+First & Next & Long & Short \\\midrule
+\verb+\deSmet+ & \verb+\deSmet+ & \verb+\LdeSmet+ & \verb+\SdeSmet+\\
+\deSmet & \deSmet & \LdeSmet & \SdeSmet\\
+& \verb+\CapThis+ & \verb+\ForceName+ & \\
+& \CapThis\deSmet & \ForceName\LdeSmet & \\\bottomrule
+\end{tabular}
+\end{center}\smallskip
+\newpage
+
+\begin{center}\bfseries Rolling Your Own: Intermediate\end{center}
+
+\noindent We begin by defining a name composed only of macros:
+\begingroup
+\newif\ifSpecialFN
+\newif\ifSpecialSN
+\newif\ifRevertSN
+\newcommand*\WM{\ifSpecialFN Wm.\else William\fi}
+\newcommand*\SHK{\ifRevertSN \textSC{Shakespeare}\else
+                 \ifSpecialSN \noexpand\AltCaps{t}he Bard\else
+                 \textSC{Shakespeare}\fi\fi}
+\newcommand*\Revert{\RevertSNtrue}
+\makeatletter
+\renewcommand*\NamesFormat[1]{%
+ \RevertSNfalse\SpecialFNfalse\SpecialSNfalse#1%
+ \unless\ifinner\marginpar{%
+   \footnotesize\raggedleft%
+   \@nameauth@FullNametrue%
+   \@nameauth@FirstNamefalse%
+   \@nameauth@EastFNfalse%
+   \SpecialFNtrue\SpecialSNfalse%
+   \NameParser}%
+ \fi\global\RevertSNfalse}
+\renewcommand*\MainNameHook[1]{%
+ \AltOff\SpecialFNfalse\SpecialSNtrue#1%
+ \unless\ifinner
+   \unless\ifRevertSN
+     \marginpar{%
+     \footnotesize\raggedleft%
+     \@nameauth@FullNamefalse%
+     \@nameauth@FirstNamefalse%
+     \@nameauth@EastFNfalse%
+     \SpecialFNfalse\SpecialSNfalse%
+     \NameParser}%
+   \fi
+ \fi\global\RevertSNfalse}
+\makeatother
+\begin{quote}\small
+\StartNum
+\begin{verbatim}
+\begin{nameauth}
+ \< Shak & \noexpand\WM & \noexpand\SHK & >
+\end{nameauth}
+\PretagName[\noexpand\WM]{\noexpand\SHK}{Shakespeare, William}
+\PretagName[Robert]{\textSC{Burns}}{Burns, Robert}
+\end{verbatim}
+\end{quote}
+
+Now we define the flags by which the macros \verb+\WM+ and \verb+\SHK+ can change inside of the formatting macros, and the different values the macros can have:
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\newif\ifSpecialFN
+\newif\ifSpecialSN
+\newif\ifRevertSN
+\newcommand*\WM{\ifSpecialFN Wm.\else William\fi}
+\newcommand*\SHK{\ifRevertSN \textSC{Shakespeare}\else
+                 \ifSpecialSN \noexpand\AltCaps{t}he Bard\else
+                 \textSC{Shakespeare}\fi\fi}
+\newcommand\Revert{\RevertSNtrue}
+\makeatletter
+\end{verbatim}
+\end{quote}
+
+Finally, we define the formatting hooks that execute these changes:
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\renewcommand*\NamesFormat[1]{%
+ \RevertSNfalse\SpecialFNfalse\SpecialSNfalse#1%
+ \unless\ifinner\marginpar{%
+   \footnotesize\raggedleft%
+   \@nameauth@FullNametrue%
+   \@nameauth@FirstNamefalse%
+   \@nameauth@EastFNfalse%
+   \SpecialFNtrue\SpecialSNfalse%
+   \NameParser}%
+ \fi\global\RevertSNfalse}
+\end{verbatim}
+
+\begin{verbatim}
+\renewcommand*\MainNameHook[1]{%
+ \AltOff\SpecialFNfalse\SpecialSNtrue#1%
+ \unless\ifinner
+   \unless\ifRevertSN
+     \marginpar{%
+     \footnotesize\raggedleft%
+     \@nameauth@FullNamefalse%
+     \@nameauth@FirstNamefalse%
+     \@nameauth@EastFNfalse%
+     \SpecialFNfalse\SpecialSNfalse%
+     \NameParser}%
+   \fi
+ \fi\global\RevertSNfalse}
+\makeatother
+\end{verbatim}
+
+\smallskip
+\Shak\ (\verb+\Shak+) is the national poet of England in much the same way as \Name[Robert]{\textSC{Burns}} (\verb+\Name[Robert]{\textSC{Burns}}+) is that of Scotland. With the latter's rise of influence in the 1800s, \Revert\Shak\ (\verb+\Revert+\verb+\Shak+) became known as ``\Shak'' (\verb+\Shak+).
+\end{quote}
+\endgroup
+
+First, we establish macros \verb+\WM+ and \verb+\SHK+ in name arguments using \verb+\noexpand+. That will make the index work properly. We use \verb+\PretagName+ to sort the names. Since we need to make some name decisions, we set up three Boolean values. One is for \verb+\WM+ and two are for variations within \verb+\SHK+. The macro \verb+\Revert+ is used to print a canonical last name without a margin note.
+
+In the first-use hook above, we prevent any form except the canonical name via \verb+\RevertSNfalse\SpecialFNfalse\SpecialSNfalse+. The default global state is set by \verb+\AltFormatActive+, so we do not need to modify that. We then print the canonical name in the body text. If not in inner horizontal mode, we print a margin paragraph containing a full name. Yet with \verb+\NameParser+ we print a special form of the personal name with the canonical form of the surname. Both hooks globally set \verb+\RevertSNfalse+ because we want \verb+\Revert+ used on a per-name basis.
+
+The subsequent-use hook uses \verb+\AltOff+ to disable formatting within the hook. Here we do not allow special forenames but we do select special surname forms. Thus, ``the Bard'' will be selected instead of ``Shakespeare''. Yet if we call \verb+\Revert+, we get ``Shakespeare'' in the text, but no margin note.
+\newpage
+
+\begin{center}\bfseries Rolling Your Own: Advanced\end{center}
+
+\newif\ifFbox
+\newif\ifFirstCap
+\newif\ifInHook
+\Fboxtrue
+We create three flags. We set \texttt{\textbackslash ifFbox} true; it replaces \texttt{\textbackslash @nameauth@DoAlt}. \texttt{\textbackslash ifFirstCap} replaces \texttt{\textbackslash @nameauth@DoCaps}, which is set by \verb+\CapThis+. The flag \texttt{\textbackslash ifInHook} replaces \texttt{\textbackslash @nameauth@InHook}, which normally is enabled by the internal format hook dispatcher.
+\begin{quote}\small
+\StartNum
+\begin{verbatim}
+\newif\ifFbox
+\newif\ifFirstCap
+\newif\ifInHook
+\Fboxtrue
+\end{verbatim}
+\end{quote}
+
+\renewcommand*\Fbox[1]{\ifFbox\protect\fbox{#1}\else#1\fi}
+The formatting macro is like what we have seen, except it refers to \texttt{\textbackslash ifFbox}:
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\renewcommand*\Fbox[1]{%
+  \ifFbox\protect\fbox{#1}\else#1\fi
+}
+\end{verbatim}
+\end{quote}
+
+\renewcommand*\AltCaps[1]{\ifInHook
+   \ifFirstCap\MakeUppercase{#1}\else#1\fi
+ \else
+   #1\fi}
+Our new \verb+\AltCaps+ works like the built-in version, except it does not use the internal macros and flags:
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\renewcommand*\AltCaps[1]{%
+  \ifInHook
+    \ifFirstCap\MakeUppercase{#1}\else#1\fi
+  \else
+    #1%
+  \fi
+}
+\end{verbatim}
+\end{quote}
+
+\renewcommand*\CapThis{\FirstCaptrue}
+\renewcommand*\NamesFormat[1]
+{\InHooktrue\NameParser\global\FirstCapfalse}
+\renewcommand*\MainNameHook[1]
+{\Fboxfalse\InHooktrue\NameParser\global\FirstCapfalse}
+\let\FrontNamesFormat\Namesformat
+\let\FrontNameHook\MainNameHook
+Here we redefine \verb+\CapThis+ to use our flag instead of the internal flag:
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\renewcommand*\CapThis{\FirstCaptrue}
+\end{verbatim}
+\end{quote}
+
+We have to reproduce the logic and macros that the package would have provided. That means defining everything, including \verb+\NamesFormat+, from scratch: 
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\renewcommand*\NamesFormat[1]
+{%
+  \InHooktrue\NameParser%
+  \global\FirstCapfalse%
+}
+\end{verbatim}
+\end{quote}
+
+Changes to \texttt{\textbackslash ifInHook} (default false) and \texttt{\textbackslash ifFbox} (default true) are local to the scope in which the hook macros are called. \texttt{\textbackslash ifFirstCap} must be \verb+\global+ in order to work correctly. Instead of using just \verb+\AltOff+ before \verb+\NameParser+ below, we have mimic the functions of the internal flags:
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\renewcommand*\MainNameHook[1]
+{%
+  \Fboxfalse\InHooktrue\NameParser%
+  \global\FirstCapfalse%
+}
+\end{verbatim}
+\end{quote}
+
+We avoid spurious index entries in the front matter by using the same hooks.
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\let\FrontNamesFormat\Namesformat
+\let\FrontNameHook\MainNameHook
+\end{verbatim}
+\end{quote}
+
+Because we use \verb+\noexpand+, our ``old-style'' macros will index the name below under the same entry as the ``new-style'' macros.
+\begin{center}\footnotesize
+\begin{tabular}{llll}\toprule
+First & Next & Long & Short \\\midrule
+\verb+\deSmet+ & \verb+\deSmet+ & \verb+\LdeSmet+ & \verb+\SdeSmet+\\
+\ForgetThis\deSmet & \deSmet & \LdeSmet & \SdeSmet\\
+& \verb+\CapThis+ & \verb+\ForceName+ & \\
+& \CapThis\deSmet & \ForceName\LdeSmet & \\\bottomrule
+\end{tabular}
+\end{center}\smallskip
+
+We can reuse new-style names (above) with old-style macros when needed. We reinstate alternate formatting:
+\AltFormatActive
+
+\newif\ifCaps
+\Capstrue
+\begin{quote}\small
+\StartNum
+\begin{verbatim}
+\newif\ifFCaps
+\newif\ifFirstCap
+\newif\ifInHook
+\Capstrue
+\end{verbatim}
+\end{quote}
+
+We redefine the other macros:
+\renewcommand*\textSC[1]{%
+  \ifCaps\textsc{#1}\else#1\fi
+}
+\renewcommand*\AltCaps[1]{%
+  \ifInHook
+    \ifFirstCap\MakeUppercase{#1}\else#1\fi
+  \else
+    #1%
+  \fi
+}
+\renewcommand\CapThis{\FirstCaptrue}
+\renewcommand*\NamesFormat[1]
+{%
+  \InHooktrue\NameParser\InHookfalse%
+  \global\FirstCapfalse%
+}
+\renewcommand*\MainNameHook[1]
+{%
+  \Capsfalse\InHooktrue\NameParser\InHookfalse%
+  \global\FirstCapfalse\Capstrue%
+}
+\let\FrontNamesFormat\Namesformat
+\let\FrontNameHook\MainNameHook
+\begin{quote}\small
+\ContinueNum
+\begin{verbatim}
+\renewcommand*\textSC[1]{%
+  \ifCaps\textsc{#1}\else#1\fi
+}
+
+\renewcommand*\AltCaps[1]{%
+  \ifInHook
+    \ifFirstCap\MakeUppercase{#1}\else#1\fi
+  \else
+    #1%
+  \fi
+}
+
+\renewcommand\CapThis{\FirstCaptrue}
+
+\renewcommand*\NamesFormat[1]
+{%
+  \InHooktrue\NameParser\InHookfalse%
+  \global\FirstCapfalse%
+}
+
+\renewcommand*\MainNameHook[1]
+{%
+  \Capsfalse\InHooktrue\NameParser\InHookfalse%
+  \global\FirstCapfalse\Capstrue%
+}
+
+\let\FrontNamesFormat\Namesformat
+\let\FrontNameHook\MainNameHook
+\end{verbatim}
+\end{quote}
+
+The names below have the same declarations and index entries as they did above. They look and work the same but use different macros.
+\begin{center}
+\small\noindent\begin{tabular}{llll}\toprule
+First & Next & Long & Short \\\midrule
+\ForgetThis\Adams & \Adams & \LAdams & \SAdams\\
+\ForgetThis\SDJR & \SDJR & \LSDJR & \SSDJR\\
+\ForgetThis\HAR & \HAR & \LHAR & \SHAR\\
+\ForgetThis\Mencius & \Mencius & \LMencius & \SMencius\\\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Feature Redesign}
+
+\begin{quote}\small
+\StartNum
+\begin{verbatim}
+\makeatletter
+\newcommandx*\MyName[3][1=\@empty, 3=\@empty]{%
+  \@nameauth@toksa\expandafter{#1}%
+  \@nameauth@toksb\expandafter{#2}%
+  \@nameauth@toksc\expandafter{#3}%
+  \hbox to 4em{Normal: \hfill}%
+  \fbox{\@nameauth@Name[#1]{#2}[#3]}%
+}
+\newcommandx*\MyLName[3][1=\@empty, 3=\@empty]{%
+  \@nameauth@toksa\expandafter{#1}%
+  \@nameauth@toksb\expandafter{#2}%
+  \@nameauth@toksc\expandafter{#3}%
+  \hbox to 4em{Long: \hfill}%
+  \fbox{\@nameauth@Name[#1]{#2}[#3]}%
+}
+\newcommandx*\MyFName[3][1=\@empty, 3=\@empty]{%
+  \@nameauth@toksa\expandafter{#1}%
+  \@nameauth@toksb\expandafter{#2}%
+  \@nameauth@toksc\expandafter{#3}%
+  \hbox to 4em{Short: \hfill}%
+  \fbox{\@nameauth@Name[#1]{#2}[#3]}%
+}
+\makeatother
+\renewcommand*\NamesFormat[1]
+  {\hbox to 9em{\hfil\scshape#1\hfil}}
+\renewcommand*\MainNameHook[1]{\hbox to 9em{\hfil#1\hfil}}
+\renewcommand*\NameauthName{\MyName}
+\renewcommand*\NameauthLName{\MyLName}
+\renewcommand*\NameauthFName{\MyFName}
+\end{verbatim}
+\makeatletter
+\newcommandx*\MyName[3][1=\@empty, 3=\@empty]{%
+  \@nameauth@toksa\expandafter{#1}%
+  \@nameauth@toksb\expandafter{#2}%
+  \@nameauth@toksc\expandafter{#3}%
+  \hbox to 4em{Normal: \hfill}%
+  \fbox{\@nameauth@Name[#1]{#2}[#3]}%
+}
+\newcommandx*\MyLName[3][1=\@empty, 3=\@empty]{%
+  \@nameauth@toksa\expandafter{#1}%
+  \@nameauth@toksb\expandafter{#2}%
+  \@nameauth@toksc\expandafter{#3}%
+  \hbox to 4em{Long: \hfill}%
+  \fbox{\@nameauth@Name[#1]{#2}[#3]}%
+}
+\newcommandx*\MyFName[3][1=\@empty, 3=\@empty]{%
+  \@nameauth@toksa\expandafter{#1}%
+  \@nameauth@toksb\expandafter{#2}%
+  \@nameauth@toksc\expandafter{#3}%
+  \hbox to 4em{Short: \hfill}%
+  \fbox{\@nameauth@Name[#1]{#2}[#3]}%
+}
+\makeatother
+\renewcommand*\NamesFormat[1]
+  {\hbox to 9em{\hfil\scshape#1\hfil}}
+\renewcommand*\MainNameHook[1]{\hbox to 9em{\hfil#1\hfil}}
+\renewcommand*\NameauthName{\MyName}
+\renewcommand*\NameauthLName{\MyLName}
+\renewcommand*\NameauthFName{\MyFName}
+
+\smallskip
+\verb+\ForgetName[Adolf]{Harnack}+\ForgetName[Adolf]{Harnack}\\[1ex]
+\begin{tabular}{@{}rl}
+\verb+\Harnack+ & \Harnack\\
+\verb+\LHarnack[Adolf von]+ & \LHarnack[Adolf von]\\
+\verb+\Harnack+ & \Harnack\\
+\verb+\SHarnack+ & \SHarnack\\
+\end{tabular}
+\end{quote}
+\newpage
+
+\section{\protect\LaTeX\ Engines}
+
+We use \texttt{american} for the language; one should use one's own. We use Latin Modern. We load \textsf{tikz} only in pdf mode to avoid crashing some DVI viewers.
+
+\begin{quote}\small
+\StartNum
+\begin{verbatim}
+\IfFileExists{iftex.sty}{\usepackage{iftex}}{}
+\unless\ifdefined\RequireTUTeX
+  \usepackage{ifxetex}
+  \usepackage{ifluatex}
+  \usepackage{ifpdf}
+\fi
+% Used to create both dvi and pdf output
+\newif\ifDoTikZ                        % Perhaps not needed
+\ifxetex
+  \usepackage{fontspec}
+  \usepackage{polyglossia}
+  \setdefaultlanguage{american}        % Use own language
+  \usepackage{tikz}
+  \DoTikZtrue	                         % Perhaps not needed
+\else
+  \ifluatex
+    \ifpdf
+      \usepackage{fontspec}
+      \usepackage{polyglossia}
+      \setdefaultlanguage{american}    % Use own language
+      \usepackage{tikz}
+      \DoTikZtrue                      % Perhaps not needed
+    \else
+      \IfFileExists{utf8-2018.def}{}
+      {\usepackage[utf8]{inputenc}}
+      \usepackage[TS1,T1]{fontenc}
+      \usepackage[american]{babel}     % Use own language
+      \usepackage{lmodern}
+      % Perhaps add \usepackage{tikz}
+    \fi
+  \else
+    \IfFileExists{utf8-2018.def}{}
+    {\usepackage[utf8]{inputenc}}
+    \usepackage[TS1,T1]{fontenc}
+    \usepackage[american]{babel}       % Use own language
+    \usepackage{lmodern}
+    \ifpdf                             % Perhaps not needed
+      \usepackage{tikz}
+      \DoTikZtrue                      % Perhaps not needed
+    \fi
+  \fi
+\fi
+\end{verbatim}
+\end{quote}
+In the body text we can use something like the test below for \fbox{\ifDoTikZ doing \texttt{pdf} things\else doing \texttt{dvi} things\fi}
+\begin{quote}\small
+\begin{verbatim}
+\ifDoTikZ
+  doing \texttt{pdf} things\else
+  doing \texttt{dvi} things\fi
+\end{verbatim}
+\end{quote}
+\newpage
+
+The following equivalent conditional statements can help a macro or just the body text to work under multiple engines:
+\begin{quote}\small
+\StartNum
+\begin{verbatim}
+\ifxetex xelatex%
+\else
+  \ifluatex
+    \ifpdf lualatex (pdf)%
+    \else lualatex (dvi)%
+    \fi
+  \else
+    \ifpdf pdflatex%
+    \else latex (dvi)%
+    \fi
+  \fi
+\fi
+\end{verbatim}
+
+\StartNum
+\begin{verbatim}
+\unless\ifxetex
+  \unless\ifluatex
+    \ifpdf pdflatex%
+    \else latex (dvi)%
+    \fi
+  \else
+    \ifpdf lualatex (pdf)%
+    \else lualatex (dvi)%
+    \fi
+  \fi
+\else xelatex%
+\fi
+\end{verbatim}
+\end{quote}
+
+\def\indexname{\hypertarget{Index}{Index}}
+\newpage
+\printindex
+
+\end{document}

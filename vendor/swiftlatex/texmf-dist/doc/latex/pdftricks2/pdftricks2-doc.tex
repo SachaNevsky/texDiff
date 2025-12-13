@@ -1,0 +1,91 @@
+\documentclass{scrartcl}
+
+\usepackage[left=2.35cm,right=2.35cm]{geometry}
+\setlength{\marginparwidth}{0pt}
+\setlength{\marginparsep}{0pt}
+\usepackage{marvosym}
+\reversemarginpar
+
+\usepackage{expdlist}
+\usepackage[english]{babel}
+\usepackage{hyperref}
+
+\newcommand\prob{\marginpar{\hbox to 0pt{\Lightning\hss}}}
+\makeatletter
+\edef\lbr{\expandafter\@gobble\string\{}
+\edef\rbr{\expandafter\@gobble\string\}}
+\makeatother
+
+\begin{document}
+
+\title{The pdftricks2 package}
+\author{Christian Reibiger\\inspired by the pdftricks package}
+
+\maketitle
+
+\tableofcontents
+
+\section{Introduction}
+
+This package provides automatization facilities to use the pstricks package with \emph{pdflatex}. It is intended to be of easy use and interoperability with \emph{latex} and \emph{pdflatex}, namely both show the same result. To use this package you only have to say \verb@\usepackage{pdftricks2}@ instead of \verb@\usepackage{pstricks}@.
+
+The pdftricks2 package circumvents the problem that \emph{pdflatex} can not handle \emph{ps}-code by writing an extra \emph{latex} file that contains only the figure. This files are converted to dvi to ps and then to pdf. Finally the resulting pdf-pictures are included in the text as a graphic. This process can be handled automatically by the package but it needs to have the possibility to execute system commands (start \emph{pdflatex} with option \texttt{--enable-write18} or \texttt{-shell-escape}). If you do not want to grant this rights you still can use the package but you have to execute a shell script the package writes yourself to produce the pdf-pictures. In this case you have to run \textit{pdftex} again to include the pictures in your document.
+
+The package tries to show the same results when used with \textit{latex} as for \textit{psflatex}. However there are some side effects of using this package as described below. Lightnings (\Lightning) on the margin of the page mark parts where changes to pstricks syntax or important flaws are stated.
+
+Although this package is inspired by the pdftricks package, it is coded from scratch. The pdftricks package has some flaws that are circumvented by pdftricks2. For example you have to gather all configurations you need for your pictures in one place. Furthermore it is not possible to share configuration code between your figures and the main text. Also the pdftricks package does not use the provided limits of the figure you produce but rather assumes it fits on a standard page and cuts everything away that does not look like being important.
+
+\section{Installation}
+
+Just copy the file `pdftricks2.sty' to your tex directory (for example `\textasciitilde/texmf/tex/latex/pdftricks2' on a linux or `C:\textbackslash Programs\textbackslash MikTeX\textbackslash tex\textbackslash latex\textbackslash pdftricks2' on a windows system). After that you have to update \LaTeX's hash table by invoking `texhash' on a linux system or by executing `Start \frqq{} Programs \frqq{} MikTeX \frqq{} Maintenance \frqq{} Settings, General \frqq{} Refresh FNDB' on a windows system.
+
+\section{Usage}
+
+\begin{description}[\breaklabel]
+\item[\tt \string\usepackage\lbr pdftricks2\rbr]
+	To use this package you have to load it via \verb@\usepackage{pdftricks2}@. The package loads automatically the pstricks package, so there is no need to say \verb@\usepackage{pstricks}@. All options you pass to pdftricks2 that are not recognized are passed to pstricks. So you can give the pstricks options just to the pdftricks2 package.
+
+\item[\tt \string\usepackageps, \string\usepackagepsonly]
+	After loading the pdftricks2 package you can load a \textsl{package} you want to use for your text and your figures by saying \verb@\usepackageps{@\textsl{package}\verb@}@. Also you have the possibility to load packages only for the figures and not in your other text by saying \prob\verb@\usepackagepsonly{@\textsl{pack\-age}\verb@}@ but this may have side effects if you use pdftricks2 with \emph{latex} because they get included in the text as well.
+
+\item[\tt \string\psset, \string\newpsstyle, \string\addtopsstyle, \string\degrees, \string\radians, \string\SpecialCoor]
+	Also you can use the pstricks commands that change the configuration of drawing outside of a \texttt{pspicture}-environment. But you must be aware \prob that their effect is always global. Inside of \texttt{pspicture}-environments the commands stated above obey the usual grouping rules.
+
+\item[\tt \string\configps, configpsblock]
+	In addition to this commands there are new ones to share definitions between your text and the figures. They are intended to be used for custom commands you want to use in text and in figures. The command \verb@\configps{@\textsl{code}\verb@}@ executes the given \textsl{code} in the text and in every figure. The same is true for the \textsl{code} in \verb@\begin{configpsblock}@\textsl{code}\verb@\end{configps@\-\verb@block}@ but this second version is better for a large amount of code.
+
+\item[\tt \string\configpsonly, configpsonlyblock]
+	As in case of package loading these commands provide the possibility to include some \textsl{code} only in the figures. They are used the same way as \verb@\configps@ and \verb@configpsblock@
+
+\item[\tt pspicture]
+	A \verb@pspicture@-environment can be started as usual by saying \verb@\begin{pspicture}@. This is fine if you keep your drawing inside the picture. However, you should say \verb@\begin{pspic@\-\verb@ture*}@ to clip your drawing to the box of the \texttt{pspicture}. Keep in mind that \emph{pdflatex} will clip your drawing anyway. Therefore the use of the \texttt{pspicture} is discouraged and pdftricks2 will warn you when you use it. For technical reasons it is not possible to \prob continue your \LaTeX{} code right after \verb@\end{pspicture*}@, instead you have to end the line there. If you do not want to have a space after your \verb@pspicture@-environment you can end the line with a comment. In contrast to the current pstricks implementation you can not use the \prob\texttt{shift} attribute to produce a \texttt{pspicture} that is not aligned by its lower border. Instead you have to use the old pstricks syntax \verb@\begin{pspicture*}[@\textsl{a}\verb@]@ to produce a \texttt{pspicture} that's baseline is at the \textsl{a}-th part of its vertical size. Therefore it is not possible to slip configuration commands for pstricks in the optional argument of the \texttt{pspicture}-environment.
+\end{description}
+
+\section{Package options}
+
+In the following the options that are processed by the pdftricks2 package are stated. All other options you provide are passed to the pstricks package.
+
+\begin{description}[\breaklabel]
+\item[\tt info]
+	When this option is set pdftricks2 prints out additional information via package warnings. Especially it shows what files it will use and when it opens and closes them.
+
+\item[\tt shell, noshell]
+	This options control whether the package tries to execute system commands for translating the figures itself or not. The default is to use the shell if possible. When no shell is used pdftricks2 writes a script that handles the translation of the figures. You just have to execute it as will be described in a package warning.
+
+\item[\tt windows, unix]
+	For some system commands it is necessary to distinguish between windows and unix systems. The package tries to guess the system you have by using the ifplatform package. However, you can disable the automatic detection by giving the platform explicitly. This is mainly intended to be used if problems occur.
+
+\item[\tt figpath=\textsl{path}]
+	Normally pdftricks2 creates the additional files it needs in the same directory as the one you run \emph{pdflatex} from. This may be a bit messy. Therefore you can give an alternate \textsl{path} where the temporary files are stored. But this \textsl{path} has to exist. The path you can choose has to be given in unix style (it is converted to windows style internally if needed) and must meet the requirements for paths imposed by \LaTeX.
+
+\item[\tt scriptpaths, noscriptpaths]
+	This options enable you to control whether pdftricks2 writes the \textsl{path} given via \texttt{figpath} to the script and figure files or whether it omits them when writing these files. By default the paths are written to the files which is necessary if the translation is handled by the package itself. However, if you translate them by hand it might be useful to omit the paths.
+\end{description}
+
+\section{Changelog}
+
+\subsection{Version 1.01}
+
+Fixed the commands \texttt{\string\usepackageps} and \texttt{\string\usepackagepsonly}.
+
+\end{document}

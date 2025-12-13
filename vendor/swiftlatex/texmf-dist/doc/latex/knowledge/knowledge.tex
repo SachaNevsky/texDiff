@@ -1,0 +1,2921 @@
+\documentclass{ltxdoc}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{paralist}
+\usepackage[svgnames]{xcolor}
+\usepackage{expl3}
+\usepackage{hyperref}
+%\usepackage{complexity}
+\usepackage[quotation,scope]{knowledge}
+\knowledgeconfigure{visible anchor points=false}
+\knowledgeconfigure{notion,diagnose line=false}
+\GetFileInfo{knowledge.sty}
+\edef\knowledgeversiondate{\fileversion--\filedate}
+
+% Depending on whether the file is included from knowledge-code.dtx
+% or not, some configuration changes.
+% This involves mainly the presence of the code.
+% It also triggers the apparition of the todo list, and a top bar allowing
+% faster navigation in the document.
+\ExplSyntaxOn
+\ifdefined\knowledgecode\expandafter\use_i:nn\else\expandafter\use_ii:nn\fi
+  {\def\producecode{\newpage\DocInput{knowledge-code.dtx}}
+    \cs_new_eq:cN{ifcodeTF}\use_i:nn}
+  {\def\producecode{}
+    \cs_new_eq:cN{ifcodeTF}\use_ii:nn}
+\ExplSyntaxOff
+% End of the parametrization.
+
+
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+
+\let\oldbibitem\bibitem
+\renewrobustcmd\bibitem\oldbibitem
+
+
+\expandafter\let\expandafter\item\csname switch item\endcsname
+
+\ifcodeTF{
+\NewDocumentCommand\textmenu{m}{#1}
+\usepackage{eso-pic}% http://ctan.org/pkg/eso-pic
+\AddToShipoutPictureFG{%
+  \AtPageUpperLeft{%
+     \put(\LenToUnit{0cm},\LenToUnit{-1em})
+       {%
+       \begin{tabular}[t]{p{21cm}}
+       \centering ---
+       \textmenu{\hyperref[paper:top]{top}} ---
+       \textmenu{\hyperref[section:status]{status version}} ---
+       \textmenu{\hyperref[section:toc]{toc}} ---
+       \ifcodeTF{\textmenu{\hyperref[section:todo]{todo list}} ---}
+       \textmenu{\hyperref[section:history]{history}} --- 
+       \textmenu{\hyperref[section:quick start]{quick start}} ---
+       \textmenu{\hyperref[section:doc]{doc}} ---
+       \textmenu{\hyperref[section:faq]{FAQ}} ---
+       \textmenu{\hyperref[section:resources]{resources}} ---
+       \ifcodeTF{\textmenu{\hyperref[section:code]{code}} ---}{}
+       \end{tabular}%
+       }}}
+}
+
+
+
+% this is a hack. Introducing Hyphenation everywhere in a sequence of token.
+% Otherwise the macro names tend to always exceed lines.
+% It should be improved in order to always require at least--say--3 symbols before
+% and after the hyphenation.
+\ExplSyntaxOn
+\cs_new:Nn\tl_fragilize:n
+  {\__tl_fragilize:N#1\q_stop}
+\cs_new:Nn\__tl_fragilize:N
+  {\token_if_eq_meaning:NNTF#1\q_stop
+      {}{#1
+      \-\__tl_fragilize:N}}
+\cs_set_eq:NN\textfragilize\tl_fragilize:n
+\cs_new:Npn\Robustdisplay#1
+   {\exp_args:Nx\textfragilize{\robustdisplay{#1}}}
+\ExplSyntaxOff
+
+
+\NewDocumentCommand\ToImprove{m}{\marginpar{\textcolor{red}{To improve:} #1}}
+
+
+\let\subsubsubsection\paragraph
+
+
+\knowledge{not implemented}{link=to be done}
+\knowledge{to be done}{color=DarkRed}
+\knowledge{|}{text=\vbar}
+\knowledge{[...]}{italic,color=gray,md}
+
+% Macros defined by knowledge
+\knowledgedirective{kenvironment}{autoref,style=cs,intro style=csintro}
+
+
+
+% directives
+\knowledgestyle{directive}{up,md,typewriter,color=NavyBlue}
+\knowledgestyle{directive intro}{up,md,typewriter,color=blue}
+\knowledgedirective{directive}{autoref,style=directive,intro style=directive intro}
+
+% options of the package
+\knowledgestyle{option}{up,md,typewriter,color=NavyBlue}
+\knowledgestyle{option intro}{up,md,typewriter,color=blue}
+\knowledgedirective{option}{autoref,style=option,intro style=option intro}
+
+
+
+\knowledgedirective{doc notion}
+         {autoref,style=doc notion,intro style=intro doc notion}
+\knowledgestyle{doc notion}{color=DarkBlue}
+\knowledgestyle{intro doc notion}{color=blue,emphasize}
+ 
+\let\cs\undefined
+\knowledgenewvariant\cs
+ {namespace=cs,
+  default style={autoref link,cs},
+  unknown style=cs unknown,
+  unknown style cont=cs unknown,
+  unknown warning=false,
+  unknown diagnose=true,
+  suggestion=cs,
+  PDF string={\detokenize{#1}}}
+\knowledgestyle{cs}{wrap=\Robustdisplay,typewriter,up,md,color=NavyBlue}
+\knowledgestyle{cs unknown}{wrap=\Robustdisplay,typewriter,up,md,color=black}
+
+\knowledgenewvariant\csintro
+ {namespace=cs,
+  auto knowledge={autoref,scope=document,also now},
+  default style={autoref target,csintro},
+  unknown style=csintro unknown,
+  unknown style cont=csintro unknown,
+  unknown warning=false,
+  unknown diagnose=false,
+  PDF string = {\detokenize{#1}}}
+\knowledgestyle{csintro}{wrap=\Robustdisplay,typewriter,up,md,color=blue}
+\knowledgestyle{csintro unknown}{wrap=\Robustdisplay,typewriter,up,md,color=black}
+
+\knowledgenewvariant\csreintro
+ {namespace=cs,
+  default style=csintro,
+  unknown style=csintro unknown,
+  unknown style cont=csintro unknown,
+  PDF string = {\Robustdisplay{#1}}}
+
+
+
+\knowledge{{@token}}{wrap=\Robustdisplay,up,md,typewriter,color=NavyBlue}
+
+
+
+\knowledge{_monoid}{style=kl unknown}
+\knowledge{_semigroup}{style=kl unknown}
+
+
+
+% style names
+\knowledgedirective{notion style}{autoref,style=style,intro style=intro style}
+\knowledgestyle{style}{typewriter,up,md,color=NavyBlue}
+\knowledgestyle{intro style}{typewriter,up,md,color=blue}
+
+
+\begin{scope}\label{style}
+  \knowledge{notion}{notion style}
+  \knowledge{intro notion}{notion style}
+
+  \knowledge{kl}{notion style}
+  \knowledge{kl unknown}{notion style}
+  \knowledge{kl unknown cont}{notion style}
+
+  \knowledge{intro}{notion style}
+  \knowledge{intro unknown}{notion style}
+  \knowledge{intro unknown cont}{notion style}
+  \knowledge{autoref not introduced}{notion style}
+  \knowledge{autoref reintroduced}{notion style}
+\end{scope}
+
+
+\knowledgedirective{kvariable}{style=cs}
+\knowledge {experimental}{doc notion,color=gray}
+
+
+%\ExplSyntaxOn
+\NewDocumentCommand\robustdisplaycs{m}
+   {\expandafter\robustdisplay\csname#1\endcsname}
+
+
+
+
+\knowledgeconfigure{quotation=false}
+\knowledge{LaTeX}[latex|LATEX|Latex]{text=\LaTeX}
+\knowledge{tex}[TeX|TEX]{text=\TeX}
+\knowledge{pdflatex}{typewriter}
+
+\knowledge"{text=\quotesymbol}
+\knowledge{""}{text=\quotesymbol\quotesymbol}
+\knowledgeconfigure{quotation=true}
+
+\knowledge{AucTex}{typewriter}
+\knowledge{Emacs}[emacs|EMACS]{typewriter}
+
+\ExplSyntaxOff
+\knowledgestyle{tt}{typewriter,up,md,color=NavyBlue}
+\knowledgestyle{tt intro}{typewriter,up,md,color=blue}
+\knowledgedirective{kcommand}{style=tt,intro style=tt intro,autoref}
+\knowledgedirective{kquotation}{style=tt, intro style=tt intro,autoref}
+\ExplSyntaxOn
+\knowledge{"..."}{kquotation,text=\kl{"}$\cdots$\kl{"}}
+\knowledge{""...""}{kquotation,text=\kl{""}$\cdots$\kl{""}}
+\knowledge{{"...@..."}}{kquotation,text=\kl{"}$\cdots\arobas\cdots$\kl{"}}
+\knowledge{{""...@...""}}{kquotation,text=\kl{""}$\cdots\arobas\cdots$\kl{""}}
+\knowledge{{"...@@..."}}{kquotation,text=\kl{"}$\cdots\arobas\cdots\arobas\cdots$\kl{"}}
+\knowledge{{""...@@...""}}{kquotation,text=\kl{""}$\cdots\arobas\cdots\arobas\cdots$\kl{""}}
+\knowledge{{"...@...@..."}}{kquotation,text=\kl{"}$\cdots\arobas\cdots\arobas\cdots$\kl{"}}
+\knowledge{{""...@...@...""}}{kquotation,text=\kl{""}$\cdots\arobas\cdots\arobas\cdots$\kl{""}}
+
+
+\ExplSyntaxOn
+
+\makeatletter
+\let\arobas @
+\makeatother
+\knowledge{{@}}{kcommand,text=\arobas}
+
+
+
+\knowledgedirective{people}{emphasize,color=DarkGray}
+\knowledge{stackexchange}{people}
+\knowledge{egreg}{people}
+
+\knowledge{nesting_int}{kvariable}
+\knowledge{count_int}{kvariable}
+\knowledge{name_tl}{kvariable}
+\knowledge{pushcode_tl}{kvariable}
+\knowledge{popcode_tl}{kvariable}
+\knowledge{autoclose_bool}{kvariable}
+\knowledge{environment_bool}{kvariable}
+\knowledge{recursive_bool}{kvariable}
+\knowledge{multiple_bool}{kvariable}
+\knowledge{acceptsknowledge_bool}{kvariable}
+\knowledge{attractsknowledge_bool}{kvariable}
+\knowledge{labelizable_bool}{kvariable}
+\knowledge{scope_bool}{kvariable}
+\knowledge{mandatorybase_seq}{kvariable}
+\knowledge{instance.attractsknowledge_bool}{kvariable}
+
+
+\ExplSyntaxOff
+
+\begin{scope}\label{area}
+  \knowledge{nesting_int}{directive}
+  \knowledge{count_int}{directive}
+  \knowledge{name_tl}{directive}
+  \knowledge{pushcode_tl}{directive}
+  \knowledge{popcode_tl}{directive}
+  \knowledge{autoclose_bool}{directive}
+  \knowledge{environment_bool}{directive}
+  \knowledge{recursive_bool}{directive} 
+  \knowledge{multiple_bool}{directive}
+  \knowledge{forces_tl}{directive}
+  \knowledge{acceptsknowledge_bool}{directive}
+  \knowledge{attractsknowledge_bool}{directive}
+  \knowledge{labelizable_bool}{directive}
+  \knowledge{scope_bool}{directive}
+  \knowledge{mandatorybase_seq}{directive}
+
+  \knowledge{autoclose=}{directive}
+  \knowledge{environment=}{directive}
+  \knowledge{parents=}{directive}
+  \knowledge{scope=}{directive}
+  \knowledge{label=}{directive}
+  \knowledge{push code=}{directive}
+  \knowledge{pop code=}{directive}
+  \knowledge{occurrences=}{directive}
+  \knowledge{forces=}{directive}
+\end{scope}
+
+\knowledge{instance.area}{kvariable}
+\knowledge{instance.parent}{kvariable}
+
+
+
+
+\knowledge{text=}{directive}
+\knowledge{link=}{directive}
+\knowledge{link scope=}{directive}
+\knowledge{style=}{directive}
+\knowledge{intro style=}{directive}
+\knowledge{wrap=}{directive}
+\knowledge{scope=}{directive}
+\knowledge{export=}[export]{directive}
+\knowledge{now}{directive}
+
+
+\knowledge{protect link}{directive}
+\knowledge{strict}{directive}
+\knowledge{emphasize}{directive}
+\knowledge{underline}{directive}
+\knowledge{up}{directive}
+\knowledge{md}{directive}
+\knowledge{boldface}{directive}
+\knowledge{fbox}{directive}
+\knowledge{typewriter}{directive}
+\knowledge{ensuretext}{directive}
+\knowledge{ensuremath}{directive}
+\knowledge{italic}[italic=]{directive}
+\knowledge{smallcaps}[smallcaps=]{directive}
+\knowledge{lowercase}{directive}
+\knowledge{uppercase}{directive}
+\knowledge{mathord}{directive}
+\knowledge{mathbin}{directive}
+\knowledge{mathop}{directive}
+\knowledge{mathrel}{directive}
+\knowledge{mathclose}{directive}
+\knowledge{mathopen}{directive}
+\knowledge{mathpunct}{directive}
+\knowledge{synonym}{directive}
+\knowledge{index=}{directive}
+\knowledge{index key=}{directive}
+\knowledge{index parent key=}{directive}
+\knowledge{index style=}{directive}
+\knowledge{label scope}[label scope=]{option}
+\knowledge{color=}{directive}
+\knowledge{cyclic color}{directive}
+\knowledge{colorbox=}{directive}
+\knowledge{ref=}{directive}
+\knowledge{url=}{directive}
+\knowledge{autoref}{directive}
+\knowledge{autorefhere}{directive}
+\knowledge{namespace=}{directive}
+\knowledge{autoref link}{directive}
+\knowledge{autoref target}{directive}
+\knowledge{also now}{directive}
+\knowledge{notion}{directive}
+\knowledge{no patch}{directive}
+\knowledge{invisible=}[invisible]{directive}
+\knowledge{detokenize}{directive}
+\knowledge{remove space}{directive}
+\begin{scope}\label{option}
+  \knowledge{hyperref}{option}
+  \knowledge{xcolor}{option}
+  \knowledge{makeidx}{option}
+  \knowledge{scope}{option}
+  \knowledge{quotation}[quotation=]{option}
+  \knowledge{notion}{option}
+  \knowledge{cyclic colors=}{option}
+\end{scope}
+\knowledge{hyperref option}{link=hyperref,link scope=option}
+\knowledge{makeidx option}{link=makeidx,link scope=option}
+\knowledge{scope option}{link=scope,link scope=option}
+\knowledge{xcolor option}{link=xcolor,link scope=option}
+\knowledge{notion option}{link=notion,link scope=option}
+\knowledge{quotation option}{link=quotation,link scope=option}
+
+
+\knowledge{visible anchor points}[visible AP|visible AP=|visible anchor points=]{option}
+\knowledge{protect quotation}[protect quotation=]{option}
+\knowledge{protect link co}{option,text=protect link}
+\knowledge{unprotect link co}{option,text=unprotect link}
+\knowledge{hyperlinks=}{option}
+\knowledge{fix hyperref twocolumn}{option}
+\knowledge{diagnose help=}[diagnose help]{option}
+\knowledge{diagnose line=}[diagnose line]{option}
+\knowledge{diagnose bar=}[diagnose bar]{option}
+
+
+\knowledge{active}{option}
+\knowledge{inactive}{option}
+\knowledge{compatibility}{option}
+\knowledge{auto}{option}
+
+% options from external packages
+\knowledgedirective{eoption}{typewriter}
+\knowledge{svgnames}{eoption}
+\knowledge{hidelinks}{eoption}
+\knowledge{breaklinks}{eoption}
+
+\knowledgedirective{package}{typewriter,color=DarkBlue}
+\knowledge{CTAN}{color=darkgray,url={https://www.ctan.org/}}
+\begin{scope}\label{package}
+   %\ExplSyntaxOn
+   %\def\mydebug{\tl_show:N\knowledge_knowledge_instance_tl}
+   %\ExplSyntaxOff
+   \knowledge{knowledge}{doc notion, package}
+   \knowledge{complexity}{package,url={https://www.ctan.org/pkg/complexity}}
+   \knowledge{expl3}{package,url={https://www.ctan.org/pkg/expl3}}
+   \knowledge{hyperref}{package,url={https://www.ctan.org/pkg/hyperref}}
+   \knowledge{tikzcd}{package,url={https://www.ctan.org/pkg/tikz-cd}}
+   \knowledge{standalone}{package,url={https://www.ctan.org/pkg/standalone}}
+   \knowledge{xcolor}{package,url={https://www.ctan.org/pkg/xcolor}}
+   \knowledge{makeidx}{package,url={https://www.ctan.org/pkg/makeidx}}
+   \knowledge{etoolbox}{package,url={https://www.ctan.org/pkg/etoolbox}}
+   \knowledge{xparse}{package,url={https://www.ctan.org/pkg/xparse}}
+   \knowledge{amsmath}{package,url={https://www.ctan.org/pkg/amsmath}}
+   \knowledge{amssymb}{package,url={https://www.ctan.org/pkg/amssymb}}
+   \knowledge{mathcommand}{package,url={https://www.ctan.org/pkg/mathcommand}}
+\end{scope}
+
+
+\knowledgedirective{environment}{typewriter}
+\begin{scope}\label{env}
+   \knowledge{scope}{kenvironment}
+   \knowledge{export}{kenvironment}
+   \knowledge{import}{kenvironment}
+   \knowledge{theorem}{environment}
+   \knowledge{tikzcd}{environment,ref=section:tikzcd}
+   \knowledge{thebibliography}{environment,ref=section:thebibliography}
+   \knowledge{document}{environment}
+\end{scope}
+
+\knowledge{variant directives}[variant directive|Variant directives]{doc notion}
+\begin{scope}\label{variant}
+  \knowledge{directive}[directives|Directives]{link=variant directive}
+  \knowledge {namespace=}{directive}
+  \knowledge {default style=}{directive}
+  \knowledge {unknown style=}{directive}
+  \knowledge {unknown style cont=}{directive}
+  \knowledge {style directive=}{directive}
+  \knowledge {auto knowledge=}{directive}
+  \knowledge {unknown warning=}{directive}
+  \knowledge {unknown diagnose=}{directive}
+  \knowledge {suggestion=}{directive}
+  \knowledge {PDF string=}{directive}
+  \knowledge {stared sequence}{doc notion}
+  \knowledge {modifier}[modifiers|Modifiers]{doc notion}
+\end{scope}
+
+\knowledge{align*}{typewriter}
+
+%\knowledgedefault{index}
+\knowledgedefault{}
+
+\knowledge{label}{}
+
+\knowledge{variant of \cs{\kl}}[variants of \cs{\kl}|Variants of \cs{\kl}]{doc notion}
+\knowledge{scoping}[Scoping]{doc notion}
+\knowledge{package option}[package options|Package options]{doc notion}
+\knowledge{configuration option}[configuration options|Configuration options]{link=package option}
+\knowledge{stack of visible scope instances}{notion}
+\knowledge{quotation notation}{doc notion}
+\ExplSyntaxOn
+\def\klqn#1{{\kl[quotation~notation]{\tl_to_str:n{#1}}}}
+\def\klbn#1{{\kl[`\vbar'-notation]{\tl_to_str:n{#1}}}}
+\ExplSyntaxOff
+
+\knowledge{`\vbar'-notation}{doc notion}
+\knowledge{doc notion}
+  |  jobname.kaux
+  |  kaux file
+\knowledge{undefined knowledge}[undefined knowledges|Undefined knowledges]{doc notion}
+\knowledge{Non introduced autoref knowledge}{doc notion}
+\knowledge{Duplicated intros}{doc notion}
+\knowledge{doc notion}
+  | instance
+  |	instances
+  | Instances
+\knowledge{doc notion}
+  | explicit scope
+  |	explicit scoping
+  | Explicit scopes
+  | explicit scopes
+  | Explicit scoping
+\knowledge{directive}[directives|Directives]{doc notion}
+\knowledge{area}[areas|Areas]{doc notion}
+\knowledge{knowledge}[knowledges|Knowledges]{doc notion}
+\knowledge{diagnose file}[diagnose|filename.diagnose]{doc notion}
+\knowledge{.diagnose}{link=diagnose file,typewriter}
+\knowledge{macro directive}[macro directives|Macro directives]{doc notion}
+\knowledge{default directive}[default directives|Default directives]{doc notion}
+\knowledge{knowledge style}[Knowledge styles|knowledge styles]{doc notion}
+\knowledge{style}[styles|Styles|display style|display styles]{link=knowledge style}
+\knowledge{category}[categories|Categories]{doc notion}
+\knowledge{doc notion}
+  |  scope
+  |  scopes
+  |  Scopes
+\knowledge{doc notion}
+  | scopetag
+  | scopetags
+\knowledge{namespace}[namespaces|Namespaces]{doc notion}
+\knowledge{vertical mode}{doc notion}
+\knowledge{debug mode}{doc notion}
+\knowledge{knowledge macro}[Knowledge macros|knowledge macros]{doc notion}
+\knowledge{anchor point}[anchor points|Anchor points]{doc notion}
+\knowledge{configuration directive}[Configuration directives|configuration directives]{doc notion}
+
+\knowledge {\knowledge namespace}{doc notion}
+\knowledge {\knowledge knowledge name}{doc notion}
+\knowledge {\knowledge optional scope}{doc notion}
+\knowledge {\knowledge synonym name}{doc notion}
+\knowledge {\knowledge synonyms}[\knowledge optional argument]{doc notion}
+\knowledge {\knowledge directives}[knowledge directive]{doc notion}
+
+\knowledge{option}
+  | composition mode
+  | composition
+\knowledge {paper mode}[paper]{option}
+\knowledge {electronic mode}[electronic]{option}
+
+\knowledge {targeting directive}[targeting directives]{doc notion}
+\knowledge {display directive}[display directives]{doc notion}
+\knowledge {scope directive}[scope directives]{doc notion}
+
+\knowledge {index key}{doc notion}
+\knowledge {index entry}{doc notion}
+\knowledge {main index entry}{doc notion}
+\knowledge {table of contents}[toc]{doc notion}
+\knowledge {knowledge name}{doc notion}
+\knowledge {klab}{doc notion}
+\knowledge {knowledge names}{synonym}
+\knowledge {export file}{doc notion}
+\knowledge {index}{doc notion}
+\knowledge {warning styles}{doc notion}
+\knowledge {default styles}{doc notion}
+\knowledge {`Undefined knowledges' section}{link=undefined knowledge}
+\knowledge {Autoref not introduced}{doc notion}
+\knowledge {Autoref introduced twice}{doc notion}
+\knowledge {scopept instances}{doc notion}
+\knowledge {token list variable}{doc notion}
+\knowledge {knowledgenow directives}{doc notion}
+\knowledge {writing mode}[Writing modes|writing modes]{doc notion}
+
+\knowledge {scope.sty}{link=scope option}
+
+
+\knowledgedefault{}
+
+
+
+
+ \newtheorem{problem}{\textcolor{red}{\texttt{The problem}}}
+ 
+ \newenvironment{warning}{\medskip\par\noindent\textcolor{red}{\texttt{Warning!}}}{\medskip\par}
+ 
+\newtheorem{remark}{Remark}
+ 
+\newenvironment{hint}{\medskip\par\noindent\textbf{Hint.}}{\medskip\par}
+\NewDocumentEnvironment{variation}{o}
+  {\medskip\par\noindent\textcolor{blue}{\texttt{Variation%
+    \IfNoValueF{#1}{ (\textcolor{DarkBlue}{#1})}%
+    .}}}{\medskip\par}
+ 
+ 
+\newsavebox{\fminipagebox}
+
+\NewDocumentEnvironment{cminipage}{m O{\fboxsep}}
+ {\par\kern#2\noindent\begin{lrbox}{\fminipagebox}
+  \begin{minipage}{#1}\ignorespaces}
+ {\end{minipage}\end{lrbox}%
+  \makebox[#1]{%
+    \kern\dimexpr-\fboxsep-\fboxrule\relax
+    \colorbox{Honeydew}{\usebox{\fminipagebox}}%
+    \kern\dimexpr-\fboxsep-\fboxrule\relax}\par\kern#2}
+
+\NewDocumentEnvironment{fminipage}{m O{\fboxsep}}
+ {\par\kern#2\noindent\begin{lrbox}{\fminipagebox}
+  \begin{minipage}{#1}\ignorespaces}
+ {\end{minipage}\end{lrbox}%
+  \makebox[#1]{%
+    \kern\dimexpr-\fboxsep-\fboxrule\relax
+    \fbox{\usebox{\fminipagebox}}%
+    \kern\dimexpr-\fboxsep-\fboxrule\relax}\par\kern#2\relax}
+
+ \newenvironment{code}[1][12.4cm]
+    {\par
+     \noindent
+     \cminipage{#1}%
+     \tt
+    }{%
+    \endcminipage%
+    \par
+    }
+ 
+ \newenvironment{PDFoutput}[1][8.5cm]
+    {\begin{flushright}\begin{fminipage}{#1}}
+    {\end{fminipage}\end{flushright}\par}
+ 
+ \newcommand\smallcode[1]{\colorbox{Honeydew}{\texttt{#1}}}
+
+
+\ExplSyntaxOn
+\group_begin:
+	\catcode`| = 11%
+	\global\def\vbar{|}
+\group_end:
+\ExplSyntaxOff
+
+
+
+
+
+
+
+
+
+
+\begin{document}
+\label{paper:top}
+\title{The \texttt{knowledge} package\\%
+   \small[\fileversion{} --- \filedate]}
+\author{Thomas Colcombet \\ \texttt{thomas.colcombet@irif.fr}}
+\maketitle
+
+\begin{abstract}\phantomintro(package){knowledge}%
+The "knowledge@@package" package offers commands and notations for handling semantical notions in a (scientific) document.
+This allows to link the use of a notion to its definition, to add it to the index automatically, etc.
+\end{abstract}
+
+\ifcodeTF{\begin{quote}This version of the documentation includes a good part of the code. A casual user should \textit{a priori} not use this version of the documentation.\end{quote}}{}
+
+\section*{Status of this version}
+\label{section:status}
+\begin{quote}
+\begin{tabular}{ll}
+\texttt{contact:}&\texttt{thomas.colcombet@irif.fr}\\
+\texttt{version:}&\texttt{\fileversion}\\
+\texttt{date:}&\texttt{\filedate}
+(documentation produced \today)\\
+\texttt{license:}&\texttt{LaTeX Project Public License 1.2}\\
+\texttt{web:}&\url{https://www.irif.fr/~colcombe/knowledge_en.html}\\
+\texttt{CTAN:}&\url{https://www.ctan.org/pkg/knowledge}
+\end{tabular}
+\end{quote}
+\newpage
+\knowledgeconfigure{protect links}
+\tableofcontents
+\label{section:toc}
+\knowledgeconfigure{unprotect links}
+
+
+\newpage
+\ifcodeTF{
+\section{Todo list}
+\label{section:todo}
+This is essentially a list for personal referencing of what has to be done.
+\begin{asparaitem}
+\item deactivate quotation by default in the preamble in particular for avoiding clashes with commands such as \cs\DeclareMathDelimiter.
+\item make knowledge compatible with beamer (request of Patrick Aiyao He), probably use hypertarget and hyperlink instead of hyperlabel and hyperref.  Seems complicated because I do not know how to know if some material is going to be displayed, and this is necessary for a complete working solution.
+I have seen Till Tantau who explained me how to test whether a material is displayed. This involves testing  the counter |beamer@coveringdepth| which if higher than one when 'not displayed'.
+|beamer@slideinframe| could also be intersting.
+\item make quotation work properly in the titles of section...,
+\item allow to protect quotation in commands, and not only environments (for instance xymatrix)
+%\item remove the warnings about redefining commands
+\item proper mathematics handling. Write a new \csintro{\NewDocumentCommand}-like macro
+%\item detect using some trick that the previous compilation failed, and deactivate the Kaux file in this case
+% (for the moment, removing the aux file deactivates the kaux file. This is convenient but not sufficient.)
+%\item proper code for \cs{\nointro}.
+\item improving the \cs{\AP} and \cs{\itemAP} commands. For the moment \cs{\AP} silently fails inside the
+  optional argument of \cs{\item}, and probably elsewhere too. See how this can be improved. I tried to use the \cs{inner_mode} test, but it also detects situations when where \cs{\AP} si allowed (like in minipage).
+\item solve the \kl(package){amsmath} problem that \cs{\label} is deactivated in unnumbered environment, while knowledge would nevertheless like to point to the place...
+\item Code export and import features.
+\item Pointing inside an external pdf document.
+\item Correct the use of parameters in a directive (see example 'highlight' below).
+\item Make the boolean parameters in knowledges to properly handle the false case (removing the default).
+\end{asparaitem}%
+}{}
+
+\newpage
+%\newgeometry{left=3cm,bottom=0.1cm}
+\section{History}
+\label{section:history}
+\small
+\begin{compactdesc}
+\item[2016-06-07] \verb|\knowledgemacro| is now renamed to \cs{\knowledgedirective}.
+\item[2017-01-13] \cs{\AP} has been recoded, and is now more properly aligned in the margin. The \kl{visible anchor points} option has also been made usable without the \kl(package){xcolor} package.
+\item[2017-01-13] The package \kl{scope option} can now be omitted. This in particular avoid clashes with the over-restriction on the structure of the document it entails. It should be improved to stop overloading the \cs{\begin} command.
+\item[2017-01-14] The overloading of \cs{\begin} and \cs{\end} was done as protected commands, which should not be the case to be consistent with the behaviour of LaTeX (for instance, this was giving an extra line in the title in the conference mode of the class IEEEtran). Corrected: these commands are not protected anymore.
+\item[2017-01-15] A workaround for an incompatibility between the "hyperref@@package" and the two-column mode as been added in the macro
+\cs{\knowledgeFixHyperrefTwocolumn} (thanks to Daniela Petrisan).
+\item[2017-01-15] Added the \kl[\knowledge directives]{directive} \kl{synonym}.
+\item[2017-01-15] Added the \texttt{noknowledge package} for minimizing the effects of not having "knowledge@@package" activated.
+\item[2017-01-17] Changed the way options are handled, decoupling the package options (options of \cs{\usepackage}) from the configuration options (see \cs{\knowledgeconfigure}). 
+\item[2017-01-17] Proper treatment of `final' option and \kl[composition mode]{composition} options.
+\item[2017-01-17] Added \cs{\IfKnowledgeFinalMode}\texttt{[TF]} commands for the user.
+\item[2017-01-17] Added the option \kl{fix hyperref twocolumn} as a shorthand for calling \cs{\knowledgeFixHyperrefTwocolumn}  (thanks to Daniela Petrisan and Luca Reggio).
+\item[2017-01-18] Added the configuration option \kl(option){notion} that offers a basic configuration compatible with \kl(package){xcolor} or not, and \texttt{final} and \kl{composition} modes.
+\item[2017-01-19] Added \cs{\phantomintro} and an explanation on how to deal with \kl{align*}.
+\item[2017-02-20] Removed the warnings of latex for unknown labels in \kl{autoref}.
+\item[2017-02-20] Removed nasty error making \cs{\AP} not operative when anchor points were not visible.
+\item[2017-02-21] Added the \kl{protect link} directive.
+\item[2017-02-21] Added the \kl{hyperlinks=} configuration.
+\item[2017-02-27] \kl{visible anchor points} is active by default now.
+\item[2017-02-27] A simple example is now included.
+\item[2017-02-28] Minor changes on the documentation.
+\item[2017-02-28] Added the \kl(env){scope} environment.
+\item[2017-02-28] Added the \kl{protect link co} and \kl{unprotect link co} \kl{configuration directives}.
+\item[2017-02-28] Added the \cs{\knowledgeconfigureenvironment} command.
+\item[2017-03-03] Added the \kl{breaklinks} faq (thanks to Luca Reggio for the request).
+\item[2017-03-10] Added the \kl{"..."} and \kl{""...""} notations and the \kl(option){quotation} mode (requested by Gabriele Puppis and Andreas Krebs).
+\item[2017-03-11] Added the \kl{"...@..."} and \kl{""...@...""} notations.
+\item[2017-03-13] Corrected for being compatible with version of expl3 posterior to Mars 2015 (\verb|\c_sys_jobname_str| does not exist anymore). (Thanks to Jean-Éric Pin).
+\item[2017-03-14] Corrected that the \verb|@| letter was left a letter after \cs{\knowledgeFixHyperrefTwocolumn}. 
+\item[2017-04-09] Internal change of code, for "scope" handling and for the "quotation notation": slowly going toward an extended "quotation notation" that can make the "scope" of search explicit.
+\item[2017-04-09] Added the \kl{protect quotation} configure option, that is given a list of environments, and deactivates automatically the "quotation notation" when in there environments. This is a simple code for the moment. Typically, one can use \smallcode{\cs\knowledgeconfigure\{\kl{protect quotation}=tikzcd\}}. For the moment, it is not explained in the document.
+\item[2017-04-19] Changed the display code such that nested knowledges behave properly: before, the introduction would be performed for the object and the subobjects.
+\item[2017-04-20] The "electronic mode" has been added, and the `\texttt{final mode}' is now renamed into "paper mode". The \cs{\knowledgepackagemode} configuration variable is also available for easier scripting.
+\item[2017-06-06] FAQ on deactivating the quote in "Emacs" (thanks to Sylvain Perifel).
+\item[2017-06-08] Removed the \texttt{noknowledge} package and all references to it.
+\item[2017-06-08] Removed the \texttt{knowledgeutils.sty} and \texttt{scopearticle.sty} which are now integrated in the main file.
+\item[2017-06-08] The file \texttt{knowledge-example.tex} has been improved.
+\item[2017-06-09] First release of version 1.0 on "CTAN".
+\item[2017-06-10] Corrected the "quotation notation" to make it expandable for avoiding problems in table of contents (the @ was not working).
+\item[2017-06-11] Corrected a bug linked to changes of expl3 on recent distributions (pointed by Murray Eisenberg). Release of v1.01 on CTAN.
+\item[2017-06-27] Overloaded labels now perform an expansion of the argument (this was causing problems with biblatex).
+\item[2017-06-28] Options \texttt{log-declarations} of "xparse@@package" package removed (causing clash with other packages, as pointed by Juliusz Chroboczek). Release of v1.02 on CTAN. 
+\item[2017-06-30] added the field \texttt{\robustdisplay{labelizable_bool}} to areas. Coded missing features of scoping. Now the "scope=" directive works with as parameter an enclosing "area", or a label.
+\item [2017-06-30] Added in the source a Regression subdirectory containing files to be tested (so far only one: regression-scope.tex)
+\item [2017-07-01] Corrected a conflict between the "scope@@option" and "makeidx@@option" option.
+\item [2017-07-03] Scoping becomes operational.
+\item [2017-07-04] The documentation for "notion@@style" and "intro notion@@style" are added (thanks to Fabian Reiter).
+\item [2017-07-09] Added boolean \cs{environment_bool} field to "areas",in order to resolve an incompatibility with the package "standalone@@package" noticed by Fabian Reiter.
+\item [2017-07-20] "Scoping" becomes fully operational, with the parenthesis notation of \cs{\kl} and \cs{\intro}. The use of scope has been recoded. Now scope links reuse implicitly the key as a link. Documentation updated.
+\item[2017-07-26] File and line numbers added in the "kaux file". Added the option "diagnose line=" to deactivate it.
+\item[2017-07-26] Corrections to the documentation. Version 1.03 on CTAN.
+\item[2017-07-28] Corrected a bug of scoping in the context of synonyms. Added ctan for producing the ctan zip file.
+\item[2017-08-06] Now passes the compliance test \texttt{check-declarations} of "expl3@@package"
+     (thanks to Marc Zeitoun)
+\item[2017-09-12] The "hidelinks" option of "hyperref@@package" is now always activated.
+\item[2017-09-25] Ancient version of "xparse@@package" does not have \cs{\NewExpandableDocumentCommand}. Corrected. Version 1.05 on "CTAN".
+\item[2017-10-10] Bug in the implementation of \cs{\knowledgenewvariant} (that was invisible for older versions of "expl3@@package"). Found and corrected (thanks to Marc Zeitoun). Version 1.06 on "CTAN".
+\item[2017-10-15] Diagnose extended (suggested by Fabian Reiter). Minor corrections. Version 1.07 on "CTAN".
+\item[2017-10-17] Added "cyclic color" and "cyclic colors=@@option". Reorganization of the structure of the code for producing a better "CTAN" archive. Version 1.08 on "CTAN".
+\item[2018-01-31] Added the "strict" configuration option. 
+\item[2018-02-05] Added the "smallcaps" formatting directive. 
+\item[2018-02-17] Corrected incompatibility with latest version of "expl3@@package". Version 1.10 on "CTAN". 
+\item[2018-02-21] Bug correction concerning the activation of scopes.
+\item[2018-02-21] Documentation improvement for "Emacs" (thanks to Michaël Cadilhac).
+\item[2018-02-24] Documentation improvement for the environment "thebibliography@@env".
+\item[2018-05-17] Correction to be compatible with the latest version of "expl3@@package" (thanks to Leo Stefanesco).
+\item[2018-07-26] Compatibility with utf8 symbols in labels (thanks to Yves Guiraud).
+\item[2018-11-22] Corrected bug for "makeidx@@package" (thanks to Sylvain Schmitz). V1.14 on "CTAN".
+\item[2019-01-27] Minor improvement of the doc, and hiding links in it. V1.15.
+\item[2019-02-15] Correction of a placement problem with \cs\AP. V1.16.
+\item[2019-05-23] Adding of the "`\vbar'-notation" for the \cs{\knowledge} command.
+"Explicit scopes" are introduced. Updating of the documentation. "up" directive in math mode now silently does nothing, and \cs{\knowledgedirective} now forbids redefinitions by default (thanks to Léo Stefanesco).
+\item[2019-07-02] Removing the `\texttt{kl}' and `\texttt{intro}' styles that prevented a proper configuration of "intro notion@@style" (thanks to Léo Stefanesco). 
+\item[2019-10-03] Update of the documentation, and V1.17.
+\item[2019-10-27] Bug correction and added the `\textbf{patch label}' configuration directive (thanks to \href{https://becca.ooo/}{Rebecca Turner}). V1.18.
+\item[2019-11-19] Now the labels are evaluated before being written to the "kaux file" in a \cs\KAuxNewLinkScopetagInstance\ command (bug fix). V1.19.
+\item[2019-11-29] Help added in the "diagnose file". \textbf{bar suggestion} (still working) renamed to "diagnose bar", and activated by default. \textbf{patch label} is renamed into "label scope". 
+\item[2019-12-02] The "kaux file" is now checked for completeness befor being used. This should avoid errors when the previous compilation failed.
+\item[2019-12-03] Corrected bug in the scope access. V1.20.
+\item[2020-01-25] Corrected bug when "knowledge@@package" is used without "hyperref@@package" (thanks to Rémi Nollet).
+\item[2020-01-25] Corrected bug that made the kaux file not stabilize (thanks to Rémi Nollet). V1.21 on CTAN.
+\item[2020-03-05] No \texttt{hidelinks} and \texttt{breaklinks} are automatically activated unless the new option \kl{no patch} is activated. Doc update. V1.22 on CTAN.
+\end{compactdesc}
+\normalsize
+%\restoregeometry
+
+
+
+\newcommand{\filluptopage}[1]{%
+ \clearpage
+ \loop\ifnum\value{page}<#1\relax
+   \null\clearpage
+ \repeat
+}
+\filluptopage{4}
+
+
+\section{Quick start}
+\label{section:quick start}
+
+\leavevmode
+\AP
+The "knowledge@@package" package offers several capabilities for handling colors, changing the display style, defining internal and external hyperlinks, producing an index, etc...
+All these possibilities arise from defining explicitly or implicitly \kl{knowledges} associated to terms in plain english (or other languages).
+
+We start by describing a certain number of problems/scenarii that a user may be confronted to, and show how to solve them. 
+%The hyperlinks in this document have been generated using the "knowledge@@package" package.
+In the subsequent sections, a more detailed account of how the "package@knowledge@package" works and can be parameterized is given.
+
+There is also a file \texttt{knowledge-example.tex} that can be used as a starting point.
+
+\subsection{Linking to outer documents/urls, and to labels}
+
+\medskip
+\begin{problem}
+I have a lot of external url's that I would like to [[very] often] have a link to, but I do not want to
+always type the full url. I do not want to remember weird labels/internal references/macro names either.
+\end{problem}
+\medskip
+
+A solution is as follows. One first loads the "knowledge@@package" package with option
+\kl(option){hyperref}
+using either:
+\marginpar{\begin{hint}
+You may use other options like \kl(option){xcolor} for allowing debugging with colors (for undefined knowledges).
+\end{hint}}
+\begin{code}[8cm]
+\cs{\usepackage}["hyperref@@package",\kl(option){quotation}]\{"knowledge@@package"\}
+\end{code}
+\noindent or equivalently:
+\begin{code}[8cm]
+\cs\usepackage\{\kl(package){hyperref}\}\\
+\cs\usepackage[\kl(option){quotation}\footnote{If you want to use the \kl{"..."} notation.}]\{"knowledge@@package"\}
+\end{code}
+
+Then, in the preamble (or in an external file), one uses commands of the form either:
+\begin{code}
+\cs\knowledge\{\kl{url=}\{https://en.wikipedia.org/wiki/LaTeX\}\}\par
+\qquad\kl{|}\quad latex
+\end{code}
+or equivalently
+\begin{code}
+\cs\knowledge\{latex\}\{\kl{url=}\{https://en.wikipedia.org/wiki/LaTeX\}\}
+\end{code}
+This configures the text `\texttt{latex}' to be associated with the sole directive \kl{url=},
+which means an hyperreference to this address.
+
+Finally in the body of the paper, the sole extra command \cs{\kl} (or the \kl"-symbol if the \kl(option){quotation} option is activated) is used,
+with as parameter a text. This text is searched for, and the directives attached to it (here "url="),
+are used for formatting its printing\footnote{This resembles a lot a macro so far. It nevertheless differs in that: (a) if not defined, it does not make the compilation fail as a macro would, and thus does not interfere with the writing process, (b) any text can be used and not only alphabetic letters as in default \TeX, (c) you do not have to care about the space after, and (d)
+in fact the machinery for resolving the meaning of a knowledge is much more powerful than simple macro expansion.}.
+Hence:
+  \marginpar{\begin{hint}
+  If the knowledge is not defined, this does not make the compilation fail.
+  In fact, it is good practice to use many \cs{\kl} commands or \kl{"..."} notations while writing a text,
+  and only resolve these questions at the end (see also the \kl{diagnose file}).
+  \end{hint}}
+\begin{code}[10cm]
+This package has been written for use in \cs\kl\{latex\}.
+\end{code}\noindent
+or, if the \kl(option){quotation} option is activated,
+\begin{code}[10cm]
+This package has been written for use in \kl{"}latex\kl{"}.
+\end{code}\noindent
+yields
+\knowledge{urllatex}{url=https://en.wikipedia.org/wiki/LaTeX,color=black}
+\begin{PDFoutput}
+This package has been written for use in \kl[urllatex]{latex}.
+\end{PDFoutput}
+
+\begin{variation}
+But in fact, I would like `\texttt{latex}' to also be properly typeset \LaTeX{}, and in \textcolor{gray}{gray}.
+This requires to load the package with the \kl(option){xcolor} option (for being able to use colors, obviously), or by loading the package "xcolor@@package" before, and then modify the \cs{\knowledge} command using
+extra "directives":
+\begin{code}[10.9cm]
+\cs\knowledge\{latex\}\{\kl{url=}https://en.wikipedia.org/wiki/LaTeX,\\
+\indent\qquad\kl{text=}\cs\LaTeX,~\kl{color=}gray\}
+\end{code}
+\noindent
+yields with the same text
+\knowledge{urllatexgray}{url=https://en.wikipedia.org/wiki/LaTeX, color=gray, text=\LaTeX}
+\begin{PDFoutput}
+This package has been written for use in \kl[urllatexgray]{LaTeX}.
+\end{PDFoutput}
+
+The \kl[\knowledge directives]{directives} \kl{text=} and \kl{color=} have quite obvious meaning.
+\kl{Directives} can also control the style using \kl{emphasize}, \kl{boldface}, \kl{italic},
+\kl{typewriter} and so on. See Section~\ref{subsection:directive list} for a complete list of "directives@knowledge directive".
+\end{variation}
+\begin{variation}[synonyms]
+It happens very often that there are several ways to name a notion, because of capitalized letters, conjugacy, grammar, or simply because it is not explicitly named in the text. There are two ways to resolve this issue. The first is to use the syntax
+\begin{center}
+\smallcode{\cs\kl[\textit{knowledge}]\{\textit{text}\}}\qquad or\qquad\smallcode{\kl"\textit{text}\kl @\textit{knowledge}\kl"}
+\end{center}
+the result is that the text `\textit{text}' is displayed, but urls, colors, etc from `\textit{knowledge}' are used.
+
+Another more systematic way to do it is to declare synonyms.
+This can be achieved using a `\vbar' separated list of texts in the \kl[\knowledge synonyms]{optional parameter} of the\cs{\knowledge} command, it is possible to add a list of `synonyms', such as in:
+%
+\marginpar{\begin{hint}
+  Another syntax (called the "`\vbar'-notation") is:
+  \begin{code}[4.35cm]
+  \cs{\knowledge}\{"url="\dots\}\\
+  \indent~\vbar~Donald Ervin Knuth\\
+  \indent~\vbar~Donald Knuth\\
+  \indent~\vbar~D. Knuth\\
+  \indent~\vbar~Knuth
+  \end{code}
+  Other possibilities are to use the
+  "synonym" or "link=" directives.
+  \end{hint}}
+%
+\begin{code}[12.4cm]
+\cs{\knowledge}\{latex\}[LaTeX\vbar Latex\vbar LATEX]\\
+\indent\qquad\{\kl{url=}http://en.wikipedia.org/wiki/LaTeX,\\
+\indent\qquad\kl{text=}\cs{\LaTeX}, \kl{color=}gray\}
+\end{code}
+This is interesting for people's name that can be displayed in various ways depending on the context. Hence
+%
+  \begin{code}[12.4cm]
+  \cs\knowledge\{Donald Ervin Knuth\}[Donald Knuth\vbar Knuth]\\
+ \indent\qquad\{\kl{url=}https://fr.wikipedia.org/wiki/Donald\_Knuth\}
+  \end{code}
+\noindent would allow 
+\begin{center}
+\smallcode{\cs\kl\{Knuth\}}~~~as well as~~~\smallcode{\cs\kl\{Donald Knuth\}},\\
+or simply \smallcode{\kl"Knuth\kl"}~~~as well as~~~\smallcode{\kl"Donald Knuth\kl"} and so on
+\end{center} to all point to the same web address.
+It is even more convenient to use it for nouns that are sometimes in plural form or at the beginning of a sentence. Hence:
+\begin{code}[12.4cm]
+\cs\knowledge\{group\}[groups\vbar Groups\vbar group morphism\\
+\indent~~~~~~~~~~\vbar group morphisms\vbar Group morphisms]\\
+\indent~~~~~  \{\kl{url=}https://en.wikipedia.org/wiki/Group\_(mathematics)\}
+\end{code}
+\noindent
+or the more readable and maintainable:
+\begin{code}[12.4cm]
+\cs\knowledge\{\kl{url=}https://en.wikipedia.org/wiki/Group\_(mathematics)\}
+\indent~~~\vbar~~group\\
+\indent~~~\vbar~~groups\\
+\indent~~~\vbar~~Groups\\
+\indent~~~\vbar~~group morphism\\
+\indent~~~\vbar~~group morphisms\\
+\indent~~~\vbar~~Group morphisms
+\end{code}
+\end{variation}
+\noindent
+makes it possible to use the notions in many contexts:
+\begin{code}
+\kl"Groups\kl" form a category when equipped with \kl"group morphisms\kl".
+\end{code}
+
+
+
+
+\subsection{Linking inside a document}
+
+
+\begin{problem}
+I am writing a scientific document with many different definitions, typically a journal article, a PhD thesis\footnote{Reviewers should appreciate...}, or a book.
+
+I would like all the notions to be linked inside the document for being able 
+in one click, whenever something is used, to jump to its definition. I also want to easily write an index.
+However, I do not want it to be a hassle when writing.
+\end{problem}
+\medskip
+
+
+A solution is as follows. First load the "knowledge@@package" package in the preamble:
+\begin{code}[11cm]
+\cs\usepackage[\kl(option){xcolor},\kl(option){hyperref},\kl(option){notion},\kl(option){quotation}]\{"knowledge@@package"\}
+\end{code}
+\noindent with suitable options: \kl(option){hyperref} for links,
+\kl(option){xcolor} for colors (if required, but always advised), "quotation@@option" for using the "quotation notation" and \kl(option){notion} for automatic configuration of the "notion" "directive".
+
+%
+%
+Then write the document using \cs{\intro} (or \kl{""...""} if \kl(option){quotation} is activated) when a notion is defined/introduced, and
+\marginpar{\begin{hint} Using an \cs{\AP} command is strongly advised,
+      and allows to control more precisely where the target of hyperreferences is: at the beginning of a paragraph is better than the beginning of the section several pages before...\end{hint}}
+\cs{\kl}  (or \kl{"..."} if \kl(option){quotation} is activated) when it is used. For instance:
+\begin{code}[12cm]
+\cs\AP{}
+A \cs\intro\{semigroup\} is an ordered pair \verb|$(S,\cdot)$| where \verb|$\cdot$| is an
+associative binary operator over~\verb|$S$|.\\
+\kl{[...]}\\
+\cs{\AP}
+A \cs\intro\{monoid\} \verb|$(M,\cdot,1)$| is a \cs\kl\{semigroup\} \verb|$(M,\cdot)$| together
+with a neutral element \verb|$1$|.
+\end{code}
+\noindent or when the "quotation notation" is activated:
+\begin{code}[12cm]
+\cs\AP{}
+A \kl{""}semigroup\kl{""} is an ordered pair \verb|$(S,\cdot)$| where \verb|$\cdot$| is an
+associative binary operator over~\verb|$S$|.\\
+\kl{[...]}\\
+\cs\AP{}
+A \kl{""}monoid\kl{""} \verb|$(M,\cdot,1)$| is a \kl"semigroup\kl" \verb|$(M,\cdot)$| together
+with a neutral element \verb|$1$|.
+\end{code}
+
+This yields
+\knowledgeconfigure{visible anchor points=true}%
+\marginpar{Note that the \cs{\AP} command is made visible thanks to a red corner.}
+\begin{PDFoutput}[10cm]
+\AP A \kl[_semigroup]{semigroup} is an ordered pair $(S,\cdot)$ where $\cdot$ is an
+associative binary operator over~$S$.\\
+\kl{[...]}\\
+\AP A \kl[_monoid]{monoid} 
+$(M,\cdot,1)$ is a \kl[_semigroup]{semigroup} $(M,\cdot)$ together
+with a neutral element~$1$.
+\end{PDFoutput}
+\knowledgeconfigure{visible anchor points=false}%
+\kl{Undefined knowledges} are in brown (it is an important feature that the compilation does not fail: undefined knowledges should not interfere with the writing of the document, which is the main activity of the writer).
+One can now see the list of such problems in the file `\kl{filename.diagnose}'.
+One can in particular find in the "`Undefined knowledges' section":
+\begin{verbatim}
+\knowledge{semigroup}{}
+\knowledge{monoid}{}\end{verbatim}
+Which means that both `monoid' and `semigroup' are unknown \kl{knowledges}.
+
+\AP
+To solve this, let us copy these two (or more) lines in the paper\footnote{It is good practice to use a separate file, something like `paper-knowledge.tex'.}, adding the \kl{notion} directive (which is a configured version of the \kl{autoref} directive, meaning essentially that you want to use the features of the \cs{\intro} command), i.e., in the preamble:
+\begin{code}[6.7cm]
+\cs\knowledge\{semigroup\}\{\kl{notion}\}\\
+\cs\knowledge\{monoid\}\{\kl{notion}\}
+\end{code}
+The result is then (after two compilations):
+%
+\knowledgeconfigure{visible anchor points=true}%
+\begin{PDFoutput}[10cm]
+\knowledge{semigroup}{scope=document,notion}%
+\knowledge{monoid}{scope=document,notion}%
+\AP A \intro{semigroup} is an ordered pair $(S,\cdot)$ where $\cdot$ is an
+associative binary operator over~$S$.
+\kl{[...]}\\
+\AP A \intro{monoid} $(M,\cdot,1)$ is a \kl{semigroup} $(M,\cdot)$ together
+with a neutral element~$1$.
+\end{PDFoutput}
+\knowledgeconfigure{visible anchor points=false}%
+%
+Clicking on `semigroup' now jumps to the place where it was introduced, and very precisely at the
+location of the red corner depicting the presence of the \cs{\AP}-command.
+If now one adds the option \kl{electronic} while loading the package, then the red corners disappear as well as the brownish undefined knowledges which become black. When using the option \kl{paper}, the links are still there, but all texts are in black.
+
+\AP
+It is very often the case that for plain english (or other languages) some terms can be used in several forms; verbs can be conjugated; nouns can be plural, and so on.
+So usually the lines added to the file look more like:
+\begin{code}[10.7cm]
+\cs\knowledge\{semigroup\}[semigroups\vbar Semigroups]\{\kl{notion}\}\\
+\cs\knowledge\{monoid\}[monoid\vbar Monoids]\{\kl{notion}\}
+\end{code}
+\noindent
+or, using the more readable "`\vbar'-notation":
+\begin{code}[10.7cm]
+\cs\knowledge\{\kl{notion}\}\\
+\indent~~~\klbn|~~semigroup\\
+\indent~~~\klbn|~~semigroups\\
+\indent~~~\klbn|~~Semigroups\\
+\cs\knowledge\{\kl{notion}\}\\
+\indent~~~\klbn|~~monoid\\
+\indent~~~\klbn|~~monoids\\
+\indent~~~\klbn|~~Monoids
+\end{code}
+Now, using a text like
+\begin{code}[11cm]
+\kl"Monoids\kl" are simply \kl{"}semigroups\kl{"} in which\dots
+\end{code}
+\noindent will properly be linked to the definition of a semigroup and a monoid.
+
+Finally, in particular for large documents, it is good to have an "index". For this,
+one should load the package "makeidx@@package" before "knowledge@@package".
+Then use it normally: putting \cs{\makeindex} in the preamble and \cs{\printindex} at the end of the document. The \cs{knowledge} commands are not easily adapted:
+\begin{code}[10.7cm]
+\cs\knowledge\{"notion","index="semigroup\}\\
+\indent~~~\vbar~~semigroup\\
+\indent~~~\vbar~~semigroups\\
+\indent~~~\vbar~~Semigroups\\
+\cs\knowledge\{"notion","index="monoid\}\\
+\indent~~~\vbar~~monoid\\
+\indent~~~\vbar~~monoids\\
+\indent~~~\vbar~~Monoids
+\end{code}
+\noindent
+Now, the index (after running \texttt{makeidx}) contains all entries and references to the use of semigroups and monoids.
+
+See Section~\ref{subsection:makeidx option} for more details on making an index.
+%
+%\subsection{Managing an index}
+%Though it is not its primary goal, without using its hyperlinking capabilities, the "knowledge@@package" offers convenient features for easily managing data for the construction of an index. 
+
+%For instance, let us imagine that one wants to write a book
+%
+
+\subsection{Mathematics}
+\label{subsection:mathematics scenario}
+
+The examples above show various techniques for using \kl{knowledges} for enhancing the information associated to terms. In fact, these techniques are not incompatible with mathematics. Imagine, for instance that you would like each time a macro \kl[@token]{\monoid} is met, to display $\mathcal M$, you would do for instance:
+\marginpar{%
+  \begin{hint}
+      Defining new macros is best done using \cs{\newrobustcmd}
+      (of the "etoolbox@@package" package), rather than \cs{\newcommand} as usual in \LaTeX.
+      This remark is general independently of the use of "knowledge@@package"
+    \end{hint}.}
+\begin{code}[7cm]
+\cs\newrobustcmd\kl[@token]\monoid\{\cs\mathcal\ M\}
+\end{code}\noindent
+Imagine that furthermore, you would like to hyperlink to the definition of a monoid. A standard \cs{\kl} command does the job\footnote{It is highly advised to not use the "quotation notation" in math mode or macros.}:
+\begin{code}[9cm]
+\cs\newrobustcmd\kl[@token]\monoid\{\cs\kl
+monoid]\{\cs\mathcal\ M\}\}\\~
+What is \$\kl[@token]\monoid\$ ?
+\end{code}\noindent
+\noindent
+would yield:
+\begin{PDFoutput}[4cm]
+\newcommand \monoid{\kl[monoid]{\mathcal M}}
+What is $\monoid$ ?
+\end{PDFoutput}
+\begin{problem}
+But I want more. I want to be able to introduce variables.
+Even better, I would like to be able to have variables hyperlinking to the place of their introduction, knowing that the same variable name may mean different things depending on the lemma or proof we are in. Hence, I want to properly control the scope of knowledges.
+\end{problem}
+
+\AP To be done, this requires to use \kl{scoping}. The principle of \kl{scoping} is that a knowledge can be
+attached to a particular context. This is particularly true when typesetting mathematics: a variable is meaningful inside a statement, and inside the proof of the statement. Furthermore, the same variable name may reappear elsewhere with a different meaning. 
+
+The following code gives an idea of what is possible using \kl{scoping}:
+\begin{code}
+\cs\knowledgeconfigureenvironment\{theorem,lemma,proof\}\{\}\par\noindent
+\kl{[...]}\par\noindent
+\cs\begin\{lemma\}\cs\label\{theorem:main\}\par\noindent
+~~~~\cs\knowledge\{n\}\{\kl{notion}\}\par\noindent
+~~~~For all number~\$\cs\intro\ n\$, \kl{[...]}\par\noindent
+\cs\end\{lemma\}\par\noindent
+\kl{[...]}\par\noindent
+Here \$\cs\kl\ n\$ is an undefined knowledge.\par\noindent
+\kl{[...]}\par\noindent
+\cs\begin\{proof\}[Proof of theorem\~\space\{theorem:main\}]\par\noindent
+~~~~\cs\knowledgeimport\{theorem:main\}\par\noindent
+~~~~Inside the proof, \$\cs\kl\ n\$ is hyperlinked to the theorem...\par\noindent
+\cs\end\{proof\}
+\end{code}
+More on \kl{scoping} can be found in Section~\ref{subsection:scoping}.
+
+The use of "variants of  \cs{\kl}" is also useful for typesetting mathematics. It allows for instance, to implicitly execute the \cs{\knowledge} command at the same time of the introduction. See~\ref{subsubsection:variants} for more detail.
+
+\newpage
+
+\section{Usage of the \kl(package){knowledge} package}
+\label{section:doc}
+
+\iffalse
+We shall now give a more complete description of the functionalities of the "knwoeldge@@package".
+\ref{subsection:loading packages}
+\ref{subsection:knowledge command}
+\ref{subsection:kl command}
+\ref{subsection:diagnose file}
+\ref{subsection:hyperref package}
+\ref{subsection:xcolor package}
+\ref{subsection:makeidx package}
+\fi
+
+\subsection{Options and configuration}
+\label{subsection:loading packages}
+
+Options are used to activate some capabilities.
+Some options have to be used when loading the "knowledge@@package" package, while some others
+can also be used inside the document thanks to the use of \cs{\knowledgeconfigure}.
+In this section, we review these ""package options"".
+
+\subsubsection{Options at package loading}
+
+The options that can be used in the optional parameter of \cs{\usepackage} when loading the "knowledge@@package" package belong to the following classes:
+\begin{compactdesc}
+\itemAP[Writing mode] The "paper", "electronic" or "composition" modes are possible ("composition" is by default) (see Section~\ref{subsubsection:writing modes} for more details).
+These modes change several rendering settings.
+\itemAP[Other packages] some of the options concern the loading and the use of other packages (\kl(package){hyperref}, \kl(package){xcolor}, \kl (package){makeidx}, \dots). Note that these package can also be loaded before "knowledge@@package". This is explained in Section~\ref{subsubsection:packages-loading}.
+\itemAP[Configuration options] as used by the command \cs{\knowledgeconfigure} can be used when loading the package.
+\itemAP[Scoping] The \kl[scope option]{scope} "option@package option" makes the package aware at a fine level of the structure of the document (see Section~\ref{subsection:scoping} for explanations). This provides, for instance, the possibility to define pieces of "knowledge" that are attached to a sections of the document.
+\itemAP[Other] The "no patch" option prevents the "knowledge@@package" to apply some patches that are convenient by default.
+\end{compactdesc}
+
+\subsubsection{Writing mode}
+\label{subsubsection:writing modes}
+There are three ""writing modes"" usable when loading the package "knowledge@@package":
+\begin{itemize}
+\itemAP In ""paper"" mode, the paper is rendered as for printing: in particular, no informative colors are visible. Hyperlinks are nevertheless present.
+\itemAP In ""electronic"" mode, the document has some colors witnessing the existence of the links for the reader to know that clicking is available.
+\itemAP In ""composition"" mode (the default), the document has colors helping the writing: "undefined knowledges" appear explicitly, "anchor points" are displayed, and so on. 
+\end{itemize}
+Activating the modes is obtained either at load time using one of:\\
+\begin{tabular}[t]{ll}
+ &\smallcode{\cs\usepackage[\kl{paper}]\{"knowledge@@package"\}}\\[2mm]
+or\quad&\smallcode{\cs\usepackage[\kl{electronic}]\{"knowledge@@package"\}}\\[2mm]
+or &\smallcode{\cs\usepackage[\kl{composition}]\{"knowledge@@package"\}}
+\end{tabular}\\
+\AP or by setting before loading the variable \csintro{\knowledgepackagemode} as in:\\
+\begin{tabular}[t]{ll}
+ &\smallcode{\cs\def\cs\knowledgepackagemode\texttt\{\kl{paper}\texttt\}}
+\end{tabular}\\
+The idea is that this can be used in automatic compilation scripts. For instance, using in a terminal:
+\begin{code}[12cm]
+\smallcode{\texttt{pdflatex} \quotesymbol\cs\def\cs\knowledgepackagemode% 
+     \texttt\{\kl{electronic}\texttt\}\cs\input\texttt\{file.tex\texttt\}\quotesymbol}
+\end{code}
+\noindent would result in compiling `\texttt{file.tex}' using "knowledge@@package" in 
+"electronic mode". 
+
+The following primitives are available to the user for "writing mode"-sensitive configuration:
+\begin{code}[11.4cm]
+\AP
+\csintro\IfKnowledgePaperModeTF\texttt\{true code\texttt\}\texttt\{false code\texttt\}\\
+\AP
+\csintro{\ ifKnowledgePaperMode}  true code [\cs{\ else} false code] \cs{\ fi}\\
+\AP
+\csintro{\IfKnowledgeElectronicModeTF}\texttt\{true code\texttt\}\texttt\{false code\texttt\}\\
+\AP
+\csintro{\ ifKnowledgeElectronicMode} true code [\cs{\ else} false code] \cs{\ fi}\\
+\AP
+\csintro{\IfKnowledgeCompositionModeTF}\texttt\{true code\texttt\}\texttt\{false code\texttt\}\\
+\AP
+\csintro{\ ifKnowledgeCompositionMode} true code [\cs{\ else} false code] \cs{\ fi}
+\end{code}
+
+
+\subsubsection{Automatic loading of other packages}
+\label{subsubsection:packages-loading}
+A certain number of "package options" coincide with the loading of other packages.
+For the moment, the packages that are concerned are \kl(option){hyperref},
+\kl(option){xcolor}, and \kl(option){makeidx}.
+
+For activating these functionalities, it is sufficient, either to load the package \emph{before} the "knowledge@@package" package, or to name it explicitly as an "option@package option" for "knowledge@@package".
+Loading separately the package is convenient for setting options for it. For instance,
+a typical preamble may look like:
+\begin{code}[7cm]
+\cs\documentclass\{article\}\\
+%\cs\usepackage[utf8]\{inputenc\}\\
+%\cs\usepackage[T1]\{fontenc\}\\
+\cs\usepackage[svgnames]\{\kl(package){xcolor}\}\\
+\cs\usepackage[\texttt{draft}]\{\kl(package){hyperref}\}\\
+\cs\usepackage[\kl(package){makeidx}]\{"knowledge@@package"\}
+\end{code}\noindent
+Such a sequence will activate the "knowledge@@package" package using the features related to \kl(package){xcolor} configured with \texttt{svgnames} option, to \kl(package){hyperref} configured with \texttt{draft} option, and to \kl(package){makeidx} with its standard configuration.
+
+
+
+In fact, the syntax when a package is loaded as an option of "knowledge@@package" is of the form 
+`package=choice' in which choice can take the following values:
+\begin{description}
+\itemAP[\intro{active}] The package will be loaded, and all the capabilities that it triggers are activated.
+This is the implicit meaning when nothing more is specified.
+\item[\intro{inactive}] The package is not loaded, and no capabilities are activated (even if it had been loaded previously by another |\usepackage| command).
+\item[\intro{compatibility}] The package is not loaded. The directives it uses do not cause any error, but have no effect. 
+\item[\intro{auto}] If the package was loaded before, then the associated capabilities are activated. This is the default behavior when the package is not named while loading.
+\end{description}
+Currently, the packages that can be loaded are:
+\begin{description}
+\itemAP[\kl(package){hyperref}] which activates all the (auto)referencing capabilities.
+\item[\kl(package){xcolor}] which activates coloring commands.
+\item[\kl(package){makeidx}] for handling the index automatically.
+\end{description}
+
+\subsubsection{Configuring and \cs{\knowledgeconfigure}}
+
+Some part of the configuration can be done outside of the \cs{\usepackage} command that loads the "knowledge@@package" package. This is done using the
+\cs{\knowledgeconfigure} command:
+\begin{center}
+\smallcode{\csintro\knowledgeconfigure\{\kl{configuration directives}\}}
+\end{center}
+Note that by default, the \kl{configuration directives} used by \cs{\knowledgeconfigure} can
+be used in the optional parameter of \cs{\usepackage} when loading the "knowledge@@package" package, but the converse is not true.
+""Configuration directives"" consists of a comma separated list of elements that can take the following values:
+
+\begin{description}
+\itemAP["diagnose bar="] (de)activates the "`\vbar'-notation" in the "diagnose file". True by default.
+\itemAP["diagnose help="] can be set to true or false. It activates or deactivates the help in the "diagnose file". True by default.
+\itemAP["diagnose line="] can be set to true or false. It activates or deactivates the line numbering in the "diagnose file". False by default.
+\itemAP[\kl{fix hyperref twocolumn}] triggers a hack that solves a known problem that may occur when "hyperref@@package" is used in two-columns mode.
+\itemAP[\kl{label scope}] enables or disables the redefined \cs{\label} command, which helps automatically define scopes (default is~\textmd{true}).
+\itemAP["notion@@option"] configures the "notion" "directive" which is a refined version of "autoref".
+\itemAP["protect quotation="] is followed by a comma separated list of environments in which the "quotation notation" will be automatically deactivated (surrounded by braces if more than one item in the list).
+\itemAP[\intro{protect link co} and \intro{unprotect link co}] starts and ends respectively a zone in which the "knowledge@@package" package do not create hyperlinks. These can be nested.
+This is typically useful around, e.g. the table of contents.
+\itemAP[\kl(option){quotation}] activates the "quotation notation", which allows to use \kl{"..."}, \kl{"...@..."} and \kl{"...@...@..."}
+   instead of \cs{\kl} commands and \kl{""...""}, \kl{""...@...""} and \kl{""...@...@...""} instead of the \cs{\intro} command.
+\itemAP[""strict""] is a Boolean option which, when activated, turns some warnings (for instance when a knowledge is redefined) into errors.
+\itemAP[\kl{visible anchor points}] is an option that makes visible or invisible the \kl{anchor points} of the \cs{\AP} and \cs{\itemAP} commands. Usually, this is automatically set to true when the "composition mode" is used (the default),
+and to false when the "paper mode" or the "electronic mode" are used.
+\end{description}
+
+
+\subsubsection{Other configuration option}
+
+\begin{itemize}
+\itemAP[""no patch""] deactivates some patches which otherwise are applied automatically.
+  Currently, the option \texttt{hidelinks} and \texttt{breaklinks} of the package \kl(package){hyperref} are automatically applied, unless "no patch" is used while loading the package. Without \texttt{hidelinks} the links in the document are surrounded by red or light blue boxes (it depends also on the pdf viewer): while this may be acceptable when links are seldom used, this becomes problematic in combination with the "knowledge@@package" package. Without \texttt{breaklinks}, links are not broken as normal text: this may corrupt the appearance of paragraphs, in particular in a multi column context.
+\end{itemize}
+
+\subsection{What is a \kl{knowledge}?}
+
+A \intro{knowledge} is often informally used in this document. Essentially, it captures what is an elementary concept in the document.
+Internally, a \kl{knowledge} is identified by three components:
+\begin{compactdesc}
+\itemAP[The \intro{knowledge name}] is a \kl{tex} string that has almost no limitation (but being well balanced, and containing no $\sharp$). It is the text entered by the user for defining and using the \kl{knowledge}.
+\itemAP[The \intro{scope}] which is a simple string identifying where the \kl{knowledge} is usable. The scopes are generated by the system.
+ For instance, internally, each section will be uniquely named `\texttt{section-1}', `\texttt{section-2}', and so on (this is invisible for the user). Each \kl{knowledge} is primarily valid in
+ exactly one such \kl{scope}. \kl{Knowledges} defined in the preamble are given the \kl{scope} `\texttt{document}'.
+ Usually, the user refers to scope using, for instance, labels.
+\itemAP[The \intro{namespace}] is a simple string that is used for avoiding clashes. It is most of the time simply `\texttt{default}'. It is `\texttt{style}' for \kl{styles} (that are internally as knowledges).
+  It is a possibility available to a developer to, when developing a new set of functionalities, use a different \kl{namespace} for avoiding clashes of names (for instance if one wants a french and an english set of knowledges that should not conflict, and would use separate sets of macros).
+  Usually, a normal user does not see \kl{namespaces}.
+\end{compactdesc}
+
+
+
+\subsection{The \cs{\knowledge} command and variations}
+\label{subsection:knowledge command}
+
+In this section, we describe the main commands that create \kl{knowledges}.
+The main one is \cs{\knowledge}. It can also be used in combination with \cs{\knowledgedirective}, \cs{\knowledgestyle} and \cs{\knowledgedefault}.
+
+\subsubsection{General description of the \cs{\knowledge} command}
+
+The key command for introducing knowledges is \cs{\knowledge}.
+There are two syntaxes. The standard one is:
+\begin{center}
+\smallcode{\csintro\knowledge\{\kl[\knowledge knowledge name]{knowledge name}\}%
+  [\kl[\knowledge synonyms]{synonym 1}\vbar\kl[\knowledge synonyms]{synonym 2}\vbar\dots]\{\kl[\knowledge directives]{directives}\}}
+\end{center}
+\AP
+The second one is the ""`\vbar'-notation""\footnote{%
+  This is a non-standard "LaTeX" syntax. The rule is that each knowledge appears in a distinguished line
+  that starts with some spaces and a `$\vbar$', and ends at the end of the line.
+  Detecting the end of the line requires to change the catcode of the end of line character; this is
+  not robust for being used in an argument or a macro.
+  }:
+\begin{code}[10cm]
+\csreintro\knowledge\{\kl[\knowledge directives]{directives}\}\\
+\indent~~~~\klbn|~\kl[\knowledge knowledge name]{knowledge name}@\kl[\knowledge optional scope]{optional scope}\\
+\indent~~~~\klbn|~\kl[\knowledge synonyms]{synonym 1}@\kl[\knowledge optional scope]{optional scope}\\
+\indent~~~~\klbn|~\kl[\knowledge synonyms]{synonym 2}@\kl[\knowledge optional scope]{optional scope}\\
+\indent~~~~~~~~$\cdots$
+\end{code}
+\AP
+The \intro[\knowledge knowledge name]{knowledge name} as well as the \intro[\knowledge synonyms]{synonyms} are plain text strings describing the knowledge. It may contain any combination of symbols, including accents or special characters as long as it well bracketted.
+This string will be used to fetch the \kl{knowledge}. Note  (and this is a standard \kl{tex} behavior) that several consecutive spaces is the same as one or a line feed.
+\AP In the normal syntax, \reintro[\knowledge synonyms]{synonyms} are given in a `\vbar' separated list, while in the "`\vbar'-notation" each of them has to be in a distinct line. \AP In the "`\vbar'-notation", an \intro[\knowledge optional scope]{optional scope} can be given after each \kl[\knowledge knowledge name]{knowledge name}/\kl[\knowledge synonyms]{synonym}.
+
+%This is a
+%shorthand for writing `\kl{link=}' \kl[\knowledge directives]{directives}. (Note that there is another way to %define synonyms using the \kl{synonym} directive).
+\AP
+The \intro[\knowledge directives]{directives} consists of `key=value' statements in a comma separated list.
+There are many \kl[\knowledge directives]{directives}. A list of them can be found in Section~\ref{subsection:directive list}. New ones can be defined using the \cs{\knowledgedirective} command.
+
+\AP
+The principle of the \cs{\knowledge} command is to introduce a new \kl{knowledge}, ready for being used.
+However, what it does exactly depends a lot on the situations.
+First, the \kl[\knowledge directives]{directives} (a comma separated list of `key=value' commands) are parsed, and from it, the namespace and "scope" of the knowledge are determined, and it is decided if it will be defined immediately or postponed to the next compilation phase (using the \kl{kaux file}).
+
+\subsubsection{Targeting and the corresponding directives}
+
+The \cs{\knowledge} has to decide what to do when defining something. The basic behaviour is as follows.
+\begin{itemize}
+\item If the \cs{\knowledge} command is used in the preamble, then the \kl{knowledge} given as argument is defined immediately (the same effect can be obtained using the \kl{now} "directive"), and is accessible in the first compilation phase everywhere in the document (one extra phase is nevertheless required if \kl{autoref} or \kl{ref=} directives are used, for the "hyperref@@package" to do its job, or if "scope=" is used). This is the simplest way to use \cs\knowledge.
+\item Otherwise, the \kl{knowledge} is written in an external file (the \kl{jobname.kaux}  file), and the \kl{knowledge} will be really usable in the next compilation phase. This is particularly useful in conjunction with the \kl{scope option}: the \kl{knowledge} 	will have a scope depending on where it is introduced (for instance the document, or a theorem, or a lemma). The same \kl{knowledge name} can then point to different \kl{knowledges} depending on where it is used.
+\item Exporting (\kl{not implemented}) furthermore writes a document containing a list of \cs{\knowledge} commands giving access to its content. This is to be imported by another document.
+\end{itemize}
+
+The \intro{targeting directives} refine the above defined behaviour:
+\begin{description}
+\itemAP[\intro{scope=} or `@' in the "`\vbar'-notation"]  When using a \kl[\knowledge directives]{directive} `\kl{scope=}name' or `@name' in the "`\vbar'-notation", the scope of the definition can be modified.
+  \cs{\knowledge} will first check if there is an outer \kl{area} of this name (\texttt{theorem}, \texttt{section}, \dots), that accepts knowledge (only
+  "scope@@env" environments are subject to this unless \cs{\knowledgeconfigureenvironment} is used, or
+  the "scope@@option" "package option" is used when loading the package).
+If this is the case, the knowledge will be associated to the corresponding \kl{instance}. For instance, inside a theorem, by default, the scope is the theorem, but adding the directive `\kl{scope=}section', the \kl{knowledge} becomes available in the whole section. 
+
+If no scope is found using the above search, an "explicit scope" of the given name is used.
+
+\itemAP[\intro{export=}] (\kl{not implemented}) When using this directive, the knowledge will be (furthermore) written to another file, ready for being used in another document. In particular, the knowledge (in the other document) will point to the present one. The details on how this is supposed to work is to be specified.
+\itemAP[\intro{namespace=}] Allows to change the \kl{namespace}. In itself, this is useless. It has to be used in conjunction with new forms of \cs\kl-like commands.
+\itemAP[\intro{now}] requires the \kl{knowledge} to be defined immediately. This may save one compilation phase. The drawback is that the \kl{knowledge} cannot be accessed before the \cs{\knowledge} command that has been introduced. It may help for modularity considerations. (for instance a \kl{knowledge}
+is used inside a proof, it makes no sense to make it available elsewhere, and it is better style to locally define it). This is implicit if the \cs{\knowledge} command happens in the preamble.
+\itemAP[\intro{also now}] requires the \kl{knowledge} to be defined immediately as well as delayed to the next compilation phase. This is in particular how "auto references@autoref" should be handled. See the use of \cs{\knowledgenewvariant} for more examples.
+\end{description}
+
+
+\subsubsection{General directives}
+
+We give here the list of \intro{display directives} that are available without loading any sub packages.
+A certain number of Boolean directives are available without any options. These most of the time are used for typesetting the output. Each of these can be used as
+`\texttt{bool=true}' (or shortly just `\texttt{bool}'),  `\texttt{bool=false}' or `\texttt{bool=default}'
+(that leaves it in the default state, or the one determined by surrounding knowledges).
+The general boolean \kl[\knowledge directives]{directives} are the following:
+\begin{description}
+\itemAP[\intro{emphasize}] forces the text to be emphasized using `\cs{\emph}',
+\itemAP[\intro{italic}/\intro{up}] forces/unforces italic ("up" does nothing in math mode),
+\itemAP[\intro{boldface}/\intro{md}] forces/unforces boldface (be it in math or text mode),
+\itemAP[\intro{smallcaps}] forces small capitals,
+\itemAP[\intro{underline}] forces the text to be emphasized using `\cs{\underline}',
+\itemAP[\intro{fbox}] puts a box around the text,
+\itemAP[\intro{typewriter}] puts in typewriter font (be it in math or text mode),
+\itemAP[\intro{ensuretext}] guarantees that text mode is used (using the `\cs{\text}' macro, thus in a 
+way consistent with the surrounding style),
+\itemAP[\intro{ensuremath}] guarantees that math  mode is used,
+\itemAP[\reintro{mathord}, \reintro{mathop}, \reintro{mathbin}, \reintro{mathrel}, \reintro{mathopen}, \reintro{mathclose}, \reintro{mathpunct}]
+yield the corresponding standard \TeX{} spacing features in math mode,
+   \begin{description}
+   \item[\intro{mathord}] for an ordinary mathematical object,
+   \item[\intro{mathop}] for a large operator (such as $\sum$, $\prod$, \dots),
+   \item[\intro{mathbin}] for a binary operation (such as $+$, $-$, or $\otimes$, \dots),
+   \item[\intro{mathrel}] for a binary relation (such as $=$, $<$, $\leq$, \dots),
+   \item[\intro{mathopen}] for an opening bracket, parenthesis, \dots
+   \item[\intro{mathclose}] for an closing bracket, parenthesis, \dots
+   \item[\intro{mathpunct}] for a punctuation symbol.
+   \end{description}
+\itemAP[\intro{lowercase}] puts the content in lowercase,
+\itemAP[\intro{uppercase}] puts the content in uppercase,
+\itemAP[""detokenize""]  detokenizes the content, i.e., instead of executing it provides a string that displays it (this is useful for commands),
+\itemAP[""remove space""] removes the spaces from the text
+\itemAP[""invisible""] prevents the rendering of the knowledge.
+\end{description}
+
+
+\AP The non-boolean general \kl[\knowledge directives]{directives} are the following:
+\begin{compactdesc}
+\itemAP[\intro{text=}\textmd{\{text\}}] will execute the \LaTeX{} code `text' instead of the key used for calling \cs\kl. For instance,
+ \smallcode{\cs\knowledge \{latex\}\{\kl{text=}\cs{\LaTeX}\}} will typeset `\LaTeX{}' properly when used. Surrounding braces can be omitted if there are no commas. Be careful when linking to such knowledges, since the substitution of meaning will happen for all the knowledges linking to it, and this may not be the expected behaviour.
+\itemAP[\intro{link=}\textmd{\{knowledge\}}] will continue searching the for linked \kl{knowledge}. Surrounding braces can be omitted if there are no commas.
+  This directive is often bypassed by the use of the \kl[\knowledge optional argument]{optional argument} of \cs{\knowledge} defining synonyms or the \kl{synonym} directive.
+\itemAP[\intro{link scope=}\textmd{\{label\}}] will continue searching in the "scope" identified by the label. Surrounding braces can be omitted if there are no commas. If no "directive" "link=" is given, then the same key is searched for.
+
+  This directive is often bypassed by the use of the \kl[\knowledge optional argument]{optional argument} of \cs{\knowledge} defining synonyms or the \kl{synonym} directive.
+\itemAP[\intro{synonym}] defines the knowledge as a link to the previously defined knowledge (in fact, the most recently defined that was not using \kl{synonym}). For instance
+\begin{code}[11cm]
+\cs\knowledge\{Leslie Lamport\}\\
+\indent~~~~~\{\kl{ref=}\{https://fr.wikipedia.org/wiki/Leslie\_Lamport\}\}\\
+\cs\knowledge\{L. Lamport\}\{\kl{synonym}\}\\
+\cs\knowledge\{Lamport\}\{\kl{synonym}\}
+\end{code}
+\noindent
+results in the two subsequent \kl{knowledge names} to point to the first one.
+\itemAP[\intro{style=}\textmd{\{knowledge style\}}] will 	adopt the styling option of the \kl{knowledge style}. Surrounding braces can be omitted if there are no commas.
+\itemAP[\intro{wrap=}\textmd{\robustdisplay\token}] will execute the macro `\textmd{\robustdisplay\token}' with as argument the knowledge text before displaying it. For instance,
+\kl{wrap=}\cs\robustdisplay,
+(where \csintro{\robustdisplay} is a variant of \cs{\tl_to_str:n} removing the trailing space) is used in this document for typesetting the commands.
+\end{compactdesc}
+
+
+\subsubsection{\kl{Knowledge styles} and the \cs{\knowledgestyle} command}
+\label{subsubsection:knowledge styles}
+
+\intro{Styles} are formatting pieces of information, as for \kl{knowledges}, but that can be used by other \kl{knowledges}. In some respect, this is very similar to \kl{macro directives} (see below), but the difference lies in that \kl{styles} are dynamically resolved, while \kl{macro directives} are statically resolved. \kl{Styles} in particular offer the access to some configuration features of the system. 
+For instance, changing the \kl(style){intro} \kl{style} changes the way the \cs{\intro} command is displayed.
+See below for some instances.
+
+\AP
+The central command is \cs{\knowledgestyle}, that has the following syntax:
+\begin{center}
+\smallcode{\csintro{\knowledgestyle}*\{style name\}\{\kl[\knowledge directives]{directives}\}}
+\end{center}
+The optional star \texttt* permits to overload an existing style (otherwise, this results in an error). The \kl[\knowledge directives]{directives} follow the same structure as for a normal \cs{\knowledge}
+command. When defined, a \kl{style} can be used in a \cs{\knowledge}
+command using the \kl[\knowledge directives]{directives} `\kl{style=}style name' (it will be used when a \cs{\kl} command calls for the \kl{knowledge}) or `\kl{intro style=}style name' (that will be used by \cs{\intro} commands).
+
+\AP
+A certain number of \intro{default styles} are also offered, that in particular includes \intro{warning styles}. The list is as follows:
+\begin{compactdesc}
+\itemAP[""kl@@style""] is the default style for macros using \cs{\kl}.
+ It can be modified dynamically using the `\kl{style=}' \kl[\knowledge directives]{directive}.
+\itemAP[""kl unknown@@style"" and ""kl unknown cont@@style""] are
+  the default \kl{styles} used when an undefined \kl{knowledge} is met.
+\itemAP[""intro@@style"" and ] is the default style for macros using \cs{\intro}.
+ It can be modified dynamically using the `\kl{intro style=}' \kl[\knowledge directives]{directive}.
+\itemAP[""intro unknown@@style"" and ""intro unknown cont@@style""]
+  are the default \kl{styles} used when an undefined \kl{knowledge} is met.
+\end{compactdesc}
+
+\subsubsection{New directives: the \cs{\knowledgedirective} command}
+\label{subsubsection:macro directives}
+
+When defining \kl{knowledges}, it is often the case that the same 
+sequence of directives are used. \intro{Macro directives} are here for simplifying this situation (see also \cs{\knowledgedefault} and \cs{\knowledgestyle}). This is achieved using the \cs{\knowledgedirective} directive:
+\marginpar{\begin{hint} This should not be confused with \kl{styles} which offer another way to control the display.\end{hint}}
+\begin{center}
+ \smallcode{\csintro{\knowledgedirective}*\{name\}[optional parameter]\{directives\}}
+\end{center}
+After such a command has been issued, `name' becomes a \kl[\knowledge directives]{directive}
+usable in \cs{\knowledge} commands, that amounts to execute the comma separated list `directives'. The newly created \kl[\knowledge directives]{directive} may receive a value, that is accessible as \texttt{\#1} in `directives'. By default, it does not allow the redefinition of a directive. This can be forced using the optional \texttt*.  The `optional parameter' gives
+a default value. For instance:
+\begin{code}
+\cs\knowledgedirective\{highlight\}[brown]\{\kl{color=}\{\#1\},\kl{emphasize},\kl{md}\}\\{}
+\kl{[...]}\\{}
+\cs\knowledge\{notion A\}\{highlight\}\\
+\cs\knowledge\{notion B\}\{highlight\}\\
+\cs\knowledge\{notion C\}\{highlight\}\\
+\cs\knowledge\{important notion D\}\{highlight=red\}\\{}
+\cs{[...]}\\
+We shall now see \cs\kl\{notion A\}, \cs\kl\{notion B\}, \cs\kl\{notion C\}, as well as the \cs\kl\{important notion D\}.
+\end{code}
+\noindent
+yields
+\begin{PDFoutput}
+\knowledgedirective{highlight}[brown]{color={#1},emphasize,md}
+\knowledge{notion A}{highlight}
+\knowledge{notion B}{highlight}
+\knowledge{notion C}{highlight}
+\knowledge{important notion D}{highlight=red}
+We shall now see \kl{notion A}, \kl{notion B}, \kl{notion C}, as well as the \kl{important notion D}.
+\end{PDFoutput}
+
+\subsubsection{\cs{\knowledgestyle} versus \cs{\knowledgedirective}}
+\label{subsubsection:style versus macro}
+
+\AP 
+The two commands \cs{\knowledgestyle} and \cs{\knowledgedirective}
+offer ways to systematize the writing of knowledges. These can seem redundant.
+This is not the case, and for understanding it, it is necessary to understand a bit the way the \cs{\knowledge} command works.
+
+\AP 
+In general when a \cs{\knowledge} (or \cs{\knowledgestyle}) command is found, the \kl[\knowledge directives]{directives} are parsed and a new internal form of the \cs{\knowledge} command is written in the \kl{kaux file}, that will be executed during the next compilation of the document.
+In this phase, some first operations are performed. For instance, in an \kl{autoref} \kl[\knowledge directives]{directive}, an internal label name is constructed. 
+
+The postponed command is then executed during the next compilation phase (or immediately if we are in the preamble, or if the \kl{now} directive is used). The execution effectively stores the \kl{knowledge} in the system. This is only at that moment that the \kl{knowledge} becomes available to be used by \cs{\kl} and similar commands.
+
+When a \cs{\kl} command (or similar) is met, it is `executed', and display informations are considered, and in particular \kl{styles} are called.
+
+Somes consequences of this kind of this are as follows:
+\begin{itemize}
+\item \kl{autoref} directives should not be used in the definition of a \kl{style}, since this would mean that
+ there would be one anchor point for all the \kl{knowledges} that use this \kl{style}. This is usually not the kind of behavior that we expect.
+\item configuring the default displays of the system (such as the \kl{intro style=} in particular) has to be done through the \kl{style} mechanism.
+\item \kl{styles} use less memory than macros.
+\end{itemize}
+
+\subsubsection{\kl{Default directives}: the \cs{\knowledgedefault} command}
+\label{subsubsection:default directives}
+
+It may happen that a sequence of consecutive \cs{\knowledge} commands have to share the same list of \kl[\knowledge directives]{directives}. The \kl{macro directives} can help solving this issue. The \intro{default directives} also go in this direction, using the  \cs{\knowledgedefault} command:
+\begin{center}
+\smallcode{\csintro\knowledgedefault*\{\kl[\knowledge directives]{directives}\}}
+\end{center}
+When such a command is applied, then from that point, all \cs{\knowledge} commands
+will use the given \kl[\knowledge directives]{directives} as default. This will stop when another \cs{\knowledgedefault} command is met or the current group is closed.
+The optional star does not reset the \kl{default directives} but simply add new ones.
+ 
+
+
+
+\subsection{The \cs{\kl} command}
+\label{subsection:kl command}
+
+\subsubsection{The standard syntax}
+
+\marginpar{\begin{hint} Note that the \cs{\kl} command can often be replaced by the
+\kl{"..."}{} notation, activated by the "quotation@@option" option.\end{hint}}
+
+
+The \cs{\kl} command has one of the following syntaxes:
+\begin{center}
+\begin{tabular}{cc}
+&\smallcode{\csintro{\kl}(\kl[klab]{optional scope})[\kl[knowledge name]{optional knowledge name}]\{text\}}\\
+or\quad&
+\smallcode{\csreintro{\kl}[\kl[knowledge name]{optional knowledge name}](\kl[klab]{optional scope})\{text\}}\ .
+\end{tabular}
+\end{center}
+Its meaning is to search for the `optional knowledge name' if present, or for `text' otherwise. How this is exactly performed depends on the presence of the \kl[klab]{optional label}.
+The search process is as follows:
+\begin{asparaitem}
+\itemAP if an \intro[klab]{optional label} is given, the \kl{knowledge} is searched in the corresponding scope.
+\itemAP otherwise, the \kl{stack of visible scope instances} is processed through (starting from the inner most)
+  until a \kl{knowledge} of name `\kl{knowledge name}' or `text', of \kl{namespace} `default' and this \kl{scope}
+  is found.
+  
+  If the `knowledge name/text' has not been found, the \kl{style} `"kl unknown@@style"' (or similar "styles", as defined by the "unknown style=@@variant" or "unknown style cont=@@variant") is used, and the
+  text displayed. 
+\item Otherwise, the \kl{knowledge} is executed. If it is a \kl{link=} or \kl{synonym} defined \kl{knowledge}, the link is followed, and the process continues.
+\item Finally, all the definitions involved in the \kl{knowledge} are processed, following a  \kl{style=} if defined, the \kl{knowledge} is updated (essentially incrementing the counter of use), and the \kl{knowledge} is displayed.
+\end{asparaitem}
+This general mechanism is used also by other commands that are variations around \cs{\kl} such as in particular \cs{\intro}.
+
+
+\subsubsection{The  "quotation notation"}
+
+\phantomintro{"}\phantomintro{@}\phantomintro{quotation notation}%
+When activated, the ""quotation@@option"" mode activates shorthand
+notations for the \cs{\kl} and \cs{\intro} macros. Possible syntaxes are as follows:
+\begin{description}
+\itemAP[\smallcode{\klqn"text\klqn"}]\phantomintro{"..."}% 
+   uses the "knowledge" pointed to by `text'. Equivalent to~\texttt{\cs\kl\{text\}}.
+\itemAP[\smallcode{\klqn"text\klqn@knowledge\klqn"}]\phantomintro{"...@..."}%
+    uses the "knowledge" pointed to by `knowledge to display `text'. Equivalent to~\texttt{\cs\kl[knowledge]\{text\}}.
+\itemAP[\smallcode{\klqn"text\klqn{@@}scope\klqn"}]\phantomintro{"...@@..."}%
+     uses the "knowledge" pointed to by `text' in "scope" `scope' to display `text'. Equivalent to~\texttt{\cs\kl(scope)\{text\}}.
+\itemAP[\smallcode{\klqn"text\klqn@knowledge\klqn@scope\klqn"}]\phantomintro{"...@...@..."}%
+      uses the "knowledge" pointed to by `knowledge in "scope" `scope' to display `text'. Equivalent to~\texttt{\cs\kl[knowledge](scope)\{text\}}.
+\itemAP[\smallcode{\klqn{""}text\klqn{""}}]\phantomintro{""...""}% 
+   introduces the "knowledge" pointed to by `text'. Equivalent to~\texttt{\cs\intro\{text\}}.
+\itemAP[\smallcode{\klqn{""}text\klqn@knowledge\klqn{""}}]\phantomintro{""...@...""}%
+    introduces the "knowledge" pointed to by `knowledge while displaying `text'. Equivalent to~\texttt{\cs\intro[knowledge]\{text\}}.
+\itemAP[\smallcode{\klqn{""}text\klqn{@@}scope\klqn{""}}]\phantomintro{""...@@...""}%
+     introduces the "knowledge" pointed by `text' in "scope" `scope'. Equivalent to~\texttt{\cs\intro(scope)\{text\}}.
+\itemAP[\smallcode{\klqn{""}text\klqn@knowledge\klqn@scope\klqn{""}}]\phantomintro{""...@...@...""}%
+      introduces the "knowledge" pointed to by `knowledge in "scope" `scope' while displaying `text'.\\
+      Equivalent to~\texttt{\cs\intro[knowledge](scope)\{text\}}.
+\end{description}
+
+\noindent\AP Activating the "quotation notation" is obtained using:
+\begin{center}
+\smallcode{\cs\knowledgeconfigure\{"quotation@@option"\}}\ ,
+\end{center}
+and deactivating it is obtained using:
+\begin{center}
+\smallcode{\cs\knowledgeconfigure\{"quotation@@option"=false\}}.
+\end{center}
+It can also be activated while loading the package.
+
+\AP It is sometimes the case that some packages do use the quote symbol, usually in some environment
+(this is the case of the "tikzcd@@env" environment). The "knowledge@@package" package can be configured to deactivate always the "quotation notation" when entering the environment. This is obtained using the "configuration option" ""protect quotation="" followed by a list of environments to be protected:
+\begin{code}[12cm]
+\cs\knowledgeconfigure\{"protect quotation="\{env1,env2,\dots\}\}
+\end{code}
+Note that the braces surrounding the list of environments can be omitted if the list contains only one item.
+
+There are nevertheless some situations in which one would prefer to use the original \cs{\kl} notation:
+\begin{itemize}
+\item When nesting of "knowledges" is involved, or the "knowledge" includes the symbol \kl",
+\item when "quotation@@option" is deactivated (or not activated) because of a conflict
+\item in particular, this should be avoided in macros, in particular for the math mode, since these may be used one day or another in a "tikzcd@@env" or similar environment for instance.
+\end{itemize}
+
+
+
+\subsubsection{\kl{Variants of \cs{\kl}}, \cs{\knowledgenewvariant}, \cs{\knowledgevariantmodifier} }
+\label{subsubsection:variants}
+\phantomintro{variant of \cs{\kl}}%
+It may happen for several reasons that we may want to define new variants of the \cs{\kl} macros, that essentially perform the same task, but are configured differently. Typical examples may be:
+\begin{itemize}
+\item several sets of "knowledges" may intersect but should use different "namespace",
+\item some "knowledges" involve macros and for this reason should be non-expanded even if the \cs{\knowledge}
+ command is not met,
+\item the \cs{\knowledge} command should be called implicitly,
+\item activate or deactivate the warnings or messages in the "diagnose file".
+\end{itemize}
+In fact, several macros in this document are instantiation of this mechanism. This is the case for for instance for \cs{\intro}, \cs{\phantomintro}, \cs{\reintro} or \cs{\mathkl} etc...
+
+
+\AP The macro for introducing a new \reintro{variant of \cs{\kl}} is:
+\begin{center}
+\smallcode{\csintro{\knowledgenewvariant}\cs\variant\{\kl{variant directives}\}}
+\end{center}
+and is similar to the one for modifying the behavior of a "variant of \cs{\kl}":
+\begin{center}
+\smallcode{\csintro{\knowledgesetvariant}\cs\variant\{\kl{variant directives}\}}\ .
+\end{center}
+These command define/modify a/the macro \cs{\variant} that uses the same syntax as \cs{\kl}. \AP The \intro{variant directives} consist of  a comma separated list of "directives@@variant" as follows:
+\begin{compactdesc}
+\itemAP[""namespace=@@variant""namespace] declares in which "namespace" (a string) the knowledges are to be searched.
+ This means in particular that the \cs{\knowledge} concerned should be defined using the the proper "namespace=" directive.
+\itemAP[""default style=@@variant"", ""unknown style=@@variant"", ""unknown style cont=@@variant""\{list of "style" names\}]
+  declares the style name to be used (1) by default when the "knowledge" is found, (2) when it is not found for the first time, and (3) the subsequent times.
+\itemAP[""style directive=@@variant""\{directive names list\}] defines a list (comma separated) of directives that can
+  be used in a \cs{\knowledge} command to modify the aspect (for instance, the \cs{\intro} behavior is modified by the "intro style=" directive, while the \cs{\kl} command is configured using the "style=" directive). If the "directives" do not exist, these are created.
+\itemAP[""auto knowledge=@@variant""\{directives\}] declares that the use of \cs{\variant} should automatically execute a \cs{\knowledge} command, and what should be the directives it uses. See examples below.
+\itemAP[""unknown warning=@@variant""true/false] activates or deactivates the warnings when a "knowledge" is not found
+   (for instance, these are deactivated in "paper mode"). True by default.
+\itemAP[""unknown diagnose=@@variant""true/false] activates or deactivates the corresponding messages in the "diagnose file". True by default.
+\itemAP[""suggestion=@@variant""\{directives\}] configures the "directives" to be suggested in the "diagnose file"
+when the "knowledge" is unknown.
+\itemAP[""PDF string=@@variant""\{code\}] gives a substitute text for "hyperref@@package" to use for producing the bookmarks. This code has to be expandable. The code may use three parameters; $\sharp1$ is the main text of the command, $\sharp 2$ is the optional parameter, and $\sharp 3$ is the scope. The macro \cs{\IfNoValueTF} of the package "xparse@@package" can be used to test if the second and third arguments are present. By default, the code is \texttt{\{$\sharp1$\}}. Note that the star syntax cannot be used in this context. It the expected result cannot be achieved using this directive, the less convenient macro \cs{\texorpdfstring} of the "hyperref@@package" package should be used.
+\end{compactdesc}
+\smallskip
+
+\AP The second feature is to use "modifiers@@variant". These correspond to the stared version of the command.
+For instance, one expects `\cs{\intro}*\cs{\kl}' to reduce to `\cs{\intro}'. For this, one has to declare explicitly the reduction using:
+\begin{center}
+\smallcode{\csintro{\knowledgevariantmodifier}\{"stared sequence@@variant"\}\cs\variant}\ ,
+\end{center}\AP 
+in which the ""stared sequence@@variant"" is of the form `\cs{variant1}*\cs{variant2}*\dots*\cs{variantk}'.
+This sequence is declared to reduce to \cs{\variant}.
+For instance, \smallcode{\cs{\knowledgevariantmodifier}\{\cs{\intro*}\cs\kl\}\cs\intro} declares `\cs{\intro}*\cs{\kl}' to reduce to `\cs{\intro}'.
+
+\subsubsection{Examples of \kl{variants of \cs{\kl}}}
+
+The best way for introducing new variants is to look at examples. We provide two of them now.
+the first one is the configuration of the \cs{\kl} and \cs{\intro} commands as defined in the "package@knowledge@package".
+The second one is the code used in this documentation for displaying macros, defining the macros \cs{\cs}
+and \cs{\csintro}.
+
+\paragraph{The configuration of \cs{\kl} and \cs{\intro}} It is also interesting to see this code since it gives more ideas on how to modify the standard behaviour of these commands correctly.
+\begin{code}
+\cs\knowledgestyle\{autoref link\}\{"autoref link"\}\par
+\cs\knowledgestyle\{autoref target\}\{"autoref target"\}\par
+\cs\knowledgestyle\{invisible\}\{"invisible"\}\par
+\cs\knowledgenewvariant\cs\kl\{\par
+~~~~"namespace=@@variant"default,\par
+~~~~"default style=@@variant"\{"kl@@style",autoref link\},\par
+~~~~"unknown style=@@variant" "kl unknown@@style",\par
+~~~~"unknown style cont=@@variant" "kl unknown cont@@style",\par
+~~~~"style directive=@@variant" "style@style="\par
+\}\par
+\cs\knowledgenewvariant\cs\intro\{\par
+~~~~"namespace=@@variant" default,\par
+~~~~"default style=@@variant" \{"intro@@style",autoref target\},\par
+~~~~"unknown style=@@variant"  "intro unknown@@style",\par
+~~~~"unknown style cont=@@variant"  "intro unknown cont@@style",\par
+~~~~"style directive=@@variant" "intro style@intro style="\par
+\}\par
+\cs\knowledgevariantmodifier\{\cs{\intro*}\cs\kl\}\cs\intro
+\end{code}
+Note that \cs{\reintro} and \cs{\phantomintro} are defined using similar code.
+
+\paragraph{Displaying control sequences}
+
+\AP The second code example is used in this document (the documentation of the package) and consists of two macros \csintro{\cs} and \csintro{\csintro} which have the
+following semantics:
+\begin{itemize}
+\item these have the same syntax as \cs{\kl} and \cs{\intro} respectively.
+\item these are used to display control sequences without executing it,
+\item if \cs{\csintro} is never used, it appears in black,
+\item is \cs{\csintro} is used, then it is in color blue, and the calls to \cs{\cs}
+    are in dark blue, and furthermore, the \cs{\cs} calls possess an hyperlink to
+    the call to \cs{\csintro}.
+\item no \cs{\knowledge} command is necessary, and no warnings are issued.
+\end{itemize}
+\begin{code}
+\cs\knowledgestyle\{cs\}\par
+~~~~\{"detokenize","remove space","typewriter","up","md","color="NavyBlue\}\par
+\cs\knowledgestyle\{cs unknown\}\par
+~~~~\{"detokenize","remove space","typewriter","up","md","color="black\}\par
+\cs\knowledgenewvariant\cs\cs\{\par
+~~~~"namespace=@@variant"cs,\par
+~~~~"default style=@@variant"\{autoref link,cs\},\par
+~~~~"unknown style=@@variant"cs unknown,\par
+~~~~"unknown style cont=@@variant"cs unknown,\par
+~~~~"unknown warning=@@variant"false,\par
+~~~~"unknown diagnose=@@variant"false,\par
+~~~~"suggestion=@@variant"cs\par
+\}\par
+\cs\knowledgestyle\{csintro\}\par
+~~~~\{"detokenize","remove space","typewriter","up","md","color="blue\}\par
+\cs\knowledgestyle\{csintro unknown\}\par
+~~~~\{"detokenize","remove space","typewriter","up","md","color="black\}\par
+\cs\knowledgenewvariant\cs\csintro\{\par
+~~~~"namespace=@@variant"cs,\par
+~~~~"auto knowledge=@@variant"\{"autoref","scope="document,"also now"\},\par
+~~~~"default style=@@variant"\{autoref target,csintro\},\par
+~~~~"unknown style=@@variant"csintro unknown,\par
+~~~~"unknown style cont=@@variant"csintro unknown,\par
+\}\par
+\cs\knowledgevariantmodifier\{\cs{\intro*}\cs\cs\}\cs\csintro\par
+\cs\knowledgevariantmodifier\{\cs\csintro*\cs\cs\}\cs\csintro\par
+\cs\knowledgevariantmodifier\{\cs\cs*\cs\kl\}\cs\cs\par
+\cs\knowledgevariantmodifier\{\cs\csintro*\cs\kl\}\cs\csintro
+\end{code}
+Several things can be noted about this code:
+\begin{asparaitem}
+\item the "directives" "detokenize" and "remove space" prevent the execution of the argument, and instead display its name, this is important since the argument is a control sequence,
+\item the "directives" "typewriter", "up" and "md" give a uniform aspect (no italic, no boldface) to the result in all contexts, 
+\item the "namespace" is set to be different from the default one, avoiding possible clashes with \cs{\kl},
+\item when a \cs{\csintro} command is met, the corresponding \cs{\knowledge} command is automatically issued, in particular with `"scope="document' for guaranteeing the visibility of each command everywhere in the document,
+\item the "also now" directive is necessary for the compilation to (possibly) stabilize in
+  two iterations, since it uses the proper \cs{\label} already at the first iteration (without "also now", it would be performed on the second one only, and with just "now", it would be visible only by the uses after the introduction).
+\item warnings and diagnose information is explicitly eliminated.
+\end{asparaitem}
+
+
+
+\subsection{Scoping}
+\label{section:scopes}\label{subsection:scoping}
+\phantomintro{scoping}
+
+\subsubsection{Principles of scoping}
+
+When writing long documents, one often wants \kl{knowledges} to be isolated in some subparts. For instance, one may want a temporary definition in a proof to not leak elsewhere in the document where the same term could be used with a different meaning. Some definitions may be only meaningful in, say, the current section/part. 
+
+Two separate things have to be understood: how to define "knowledge" in a given "scope" (and create "scopes"), and how to access "knowledge" from a given "scope".
+
+\paragraph{Accessing knowledge attached to a given scope}
+This can be done directly either using the parenthesis notations of \cs{\kl} and the second \klqn@ of
+the "quotation notation":
+\begin{center}
+\begin{tabular}{ccc}
+  \smallcode{\cs\kl(scope name)\{knowledge\}}%
+      &~or~&%
+   \smallcode{\cs\kl(scope name)[knowledge]\{displayed text\}}\\
+   \smallcode{\klqn"knowledge\klqn{@@}scope\klqn"}%
+      &~or~&%
+    \smallcode{\klqn"displayed text\klqn@knowledge\klqn@scope\klqn"}
+    \end{tabular}
+\end{center}
+It works also for \cs{\intro} and with double quotes.
+
+Another option is to import the scope locally, using:
+\begin{code}[10cm]
+\cs\knowledgeimport\{\textit{scope name 1,scope name 2,}\dots\}
+\end{code}
+After this command, the knowledges will be searched automatically in the imported scopes.
+The import stops at the end of the current scoping environment.
+
+\paragraph{Attaching knowledge to a given scope}
+This can be done directly using the "scope=" "directive", for instance in:
+\begin{code}[12cm]
+\cs\knowledge\{knowledge\}\{"scope="\textit{scope name},\textit{directives}\}
+\end{code}
+\noindent 
+or, this is obtained usint the "`\vbar'-notation" using `\klbn@'~:
+  \begin{code}[8cm]
+  \cs\knowledge\{\textit{directives}\}\\
+  \indent~~~\klbn|~~knowledge\klbn@\textit{scope name 1}\\
+  \indent~~~\klbn|~~synonym\klbn@\textit{scope name 2}\\
+  \indent~~~$\vdots$~~~~~~~~~~~~$\vdots$
+  \end{code}
+
+\AP
+The other possibility is to define a knowledge inside a "scope@@env" environment:
+\begin{code}[8cm]
+\cs\begin\{"scope@@env"\}\cs\label\{label\}\\
+\indent\quad\cs\knowledge\{knowledge 1\}\{\textit{directives}\}\\
+\indent\qquad$\vdots$\\
+\cs\end\{"scope@@env"\}
+\end{code}
+\noindent 
+In such a code, the knowledge defined is automatically visible in the environment,
+and from outside, using the scope name \texttt{label}. Indeed, the \cs{\label} is overloaded for doing automatically a \cs{\knowledgescope} command.
+
+In fact, it is possible to do even more: other environments can be defined to behave like "scope@@env".
+
+
+\subsubsection{Scoping by examples}
+
+""Explicit scoping"" consists in attaching a precise scope name to a "knowledge" using the "scope=" "directive":
+\begin{code}
+\cs\knowledge\{thing\}\{"scope="s1,"color="red\}\\
+\cs\knowledge\{thing\}\{"scope="s2,"color="green\}\\
+\\
+Here, \klqn"thing\klqn" and \cs\kl\{thing\} are unknown.\\
+But \klqn"thing\klqn{@@}s1\klqn" and \cs\kl(s1)\{thing\} are in red,\\
+and \klqn"thing\klqn{@@}s2\klqn" and \cs\kl(s2)\{thing\} are in green.
+\end{code}
+The "`\vbar'-notation" can also be used for "explicit scoping".
+This is convenient, in particular for having synonyms in different scopes:
+\begin{code}
+\cs\knowledge\{"color="red\}\\
+\indent~~\klbn|~~abelian group\\
+\indent~~\klbn|~~abelian groups\\
+\indent~~\klbn|~~Abelian groups\\
+\indent~~\klbn|~~group\klbn@abelian\\
+\indent~~\klbn|~~groups\klbn@abelian\\
+\indent~~\klbn|~~Groups\klbn@abelian\\
+
+Here, general \klqn"groups\klqn" are not defined but \klqn"groups\klqn{@@}abelian\klqn" are,\\
+and correspond to \klqn"abelian groups\klqn".\\
+\cs\begin\{"scope@@env"\}\cs\knowledgeimport\{abelian\}\\
+\indent~~Her, all \klqn"groups\klqn" here are abelian.\\
+\cs\end\{"scope@@env"\}
+\end{code}
+
+
+"Scopes" can also be attached to areas in the code. It is convenient to use the usual \cs{\label} command to name them (though a priori two different spaces of naming are used).
+\begin{code}
+\textcolor{gray}{\% We declare first in the preamble the environments that can have}\\
+\textcolor{gray}{\% knowledges attached to them.}\\
+\cs\knowledgeconfigureenvironment\{theorem,lemma,proof\}\{\}\\
+\\
+\textcolor{gray}{\% and now in the main body of the document.}\\
+\cs{\begin}\{theorem\}\cs\label\{theorem:main\}\\
+\indent~~ \cs\knowledge\{rabbit\}[rabbits]\{notion\}\\
+\indent~~ In every hat, there is a \cs\kl\{rabbit\},\\
+\indent~~ \cs\AP~in which a \cs\intro\{rabbit\} is a small animal with long ears.\\
+\cs{\end}\{theorem\}\\
+Here a \kl"rabbit\kl" is an "unknown knowledge".\\
+But \kl{"}rabbits\kl[quotation notation]{@@}theorem:main\kl{"}  point to Theorem~\cs\ref\{theorem:main\}.\\
+\cs\begin\{proof\}\cs\knowledgeimport\{theorem:main\}\\
+\indent~~ Now, \kl"rabbit\kl" is hyperlinked to Theorem~\cs\ref\{theorem:main\}.
+\cs\end\{proof\}
+\end{code}
+
+\subsubsection{What is the structure of \kl{scopes} in a document}
+
+To start with, one needs to understand what are the possible \kl{scopes}. Scopes are aggregation of zones in the document.
+\begin{itemize}
+\itemAP By default, all the body of the document belongs to a \kl{scope} called `\texttt{document}'.
+         The user can open new scopes using the \intro(env){scope} environment:
+         \begin{code}[10cm]
+         \cs\begin\{\kl(env){scope}\}\par
+         ~~\cs\knowledge\{local notion\}\{\kl{color=}green\}\par
+         ~~Here is a \cs\kl\{local notion\} that appears in green.\par
+         \cs\end\{\kl(env){scope}\}\\
+         But here the \cs\kl\{local notion\} is undefined.         
+         \end{code}
+         Note that scoping is independent from the grouping mechanism of \LaTeX.
+         
+         \AP The user can also declare environments such as \texttt{lemma}, \texttt{theorem},
+         \texttt{remark} or \texttt{proof} to behave like \kl(env){scope}. This is achieved using using
+         \cs{\knowledgeconfigureenvironment} command.
+ \itemAP The use of the ""scope@scope option"" \kl{configuration option} goes one step further, and attaches "scopes" to sections, subsections, itemize, items, and so on. But be cautious, this feature, though working, may cause some compiling document to not compile anymore if some weird (and unnatural) nesting of scopes are used (this is the case for instance when using \cs{\bibitem} and \cs{\thebibliography}, and this has to be corrected by hand).
+\end{itemize}
+
+\subsubsection{How is chosen the \kl{scope} of a \kl{knowledge}?}
+
+In general, when a \cs{\knowledge} command is used, the system tries to figure out what should be its "scope":
+\begin{itemize}
+\item If the command occurs in the preamble, then the default \kl{scope} will be `document'.
+\item \AP Otherwise, the information is searched for in the ""stack of visible scope instances"" which means that the \kl{knowledge} will be defined at the level of the innermost surrounding scope that `attracts knowledges'. If the \kl{scope option} is not activated (and the user did not perform its own configuration), this is the inner most \kl(env){scope} environment (or similar environment if \cs{\knowledgeconfigureenvironment} has been used), or `document' if the declaration is not in the scope. If the  \kl{scope option} is used, this will be the innermost lemma, proof, or theorem in the context.
+\item This default behavior can be modified using the \kl{scope=} directive. The \kl{scope=} directive can be followed with a scope level, such as `section', `subsection', 'chapter' or `itemize' (in particular in combination with the \kl{scope option}), that will be looked for in the current context and will receive the \kl{knowledge}. The \kl[\knowledge directives]{directive} can also be followed by a label name, and the active scope at the moment of this label will be used.
+
+The following code (that requires the "scope option" for being functional) should be self explanatory:
+  \begin{code}[11.5cm]
+  \cs\section\{First section\}\par\noindent
+  \cs\label\{section:first\}\par\noindent
+  \cs\knowledge\{one\}\{\kl{scope=}section,\kl{color=}green\}\par\noindent
+  \cs\knowledge\{two\}\{\kl{scope=}some label,\kl{color=}green\}\par\noindent
+  ~\par\noindent
+  \cs\begin\{\kl(env){scope}\}\cs\label\{some label\}\\
+  \indent~~Here \cs\kl\{one\} and \cs\kl\{two\} are defined.\\
+  \cs\end\{\kl(env){scope}\}\par\noindent
+  Here \cs\kl\{one\} is defined but \cs\kl\{two\} isn't.\par\noindent
+  ~\par\noindent
+  \cs\section\{Second section\}\par\noindent
+  Here neither \cs\kl\{one\} nor \cs\kl\{two\} is defined.
+  However, I can still use them using \cs\kl(section:first)\{one\} and \cs\kl(some label)\{two\}
+  (or \kl"one@@section:first\kl" and \kl"two@@some label\kl", or using the \cs{\knowledgeimport}\{section:first\}).
+  \end{code}
+\end{itemize}
+
+\subsubsection{Naming "scopes": the \cs{\knowledgeimport}, \cs{\knowledgescope} and \cs{label} commands
+}
+
+It is often the case in a text, that one has to locally break the nesting structure of a document, and refer to a object local in an environment. For instance, a comment may refer to a variables/concept that has been locally used in the proof. The "knowledge@@package" provides suitable mechanisms for complex referencing of scopes. Let us explain this through an example:
+\begin{code}
+\textcolor{gray}{\% We declare first in the preamble the environments that use knowledge.}\\ 
+\cs\knowledgeconfigureenvironment\{definition\}\{knowledge=attracts\}\par\indent
+{[...]}\\
+\indent
+\cs\begin\{definition\}\cs\label\{somewhere\}\\
+\indent~~\cs\knowledge\{something\}\{notion\}\\
+\indent~~Here, \cs\intro\{something\} is a notion internal to the definition.
+\cs\end\{definition\}
+\end{code}
+Note here that what is important is the location of the \cs\knowledge\ command, irrespective of the location ofthe \cs\intro\ command.
+
+\AP The \cs\label\ command is used to name the "scope". In fact, the real command is 
+\begin{center}
+  \smallcode{\csintro\knowledgescope\{scope name\}}
+\end{center}\noindent
+which associates a scope name to the surrounding environment (providing it has been declared possible to do it using
+\cs\knowledgeconfigureenvironment).
+\AP 
+The standard \LaTeX\ command \cs\label\ is overloaded and performs implicitly a call to \cs\knowledgescope\ (this behavior can be deactivated/reactivated using the ""label scope=""\texttt{\{true,false\}} directive). The result is that the same string of characters can be used in order to name the scope, and at the same time is used as a standard \LaTeX\ label.
+
+\AP Something important is missing so far: one rapidly wants to access to \kl{knowledges} that do not exist in the current \kl{scope}. For instance, a notion is used in a section of a document, and one would like to refer to it in the introduction. Another case is that of a notion or a mathematic variable that is introduced in the statement of a theorem, and should be accessible inside the proof. There are essentially two ways to access such distant \kl{knowledges}: either use the \smallcode{\cs\kl(label)\{text\}} command (or the equivalent \smallcode{\kl{"...@...@..."}} notation), or use the \cs{\knowledgeimport} command. We describe the second possibility now. The syntax is:
+\begin{center}
+\smallcode{\csintro\knowledgeimport\{label\}}
+\end{center}
+The result is that the \kl{knowledges} in the \kl{scope} identified by the label are now
+accessible until the closure of the current \kl{scope}.
+
+For instance:
+\begin{code}[9cm]
+\cs\knowledgeconfigureenvironment\{theorem,proof\}\{\}\par\indent
+{[...]}\par\indent
+\cs\begin\{theorem\}\cs\label\{theorem:1\}\par\noindent
+~~\cs\knowledge\verb|\alpha|\{\kl{autoref},\kl{color=}red\}\par\noindent
+~~Let \$\cs\intro\verb|\alpha|\$ be an integer [...]\par\noindent
+\cs\end\{theorem\}\par\noindent
+{[...]}\par\indent
+Here \$\cs\kl\verb|\alpha|\$ is unknown.\par\noindent
+{[...]}\par\indent
+\cs\begin\{proof\}\par\noindent
+~~\cs\knowledgeimport\{theorem:1\}\par\noindent
+~~But now \$\cs\kl\verb|\alpha|\$ points to its definition.\par\noindent
+\cs\end\{proof\}
+\end{code}
+
+
+
+\subsubsection{Managing scoping environments}
+
+ \AP The user can also declare an environment 
+ to behave like \kl(env){scope} using the
+ command \cs{\knowledgeconfigureenvironment}, as well as adapt some of its characteristics using
+"scope directives".
+\begin{center}
+         \smallcode{\csintro\knowledgeconfigureenvironment\{environments\}\{"scope directives"\}}
+\end{center}
+For instance:
+\begin{code}[12cm]
+         \cs\knowledgeconfigureenvironment \{lemma,theorem,fact,proof\}\par
+         ~~~~~~~~\{knowledge=attracts\}
+\end{code}
+ \noindent
+ will induce the corresponding environments to have internal knowledges.
+ 
+Most of the times, it is not necessary to use "scope directives".
+ 
+\begin{remark}
+Note that (in the current implementation) it is necessary to use the
+commands \cs{\begin} and \cs{\end}. Hence \cs{\proof}\dots\cs{\endproof} would
+         not trigger a scoping environment while \cs{\begin{proof}}\dots\cs{\end{proof}}
+         would.
+\end{remark}
+
+\AP The ""scope directives"" are low level and advanced features. These should not be used in general. The list is the following:
+\begin{compactdesc}
+\itemAP[\intro(area){scope=}\texttt{true/false}] tells whether an environment should induce a scope. For the moment, this is not used (as soon as configured, it always behaves like a scope).
+ \itemAP[\intro(area){label=}\texttt{none/accepts}] tells whether a \cs{\label} command can refer to an "instance" of this "area",
+ \itemAP[\intro(area){environment=}\texttt{true/false}] should be set to true if the scope has to be opened whenever an environment of same name is opened using the \cs{\begin} and \cs{\end} commands of "latex".
+ \itemAP[\intro(area){autoclose=}\texttt{true/false}] means that the closure is triggered by another event (closure of another enclosing instance, or pushing of an area that requires its closure). It should be true for "latex" environments, and false when configuring, e.g, \cs{\section} to open an "scope" (since the end of the section is automatic: when another section is opened, or some higher level sectioning command).
+ \itemAP[\intro(area){parents=}\{"area1@area","area2@area",\dots\}] takes a comma separated list of areas that are allowed as parent. For opening the area, some enclosing instances may be automatically closed for reaching such a parent (if their "autoclose=@@area" "directive@scope directive" is set to true).
+ \itemAP[\intro(area){push code=}\texttt{\{code\}}] defines the code to be executed when the area is pushed (each time, these are added).
+ \itemAP[\intro(area){pop code=}\texttt{\{code\}}] defines the code to be exected when the are is popped (added too).
+ \itemAP[\intro(area){occurrences=}\texttt{once/multiple/recursive}] can be one of `\texttt{once}' if the area can only have one instance in the document, `\texttt{multiple}' if there can be several instances, but not nested, and `\texttt{recursive}', if there is no restriction.
+ \itemAP[\intro(area){forces=}"area"] requires a specific area as an ancestor of this area. This ancestor is implicitly pushed if necessary. 
+ \end{compactdesc}
+
+
+\subsection{Error handling}
+\label{section:error handling}
+
+By default, the "knowledge@@package" package tries to not stop the compilation unless a serious problem has been found. In particular, it is possible to write an entire document using \cs{\intro} and \cs{\kl} commands or the "quotation notation" without ever introducing a \kl{knowledge}, and only in the end provide this information. This is a feature: as opposed to normal macros, not defining a knowledge should not stop the real work, which is the writing of the document.
+
+\AP
+Very often there is some \kl[undefined knowledge]{undefined knowledge}.
+Such \kl{knowledges} are displayed using "kl unknown@@style" and "kl unknown cont@@style")
+\kl{styles} when issued by \cs{\kl}; using "intro unknown@@style" and "intro unknown cont@@style" when issued by \cs{\intro}.
+The detail of the problems are then gathered in the \kl{diagnose file}.
+
+
+\subsection{The \kl{diagnose file}}
+\label{subsection:diagnose file}
+
+The \intro{diagnose file} is a file that is created when the "knowledge@@package" package is used
+(note that another file, ""jobname.kaux"" is also created by the "knowledge@@package" package, for internal use). It enormously eases the use of the package, and it is important to look into it when finalizing a document. It gathers a certain number of informations, that can be warning, code to be used, or simply information. This file has the name of the tex document with the extension \kl{.diagnose}. Its content is divided into clearly identified parts. Depending on the used options, some of these parts may appear or disappear.
+\begin{description}
+\itemAP[\intro{Undefined knowledges}] in this section are listed all the knowledges that have been unsuccessfully searched for. These are given in lines either of the form 
+   \begin{quote}
+    \texttt{\cs{\knowledge}\{\textit{suggested directives}\}\\
+    \indent~~~\klbn|~~undefined knowledge}\textit{[\klbn@scope]}\\
+    \indent~~~~~~~~~~~~~~\vdots
+  \end{quote}
+ or of the form
+  \begin{quote}
+    \texttt{\cs{\knowledge}\{undefined knowledge\}\{\textit{suggested directives}\}}
+   \end{quote}
+  \AP Switching from one mode to another is obtained using the "configuration directive" "diagnose bar="\{true,false\} (default is true).  
+The intent is that copying the content of this section to the document itself will solve all problems of \kl{undefined knowledges}. It is an efficient way,
+when one has written a document without caring so much about knowledges to copy the content of this section, and then modify it/reorganize it, in order to suit ones purposes. By default, no suggestion is offered, or "notion" is suggested if the "notion@@option" directive has been used. Suggestion can be automatically configured using the "suggestion=@@variant" "directive@@variant" of the macros \cs{\knowledgenewvariant} and \cs{\knowledgesetvariant}.
+
+For instance, using:
+\begin{center}
+\smallcode{\cs\knowledgesetvariant\cs\kl\{"notion"\}}
+\end{center}
+the "directive" "notion@@option" is suggested for more directly copying the content.
+\itemAP[\intro{Autoref not introduced}] This section lists all \kl{knowledges} that were declared using the \kl{autoref} \kl[\knowledge directives]{directive} (this can be the case indirectly using, e.g.  "notion"), but have not been introduced in  the document . When a document reaches its final states, this section should be empty.
+Usually, one should add the corresponding \cs{\intro} or \cs{\phantomintro} command somewhere in the text.
+\itemAP[\intro{Autoref introduced twice}] In this section, all \kl{knowledges} that were declared using the \kl{autoref} \kl[\knowledge directives]{directive} and introduced using \cs{\intro} or \cs{\nointro}
+more than once are listed.  When a document reaches its final states, this section should be empty. Consider using \cs{\kl} or \cs{\reintro} for solving the problem.
+Note that this may be caused by an \cs{\intro} used in some title (and repeated in the table of contents).
+\end{description}
+
+\AP By default, the "diagnose file" does not give the file and the line of the messages.
+This can be activated using the "diagnose line" boolean option:
+\begin{center}
+\smallcode{\cs\knowledgeconfigure\{""diagnose line=""true\}}
+\end{center}
+\AP By default, the "diagnose file" gives suggestions to be used with the normal \cs\knowledge\ syntax.
+A "`\vbar'-notation" suggestion can be activated using:
+\begin{center}
+\smallcode{\cs\knowledgeconfigure\{""diagnose bar=""true\}}
+\end{center}
+
+\iffalse
+
+\subsection{Importing and exporting (\kl{not implemented})}
+\label{subsection:import-export}
+
+
+Exporting is not coded yet, and it is not even clear how it should be done.
+
+
+Exporting means outputting in the \kl{export file} some code that it is sufficient to include in another document for being able to refer to some knowledges.
+
+
+When this file is used, using for instance an \cs{\input} command, or simply copied and paste in another document, then the knowledge `Pythagorean theorem'
+becomes available, and points to the proper file.
+Hence in another document, we can use:
+\begin{code}
+\cs\knowledgeimport\{lesson1\}
+\end{code}
+that would make immediately available all the knowledge attached to \kl{scope} `lesson1'. Another possibility if this should be linked only once is to use it directly in the text:
+\begin{code}
+
+\end{code}
+
+It is useful to be able to 1) export some of the knowledges defined in a document, and 2) import them in another document. For the moment this feature is not coded.
+\kl{to be done}
+
+\begin{itemize}
+\item \csintro\knowledgeexportscopename
+\item \csintro\knowledgeexportbase
+\item \csintro\knowledgeimport
+\end{itemize}
+\fi
+
+
+
+\subsection{Other packages}
+
+\subsubsection{The \kl{xcolor option}}
+\label{subsection:xcolor package}
+
+The \intro{xcolor option} is used if one wants to change colors. It is good to always load it since it also triggers coloring for debugging. It triggers colors in the \kl{warning styles} that can be useful in debugging.
+It also offers two new directives:
+\begin{description}
+\itemAP[\intro{color=}] where in `\kl{color=}name', name is a color description following the syntax of the "xcolor@@package" package.
+\itemAP[\intro{cyclic color}] similar to `"color="', but selects the color automatically in a a cyclic list of colors. This can be convenient for debugging.
+ The cyclic list of colors can be chosen using the "configuration directive" ""cyclic colors=@@option"":
+ \begin{center}
+ \smallcode{\cs\knowledgeconfigure\{"cyclic colors=@@option"\{color1,color2,\dots\}\}}
+ \end{center}
+ Note that no spaces are allowed between colors, and that at least two colors are required.
+ 
+ The default cyclic color list is:
+ \begin{center}
+   \texttt{\{red,green,blue,cyan,magenta,yellow,gray,brown,lime,\\olive,orange,pink,purple,teal,violet\}}
+ \end{center}
+\itemAP[\intro{colorbox=}] surrounds the text with a colorbox of given color (following the syntax of the "xcolor@@package" package).
+\end{description}
+Loading the package before is necessary for changing
+the options of the "xcolor@@package" package
+(for instance for using \kl{svgnames}).
+
+\subsubsection{The \kl{hyperref option}}
+ \label{subsection:hyperref option}
+
+\subsubsubsection{Activating the \kl{hyperref option}}
+ 
+The \intro{hyperref option} loads the \intro(package){hyperref}
+and triggers a certain number of link-related features.
+This is done either by the command:
+\marginpar{%
+  \begin{hint}
+     The "hyperref@@package" surrounds by default links by boxes that are graphically heavy
+     (this are visible in some viewers, and not in some others):  this is automatically deactivated when loading
+     the "knowledge@@package" package. Such automatic behavior can ba avoided using the \kl{no patch}
+     option at loading.
+  \end{hint}}
+%
+\begin{center}
+  \smallcode{%
+    \cs{\usepackage}[\kl(option){hyperref}]\{\kl(package){knowledge}\}}
+\end{center}
+\noindent or by loading the "hyperref@@package" before the "knowledge@@package" package.
+
+The \kl[\knowledge directives]{directives} activated by the package are:
+\begin{compactdesc}
+\itemAP[\kl{url=}] for hyperlinking to an external document
+\item[\kl{ref=}] for hyperlinking inside document 
+\item[\kl{protect link}] it a boolean for protecting from the creation of nested hyperlinks,
+\item[\kl{autoref}] for relating objects with their definition
+\item[\kl{autorefhere}] similar, and used implicitely for math
+\end{compactdesc}
+
+\AP
+The package comes also with the "configuration directive" \intro{hyperlinks=} which is a boolean
+deactivates or reactivates the links.
+
+
+
+\subsubsubsection{Functionnalities triggered by the \kl{hyperref option}}
+
+\begin{description}
+\itemAP[\intro{ref=}]\texttt{\{label\}} puts an hyperlink pointing toward a label inside the document (the braces can be omitted when there is no comma). 
+\item[\intro{protect link}] disables the inside hyperlinks,
+\item[\intro{url=}]\texttt{\{url address\}} puts an hyperlink to an (external) url
+(the braces can be omitted when there is no comma).
+   \marginpar{\begin{hint} You may have to use \texttt{$\backslash$\~} instead of \texttt{\~} in url's addresses.\end{hint}}
+\item[\kl{autoref}] activates the ability to introduce once, use several times an instance. This is very convenient when writing scientific documents with many notions. This is the basic directive activating
+the features of the \cs{\intro} command.
+\item[\kl{autorefhere}] puts immediately a label at the location of the definition, and makes all \cs{\kl} occurrences of this \kl{knowledge}
+hyperlink to this location.
+\end{description}
+
+\subsubsubsection{The \kl{autoref} directive}
+\marginpar
+    {\begin{hint} It is usually easier to use the `\kl{notion}' directive
+    than simply the \kl{autoref} directive. Its use it already configured. \end{hint}}
+\phantomintro{""}
+The \intro{autoref} \kl[\knowledge directives]{directive} is among the most useful offered by the "knowledge@@package" package.
+It is very often used indirectly through directives like "notion".
+When set, the \kl{knowledge} should be used with both \csintro{\intro} (exactly once) --
+or the \kl{""...""} and \kl{""...@...""} notations (and variants) if \kl(option){quotation} is active -- and \cs{\kl} (possibly several times) -- or the \kl{"..."} notation if \kl(option){quotation} is active. The use of \cs{\kl}
+will hyperlink to the location of the \cs{\intro}. The syntax of \cs{\intro} is the same as
+for \cs{\kl}:
+\begin{center}
+\smallcode{\cs{\intro}[optional knowledge name]\{knowledge name\}}
+\end{center}
+
+\emph{See \cs{\AP} below for improving the result.}
+
+A typical use looks as follows:
+\marginpar{\begin{hint}
+  Though the \cs{\intro} command can be used
+  in the title of, e.g. sections, without any errors, this may cause
+  a warning when a \kl{table of contents} is used: the command is
+  executed twice, once in the \kl{table of contents}, and once in the
+  document itself.
+  \end{hint}}
+\begin{code}
+\cs\knowledge\{house\}[Houses\vbar houses]\{\kl{autoref}\}\\~
+\kl{[...]}\\
+\cs\begin\{document\}\\~
+\kl{[...]}\\
+In this document, we will see the very important notion of \kl{"}houses\kl{"}.\\~
+\kl{[...]}\\
+\cs\AP\\
+Let us define a \kl{""}house\kl{""} to be a building that functions as a home.\\~
+\kl{[...]}\\
+\cs\end\{document\}
+\end{code}\noindent
+yields
+\begin{PDFoutput}
+\knowledge{house}[Houses| houses]{autoref}%
+\kl{[...]}\\
+In this document, we will see the very important notion of \kl{houses}.\\~
+\kl{[...]}\\
+\AP
+Let us define a \intro{house} to be a building that functions as a home.
+\\~
+\kl{[...]}
+\end{PDFoutput}
+
+\AP
+The variant \csintro{\intro*} makes the next \cs{\kl} command behave like \cs{\intro}. This is useful in particular in math mode:
+\begin{code}
+\cs\newcommand\kl[@token]\monoid\{\cs\kl[\kl[@token]\monoid]\{\cs\mathcal M\}\}\\
+\cs\knowledge\kl[@token]\monoid\{autoref\}\\~
+\kl{[...]}\\
+\cs\AP\\~
+Let now \$\cs{\intro*}\kl[@token]\monoid\$ be a monoid.\\~
+\kl{[...]}\\
+Remember now who is \$\kl[@token]\monoid\$.
+\end{code}
+%
+\marginpar{\begin{hint} This does not work in \kl{align*} and similar environments.
+Section~\ref{section:amsmath questions} gives some solutions. \end{hint}}
+\begin{PDFoutput}
+\newcommand\moonoid{\kl[\moonoid]{\mathcal M}}
+\knowledge\moonoid{autoref}
+\AP
+Let now $\intro*\moonoid$ be a monoid.\\~
+\kl{[...]}\\
+Remember now who is $\moonoid$.
+\end{PDFoutput}
+
+\AP The \csintro{\phantomintro} version:
+\begin{center}
+\smallcode{\cs{\phantomintro}(optional label)\{knowledge\}}
+\end{center} 
+ takes a \kl{knowledge}, and introduces it at the current location, without displaying anything. This is behaves like an invisible intro, i.e., essentially an abbreviation for \smallcode{\cs\intro[knowledge]\{\}}.
+This can be used as a workaround in environment like \kl{align*} that do not allow the use of labels (see Section~\ref{section:amsmath questions}).
+
+
+\AP
+The \csintro{\nointro} command:
+\begin{center}
+\smallcode{\cs{\nointro}\{knowledge\}}
+\end{center} 
+does not display anything and silently prevents the knowledge from issuing warnings
+because it is not introduced.
+
+\AP
+The \csintro{\reintro} command:
+\begin{center}
+\smallcode{\cs{\reintro}[optional knowledge]\{knowledge\}}
+\end{center} 
+is displayed as for \cs{\intro}, but without being an anchor for hyperlinks, and without counting as a real \cs\intro. It is used if there are for some reason several places that should look like an introduction (typically in the same paragraph), but count as a single target. There is a variant \csintro{\reintro*} that makes the next \cs{\kl} command behave like a \cs{\reintro} (similar to \cs{\intro*} with respect to \cs{\intro}).
+
+\AP
+\kl{Knowledges} that use this directive can be parameterized by modifying the style "intro@@style".
+
+\AP
+For modifying the display of \kl{knowledges} introduced by \cs{\intro},
+there are new directives:
+\begin{description}
+\itemAP[\intro{intro style=}] that takes the name of a \kl{style} as argument.
+  This \kl{style} will be used when the \kl{knowledge} is used in a \cs{\intro} or \cs{\reintro} command.
+\itemAP[\intro{autoref target}] declares the knowledge to be the target of the autoref (this is implicit when using \cs{\intro}).
+\itemAP[\intro{autoref link}] requires a link to the target of the autoref to be produced (this is implicit when using \cs{\kl}).
+\end{description}
+See the use of \cs{\knowledgesetvariant} for examples of configuration.
+%Hence:
+%\begin{code}
+%%test
+%\end{code}
+
+\subsubsubsection{The \kl{autorefhere} \kl[\knowledge directives]{directive}}
+
+The \intro{autorefhere} directive silently introduces an \kl{anchor point} at the location of the \cs{\knowledge} command invoking it.
+Uses of \cs{\kl} commands will be hyperlinked to this location.
+
+\AP
+In some sense, an \kl{autorefhere} directive can be understood as the sequence of 
+a \kl{autoref} directive that would be immediately followed by the corresponding \cs{\intro} command. This is a bit better since using \kl{autoref} in the body of the document requires three phases of compilation (two only if in the preamble).
+However, the \kl{autorefhere} \kl[\knowledge directives]{directive} does only require two (as for normal labels).
+
+\AP
+In fact, this \kl{autorefhere} directive is what is used underneath when introducing mathematical variables, and should be used for implementing similar behaviors.
+
+
+% phantomsection behaves badly in sections
+\let\oldphantomsection\phantomsection
+\RenewDocumentCommand\phantomsection{}{\oldphantomsection}
+
+\subsubsubsection{Using \kl{anchor points}}
+
+
+The directives \kl{autoref} and \kl{autorefhere} use underneath the "hyperref@@package" package. This means that it puts à label at the place of the \cs{\intro} command, and then points to it. However, the semantics in this case, is to jump to the beginning of the surrounding `region'.
+If the \cs{\intro} happens in a `section' (but not inside a theorem-like envionment) then the \cs{\kl} command will point at the beginning of the section, possibly 10 pages above the definition itself. 
+
+\AP
+The standard solution in the \kl(package){hyperref} package
+is to use the \csintro{\phantomsection}. This means defining \intro{anchor points} in the document that will be the target of hyperlinks.
+
+We offer here new commands for helping using this feature:
+\smallskip
+\begin{compactdesc}
+\itemAP[\csintro{\AP}] declares an \kl{anchor point} at the left of the current column, at the height of the current line. If the \kl{configuration option} \kl{visible anchor points} is set (and this is the case by default), a mark will show the precise location of the target. Be careful: it does not work in some situations, like for instance inside the optional argument of an \cs{\item} command (but this is ok elsewhere in an itemize environment), or inside a some macros in mathmode (e.g. fractions). In the particular case of \cs{\item}, one should use instead:
+\itemAP[\csintro{\itemAP}] Similar to \cs\AP, but to be used instead of an \cs\item.
+\end{compactdesc}
+\smallskip
+
+Usually putting an \cs{\AP} (a standard command of the "hyperref@@package") at the beginning of every paragraph, and replacing \cs{\item} by \cs{\itemAP} in itemize-like environments is most of the time good and safe option.
+
+For instance:
+\begin{code}[12.5cm]
+\cs\AP\\
+ In order to describe what is a \cs\kl\{monoid\}, let us us first define
+a \cs\intro\{product\} to be an associative binary operator,
+and a \cs\intro\{unit\} to be  \kl{[...]}
+\bigskip
+
+\cs\begin\{description\}\\
+\cs\itemAP[A \cs\intro\{semigroup\}] is a set equipped with a \cs\kl\{product\}.\\
+\cs\itemAP[A \cs\intro\{monoid\}] is a \cs\kl\{semigroup\} that has a \cs\kl\{unit\}.\\
+\cs\end\{description\}
+\end{code}
+\noindent
+yields
+\begin{PDFoutput}[10cm]
+\knowledgeconfigure{visible AP=true}
+\knowledge{semigroup2}{text=semigroup,autoref}
+\knowledge{monoid2}{text=monoid,autoref}
+\knowledge{product2}{text=product,autoref}
+\knowledge{unit2}{text=unit,autoref}
+~~~~~~~
+\begin{minipage}{8.8cm}
+\smallskip
+\AP In order to describe what is a \kl{monoid2}, let us us first define
+ a \intro{product2} to be an associative binary operator,
+and a \intro{unit2} to be
+\kl{[...]}\par
+\begin{description}
+\itemAP[A \intro{semigroup2}] is a set equipped with a \kl{product2}.
+\itemAP[A \intro{monoid2}] is a \kl{semigroup2} that has a \kl{unit2}.
+\smallskip
+\end{description}
+\end{minipage}
+\end{PDFoutput}
+\AP
+One can check that the different knowledges are properly hyperlinked, and that precise targets are the one described by \cs{\AP} and \cs{\itemAP}. For helping debugging the \kl{anchor points}, these are by default made visible as (red)
+corners on output. When the "knowledge@@package" package is loaded with the \kl{paper} option
+this graphical help disappears. 
+This can also be desactivated using:\phantomintro{visible anchor points}
+  \begin{code}[9cm]
+  \cs\knowledgeconfigure\{\kl{visible anchor points=}false\}
+  \end{code}
+
+
+\subsubsection{The \kl{makeidx option}}
+ \label{subsection:makeidx option}
+
+\subsubsubsection{Activating the \kl{makeidx option}}
+ 
+The \intro{makeidx option} loads the \intro(package){makeidx} package and triggers a certain number of link-related features. This is done either by the command:
+\begin{center}
+\smallcode{\cs{\usepackage}[\kl(option){makeidx}]\{\kl(package){knowledge}\}}
+\end{center}\noindent
+or by loading the \kl(package){makeidx} before the "knowledge@@package" package.
+
+\subsubsubsection{Features}
+
+When activated, it becomes possible to trigger the \cs{\index} command when a \cs{\kl} command is used.
+The following \kl[\knowledge directives]{directives} are to be used:
+\begin{description}
+\itemAP[\intro{index=}] is the text typeset in the index. It uses the standard syntax of the \cs{\index} command. By default, it is the knowledge name itself. You can use the full syntax of \cs{\index} in it, i.e. using `!' and `@'.
+\itemAP[\intro{index key=}] takes as argument the \kl{index key}: a text that is used for identifying the \kl{index entry} (usually an accent free version of it).  You can use `!' in it, as long as it does not clash with "index=" in order to avoid clashes.
+\itemAP[\intro{index parent key=}] makes the \kl{index entry} be a subentry of the given \kl{main index entry} (a replacement of `!'). Once more, it should not clash with "index=" and "index key=".
+\itemAP[\intro{index style=}] is followed by a token (without the scape character) that will be used for displaying the number (e.g. "index style="\texttt{textbf}). Usually, this is to be used in order to typeset in a particular manner the knowledges in the index when introduced. Thus, by default, the \cs{\intro}, \cs{\reintro} and \cs{\phantomintro} command use the command \csintro{\knowledgeIntroIndexStyle}. Hence, you can use for instance:
+\begin{code}[8cm]
+\cs\def\cs\knowledgeIntroIndexStyle\#1\{\cs\fbox\{\#1\}\}
+\end{code}
+\end{description}
+
+
+\subsection{Dealing with math}
+\label{subsection:math}
+
+There are essentially two ways in which one would like to use "knowledge@@package" with mathematics:
+\begin{description}
+\item[Single introduction] Some mathematical objects are introduced once and for all in the paper. In this case, all the use of the object 
+should point to the same introduction location.
+\item[Variables] The more advanced case is when one wants to track variables. For instance, a macro variable~\cs\x\ could have a different meaning in two distinct theorems. This case is more similar to variables in a programming language, that have a scope.
+Here the situation is  slightly more complicated since a variable could be introduced in a theorem, and then used many pages later in a proof section for instance.
+\end{description}
+The first use is fairly easy. The second one requires a bit more care. We review them one after the other.
+
+\subsubsection{Defining macros for math: the "mathcommand@@package" package}
+
+Defining macros is standard in \TeX, and it should be used systematically in writing scientific documents, in particular
+when using the "knowledge@@package" package.
+The standard way in \LaTeX\ for defining macros is to use \cs\newcommand. However, the resulting macro, if it has
+no optional parameters, is then expandable, and it is better to avoid it using instead \cs\newrobustcmd\ from the "etoolbox@@package"
+package (it has the same syntax).
+
+Another package "mathcommand@@package" has been designed to be used in conjunction with "knowledge@@package".
+We shall use it in the advanced examples below. It allows:
+\begin{itemize}
+\item to define/redefine commands to be used in math mode only. This allows for instance to use the macro \cs\c\ for producing as usual a cedilla in text mode, and at the same time some variable $\mathbf c$ in math mode. This is achieved using for instance:
+ \smallcode{\cs\renewmathcommand\cs\c\{\cs\mathbf\{c\}\}}.
+\item When redefining a command, it automatically stores the original command \cs\macro\ as \cs\LaTeXmacro. So for instance, if one wants to introduce the constant~$\pi$ in a document and have it linked, one can use:
+  \begin{code}
+  \cs\renewmathcommand\cs\pi\{\cs\kl[\cs\pi]\{\cs\LaTeXpi\}\}\\
+  \cs\knowledge\cs\pi\{notion\}\\
+  {[...]}\\
+  \cs\AP\ Let \$\cs{\intro*}\cs\pi=3.1415\$.\\
+  {[...]}\\
+  Now \$\cs\pi\$ points to the above sentence.  
+  \end{code}
+  This code works because a different name \cs\LaTeXpi\ stores the original macro. Using~\cs\pi\ instead would yield an infinite loop.
+\item The package also gives access to the exponents and indices as well as primes that follow a command (see the documentation).
+\item It also has some facilities for disabling \LaTeX\ commands and provide suggestions of replacement (useful for remembering the macros and working with colleagues).
+\item Finally, it offers some commodity for redefining many variables in one command.
+        E.g. for defining \cs\calA, \cs\calB,\dots to be shortcuts for \smallcode{\cs\cal A}, \smallcode{\cs\cal B},\dots:
+        \begin{code}
+        \cs\LoopCommands\{ABCDEFGHIJKLMNOPQRSTUVWXYZ\}[cal\#1]\par
+        ~~~~\quad\{\cs\newmathcommand\#2\{\cs\cal~\#1\}\}
+        \end{code}
+\end{itemize}
+
+\subsubsection{Mathematical objects that are singly introduced}
+
+In this case, this is essentially as in text mode. 
+Five points have to be kept in mind:
+\begin{itemize}
+\item Do not use the "quotation notation"  in math mode and in macros. Indeed,
+  some packages, like "tikzcd@@package" use the double-quote symbol in their
+  (math) syntax. In this context, quotes have to be deactivated, and hence macros
+  that would use the "quotation notation" would suddenly not have the expected result.
+\item Do not mix the "knowledge" concerning math commands and normal text. It is in practice
+  difficult to maintain.
+\item Use the control sequence of the macro itself as the "knowledge" name.
+    This does not cause problems and is easier to maintain.
+\item Use the \cs{\intro*} notation for introducing macros. 
+\item The surrounding space is broken by using the command \cs{\kl}. Commands like \cs\mathrel\ should be used to recover it.
+\end{itemize}
+These five points are illustrated in the following code:
+\begin{code}
+\cs\newrobustcmd\cs\comp\{\cs\mathrel\{\cs\kl[\cs\comp]\{\cs\circ\}\}\}\\
+\cs\knowledge\cs\comp\{notion\}\\
+{[...]}\\
+\cs\AP\ Composition is denoted \$\cs{\intro*}\cs\comp\$.\\
+{[...]}\\
+Now, each use of \$\cs\comp\$ points to its introduction.
+\end{code}
+
+Two variation may be comfortable to use.
+
+\paragraph{Disabling commands} 
+When writing a paper, in particular with coauthors, one may be tempted to not always use the macros designed for each case.
+For helping to remember the macro, one can use instead (using the "mathcommand@@package" package):
+\begin{code}
+\cs\disablecommand\cs\rho\\
+\cs\suggestcommand\cs\rho\{Use \cs\myFunction.\}\\
+\cs\newrobustcmd\cs\myFunction\{\cs\kl[\cs\myFunction]\{\cs\LaTeXrho\}\}\\
+\cs\knowledge\cs\myFunction\{notion\}\\
+{[...]}\\
+\AP Let \$\cs{\intro*}\cs\myFunction(x)=[...]\$\\
+{[...]}\\
+Now, each use of \$\cs\myFunction\$ points to its introduction.
+\end{code}
+\noindent The result is that if one uses \cs\rho\ in the code, an error will be issued, and \cs\myFunction\ be suggested as a replacement.
+Note that more than one suggestions can be attached to the macro (if several macros use the symbol~$\rho$). Note also
+that in the definition of \cs\myFunction, \cs\LaTeXrho\ is used instead of~\cs\rho. Indeed, \cs\rho\ has been deactivated,
+but~\cs\LaTeXrho\ gives access to its original meaning.
+
+\paragraph{Redefining the original \TeX\ macro}
+Another situation is that one would like to use the \cs\rho\ control sequence for accessing our function instead of \cs\myFunction (simply because this is more convenient and easy to remember, and we know in advance that no confusion may arise).
+In this case, the "mathcommand@@package" package can also be of some help:
+\begin{code}
+\cs\renewmathcommand\cs\rho\{\cs\kl[\cs\rho]\{\cs\LaTeXrho\}\}\\
+\cs\knowledge\cs\rho\{notion\}\\
+{[...]}\\
+\cs\AP\ Let \$\cs{\intro*}\cs\rho(x)=[...]\$\\
+{[...]}\\
+Now, each use of \$\cs\rho\$ points to its introduction.
+\end{code}
+\noindent
+The effect of \cs\renewmathcommand\ is that it sets~\cs\LaTeXrho\ to have the same effect as the original \cs\rho\ command,
+and then redefines~\cs\rho.
+
+\subsubsection{Context dependent variables}
+
+This section is not yet written.
+
+\iffalse
+We enter now a more advanced situation. We want to track all the variables in a mathematic document...
+the first thing to do is to give access to the "knowledge@@package" package to the scope of the document.
+The easiest way to do that is to declare in the preamble what are the environments that we want to use.
+\begin{code}
+\cs\knowledgeconfigureenvironment\{theorem,lemma,proof\}\{\}\par\noindent
+\end{code}}
+
+
+The "knowledge@@package" package offers several tools for dealing with mathematics. It is mostly still experimental.
+The essential goal is to be able to track the identity variables and to point each of them to its introduction.
+For obtaining this, this requires:
+\begin{itemize}
+\item to use the \kl{scoping} since in mathematical proofs the same name can be used to represent many things depending on the context, and
+\item offer ways to easily define macros. One key issue that make this different than standard macro definition is that one is accustomed to use subscripts, supscripts, or primes, to separate different objects. However, it would be very inconvenient to separately define macros for each variant. Hence, is is ok to say that \verb|\rx,\ry,\rz|  are variables denoting real numbers (typeset $x,y,z$), but is not ok to separately have to make precise that $x_1$, $x_{i+2}$ and so on in fact represent the same object. It is aso normal that $x$ and $x'$ are different objects, but it is not the case for $f$ and $f'$ if one uses the convention that second is the derivative of the first.
+\end{itemize}
+\fi
+
+
+
+\subsection{Fixes}
+\label{subsection:fixes}
+
+In this section, we present some fixes that have been added to help the user solve problems.
+
+\paragraph{Hyperref and twocolumn} It happens that the "hyperref@@package" and two-column mode yields a fatal error. This happens when a link spans across the boundary between two pages. This is an issue which is not related to the "knowledge@@package" package, but becomes severely more annoying when more links have to be used.
+A \emph{workaround} can be tried by using using
+\begin{center}
+\smallcode{\cs\knowledgeconfigure\{""fix hyperref twocolumn""\}}.
+\end{center}
+I do not know to which extend it is compatible with various classes...
+
+\subsection{Predefined configuration}
+
+\subsubsection{The "notion@@option" directive}
+
+\AP The configuration option~\intro(option){notion} is activated using:
+\begin{center}
+\smallcode{\cs\knowledgeconfigure\{\kl(option){notion}\}}
+\end{center}\noindent
+\AP It automatically configures a \kl[\knowledge directives]{directive} \intro{notion}
+which is an \kl{autoref} configured to be displayed in a configurable way:
+\begin{itemize}
+\item In \kl{paper mode}, the \cs{\intro} commands (not in math mode) are emphasized, while the \cs{\kl} commands are displayed as normal. It has the aspect of a normal paper.
+\item In "electronic mode" and \kl{composition mode} (with the "xcolor@@package" package), notions are furthermore typeset in blue when introduced, and in dark blue when used. Without the \kl(package){xcolor} package, underlining draw the attention to the knowledges (not in math mode).
+\end{itemize}
+The behavior of the "notion" directive is to activate "autoref", and to configure the following two "styles":
+\begin{itemize}
+\itemAP the "style" ""notion@@style"" is used for normal use,
+\itemAP the "style" ""intro notion@@style"" is used for introduction.
+\end{itemize}
+
+A typical document using notion could start by the following commands:
+\begin{code}
+\cs\documentclass\{article\}\\
+\cs\usepackage\{\kl(package){xcolor}\}\\
+\cs\usepackage\{\kl(package){hyperref}\}\\
+\cs\usepackage[\kl{electronic}]\{"knowledge@@package"\}\\
+\cs\knowledgeconfigure\{"notion@@option"\}\\
+{[...]}\\
+\cs\knowledge\{some text\}\{notion\}
+\end{code}\noindent
+Then the paper is displayed in a colorful way. 
+
+\newpage
+
+\section{Some questions and some answers}
+\label{section:faq}
+
+
+
+\subsection{How to compile?}
+
+As usual with \LaTeX, a certain number of compilation phases are necessary for reaching a document in final form. The problematic point is of course the use of labels, and in particular the \cs{\intro} command. When it is used, and all the \cs{\knowledge} commands are in the preamble, then two phases are necessary. When \cs{\knowledge} commands are used in the body of the documents, then one extra phase is required, meaning three with \kl{autoref} definitions. This is also the case when "scoping" is used.
+
+\subsection{Problem with \cs{\item} parameters}
+
+\paragraph{The use of~\cs{\AP} inside the optional parameter of \cs{\item} does not work.} Do not use \cs{\AP} inside the optional argument of \cs{\item}, and rather use the command \cs{\itemAP}.
+
+\paragraph{Argument of \cs{\kl} has an extra `\texttt\}'.} This is a problem of using optional parameters inside optional parameters such as in \smallcode{\cs\item[\cs\kl[test]\{Test\}]}. You can surround the content of the optional parameter by two level of curly braces as in \smallcode{\cs\item[\{\{\cs\kl[test]\{Test\}\}\}]}.
+The notation \kl{"..."} does not have this issue.
+
+
+
+
+\subsection{Knowledges and moving arguments (table of contents, \dots).}
+
+
+
+\paragraph{The use of \cs{\kl} does not work in (e.g.) the table of content.} When the \kl{knowledge name} contains expandable macros, or accentuated letters, then these are not copied in the table of content as the exact same text, but are expanded/translated. Thus, when the table of content is displayed, the \cs{\kl} command complains of not knowing the \kl{knowledge}. For instance\footnote{with \texttt{\cs\usepackage[utf8]\{inputenc\}} and, for instance \texttt{\cs\usepackage[T1]\{fontenc\}} for the accents.}:
+\begin{center}
+\begin{code}[11cm]
+\cs\newcommand\robustdisplay\Ltwo\{\cs\ensuremath\{L\^{}2\}\}\\
+\cs\knowledge\{\robustdisplay\Ltwo-space\}[\robustdisplay\Ltwo-spaces]\{autoref\}\\
+\cs\knowledge\{\'etale topology\}[\'Etale topology]\par
+~~~~~~~\{\kl{url=}\{https://en.wikipedia.org/wiki/\'Etale\_topology\}\}\\
+{[...]}\\
+\cs\begin\{document\}\\
+\cs\tableofcontents\\
+\cs\section\{On \cs\kl\{\robustdisplay\Ltwo-spaces\}\\
+{[...]}\\
+\cs\section\{On the \cs\kl\{\'etale topology\}\}\\
+{[...]}\\
+\cs\end\{document\}
+\end{code}\end{center}\noindent
+will result in that both \kl{knowledges} are considered unknown in the table of contents.
+For the first one, this is due to the expansion of~\cs\Ltwo. For the second, this is due to an implicit translation of the accentuated letter into an internal sequence of commands (for instance `\'e' is translated into the internal sequence `\verb|\IeC {\'e}|'). Some solutions are as follows:
+\begin{itemize}
+\item Make the macros non-expandable, for instance using \cs{\newrobustcmd} (of the \kl(package){etoolbox} package) or \cs{\NewDocumentCommand} (of the \kl(package){xparse} package, with a different handling of arguments) instead of \cs{\newcommand}. Hence:
+\begin{code}
+\cs\newrobustcmd\robustdisplay\Ltwo\{\cs\ensuremath\{L\^{}2\}\}
+\end{code}\noindent
+solves the first problem.
+\item Using an equivalent text that does not have the problem:
+  \begin{code}
+  \cs\knowledge\{$\backslash$'etale topology\}\{\kl{link=}\'etale topology\}\\
+  {[...]}\\
+  \cs\section\{On the \cs\kl\{$\backslash$'etale topology\}\}
+  \end{code}
+\item Both problems can be solved using synonyms/links that have no problem. For instance:
+  \begin{code}
+  \cs\knowledge\{Ltwo-space\}\{\kl{link=}\robustdisplay\Ltwo-space\}\\
+  \cs\knowledge\{etale topology\}\{\kl{link=}\'etale topology\}\\
+  {[...]}\\
+  \cs\section\{On \cs\kl[Ltwo-space]\{\robustdisplay\Ltwo-spaces\}\}\\
+  \cs\section\{On the \cs\kl[etale topology]\{étale topology\}\}
+  \end{code}
+\item Other solutions? None so far. I am trying to systematize the treatment of these problems.
+\end{itemize}
+
+
+\paragraph{Using \cs{\intro} in a section title causes introducing the knowledge twice.}
+Do not use \cs{\intro} in titles, but rather \cs{\reintro}. If you want the section to be the target of the \kl{knowledge}, then put after the section a \cs{\pantomintro} command.
+\begin{center}
+\begin{tabular}{ccc}
+%\hline
+\begin{code}[5.5cm]
+\cs\section\{On \cs\intro\{topology\}\}\\
+\end{code}&&
+\begin{code}[5.9cm]
+\cs\section\{On \cs{\reintro}\{topology\}\}\\
+\cs{\phantomintro}\{topology\}
+\end{code}\\
+\textit{Problematic code}&&
+\textit{A solution}
+\end{tabular}
+\end{center}
+
+\subsection{Problems with "tikzcd@@package" and other issues with the "quotation notation"}
+\label{section:tikzcd}
+
+The package "tikzcd@@package" uses (heavily) the quotes. Thus, it conflicts with the "quotation notation".
+Some other packages may do the same. For solving this issue, the only things to do are:
+\begin{itemize}
+\item be sure to load these packages before "knowledge@@package", or at least be sure that the "quotation notation" is not
+active when you do so, and
+\item to temporarily deactivate the "quotation notation" when in a context where the package may use the quotes.
+\end{itemize}
+
+This can be done either explicitly using before each figure:
+\begin{code}[8.5cm]
+\cs\knowledgeconfigure\{"quotation@@option"=false\}
+\end{code}
+\noindent 
+and after the figure:
+\begin{code}[7cm]
+\cs\knowledgeconfigure\{"quotation@@option"\}
+\end{code}
+Another possibility is to force some environment to deactivate systematically the "quotation notation" when used. For instance
+\begin{code}[10cm]
+\cs\knowledgeconfigure\{"protect quotation="\{"tikzcd@@env"\}\}
+\end{code}\noindent
+will deactivate the "quotation notation" in all the "tikzcd@@env" environments.
+
+
+\subsection{Problems with \kl(package){amsmath}}
+\label{section:amsmath questions}
+
+\paragraph{The \cs{\intro} command does not work in \kl{align*} or similar environments}
+It happens that in stared environment (i.e., unnumbered), the package \kl(package){amsmath}
+deactivates the labels. As a consequence the command \cs{\intro}, which internally uses {\cs\label} (at least so far), does not work. For the moment, there is no real solution, but a workaround which consists in introducing the \kl{knowledge} before
+the incriminated environment using \cs\phantomsection, and then use \cs{\reintro} inside the environment. Imagine for instance a command
+\texttt{\robustdisplay\SomeCommand}, that inside uses \texttt{\cs\kl[\robustdisplay{\Somecommand}]}, then:
+\begin{center}
+  \begin{tabular}{ccc}
+ does not work&&works\\
+     \begin{code}[5cm]
+     \cs\begin\{\kl{align*}\}\\
+     \cs{\intro*}\texttt{\robustdisplay{\SomeCommand}}\\
+     \cs\end\{\kl{align*}\}\\
+   \end{code}
+  &&
+   \begin{code}[5cm]
+     \cs\phantomintro\texttt{\robustdisplay{\SomeCommand}}\\
+     \cs\begin\{\kl{align*}\}\\
+     \cs\reintro*\texttt{\robustdisplay{\SomeCommand}}\\
+     \cs\end\{\kl{align*}\}
+   \end{code}
+  \end{tabular}
+\end{center}
+
+\subsection{Hyperref complains}
+\paragraph{A fatal error occurs in twocolumn mode.} A workaround is to use
+\smallcode{\cs\knowledgeconfigure\{\kl{fix hyperref twocolumn}\}}.
+
+\subsection{Name clash (eg with the "complexity@@package" package)}
+
+It may happen that an already defined command is redefined by the "knowledge@@package" package.
+This happens in particular wen used in combination with the "complexity@@package" package: both package redefine the command \cs\AP. For "complexity@@package", this denotes a complexity class, and for "knowledge@@package", it is an "anchor point".
+The problem has to be resolved by hand. The two following solutions are quick hacks:
+\begin{center}
+\begin{tabular}{ccc}
+\begin{code}[5.2cm]
+\cs\usepackage\{\kl(package){complexity}\}\\
+\cs\let\cs\compAP\robustdisplay\AP\\
+\cs\let\robustdisplay\AP\cs\undefined\\
+\cs\usepackage[...]\{"knowledge@@package"\}
+\end{code}
+&&
+\begin{code}[5.2cm]
+\cs\usepackage[...]\{"knowledge@@package"\}\\
+\cs\let\cs\kAP\robustdisplay\AP\\
+\cs\let\robustdisplay\AP\cs\undefined\\
+\cs\usepackage\{\kl(package){complexity}\}
+\end{code}\\
+for using \texttt{\robustdisplay\AP}from "knowledge@@package",
+  && for using \texttt{\robustdisplay\AP}from "complexity@@package",\\
+and \cs\compAP\ for "complexity@@package",
+ && and \cs\kAP\ for "knowledge@@package".
+\end{tabular}
+\end{center}
+
+\subsection{Incorrect display}
+
+\subsubsection{Incorrect breaking at the end of lines (in  Arxiv for instance)}
+
+It may happen that some hyperlinks generated by "knowledge@@package" are not broken properly
+at the end of lines. This is an issue with the \kl(package){hyperref} package. This happens in particular for files compiled by the Arxiv system while the file on the local computer was not having any problem. A workaround is to use the \kl{breaklinks} option of  \kl(package){hyperref}. If you need this for Arxiv, then you also have to force the use of \cs\pdflatex\ (because the \kl{breaklinks} option does not work if compiled via the ancestral sequence TEX$\rightarrow$DVI$\rightarrow$PS$\rightarrow$PDF). This can be obtained by adding \smallcode{\cs\pdfoutput=1} within the five first lines of the preamble.
+
+The preamble thus looks like:
+\begin{code}[9cm]
+\cs\documentclass\{\kl{[...]}\}\par\noindent
+\cs\pdfoutput=1\par\noindent
+\kl{[...]}\par\noindent
+\cs\usepackage[\kl{breaklinks}]\{\kl(package){hyperref}\}\par\noindent
+\kl{[...]}\par\noindent
+\cs\usepackage\{\kl(package){knowledge}\}\par\noindent
+\kl{[...]}\par\noindent
+\end{code}
+
+\subsubsection{Red boxes around links}
+
+This is an annoying feature of the "hyperref@@package" package to surround all links by red boxes (that may appear or not depending on the viewer). This is very heavy in document with many links. By default, this is deactivated when using the "knowledge@@package",
+unless the "no patch" option is used when loading the package. When the "no patch" option is used, the same effect can nevertheless be obtain, eg using \smallcode{\cs\hypersetup\{hidelinks\}}.
+
+
+\subsection{Problems with scope}
+
+\subsubsection{Problems in combination with \cs{\bibitem} and "thebibliography@@env"}
+
+
+The "scope option" of the package triggers some analysis of the code, and restrains the structure of the code (in particular, this is because "scopes" have to be nested, and thus some not so well nested parts of \LaTeX{} yield errors). In particular, the "scope option" does not allow to have a \cs{\section} command inside a list. 
+However, this is what does the environment "thebibliography@@env", yielding a scoping error.
+
+A simple hack to treat this situation:
+\begin{code}[6cm]
+\cs\let\cs\section\cs\SUPERsection\\
+\cs\begin\{"thebibliography@@env"\}\\
+\cs\bibitem\dots\\
+{}[...]\\
+\cs\end\{"thebibliography@@env"\}\\
+\cs\let\cs\section\cs\NEWsection
+\end{code}
+The result is to revert to the original version of the macro \smallcode{\cs\section}, which does not make any structural test, and then reactivate the modified version of the command.
+
+Another solution is to reconfigure the environment "thebibliography@@env" using in the preamble:
+\begin{code}
+\cs\ScopeConfigure\{"thebibliography@@env"\}\par
+\hspace{3cm}\{push code=\cs\let\cs\section\cs\SUPERsection,\par
+\hspace{3cm}~pop code=\cs\let\cs\section\cs\NEWsection\}
+\end{code}
+
+
+\subsection{Editors}
+
+\newenvironment{pquote}{\begin{quote}}{\end{quote}}
+\knowledgeconfigure{protect quotation=pquote}
+
+\subsubsection{"Emacs" editor and \kl[quotation notation]{quotes}}
+The "AucTex" mode in "Emacs" binds the quote symbol to other characters, cycling
+through \verb|``|, \quotesymbol, and \quotesymbol\quotesymbol. This is not
+convenient when using the "knowledge@@package" package.
+
+This behavior can be deactivated temporarily using:
+\begin{pquote}
+%\texttt{M-x local-unset-key $\backslash$\quotesymbol.}
+\texttt{M-x local-unset-key RET \quotesymbol{} RET}
+\end{pquote}\noindent
+or definitively using:
+\begin{pquote}
+\texttt{(defun my-hook () (local-unset-key \quotesymbol$\backslash$\quotesymbol\quotesymbol))\\
+(add-hook 'LaTeX-mode-hook 'my-hook)}
+\end{pquote}
+% source: Sylvain Perifel, and:
+%(source : https://stackoverflow.com/questions/24835536/insert-regular-double-quotes-in-latex-mode-with-auctex)
+
+Alternatively, this can be changed so as to cycle through \quotesymbol,
+\verb|``|, and \quotesymbol\quotesymbol, which is slightly more convenient than
+the default.  This is achieved by customizing \texttt{TeX-quote-after-quote}:
+\begin{pquote}
+  \texttt{M-x customize-set-variable RET TeX-quote-after-quote RET y}
+\end{pquote}
+
+\subsection{Others}
+If other kind of problems occur, report them to \texttt{thomas.colcombet@irif.fr}.
+
+\newpage
+
+\section{Resources}
+\label{section:resources}
+
+\subsection{List of commands}
+\begin{compactdesc}
+\item[\cs\AP] introduces an "anchor point".
+\item[\cs\intro] searches for a \kl{knowledge} and put an anchor to it (to be used with the \kl{autoref} directive).
+\item[\cs\kl] searches for a \kl{knowledge} and displays it accordingly.
+\item[\cs\knowledge] defines new \kl{knowledges}.
+\item[\cs\knowledgeconfigure] configures the package.
+\item[\cs\knowledgedirective] defines a new \kl[\knowledge directives]{directive}.
+\item[\cs\knowledgedefault] declares the default \kl[\knowledge directives]{directives} to be automatically used in \cs{\knowledge} commands.
+\item[\cs\knowledgeimport] gives access to \kl{knowledges} existing in other scopes.
+\item[\cs\knowledgenewvariant] defines a new "variant of \cs{\kl}".
+\item[\cs\knowledgesetvariant] configures a "variant of \cs{\kl}".
+\item[\cs\knowledgestyle] defines a new \kl{style}.
+\item[\cs\knowledgevariantmodifier] declares a meaning of \cs{*} in  "variants of \cs{\kl}".
+\item[\cs\nointro] declares that the knowledge will never be introduced (does not work properly yet).
+\item[\cs\phantomintro] performs an invisible \cs\intro.
+\item[\cs\reintro] uses the \kl{display style} of \cs{\intro} without introducing an anchor.
+\end{compactdesc}
+
+\subsection{List of environments}
+\begin{compactdesc}
+\item[\kl(env){export}] (\kl{not implemented}) requires exportation of the content.
+\item[\kl(env){import}] (\kl{not implemented}) declares external resources.
+\item[\kl(env){scope}] Defines a \kl{scope} in which \kl{knowledges} are internal.
+\end{compactdesc}
+
+\subsection{List of \kl{directives} (to use with \cs{\knowledge})}
+\label{subsection:directive list}
+
+
+\begin{compactdesc}
+\item["autoref"] Activates the \cs{\intro} feature (requires the "hyperref@@package").
+\item["autoref link"] activates an hyperlink to the target.
+\item["autoref target"] puts a target for a hyperlink.
+\item[\kl{autorefhere}] creates an \kl{anchor point} that points to the \cs{\knowledge} command (Requires the \kl{hyperref option}).
+\item[\kl{boldface}] Displays the knowledge in boldface.
+\item[\kl{color=}] Displays the \kl{knowledge} is the given color (resquires \kl(option){xcolor}).
+\item[\kl{colorbox=}] Displays the \kl{knowledge} in a box of the given color (requires  \kl(option){xcolor}). 
+\item[\kl{cyclic color}] Displays in a color among a cyclic list (requires  \kl(option){xcolor}).
+\item[\kl{detokenize}] Avoids evaluation of the text.
+\item[\kl{emphasize}] Emphasizes the displayed output.
+\item[\kl{ensuretext}] Guarantees that the output will be displayed in text mode.
+\item[\kl{ensuremath}] Guarantees that the output will be displayed in math mode.
+\item[\kl{export=}] (\kl{not implemented})
+\item[\kl{invisible=}] no display
+\item[\kl{italic=}] displays in italic
+\item[\kl{fbox}] Surround the text with a box.
+\item[\kl{md}] Removes boldface typesetting.
+\item[\kl{notion}]
+%\item[\kl{import=}] (\kl{not implemented})
+\item[\kl{index=}] Chooses the text to be displayed in the \kl{index=}.
+\item[\kl{index key=}] the key used to choose the place in the \kl{index}.
+\item[\kl{index style=}] the \kl{style} to be used to display in the \kl{index}.
+\item[\kl{index parent key=}] the parent key in the \kl{index}.
+\item[\kl{intro style=}] Chooses the typesetting in case of an intro.
+\item[\kl{italic}] Typesets the output in italic.
+\item[\kl{link=}] Follow with the search the linked knowledge.
+\item[\kl{link scope=}] Follow the search in the corresponding scope, using the same key, or the one provided by \kl{link=}
+ if present.
+\item[\kl{lowercase}] Put all letters of the output in lowercase.
+\item[\kl{mathord}, \kl{mathop}, \kl{mathbin}, \kl{mathrel}, \kl{mathopen}, \kl{mathclose}, \kl{mathpunct}] Selects a spacing behaviour in math mode.
+\item[\kl{protect link}] Disables the hyperlinks inside the link.
+\item[\kl{ref=}] Links to a label inside the document.
+\item[\kl{scope=}] Choose the \kl{scope} of the definition.
+\item[\kl{smallcaps}] Forces the use of small capitals.
+\item[\kl{style=}] Links to a style.
+\item[\kl{synonym}] Is a synonym of the lastly defined \kl{knowledge}.
+\item[\kl{text=}] Changes the output text.
+\item[\kl{remove space}] removes the spaces from the input
+\item[\kl{typewriter}] Typeset in as with \cs{\texttt}.
+\item[\kl{underline}] Underlines the text.
+\item[\kl{up}] Removes italic typesetting.
+\item[\kl{uppercase}] Put all letters of the output in uppercase.
+\item[\kl{url=}] An url to point to (uses the "hyperref@@package").
+\item[\kl{wrap=}] A macro used to process the displayed text. 
+\end{compactdesc}
+
+\subsection{List of \kl{configuration directives} (to use with \cs{\knowledgeconfigure})}
+\label{subsection:configuration directive list}
+
+\begin{compactdesc}
+\item["diagnose bar="\textmd{\{true,false\}}] activates the \kl{`\vbar'-notation} in the "diagnose file" (default is false)
+\item["composition"] switches to "composition mode",
+\item["cyclic colors=@@option"] fixes the cyclic list of colors used by the "directive" "cyclic color".
+\item["diagnose line="\textmd{\{true,false\}}] activates or deactivates the line numbering in the "diagnose file".
+\item["electronic"] switches to "electronic mode".
+\item[\kl{fix hyperref twocolumn}] fixes a known problem between "hyperref@@package"
+  and the two column mode.
+\item[\kl{hyperlinks=}\textmd{\{true,false\}}] activates or deactivates the hyperlinks.
+\item[{{\kl{no patch}}}] deactivates the default patches made to other packages.
+\item[{{\kl(option){notion}}}] activates the "notion" directive.
+\item["paper"] switches to "paper mode".
+\itemAP[\kl{label scope=}\textmd{\{true,false\}}] enables or disables the redefined \cs{\label} command, which helps automatically define scopes (default is~\textmd{true}).
+\item[\kl{protect link co} and \kl{unprotect link co}] starts and ends respectively a zone in which the "knowledge@@package" package does not create hyperlinks.
+\item[\kl{protect quotation=}\textmd{\{environment list\}}] declares a list of environment in which the "quotation notation" should be deactivated.
+\item[{{\kl(option)[quotation]{quotation=}\textmd{\{true,false\}}}}] activates or deactivates the "quotation notation".
+\item["strict"] is a Boolean which, when true, makes the compilation more restrictive by turning some of the warnings into errors (in particular in case of redefinition of knowledges).
+\item[\kl{visible anchor points=}\textmd{\{true,false\}}] makes the \kl{anchor points} either visible or invisible.
+\end{compactdesc}
+\newpage
+
+
+
+
+
+
+\subsection*{List of default \kl{styles}}
+\begin{compactdesc}
+\itemAP[\kl(style){intro}]
+\itemAP[\kl(style){kl unknown}, \kl(style){kl unknown cont}]
+\itemAP[\kl(style){intro unknown}, \kl(style){intro unknown cont}]
+\itemAP[\kl(style){notion}] (if "notion" is activated)
+\itemAP[\kl(style){intro notion}] (if "notion" is activated)
+\end{compactdesc}
+
+
+
+
+\producecode
+\end{document}

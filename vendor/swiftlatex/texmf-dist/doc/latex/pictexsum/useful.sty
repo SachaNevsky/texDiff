@@ -1,0 +1,176 @@
+% Copyright (c) 1990 Angus Duggan
+% All rights reserved.
+% 
+% Redistribution and use in source and binary forms, with or without
+% modification, are permitted provided that the following conditions are met:
+% 
+%     Redistributions of source code must retain the above copyright
+%     notice, this list of conditions and the following disclaimer.
+% 
+%     Redistributions in binary form must reproduce the above copyright
+%     notice, this list of conditions and the following disclaimer in the
+%     documentation and/or other materials provided with the distribution.
+% 
+% THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+% IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+% TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+% PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+% HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+% SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+% TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+% PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+% LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+% NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+% SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
+% useful.sty - useful LaTeX macros for my documents
+% AJCD 18/1/90
+
+% \makeatletter
+%\catcode`@=11
+
+
+% CHARACTERS
+\def\bsl{{\tt\char'134}}  % backslash
+\def\crt{\char'136}       % caret
+\def\tld{\char'176}       % tilde
+\def\bar{\char'174}       % vertical bar
+\def\and{\char'046}       % ampersand
+\def\squ{{\tt\char'015}}  % straight quote
+
+\def\tc#1{\hbox{\tt\bs#1}}
+\def\ctr#1{\quad#1\hfil}
+%\def\type#1{{\tt#1}}
+
+
+% FONTS
+% oldstyle (for numerals)
+\def\oldstyle{\fam\@ne \tenmi}
+
+
+% LOGOS
+% AMS logo
+\def\AMS{American Mathematical Society}
+
+% AmSTeX logo
+\def\AmSTeX{$\cal A\kern-.1667em\lower.5ex\hbox{$\cal M$}\kern-.075em S$-\TeX}
+
+% BiBTeX logo
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em \TeX}}
+
+% Metafont logo
+\font\manual=manfnt
+\def\MF{{\manual META}\-{\manual FONT}}
+
+% SliTeX logo
+\def\SliTeX{{\rm S\kern-.06em{\sc l\kern-.035emi}\kern-.06em \TeX}}
+
+% PiCTeX logo
+\def\PiCTeX{P\kern-.12em\lower.5ex\hbox{I}\kern-.075emC\kern-.11em\TeX}
+
+% PiC logo
+\def\PiC{P\kern-.12em\lower.5ex\hbox{I}\kern-.075emC}
+
+
+% COMMANDS
+% discretionary break
+\def\nl{\discretionary{}{}{}}
+
+% linestack: like shortstack, but defaults to normal line spacing
+\def\linestack{\@ifnextchar[{\@linestack}{\@linestack[c]}}
+\def\@linestack[#1]{\leavevmode
+\vbox\bgroup%\baselineskip-1pt\lineskip 3pt
+\let\mb@l\hss
+\let\mb@r\hss \expandafter\let\csname mb@#1\endcsname\relax
+\let\\\@stackcr\@ishortstack}
+
+% inputwith: input file with local style files
+% if first char is '*', count & dimen allocations are shared between styles
+% if second char is also '*', allocations are shared with input file also.
+% This is not clean.
+\newif\ifrealloc \newif\ifmaxalloc
+\newcount\b@secount \newcount\m@xcount
+\newcount\b@sedimen \newcount\m@xdimen
+\def\inputwith{\reallocfalse\maxalloctrue
+   \@ifnextchar*{\realloctrue\@inwithalloc}{\@inwithshare*}}
+\def\@inwithalloc*{\@ifnextchar*{\maxallocfalse\@inwithshare}{\@inwithshare*}}
+\def\@inwithshare*{\@ifnextchar[{\@inwithstyle}{\@inwithstyle[]}}
+\def\@inwithstyle[#1]#2{\bgroup\makeatletter
+   \b@secount\count10 \b@sedimen\count11
+   \m@xcount\b@secount \m@xdimen\b@sedimen
+   \@for\@tempa:={#1}\do
+      {\ifrealloc \count10\b@secount \count11\b@sedimen \fi
+       \expandafter\input\@tempa.sty\relax
+       \ifmaxalloc \ifnum\count10>\m@xcount \m@xcount\count10 \fi
+       \ifnum\count11>\m@xdimen \m@xdimen\count11 \fi\fi}\makeatother
+   \global\count10\m@xcount \global\count11\m@xdimen
+   \input #2\relax\egroup
+}
+
+% readaux: reads another aux file, ignoring table of contents, etc, but
+% collecting references
+\def\readaux#1{% probably want some redefinition here...
+  \makeatletter
+  \@input{#1.aux}
+  \makeatother}
+
+
+% ENVIRONMENTS
+% hanging indentation on a list
+\newbox\hangb@x
+\def\labelled{%
+  \begin{list}{}{\renewcommand{\makelabel}[1]{\setbox\hangb@x\hbox{##1}%
+                 \ifdim\wd\hangb@x>\leftmargin
+                   \vbox{\hbox to\labelwidth{\box\hangb@x\hss}\hbox{}}%
+                 \else \box\hangb@x\hfil
+                 \fi}%
+    \setlength{\leftmargin}{2\leftmargin}%
+    \setlength{\labelsep}{.5em}%
+    \setlength{\labelwidth}{\leftmargin}%
+    \addtolength{\labelwidth}{-\labelsep}%
+    \setlength{\listparindent}{1.5em}%
+  }%
+}
+\def\endlabelled{%
+  \end{list}%
+}
+
+% extracts (in small type)
+\def\extract{%
+  \begin{quote}\small
+}
+\def\endextract{\end{quote}}
+
+% newverbatim ripped out of verbatim.tex:
+\def\newverbatim#1{\@ifnextchar[{\@new@v@env{#1}}{\@new@v@env{#1}[0]}}
+% In the definition of \@new@v@env, the easy part (definition of \endFOO) comes
+% first.  The definition of \FOOVERBATIM is harder, and finally \FOO is defined
+% to have \verb@syntax\FOOVERBATIM at the end of its expansion.
+\def\@new@v@env#1[#2]#3#4{\expandafter\def\csname end#1\endcsname{#4}\relax
+   \expandafter\def@verbatim\csname #1VERBATIM\endcsname{#1}{##1\end{#1}}\relax
+   \expandafter\newcommand\csname #1\endcsname
+       [#2]{#3\verb@syntax\csname #1VERBATIM\endcsname}}
+% Define verbatim syntax.
+\def\verb@syntax{\obeylines\tt\let\do\@makeother\dospecials\frenchspacing\@vobeyspaces}
+% Finally, an auxiliary function to define a macro whose argument is delimited
+% by \end{foo} in special syntax, \def@verbatim{\CS}{foo}{...body...}.
+\begingroup \catcode `|=0 \catcode `[= 1
+\catcode`]=2 \catcode `\{=12 \catcode `\}=12
+\catcode`\\=12 |gdef|def@verbatim#1#2#3[|def#1##1\end{#2}[#3]]
+|endgroup
+
+
+% ANGLICISED COMMANDS
+% british itemize
+\let\itemise\itemize
+\let\enditemise\enditemize
+
+% british center
+\let\centre\center
+\let\endcentre\endcenter
+% ...and while we're at it
+\let\centring\centering
+\let\centreline\centerline
+
+% \makeatother
+%\catcode`@=12

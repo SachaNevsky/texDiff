@@ -1,0 +1,899 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Contents: Customising LaTeX output
+% $Id: custom.tex 533 2015-04-09 13:00:40Z oetiker $
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{\LaTeX i seadistamine}
+
+\begin{intro}
+Seni õpitud käskudega loodud dokumendid on välimuselt aktsepteeritavad
+laia lugejaskonna jaoks. Kuigi nad ei hiilga toredusega, järgivad nad
+kõiki väljakujunenud tüpograafiareegleid, mistõttu neid on kerge lugeda
+ja kena vaadata.
+
+Kuid tuleb ette olukordi, kus \LaTeX is mõni vajalik käsk või keskkond
+puudub või mõne olemasoleva käsu väljund ei vasta tingimustele. Selles
+peatükis püüame anda nõu, kuidas õpetada \LaTeX ile uusi trikke ja
+kuidas panna ta looma väljundit, mis erineb vaikimisi saadavast
+väljundist.
+\end{intro}
+
+\section{Uued käsud, keskkonnad ja paketid}
+
+Olete võib-olla juba tähele pannud, et kõik selles raamatus sissetoodud
+käsud on trükitud kasti sees ja et nad esinevad ka aineregistris raamatu
+lõpus. Selle asemel et realiseerida see igal pool vahetult \LaTeX i
+käskudega, olen koostanud \index{pakett}paketi, milles on defineeritud uued
+käsud ja keskkonnad. Nüüd võib lihtsalt kirjutada:
+
+\begin{example}
+\begin{lscommand}
+\ci{liba}
+\end{lscommand}
+\end{example}
+
+Selles näites on kasutatud nii uut keskkonda nimega \ei{lscommand}, mis
+joonistab käsu ümber kasti, kui ka uut käsku nimega \ci{ci}, mis trükib
+käsu nime ja lisab vastava kirje aineregistrisse. Seda võib järele
+kontrollida: raamatu tagant aineregistrist leiab käsu \ci{liba} kirje,
+mis viitab igale leheküljele, kus käsku \ci{liba} on mainitud.
+
+Kui teose autor peaks otsustama, et kast käskude ümber talle enam ei
+meeldi, siis võib lihtsalt muuta keskkonna \ei{lscommand}
+definitsiooni ja luua uue kujunduse. See on palju hõlpsam kui käia läbi
+terve dokument, püüdes üles leida kõik kohad, kus on sõna ümber kast
+joonistatud tavaliste \LaTeX i käskudega.
+
+\subsection{Uued käsud}
+
+Uusi käske saab moodustada
+käsuga\index{argument}\index{argument!valikuline}
+\begin{lscommand}
+\ci{newcommand}\verb|{|%
+       \emph{nimi}\verb|}[|\emph{arv}\verb|]{|\emph{definitsioon}\verb|}|
+\end{lscommand}
+\noindent Põhiliselt nõuab see käsk kahte argumenti: loodava käsu
+\emph{nimi} ja käsu \emph{definitsioon}. Argument \emph{num}
+nurksulgudes on valikuline ja määrab uue käsu argumentide arvu (võimalik
+on kuni 9). Kui see puudub, siis on argumentide arvuks 0, st argumendid
+pole lubatud.
+
+Järgmised kaks näidet peaksid aitama mõtet selgitada. Esimeses näites
+defineeritakse uus käsk \ci{mvl}, mis on lühend fraasist "`Mitte väga
+lühike \LaTeXe{} sissejuhatus"'. Niisugune käsk võib olla abiks, kui
+selle raamatu pealkirja tuleb kirjutada korduvalt ja korduvalt.
+
+\begin{example}
+\newcommand{\mvl}{Mitte väga
+    lühike \LaTeXe{}
+    sissejuhatus}
+See on "`\mvl"' \ldots{}
+"`\mvl"'
+\end{example}
+
+Teine näide demonstreerib, kuidas defineerida käsku, millel on üks
+argument. Märgis \verb|#1| asendatakse argumendiga, mis käsule ette
+antakse. Kui vaja on rohkem kui ühte argumenti, siis järgmine on
+\verb|#2| ja nii edasi.
+
+\begin{example}
+\newcommand{\xlit}[2]
+ {See on \emph{#1}
+  #2 \LaTeXe{} sissejuhatus}
+% dokumendi tekstis
+\begin{itemize}
+\item \xlit{mitte väga}{lühike}
+\item \xlit{eriti}{pikk}
+\end{itemize}
+\end{example}
+
+\LaTeX{} ei luba luua uut käsku, mis kirjutab mõne olemasoleva üle. Kuid
+on olemas spetsiaalne käsk, kui tarvis on teha just seda:
+\ci{renewcommand}. Selle süntaks on sama nagu käsul \verb|\newcommand|.
+
+Teatavatel juhtudel võib vaja minna käsku \ci{providecommand}. See
+töötab samamoodi nagu \ci{newcommand}, kuid kui käsk on juba
+defineeritud, siis \LaTeXe{} lihtsalt ignoreerib uut definitsiooni.
+
+Mõnda asja tuleb tähele panna \LaTeX i käskudele järgneva tühja ruumi
+puhul, rohkem infot leiab leheküljelt \pageref{whitespace}.
+
+\subsection{Uued keskkonnad}
+
+Käsuga \verb|\newcommand| sarnaselt on olemas käsk uute keskkondade
+loomiseks. Sellel käsul \ci{newenvironment} on järgmine süntaks:
+
+\begin{lscommand}
+\ci{newenvironment}\verb|{|%
+       \emph{nimi}\verb|}[|\emph{arv}\verb|]{|%
+       \emph{enne}\verb|}{|\emph{pärast}\verb|}|
+\end{lscommand}
+
+Käsul \ci{newenvironment} võib jällegi olla valikuline argument.
+Argumendis \emph{enne} määratud materjal töödeldakse enne keskkonnas
+oleva teksti töötlemist. Argumendi \emph{pärast} materjal töödeldakse
+siis, kui kohatakse käsku \verb|\end{|\emph{nimi}\verb|}|.
+
+Käsu \ci{newenvironment} kasutamist illustreerib järgmine näide.
+\begin{example}
+\newenvironment{kuningas}
+ {\rule{1ex}{1ex}%
+      \hspace{\stretch{1}}}
+ {\hspace{\stretch{1}}%
+      \rule{1ex}{1ex}}
+
+\begin{kuningas}
+Mu ustavad alamad \ldots
+\end{kuningas}
+\end{example}
+
+Argumenti \emph{arv} kasutatakse samamoodi nagu käsus
+\verb|\newcommand|. \LaTeX{} kontrollib, et defineeritavat keskkonda ei
+oleks enne olemas. Kui on tõesti tarvis olemasolevat keskkonda muuta,
+siis selleks on käsk \ci{renewenvironment}, mille süntaks on sama nagu
+käsul \ci{newenvironment}.
+
+Ülaltoodud näites esinevate käskude tähendust selgitatakse hiljem. Käsku
+\ci{rule} vaadeldakse leheküljel \pageref{sec:rule}, käskude \ci{hspace}
+ja \ci{stretch} kohta leiab rohkem infot leheküljelt
+\pageref{sec:hspace}.
+
+\subsection{Lisatühikud}
+
+Uusi keskkondi luues võib kergesti saada nõelata sissehiilivatest
+lisatühikutest, millel võib olla potentsiaalselt fataalne efekt, näiteks
+püüdes defineerida keskkonda tiitli jaoks, mis lülitab välja nii iseenda
+taande kui ka sellele järgneva lõigu taande.
+
+\begin{example}
+\newenvironment{lihtne}%
+ {\noindent}%
+ {\par\noindent}
+
+\begin{lihtne}
+Vaata tühikut\\vasakul.
+\end{lihtne}
+Sama\\siin.
+\end{example}
+
+Vastumeetmena võib keskkonna alguseplokki panna käsu \ci{ignorespaces},
+siis ignoreerib keskkond kõiki tühikuid, mis tulevad ette vahetult
+pärast alguseploki täitmist. Lõpuplokk on keerulisem, sest keskkonna
+lõpus toimub eritöötlus. Käsu \ci{ignorespacesafterend} toimel annab
+\LaTeX{} käsu \ci{ignorespaces} pärast seda, kui lõpu eritöötlus on
+toimunud.
+
+\begin{example}
+\newenvironment{korrektne}%
+ {\noindent\ignorespaces}%
+ {\par\noindent%
+   \ignorespacesafterend}
+
+\begin{korrektne}
+Pole tühikut\\vasakul.
+\end{korrektne}
+Sama\\siin.
+\end{example}
+
+\subsection{Käsurea \LaTeX}
+
+Operatsioonisüsteemides nagu Unix kasutatakse \LaTeX i projektide
+kompileerimiseks koostefaile (\emph{makefile}). Sellega seoses võib
+pakkuda huvi võimalus produtseerida samast dokumendist erinevaid
+versioone, kutsudes \LaTeX i välja käsurea argumentidega.
+
+Näiteks võib dokumenti lisada järgmise struktuuri:
+\begin{code}
+\begin{verbatim}
+\usepackage{ifthen}
+\ifthenelse{\equal{\mustvalge}{true}}{
+  % mustvalge väljund; tee midagi..
+}{
+  % värviline väljund; tee midagi muud..
+}
+\end{verbatim}
+\end{code}
+Nüüd saab \LaTeX i välja kutsuda nii:
+\begin{lscommand}
+\verb|latex '\newcommand{\mustvalge}{true}\input{test.tex}'|
+\end{lscommand}
+Kõigepealt defineeritakse käsk \verb|\mustvalge| ja seejärel loetakse
+sisse tegelik fail. Seades \verb|\mustvalge| väärtuseks \verb|false|,
+luuakse dokumendist värviline versioon.
+
+\subsection{Oma pakett}
+
+Kui defineerida palju uusi keskkondi ja käske, siis muutub dokumendi
+preambul üsnagi pikaks. Sellises olukorras on hea mõte koondada kõik
+käsu- ja keskkonnadefinitsioonid omaette \LaTeX i \wi{pakett}i. Dokumendis
+kättesaadavaks saab selle paketi teha käsuga \ci{usepackage}.
+
+\begin{figure}[!htbp]
+\begin{lined}{\textwidth}
+\begin{verbatim}
+% Tobias Oetikeri demopakett
+\ProvidesPackage{demopakett}
+\newcommand{\mvl}{Mitte väga lühike \LaTeX i
+                   sissejuhatus}
+\newcommand{\xlit}[1]{\emph{#1} lühike \LaTeX i
+                       sissejuhatus}
+\newenvironment{kuningas}{\begin{quote}}{\end{quote}}
+\end{verbatim}
+\end{lined}
+\caption{Näitepakett} \label{package}
+\end{figure}
+
+Paketi kirjutamine seisneb peamiselt dokumendi preambuli sisu
+kopeerimises eraldi faili, mille nimi lõpeb laiendiga \eei{sty}. On
+üks spetsiaalkäsk%
+\begin{lscommand}
+\ci{ProvidesPackage}\verb|{|\emph{paketi nimi}\verb|}|
+\end{lscommand}
+\noindent mis pannakse paketifaili algusesse. Käsk
+\verb|\ProvidesPackage| teatab \LaTeX ile paketi nime ja võimaldab tal
+anda sisuka veateate, kui paketti proovitakse sisse lugeda kaks korda.
+Joonisel~\ref{package} on toodud väike näitepakett, mis sisaldab
+eelnevates näidetes defineeritud käske.
+
+\section{Kirjad ja suurused}
+\label{sec:fontsize}
+
+\subsection{Kirja muutmise käsud}
+\index{kiri}\index{kirjasuurus} \LaTeX{} valib sobiva kirjatüübi ja
+-suuruse vastavalt dokumendi loogilisele struktuurile (jaotised,
+allmärkused, \ldots). Mõnel juhul võib tekkida soov muuta kirju ja
+nende suurusi käsitsi. Seda võib teha tabelites~\ref{fonts}
+ja~\ref{sizes} loetletud käskudega. Iga kirja tegelik suurus on
+kujunduse küsimus ja sõltub dokumendiklassist ning selle suvanditest.
+Tabelis~\ref{tab:pointsizes} on kirjakäskude absoluutsed
+punktisuurused, mis kehtivad standardsetes dokumendiklassides.
+
+\begin{example}
+{\small Väikesed ja
+\textbf{paksud} roomlased}
+valitsesid {\Large kogu suurt
+\textit{Itaaliat}.}
+\end{example}
+
+\begin{table}[!tbp]
+\caption{Kirjatüübid} \label{fonts}
+\begin{lined}{12cm}
+%
+% Alan suggested not to tell about the other form of the command
+% eg \verb|\sffamily| or \verb|\bfseries|. This seems a good thing to me.
+%
+\begin{tabular}{@{}rl@{\qquad}rl@{}}
+\fni{textrm}\verb|{...}|        &      \textrm{\wi{seriifkiri}}&
+\fni{textsf}\verb|{...}|        &      \textsf{\wi{seriifideta kiri}}\\
+\fni{texttt}\verb|{...}|        &      \texttt{\wi{masinakiri}}\\[6pt]
+\fni{textmd}\verb|{...}|        &      \textmd{\wi{keskmine kiri}}&
+\fni{textbf}\verb|{...}|        &      \textbf{\wi{paks kiri}}\\[6pt]
+\fni{textup}\verb|{...}|        &      \textup{\wi{püstkiri}}&
+\fni{textit}\verb|{...}|        &      \textit{\wi{kursiivkiri}}\\
+\fni{textsl}\verb|{...}|        &      \textsl{\wi{kaldkiri}}&
+\fni{textsc}\verb|{...}|        &      \textsc{\wi{kapiteelkiri}}\\[6pt]
+\ci{emph}\verb|{...}|           &      \emph{\wi{rõhutatud kiri}} &
+\fni{textnormal}\verb|{...}|    &      \textnormal{\wi{dokumendikiri}}
+\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+\begin{table}[!tp]
+\index{kirjasuurus}
+\caption{Kirjasuurused} \label{sizes}
+\begin{lined}{12cm}
+\begin{tabular}{@{}ll}
+\fni{tiny}         & \tiny        pisitilluke kiri \\
+\fni{scriptsize}   & \scriptsize  väga väike kiri\\
+\fni{footnotesize} & \footnotesize  üsna väike kiri\\
+\fni{small}        &  \small            väike kiri\\
+\fni{normalsize}   &  \normalsize  harilik kiri\\
+\fni{large}        &  \large       suur kiri
+\end{tabular}%
+\qquad\begin{tabular}{ll@{}}
+\fni{Large}        &  \Large       suurem kiri\\[5pt]
+\fni{LARGE}        &  \LARGE       väga suur kiri\\[5pt]
+\fni{huge}         &  \huge        tohutu\\[5pt]
+\fni{Huge}         &  \Huge        hiiglaslik
+\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+\begin{table}[!tbp]
+\caption{Absoluutsed punktisuurused standardklassides}\label{tab:pointsizes}
+\label{tab:sizes}
+\begin{lined}{12cm}
+\begin{tabular}{lrrr}
+ &
+\multicolumn{1}{c}{\texttt{10pt} (vaikesuvand) } &
+           \multicolumn{1}{c}{\texttt{11pt} suvand}  &
+           \multicolumn{1}{c}{\texttt{12pt} suvand}\\
+\verb|\tiny|       & 5\,pt  & 6\,pt & 6\,pt\\
+\verb|\scriptsize| & 7\,pt  & 8\,pt & 8\,pt\\
+\verb|\footnotesize| & 8\,pt & 9\,pt & 10\,pt \\
+\verb|\small|        & 9\,pt & 10\,pt & 11\,pt \\
+\verb|\normalsize| & 10\,pt & 11\,pt & 12\,pt \\
+\verb|\large|      & 12\,pt & 12\,pt & 14\,pt \\
+\verb|\Large|      & 14\,pt & 14\,pt & 17\,pt \\
+\verb|\LARGE|      & 17\,pt & 17\,pt & 20\,pt\\
+\verb|\huge|       & 20\,pt & 20\,pt & 25\,pt\\
+\verb|\Huge|       & 25\,pt & 25\,pt & 25\,pt\\
+\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+
+\begin{table}[!tbp]
+\caption{Valemikirjad} \label{mathfonts}
+\begin{lined}{0.7\textwidth}
+\begin{tabular}{@{}ll@{}}
+\fni{mathrm}\verb|{...}|&     $\mathrm{Seriifkiri}$\\
+\fni{mathbf}\verb|{...}|&     $\mathbf{Paks\ kiri}$\\
+\fni{mathsf}\verb|{...}|&     $\mathsf{Seriifideta\ kiri}$\\
+\fni{mathtt}\verb|{...}|&     $\mathtt{Masinakiri}$\\
+\fni{mathit}\verb|{...}|&     $\mathit{Kursiivkiri}$\\
+\fni{mathcal}\verb|{...}|&    $\mathcal{KALLIGRAAFILINE\ KIRI}$\\
+\fni{mathnormal}\verb|{...}|& $\mathnormal{Harilik\ kiri}$\\
+\end{tabular}
+
+%\begin{tabular}{@{}lll@{}}
+%\textit{Command}&\textit{Example}&    \textit{Output}\\[6pt]
+%\fni{mathcal}\verb|{...}|&    \verb|$\mathcal{B}=c$|&     $\mathcal{B}=c$\\
+%\fni{mathscr}\verb|{...}|&    \verb|$\mathscr{B}=c$|&     $\mathscr{B}=c$\\
+%\fni{mathrm}\verb|{...}|&     \verb|$\mathrm{K}_2$|&      $\mathrm{K}_2$\\
+%\fni{mathbf}\verb|{...}|&     \verb|$\sum x=\mathbf{v}$|& $\sum x=\mathbf{v}$\\
+%\fni{mathsf}\verb|{...}|&     \verb|$\mathsf{G\times R}$|&        $\mathsf{G\times R}$\\
+%\fni{mathtt}\verb|{...}|&     \verb|$\mathtt{L}(b,c)$|&   $\mathtt{L}(b,c)$\\
+%\fni{mathnormal}\verb|{...}|& \verb|$\mathnormal{R_{19}}\neq R_{19}$|&
+%$\mathnormal{R_{19}}\neq R_{19}$\\
+%\fni{mathit}\verb|{...}|&     \verb|$\mathit{ffi}\neq ffi$|& $\mathit{ffi}\neq ffi$
+%\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+\LaTeXe{} olulise iseärasusena on kirjade atribuudid üksteisest
+sõltumatud. See tähendab, et on võimalik anda suuruse või isegi
+kirjatüübi muutmise käsk ja ikkagi säilitada varem seatud paksu või
+kaldkirja atribuut.
+
+Valemire\v{z}iimis saab kirjamuutmise käske kasutada ajutiselt
+valemire\v{z}iimist lahkumiseks ja hariliku teksti sisestamiseks. Kui on
+soov valemi vormistamisel lülituda ümber mõnele muule kirjale, siis
+läheb vaja veel omaette käske, vt tabelit~\ref{mathfonts}.
+
+
+Kirjasuuruse käskude puhul mängivad olulist rolli \wi{looksulud}, mille
+abil moodustatakse \index{rühm}\emph{rühmi}. Rühmad piiravad enamiku
+\LaTeX i käskude skoopi.
+
+\begin{example}
+Ta armastab {\LARGE suuri
+ja {\small väikesi} tähti}.
+\end{example}
+
+Kirjasuuruse käsud muudavad ka reavahet, kuid ainult siis, kui lõik
+lõpeb kirjasuuruse käsu mõjupiirkonnas. Sulgev looksulg \verb|}| ei tohi
+seega tulla liiga vara. Järgmises kahes näites tasub tähele panna käsu
+\ci{par} asukohta.\footnote{\ci{par} on samaväärne tühja reaga.}
+
+\begin{example}
+{\Large Ära loe seda!
+ See ei ole tõsi.
+ Võid mind uskuda!\par}
+\end{example}
+
+\begin{example}
+{\Large See ei ole samuti tõsi.
+Arvesta, et olen valetaja.}\par
+\end{example}
+
+Terve tekstilõigu või veelgi pikema tekstiploki kirjasuuruse muutmiseks
+võib kasutada kirjamuutmiskäske keskkonna vormis.
+
+\begin{example}
+\begin{Large}
+See pole tõsi.
+Kuid jällegi, mis tänapäeval
+\ldots
+\end{Large}
+\end{example}
+
+\noindent See hoiab palju kokku looksulgude loendamist.
+
+\subsection{Ohtlik, Will Robinson, ohtlik}
+
+Nagu esimese peatüki alguses märgitud, on ohtlik selliseid otseseid
+käske oma dokumenti kuhjata, sest nad töötavad vastu \LaTeX i
+põhiideele, milleks on dokumendi loogilise ja visuaalse märgenduse lahus
+hoidmine. See tähendab, et kui mitmes kohas kasutatakse teatavat tüüpi
+informatsiooni trükkimiseks sama kirjamuutmiskäsku, siis tuleks käsuga
+\verb|\newcommand| defineerida kirjamuutmiskäsu jaoks "`loogiline
+ümbris"'.
+
+\begin{example}
+\newcommand{\ups}[1]{%
+ \textbf{#1}}
+Ära \ups{sisene} sellesse ruumi,
+selle ruumi on hõivanud tundmatu
+päritolu ja otstarbega
+\ups{masinad}.
+\end{example}
+
+Sellise lähenemise eelis on see, et autor saab mõnel hilisemal hetkel
+otsustada, et ohu visuaalseks esituseks sobib paremini miski muu kui
+\verb|\textbf|, ilma et oleks vaja dokument läbi lapata, otsides üles
+kõik käsu \verb|\textbf| esinemised ja tehes kindlaks, kas igaüks neist
+oli mõeldud ohu tähistamiseks või täitis mingit teist eesmärki.
+
+Tasub tähele panna, et käskida \LaTeX il midagi \emph{rõhutada} ja
+käskida tal kasutada erinevat \textit{kirja} ei ole üks ja sama. Käsk
+\ci{emph} võtab arvesse konteksti, samas kui kirjakäsud on absoluutsed.
+
+\begin{example}
+\textit{On täiesti võimalik
+  \emph{rõhutada} teksti, mis
+  on trükitud kursiivis,}
+\textsf{%
+  \emph{seriifideta} kirjas}
+\texttt{või
+  \emph{masinakirja} stiilis.}
+\end{example}
+
+\subsection{Nõuanne}
+
+Lõpetades teekonna kirjade ja kirjasuuruste maale, on siin veel
+üks väike nõuanne:
+
+\begin{quote}
+  \underline{\textbf{Pea meeles\Huge!}} \textit{Mida}
+  \textsf{Ro\textbf{\LARGE H}\texttt{K}\textsl{E}M} kirju \Huge sa
+  \tiny oma \footnotesize \textbf{dokumendis} \small \texttt{kasutad},
+  \large \textit{seda} \textsc{loetavamaks} ja
+  \textsl{\textsf{ilusamaks} see mu\large u\Large t\LARGE u\huge b}.
+\end{quote}
+
+\section{Vahed}
+
+\subsection{Reavahed}
+
+\index{reavahed} Soovides jätta ridade vahele rohkem ruumi,
+võib dokumendi preambulisse panna käsu
+\begin{lscommand}
+\ci{linespread}\verb|{|\emph{tegur}\verb|}|
+\end{lscommand}
+\noindent "`Pooleteisekordse"' reavahe annab \verb|\linespread{1.3}| ja
+"`kahekordse"' reavahe \verb|\linespread{1.6}|. Tavalistel reavahedel
+laiendus puudub, nii et laiendusteguri vaikeväärtus
+on~1.\index{kahekordne reavahe}
+
+Käsu \ci{linespread} mõju on üsna drastiline ja avaldamiseks mõeldud töö
+jaoks ebakohane. Seega kui reavahe muutmiseks on olemas hea põhjus, siis
+võiks seda teha käsuga\cih{baselineskip}
+\begin{lscommand}
+\verb|\setlength{\baselineskip}{1.5\baselineskip}|
+\end{lscommand}
+
+\begin{example}
+{\setlength{\baselineskip}%
+           {1.5\baselineskip}
+Selle lõigu vormistamisel on
+alusjoonte hüppeks määratud 1{,}5
+korda senine väärtus. Pane tähele
+lõigukäsku lõigu lõpus.\par}
+
+Sellel lõigul on kindel eesmärk:
+ta näitab, et sulgeva looksulu
+järel on kõik jälle normaalne.
+\end{example}
+
+\subsection{Lõigu vormindamine}\label{parsp}
+
+\LaTeX is on kaks parameetrit, mis mõjutavad lõigu küljendust.
+Paigutades sisendfaili preambulisse definitsioonid nagu
+\begin{code}
+\ci{setlength}\verb|{|\ci{parindent}\verb|}{0pt}| \\
+\verb|\setlength{|\ci{parskip}\verb|}{1ex plus 0.5ex minus 0.2ex}|
+\end{code}
+on võimalik muuta lõikude vormindust. Need käsud suurendavad kahe lõigu
+vahele jäetavat ruumi ja samal ajal seavad lõigu algtaande
+nulliks.\index{taane}
+
+Pikkuse komponendid \texttt{plus} ja \texttt{minus} ütlevad \TeX ile, et
+lõikudevahelist hüpet võib kokku suruda või välja venitada määratud
+väärtuste võrra, kui see on vajalik lõigu korralikuks mahutamiseks
+leheküljele.
+
+Mandri-Euroopa tüpograafias eraldataksegi lõike tavaliselt tühja reaga
+ja lõigu esimest rida ei taandata. Kuid need käsud mõjutavad ka
+sisukorda, mille ridade vahele jäetakse samuti rohkem vahet. Selle
+vältimiseks võib nimetatud kaks käsku viia preambulist dokumendi sisusse
+mingisse kohta pärast käsku \verb|\tableofcontents| või neid üldse mitte
+kasutada, sest professionaalselt küljendatud raamatutes eraldatakse
+lõike enamasti taandridade, mitte lõiguvahede abil.
+
+Kui taandamata lõigu esimesele reale on vaja lisada \wi{taane}, võib
+lõiku alustada käsuga
+\begin{lscommand}
+\ci{indent}
+\end{lscommand}
+\noindent Selge, et sellel on mingi mõju ainult siis, kui
+\verb|\parindent| ei ole null.\footnote{Igale jaotisepäisele järgneva
+esimese lõigu taandamiseks sobib pakett \pai{indentfirst} komplektist
+Tools.}
+
+Taandeta lõigu moodustamiseks tuleks lõigu esimeseks käsuks panna
+\begin{lscommand}
+\ci{noindent}
+\end{lscommand}
+\noindent See on otstarbekas siis, kui dokument algab otse põhitekstiga,
+mitte jaotisekäsuga.
+
+\subsection{Horisontaalvahe}
+
+\label{sec:hspace}
+\LaTeX{} määrab sõnade ja lausete vahed automaatselt. Horisontaalvahet
+saab lisada käsuga \index{horisontaalvahe}\index{vahe!horisontaalne}
+\begin{lscommand}
+\ci{hspace}\verb|{|\emph{pikkus}\verb|}|
+\end{lscommand}
+Kui see vahe peab alles jääma isegi siis, kui ta satub rea algusesse või
+lõppu, võib käsu \ci{hspace} asemel anda käsu \ci{hspace*}.
+Argument \emph{pikkus} on lihtsamal juhul arv koos mõõtühikuga. Kõige
+tähtsamad mõõtühikud on toodud tabelis~\ref{units}.
+
+\begin{example}
+See\hspace{1.5cm}on vahe
+pikkusega 1{,}5 cm.
+\end{example}
+\begin{table}[tbp]
+\index{ühikud}\index{mõõtühikud}
+\caption{\TeX i mõõtühikud} \label{units}
+\begin{lined}{9.5cm}
+\begin{tabular}{@{}ll@{}}
+\texttt{mm} & millimeeter $\approx 1/25$~tolli \quad \demowidth{1mm} \\
+\texttt{cm} & sentimeeter = 10~mm  \quad \demowidth{1cm}                     \\
+\texttt{in} & toll $=$ 25{,}4~mm \quad \demowidth{1in}                    \\
+\texttt{pt} & punkt $\approx 1/72$~tolli $\approx \frac{1}{3}$~mm  \quad\demowidth{1pt}\\
+\texttt{em} & tähe M ligikaudne laius jooksvas kirjas \quad \demowidth{1em}\\
+\texttt{ex} & tähe x ligikaudne kõrgus jooksvas kirjas\quad \demowidth{1ex}
+\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+\label{cmd:stretch}
+Käsk
+\begin{lscommand}
+\ci{stretch}\verb|{|\emph{n}\verb|}|
+\end{lscommand}
+\noindent loob spetsiaalse paisuva vahe. See venib niikaua, kuni reas on
+kogu järelejäänud ruum täidetud. Kui samas reas antakse mitu
+\verb|\hspace{\stretch{|\emph{n}\verb|}}|-käsku, siis täidavad nad kogu
+olemasoleva ruumi võrdeliselt oma paisumisteguritega.
+
+\begin{example}
+x\hspace{\stretch{1}}
+x\hspace{\stretch{3}}x
+\end{example}
+
+Horisontaalvahet ja teksti koos kasutades võib olla mõttekas muuta vahe
+suurust olenevalt jooksva kirja suurusest. Seda saab teha kirjast
+sõltuvate ühikute \texttt{em} ja \texttt{ex} abil:
+
+\begin{example}
+{\Large{}suu\hspace{1em}r}\\
+{\tiny{}väik\hspace{1em}e}
+\end{example}
+
+\subsection{Vertikaalvahe}
+
+Vahed lõikude, jaotiste, alajaotiste, \ldots{} vahel määrab \LaTeX{}
+automaatselt. Kui vaja, saab vertikaalvahet \emph{kahe lõigu vahele}
+lisada käsuga
+\begin{lscommand}
+\ci{vspace}\verb|{|\emph{pikkus}\verb|}|
+\end{lscommand}
+
+See käsk tuleks tavaliselt panna kahe tühja rea vahele. Kui vahe peab
+säilima ka lehekülje üla- või alaääres, võib käsu \ci{vspace} asendada
+selle tärniga versiooniga \ci{vspace*}.
+\index{vertikaalvahe}\index{vahe!vertikaalne}
+\index{käsk!tärniga}\index{tärniga käsk}
+
+Käske \verb|\stretch| ja \verb|\pagebreak| koos kasutades saab teksti
+trükkida lehekülje viimasele reale või tsentreerida teksti leheküljel
+vertikaalselt:
+\begin{code}
+\begin{verbatim}
+Natuke teksti \ldots
+
+\vspace{\stretch{1}}
+See läheb lehekülje viimasele reale.\pagebreak
+\end{verbatim}
+\end{code}
+
+Lisavahet \emph{sama} lõigu kahe rea vahele või tabelisse saab jätta
+käsuga
+\begin{lscommand}
+\ci{\bs}\verb|[|\emph{pikkus}\verb|]|
+\end{lscommand}
+
+Käskudega \ci{bigskip} ja \ci{smallskip} saab lisada eeldefineeritud
+suurusega vertikaalvahe, ilma täpsete arvudega vaeva nägemata.
+
+\section{Lehekülje kujundus}
+
+\begin{figure}[!hp]
+\begin{center}
+\makeatletter\lay@layout\makeatother%\par
+\raisebox{-2.65\baselineskip}{\hspace*{-14.9em}\ttfamily\footnotesize \bs evensidemargin}
+\end{center}
+\vspace*{1.8cm}
+\caption[Selle raamatu kujunduse parameetrid]{Selle raamatu kujunduse
+parameetrid. Oma dokumendi kujunduse saab trükkida paketiga
+\pai{layout}}
+\label{fig:layout}
+\cih{hoffset}
+\cih{voffset}
+\cih{oddsidemargin}
+\cih{evensidemargin}
+\cih{topmargin}
+\cih{headheight}
+\cih{headsep}
+\cih{textheight}
+\cih{textwidth}
+\cih{marginparsep}
+\cih{marginparwidth}
+\cih{footskip}
+\cih{marginparpush}
+\cih{paperheight}
+\cih{paperwidth}
+\end{figure}
+
+\index{lehekülje kujundus}
+\LaTeXe{} võimaldab käsus \ci{documentclass} valida \index{paberi
+formaat}paberi formaati. Sellest lähtudes määrab ta automaatselt õige
+suurusega \wi{ääred}, kuid mõnikord eeldefineeritud väärtused ei sobi.
+Loomulikult saab neid muuta.
+%no idea why this is needed here ...
+\thispagestyle{fancyplain}%
+Joonisel~\ref{fig:layout} on kujutatud kõik parameetrid, mida muuta saab.
+See joonis on tehtud paketiga \pai{layout} komplektist Tools.%
+\footnote{\CTAN|pkg/tools|}
+
+\textbf{OOTA!} \ldots{} Enne, kui lähed kaasa "`Teeme selle kitsa
+lehekülje veidi laiemaks"' hullusega, mõtle mõni sekund järele. Nagu
+enamiku asjadega \LaTeX is, on ka siin kindel põhjus, miks lehekülje
+kujundus just selline on.
+
+Muidugi, võrreldes \wi{MS Word}i standardleheküljega tundub \LaTeX i
+lehekülg kohutavalt kitsas. Kuid vaata mõnda raamatut\footnote{See
+tähendab, tõelist raamatut, mille on välja andnud tuntud kirjastus.} ja
+loe kokku sümbolid tavalises tekstireas. Ilmneb, et reas ei ole rohkem
+kui umbes 66 sümbolit. Seejärel tee sama \LaTeX i leheküljega. Selgub,
+et ka seal on ühes reas umbes 66 sümbolit. Kogemus näitab, et
+lugemine muutub raskeks niipea, kui reas on sümboleid rohkem. See tuleb
+sellest, et silmadel on raske hüpata rea lõpust järgmise rea
+algusesse. Samal põhjusel trükitakse ka ajalehti mitmes veerus.
+
+Seega tuleb põhiteksti laiust suurendades arvestada, et teose lugejatel
+tehakse niimoodi elu raskemaks. Kuid aitab hoiatustest, lubasime
+rääkida, kuidas seda teha \ldots
+
+\LaTeX is on nende parameetrite muutmiseks kaks käsku, mis tavaliselt
+antakse dokumendi preambulis.
+
+Esimene käsk omistab ükskõik millise parameetri väärtuseks fikseeritud
+pikkuse:
+\begin{lscommand}
+\ci{setlength}\verb|{|\emph{parameeter}\verb|}{|\emph{pikkus}\verb|}|
+\end{lscommand}
+\noindent Teine käsk liidab ükskõik millisele parameetri väärtusele
+pikkuse:
+\begin{lscommand}
+\ci{addtolength}\verb|{|\emph{parameeter}\verb|}{|\emph{pikkus}\verb|}|
+\end{lscommand}
+
+Teine käsk on tegelikult kasulikum kui käsk \ci{setlength}, sest ta
+töötab relatiivselt senise seadistuse suhtes. Et liita üldisele teksti
+laiusele üks sentimeeter, võib dokumendi preambulisse kirjutada
+järgmised read:
+\begin{code}
+\verb|\addtolength{\hoffset}{-0.5cm}|\\
+\verb|\addtolength{\textwidth}{1cm}|
+\end{code}
+
+Selles kontekstis võib heita pilgu ka paketile \pai{calc}. See võimaldab
+kasutada aritmeetilisi tehteid nii käsu \ci{setlength} argumendis kui ka
+muudes kohtades, kus funktsioonile antakse ette arvulisi väärtusi.
+
+\section{Veel nippe pikkustega}
+
+Kus võimalik, tasuks \LaTeX i dokumentides mitte kasutada absoluutseid
+pikkusi, vaid püüda asju taandada muude leheküljeelementide laiustele
+või kõrgustele. Näiteks joonise laiuse puhul võiks aluseks olla
+\verb|\textwidth|, et joonis lehekülje täidaks.
+
+Kolme käsuga saab määrata tekstifraasi laiust, kõrgust ja sügavust.
+
+\begin{lscommand}
+\ci{settowidth}\verb|{|\emph{muutuja}\verb|}{|\emph{tekst}\verb|}|\\
+\ci{settoheight}\verb|{|\emph{muutuja}\verb|}{|\emph{tekst}\verb|}|\\
+\ci{settodepth}\verb|{|\emph{muutuja}\verb|}{|\emph{tekst}\verb|}|
+\end{lscommand}
+
+\noindent Järgmine näide demonstreerib nende käskude võimalikku
+rakendust.
+
+\begin{example}
+\newenvironment{muutkirj}[1]{%
+  \settowidth{\parindent}{#1:\ }
+  \makebox[0pt][r]{#1:\ }}{}
+\begin{displaymath}
+a^2+b^2=c^2
+\end{displaymath}
+
+\begin{muutkirj}{Kus}$a$, $b$ --
+on täisnurga lähisküljed
+täisnurkses kolmnurgas.
+
+$c$ -- on kolmnurga hüpotenuus
+ja tunneb end üksikuna.
+
+$d$ -- ei esine siin üldse.
+Kas see pole mõistatuslik?
+\end{muutkirj}
+\end{example}
+\enlargethispage{\baselineskip}
+
+\section{Kastid}
+
+\LaTeX{} ehitab lehekülgi kaste paigutades. Alustuseks on iga täht üks
+väike \wi{kast}, need liimitakse teiste tähtedega kokku sõnaks. Sõnad
+omakorda liimitakse teiste sõnade külge; seda tehakse spetsiaalse
+elastse liimiga, tänu millele on sõnade jada võimalik kokku suruda või
+välja venitada, et rida saaks leheküljel täpselt täidetud.
+
+Muidugi on see tegelikult toimuvast väga lihtsustatud ettekujutus, kuid
+põhimõte on selles, et \TeX{} tegutseb \wi{liim}i ja kastidega. Tähed ei
+ole ainsad, mis võivad kastides olla. Kasti sisse võib panna peaaegu
+ükskõik mida, kaasa arvatud teisi kaste. Iga kasti käsitleb \LaTeX{}
+nii, nagu oleks see üksainus täht.
+
+Eelmises peatükkides juba esines mõningaid kaste, kuigi siis seda ei
+mainitud. Näiteks keskkond \ei{tabular} ja käsk \ci{includegraphics}
+moodustavad kasti. Seega võib kaks tabelit või pilti\index{joonised}
+lihtsasti asetada teineteise kõrvale. Tuleb ainult jälgida, et nende
+kogulaius ei oleks teksti laiusest suurem.
+
+Kasti sisse saab panna ka suvalise lõigu kas käsuga
+
+\begin{lscommand}
+\ci{parbox}\verb|[|\emph{asend}\verb|]{|\emph{laius}\verb|}{|\emph{tekst}\verb|}|
+\end{lscommand}
+
+\noindent või keskkonnaga
+
+\begin{lscommand}
+\verb|\begin{|\ei{minipage}\verb|}[|\emph{asend}\verb|]{|\emph{laius}\verb|}|
+\emph{tekst} \verb|\end{|\ei{minipage}\verb|}|
+\end{lscommand}
+
+\noindent Argument \emph{asend} võib olla üks tähtedest \texttt{c},
+\texttt{t} või \texttt{b} ning sellega määratakse kasti vertikaalne
+joondus ülejäänud teksti alusjoone suhtes. Argument \emph{laius} on
+pikkusetüüpi ja määrab kasti laiuse. Keskkonna \ei{minipage} ja käsu
+\ci{parbox} peamine erinevus on see, et käsu \ci{parbox} sees ei saa
+kasutada kõiki käske ja keskkondi, samas kui keskkonna \ei{minipage}
+sees on peaaegu kõik võimalik.
+
+Sellal kui käsk \ci{parbox} pakib sisse terve lõigu, koos reamurdmiste
+ja kõige muuga, on olemas ka klass kastikäske, mis tegutsevad ainult
+horisontaalselt joondatud materjalil. Ühte neist me juba tunneme, nimelt
+\ci{mbox}. See käsk seob lihtsalt rea kaste üheks kastiks ning selle
+abil saab takistada \LaTeX il kahte sõna teineteisest eraldamast. Kuna
+kaste võib panna kastide sisse, on nende horisontaalsete kastipakkijate
+paindlikkus piiramatu.
+
+\begin{lscommand}
+\ci{makebox}\verb|[|\emph{laius}\verb|][|\emph{asend}\verb|]{|\emph{tekst}\verb|}|
+\end{lscommand}
+
+\noindent Argument \emph{laius} määrab tulemuskasti suuruse
+väljastpoolt vaadates.\footnote{See võib olla ka väiksem
+kui kasti sees olev materjal. Laiuseks võib panna isegi \texttt{0pt},
+millega kasti sees olev tekst trükitakse nii, et see ümbritsevaid kaste
+ei mõjuta.} Peale pikkusetüüpi väärtuste võib argumendis \emph{laius}
+kasutada ka suurusi \ci{width}, \ci{height}, \ci{depth} ja
+\ci{totalheight}. Need kajastavad vormindatud \emph{tekst}i mõõtmisel
+saadud väärtusi. Argument \emph{asend} on üksainus täht:
+\texttt{c} (keskele), \texttt{l} (vasakule), \texttt{r} (paremale) või
+\texttt{s} (laotatud laiali kogu kasti alale).
+
+Käsk \ci{framebox} töötab täpselt samamoodi nagu \ci{makebox}, ainult
+lisaks joonistab teksti ümber raami.
+
+Järgmises näites demonstreeritakse mõningaid asju, mida saab käskudega
+\ci{makebox} ja \ci{framebox} teha.
+
+\begin{example}
+\makebox[\textwidth]{%
+    k e s k e l}\par
+\makebox[\textwidth][s]{%
+    l a o t a t u d}\par
+\framebox[1.1\width]{Olen
+    nüüd raami sees!} \par
+\framebox[0.8\width][r]{Bumm,
+    ma olen liiga lai} \par
+\framebox[1cm][l]{pole vahet,
+    mina ka}
+Kas seda saab lugeda?
+\end{example}
+
+Nüüd kui me oskame juhtida horisontaalset, on järgmine ilmne samm minna
+vertikaalseks.\footnote{Täielik juhtimine saavutatakse korraga
+horisontaalset ja vertikaalset juhtides \ldots} \LaTeX i jaoks pole
+see probleem. Käsk
+
+\begin{lscommand}
+\ci{raisebox}\verb|{|\emph{tõste}\verb|}[|\emph{ulatus alusjoonest
+üles}\verb|][|\emph{ulatus alusjoonest
+alla}\verb|]{|\emph{tekst}\verb|}|
+\end{lscommand}
+\noindent võimaldab määrata kasti vertikaalseid omadusi. Esimeses kolmes
+argumendis võib kasutada suurusi \ci{width}, \ci{height}, \ci{depth} ja
+\ci{totalheight}, et tegutseda sõltuvalt argumendis \emph{tekst} oleva
+kasti suurusest.
+
+\begin{example}
+\raisebox{0pt}[0pt][0pt]{\Large%
+\textbf{Aaaa\raisebox{-0.3ex}{a}%
+\raisebox{-0.7ex}{aa}%
+\raisebox{-1.2ex}{pp}%
+\raisebox{-2.2ex}{i}%
+\raisebox{-4.5ex}{i}}}
+hüüdis ta, kuid isegi reas
+järgmine ei märganud, et temaga
+oli juhtunud midagi kohutavat.
+\end{example}
+
+\section{Jooned}
+\label{sec:rule}
+
+Mõned leheküljed tagasi esines käsk
+
+\begin{lscommand}
+\ci{rule}\verb|[|\emph{tõste}\verb|]{|\emph{laius}\verb|}{|\emph{kõrgus}\verb|}|
+\end{lscommand}
+
+\noindent Tavakasutuses moodustab see hariliku musta kasti.
+
+\begin{example}
+\rule{3mm}{.1pt}%
+\rule[-1mm]{5mm}{1cm}%
+\rule{3mm}{.1pt}%
+\rule[1mm]{1cm}{5mm}%
+\rule{3mm}{.1pt}
+\end{example}
+
+\noindent See on kasulik vertikaalsete ja horisontaalsete joonte
+tõmbamiseks. Näiteks tiitellehe jooned on loodud käsuga \ci{rule}.
+
+\bigskip
+{\flushright Lõpp.\par}
+
+%
+
+% Local Variables:
+% TeX-master: "lshort2e"
+% mode: latex
+% mode: flyspell
+% End:

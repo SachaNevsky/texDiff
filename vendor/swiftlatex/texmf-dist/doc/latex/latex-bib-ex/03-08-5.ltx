@@ -1,0 +1,102 @@
+%% 
+%%  Ein Beispiel der DANTE-Edition
+%% 
+%%  Beispiel 03-08-5 auf Seite 105.
+%% 
+%%  Copyright (C) 2011 Herbert Voss
+%% 
+%%  It may be distributed and/or modified under the conditions
+%%  of the LaTeX Project Public License, either version 1.3
+%%  of this license or (at your option) any later version.
+%% 
+%%  See http://www.latex-project.org/lppl.txt for details.
+%% 
+%% 
+%% ==command biber ++FILE++== 
+% Show page(s) 1
+%% 
+\documentclass[]{article}
+\pagestyle{empty}
+\setlength\textwidth{352.81416pt}
+\usepackage[T1]{fontenc}
+\usepackage[autostyle]{csquotes}
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage{filecontents}
+\begin{filecontents*}{test.bbx}
+\ProvidesFile{test.bbx}[ 2011/01/01 v1.0 biblatex bib style ]
+\newtoggle{bbx:issn}\newtoggle{bbx:url}\newtoggle{bbx:doi}\newtoggle{bbx:eprint}
+%
+\DeclareBibliographyOption{issn}[true]{\settoggle{bbx:issn}{#1}}
+\DeclareBibliographyOption{url}[true]{\settoggle{bbx:url}{#1}}
+\DeclareBibliographyOption{doi}[true]{\settoggle{bbx:doi}{#1}}
+\DeclareBibliographyOption{eprint}[true]{\settoggle{bbx:eprint}{#1}}
+%
+\ExecuteBibliographyOptions{issn,url,doi,eprint}
+\DeclareFieldFormat{labelnumberwidth}{\mkbibbrackets{#1}}
+%
+\defbibenvironment{bibliography}
+  {\list{\printtext[labelnumberwidth]{\printfield{labelnumber}}}
+        {\setlength\labelwidth{\labelnumberwidth}%
+         \setlength\leftmargin{\labelwidth}\setlength\labelsep{\biblabelsep}%
+         \addtolength\leftmargin{\labelsep}\setlength\itemsep{\bibitemsep}%
+         \setlength\parsep{\bibparsep}}%
+    \renewcommand*\makelabel[1]{\hss##1}}
+  {\endlist}{\item}
+%
+\newbibmacro*{finentry}{\finentry}
+%
+\DeclareBibliographyDriver{article}{\usebibmacro{bibindex}%
+  \usebibmacro{author/translator+others}\setunit{\labelnamepunct}\newblock % Autor
+  \usebibmacro{title}\newunit                                       % Titel
+  \usebibmacro{in:}\usebibmacro{journal+issuetitle}\newunit         % Zeitschrift
+  \usebibmacro{note+pages}\newunit\newblock                         % Note und Seiten
+  \iftoggle{bbx:issn}{\printfield{issn}}{}\newunit\newblock         % ISSN
+  \usebibmacro{doi+eprint+url}\newunit\newblock                     % DOI, EPrint, URL
+  \usebibmacro{finentry}}
+
+\DeclareFieldFormat[article]{title}{\mkbibemph{#1\isdot}}
+\DeclareFieldFormat[article]{smallcaps}{\textsc{#1}}
+
+\newbibmacro*{doi+eprint+url}{%
+  \iftoggle{bbx:doi}{\printfield{doi}}{}\newunit\newblock
+  \iftoggle{bbx:eprint}{\usebibmacro{eprint}}{}\newunit\newblock
+  \iftoggle{bbx:url}{\usebibmacro{url+urldate}}{}}
+\newbibmacro*{journal+issuetitle}{%
+  \usebibmacro{journal}\setunit*{\addspace}%
+  \iffieldundef{series}{}{\newunit\printfield{series}\setunit{\addspace}}%
+  \usebibmacro{volume+number+eid}\setunit{\addspace}%
+  \usebibmacro{issue+date}\setunit{\addcolon\space}%
+  \usebibmacro{issue}\newunit}
+\newbibmacro*{volume+number+eid}{%
+  \printfield{volume}\setunit*{\adddot}%
+  \printfield{number}\setunit{\addcomma\space}\printfield{eid}}
+\newbibmacro*{issue+date}{%
+  \printtext[parens]{%
+    \iffieldundef{issue}%
+      {\usebibmacro{date}}
+      {\printfield{issue}\setunit*{\addspace}\usebibmacro{date}}}%
+  \newunit}
+\newbibmacro*{note+pages}{\printfield{note}\setunit{\bibpagespunct}%
+  \printfield{pages}\newunit}
+\endinput
+\end{filecontents*}
+\begin{filecontents*}{test.cbx}
+\ProvidesFile{test.cbx}[ 2011/01/01 v1.0 biblatex citation style ]
+\ExecuteBibliographyOptions{labelnumber}
+\newbibmacro*{cite}{\printtext{\printfield{labelnumber}}}
+\DeclareCiteCommand{\cite}[\mkbibbrackets]
+                          {\usebibmacro{prenote}}
+                          {\usebibmacro{citeindex}\usebibmacro{cite}}
+                          {\multicitedelim}
+                          {\usebibmacro{postnote}}
+\endinput
+\end{filecontents*}
+
+\usepackage[style=test,backend=biber]{biblatex}  \bibliography{examples}
+
+\begin{document}
+Normale Verweise~\cite[S.\,77]{kastenholz} und \cite{bertram}.\qquad
+\ldots~\cite[siehe][77--99]{kastenholz} und \cite{kastenholz,bertram}.
+\printbibliography
+\end{document}

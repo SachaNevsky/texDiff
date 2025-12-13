@@ -1,0 +1,179 @@
+% Test definitions for accents and composite accents in Greek
+\documentclass[a4paper,polutonikogreek,british]{article}
+\pagestyle{empty}
+\usepackage[margin=2.9cm]{geometry}
+\usepackage{cmap} % fix search and cut-and-paste in Acrobat Reader
+
+\usepackage%
+{lmodern}
+% {gfsartemisia}
+% {gfsbaskerville}
+% [default]{gfsbodoni}
+% [default]{gfscomplutum}
+% {gfsdidot}
+% [default]{gfsneohellenic}
+% {lmodern} \usepackage{gfsporson} \renewcommand*\rmdefault{porson}
+% [default]{gfssolomos}
+% {kerkis}
+% {teubner}
+% \renewcommand{\ttdefault}{txtt}
+
+% Load encoding definitions (after font package)
+\usepackage[LGR,T1]{fontenc}
+\usepackage{textalpha}
+
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily}
+
+% Babel package:
+
+\usepackage{babel}
+
+% With XeTeX/LuaTeX, load fontspec after babel to use Unicode
+% fonts for Latin script and LGR for Greek:
+\ifdefined\luatexversion \usepackage{fontspec}\fi
+\ifdefined\XeTeXrevision \usepackage{fontspec}\fi
+
+
+% "Lipsiakos" italic font `cbleipzig`:
+\newcommand*{\lishape}{\fontencoding{LGR}\fontfamily{cmr}%
+		       \fontshape{li}\selectfont}
+\DeclareTextFontCommand{\textli}{\lishape}
+
+
+\begin{document}
+
+% \selectlanguage{british}
+
+\title{Greek diacritics with standard accent macros}
+\author{G\"unter Milde}
+\maketitle
+
+The font encoding definition file \texttt{lgrenc.def} defines LICR macros
+for all non-ASCII characters in the LGR font encoding. Greek accent macros
+have names starting with \verb|\acc| followed by the Greek accent name as
+used in the Unicode standard (e.g. \verb|\acctonos|). The standard symbol
+accents \verb|\' \` \~| behave according to Greek typography if used in the
+LGR font encoding.
+
+The \emph{textalpha} or \emph{alphabeta} packages define the symbol macros
+\verb|\<| and \verb|\>| as alias for the breathings (Dasia and Psili).%
+\footnote{The definition of the macros 
+          \texttt{\textbackslash<} and \texttt{\textbackslash>} was moved
+	  from the font definition file \texttt{greek-fontenc.def} to
+	  \texttt{textalpha.sty} in order to avoid clashes with local
+	  definitions of this macros in documents using the LGR font
+	  encoding via \emph{fontenc} or \emph{babel}.}
+With these packages, all Greek diacritics can be input as backslash followed
+by the LGR transliteration.%
+\footnote{This makes it easy to follow the advise in
+	  \emph{teubner-doc}: ``typeset your paper with the regular
+	  accent vowel ligatures and [{\ldots}] substitute them in the
+	  final revision with the accented vowel macros only in those
+	  instances where the lack of kerning is disturbing''.}
+
+The example in babel/contrib/greek/usage.pdf:
+%
+\begin{quote} \selectlanguage{greek}
+    T\'i f\'hic? \<Id\`wn \>enj\'ede pa\~id''
+    \>eleuj\'eran t\`ac plhs\'ion N\'umfac stefano\~usan,
+    S\'wstrate, \>er\~wn \'ap\~hljec e\>uj\'uc?
+\end{quote}
+can be input as
+\begin{lstlisting}
+    T\'i f\'hic? \<Id\`wn \>enj\'ede pa\~id''
+    \>eleuj\'eran t\`ac plhs\'ion N\'umfac stefano\~usan,
+    S\'wstrate, \>er\~wn \'ap\~hljec e\>uj\'uc?
+\end{lstlisting}
+%
+Improvements over the ligature-based approach in LGR:
+%
+\begin{itemize}
+
+\item Accents can be placed on any character:%
+  \footnote{In babel-greek versions < 1.4, Babel's \emph{polutonikogreek}
+    option re-defined \textbackslash\textasciitilde (even for
+    Latin with \textbackslash textlatin).
+    This document reverted the babel definition in the preamble
+    to make the tilde/perispomeni-accent work as usual in both,
+    English (\textgreek{ni\~n\~o} ni\~n\~o) and Greek %
+    % (\foreignlanguage{greek}{ni\~n\~o \textlatin{ni\~n\~o}}).
+    .}
+  \textgreek{\"k \`l \'m \~<n \<o \>'p \>9 \`\>-}
+
+\item Kerning is preserved
+  \selectlanguage{greek}
+  \begin{tabular}[t]{llll}
+     & \textlatin{roman} & \textlatin{italic} & \textlatin{cbleipzig} \\
+    \foreignlanguage{british}{accent macro:}  &
+      a\>ut'os & \emph{a\>ut\'os} & \textli{a\>ut\'os} \\
+    \foreignlanguage{british}{transliteration:} &
+      a>ut'os & \emph{a>ut'os} & \textli{a>ut'os}\\
+  \end{tabular}
+  \selectlanguage{british}
+
+  Like in any font encoding, kerning only works with pre-composed glyphs:\\
+  \textgreek{A\"UA $\ne$ A\~UA}, AVA $\ne$ A\'VA.
+
+\item Compatible with hyperref (see greekhyperref.pdf).
+
+\item Following Greek typesetting convention, diacritics (except the
+  dialytika) are placed to the left of capital letters and and dropped
+  by \verb|\MakeUppercase|:
+
+  \begin{quote} \selectlanguage{greek}
+    \'antropos $\mapsto$ \MakeUppercase{\'antropos},
+    \>'antropos $\mapsto$ \MakeUppercase{\>'antropos},\\
+    Aqill\'eas $\mapsto$ \MakeUppercase{Aqill\'eas},
+    \>Aqille\'us $\mapsto$ \MakeUppercase{\>Aqille\'us}.
+  \end{quote}
+
+  The dialytika is printed even in cases where it's not needed
+  in lowercase: % the "hiatus" feature
+  \begin{quote} \selectlanguage{greek}
+    \'aulos $\mapsto$ \MakeUppercase{\'aulos},
+    \'>aulos $\mapsto$ \MakeUppercase{\'\>aulos}, 
+    % from http://diacritics.typo.cz/index.php?id=69  μάινα -> ΜΑΪΝΑ
+    m\'aina $\mapsto$ \MakeUppercase{m\'aina},\\
+    % from  http://de.wikipedia.org/wiki/Neugriechische_Orthographie#Das_Trema
+    % κέικ, ἀυπνία/αϋπνία
+    k\'eik, $\mapsto$ \MakeUppercase{k\'eik},
+    \>aupn\'ia $\mapsto$ \MakeUppercase{\>aupn\'ia}.
+  \end{quote}
+\end{itemize}
+
+\selectlanguage{british} Composite diacritics can be specified as
+named macro, backslash + LGR transliteration, or combined accent macros, 
+e.\,g. \textgreek{\~>a} can be written as
+\begin{quote}
+  \verb+\accpsiliperispomeni{a}+,
+  \verb+\~>a+, \verb+\>~a+,
+  \verb+\~\>{a}+, or \verb+\~\>a+.
+\end{quote}
+However, braces in composite accents
+(\verb+\~{\>a}+, \verb+\~{>a}+, or \verb+\~{\>{a}}+)
+lead to errors.
+
+\verb+\MakeUppercase+ works with most input variants but fails with a tilde
+in a document which does \textbf{not} define the \texttt{greek} or
+\texttt{polutonikogreek} language with Babel (which fixes the uccode for
+characters used in the LGR transliteration).
+Combining ``symbol macros'' (\verb+\>\~+) or reversing the order
+(\verb+\~>+) is safe.
+% \foreignlanguage{greek}{\~>a \>~a  \>\~a \~\>a $\mapsto$
+%          \MakeUppercase{\~>a \>~a \>\~a \~\>a}}.
+
+Accent macros can start with \verb|\a| instead of \verb|\| when the
+short form is redefined, e.\,g. inside a \emph{tabbing} environment.
+This also works for the new-defined Dasia and Psili shortcuts
+(\verb|\a<| and \verb|\a>|):
+%
+\begin{quote}
+\selectlanguage{greek}
+\begin{tabbing}
+T'i f'hic? \= T\a'i f\a'hic? \\
+<Id`wn \> \a>enj\a'ede pa\a~id
+\end{tabbing}
+\end{quote}
+
+\end{document}

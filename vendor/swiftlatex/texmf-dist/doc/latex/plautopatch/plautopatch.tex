@@ -1,0 +1,161 @@
+%# -*- coding: utf-8 -*-
+\ifx\epTeXinputencoding\undefined\else % defined in e-pTeX (> TL2016)
+  \epTeXinputencoding utf8    % ensure utf-8 encoding for platex
+\fi
+
+\documentclass[a4paper]{jsarticle}
+\usepackage{doc}
+\usepackage{plautopatch}% load this here to make \GetFileInfo work
+\GetFileInfo{plautopatch.sty}
+\title{Package \textsf{plautopatch} \fileversion}
+\author{Hironobu Yamashita}
+\date{\filedate}
+\begin{document}
+
+\maketitle
+
+Japanese \pLaTeX/up\LaTeX\ formats and packages often conflict
+with other \LaTeX\ packages which are unaware of p\LaTeX/up\LaTeX.
+In the worst case, such packages throw a fatal error or
+end up with a wrong output.
+
+The goal of this package \textsf{plautopatch} is that
+there should be no need to worry about such incompatibilities,
+because specific patches are loaded automatically
+whenever necessary.
+This helps not only to simplify source files, but also
+to make the appearance of working p\LaTeX/up\LaTeX\ sources
+similar to those of ordinary \LaTeX\ ones.
+
+The package is maintained on GitHub:
+\begin{verbatim}
+    https://github.com/aminophen/plautopatch
+\end{verbatim}
+
+\section*{Requirements}
+
+This package depends on \textsf{filehook} package,
+written by Martin Scharrer.
+
+\section*{Usage}
+
+Load this package at the very beginning of the \LaTeX\ source.
+It is strongly recommended to use
+\verb+\RequirePackage{plautopatch}+
+before \verb+\documentclass+ or any other commands,
+as such other classes and packages may load
+some problematic packages internally.
+
+Here is an example:
+\begin{verbatim}
+  %\RequirePackage{plautopatch}
+  \documentclass{tarticle}% vertical writing (requires plext)
+  \usepackage{array}% incompatible with plext
+  \begin{document}
+  ...
+  \end{document}
+\end{verbatim}
+In the above example, the class \textsf{tarticle} internally
+requires the package \textsf{plext}.
+However, \textsf{array} explicitly required by \verb+\usepackage+
+conflicts with \textsf{plext}.
+By using \verb+\RequirePackage{plautopatch}+,
+\textsf{plextarray} is automatically loaded and the problem goes.
+The list of automatically-loaded packages is shown at
+\verb+\end{document}+:
+\begin{verbatim}
+***** List of packages loaded by `plautopatch': *****
+ plextarray.
+*****************************************************
+\end{verbatim}
+When multiple packages are loaded, they are all printed
+as a list separated by commas and spaces.
+
+\section*{List of currently available patches}
+
+\def\ITEMoTo#1 (#2) -> #3 (#4){%
+  \item \textsf{#1} (\textsf{#2})\\
+    $\rightarrow$ \textsf{#3} (\textsf{#4})}
+\def\ITEMoTx#1 (#2) -> #3 {%
+  \item \textsf{#1} (\textsf{#2})\\
+    $\rightarrow$ \textsf{#3} }
+\def\ITEMxTx#1      -> #2 {%
+  \item \textsf{#1}\\
+    $\rightarrow$ \textsf{#2} }
+\def\ITEMooTo#1 (#2) + #3 (#4) -> #5 (#6){%
+  \item \textsf{#1} (\textsf{#2}) + \textsf{#3} (\textsf{#4})\\
+    $\rightarrow$ \textsf{#5} (\textsf{#6})}
+\def\ITEMxoTo#1      + #2 (#3) -> #4 (#5){%
+  \item \textsf{#1}               + \textsf{#2} (\textsf{#3})\\
+    $\rightarrow$ \textsf{#4} (\textsf{#5})}
+\def\ITEMxoTx#1      + #2 (#3) -> #4 {%
+  \item \textsf{#1}               + \textsf{#2} (\textsf{#3})\\
+    $\rightarrow$ \textsf{#4} }
+
+The legend:
+\begin{itemize}
+\item \texttt{<original package>} (\texttt{<bundle name of original package>})\\
+  \texttt{<patch package>} (\texttt{<bundle name of patch package>})
+\end{itemize}
+
+Current version (\filedate\space\fileversion) supports the followings:
+\begin{itemize}
+\ITEMoTo  doc (latex) -> pldocverb (maintained here!)
+\ITEMoTo  tracefnt (latex) -> ptrace/uptrace (platex/uplatex)
+\ITEMoTo  fltrace (latex) -> pfltrace (platex)
+\ITEMoTo  array (latex-tools) -> plarray (platex-tools)
+\ITEMooTo array (latex-tools) + plext (platex) -> plextarray (platex-tools)
+\ITEMooTo delarray (latex-tools) + plext (platex) -> plextdelarray (platex-tools)
+\ITEMxoTx colortbl + plext (platex) -> plextcolortbl (maintained here!)
+\ITEMxTx  arydshln -> plarydshln (maintained here!)
+\ITEMxoTx arydshln + plext (platex) -> plextarydshln (maintained here!)
+\ITEMxTx  siunitx -> plsiunitx (maintained here!)
+\ITEMoTo  everysel (ms) -> pxeverysel (platex-tools)
+\ITEMoTo  everyshi (ms) -> pxeveryshi (platex-tools)
+\ITEMoTo  atbegshi (oberdiek) -> pxatbegshi (platex-tools)
+\ITEMoTo  ftnright (latex-tools) -> pxftnright (platex-tools)
+\ITEMoTo  multicol (latex-tools) -> pxmulticol (platex-tools)
+\ITEMoTo  xspace (latex-tools) -> pxxspace (platex-tools)
+\ITEMxTx  textpos -> pxtextpos (maintained here!)
+\ITEMxTx  pdfpages -> pxpdfpages (maintained here!)
+\ITEMoTo  stfloats (sttools) -> pxstfloats (pxsttools)
+\ITEMoTx  pgfrcs (pgf) -> pxpgfrcs (maintained here!)
+\ITEMoTx  pgfcore (pgf) -> pxpgfmark (by Takayuki YATO)
+\end{itemize}
+Note that, of course, the list may be adjusted
+(addition, deletion or replacement)
+in the future to get the expected result.
+Feel free to report some compatibility issue or request changes!
+
+\section*{Disabling a specific patch}
+
+By default, \texttt{<patch package>} is automatically loaded when
+\texttt{<original package>} is detected, following the whole list.
+However, there is still a possibility of another regression issue.
+In that case, you can disable the detection of
+\texttt{<original package>} by using the command:
+\begin{verbatim}
+    \plautopatchdisable{<original package>}
+\end{verbatim}
+If you want to disable multiple packages, you can give
+a comma-separated list of them:
+\begin{verbatim}
+    \plautopatchdisable{<original package 1>,<original package 2>}
+\end{verbatim}
+
+\section*{Change History}
+
+\begin{itemize}
+  \item 2018/08/21 v0.2  First CTAN release
+  \item 2018/08/22 v0.3  Improve detection of problematic packages
+  \item 2018/09/21 v0.5  Add support for \textsf{colortbl} and \textsf{pgf}
+  \item 2018/10/02 v0.6  Add support for \textsf{arydshln}
+  \item 2018/10/27 v0.8  Better support for \textsf{everysel}
+  \item 2018/11/03 v0.9  Add support for \textsf{siunitx}
+  \item 2018/11/25 v0.9b Add support for \textsf{multicol} and \textsf{doc}
+  \item 2019/06/06 v0.9c Update patch for \textsf{siunitx}
+  \item 2019/09/05 v0.9d Add support for \textsf{xspace} and \textsf{stfloats}
+  \item 2020/02/25 v0.9e Add support for \textsf{textpos}
+\end{itemize}
+
+\end{document}

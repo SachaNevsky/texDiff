@@ -1,0 +1,750 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% File biblatex-publist.tex
+%%
+%% Manual of the biblatex-publist package.
+%%
+%% This file is part of the biblatex-publist package.
+%%
+%% Author: Juergen Spitzmueller <juergen.spitzmueller@univie.ac.at>
+%%
+%% This work may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either version 1.3
+%% of this license or (at your option) any later version.
+%% The latest version of this license is in
+%%   http://www.latex-project.org/lppl.txt
+%% and version 1.3 or later is part of all distributions of LaTeX
+%% version 2003/12/01 or later.
+%%
+%% This work has the LPPL maintenance status "maintained".
+%% 
+%% The Current Maintainer of this work is Juergen Spitzmueller.
+%%
+%% Code repository and issue tracker: https://github.com/jspitz/jslectureplanner
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[english]{article}
+\usepackage[osf]{libertine}
+\usepackage[scaled=0.76]{beramono}
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+
+\usepackage{listings}
+\lstset{%
+	language={[LaTeX]TeX},
+	basicstyle={\small\ttfamily},
+	frame=single}
+\usepackage{babel}
+\usepackage{url}
+\usepackage[svgnames]{xcolor}
+\usepackage[unicode=true]{hyperref}
+\hypersetup{%
+	pdftitle={The biblatex-publist manual},
+	pdfauthor={Jürgen Spitzmüller},
+	pdfkeywords={biblatex,publication list}
+	bookmarks=true,
+	bookmarksnumbered=false,
+	bookmarksopen=false,
+	breaklinks=false,
+	backref=false,
+	colorlinks,
+	linkcolor=black,
+	filecolor=Maroon,
+	urlcolor=Maroon,
+	citecolor=black
+}
+
+% Tweak the TOC (make it more compact)
+\usepackage{tocloft}
+\setlength{\cftaftertoctitleskip}{6pt}
+\setlength{\cftbeforesecskip}{3pt}
+\setlength{\cftbeforesubsecskip}{0pt}
+\renewcommand{\cfttoctitlefont}{\normalsize\bfseries}
+\renewcommand{\cftsecfont}{\small\bfseries}
+\renewcommand{\cftsecpagefont}{\small\bfseries}
+\renewcommand{\cftsubsecfont}{\small}
+\renewcommand{\cftsubsecpagefont}{\small}
+
+% Some semantic markup
+\makeatletter
+\def\jmacro{\@ifstar\@@jmacro\@jmacro}
+\newcommand*\@marginmacro[1]{\marginpar{\small\texttt{#1}}}
+\newcommand*\@jmacro[1]{\textbf{\texttt{#1}}}
+\newcommand*\@@jmacro[1]{\@jmacro{#1}\@marginmacro{#1}}
+\def\jcsmacro{\@ifstar\@@jcsmacro\@jcsmacro}
+\newcommand*\@jcsmacro[1]{\@jmacro{\textbackslash{#1}}}
+\newcommand*\@@jcsmacro[1]{\@@jmacro{\textbackslash{#1}}}
+\newcommand*\joption[1]{\textbf{\texttt{#1}}}
+\newcommand*\jfoption[1]{\texttt{#1}}
+\newcommand*\jfmacro[1]{\texttt{#1}}
+\newcommand*\jfcsmacro[1]{\jfmacro{\textbackslash{#1}}}
+\newcommand*\bpl{\texttt{biblatex-publist}}
+\newcommand*\bibltx{\texttt{biblatex}}
+\makeatother
+
+\reversemarginpar
+
+% Conditional page breaks
+\def\condbreak#1{%
+	\vskip 0pt plus #1\pagebreak[3]\vskip 0pt plus -#1\relax}
+% \condbr{<number of lines>}
+\newcommand*\condbr[1]{\condbreak{#1\baselineskip}}
+
+\renewcommand{\lstlistingname}{Example}
+
+%
+%%
+\begin{document}
+
+\title{biblatex-publist}
+
+\author{Jürgen Spitzmüller%%
+\thanks{Please report issues via \protect\url{https://github.com/jspitz/biblatex-publist}.}%
+}
+
+\date{Version 1.16, 2019/04/16}
+\maketitle
+
+\begin{abstract}
+\noindent The \bpl\ package provides a \emph{biblatex bibliography style file}
+({*}.bbx) for publication lists, i.\,e.\ a bibliography containing one's own
+publications. The style file draws on \bibltx's \emph{authoryear} style per default
+(which can be changed), but provides some extra features needed for publication lists,
+such as the omission or highlighting of the own name from\slash in author or editor data.
+The package requires at least version 3.8 of the \bibltx\ package\footnote{For \bibltx, see
+\url{http://www.ctan.org/pkg/biblatex}.} and \texttt{biber} (the respective version as required by \bibltx).
+\end{abstract}
+
+\tableofcontents
+
+\section{Aim of the package}
+
+The \bpl\ package ships a \emph{biblatex bibliography style file} ({*}.bbx)
+for a specific task: academic publication lists. Such lists, which are a central
+part of the academic CV, contain all or selected publications of a specific
+author, usually sorted by genre and year. Even though publication lists are actually
+nothing else than (specific) bibliographies, they diverge from those in some
+respects. Most notably, it is widespread practice to omit your own name in
+your publication list and only list your co-authors, if there are any, or to
+highlight your own name (e.\,g., with bold face letters).
+If you want to follow this practice, a normal bibliography style does not
+produce the desired result.
+
+Given the fact that maintaining a publication list is a routine task
+in an academian's life, it is surprising how few specified solutions
+exist to generate such lists (particularly from Bib\TeX\ data). For
+traditional Bib\TeX, Nicolas Markey provided a specific Bib\TeX\
+style file, \emph{publist.bst}%
+\footnote{\url{http://www.lsv.ens-cachan.fr/~markey/BibTeX/publist/?lang=en};
+see also \cite{ttb}.}, which helps a lot if you want to produce a publication
+list with Bib\TeX. The \bpl\ package is the result of the aim of emulating
+the features of \emph{publist.bst} with \bibltx's means. It partly draws on
+Markey's conceptual ideas. Bug reports, comments and ideas are welcome.
+
+
+\section{Usage}
+
+\subsection{Standard usage\label{sec:standard-usage}}
+
+The standard way of using the package is to load the style file via
+\begin{lstlisting}[moretexcs={[1]{plauthorname}}]
+\usepackage[bibstyle=publist]{biblatex}
+\plauthorname[first name][von-part]{surname}
+\end{lstlisting}
+The \jcsmacro*{plauthorname} macro\footnote{The macro was named \jfcsmacro{omitname} until v.\,1.4
+of the \bpl\ package. The old macro still works, but is marked as deprecated.}
+(at least with the mandatory \emph{surname} argument) needs to be given (at least\footnote{See
+sec.~\ref{sec:multiauthors} for the case of handling multiple authors and name variants.}) once. 
+It informs the style file which name(s) it should suppress or highlight in the
+author\slash editor list (usually yours). 
+
+With the default settings, the author\slash editor name(s) will be omitted completely
+for all of publications which are authored or edited only by the specified person(s), as in:
+\begin{quote}
+\textbf{2012.} Some recent trends in gardening. In: \emph{Gardening
+Practice} 56, pp.~34--86.
+\end{quote}
+If there are co-authors\slash co-editors, your name(s) will be filtered
+out and the collaborators added in parentheses, as in:
+\begin{quote}
+\textbf{1987} (with John Doe and Mary Hall). Are there new trends
+in gardening? In: \emph{Gardening Practice} 24, pp.~10--15.
+\end{quote}
+If \joption{plauthorhandling=highlight} is used (see next section), the plauthor(s)
+will be printed in bold face instead, as in:
+\begin{quote}
+	Doe, John, \textbf{Myself, Me} and Hall, Mary, \textbf{1987}. Are there new trends
+	in gardening? In: \emph{Gardening Practice} 24, pp.~10--15.
+\end{quote}
+%
+Note that \jcsmacro{plauthorname} expects the name constituents as they are recorded in the
+database (special characters will be expanded). The option \joption{plauthorfirstinit} (see next section),
+however, allows you to pass only an initial character instead of a first name.
+
+
+\subsection{Additional options}\label{sec:addopts}
+
+Currently, the following additional options are provided (next to the
+options provided by the \bibltx\ package itself%
+\footnote{Please refer to the \bibltx\ manual \cite{bibltx} for those.}):
+\begin{description}
+\item [{\joption{plauthorname=<surname>}}]
+\item [{\joption{plauthorfirstname=<first name>}}]
+\item [{\joption{plauthornameprefix=<von-part>}}] ~
+
+This is an alternative to the \jcsmacro{plauthorname} macro
+described in sec.~\ref{sec:standard-usage}.\footnote{The options were called \jfoption{omitname}, \jfoption{omitfirstname} and \jfoption{omitnameprefix} until v.\,1.4
+of \bpl. The old options still work, but are marked as deprecated.} However, due to the
+way bibliography options are implemented in \bibltx, this only works
+if your name does not consist of non-ASCII characters. Hence, the
+\jcsmacro{plauthorname} macro is the recommended way.
+
+\item [{\joption{plauthorhandling{[}=omit|highlight{]}}}] default: \emph{omit}.
+
+By default, the publist author (as defined with \jmacro{plauthor}) is omitted from
+the author or editor list. If you use the option \joption{plauthorhandling=highlight},
+it is highlighted instead (i.\,e., set in bold face by default; see sec.~\ref{sec:auxmacros} how to change that).
+
+\item [{\joption{nameorder{[}=family-given|given-family{]}}}] default: \emph{family-given}.
+
+By default, the author and editor names with \joption{plauthorhandling=highlight} are output in the order ``Lastname, Given Names''.
+To change the order to ``Given Names Lastname'', pass the option \joption{nameorder=given-family} to \bibltx.
+
+\item [{\joption{boldyear{[}=true|false{]}}}] default: \emph{true}.
+
+By default, the year (or pubstate, if no year is given) is printed in bold face.
+To prevent this, pass the
+option \joption{boldyear=false} to \bibltx.
+
+\item [{\joption{marginyear{[}=true|false{]}}}] default: \emph{false}.
+
+With this option set to \joption{true}, the publication year (or pubstate) will
+be printed in the margin once a new year starts. The option also has
+the effect that all marginpars are printed ``reversed'', i.\,e.
+on the left side in one-sided documents (via \jfcsmacro{reversemarginpar}).
+
+\item [{\joption{plnumbered{[}=true|false|reset{]}}}] default: \emph{true}.
+
+By default, the publication list is numbered continuously. If you divide your publication list into sections by means of
+\jfcsmacro{refsection}s (as documented in section~\ref{sec:example}), you will thus get a global numbering over all sections.
+
+If you prefer the numbering to start from 1 at each section instead, set this option to \joption{reset}.
+
+If you do not want to have any numbers at all, set this option to \joption{false}.
+
+\item [{\joption{plauthorfirstinit{[}=true|false{]}}}] default: \emph{false}.
+
+If you set this option to true, you can (and are supposed to) pass only an initial character as first name value of
+\jcsmacro{plauthorname} (e.\,g., \jcsmacro{plauthorname[J]\{Doe\}} or \jcsmacro{plauthorname[J][van]\{Doe\}}).
+In consequence, \bpl\ will consider all entries of the specified given name (and prefix, if specified)
+whose prename starts with the specified character. This allows you to deal with databases that record entries of your work
+with abbreviated and full first name (\textsc{J. Doe} and well as \textsc{John Doe} and \textsc{John Robert Doe}) \emph{as well as}
+works of colleagues with the same surname (maybe your family members), which you will not want to mark as your own's.
+Of course, the solution does not help if there is an entry with same surname and same first name initial (such as \textsc{Jane Doe}).
+
+
+\end{description}
+
+
+\subsection{Handling multiple authors and\slash or name variants}\label{sec:multiauthors}
+
+If multiple \jcsmacro{plauthorname} specifications have been entered (or a \jcsmacro{plauthorname} specification
+in addition to a specification via the options \joption{plauthorname}, \joption{plauthorname} and
+\joption{plauthornameprefix}), all of them will be considered.
+
+Thus it is possible to highlight multiple authors in the publication
+list (for instance to mark contributions of a research team):
+\begin{lstlisting}[moretexcs={[2]{plauthorname}}]
+\usepackage[style=publist,plauthorhandling=highlight]{biblatex}
+\plauthorname[Cristiano]{Ronaldo}
+\plauthorname[\'Angel][Di]{Mar\'ia}
+\plauthorname{Neymar}
+\end{lstlisting}
+%
+Multiple specifications can also be used to deal with name variants:
+\begin{lstlisting}[moretexcs={[2]{plauthorname}}]
+\plauthorname[Bill]{Gates}
+\plauthorname[William]{Gates}
+\plauthorname[William Henry]{Gates}
+\plauthorname[William H.]{Gates}
+\end{lstlisting}
+%
+Since the latter is also useful with \joption{plauthorhandling=omit}, this mode also considers multiple specifications.
+By entering something such as the former, it is even possible to omit more than one and different authors from the entries
+(and \bpl\ will take care of the change in the author separation this involves; think of final \emph{and} vs. \emph{comma},
+which have to be adjusted accordingly if names are omitted). However, it does not strike me sensible to do so (in other words,
+if you need to deal with a \emph{team} of authors, you should really consider to use \joption{plauthorhandling=highlight}).
+
+Note that multiple specifications also affect filtering (see sec.~\ref{sec:filtering}), i.\,e., the \joption{mine} filter selects
+entries authored or edited by any and all specified persons.
+
+
+\section{Customization}
+
+\subsection{Auxiliary macros and lengths}\label{sec:auxmacros}
+
+The appearance of the \emph{marginyear} is controlled by the
+\jcsmacro*{plmarginyear} macro, which has the following default definition:
+\begin{lstlisting}[moretexcs={[2]{providecommand,plmarginyear}}]
+\providecommand*\plmarginyear[1]{%
+  \raggedleft\small\textbf{#1}%
+}
+\end{lstlisting}
+If you want to change the appearance, just redefine this macro via
+\jfcsmacro{renewcommand{*}}.
+
+The highlighting of the publication list author, if \joption{plauthorhandling=highlight} has been set,
+is controlled by the \jcsmacro*{plauthorhl} macro, which has the following default definition:
+\begin{lstlisting}[moretexcs={[2]{providecommand,plauthorhl,mkbibbold}}]
+\providecommand*\plauthorhl[1]{%
+	\mkbibbold{#1}%
+}
+\end{lstlisting}
+If you need another form of highlighting, redefine this macro via \jfcsmacro{renewcommand{*}}.
+
+The indendation of the bibliographic entries (lines > 1) can be adjusted by setting the length
+\jmacro*{extralabel\-numberwidth} via \jfcsmacro{setlength} (default is \texttt{0pt}).
+This might be needed for long bibliographies (> 99 entries) in order to adjust to the extra
+space the item number needs.
+
+
+\subsection{Using a different base style}\label{sec:basestyle}
+
+By default, \bpl\ loads \bibltx's \emph{authoryear} style, and it has been written
+to work with that style. However, it is possible to try a diffent base style, if
+\emph{author\-year} does not fit your needs.\condbreak{2\baselineskip}
+
+In order to do so, enter the following \emph{before} loading \bibltx:
+\begin{lstlisting}[moretexcs={[2]{publistbasestyle}}]
+\newcommand*\publistbasestyle{<stylename>}
+\end{lstlisting}
+where <stylename> is the name of the biblatex bibliography style (\emph{bbx}) you want to use, without the \emph{bbx} entension (e.\,g., \lstinline|\newcommand*\publistbasestyle{mla}|).
+
+Note, though, that there is (and can be) no guarantee that \bpl\ will work with all styles, although it has been successfully tested with several. Be prepared to bump into \LaTeX\ errors and carefully check the output for correctness if you try a different base style.
+
+Note, further, that the order of author's and editor's given and family names is hardcoded in
+\bpl\ due to the complex omission\slash highlighting mechanism. This might
+differ from what you expect with specific base styles. To change the order,
+use the package option \joption{nameorder} (see sec.~\ref{sec:addopts}).
+
+
+\section{Localization}
+
+Since the package draws on \bibltx, it supports localization. 
+The following additional localization keys (\jfcsmacro{bibstrings})
+are added by the package:
+\begin{itemize}
+\item \emph{with}: the preposition ``with'' that precedes the list of
+co-authors by default (i.\,e., with \joption{plauthorhandling=omit}).
+\item \emph{parttranslationof}: the expression ``partial translation of''
+for entries referring to partially translated work via \bibltx's
+``related entries'' feature (see sec.~\ref{sec:partial-translations}).
+\end{itemize}
+Currently, these additional localization keys are available in the following
+languages: English, French and German.%
+\footnote{Please send suggestions for other languages to the package author.}
+
+
+\section{Further Extensions}
+
+The following extensions of standard \bibltx\ features are provided.
+
+
+\subsection{Review bibliography type}\label{sec:review-bibliography-type}
+
+Although a \emph{review} entry type is provided by \bibltx, this
+type is treated as an alias for \emph{article}. The \bpl\ package
+uses this entry type for a specific purpose: Foreign reviews of your
+own work. It therefore defines a new bibliography environment \emph{reviews}
+with a specific look (particularly as far as the author names are
+concerned) and its own numbering; furthermore, it redefines the \emph{review}
+bibliography driver. The purpose of this is that you can add other
+people's reviews of your work to your publication list, while these
+titles are clearly marked and do not interfere with the overall numbering
+(see sec.~\ref{sec:example} for an example).
+
+
+\subsection{Partial translations}\label{sec:partial-translations}
+
+A new ``related entry'' type \emph{parttranslationof} is provided.
+This is an addition to the \emph{translationof} related entry type
+\bibltx\ itself provides. Please refer to the \bibltx\ manual \cite{bibltx}
+on what ``related entries'' are and how to use them.
+
+
+\section{An example}\label{sec:example}
+
+Publication lists are usually categorized by genre (monographs, articles,
+book chapters, etc.). For this task, the use of \jfmacro{refsections} (see \cite[sec 3.7.4]{bibltx} for details) is
+suggested. Other possibilities were not tested extensively and might fail (in particular as far as the numbering of the items
+is concerned).
+
+The suggested procedure is to maintain separate bib files for each
+category, say \emph{mymonographs.bib}, \emph{myarticles.bib}, \emph{myproceedings.bib}.%
+\footnote{But see sec.~\ref{sec:filtering} for an alternative.}
+Then a typical file would look like example~\ref{example} (p.~\pageref{example}).
+%
+\begin{lstlisting}[caption={Typical document},
+		   float,
+		   frame=single,
+		   label={example},
+		   moretexcs={[5]{plauthorname,addbibresource,printbibliography,maketitle,newrefsection}}]
+\documentclass{article}
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+
+\usepackage{csquotes}% not required, but recommended
+\usepackage[style=publist]{biblatex}
+\plauthorname[John]{Doe}
+
+\addbibresource{mymonographs.bib}
+\addbibresource{myarticles.bib}
+\addbibresource{myproceedings.bib}
+
+\begin{document}
+
+\title{John Doe's publications}
+\date{\today}
+\maketitle
+
+\section{Monographs}
+\newrefsection[mymonographs]
+\nocite{*}
+\printbibliography[heading=none]
+
+\section{Proceedings}
+\newrefsection[myproceedings]
+\nocite{*}
+\printbibliography[heading=none]
+
+\section{Articles}
+\newrefsection[myarticles]
+\nocite{*}
+\printbibliography[heading=none]
+
+\end{document}
+\end{lstlisting}
+
+
+If you want to add other people's reviews of your work, add a section
+such as the following:
+\begin{lstlisting}[caption={Adding foreign reviews},
+		  moretexcs={[4]{bibfont,subsubsection,printbibliography,newrefsection}}]
+\subsubsection*{Reviews of my thesis}
+\newrefsection[mythesis-reviews]
+\renewcommand\bibfont{\small}
+\nocite{*}
+\printbibliography[heading=none,env=reviews]
+\end{lstlisting}
+
+Note that the \jfcsmacro{printbibliography} option
+\joption{env=reviews}  is crucial if you want to use the specifics
+\bpl\ defines for reviews (see sec.~\ref{sec:review-bibliography-type}).
+
+
+\section{Filtering\label{sec:filtering}}
+
+If you have a bibliographic database consisting not only of your own
+publications, you can extract yours with the bibliography filter \joption{mine},
+which has to be passed to \jfcsmacro{printbibliography}, as in:
+\begin{lstlisting}[caption={Using a bibliography filter},
+		  moretexcs={[1]{printbibliography}}]
+\nocite{*}
+\printbibliography[heading=none,filter=mine]
+\end{lstlisting}
+%
+This will effectively print only publications which have been authored or edited by the
+person(s) specified as via \jcsmacro{plauthorname} (or the corresponding option).
+
+Of course, you can also use other filter possibilities provided by
+\bibltx, such as filtering by type or by keyword. So if you want
+to extract all of your articles from a larger database with entries
+of diverse type and authors, specify:
+\begin{lstlisting}[moretexcs={[1]{printbibliography}}]
+\printbibliography[heading=none,filter=mine,type=article]
+\end{lstlisting}
+%
+Note that several reruns of \texttt{latex} might be required to fix the numbering.
+
+
+\section{Sorting\label{sec:sorting}}
+
+
+\subsection{Sorting Publication Lists}
+
+The sorting conventions of publication lists differ from those of normal bibliographies.
+Publication lists are usually not sorted by author name, the prime criterion of normal
+bibliographies, but rather chronologically (usually \emph{descending} from the newest through
+the oldest publication). How to sub-sort within a year depends on the handling of author names.
+If you display all authors and only highlight your own (via \joption{plauthorhandling=highlight}),
+it probably makes sense to sub-sort first by author name, and then by title. If you omit your own name
+and just mention your co-authors (the default), it makes more sense to sub-sort by title right away,
+without taking the author names into account.
+
+To account for these needs, \bpl\ adds some sorting options on top of those that come with
+\bibltx\ itself.
+
+
+\subsection{Sorting Templates}\label{sec:sorttemplates}
+
+The sorting of items is done via \bibltx's sorting mechanism, via so called \emph{sorting templates}
+(please refer to the \bibltx\ manual for details). 
+
+By default, \bpl\ uses an own template, \joption{ydt}, which sorts hierarchically by \textbf{y}ear
+(\textbf{d}escending) and \textbf{t}itle (alphabetically ascending), ignoring author
+names. This default is used since author name sorting does not make much sense at least in
+the default configuration, where the own name is omitted and the list of co-authors is presented
+in a particular way.
+If you use \joption{plauthorhandling=highlight}, however, the default changes to \joption{ydnt}
+(a template provided by \bibltx\ itself) which sub-sorts by author names (alphabetically ascending)
+before sub-sorting by title.
+
+In addition to this default template, \bpl\ provides some sorting templates that account
+for the full date (rather than just the year).
+This is especially useful for sorting talks, since those usually do not only have a year, but a full
+date (day, month and year).
+The following templates, with and without author sorting, are provided:
+\begin{itemize}
+ \item \jmacro{ddt}: Sort by full \textbf{d}ate (\textbf{d}escending)
+        and \textbf{t}itle (both ascending).
+ \item \jmacro{ddnt}: Sort by full \textbf{d}ate (\textbf{d}escending),
+        author \textbf{n}ame and \textbf{t}itle (both ascending).
+ \item \jmacro{dt}: Sort by full \textbf{d}ate and \textbf{t}itle (all ascending).
+ \item \jmacro{dnt}: Sort by full \textbf{d}ate, author \textbf{n}ame and \textbf{t}itle
+        (all ascending).
+ \item \jmacro{ydmdt}: Sort by \textbf{y}ear (\textbf{d}escending),
+	    \textbf{m}onth, \textbf{d}ay and \textbf{t}itle	(all ascending).
+\item \jmacro{ydmdnt}: Sort by \textbf{y}ear (\textbf{d}escending),
+       \textbf{m}onth, \textbf{d}ay, author \textbf{n}ame and \textbf{t}itle
+       (all ascending).
+\end{itemize}
+In order to use any of these, or another sorting template provided by \bibltx\, 
+use \bibltx's \jfmacro{sorting} option, which can be passed either globally
+(via \joption{sorting=<template>} as a \bibltx\ option) or locally
+(by means of a \jfcsmacro{newrefcontext} macro with the option \joption{sorting=<template>}).
+So, to sort your talks in descending order by full date in your CV, you would
+use either
+\begin{lstlisting}[moretexcs={[1]{printbibliography}}]
+\usepackage[style=publist,sorting=ddt]{biblatex}
+\end{lstlisting}
+or
+\begin{lstlisting}[moretexcs={[3]{printbibliography,newrefcontext,endrefcontext}}]
+\newrefcontext[sorting=ddt]
+\printbibliography[heading=none]
+\endrefcontext
+\end{lstlisting}
+
+\condbr{4}
+
+\section{Revision Log}
+
+\begin{description}
+	\item [{V. 1.16 (2019-04-16):}]~
+	\begin{itemize}
+		\item Major code cleanup.
+	\end{itemize}
+
+	\item [{V. 1.15 (2019-02-22):}]~
+	\begin{itemize}
+		\item Add support for omitting multiple authors. See sec.~\ref{sec:multiauthors}.
+		\item Fix documentation issues.
+	\end{itemize}
+	
+	\item [{V. 1.14 (2019-02-21):}]~
+	\begin{itemize}
+		\item Add support for highlighting multiple authors. See sec.~\ref{sec:multiauthors}.
+		\item Fix handling of non-ASCII names.
+		\item Use \jfcsmacro{DeclareStyleSourcemap} rather that \jfcsmacro{DeclareSourcemap}.
+		\item Update sorting documentation in the wake of \bibltx\ changes.
+	\end{itemize}
+
+	\item [{V. 1.13 (2018-11-30):}]~
+	\begin{itemize}
+		\item Introduce new sorting templates that ignore names. See sec.~\ref{sec:sorttemplates}.
+		\item \textbf{Change of output!} Use \joption{ydt} template by default. See sec.~\ref{sec:sorttemplates}.
+		\item Assign extralabel independent of author group with \joption{plauthorhandling=omit}.
+	\end{itemize}
+	
+	\item [{V. 1.12 (2018-11-25):}]~
+	\begin{itemize}
+		\item Switch name parsing toggles globally (fixes regression with \bibltx\ 3.12).
+		\item Account for omitted author when adding \jfcsmacro{finalnamedelim}.
+		\item Fix issue with initial dot in \joption{nameorder=family-given}.
+		\item Add option \joption{plauthorfirstinit} that allows for specifying initials in first names
+	          of \jcsmacro{plauthorname}. See sec.~\ref{sec:addopts}.
+    \end{itemize}
+	
+	\item [{V.~1.11 (2018-09-01):}]~
+	\begin{itemize}
+		\item Fix \joption{marginyear=true} with \joption{labeldateparts=false}.
+		\item Fix problem with empty parentheses in article with standard base style
+		      and with \joption{labeldateparts=false}.
+	\end{itemize}
+
+	\item [{V.~1.10 (2018-04-08):}]~
+	\begin{itemize}
+		\item Extend option \joption{plnumbered} with \joption{plnumbered=reset}.
+		This allows to restart the numbering of the publication list items at
+		\jcsmacro{refsection}s.
+		\item Documentation improvements.
+	\end{itemize}
+
+	\item [{V.~1.9 (2018-03-01):}]~
+	\begin{itemize}
+		\item New option \joption{plnumbered} that allows to omit the numbering
+		      of the publication list items
+		\item Documentation improvements.
+	\end{itemize}
+\condbr{3}
+	\item [{V.~1.8 (2017-11-14):}]~
+	\begin{itemize}
+		\item Adapt to \bibltx\ 3.8. This version is now required.
+		\item Rename some macros, using pseudo-namespaces:
+		\begin{itemize}
+			\item \texttt{date:makedate} $\Rightarrow$ \texttt{bpl:date:makedate}
+	    	\item \texttt{date:labelyear+extrayear} $\Rightarrow$ \texttt{bpl:date:labeldate+extradate}
+	    	\item \texttt{marginyear} $\Rightarrow$ \texttt{bpl:marginyear}
+	    	\item \texttt{rauthor} $\Rightarrow$ \texttt{bpl:review:author}
+	    	\item \texttt{rauthor/label} $\Rightarrow$ \texttt{bpl:review:author/label}
+	    	\item \texttt{year+labelyear} $\Rightarrow$ \texttt{bpl:year+labelyear}
+				\end{itemize}
+	\end{itemize}
+
+	\item [{V.~1.7 (2017-04-12):}]~
+    \begin{itemize}
+	\item Output marginyear before the author list. This prevents it from being vertically
+	      shifted in case of long author lists.
+    \end{itemize}
+	\item [{V.~1.6 (2017-04-02):}]~
+	    \begin{itemize}
+		    \item New option \joption{nameorder} that allows to change the ordering of author and editor
+		          name (\joption{given-family} vs. \joption{family-given} [=~default]).
+		    \item Use proper name delimiters also for bookauthor.
+        \end{itemize}
+
+   \item [{V.~1.5 (2017-02-28):}]~
+	    \begin{itemize}
+	        \item Fix extra \emph{and} in name list with \joption{plauthorhandling=highlight}.
+	        \item Whitespace fix with \joption{plauthorhandling=highlight}.
+	        \item Use proper name delimiters.
+        \end{itemize}
+   \item [{V.~1.4 (2017-02-12):}]~
+	\begin{itemize}
+		\item New option \joption{plauthorhandling} that defines how the publist author is
+		handled in the publication list (possible values: \joption{omit} [=~default],
+		\joption{highlight}).
+		\item New command \jcsmacro{plauthorhl} that determines the aforementioned highlighting.
+		\item  Rename \jcsmacro{omitname} to \jcsmacro{plauthorname} (the old macro is still functional, but marked as deprecated).
+		\item Rename \joption{omit*} options to \joption{plauthor*} (the old options are still functional, but marked as deprecated).
+		\item Assure the margin text always starts uppercased (relevant for pubstates).
+		\item Minor corrections to the manual.
+	\end{itemize}
+\condbr{3}
+   \item [{V.~1.3 (2016-08-06):}]~
+
+   \begin{itemize}
+	\item It is now possible to change the base style that is used by \bpl. See sec.~\ref{sec:basestyle}.
+	\item Proper sorting of pubstates.
+	\item Add possibility to increase the indentation of items (by means of the length  \jmacro{extralabelnumberwidth}). See sec.~\ref{sec:auxmacros}.
+	\item Use \jfoption{pagetracker=true} instead of \jfoption{pagetracker=spread}
+	      by default (avoids warning, no change in functionality).
+\end{itemize}
+
+\item [{V.~1.2 (2016-05-12):}]~
+	\begin{itemize}
+		\item Accomodate to the backwards-incompatible changes of \bibltx~3.4\\
+		(\jfoption{prefixnumber} $\Rightarrow$ \jfoption{labelprefix},
+		\jfcsmacro{ifempty} $\Rightarrow$ \jfcsmacro{ifdefvoid}).
+		This version of \bibltx\ is now required.
+	\end{itemize}
+
+\item [{V.~1.1 (2016-03-09):}]~
+\begin{itemize}
+\item Adapt to the \jfcsmacro{Declare*Name} changes of \bibltx~3.3.
+      Since \bibltx~3.3 introduced backwards-incompatible changes that
+      affect \bpl, this version of \bibltx\ is now required.
+\end{itemize}
+
+\item [{V.~1.0~(2015-01-04):}]~
+\begin{itemize}
+\item Add portmanteau *.cbx file to allow loading \bpl\ also via 
+      the \jfoption{style} option (next to \jfoption{bibstyle}).
+\end{itemize}
+
+\item [{V.~0.9~(2014-03-13):}]~
+\begin{itemize}
+\item Fix problem with multi-token names.
+\item Support name prefix in \jcsmacro{omitname}.
+\item Support pubstate.
+\end{itemize}
+
+\item [{V.~0.8~(2013-08-16):}]~
+\begin{itemize}
+\item Add custom sorting schemes \jmacro{ddnt}, \jmacro{ydmdnt} and \jmacro{dnt}
+      (see sec.~\ref{sec:sorting}).
+\item Revise the documentation.
+\end{itemize}\condbreak{2\baselineskip}
+
+\item [{V.~0.7~(2013-07-25):}]~
+\begin{itemize}
+\item Support full dates.
+\end{itemize}
+
+\item [{V.~0.6~(2013-07-21):}]~
+\begin{itemize}
+\item Fix numbering with recent \bibltx\ versions.
+\end{itemize}
+
+\item [{V.~0.5~(2013-05-03):}]~
+\begin{itemize}
+\item Fix numbering if \jfcsmacro{printbibliography} is used
+multiple times within the same or without any \jfmacro{refsection}.
+\end{itemize}
+
+\item [{V.~0.4~(2012-10-30):}]~
+\begin{itemize}
+\item More robust name parsing (especially for names with non-ASCII characters
+encoded with \LaTeX{} macros). The code was kindly suggested by Enrico
+Gregorio.%
+\footnote{Cf. \url{http://tex.stackexchange.com/questions/79555/biblatex-bibliographyoption-with-braces}.%
+}
+\item Add \jcsmacro{omitname} command (see sec.~\ref{sec:standard-usage}).
+\item Support \joption{firstinits} option.
+\end{itemize}
+
+\item [{V.~0.3~(2012-10-23):}]~
+\begin{itemize}
+\item Bug fix: Add missing ``and'' if omitted name was last minus one.
+\item Bug fix: Fix output with ``et al.'' if omitted name is first and
+\emph{liststop} is 1.
+\item Set \joption{maxnames} default to 4.
+\item Add filter possibility (see sec.~\ref{sec:filtering}).
+\item Add French localization.
+\item Some corrections to the manual.
+\end{itemize}
+
+\item [{V.~0.2~(2012-10-21):}] Initial release to CTAN.
+\end{description}
+
+\section{Credits}
+
+Thanks go to Enrico Gregorio (egreg on \emph{tex.stackexchange.com})
+for helping me with correct name parsing (actually, the code the package
+uses is completely his), user gusbrs on \emph{tex.stackexchange.com},
+Marko Budi¨i\'{c}, Clea F. Rees, Yannick Kalff and many other users for
+testing and bug reports, Nicolas Markey for \emph{publist.bst} and of
+course Philipp Lehman and the current \bibltx\ team (Philipp Kime,
+Moritz Wemheuer, Audrey Boruvka and Joseph Wright) for \bibltx.
+
+\begin{thebibliography}{1}
+\bibitem{bibltx}Lehman, Philipp (with Audrey Boruvka, Philip Kime
+and Joseph Wright): \emph{The biblatex Package. Programmable Bibliographies
+and Citations}. March 3, 2016.
+\url{http://www.ctan.org/pkg/biblatex}.
+
+\bibitem{ttb}Markey, Nicolas: \emph{Tame the BeaST. The B to X of
+BibTEX}. October 11, 2009.
+\url{http://www.ctan.org/pkg/tamethebeast}.
+\end{thebibliography}
+
+\end{document}

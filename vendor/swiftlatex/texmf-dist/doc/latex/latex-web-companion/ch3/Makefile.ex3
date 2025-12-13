@@ -1,0 +1,62 @@
+# Makefile for Example 3
+L2H = $(L2HNEW)/latex2html -link 4
+L2HTOP = $(L2HNEW)/latex2html -split 0 
+LTX = latex
+EX = ex3
+HTML = .html
+TX = .tex
+TEXES = $(EX)*$(TX)
+TOP = ex30
+BIB = $(EX)bib
+TEXTOP = $(TOP)$(TX)
+INT = internals.pl
+BIBREF = '\#BIBLIO'
+# Directories containing the segments
+EX30 = ../$(TOP)/$(TOP)
+EX31 = ../$(EX)1/$(EX)1
+EX32 = ../$(EX)2/$(EX)2
+EX3b = ../$(TOP)/$(TOP)$(HTML)
+# Titles for navigation to the segments
+EX30t = Exemple_d\'un_document_segmenté
+EX31t = Une_figure_EPS
+EX32t = Exemple_d\'un_tableau
+EX3bt = Références
+
+COMMON = -info 0 -split 1 -link 4 -no_auto_link -biblio $(EX3b) -external_file $(TOP) \
+        -up_url $(EX30)$(HTML) -up_title $(EX30t) -index $(EX3b) -index_in_navigation 
+update:	$(TOP).ind
+	make $(TOP)/$(INT) $(EX)2/$(INT) $(EX)1/$(INT); make $(TOP)/$(INT)
+fresh:
+	rm $(EX)*/$(INT) $(TOP).aux; make $(TOP).ind;
+	make $(TOP)$(HTML) $(EX)2$(HTML) $(EX)1$(HTML); make $(TOP)$(HTML)
+$(TOP)$(HTML) :
+	$(L2HTOP) -down_url $(EX31)$(HTML) -down_title $(EX31t) -biblio $(BIBREF) $(TOP)
+$(TOP)/$(INT) : $(TEXTOP) $(BIB)$(TX) $(EX)1/$(INT) $(EX)2/$(INT)
+	make $(TOP)$(HTML)
+$(EX)1$(HTML) :
+	$(L2H) $(COMMON) -t $(EX31t) -prev_url $(EX30)$(HTML) -prev_title $(EX30t) \
+	-down_url $(EX32)$(HTML) -down_title $(EX32t) $(EX)1
+$(EX)1/$(INT) : $(EX)1$(TX)
+	make $(EX)1$(HTML)
+$(EX)2$(HTML) :
+	$(L2H) $(COMMON) -t $(EX32t) -prev_url $(EX31)$(HTML) -prev_title $(EX31t) \
+	-down_url $(EX3b)$(BIBREF) -down_title $(EX3bt) $(EX)2
+$(EX)2/$(INT) : $(EX)2$(TX)
+	make $(EX)2$(HTML)
+
+# handle  LaTeX/dvips/makeindex  etc.
+$(TOP).aux: $(TEXES)
+	make dvi
+$(TOP).dvi:
+	make dvi
+dvi:
+	$(LTX) $(TEXTOP); $(LTX) $(TEXTOP); make $(TOP).ind
+$(TOP).ind: $(TOP).aux
+	makeindex $(TOP).idx; $(LTX) $(TEXTOP); touch $(TOP).ind
+ps:
+	make $(TOP).ps
+$(TOP).ps: $(TOP).dvi
+	dvips $(TOP).dvi -o
+clean:
+	rm *.ps *.dvi *.log *.ilg
+

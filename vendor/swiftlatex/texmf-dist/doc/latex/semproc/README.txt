@@ -1,0 +1,14 @@
+----------------------------------------------------------------
+semproc --- LaTeX class for seminar proceedings
+E-mail: tobias.columbus@kit.edu
+Released under the LaTeX Project Public License v1.3c or later
+See http://www.latex-project.org/lppl.txt
+----------------------------------------------------------------
+
+This class provides some means for typesetting seminar proceedings based on
+KOMA-Script's scrreprt class and etoc: It offers an alternative to \chapter that
+typesets the speaker and if necessary the typist of the notes for the talk in
+question. Moreover, the class provides two types of table of contents. A global
+table of contents showing only the talks of the seminar and the respective
+speakers and a local table of contents for each talk showing the sections and
+subsections of the respective talk.

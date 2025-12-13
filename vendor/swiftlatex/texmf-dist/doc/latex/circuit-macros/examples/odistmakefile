@@ -1,0 +1,548 @@
+# Examples distmakefile.
+#
+# CTAN dist files: make -f distmakefile dist zips
+#  The CTAN file is tmp/Circuit_macros/Circuit_macrosN.N.tar.gz
+# or
+#  make -f distmakefile distece
+#  The ECE file is ~/tmp/CMdistfiles.tar.gz
+# Change the version number in doc/Version.tex
+
+# Circuit_macro directory, change this if necessary:
+LIBDIR = $$HOME/lib
+LIBDIR=/cygdrive/D/Dwight/lib
+# LIBDIR = ..
+
+# The dpic processor:
+PIC = dpic -p
+
+CONFIGFILE = pstricks.m4
+
+# Uncomment for gpic.  Use gpic or pic as applicable on your machine:
+# PIC = gpic -t
+# PIC = pic -t
+# CONFIGFILE = gpic.m4
+
+#########################################################################
+
+# M4 = m4 -B32000
+# M4 = m4 -I $(LIBDIR)
+# Environment variable M4PATH has been set to the installation directory:
+M4 = m4
+
+#########################################################################
+
+THISFILE = distmakefile
+
+DOC = examples
+PICS = \
+  Adder.tex Alogix.tex ABlogix.tex AmpTable.tex Antennas.tex Audio.tex \
+  Bip.tex Btree.tex Byte.tex Buttons.tex \
+  CanLogic.tex CctTable.tex Conn.tex Counting.tex Crossbar.tex Crow.tex \
+  Csource.tex \
+  Decoder.tex Demultiplexer.tex Dini.tex Diodes.tex Drive.tex \
+  Emarrows.tex Flow.tex Fuses.tex Grounds.tex \
+  Headers.tex Heathkit.tex \
+  I2L.tex Incleps.tex Jack.tex \
+  Logic.tex Loglog.tex MC.tex Mixer.tex MotorControl.tex Multiplexer.tex \
+  NLG.tex NPDT.tex Nport.tex \
+  Opamp.tex Optoiso.tex \
+  Pconn.tex PushPull.tex Quantum.tex \
+  Rectifiers.tex Relay.tex Rotbox.tex \
+  Schottky.tex ShiftR.tex Sierpinski.tex Sixpole.tex Sources.tex SQUID.tex \
+  Switches.tex \
+  TTLnand.tex Tgate.tex Three.tex Timer.tex Ttree.tex Tubediags.tex \
+  Variable.tex Windings.tex Xform.tex \
+  control.tex csc.tex diamond.tex \
+  ex00.tex ex01.tex ex02.tex ex03.tex ex04.tex ex05.tex ex06.tex \
+  ex08.tex ex09.tex ex10.tex ex11.tex ex12.tex ex15.tex \
+  ex16.tex ex17.tex ex18.tex ex21.tex exp.tex fet.tex \
+  graysurf.tex lcct.tex pwrsupply.tex quick.tex recycle.tex rose.tex \
+  sfg.tex shapes.tex thyristor.tex ujt.tex worm.tex XOR.tex
+
+PICS = `make -f Makefile echopics`
+
+MANFIGS = AmpTable Antennas Audio Bip CctTable Conn Contact Contacts \
+  Demultiplexer Diodes \
+  Emarrows Fuses Grounds Headers Jack Logic Multiplexer NLG NPDT Nport Opamp \
+  Pconn Relay ShiftR Sources Switches Tgate Variable Windings Xform fet quick \
+  thyristor ujt
+
+# Files that have to be processed twice:
+BOXDIMS = ex09 Crow Incleps Loglog Opamp Windings
+
+M4LIBS = $(CONFIGFILE)
+
+# Convert options
+EPSOPTS = -trim
+TIFOPTS = -trim
+SVGOPTS = -trim
+GIFOPTS = -trim
+PNGOPTS = -trim -density 400 -scale 25% -quality 92 -alpha Remove
+
+DVIPSOPTS = -Ppdf -G0 -t ledger
+
+DIMFILE = $(DOC).dim
+LTX = latex --shell-escape --quiet
+BS = tr '|' '\134'
+
+.SUFFIXES: .ps .dvi .tex .m4 .pic .eps .png .pdf .svg .tif .gif
+.dvi.ps:
+	dvips $(DVIPSOPTS) $* -o $*.ps
+	chmod 644 $*.ps
+.m4.tex:
+	@if test -n "$(DIMFILE)" ; then touch $(DIMFILE) ; fi ; touch F_$*.dim
+	$(M4) $(M4LIBS) $(DIMFILE) F_$*.dim $*.m4 | sed -e '/^ *$$/d' > $*.pic
+	$(PIC) $*.pic > $*.tex
+.m4.pic:
+	@if test -n "$(DIMFILE)" ; then touch $(DIMFILE) ; fi
+	$(M4) $(M4LIBS) $(DIMFILE) $*.m4 > $*.pic
+.m4.dvi:
+	make -f $(THISFILE) $*.tex
+	printf "|documentclass[11pt]{article}\n\
+|usepackage{times,pstricks,boxdims,graphicx,pst-grad,pst-slpe}\n\
+|usepackage[amssymb,Gray,thinqspace,textstyle]{SIunits}\n\
+|setlength{|textwidth}{28cm}|addtolength{|textheight}{28cm}\n\
+|setlength{|oddsidemargin}{0pt}|setlength{|evensidemargin}{0pt}\n\
+|setlength{|hoffset}{-1cm}\n\
+|newbox|graph\n\
+|pagestyle{empty}|thispagestyle{empty}\n\
+|begin{document}\n\
+|noindent|input{"$*".tex}\n\
+|end{document}\n" | $(BS) > F_$*.tex
+	latex --quiet F_$*
+	touch F_$*.dim $(DIMFILE) ; rm -f $*.tex $*.pic ; make -f $(THISFILE) $*.tex 
+	latex --quiet F_$*
+	touch F_$*.dim $(DIMFILE) ; rm -f $*.tex $*.pic ; make -f $(THISFILE) $*.tex 
+	latex --quiet F_$*
+.m4.eps:
+	make -f $(THISFILE) $*.dvi
+	dvips -Ppdf F_$* -T128cm,28cm -o $*.ps
+# Recent changes to PSTricks(?) have clashed with the use of TeXtoEPS
+#  so use ps2epsi
+	ps2epsi $*.ps $*.epsi
+	( sed -e '/%%Pages:/d' -e '/BeginPreview/,$$d' -e '/%%HiResBoundingBox/d' \
+      $*.epsi | tr '\015' '\012' ; sed -e '1,/EndPreview/d' $*.epsi ) | awk \
+  '/^%%BoundingBox/{print $$1" "$$2" "$$3" "$$4+10" "$$5+15; next}; {print}' \
+     >$*.eps
+.m4.ps:
+	make -f $(THISFILE) $*.tex && mv $*.tex test.tex; latex --quiet tst
+	rm -f test.tex $*.pic
+	if test -f tst.dim ; then cp tst.dim F_$*.dim ; fi
+	make -f $(THISFILE) $*.tex && mv $*.tex test.tex; latex --quiet tst
+	dvips $(DVIPSOPTS) tst -o $*.ps
+	chmod 644 $*.ps
+.m4.svg:
+	make -f $(THISFILE) $*.ps
+	convert $(SVGOPTS) $*.ps $*.svg
+.m4.png:
+	make -f $(THISFILE) $*.ps
+#	make -f $(THISFILE) $*.eps
+#	convert $(PNGOPTS) $*.eps $*.png
+	convert $(PNGOPTS) $*.ps $*.png
+	@if test -f $*.png.0 ; then mv $*.png.0 $*.png ; fi
+.m4.gif:
+	make -f $(THISFILE) $*.ps
+	convert $(GIFOPTS) $*.ps $*.gif
+.m4.tif:
+	make -f $(THISFILE) $*.ps
+	convert $(TIFOPTS) $*.ps $*.tif
+	@if test -f $*.tif.0 ; then mv $*.tif.0 $*.tif ; fi
+.m4.pdf:
+	touch F_$*.dim
+	$(M4) pgf.m4 F_$*.dim $*.m4 > $*.pic
+	dpic -g $*.pic > test.tex
+	sed -e '/^\\usepackage.*graphicx/s/^.*$$/\\usepackage{tikz}/' \
+      -e '/pstricks/d' tst.tex > F_$*.tex
+	pdflatex --quiet F_$*
+	$(M4) pgf.m4 F_$*.dim $*.m4 > $*.pic
+	dpic -g $*.pic > test.tex
+	pdflatex --quiet F_$*
+	mv F_$*.pdf $*.pdf
+
+#########################################################################
+default:
+	@printf "\n === making default\n"
+	@printf "\n\n\nUSAGE: make -f $(THISFILE) distece\n\n\n"
+
+$(DOC).ps: $(DOC).dvi
+
+doclinks:
+	@printf "\n === making doclinks\n"
+	-for nm in $(MANFIGS) ; do cp $(LIBDIR)/doc/$$nm.m4 . ; done
+	touch doclinks
+
+$(DOC).dvi: $(DOC).frs
+	@printf "\n === making $(DOC).dvi\n"
+	touch $(DOC).dim
+	for file in $(BOXDIMS) ; do \
+      rm -f $$file.tex $$file.pic ; \
+      make -f $(THISFILE) PIC="$(PIC)" DIMFILE=$(DOC).dim $${file}.tex ; done
+	latex --quiet $(DOC)
+	for file in $(BOXDIMS) ; do \
+      rm -f $$file.tex $$file.pic ; \
+      make -f $(THISFILE) PIC="$(PIC)" DIMFILE=$(DOC).dim $${file}.tex ; done
+	latex --quiet $(DOC)
+
+$(DOC).frs: $(DOC).tex files.tex header.tex
+	@printf "\n === making $(DOC).frs\n"
+	printf "|usepackage{pstricks,pst-grad}\n" | $(BS) > mode.tex
+	make -f $(THISFILE) $(PICS)
+	cp $(LIBDIR)/doc/Version.tex .
+	latex --quiet $(DOC)
+	touch $(DOC).frs
+	rm -f $(DOC).dvi
+
+tst:
+	make -f $(THISFILE) test.tex; latex --quiet tst; rm -f test.tex test.pic
+	make -f $(THISFILE) DIMFILE=tst.dim test.tex; latex --quiet tst
+	dvips $(DVIPSOPTS) tst -o tst.ps
+
+tst1: test.tex tst.tex
+	latex --quiet tst
+	dvips $(DVIPSOPTS) tst -o tst.ps
+
+gtst:
+	touch test.m4; make -f $(THISFILE) PIC="gpic -t" CONFIGFILE="" tst
+
+gtst1:
+	touch test.m4; make -f $(THISFILE) PIC="gpic -t" CONFIGFILE="" tst1
+
+# Distribution files
+NAME=Circuit_macros
+TMP=/tmp
+
+#                           Makes test.m4, examples.pdf, Circuit_macros.pdf,
+#                           Copying, examples/mf/cct.tfm examples/xfig
+dist:
+	@printf "\n === making lib/examples/dist\n"
+	(cd .. ; make clobber )
+	touch test.m4; cp test.m4 $(TMP)/test`date +%Y.%m.%d.%H:%M:%S`
+	find . -name test.m4 -exec rm -f {} \;
+	make -f $(THISFILE) test.m4
+	(cd $(LIBDIR)/doc; make )
+	make -f Makefile examples.pdf
+	( cd $(LIBDIR); mv doc/Circuit_macros.pdf . ; \
+        mv examples/examples.pdf . ; \
+        make clobber; chmod 644 Circuit_macros.pdf examples.pdf; \
+        cp -p Circuit_macros.pdf examples.pdf $(TMP) ; \
+        mv Circuit_macros.pdf doc; mv examples.pdf examples )
+#	touch reducedfiles
+#	make -f $(THISFILE) reducedfiles
+#	while test -f reducedfiles ; do sleep 1; done
+	make -f $(THISFILE) Copying
+	@printf "\n === making lib/examples/mf/cct.tfm\n"
+	(cd mf; make; chmod 644 cct.tfm; make clean)
+	@printf "\n === making lib/examples/xfig\n"
+	(cd xfig; make; make clean)
+	(cd $(LIBDIR)/doc; make clean )
+	-dir=`pwd` ; if [ "`basename $$dir`" = "examples" ] ; then \
+         rm -f $(LIBDIR)/examples.tar.gz ; fi
+
+EXCHANGE="`find C:/Program*\\(x86\\)/Adobe -name Acrobat.exe -print`"
+
+reducedfiles:
+	@printf "\n === making reducedfiles\n"
+	-( cd $(LIBDIR)/doc ; \
+      printf "\n\n save Circuit_macros.pdf as reduced size pdf\n\n" ; \
+      pwd | sed -e 's%/cygdrive/\(.\)%\1:%' -e 's%/%\\\\%g' \
+        -e 's%^%$(EXCHANGE) %' -e 's%$$%\\\\Circuit_macros.pdf%' | sh ) && \
+    ( printf "\n\n save examples.pdf as reduced size pdf\n\n" ; \
+    pwd | sed -e 's%/cygdrive/\(.\)%\1:%' -e 's%/%\\\\%g' \
+      -e 's%^%$(EXCHANGE) %' -e 's%$$%/examples.pdf%' | sh ) && \
+
+$(TMP)/$(NAME):
+	if test -d $(TMP)/$(NAME); then rm -rf $(TMP)/$(NAME); \
+      mkdir -p $(TMP)/$(NAME) ; fi
+
+COPIED = boxdims.sty CHANGES Copying darrow.m4 doc examples gpic.m4 \
+ lib3D.m4 libcct.m4 libgen.m4 liblog.m4 Licence.txt \
+ Makefile mfpic.m4 mpost.m4 pgf.m4 postscript.m4 psfrag.m4 pstricks.m4 \
+ README svg.m4 xfig.m4 dpictools.pic
+
+REMOVED = examples/test examples/dev examples/pdflatex examples/xfig/info \
+  examples/htmlsource examples/html examples/dist examples/zips \
+  examples/SCP examples/distmakefile examples/boxdims \
+  m4s \
+  doc/expl-m4.pdf
+
+zipdir: $(TMP)/$(NAME)
+	@printf "\n === making lib/examples/zips\n"
+	Version=`sed -e 's/Version //' $(LIBDIR)/doc/Version.tex` ; \
+      PCVersion=`echo $$Version | sed -e 's/\./_/g'` ; \
+      rm -rf $(TMP)/$(NAME)$$Version ; mkdir $(TMP)/$(NAME)$$Version; \
+      (cd $(LIBDIR); cp -r $(COPIED) $(TMP)/$(NAME)$$Version ); \
+      (cd $(TMP)/$(NAME)$$Version ; rm -rf $(REMOVED) ) ; \
+      (cd $(TMP)/$(NAME)$$Version ; find . -type f -exec chmod 644 {} \; ) ; \
+      (cd $(TMP)/$(NAME)$$Version ; find . -type f -empty -exec rm {} \; ) ; \
+      (cd $(TMP)/$(NAME)$$Version ; find . -type d -exec chmod 755 {} \; ) ; \
+      (cd $(TMP)/$(NAME)$$Version ; chmod +x examples/mf/mftest ) ; \
+      (cd $(TMP)/$(NAME)$$Version ; chmod +x examples/mpost/mptest ) ; \
+      (cd $(LIBDIR)/doc; make clobber )
+	touch zipdir
+
+zips:	zipdir
+	Version=`sed -e 's/Version //' $(LIBDIR)/doc/Version.tex` ; \
+      ( cd $(TMP); \
+        tar cf - $(NAME)$$Version | gzip > $(NAME)$$Version.tar.gz ; \
+        (cd $(NAME)$$Version; zip -r $(NAME) * ) ; \
+        mv $(NAME)$$Version/$(NAME).zip $(NAME)$$PCVersion.zip ; \
+        printf "\n$(TMP)/$(NAME)$$Version and\n" ; \
+        printf "$(TMP)/$(NAME)$$Version.tar.gz created\n"; \
+        printf "\n$(TMP)/$(NAME)$$PCVersion.zip created\n" )
+#	touch zips
+
+test.m4:
+	@printf "\n === making test.m4\n"
+	printf \
+".PS\n\
+# Test.m4\n\
+cct_init\n\
+# Use this file to do a quick test of diagrams you are developing.\n\
+# Enter the drawing commands here and (if you have a \"make\" utility) type\n\
+#   make tst\n\
+# Otherwise, to process a file called filename.m4, type one of\n\
+#   make filename.ps\n\
+#   make filename.eps\n\
+#   make filename.pdf\n\
+#   make filename.gif (requires ImageMagick convert)\n\
+#   make filename.png (requires ImageMagick convert)\n\
+#   make filename.tif (requires ImageMagick convert)\n\
+# To perform tests in a new folder, copy the Makefile, this file,\n\
+#   and tst.tex (or your own equivalent) to that folder.\n\
+.PE\n" > test.m4
+
+#                           For the git repository
+GITDIR=$${HOME}/dpic/git/Circuit_macros
+gitsync: dist zipdir
+	cd $(GITDIR) && rsync -a -v $(TMP)/Cir*[0-9]/* .
+	cp -p htmlsource/.gitignore $(GITDIR)
+
+distfile:
+	@printf "\n === making distfile\n"
+	rm -f dist zips htmlfiles
+	make -f $(THISFILE) dist zips htmlfiles
+	rm -rf distfile distfile.tar.gz; mkdir distfile
+	Version=`sed -e 's/Version //' $(LIBDIR)/doc/Version.tex` ; \
+    cp -p $(TMP)/$(NAME)$$Version.tar.gz \
+      $(TMP)/$(NAME)$$Version/README $(TMP)/$(NAME)$$Version/CHANGES \
+      distfile ;\
+    PCVersion=`echo $$Version | sed -e 's/\./_/g'` ; \
+    cp -p $(TMP)/$(NAME)$$PCVersion.zip distfile ;\
+    mkdir distfile/html
+	cp -rp html/* distfile/html
+	(cd distfile/html; mv index.html .. ; rm -f access.log *.pl )
+#	tarlib distfile
+
+EPSFILES=${PICS:%.tex=%.eps}
+# Make an encapsulated Postscript file for each example (requires pstricks)
+eps:
+	@printf "\n === making eps\n"
+	make -f $(THISFILE) ${PICS:%.tex=%.eps}
+
+Copying: $(LIBDIR)/doc/Version.tex
+	@printf "\n === making Copying\n"
+	sed -e \
+    "s%Version  *[0-9.]*,%`cat $(LIBDIR)/doc/Version.tex`,%" $(LIBDIR)/Copying \
+      > xxx
+	sed -e "s%opyright (c) [^ ][^ ]* J%opyright (c) `date '+%Y'` J%" xxx \
+          > $(LIBDIR)/Copying ; rm -f xxx
+#	for file in `find $(LIBDIR) -name Copying -print` ; do \
+#      if test ! "$$file" = "$(LIBDIR)/Copying" ; then \
+#        cp $(LIBDIR)/Copying $$file; fi ; done
+	(cd $(LIBDIR) ; for file in `grep -l 'Version [0-9][\.0-9]*,' *` ; do \
+      if test ! \( "$$file" = "Copying" -o "$$file" = "CHANGES" \) ; then \
+        ( sed -e '/opyright (c)/,$$d' $$file ; cat Copying ; echo "" ; \
+        sed -e '1,/opyright (c)/d' $$file | sed -e '1,/^ *$$/d' ) > xxx ; \
+        sed -e "s%Version  *[0-9.]*:%`cat doc/Version.tex`:%" xxx \
+          > $$file ; rm -f xxx ; fi ; done ; )
+	(cd $(LIBDIR) ; \
+     ( sed -e '/opyright (c)/,$$d' dpictools.pic ; \
+       sed -e 's/^ *\*/\#/' -e 's/\* *$$/\#/' Copying ; echo "" ; \
+       sed -e '1,/opyright (c)/d' dpictools.pic | sed -e '1,/^ *$$/d' ) > xxx ;\
+       sed -e "s%Version  *[0-9.]*:%`cat doc/Version.tex`:%" xxx \
+          > dpictools.pic ; rm xxx ) 
+
+htmlfiles: html svgfiles pngs html/examples.html html/index.html \
+      Circuit_macros.ico html/Optosample.png
+	@printf "\n === making lib/examples/htmlfiles\n"
+	mv Circuit_macros.ico html
+	if test -f examples.pdf ; \
+      then printf "\n\n examples.pdf found\n" ; \
+    else printf "\n\n examples.pdf not found\n" ; fi
+	if test -f doc/Circuit_macros.pdf ; \
+      then printf "\n\n doc/Circuit_macros.pdf found\n" ; \
+        cp doc/Circuit_macros.pdf html ; \
+    else printf "\n\n doc/Circuit_macros.pdf not found\n" ; \
+      cp $(TMP)/Circuit_macros.pdf $(LIBDIR)/doc ; fi
+	cp examples.pdf html
+	(cd html; chmod 644 *.svg *.txt *.html *.pdf )
+	touch htmlfiles
+
+html:
+	@printf "\n === making html\n"
+	if test ! -d html ; then mkdir html ; fi
+	( cd htmlsource; cp -p $(PERLFILE).pl .htaccess ../html )
+
+svgfiles: html
+	@printf "\n === making svgfiles\n"
+	( cd svg; make )
+	for file in `ls svg/*SVG.m4` ; \
+      do cp $$file html/`basename $$file .m4`.txt ; done
+	cp -p svg/examplesSVG.html svg/*.svg svg/*.jpg html
+	touch svgfiles
+
+Circuit_macros.ico: html htmlsource/favicon.m4
+	@printf "\n === making Circuit_macros.ico\n"
+	cp htmlsource/favicon.m4 .
+	make -f $(THISFILE) favicon.eps
+	convert -density 105 favicon.eps Circuit_macros.ico
+	rm -f favicon.*
+
+html/index.html: htmlsource/index.htmx html
+	@printf "\n === making index.html\n"
+	Version=`sed -e 's/Version //' $(LIBDIR)/doc/Version.tex` ; \
+      PCVersion=`echo $$Version | sed -e 's/\./_/g'` ; \
+      sed -e 's/XXX/'$$Version'/' \
+          -e 's/PCVersion/'$$PCVersion'/' \
+      htmlsource/index.htmx > html/index.html
+
+html/Optosample.png: html htmlsource/Optosample.m4
+	@printf "\n === making Optosample.png\n"
+	cp htmlsource/Optosample.m4 .
+	make -f $(THISFILE) Optosample.eps
+	convert Optosample.eps Optosample.png
+	mv Optosample.png html/Optosample.png
+	rm -f Optosample.*
+
+TR = tr '^@' '\012`'
+html/examples.html: html htmlsource/examples.htmx files.tex
+	@printf "\n === making examples.html\n"
+	Version=`sed -e 's/Version //' $(LIBDIR)/doc/Version.tex` ; \
+      sed -e 's/Version XXX/Version '$$Version'/' htmlsource/examples.htmx \
+      > html/examples.html
+	cat files.tex | sed -e '/bfig[\{]/d' -e '/^ *[\}][\}]* *$$/d' \
+     -e '/src[\{]/d' -e '/\\if/d' -e '/\\fi/d' -e '/includegraphics/d' \
+     -e '/\%ignore\%/d' -e '/^\%/d' -e '/\\end[\{]/d' -e '/^\%/d' \
+     -e '/getpic/s/\\getpic[\{]\([^\}]*\)[\}][\}]*/ <\1> /g' \
+     -e '/<[^-]/s/^[^<]*<//' -e '/<[^-]/s/>[^<]*</> /g' -e '/[^-]>/s/>.*$$/>/' \
+     -e 's/\([^ -][^ -]*\)>/IS_"\1.png" A_"\1 diagram">B_"\1.txt" T_\1.m4Y/'\
+     -e 's/IS_/<P><IMG SRC=/' -e 's/A_/ALT=/' -e 's/B_/<BR>^<A HREF=/' \
+     -e 's/T_/TARGET="_blank"><P>/' -e 's/4Y/4<\/A>:/' \
+     -e 's/^.*caption[\{]//' -e '/^ *$$/s/^ */<HR>/' \
+     -e 's/\\hbox//g' \
+      | sed \
+      -e '/<P>/!s/{\\tt \([^}]*\)}/<tt>\1<\/tt>/g' \
+      -e '/<P>/!s/{\\texttt \([^}]*\)}/<tt>\1<\/tt>/g' \
+      -e '/<P>/!s/{\\bf \([^}]*\)}/<tt>\1<\/tt>/g' \
+      -e '/<P>/!s/{\\em \([^}]*\)}/<em>\1<\/em>/g' \
+      -e '/<P>/!s/{\\it \([^}]*\)}/<em>\1<\/em>/g' \
+      -e '/<P>/!s/{\\sl \([^}]*\)}/<em>\1<\/em>/g' \
+      -e '/<P>/!s%\([^\\]\)_\(.\)%\1<sub>\2</sub>%g' \
+      -e '/<P>/!s%\([^\\]\)\^\(.\)%\1<sup>\2</sup>%g' \
+      -e 's%``%"%g' -e "s%''%\"%g" -e 's/\~/ /g' \
+      -e 's%\\%%g'  -e 's/\$$//g' \
+      | sed -e 's/HREF=Inclpdf.m4/HREF=Inclpdf.txt/' | $(TR) \
+      >> html/examples.html
+	cat htmlsource/endexamples.htmx >> html/examples.html
+
+BACKGROUND = blight
+
+pngs: basenames
+	@printf "\n === making pngs\n"
+	cp htmlsource/$(BACKGROUND).m4 .
+	-for nm in `cat basenames` ; do \
+       echo "make -f $(THISFILE) $$nm.png ; mv $$nm.png html/$$nm.png" ;\
+       make -f $(THISFILE) $$nm.png ; mv $$nm.png html/$$nm.png ;\
+       ls -l html/$$nm.png ; \
+       done
+	make -f $(THISFILE) $(BACKGROUND).png
+	mv $(BACKGROUND).png html/$(BACKGROUND).png
+	rm -f $(BACKGROUND).tex
+	-for nm in `cat basenames` ; do\
+      cp $$nm.m4 html/$$nm.txt ; done
+	cp Inclpdf.m4 html/Inclpdf.txt
+	echo "" > html/Inclpdf.m4
+	cat Inclpdf.m4 >> html/Inclpdf.m4
+	chmod 644 html/Inclpdf.m4
+
+gifs: basenames
+	@printf "\n === making gifs\n"
+	-for nm in `cat basenames` ; do \
+       make -f $(THISFILE) $$nm.gif ; mv $$nm.gif html/$$nm.gif ;\
+       done
+	make -f $(THISFILE) $(BACKGROUND).gif
+	mv $(BACKGROUND).gif html/$(BACKGROUND).gif
+	rm -f $(BACKGROUND).tex
+	-for nm in `cat basenames` ; do\
+      cp $$nm.m4 html/$$nm.txt ; done
+	cp Inclpdf.m4 html/Inclpdf.txt
+	echo "" > html/Inclpdf.m4
+	cat Inclpdf.m4 >> html/Inclpdf.m4
+	chmod 644 html/Inclpdf.m4
+
+basenames: files.tex
+	@printf "\n === making basenames\n"
+	grep '\\getpic' files.tex | sed -e '/Inclpdf/d' \
+      -e 's%\\getpic[\{]\([^\}]*\)[\}]% <\1> %g' \
+      -e 's/^[^<]*<//' -e 's/>[^<]*</ /g' -e 's/>.*$$//' \
+      | sort | uniq > basenames
+
+# To make but not distribute everything: make dist zips htmlfiles
+
+ECETMP = /cygdrive/d/Dwight/tmp
+ECENAM = CMdistfiles
+ECEDIR = $(ECETMP)/$(NAME)
+PERLFILE = Circuit_macros_access_log
+
+# (cd lib/examples; make -f distmakefile distece 2>&1)2>&1 > typescript
+distece:
+	@printf "\n === making lib/examples/distece\n"
+	(cd ..; find . -type f -exec chmod 644 {} \; ) 
+	rm -f dist zips htmlfiles
+	make -f $(THISFILE) dist zips htmlfiles
+	rm -rf $(ECEDIR)* ; mkdir $(ECEDIR) 
+	Version=`sed -e 's/Version //' $(LIBDIR)/doc/Version.tex` ; \
+    PCVersion=`echo $$Version | sed -e 's/\./_/g'` ; \
+      cp -p $(TMP)/$(NAME)$$Version.tar.gz \
+       $(TMP)/$(NAME)$$PCVersion.zip \
+       $(TMP)/$(NAME)$$Version/README $(TMP)/$(NAME)$$Version/CHANGES \
+       $(TMP)/$(NAME)$$Version/doc/Circuit_macros.pdf \
+      $(ECEDIR)
+	rm -rf $(ECEDIR)/html ; mkdir $(ECEDIR)/html
+	cp -rp html/* $(ECEDIR)/html
+	mv $(ECEDIR)/html/index.html $(ECEDIR)/index.html
+	(cd $(ECETMP); tarlib $(NAME); mv $(NAME).tar.gz $(ECENAM).tar.gz )
+	echo ""; echo ""; ls -l $(ECETMP)/$(ECENAM).tar.gz
+
+testall:
+	(cd mf; make)
+	(cd mpost; make)
+#	(cd pgf; make)
+	(cd psfrag; make)
+	(cd svg; make)
+	(cd xfig; make)
+
+clobber:	clean
+	rm -f *.ps
+	-@for dir in mf mpost pdflatex xfig psfrag pgf svg dev test; \
+      do (if test -d $$dir ; then cd $$dir; make clobber; fi) ; done
+	rm -f *.warn
+	rm -rf index.html html basenames *.png* dist zips htmlfiles svgfiles
+	rm -rf $(TMP)/Cir* $(ECETMP)/Cir* $(ECEDIR)
+	if test -f Incl.pdf ; then \
+      mv Incl.pdf Incl.pdx; rm -f *.pdf; mv Incl.pdx Incl.pdf ; fi
+	for file in `ls *.tex` ; do \
+      nm=`echo $$file | sed -e "s/\(.*\)\.tex/\1/"` ; \
+      if test -s $$nm.m4 ; then rm -f $$nm.pic $$nm.tex ; fi ; done
+
+clean:
+	@printf "\nclean:\n"
+	find .. -name \*stackdump -exec rm {} \;
+	rm -f core snapshots *.ico *favicon* $(BACKGROUND).* zipdir
+	rm -f *.dvi *.aux *.log *.toc *.blg *.eps *.epsi eps *-mfpic*
+	rm -f fig*.tex $(PICS) *.roff *.int *.pic gpic.m4 test.tex xxx* *.fig
+	rm -f *.dim *.bak *.frs $(RPICS) rotate.ps tst.ps *.bbl *-pics.ps *.gif
+	rm -f *.tfm *[0-9]pk *.png *.1
+	rm -f F_*.tex Version.tex doclinks *stackdump *.ico
+	rm -rf distfile distfile.tar.gz
+	@printf "\n"

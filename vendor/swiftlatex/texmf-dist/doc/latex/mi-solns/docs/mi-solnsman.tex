@@ -1,0 +1,406 @@
+\documentclass{article}
+\usepackage[fleqn]{amsmath}
+\usepackage[
+    web={centertitlepage,designv,forcolorpaper,tight*,latextoc,pro},
+    exerquiz={nosolutions},eforms,aebxmp
+]{aeb_pro}
+\let\protected\relax
+\usepackage{mi-solns}
+%\usepackage{eq-save}
+%\usepackage[ImplMulti]{dljslib}
+%\usepackage{graphicx,array,fancyvrb}
+\usepackage{aeb_mlink}
+%\usepackage{myriadpro}
+%\usepackage{calibri}
+
+\usepackage[altbullet]{lucidbry}
+
+\def\hardspace{{\fontfamily{cmtt}\selectfont\symbol{32}}}
+\newif\ifmiswitch \miswitchfalse
+
+\usepackage{acroman}
+
+\usepackage[active]{srcltx}
+
+\urlstyle{tt}
+
+
+
+\def\STRUT{\rule{0pt}{14pt}}
+%\useBeginQuizButton[\CA{Begin}]
+%\useEndQuizButton[\CA{End}]
+\def\SOL{\textsf{SOL}}
+\def\QSL{\textsf{QSL}}
+
+\makeatletter
+\def\eExmpl{\eq@fititin{\mbox{\exrtnlabelformatwp}}}
+\newcount\hesheCnt \hesheCnt=-1
+\def\heshe{\@ifstar{\heshei}{\global\advance\hesheCnt\@ne\heshei}}
+\def\heshei{\ifodd\hesheCnt she\else he\fi}
+\def\HeShe{\@ifstar{\HeShei}{\global\advance\hesheCnt\@ne\HeShei}}
+\def\HeShei{\ifodd\hesheCnt She\else He\fi}
+\def\hisher{\@ifstar{\hisheri}{\global\advance\hesheCnt\@ne\hisheri}}
+\def\hisheri{\ifodd\hesheCnt her\else his\fi}
+\def\himher{\@ifstar{\himheri}{\global\advance\hesheCnt\@ne\himheri}}
+\def\himheri{\ifodd\hesheCnt her\else him\fi}
+\makeatother
+
+\DeclareDocInfo
+{
+    university={\AcroTeX.Net},
+    title={The \textsf{mi-solns} Package},
+    author={D. P. Story},
+    email={dpstory@acrotex.net},
+    subject=Documentation for the mi-solns package,
+    talksite={\url{www.acrotex.net}},
+    version={0.6, 2018/12/29},
+    Keywords={LaTeX, AeB, exercises, quizzes, mark and insert solutions},
+    copyrightStatus=True,
+    copyrightNotice={Copyright (C) \the\year, D. P. Story},
+    copyrightInfoURL={http://www.acrotex.net}
+}
+
+\universityLayout{fontsize=Large}
+\titleLayout{fontsize=LARGE}
+\authorLayout{fontsize=Large}
+\tocLayout{fontsize=Large,color=aeb}
+\sectionLayout{indent=-62.5pt,fontsize=large,color=aeb}
+\subsectionLayout{indent=-31.25pt,color=aeb}
+\subsubsectionLayout{indent=0pt,color=aeb}
+\subsubDefaultDing{\texorpdfstring{$\bullet$}{\textrm\textbullet}}
+
+\chngDocObjectTo{\newDO}{doc}
+\begin{docassembly}
+var titleOfManual="The mi-solns Package";
+var manualfilename="Manual_BG_Print_mi-solns.pdf";
+var manualtemplate="Manual_BG_Brown.pdf"; // Blue, Green, Brown
+var _pathToBlank="C:/Users/Public/Documents/ManualBGs/"+manualtemplate;
+var doc;
+var buildIt=false;
+if ( buildIt ) {
+    console.println("Creating new " + manualfilename + " file.");
+    doc = \appopenDoc({cPath: _pathToBlank, bHidden: true});
+    var _path=this.path;
+    var pos=_path.lastIndexOf("/");
+    _path=_path.substring(0,pos)+"/"+manualfilename;
+    \docSaveAs\newDO ({ cPath: _path });
+    doc.closeDoc();
+    doc = \appopenDoc({cPath: manualfilename, oDoc:this, bHidden: true});
+    f=doc.getField("ManualTitle");
+    f.value=titleOfManual;
+    doc.flattenPages();
+    \docSaveAs\newDO({ cPath: manualfilename });
+    doc.closeDoc();
+} else {
+    console.println("Using the current "+manualfilename+" file.");
+}
+var _path=this.path;
+var pos=_path.lastIndexOf("/");
+_path=_path.substring(0,pos)+"/"+manualfilename;
+\addWatermarkFromFile({
+    bOnTop:false,
+    bOnPrint:false,
+    cDIPath:_path
+});
+\executeSave();
+\end{docassembly}
+
+
+\begin{document}
+
+\maketitle
+
+\selectColors{linkColor=black}
+\tableofcontents
+\selectColors{linkColor=webgreen}
+
+
+\section{Introduction}
+
+The name of the package is \pkg{mi-solns}, where `m' is for `mark' and `i' is
+for `insert'. So the \pkg{mi-solns} package can mark and insert solutions
+(created by the \pkg{exerquiz} and \pkg{eqexam} packages).
+
+The \pkg{exerquiz}
+(\href{https://www.ctan.org/pkg/acrotex}{ctan.org/pkg/acrotex}) and
+\pkg{eqexam} (\href{https://www.ctan.org/pkg/eqexam}{ctan.org/pkg/eqexam})
+packages are capable of creating questions and solutions to exercises and
+quizzes. The purpose of this package is to present commands for marking, and
+for inserting any marked solution---for whatever reason---into the body of
+the document.\footnote{A solution may be inserted into anohter solution, but
+may  not be inserted into itself.} To accomplish this goal, recent versions
+of \pkg{exerquiz} and \pkg{eqexam} are required (dated 2018/12/13 or later);
+also required is the \pkg{shellesc} package
+(\href{https://ctan.org/pkg/shellesc}{ctan.org/pkg/shellesc}).
+
+While the document is being compiled, the solution files (\SOL{} and \QSL) are
+being written to, so we cannot input them or read them. What we do is to make
+a copy of the solution files from within the operating system, and input the
+copy back into the body of the document when required. Consequently, it is
+necessary to activate the feature of executing an OS script from within the
+compiling operation. To activate the feature, the document needs to be
+compiled with the \texttt{-{}-shell-escape} switch (for
+\app{latex}, \app{pdflatex}, \app{lualatex}, or \app{xelatex}, depending on
+your workflow).
+
+\paragraph*{Description of workflow.} The procedure is simple and short: (1)
+mark a solution for insertion (\cs{mrkForIns\darg{\ameta{name}}}), just above
+the \env{solution} environment; and (2) insert the solution with
+\cs{insExSoln\darg{\ameta{name}}}, \cs{insSqSoln\darg{\ameta{name}}}, or
+\cs{insQzSoln\darg{\ameta{name}}}, depending on whether the solution came
+from an \env{exercise}, \env{shortquiz}, or \env{quiz} environment.
+
+\paragraph*{Demo files.} There are four demonstration files.
+\begin{itemize}
+    \item \texttt{mi-solns-eq.tex} uses \pkg{exerquiz} to test the features
+    of \pkg{mi-solns}.
+    \item \texttt{mi-solns-eqe.tex} uses \pkg{eqexam} to test the features
+        of \pkg{mi-solns}.
+    \item \texttt{create-db.tex} part of a novel idea, it is an application for changing
+    the output file names. Compiling this file creates \texttt{poems.lst}, which is a very small database
+    of poetic quotations.
+    \item \texttt{use-db.tex} is the companion file to
+        \texttt{create-db.tex}. Once \texttt{poems.lst} is created, compile
+        \texttt{use-db.tex}, which will input \texttt{poems.lst} and
+        display the quotations.
+\end{itemize}
+
+\section{Copying the \texorpdfstring{\SOL\space and \QSL}{SOL and QSL} files}
+
+Assuming you have determined how to compile using the
+\texttt{-{}-shell-escape} switch, when you compile a \pkg{mi-solns} document,
+the files \cs{jobname.sol} and \cs{jobname.qsl} are copied at the end of the
+document. The destination filenames are \cs{jobname-cpy.sol} and
+\cs{jobname-cpy.qsl} by default, but these names can be changed through the
+commands \cs{declSOLOut} and \cs{declQSLOut}.
+\bVerb\takeMeasure{\string\declSOLOut\darg{\ameta{sol-out}}}%
+\setlength\aebscratch{\bxSize}%
+\def\1{\makebox[0pt][l]{\hspace{\aebscratch}\enspace\makebox[0pt][l]{\normalfont(\cs{declSOLIn\darg{\string\jobname.sol}})}}}%
+\def\2{\makebox[0pt][l]{\hspace{\aebscratch}\enspace\makebox[0pt][l]{\normalfont(\cs{declSOLOut\darg{\string\jobname-cpy.sol}})}}}%
+\def\3{\makebox[0pt][l]{\hspace{\aebscratch}\enspace\makebox[0pt][l]{\normalfont(\cs{declQSLIn\darg{\string\jobname.qsl}})}}}%
+\def\4{\makebox[0pt][l]{\hspace{\aebscratch}\enspace\makebox[0pt][l]{\normalfont(\cs{declQSLOut\darg{\string\jobname-cpy.qsl}})}}}%
+\begin{dCmd}[commandchars=!(),commentchar=\%]{\bxSize}
+%!1\declSOLIn{!ameta(sol-in)}
+!2\declSOLOut{!ameta(sol-out)}
+%!3\declQSLIn{!ameta(qsl-in)}
+!4\declQSLOut{!ameta(qsl-out)}
+\end{dCmd}
+\eVerb At the end of the document, the following OS operations occur:
+\begin{itemize}
+  \item Copy \cs{jobname.sol} to \ameta{sol-out} (\cs{jobname.sol} to \cs{jobname-cpy.sol})
+  \item Copy \cs{jobname.qsl} to \ameta{qsl-out} (\cs{jobname.qsl} to \cs{jobname-cpy.qsl})
+\end{itemize}
+Freely change the names of the output files according to your own whims.
+
+\paragraph*{The copy commands.} The following two commands expand the run-time scripts for
+copying one file to another.
+\bVerb\takeMeasure{\string\newcommand\darg{\string\copyfileCmdEx}\darg{copy \string\jobname.sol \string\misolout}}%
+\setlength\aebscratch{\bxSize}%
+\begin{dCmd}[commandchars=!()]{\bxSize}
+\newcommand{\copyfileCmdEx}{copy \jobname.sol \misolout}
+\newcommand{\copyfileCmdQz}{copy \jobname.qsl \miqslout}
+\end{dCmd}
+\eVerb where \cs{misolout} and \cs{miqslout} expand to the names assigned by
+the declarations \cs{declSOLOut} and \cs{declQSLOut}, respectively. These are
+the definitions for \app{Windows} OS, it might be necessary to redefine these
+commands corresponding to the OS in which you reside.
+
+\paragraph*{Turn copying on and off.} The SOL and QSL files are automatically copied, by default;
+however, this operation can be turned off.
+\bVerb\takeMeasure{\string\copySolnsOn\qquad\string\copySolnsOff}%
+\setlength\aebscratch{\bxSize}%
+\def\1{\makebox[0pt][l]{\hspace{\aebscratch}\enspace\makebox[0pt][l]{\sffamily(preamble only)}}}%
+\def\2{\makebox[0pt][l]{\hspace{\aebscratch}\enspace\makebox[0pt][l]{\sffamily(anywhere)}}}%
+\begin{dCmd}[commandchars=!()]{\bxSize}
+!1\copySolnsOn!qquad\copySolnsOff
+!2\readSolnsOn!qquad\readSolnsOff
+\end{dCmd}
+\eVerb \cs{copySolnsOn} is the default, it causes the solutions to be copied
+at the end of the document; \cs{copySolnsOff} turns off the copying. Why
+would you do this? Well, if you have completed composing your solutions and
+you are concentrating on the other content of the document, there is no need
+to repeatedly copy the solution files. Perhaps turn it on for the final
+\emph{two compiles}. Yes, you read correctly, two compiles. Since the
+solution files are copied at the end of the document, the refreshed
+\ameta{sol-out} and \ameta{qsl-out} files do not get read until the next
+compile.
+
+\cs{readSolnsOn} is initially expanded by the package, so it is the default. If you expand \cs{readSolnsOff}, the commands
+\cs{insExSoln}, \cs{insSqSoln}, and \cs{insQzSoln} do not input their target file; instead
+\cs{miReadOffMsg} is typeset. The default definition of this command is,
+\begin{Verbatim}[xleftmargin=\parindent]
+\newcommand\miReadOffMsg{(\textbf{?? read is off ??})}
+\end{Verbatim}
+This command may be redefined as desired.
+
+\section{Marking a solution}
+
+The first step is to mark a solution you wish to insert elsewhere in the document.
+\bVerb\takeMeasure{\string\mrkForIns\darg{\ameta{name}}}%
+\setlength\aebscratch{\bxSize}%
+\begin{dCmd}[commandchars=!()]{\bxSize}
+\mrkForIns{!ameta(name)}
+\end{dCmd}
+\eVerb The placement is just above the targeted \env{solution} environment.
+\begin{Verbatim}[xleftmargin=\parindent,commandchars=!()]
+!textbf(\mrkForIns{!ameta(name)})
+\begin{solution}[!ameta(options)]
+!quad!ameta(solution)
+\end{solution}
+\end{Verbatim}
+Here, \ameta{name} is a word consisting of only ASCII characters. As the \ameta{sol-out} file is  read in,
+a simple string comparison is performed. If \pkg{mi-solns} is not displaying the solution you want to insert,
+this could be the problem; simplify the word(s) used for the \ameta{name} argument.
+
+%\insExSoln[\ignoreques]{dps}
+
+Below is a simple example we'll work with throughout the rest of this documentation.
+
+\begin{exercise}\label{ex:First}
+\begin{cq}An intelligent question.\end{cq}
+\mrkForIns{myIQ}
+\begin{solution}
+A brilliant answer to the intelligent question.
+\ifmiswitch(D. P. Story)\fi
+\end{solution}
+\end{exercise}
+The verbatim listing is,
+\begin{Verbatim}[xleftmargin=\parindent,commandchars={!@^}]
+\newif\ifmiswitch \miswitchfalse %!sffamily@ used in Example 4^
+...
+\begin{exercise}
+\begin{cq}An intelligent question.\end{cq}
+!textbf@\mrkForIns{myIQ}^
+\begin{solution}
+A brilliant answer to the intelligent question.
+\ifmiswitch(D. P. Story)\fi
+\end{solution}
+\end{exercise}
+\end{Verbatim}
+Continue to the next section for information on how to insert the solution
+into the document.
+
+\section{Inserting a solution}
+
+The second step is to insert the solution into the document. There are three
+commands for inserting marked content back in the document.
+\bVerb\takeMeasure{\string\insExSoln[\ameta{inserts}]\darg{\ameta{name}}}%
+\setlength\aebscratch{\bxSize}%
+\setlength\aebscratch{\bxSize}%
+\def\1{\makebox[0pt][l]{\hspace{\aebscratch}\enspace\makebox[0pt][l]{\sffamily(for \env{exercise} env.)}}}%
+\def\2{\makebox[0pt][l]{\hspace{\aebscratch}\enspace\makebox[0pt][l]{\sffamily(for \env{shortquiz} env.)}}}%
+\def\3{\makebox[0pt][l]{\hspace{\aebscratch}\enspace\makebox[0pt][l]{\sffamily(for \env{quiz} env.)}}}%
+\begin{dCmd}[commandchars=!()]{\bxSize}
+!1\insExSoln[!ameta(inserts)]{!ameta(name)}
+!2\insSqSoln[!ameta(inserts)]{!ameta(name)}
+!3\insQzSoln[!ameta(inserts)]{!ameta(name)}
+\end{dCmd}
+\eVerb where, \ameta{name} must match up with the \ameta{name} argument of a
+\cs{mrkForIns} command somewhere in the document. For solution content to
+appear correctly, the choice of the insertion command must match the
+environment that has been marked. If you marked a solution to an exercise,
+then use \cs{insExSoln} to insert that solution. This is possible error
+point, if the \ameta{name} does not match up with the correct insertion
+command.
+
+The \ameta{inserts} optional parameter can be most anything that does not
+disrupt the expansion of the \cs{ins??Soln} commands. \emph{It is placed
+within a group.}\marginpar{\small\raggedleft\slshape\ameta{inserts} placed in
+a group} This may be an interesting, useful, and significant feature,
+depending on your imagination to use it. One command designed for the
+\ameta{inserts} option for an exercise is \cs{ignoreques}. This is
+discussed in \textbf{Example~2} below.
+
+\paragraph*{Example~1.} Insert the solution to \textsc{\hyperref[ex:First]{Exercise~\ref*{ex:First}}}: \insExSoln{myIQ}
+\begin{Verbatim}[xleftmargin=\parindent,commandchars=!()]
+(!sffamily(Insert the solution to !ameta(link removed):)) !textbf(\insExSoln{myIQ})
+\end{Verbatim}
+The above is the verbatim listing. It's just that simple! However, the
+question to the problem also appears! Continue this problem with
+\textbf{Example~2}.\eExmpl
+
+\paragraph*{Example~2.} \textsc{\hyperref[ex:First]{Exercise~\ref*{ex:First}}} has its question
+enclosed in the \env{cq} environment. This environment passes
+the question along with the solution. If we don't want to include the
+question, pass a special command \cs{ignoreques} in the optional
+\ameta{inserts} argument. The expansion of
+\verb~``\insExSoln[\ignoreques]{myIQ}''~ is
+``\insExSoln[\ignoreques]{myIQ}''\eExmpl
+
+\def\myFmt{\declCQPre{\emph{\textcolor{blue}{\cqQStr}:}\space}%
+\declCQPost{\par\medskip\noindent\emph{\textcolor{blue}{\cqSStr}:}\space\ignorespaces}}
+
+\paragraph*{Example~3.} Again referring to \textsc{\hyperref[ex:First]{Exercise~\ref*{ex:First}}}, the
+\env{cq} environment (defined in \pkg{exerquiz} and \pkg{eqexam}) has certain
+formatting controls. We can pass some formatting commands through the
+\ameta{inserts} argument without affecting other \env{cq} environments in the
+document. For example,
+\par\medskip\noindent
+\insExSoln[\myFmt]{myIQ}
+\begin{Verbatim}[xleftmargin=\parindent,commandchars=!(),fontsize=\small]
+\newcommand\myFmt{\declCQPre{\emph{\textcolor{blue}{\cqQStr}:}\space}%
+  \declCQPost{\par\medskip\noindent
+    \emph{\textcolor{blue}{\cqSStr}:}\space\ignorespaces}}
+\end{Verbatim}
+Verbatim listing:
+{\let\leftmargini\parindent
+\begin{quote}
+\textsf{For example,}\texttt{\cs{par}\string\medskip\string\noindent\textbf{\string\insExSoln[\string\myFmt]\darg{myIQ}}}
+\end{quote}}\noindent
+Be sure not to introduce any spurious spaces.\eExmpl
+
+\paragraph*{Example~4.} (\textbf{Conditional content}) The \ameta{solution} can have conditional content, which
+may be controlled locally by passing the state of a Boolean switch through the \ameta{inserts} argument.
+\begin{Verbatim}[xleftmargin=\parindent,commandchars=!(),fontsize=\small]
+\newif\ifmiswitch \miswitchfalse
+...
+(!normalfont!sffamily(This code results in ))``!textbf(\insExSoln[\ignoreques\miswitchtrue]{myIQ})''
+\end{Verbatim}
+This code results in ``\insExSoln[\ignoreques\miswitchtrue]{myIQ}''\eExmpl
+
+\paragraph*{Example~5.} (\textbf{Changing \ameta{sol-out}}) There is a file \texttt{poems.lst} produced by
+the demo file \texttt{create-db.tex}; here, we insert one of the verses by
+changing the \ameta{sol-out} file.\medskip \bVerb
+\begin{minipage}[t]{2in+20pt}
+\begin{flushleft}\setlength{\baselineskip}{0pt}\setlength{\leftmargini}{15pt}
+\textbf{The Lama} by \textbf{Ogden Nash}
+\insExSoln[\declSOLOut{poems.lst}]{The Lama}
+\end{flushleft}
+\end{minipage}\hfill
+\begin{minipage}[t]{\linewidth-2in-20pt}
+Verbatim listing of the poem:\\[3pt]
+{\ttfamily\small\string\insExSoln[\textbf{\string\declSOLOut\darg{poems.lst}}]\darg{The Lama}}
+\end{minipage}\medskip
+\eVerb Refer to demo files \texttt{create-db.tex} and \texttt{use-db.tex}.\eExmpl
+
+\section{Building the solution sets}
+
+We can extract the solution to a problem only if the solution file is fully
+built. Generally, the solution sets are fully built when the solutions appear
+at the end of the file, but that is not the only situation. The following
+list summarizes the options for which the solution files are created in their
+entirety.
+\begin{itemize}
+  \item For the \pkg{exerquiz} package, any option other than \texttt{solutionsafter}.
+      This includes the following options: \texttt{nosolutions}, \texttt{noquizsolutions},
+      \texttt{vspacewithsolns}, and no solution-related option at all
+      (\verb~\usepackage{exerquiz}~). Hidden solutions are not displayed.
+  \item For the \pkg{eqexam} package, any option other than
+      \texttt{solutionsafter} and \texttt{answerkey}. This includes the
+      following options: \texttt{nosolutions},
+      \texttt{vspacewithsolns}, and no solution-related option at all
+      (\verb~\usepackage{eqexam}~). Hidden solutions are not displayed.
+\end{itemize}
+You can insert solutions even when the \texttt{answerkey} or
+\texttt{solutionsafter} option is in effect. First compile with
+\texttt{vspaceiwithsolns},\footnote{This creates fully built \ameta{sol-out}
+and \ameta{qsl-out} files.} for example, then place \cs{copySolnsOff} in the
+preamble and compile again with the \texttt{answerkey} or
+\texttt{solutionsafter} option. The insertions will then appear on the next
+compile.
+
+\section{My retirement}
+
+Now, I simply must get back to it. \dps
+
+\end{document}

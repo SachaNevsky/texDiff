@@ -1,0 +1,119 @@
+\documentclass[DIV=8, parskip=half, pagesize=auto]{scrartcl}
+
+\usepackage{fixltx2e}
+\usepackage{etex}
+\usepackage{xspace}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage{microtype}
+%\usepackage{hyperref}
+
+\newcommand*{\mail}[1]{\href{mailto:#1}{\texttt{#1}}}
+\newcommand*{\pkg}[1]{\textsf{#1}}
+\newcommand*{\cls}[1]{\textsf{#1}}
+\newcommand*{\cs}[1]{\texttt{\textbackslash#1}}
+\makeatletter
+\newcommand*{\cmd}[1]{\cs{\expandafter\@gobble\string#1}}
+\makeatother
+\newcommand*{\env}[1]{\texttt{#1}}
+\newcommand*{\opt}[1]{\texttt{#1}}
+\newcommand*{\meta}[1]{\textlangle\textsl{#1}\textrangle}
+\newcommand*{\marg}[1]{\texttt{\{}\meta{#1}\texttt{\}}}
+\newcommand*{\oarg}[1]{\texttt{[}\meta{#1}\texttt{]}}
+\renewcommand{\^}{\nolinebreak[2]}
+%\addtokomafont{title}{\rmfamily}
+
+\title{The import package}
+\author{Donald Arseneau  (\texttt{asnd@triumf.ca})}
+\date{Version 6.1, \quad 06--Mar--2020}
+\setlength{\parskip}{5pt plus 2pt minus 1pt}
+
+
+\begin{document}
+
+\maketitle
+
+This software is in the public domain; free of any restrictions.
+
+\medskip
+
+Two new \LaTeX\ commands:
+\begin{verse}
+ \cmd{\import} \marg{full-path} \marg{file}\hspace{8em} and\\[2pt]
+ \cmd{\subimport} \marg{path-extension} \marg{file}
+\end{verse}
+are defined to input a file from another directory, allowing that file
+to find its own inputs (using \cmd{\input}, \cmd{\includegraphics}
+etc.\@) in that directory.
+
+Alias command names are ``\cmd{\inputfrom}'' and ``\cmd{\subinputfrom}''.
+(If \cmd{\import} was defined previously, it will not be redefined.)
+Also provided are the similar commands ``\cmd{\includefrom}'' and
+``\cmd{\subincludefrom}'', which are based on the \cmd{\include} command,
+rather than \cmd{\input}. 
+
+For example, if a remote file \texttt{/user/friend/work/report.tex} has
+contents:
+%
+\begin{verbatim}
+     My graph: \includegraphics{picture}
+     \input{explanation}
+\end{verbatim}
+%
+then you can input that file to a document with 
+\verb+\import{/user/friend/+\^\verb+work/}+\^\verb+{report}+ 
+so that both the explanation and picture will be taken from the 
+\texttt{/user/friend/\^work/} directory.
+
+The \meta{full-path} argument for \cmd{\import} can be a full absolute path
+or a relative path starting from the main working directory for the document.
+The \cmd{\subimport} command facilitates nesting of file imports. It takes a
+relative \meta{path-extension} based on the location of the current imported file.
+For example, if a file is imported (using either command) from directory
+\texttt{abc/} and that file contains the command \verb+\subimport{lmn/}{xyz}+ then
+file \texttt{abc/lmn/xyz.tex} is input, and any \cmd{\input} commands in that file
+will read files from directory \texttt{abc/lmn/}.\footnote{~Note that the sub-import
+  path is merely appended to the current import path.  Syntactical mistakes from this
+  method may be corrected by \cmd{\import@path@fix}.}
+
+Depending on on how your \TeX\ system is configured, if a file does not
+exist in the specified import directory, it will be looked for in previous
+import directories (when nesting \cmd{\subimport} files), then in any
+directory listed in the pre-existing \cmd{\input@path}, then in the current 
+working directory, and finally in the \texttt{TEXINPUTS} path. Therefore, for 
+\cmd{\import} and for other \cmd{\input} used within an imported file,
+a file found on the path of import(s) will be read in preference to others with
+the same name located elsewhere. So here is the real behavior of the previous
+example: Given the nested sequence:
+\begin{verse}
+\verb+\import{abc/}{one}+\quad (in main document);\\
+\verb+\subimport{lmn/uvw/}{two}+\quad (in file \texttt{abc/one.tex});\\
+\verb+\input{three}+\quad (in file \texttt{abc/lmn/uvw/two.tex});
+\end{verse}
+\LaTeX\ first looks for \texttt{abc/lmn/uvw/three} (or \texttt{abc/lmn/uvw/three.tex});\\
+if not found, it tries \texttt{abc/three} (or \texttt{abc/three.tex});\\
+if still not found, it looks in the \cmd{\input@path}, if there was one defined;\\
+if \cmd{\input@path} was not defined, or if the file was not found on it,
+\LaTeX\ then tries to open \texttt{three} in the main document directory;\\
+finally, if still not found, it searches the \texttt{TEXINPUTS} search path.
+
+Historically, `star' versions of the commands were defined (to avoid searching
+the \texttt{TEXINPUTS} path) but now the ``$*$'' is ignored.
+
+
+A command  ``\cmd{\import@path@fix}'' is provided to reformat the import path
+to fit the syntax of a particular operating system.  It \emph{could} be
+defined to convert unix-style path names to the local format. The default
+definition ensures paths end with a single ``\texttt{/}'' on most systems
+(unless the path is empty), but on VMS systems it removes
+``\texttt{]\hspace{-2pt}[}'' from within combined paths.
+
+Note that the import package works by manipulating the internal `commands'
+\cmd{\input@path} and \cmd{\Ginput@path}, so may behave badly if you
+redefine them manually, or via another package, within the document.
+
+Presently, the paths are defined `locally' so input files must have 
+balanced grouping.
+
+\end{document}

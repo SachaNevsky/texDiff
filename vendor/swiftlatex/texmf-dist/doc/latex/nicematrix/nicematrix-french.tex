@@ -1,0 +1,2805 @@
+% -*- coding: utf-8 ; -*-
+\documentclass[dvipsnames]{article}% dvipsnames is for xcolor (loaded by Tikz, loaded by nicematrix)
+\usepackage{xltxtra}
+\usepackage[french]{babel}
+\frenchsetup{og = « , fg = »}
+
+\usepackage{geometry}
+\geometry{left=2.8cm,right=2.8cm,top=2.5cm,bottom=2.5cm,papersize={21cm,29.7cm}}
+
+\usepackage{amsmath}
+
+\usepackage{array}
+\usepackage{colortbl}
+\usepackage{nicematrix}
+\usepackage{tikz}
+\usetikzlibrary{fit}
+
+
+\usepackage{enumitem}
+
+\usepackage{siunitx}
+
+
+\usepackage{arydshln}
+\usepackage{verbatim}
+
+% We use \MakeShortVerb of shortvrb and not \DefineShortVerb of fancyvrb
+% because we don't want the contents of short verbatim colored in gray
+\usepackage{shortvrb}
+\MakeShortVerb{\|}
+
+
+\usepackage{fancyvrb}
+\fvset{commandchars=\~\#\@,formatcom=\color{gray}}
+
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{6.5ex plus 1ex minus .2ex}{4.3ex plus .2ex}
+\titlespacing*{\subsection}{0pt}{4.5ex plus 1ex minus .2ex}{2ex plus .2ex}
+
+\usepackage{multicol}
+\setlength{\columnseprule}{0.4pt}
+
+\def\interitem{\vspace{7mm plus 2 mm minus 3mm}}          
+\def\emphase{\bgroup\color{RoyalPurple}\let\next=}
+
+\usepackage{footnote}
+
+\usepackage{booktabs}
+
+\usepackage{varwidth}
+
+\usepackage[hyperfootnotes = false]{hyperref}
+
+\hypersetup
+  {
+    pdfinfo = 
+      {
+        Title = L’extension nicematrix ,
+        Subject = Une extension LaTeX ,
+        Author = F. Pantigny 
+      }
+  } 
+
+
+\NewDocumentEnvironment {scope} {} {} {}
+
+\NewDocumentCommand {\pkg} {m} {\textsf{#1}}
+\NewDocumentCommand {\cls} {m} {\textsf{#1}}
+
+\setlength{\parindent}{0pt}
+
+
+\begin{document}
+
+\VerbatimFootnotes
+
+\title{L'extension \pkg{nicematrix}
+       \thanks{Ce document correspond à la version~\myfileversion\space of \pkg{nicematrix},
+               en date du~\myfiledate.}} 
+\author{F. Pantigny \\ \texttt{fpantigny@wanadoo.fr}}
+
+
+\maketitle
+
+\begin{abstract}
+L'extension LaTeX \pkg{nicematrix} fournit de nouveaux environnements similaires aux environnements classiques
+|{array}| et |{matrix}| mais avec des fonctionnalités supplémentaires. Parmi ces fonctionnalités figurent la
+possibilité de fixer la largeur des colonnes et de tracer des traits en pointillés continus entre les cases du
+tableau.
+\end{abstract}
+
+\vspace{1cm}
+\section{Présentation}
+
+Cette extension peut être utilisée avec |xelatex|, |lualatex| et |pdflatex| mais aussi avec le cheminement
+classique |latex|-|dvips|-|ps2pdf| (ou Adobe Distiller). Deux ou trois compilations successives peuvent être
+nécessaires. Cette extension nécessite et charge les extensions \pkg{expl3}, \pkg{l3keys2e}, \pkg{xparse},
+\pkg{array}, \pkg{amsmath} et \pkg{pgfcore} ainsi que le module \pkg{shapes} de \textsc{pgf} (l'extension
+\pkg{tikz} n'est \emph{pas} chargée). L'utilisateur final n'a qu'à charger l'extension \pkg{nicematrix} avec
+l'instruction habituelle : |\usepackage{nicematrix}|.
+
+
+
+\medskip
+\begin{savenotes}
+\begin{minipage}{0.6\linewidth}
+Cette extension fournit quelques outils supplémentaires pour dessiner des matrices (au sens mathématique). Les
+principales caractéristiques sont les suivantes :
+\begin{itemize}\setlength{\itemsep}{0pt}
+\item des lignes en pointillés continues\footnote{Si l'option de classe
+\texttt{draft} est utilisée, ces lignes en pointillés ne sont pas tracées pour
+accélérer la compilation.} ;
+\item des rangées et colonnes extérieures pour les labels ;
+\item un contrôle sur la largeur des colonnes.
+\end{itemize}
+\end{minipage}
+\end{savenotes}
+\hspace{1.4cm}
+$\begin{bNiceArray}{CCCC}[first-row,first-col,
+                          code-for-first-col=\color{blue}\scriptstyle,
+                          code-for-first-row=\color{blue}\scriptstyle,
+                          columns-width = auto]
+       & C_1     & C_2    & \Cdots  & C_n    \\
+L_1    & a_{11}  & a_{12}  & \Cdots  & a_{1n} \\
+L_2    & a_{21}  & a_{22}  & \Cdots  & a_{2n} \\
+\Vdots & \Vdots & \Vdots  & \Ddots  & \Vdots \\
+L_n    & a_{n1}  & a_{n2}  & \Cdots  & a_{nn} 
+\end{bNiceArray}$
+
+
+
+
+\medskip
+Une commande|\NiceMatrixOptions| est fournie pour régler les options (la portée des options fixées par cette
+commande est le groupe TeX courant).
+
+
+
+
+\bigskip
+\textbf{Un exemple d'utilisation pour les lignes en pointillés continues}
+
+\medskip
+\begin{minipage}{10cm}
+Considérons par exemple le code suivant qui utilise un environnement |{pmatrix}| de l'extension \pkg{amsmath}.
+
+\smallskip
+\begin{BVerbatim}
+$A = \begin{pmatrix}
+1      & \cdots & \cdots & 1      \\
+0      & \ddots &        & \vdots \\
+\vdots & \ddots & \ddots & \vdots \\
+0      & \cdots & 0      & 1
+\end{pmatrix}$
+\end{BVerbatim}
+
+\smallskip
+Ce code compose la matrice $A$ représentée à droite.
+\end{minipage}\hspace{1cm}
+$A = \begin{pmatrix}
+1      &\cdots &\cdots &1      \\
+0      &\ddots &       &\vdots \\
+\vdots &\ddots &\ddots &\vdots \\
+0      &\cdots &0      &1
+\end{pmatrix}$
+
+
+
+
+\bigskip
+\begin{scope}
+\NiceMatrixOptions{transparent}
+\begin{minipage}{10cm}
+Maintenant, si nous utilisons l'extension \pkg{nicematrix} avec l'option |transparent|, le même code va donner le
+résultat ci-contre à droite.
+\end{minipage}\hspace{1cm}
+$A = \begin{pmatrix}
+1      & \cdots & \cdots & 1      \\
+0      & \ddots &        & \vdots \\
+\vdots & \ddots & \ddots & \vdots \\
+0      & \cdots & 0      & 1
+\end{pmatrix}$
+\end{scope}
+
+
+
+
+\section{Les environnements de cette extension} 
+
+L'extension \pkg{nicematrix} définit les nouveaux environnements suivants :
+
+\medskip
+\begin{ttfamily}
+\setlength{\tabcolsep}{3mm}
+\begin{tabular}{llll}
+\{NiceMatrix\}  & \{NiceArray\} & \{pNiceArray\}          \\
+\{pNiceMatrix\} &               & \{bNiceArray\}          \\
+\{bNiceMatrix\} &               & \{BNiceArray\}          \\
+\{BNiceMatrix\} &               & \{vNiceArray\}          \\
+\{vNiceMatrix\} &               & \{VNiceArray\}          \\
+\{VNiceMatrix\} &               & \{NiceArrayWithDelims\} \\
+\end{tabular}
+\end{ttfamily}
+
+
+
+\medskip
+Par défaut, les environnements |{NiceMatrix}|, |{pNiceMatrix}|, |{bNiceMatrix}|, |{BNiceMatrix}|, |{vNiceMatrix}|
+et |{VNiceMatrix}| se comportent quasiment comme les environnements correspondants de \pkg{amsmath} : |{matrix}|,
+|{pmatrix}|, |{bmatrix}|, |{Bmatrix}|, |{vmatrix}| et |{Vmatrix}|.
+
+
+\medskip
+L'environnement |{NiceArray}| est similaire à l'environnement |{array}| de l'extension |{array}|. Néanmoins, pour
+des raisons techniques, dans le préambule de l'environnement |{NiceArray}|, l'utilisateur doit utiliser les lettres
+|L|, |C| et~|R| au lieu de |l|, |c| et |r|. Il est possible d'utiliser les constructions |w{...}{...}|,
+|W{...}{...}|\footnote{Pour les colonnes de type |w| et |W|, les cases sont composées en mode mathématique (dans
+  les environnements de \pkg{nicematrix}) alors que dans |{array}| de \pkg{array}, elles sont composées en mode
+  texte.}, \verb+|+, |>{...}|, |<{...}|, |@{...}|, |!{...}| et |*{n}{...}| mais les lettres |p|, |m| et |b| ne
+doivent pas être employées. Voir p.~\pageref{NiceArray} la partie concernant |{NiceArray}|.
+
+\section{Les lignes en pointillés continues}
+
+À l'intérieur des environnements de l'extension \pkg{nicematrix}, de nouvelles commandes sont définies : |\Ldots|,
+|\Cdots|, |\Vdots|, |\Ddots|, et |\Iddots|. Ces commandes sont conçues pour être utilisées à la place de |\dots|,
+|\cdots|, |\vdots|, |\ddots| et |\iddots|.\footnote{La commande |\iddots|, définie dans \pkg{nicematrix}, est une
+  variante de |\ddots| avec les points allant vers le haut. Si \pkg{mathdots} est chargée, la
+  version de \pkg{mathdots} est utilisée. Elle correspond à la commande |\adots| de \pkg{unicode-math}.}
+\newcounter{fniddots} 
+\setcounter{fniddots}{\thefootnote}
+
+\smallskip
+Chacune de ces commandes doit être utilisée seule dans la case du tableau et elle trace une ligne en pointillés
+entre les premières cases non vides\footnote{La définition précise de ce qui est considéré comme une «case vide»
+  est donnée plus loin (cf. p.~\pageref{empty-cells}).} situées de part et d'autre de la case courante. Bien
+entendu, pour |\Ldots| et |\Cdots|, c'est une ligne horizontale ; pour |\Vdots|, c'est une ligne verticale et pour
+|\Ddots| et |\Iddots|, ce sont des lignes diagonales. On peut changer la couleur d'une ligne avec
+l'option~|color|.\footnote{Il est aussi possible de changer la couleur de toutes ces lignes pointillées avec
+  l'option |xdots/color| (\textsl{xdots} pour rappeler que cela s'applique à |\Cdots|, |\Ldots|, |Vdots|, etc.) :
+  cf. p.~\pageref{customization}).
+}\par\nobreak   
+
+\bigskip
+\begin{BVerbatim}[baseline=c,boxwidth=10cm]
+\begin{bNiceMatrix}
+a_1      & \Cdots &        & & a_1     \\
+\Vdots   & a_2    & \Cdots & & a_2     \\
+         & \Vdots & \Ddots[color=red] \\
+\\
+a_1      & a_2    &        & & a_n 
+\end{bNiceMatrix}
+\end{BVerbatim}
+$\begin{bNiceMatrix}
+a_1      & \Cdots &        & & a_1   \\
+\Vdots   & a_2    & \Cdots & & a_2   \\
+         & \Vdots & \Ddots[color=red] \\
+\\
+a_1      & a_2    &        & & a_n 
+\end{bNiceMatrix}$
+
+
+
+
+\interitem
+Pour représenter la matrice nulle, on peut choisir d'utiliser le codage suivant :\par\nobreak
+
+\bigskip
+\begin{BVerbatim}[baseline=c,boxwidth=10cm]
+\begin{bNiceMatrix}
+0      & \Cdots & 0      \\
+\Vdots &        & \Vdots \\
+0      & \Cdots & 0 
+\end{bNiceMatrix}
+\end{BVerbatim}
+$\begin{bNiceMatrix}
+0      & \Cdots & 0      \\
+\Vdots &        & \Vdots \\
+0      & \Cdots & 0 
+\end{bNiceMatrix}$
+
+\bigskip
+On peut néanmoins souhaiter une matrice plus grande. Habituellement, dans un tel cas, les utilisateurs de LaTeX
+ajoutent une nouvelle ligne et une nouvelle colonne. Il est possible d'utiliser la même méthode avec
+\pkg{nicematrix} :\par\nobreak
+
+\bigskip
+\begin{BVerbatim}[baseline=c,boxwidth=10cm]
+\begin{bNiceMatrix}
+0      & \Cdots & \Cdots & 0      \\
+\Vdots &        &        & \Vdots \\
+\Vdots &        &        & \Vdots \\
+0      & \Cdots & \Cdots & 0 
+\end{bNiceMatrix}
+\end{BVerbatim}
+$\begin{bNiceMatrix}
+0      & \Cdots & \Cdots & 0      \\
+\Vdots &        &        & \Vdots \\
+\Vdots &        &        & \Vdots \\
+0      & \Cdots & \Cdots & 0 
+\end{bNiceMatrix}$
+
+\bigskip
+Dans la première colonne de cet exemple, il y a deux instructions |\Vdots| mais une seule ligne en pointillés sera
+tracée (il n'y a pas d'objets qui se superposent dans le fichier \textsc{pdf} résultant\footnote{Et il n'est pas
+  possible de tracer une ligne |\Ldots| et une ligne |\Cdots| entre les mêmes cases.}).
+
+\bigskip
+En fait, dans cet exemple, il aurait été possible de tracer la même matrice plus rapidement avec le codage suivant
+:\par\nobreak
+
+\bigskip
+\begin{BVerbatim}[baseline=c,boxwidth=10cm]
+\begin{bNiceMatrix}
+0       & \Cdots &        & 0      \\
+\Vdots  &        &        &        \\
+        &        &        & \Vdots \\
+0       &        & \Cdots & 0 
+\end{bNiceMatrix}
+\end{BVerbatim}
+$\begin{bNiceMatrix}
+0       & \Cdots &        & 0      \\
+\Vdots  &        &        &        \\
+        &        &        & \Vdots \\
+0       &        & \Cdots & 0 
+\end{bNiceMatrix}$
+
+\bigskip
+Il y a aussi d'autres moyens de changer la taille d'une matrice. On pourrait vouloir utiliser l'argument optionnel
+de la commande~|\\| pour l'espacement vertical et la commande~|\hspace*| dans une case pour l'espacement
+horizontal.\footnote{Dans \pkg{nicematrix}, il faut utiliser |\hspace*| et non |\hspace| car \pkg{nicematrix}
+  utilise \pkg{array}. Remarquons aussi que l'on peut également régler la largeur des colonnes en utilisant l'environnement |{NiceArray}| (ou
+  une de ses variantes) avec une colonne de type~|w| ou |W|: cf. p.~\pageref{width}}
+
+Toutefois, une commande~|\hspace*| pourrait interférer dans la construction des lignes en pointillés. C'est
+pourquoi l'extension \pkg{nicematrix} fournit une commande~|\Hspace| qui est une variante de |\hspace| transparente
+pour la construction des lignes en pointillés de \pkg{nicematrix}.\par\nobreak
+
+\bigskip
+\begin{BVerbatim}[baseline=c,boxwidth=10cm]
+\begin{bNiceMatrix}
+0      & \Cdots & ~emphase#\Hspace*{1cm}@ & 0      \\
+\Vdots &        &               & \Vdots \\~emphase#[1cm]@
+0      & \Cdots &               & 0    
+\end{bNiceMatrix}
+\end{BVerbatim}
+$\begin{bNiceMatrix}
+0      & \Cdots & \Hspace*{1cm} & 0      \\
+\Vdots &        &               & \Vdots \\[1cm]
+0      & \Cdots &               & 0    
+\end{bNiceMatrix}$
+
+\subsection{L'option nullify-dots}
+
+Considérons la matrice suivante qui a été composée classiquement avec l'environnement |{pmatrix}| de
+\pkg{amsmath}.\par\nobreak
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=10cm]
+$A = \begin{pmatrix}
+h & i & j & k & l & m \\
+x &   &   &   &   & x \\
+\end{pmatrix}$
+\end{BVerbatim}
+$A = \begin{pmatrix}
+h & i & j & k & l & m \\
+x   &     &     &    &     & x \\
+\end{pmatrix}$
+
+
+\bigskip
+Si nous ajoutons des instructions |\ldots| dans la seconde rangée, la géométrie de la matrice est
+modifiée.\par\nobreak
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=10cm]
+$B = \begin{pmatrix}
+h & i & j & k & l & m \\
+x & \ldots & \ldots  & \ldots & \ldots & x \\
+\end{pmatrix}$
+\end{BVerbatim}
+$B = \begin{pmatrix}
+h & i & j & k & l & m \\
+x   & \ldots   & \ldots  & \ldots & \ldots & x \\
+\end{pmatrix}$
+
+\bigskip
+Par défaut, avec \pkg{nicematrix}, si nous remplaçons |{pmatrix}| par |{pNiceMatrix}| et |\ldots| par |\Ldots|, la
+géométrie de la matrice n'est pas changée.\par\nobreak
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=10cm]
+$C = \begin{pNiceMatrix}
+h & i & j & k & l & m \\
+x & \Ldots & \Ldots & \Ldots & \Ldots & x \\
+\end{pNiceMatrix}$
+\end{BVerbatim}
+$C = \begin{pNiceMatrix}
+h & i & j & k & l & m \\
+x & \Ldots & \Ldots  & \Ldots & \Ldots & x \\
+\end{pNiceMatrix}$
+
+\bigskip
+On pourrait toutefois préférer la géométrie de la première matrice $A$ et vouloir avoir la même géométrie avec une
+ligne en pointillés continue dans la seconde rangée. C'est possible en utilisant l'option |nullify-dots| (et une
+seule instruction |\Ldots| suffit).\par\nobreak
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=10cm]
+$D = \begin{pNiceMatrix}[~emphase#nullify-dots@]
+h & i & j & k & l & m \\
+x & \Ldots & & & & x \\
+\end{pNiceMatrix}$
+\end{BVerbatim}
+$D = \begin{pNiceMatrix}[nullify-dots]
+h & i & j & k & l & m \\
+x & \Ldots & &  &  & x \\
+\end{pNiceMatrix}$
+
+\medskip
+L'option |nullify-dots| «smashe» les instructions |\Ldots| (et ses variantes) horizontalement mais aussi
+verticalement.
+
+\medskip
+{\bfseries Il doit n'y avoir aucun espace devant le crochet ouvrant (|[|) des options de l'environnement.}
+
+\subsection{La commande \textbackslash Hdotsfor}
+
+Certaines personnes utilisent habituellement la commande |\hdotsfor| de l'extension \pkg{amsmath} pour tracer des
+lignes en pointillés horizontales dans une matrice. Dans les environnements de \pkg{nicematrix}, il convient
+d'utiliser |\Hdotsfor| à la place pour avoir les lignes en pointillés similaires à toutes celles tracées par
+l'extension \pkg{nicematrix}.
+
+Comme avec les autres commandes de \pkg{nicematrix} (comme |\Cdots|, |\Ldots|, |\Vdots|, etc.), la ligne en
+pointillés tracée par |\Hdotsfor| s'étend jusqu'au contenu des cases de part et d'autre.
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=7cm]
+$\begin{pNiceMatrix}
+1 & 2 & 3 & 4 & 5 \\
+1 & ~emphase#\Hdotsfor{3}@ & 5 \\
+1 & 2 & 3 & 4 & 5 \\
+1 & 2 & 3 & 4 & 5 
+\end{pNiceMatrix}$
+\end{BVerbatim}
+$\begin{pNiceMatrix}
+1 & 2 & 3 & 4 & 5 \\
+1 & \Hdotsfor{3} & 5 \\
+1 & 2 & 3 & 4 & 5 \\
+1 & 2 & 3 & 4 & 5 
+\end{pNiceMatrix}$
+
+\bigskip
+Néanmoins, si ces cases sont vides, la ligne en pointillés s'étend seulement dans les cases spécifiées par
+l'argument de |\Hdotsfor| (par conception).
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=7cm]
+$\begin{pNiceMatrix}
+1 & 2 & 3 & 4 & 5 \\
+  & ~emphase#\Hdotsfor{3}@ \\
+1 & 2 & 3 & 4 & 5 \\
+1 & 2 & 3 & 4 & 5 \\
+\end{pNiceMatrix}$
+\end{BVerbatim}
+$\begin{pNiceMatrix}
+1 & 2 & 3 & 4 & 5 \\
+  & \Hdotsfor{3} \\
+1 & 2 & 3 & 4 & 5 \\
+1 & 2 & 3 & 4 & 5 
+\end{pNiceMatrix}$
+
+\bigskip
+La commande |\hdotsfor| de \pkg{amsmath} prend un argument optionnel (entre crochets) qui est utilisé pour un
+réglage fin de l'espace entre deux points consécutifs. Par homogénéité, |\Hdotsfor| prend aussi un argument
+optionnel mais cet argument est écarté silencieusement.
+
+Remarque : Contrairement à la commande |\hdotsfor| de \pkg{amsmath}, la commande |\Hdotsfor| est utilisable lorsque
+l'extension \pkg{colortbl} est chargée (mais vous risquez d'avoir des problèmes si vous utilisez |\rowcolor| sur la
+même rangée que |\Hdotsfor|).
+
+\subsection{Comment créer les lignes en pointillés de manière transparente}
+
+L'extension \pkg{nicematrix} fournit une option appelée |transparent| qui permet d'utiliser du code existant de
+manière transparente dans les environnements de l'\pkg{amsmath} : |{matrix}|, |{pmatrix}|, etc. En fait, cette
+option est un alias pour la conjonction de deux options : |renew-dots| et |renew-matrix|.\footnote{Comme toutes les
+  autres options, les options |renew-dots|, |renew-matrix| et |transparent| peuvent être fixées avec la commande
+  |\NiceMatrixOptions|, mais elles peuvent aussi être passées en option du |\usepackage| (ce sont les trois
+  seules).}
+
+\smallskip
+
+\begin{itemize}
+\item L'option |renew-dots|\par\nobreak 
+
+Avec cette option, les commandes |\ldots|, |\cdots|, |\vdots|, |\ddots|, |\iddots|\footnotemark[\thefniddots] et
+|\hdotsfor| sont redéfinies dans les environnements de \pkg{nicematrix} et agissent alors comme |\Ldots|, |\Cdots|,
+|\Vdots|, |\Ddots|, |\Iddots| et |\Hdotsfor| ; la commande |\dots| (points de suspension «automatiques» de
+|amsmath|) est aussi redéfinie et se comporte comme |\Ldots|.
+
+\item L'option |renew-matrix|\par\nobreak 
+
+Avec cette option, l'environnement |{matrix}| est redéfini et se comporte comme |{NiceMatrix}| et il en est de même
+pour les cinq variantes.
+\end{itemize}
+
+\bigskip 
+Par conséquent, avec l'option |transparent|, un code classique donne directement le résultat fourni par
+\pkg{nicematrix}.\par\nobreak
+
+\bigskip
+\begin{scope}
+\NiceMatrixOptions{transparent}
+\begin{BVerbatim}[baseline=c,boxwidth=10cm]
+~emphase#\NiceMatrixOptions{transparent}@
+\begin{pmatrix}
+1      & \cdots & \cdots & 1      \\
+0      & \ddots &        & \vdots \\
+\vdots & \ddots & \ddots & \vdots \\
+0      & \cdots & 0      & 1
+\end{pmatrix}
+\end{BVerbatim}
+$\begin{pmatrix}
+1      & \cdots & \cdots & 1      \\
+0      & \ddots &        & \vdots \\
+\vdots & \ddots & \ddots & \vdots \\
+0      & \cdots & 0      & 1
+\end{pmatrix}$
+\end{scope}
+
+
+\subsection{Personnalisation des lignes en pointillés}
+
+
+\label{customization}
+Les lignes pointillées tracées par |\Ldots|, |\Cdots|, |\Vdots|, |\Ddots|, |\Idots| et |\Hdotsfor| (ainsi que par la
+commande |\line| dans le |code-after| décrite p.~\pageref{line-in-code-after}) peuvent être
+paramétrées par trois options (que l'on met entre crochets après la commande) :
+%
+\begin{itemize}
+\item |color| ;
+\item |shorten| ; 
+\item |line-style|.
+\end{itemize}
+
+Ces options peuvent aussi être fixées avec |\NiceMatrixOption| ou bien au niveau d'un environnement mais elles
+doivent alors être préfixées par |xdots|, ce qui fait que leurs noms deviennent :
+%
+\begin{itemize}
+\item |xdots/color| ;
+\item |xdots/shorten| ; 
+\item |xdots/line-style|.
+\end{itemize}
+%
+Pour la clarté, dans la suite, on utilisera ces noms-là.
+
+\bigskip
+\textbf{L'option xdots/color}\par\nobreak
+
+\smallskip
+L'option |xdots/color| indique bien entendu la couleur de la ligne tracée. On remarquera néanmoins que les lignes
+tracées dans les rangées et colonnes extérieures (décrites plus loin) bénificient d'un régime spécial : cf.
+p.~\pageref{exterior}.
+
+
+\bigskip
+\textbf{L'option xdots/shorten}\par\nobreak
+
+\smallskip
+L'option |xdots/shorten| indique la marge qui est laissée aux deux extrémités de la ligne. Le nom s'inspire des options
+«|shorten >|» et «|shorten <|» de Tikz, mais il faut remarquer que \pkg{nicematrix} ne propose que |xdots/shorten|.
+La valeur initiale de ce paramètre est de $0.3$~em (il est conseillé d'utiliser une unité de mesure dépendante de
+la fonte courante).
+
+
+\bigskip
+\textbf{L'option xdots/line-style}\par\nobreak
+
+\smallskip
+Il faut savoir que, par défaut, les lignes de Tikz tracées avec le paramètre |dotted| sont composées de points
+carrés et non pas ronds.\footnote{La raison de départ est que le format \textsc{pdf} comporte un système de description
+  de lignes en tiretés, qui, puisqu'il est incorporé dans le \textsc{pdf}, est affiché très rapidement par les
+  lecteurs de \textsc{pdf}. Il est facile à partir de ce type de ligne de créer des lignes de points carrés alors
+  qu'une ligne de points ronds doit être construite explicitement point par point.}
+
+\begin{BVerbatim}[baseline=c,boxwidth=9cm]
+\tikz \draw [dotted] (0,0) -- (5,0) ;
+\end{BVerbatim}
+\tikz \draw [dotted] (0,0) -- (5,0) ;
+
+\bigskip
+Voulant proposer des lignes avec des points ronds dans le style de celui de |\ldots| (au moins celui des fontes
+\emph{Computer Modern}), l'extension \pkg{nicematrix} contient en interne son propre système de ligne en pointillés
+(qui, au passage n'utilise que \pkg{pgf} et non \pkg{tikz}). Ce style est appelé le style |standard|. Cette valeur
+est la valeur initiale du paramètre |xdots/line-style|.
+
+\bigskip
+Néanmoins (quand Tikz est chargé), on peut utiliser pour |xdots/line-style| n'importe quel style proposé par Tikz,
+c'est-à-dire n'importe quelle suite d'options Tikz applicables à un chemin (à l'exception de «|color|», 
+«|shorten >|» et «|shorten <|»). 
+
+\medskip
+Voici par exemple une matrice tridiagonale avec le style |loosely dotted| :\par\nobreak
+
+\medskip
+\begin{BVerbatim}[baseline=c]
+$\begin{pNiceMatrix}[nullify-dots,~emphase#xdots/line-style=loosely dotted@]
+a      & b      & 0      &        & \Cdots & 0      \\ 
+b      & a      & b      & \Ddots &        & \Vdots \\
+0      & b      & a      & \Ddots &        &        \\
+       & \Ddots & \Ddots & \Ddots &        & 0      \\
+\Vdots &        &        &        &        & b      \\
+0      & \Cdots &        & 0      & b      & a
+\end{pNiceMatrix}$
+\end{BVerbatim}
+
+
+\[\begin{pNiceMatrix}[nullify-dots,xdots/line-style=loosely dotted]
+a      & b      & 0      &        & \Cdots & 0      \\ 
+b      & a      & b      & \Ddots &        & \Vdots \\
+0      & b      & a      & \Ddots &        &        \\
+       & \Ddots & \Ddots & \Ddots &        & 0      \\
+\Vdots &        &        &        &        & b      \\
+0      & \Cdots &        & 0      & b      & a
+\end{pNiceMatrix}\]
+
+
+\section{Les nœuds PGF-Tikz créés par l'extension nicematrix}
+
+\label{name}
+
+L'extension \pkg{nicematrix} crée un nœud PGF-Tikz pour chaque case (non vide) du tableau considéré. Ces nœuds sont
+utilisés pour tracer les lignes en pointillés entre les cases du tableau. Toutefois, l'utilisateur peut aussi
+utiliser directement ces nœuds (s'il a chargé Tikz\footnote{On rappelle que depuis la version 3.13,
+  \pkg{nicematrix} ne charge plus Tikz par défaut, mais seulement \textsc{pgf} (Tikz est une surcouche de
+  \textsc{pgf}).}). On commence par donner un nom au tableau (avec l'option |name|). Cela étant fait, les nœuds
+sont accessibles à travers les noms «\textsl{nom}-$i$-$j$» où \textsl{nom} est le nom donné au tableau et $i$ et
+$j$ les numéros de rangée et de colonne de la case considérée.
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=11cm]
+$\begin{pNiceMatrix}[name=~emphase#ma-matrice@]
+1 & 2 & 3 \\
+4 & 5 & 6 \\
+7 & 8 & 9 
+\end{pNiceMatrix}$
+\tikz[remember picture,overlay] 
+     \draw ~emphase#(ma-matrice-2-2)@ circle (2mm) ; 
+\end{BVerbatim}
+$\begin{pNiceMatrix}[name=ma-matrice]
+1 & 2 & 3 \\
+4 & 5 & 6 \\
+7 & 8 & 9 
+\end{pNiceMatrix}$
+\tikz[remember picture,overlay] 
+     \draw (ma-matrice-2-2) circle (2mm) ; 
+
+\medskip
+Ne pas oublier les options |remember picture| et |overlay|.
+
+\bigskip
+Dans l'exemple suivant, nous avons surligné toutes les cases de la matrice.
+\[\begin{pNiceMatrix}[
+ code-after = {\begin{tikzpicture}
+                  [every node/.style = {blend mode = multiply,
+                                        inner sep = 0 pt ,
+                                        fill = red!15}]
+               \node [fit = (1-1)] {} ;
+               \node [fit = (1-3)] {} ;
+               \node [fit = (2-2)] {} ;
+               \node [fit = (3-1)] {} ;
+               \node [fit = (3-3)] {} ;
+               \node [fit = (1-2)] {} ;
+               \node [fit = (2-1)] {} ;
+               \node [fit = (2-3)] {} ;
+               \node [fit = (3-2)] {} ;
+               \end{tikzpicture}}]
+a & a + b & a + b + c \\
+a & a     & a + b  \\
+a & a     & a 
+\end{pNiceMatrix}\]
+
+
+\bigskip
+En fait, l'extension \pkg{nicematrix} peut créer deux séries de nœuds supplémentaires (\emph{extra nodes} en
+anglais) : les «nœuds moyens» (\emph{medium nodes} en anglais) et les «nœuds larges» (\emph{large nodes} en
+anglais). Les premiers sont créés avec l'option |create-medium-nodes| et les seconds avec l'option
+|create-large-nodes|.\footnote{Il existe aussi l'option |create-extra-nodes| qui est un alias pour la conjonction
+de |create-medium-nodes| et |create-large-nodes|.}
+
+\medskip
+Les noms des «nœuds moyens» s'obtiennent en ajoutant le suffixe «|-medium|» au nom des nœuds normaux. Dans
+l'exemple suivant, on a surligné tous les «nœuds moyens». Nous considérons que cet exemple se suffit à lui-même
+comme définition de ces nœuds.
+\[\begin{pNiceMatrix}[
+ create-medium-nodes,
+ code-after = {\begin{tikzpicture}
+                  [every node/.style = {fill = red!15,
+                                        blend mode = multiply,
+                                        inner sep = 0 pt},
+                   name suffix = -medium]
+               \node [fit = (1-1)] {} ;
+               \node [fit = (1-2)] {} ;
+               \node [fit = (1-3)] {} ;
+               \node [fit = (2-1)] {} ;
+               \node [fit = (2-2)] {} ;
+               \node [fit = (2-3)] {} ;
+               \node [fit = (3-1)] {} ;
+               \node [fit = (3-2)] {} ;
+               \node [fit = (3-3)] {} ;
+               \end{tikzpicture}}]
+a & a + b & a + b + c \\
+a & a     & a + b  \\
+a & a     & a 
+\end{pNiceMatrix}\]
+
+
+\medskip
+Les noms des «nœuds larges» s'obtiennent en ajoutant le suffixe «|-large|» au nom des nœuds normaux. Dans l'exemple
+suivant, on a surligné tous les «nœuds larges». Nous considérons que cet exemple se suffit à lui-même comme
+définition de ces nœuds.\footnote{Il n'y a pas de «nœuds larges» créés dans les rangées et colonnes extérieures
+  (pour ces rangées et colonnes, voir p.~\pageref{exterior}).}
+
+\[\begin{pNiceMatrix}[
+ create-large-nodes,
+ code-after = {\begin{tikzpicture}
+                  [every node/.style = {blend mode = multiply,
+                                        inner sep = 0 pt},
+                   name suffix = -large]
+               \node [fit = (1-1),fill = red!15] {} ;
+               \node [fit = (1-3),fill = red!15] {} ;
+               \node [fit = (2-2),fill = red!15] {} ;
+               \node [fit = (3-1),fill = red!15] {} ;
+               \node [fit = (3-3),fill = red!15] {} ;
+               \node [fit = (1-2),fill = blue!15] {} ;
+               \node [fit = (2-1),fill = blue!15] {} ;
+               \node [fit = (2-3),fill = blue!15] {} ;
+               \node [fit = (3-2),fill = blue!15] {} ;
+               \end{tikzpicture}}]
+a & a + b & a + b + c \\
+a & a     & a + b  \\
+a & a     & a 
+\end{pNiceMatrix}\]
+
+
+\medskip
+Les «nœuds larges» de la première colonne et de la dernière colonne peuvent apparaître trop petits pour certains
+usages. C'est pourquoi il est possible d'utiliser les options |left-margin| et |right-margin| pour ajouter de
+l'espace des deux côtés du tableau et aussi de l'espace dans les «nœuds larges» de la première colonne et de la
+dernière colonne. Dans l'exemple suivant, nous avons utilisé les options |left-margin| et
+|right-margin|.\footnote{Les options |left-margin| et |right-margin| prennent des dimensions comme valeurs mais, si
+  aucune valeur n'est donnée, c'est la valeur par défaut qui est utilisée et elle est égale à |\arraycolsep| (par
+  défaut, 5~pt).Il existe aussi une option |margin| pour fixer à la fois |left-margin| et |right-margin|.}
+\[\begin{pNiceMatrix}[
+ create-large-nodes,left-margin,right-margin,
+ code-after = {\begin{tikzpicture}
+                  [every node/.style = {blend mode = multiply,
+                                        inner sep = 0 pt},
+                   name suffix = -large]
+               \node [fit = (1-1),fill = red!15] {} ;
+               \node [fit = (1-3),fill = red!15] {} ;
+               \node [fit = (2-2),fill = red!15] {} ;
+               \node [fit = (3-1),fill = red!15] {} ;
+               \node [fit = (3-3),fill = red!15] {} ;
+               \node [fit = (1-2),fill = blue!15] {} ;
+               \node [fit = (2-1),fill = blue!15] {} ;
+               \node [fit = (2-3),fill = blue!15] {} ;
+               \node [fit = (3-2),fill = blue!15] {} ;
+               \end{tikzpicture}}]
+a & a + b & a + b + c \\
+a & a     & a + b  \\
+a & a     & a 
+\end{pNiceMatrix}\]
+
+\medskip
+Il est aussi possible d'ajouter de l'espace sur les côtés du tableau avec les options |extra-left-margin| et
+|extra-right-margin|. Ces marges ne sont pas incorporées dans les «nœuds larges». Dans l'exemple suivant, nous
+avons utilisé |extra-left-margin| et |extra-right-margin| avec la valeur $3$~pt.
+\[\begin{pNiceMatrix}[
+ create-large-nodes,left-margin,right-margin,extra-right-margin=3pt,extra-left-margin=3pt,
+ code-after = {\begin{tikzpicture}
+                  [every node/.style = {blend mode = multiply,
+                                        inner sep = 0 pt},
+                   name suffix = -large]
+               \node [fit = (1-1),fill = red!15] {} ;
+               \node [fit = (1-3),fill = red!15] {} ;
+               \node [fit = (2-2),fill = red!15] {} ;
+               \node [fit = (3-1),fill = red!15] {} ;
+               \node [fit = (3-3),fill = red!15] {} ;
+               \node [fit = (1-2),fill = blue!15] {} ;
+               \node [fit = (2-1),fill = blue!15] {} ;
+               \node [fit = (2-3),fill = blue!15] {} ;
+               \node [fit = (3-2),fill = blue!15] {} ;
+               \end{tikzpicture}}]
+a & a + b & a + b + c \\
+a & a     & a + b  \\
+a & a     & a 
+\end{pNiceMatrix}\]
+
+\medskip
+Dans le cas présent, si on veut un contrôle sur la hauteur des rangées, on peut ajouter un |\strut| dans chaque
+rangée du tableau.
+\[\begin{pNiceMatrix}[
+ create-large-nodes,left-margin,right-margin,extra-right-margin=3pt,extra-left-margin=3pt,
+ code-after = {\begin{tikzpicture}
+                  [every node/.style = {blend mode = multiply,
+                                        inner sep = 0 pt},
+                   name suffix = -large]
+               \node [fit = (1-1),fill = red!15] {} ;
+               \node [fit = (1-3),fill = red!15] {} ;
+               \node [fit = (2-2),fill = red!15] {} ;
+               \node [fit = (3-1),fill = red!15] {} ;
+               \node [fit = (3-3),fill = red!15] {} ;
+               \node [fit = (1-2),fill = blue!15] {} ;
+               \node [fit = (2-1),fill = blue!15] {} ;
+               \node [fit = (2-3),fill = blue!15] {} ;
+               \node [fit = (3-2),fill = blue!15] {} ;
+               \end{tikzpicture}}]
+\strut a & a + b & a + b + c \\
+\strut a & a     & a + b  \\
+\strut a & a     & a 
+\end{pNiceMatrix}\]
+
+\bigskip
+On explique plus loin comment surligner les nœuds créés par Tikz (cf. p. \pageref{highlight}).
+
+\section{Le code-after}
+
+\label{code-after}
+
+L'option |code-after| peut être utilisée pour indiquer du code qui sera exécuté après la construction de la matrice,
+et donc, en particulier, après la construction de tous les nœuds.
+
+\textbf{Si on a chargé Tikz}\footnote{On rappelle que depuis la version 3.13, \pkg{nicematrix} ne charge plus Tikz
+  par défaut, mais seulement \textsc{pgf} (Tikz est une surcouche de \textsc{pgf}).}, on peut accéder à ces nœuds
+avec des instructions Tikz classiques. Les nœuds devront être désignés sous la forme $i$-$j$ (sans le préfixe
+correspondant au nom de l'environnement).
+
+De plus, une commande spéciale, nommée |\line| est disponible pour tracer directement des lignes en pointillés
+entre les nœuds).
+\label{line-in-code-after}
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=13cm]
+$\begin{pNiceMatrix}[~emphase#code-after = {\line{1-1}{3-3}[color=blue]}@]
+0 & 0 & 0 \\
+0 &   & 0 \\
+0 & 0 & 0 
+\end{pNiceMatrix}$
+\end{BVerbatim}
+$\begin{pNiceMatrix}[code-after = {\line{1-1}{3-3}[color=blue]}]
+0 & 0 & 0 \\
+0 &   & 0 \\
+0 & 0 & 0 
+\end{pNiceMatrix}$
+
+\section{L'environnement \{NiceArray\}}
+\label{NiceArray}
+
+L'environnement |{NiceArray}| est similaire à l'environnement |{array}|. Comme pour |{array}|, l'argument
+obligatoire est le préambule du tableau. Néanmoins, pour des raisons techniques, l'utilisateur doit utiliser les
+lettres |L|, |C| et |R|\footnote{Les types de colonnes |L|, |C| et |R| sont définis localement à l'intérieur de
+  |{NiceArray}| avec la commande |\newcolumntype| de \pkg{array}. Cette définition masque une éventuelle définition
+  précédente. En fait, les types de colonnes |w| et |W| sont également redéfinis.} au lieu de |l|, |c| et |r|.
+
+Il est possible d'utiliser les constructions |w{...}{...}|, |W{...}{...}|, \verb+|+, |>{...}|, |<{...}|, |@{...}|,
+|!{...}| et |*{n}{...}| mais les lettres |p|, |m| et |b| ne doivent pas être employées.\footnote{Dans une commande
+  |\multicolumn|, on doit également utiliser les lettres |L|, |C| et |R|.}
+
+\medskip
+En plus des options proposées pour |{pNiceMatrix}| et ses variantes, l'environnement |{NiceArray}| propose une
+option |baseline| qui prend en argument un entier qui indique le numéro de rangée dont la ligne de base servira de
+ligne de base pour l'environnement |{NiceArray}|.
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=11cm]
+$A = 
+\begin{NiceArray}{CCCC}[hvlines,~emphase#baseline=2@]
+1 & 2 & 3 & 4 \\
+1 & 2 & 3 & 4 \\
+1 & 2 & 3 & 4 \\
+\end{NiceArray}$
+\end{BVerbatim}
+%
+$A = 
+\begin{NiceArray}{CCCC}[hvlines,baseline=2]
+1 & 2 & 3 & 4 \\
+1 & 2 & 3 & 4 \\
+1 & 2 & 3 & 4 \\
+\end{NiceArray}$
+
+\smallskip
+L'option |hvlines| utilisée dans cet exemple est présentée plus loin (cf. p. \pageref{hvlines}).
+
+\medskip
+L'option |baseline| peut aussi prendre les trois valeurs spéciales |t|, |c| et |b|. Ces trois lettres peuvent aussi
+être utilisées de manière absolue comme pour l'option de l'environnement |{array}| de \pkg{array}. La valeur
+initiale de |baseline| est~|c|.
+
+
+\medskip
+Dans l'exemple suivant, on utilise l'option |t| (synonyme de |baseline=t|) immédiatement après un |\item| de liste.
+On remarquera que la présence d'un |\hline| initial n'empêche pas l'alignement sur la ligne de base de la première
+rangée (avec |{array}| de {array}, il faut utiliser |\firsthline|\footnote{On peut aussi utiliser |\firsthline|
+  avec |{NiceArray}|.}).
+
+\smallskip
+\begin{BVerbatim}[baseline=c,boxwidth=9cm]
+\begin{enumerate}
+\item un item
+\smallskip
+\item \renewcommand{\arraystretch}{1.2}
+$\begin{NiceArray}[t]{LCCCCCC}
+\hline
+n   & 0 & 1 & 2 & 3 & 4  & 5 \\
+u_n & 1 & 2 & 4 & 8 & 16 & 32 
+\hline
+\end{NiceArray}$
+\end{enumerate}
+\end{BVerbatim}
+%
+\begin{minipage}{5cm}
+\begin{enumerate}
+\item un item
+\smallskip
+\item \renewcommand{\arraystretch}{1.2}
+$\begin{NiceArray}[t]{LCCCCCC}
+\hline
+n   & 0 & 1 & 2 & 3 & 4  & 5  \\
+u_n & 1 & 2 & 4 & 8 & 16 & 32 \\
+\hline
+\end{NiceArray}$
+\end{enumerate}
+\end{minipage}
+
+
+\medskip
+Il est également possible d'utiliser les outils de \pkg{booktabs}: |\toprule|,
+|\bottomrule| et |\midrule|.\par\nobreak
+
+\smallskip
+\begin{BVerbatim}[baseline=c,boxwidth=9cm]
+\begin{enumerate}
+\item an item
+\smallskip
+\item 
+$\begin{NiceArray}[t]{LCCCCCC}
+~emphase#\toprule@
+n   & 0 & 1 & 2 & 3 & 4  & 5 \\
+~emphase#\midrule@
+u_n & 1 & 2 & 4 & 8 & 16 & 32 
+~emphase#\bottomrule@
+\end{NiceArray}$
+\end{enumerate}
+\end{BVerbatim}
+\begin{minipage}{5cm}
+\begin{enumerate}
+\item an item
+\smallskip
+\item 
+$\begin{NiceArray}[t]{LCCCCCC}
+\toprule
+n   & 0 & 1 & 2 & 3 & 4  & 5  \\
+\midrule
+u_n & 1 & 2 & 4 & 8 & 16 & 32 \\
+\bottomrule
+\end{NiceArray}$
+\end{enumerate}
+\end{minipage}
+
+
+
+
+\vspace{1cm}
+L'utilisation de |{NiceArray}| permet de tracer des filets verticaux :\par\nobreak
+
+\bigskip
+\begin{BVerbatim}[baseline=c,boxwidth=10cm]
+$\left[\begin{NiceArray}{CCCC|C}
+a_1    & ?      & \Cdots & ?       & ?     \\
+0      &        & \Ddots & \Vdots  & \Vdots\\
+\Vdots & \Ddots & \Ddots & ? \\ 
+0      & \Cdots & 0      & a_n     & ?     
+\end{NiceArray}\right]$
+\end{BVerbatim} 
+$\left[\begin{NiceArray}{CCCC|C}
+a_1    & ?      & \Cdots & ?       & ?     \\
+0      &        & \Ddots & \Vdots  & \Vdots\\
+\Vdots & \Ddots & \Ddots & ? \\ 
+0      & \Cdots & 0      & a_n     & ?     
+\end{NiceArray}\right]$
+
+\vspace{1cm}
+Il existe également des variantes pour l'environnement |{NiceArray}| : |{pNiceArray}|, |{bNiceArray}|,
+|{BNiceArray}|, |{vNiceArray}| et |{VNiceArray}|. La clé |baseline| n'est \emph{pas} disponible pour ces
+environnements. 
+
+
+Dans l'exemple suivant, on utilise un environnement |{pNiceArray}| (on n'utilise pas |{pNiceMatrix}| car on
+souhaite utiliser les types de colonne |L| et |R| --- avec |{pNiceMatrix}|, toutes les colonnes sont de type |C|).
+
+
+\bigskip
+\begin{BVerbatim}[baseline=c,boxwidth=10cm]
+$\begin{pNiceArray}{LCR}
+a_{11}    & \Cdots & a_{1n} \\
+a_{21}    &        & a_{2n} \\
+\Vdots    &        & \Vdots \\
+a_{n-1,1} & \Cdots & a_{n-1,n} 
+\end{pNiceArray}$
+\end{BVerbatim}
+$\begin{pNiceArray}{LCR}
+a_{11}    & \Cdots & a_{1n} \\
+a_{21}    &        & a_{2n} \\
+\Vdots    &        & \Vdots \\
+a_{n-1,1} & \Cdots & a_{n-1,n} 
+\end{pNiceArray}$
+
+
+\bigskip
+\bigskip
+En fait, l'environnement |{pNiceArray}| et ses variantes sont fondés sur un environnement plus général, appelé
+|{NiceArrayWithDelims}|. Les deux premiers arguments obligatoires de cet environnement sont les délimiteurs gauche
+et droit qui seront utilisés dans la construction de la matrice. Il est possible d'utiliser |{NiceArrayWithDelims}|
+si on a besoin de délimiteurs atypiques ou asymétriques.
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=11cm]
+$\begin{~emphase#NiceArrayWithDelims@}
+   {\downarrow}{\uparrow}{CCC}[margin]
+1 & 2 & 3 \\
+4 & 5 & 6 \\
+7 & 8 & 9 \\
+\end{~emphase#NiceArrayWithDelims@}$
+\end{BVerbatim}
+$\begin{NiceArrayWithDelims}
+   {\downarrow}{\uparrow}{CCC}[margin]
+1 & 2 & 3 \\
+4 & 5 & 6 \\
+7 & 8 & 9 \\
+\end{NiceArrayWithDelims}$
+
+
+
+\bigskip
+\section{Les rangées et colonnes extérieures}
+Les environnements de \pkg{nicematrix} permettent de composer des rangées et des colonnes «extérieures» grâce aux options
+|first-row|, |last-row|, |first-col| et |last-col|.
+\label{exterior}
+
+Si elle est présente, la «première rangée» (extérieure) est numérotée par $0$ (et non $1$). Il en est de même pour
+la «première rangée». 
+
+\begin{Verbatim}
+$\begin{pNiceMatrix}[~emphase#first-row,last-row,first-col,last-col@,nullify-dots]
+       & C_1    & \Cdots &        & C_4    &        \\
+L_1    & a_{11} & a_{12} & a_{13} & a_{14} & L_1    \\
+\Vdots & a_{21} & a_{22} & a_{23} & a_{24} & \Vdots \\
+       & a_{31} & a_{32} & a_{33} & a_{34} &        \\
+L_4    & a_{41} & a_{42} & a_{43} & a_{44} & L_4    \\
+       & C_1    & \Cdots &        & C_4    &     
+\end{pNiceMatrix}$
+\end{Verbatim}
+%
+\[\begin{pNiceMatrix}[first-row,last-row,first-col,last-col,nullify-dots]
+       & C_1    & \Cdots &        & C_4    &        \\
+L_1    & a_{11} & a_{12} & a_{13} & a_{14} & L_1    \\
+\Vdots & a_{21} & a_{22} & a_{23} & a_{24} & \Vdots \\
+       & a_{31} & a_{32} & a_{33} & a_{34} &        \\
+L_4    & a_{41} & a_{42} & a_{43} & a_{44} & L_4    \\
+       & C_1    & \Cdots &        & C_4    &     
+\end{pNiceMatrix}\]
+
+\bigskip
+Il y a plusieurs remarques à formuler.
+%
+\begin{itemize}[beginpenalty=10000]
+\item Si on utilise un environnement avec préambule explicite (c'est-à-dire |{NiceArray}| ou l'une de ses
+variantes), on ne doit pas mettre dans ce préambule de spécification de colonne pour les éventuelles première et
+dernière colonne : ce sera automatiquement (et nécessairement) une colonne |R| pour la première colonne et une
+colonne |L| pour la dernière.
+
+\item On peut se demander comment \pkg{nicematrix} détermine le nombre de rangées et de colonnes nécessaires à la
+composition de la «dernière rangée» et de la «dernière colonne».
+
+\begin{itemize}
+\item Dans le cas d'un environnement avec préambule, comme |{NiceArray}| ou |{pNiceArray}|, le nombre de colonnes
+se déduit évidemment du préambule.
+
+\item Dans le cas où l'option |light-syntax| (cf. p. \pageref{light-syntax}) est utilisée, \pkg{nicematrix} profite
+du fait que cette option nécessite de toutes manières le chargement complet du contenu de l'environnement (d'où
+l'impossibilité de mettre du verbatim dans ce cas-là) avant composition du tableau. L'analyse du contenu de
+l'environnement donne le nombre de rangées (mais pas le nombre de colonnes).
+
+\item Dans les autres cas, \pkg{nicematrix} détermine le nombre de rangées et de colonnes à la première compilation
+et l'écrit dans le fichier |.aux| pour pouvoir l'utiliser à la compilation suivante.
+
+\textsl{Néanmoins, il est possible de donner le numéro de la dernière rangée et le numéro de la dernière colonne en
+arguments des options |last-row| et |last-col| pour ce qui permettra d'accélérer le processus complet de
+compilation.} C'est ce que nous ferons dans la suite.
+\end{itemize}
+
+\end{itemize}
+
+
+
+\bigskip
+On peut contrôler l'apparence de ces rangées et colonnes avec les options |code-for-first-row|,
+|code-for-last-row|, |code-for-first-col| et |code-for-last-col|. Ces options sont des listes de tokens qui seront
+insérées au début de chaque case de la rangée ou de la colonne considérée.
+
+\begin{Verbatim}
+\NiceMatrixOptions{~emphase#code-for-first-row@ = \color{red},
+                   ~emphase#code-for-first-col@ = \color{blue},
+                   ~emphase#code-for-last-row@ = \color{green},
+                   ~emphase#code-for-last-col@ = \color{magenta}}
+$\begin{pNiceArray}{CC|CC}[first-row,last-row=6,first-col,last-col,nullify-dots]
+       & C_1    & \Cdots &        & C_4    &        \\
+L_1    & a_{11} & a_{12} & a_{13} & a_{14} & L_1    \\
+\Vdots & a_{21} & a_{22} & a_{23} & a_{24} & \Vdots \\
+\hline
+       & a_{31} & a_{32} & a_{33} & a_{34} &        \\
+L_4    & a_{41} & a_{42} & a_{43} & a_{44} & L_4    \\
+       & C_1    & \Cdots &        & C_4    &     
+\end{pNiceArray}$
+\end{Verbatim}
+%
+\begin{scope}
+\NiceMatrixOptions{code-for-first-row = \color{red},
+                   code-for-first-col = \color{blue},
+                   code-for-last-row = \color{green},
+                   code-for-last-col = \color{magenta}}
+\begin{displaymath}
+\begin{pNiceArray}{CC|CC}[first-row,last-row=5,first-col,last-col,nullify-dots]
+       & C_1    & \multicolumn1C{\Cdots} &        & C_4    &        \\
+L_1    & a_{11} & a_{12} & a_{13} & a_{14} & L_1    \\
+\Vdots & a_{21} & a_{22} & a_{23} & a_{24} & \Vdots \\
+\hline
+       & a_{31} & a_{32} & a_{33} & a_{34} &        \\
+L_4    & a_{41} & a_{42} & a_{43} & a_{44} & L_4    \\
+       & C_1    & \multicolumn1C{\Cdots} &        & C_4    &     
+\end{pNiceArray}
+\end{displaymath}
+\end{scope}
+
+
+
+\emph{Remarques}
+\begin{itemize}[beginpenalty=10000]
+\item Comme on peut le voir dans l'exemple précédent, un filet horizontal (tracé avec |\hline|) ne s'étend pas
+dans les colonnes extérieures et un filet vertical (spécifié par un caractère «\verb+|+» dans le préambule du
+tableau) ne s'étend pas dans les rangées extérieures.\footnote{Ce dernier point n'est pas valable si on a chargé,
+  en plus de \pkg{nicematrix}, l'extension \pkg{arydshln}. Les extensions \pkg{nicematrix} et \pkg{arydshln} ne
+  sont pas parfaitement compatibles car \pkg{arydshln} redéfinit beaucoup de structures internes à \pkg{array}. Par
+ailleurs, si on veut vraiment un filet qui s'étende dans la première et la dernière rangée, on peut utiliser
+|!{\vline}| dans le préambule à la place de \verb+|+.}
+
+Si on veut définir de nouveaux spécificateurs de colonnes pour des filets (par exemple plus épais), on aura
+peut-être intérêt à utiliser la commande |\OnlyMainNiceMatrix| décrite p.~\pageref{OnlyMainNiceMatrix}.
+\item Une spécification de couleur présente dans |code-for-first-row| s'applique à une ligne pointillée tracée
+dans cette «première rangée» (sauf si une valeur a été donnée à |xdots/color|). Idem pour les autres.
+\item Sans surprise, une éventuelle option |columns-width| (décrite p.~\pageref{width}) ne s'applique pas à la
+«première colonne» ni à la «dernière colonne».
+\item Pour des raisons techniques, il n'est pas possible d'utiliser l'option de la commande |\\| après la
+«première rangée» ou avant la «dernière rangée» (le placement des délimiteurs serait erroné).
+\end{itemize}
+
+
+
+
+
+\section[Les lignes en pointillés pour séparer les rangées et les colonnes]{Les lignes en pointillés pour séparer les rangées\\ et les colonnes}
+
+
+Dans les environnements de \pkg{nicematrix}, il est possible d'utiliser la commande |\hdottedline| (fournie
+par \pkg{nicematrix}) qui est l'équivalent pour les pointillés des commandes |\hline| et |\hdashline|
+(cette dernière étant une commande de \pkg{arydshln}).
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=9.5cm]
+\begin{pNiceMatrix}
+1 & 2 & 3 & 4 & 5 \\
+~emphase#\hdottedline@
+6 & 7 & 8 & 9 & 10 \\
+11 & 12 & 13 & 14 & 15 
+\end{pNiceMatrix}
+\end{BVerbatim}
+$\begin{pNiceMatrix}
+1 & 2 & 3 & 4 & 5 \\
+\hdottedline
+6 & 7 & 8 & 9 & 10 \\
+11 & 12 & 13 & 14 & 15 
+\end{pNiceMatrix}$
+
+
+\bigskip
+Dans les environnements avec un préambule explicite (comme |{NiceArray}|, |{pNiceArray}|, etc.), il est possible de
+dessiner un trait vertical en pointillés avec le spécificateur «|:|».
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=9.5cm]
+\begin{pNiceArray}{CCCC~emphase#:@C}
+1 & 2 & 3 & 4 & 5 \\
+6 & 7 & 8 & 9 & 10 \\
+11 & 12 & 13 & 14 & 15 
+\end{pNiceArray}
+\end{BVerbatim}
+$\begin{pNiceArray}{CCCC:C}
+1 & 2 & 3 & 4 & 5 \\
+6 & 7 & 8 & 9 & 10 \\
+11 & 12 & 13 & 14 & 15 
+\end{pNiceArray}$
+
+
+\bigskip
+Ces lignes en pointillés ne s'étendent pas dans les rangées et colonnes extérieures.\par\nobreak
+
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=9.5cm]
+$\begin{pNiceArray}{CCC:C}%
+   [first-row,last-col, 
+    code-for-first-row = \color{blue}\scriptstyle,
+    code-for-last-col = \color{blue}\scriptstyle ]
+C_1 & C_2 & C_3 & C_4 \\
+1 & 2 & 3 & 4 & L_1 \\
+5 & 6 & 7 & 8 & L_2 \\
+9 & 10 & 11 & 12 & L_3 \\
+\hdottedline
+13 & 14 & 15 & 16 & L_4 
+\end{pNiceArray}$
+\end{BVerbatim}
+$\begin{pNiceArray}{CCC:C}%
+   [first-row,last-col, 
+    code-for-first-row = \color{blue}\scriptstyle,
+    code-for-last-col = \color{blue}\scriptstyle ]
+C_1 & C_2 & C_3 & C_4 \\
+1 & 2 & 3 & 4 & L_1 \\
+5 & 6 & 7 & 8 & L_2 \\
+9 & 10 & 11 & 12 & L_3 \\
+\hdottedline
+13 & 14 & 15 & 16 & L_4 
+\end{pNiceArray}$
+
+\bigskip
+Il est possible de changer dans \pkg{nicematrix} la lettre utilisée pour indiquer dans le préambule un trait
+vertical en pointillés avec l'option |letter-for-dotted-lines| disponible dans |\NiceMatrixOptions|. Par exemple,
+dans ce document, nous avons chargé l'extension \pkg{arydshln} qui utilise la lettre «|:|» pour indiquer un trait
+vertical en tiretés. Par conséquent, en utilisant l'option |letter-for-dotted-lines|, on peut utiliser les traits
+verticaux fournis à la fois par \pkg{arydshln} et par \pkg{nicematrix}.
+
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=9.5cm]
+\NiceMatrixOptions{letter-for-dotted-lines = I}
+\arrayrulecolor{blue}
+\begin{pNiceArray}{~emphase#C|C:CIC@}
+1 & 2 & 3 & 4 \\
+5 & 6 & 7 & 8 \\
+9 & 10 & 11 & 12
+\end{pNiceArray}
+\arrayrulecolor{black}
+\end{BVerbatim}
+\begin{scope}
+\arrayrulecolor{blue}
+\NiceMatrixOptions{letter-for-dotted-lines = I}
+$\begin{pNiceArray}{C|C:CIC}
+1 & 2 & 3 & 4 \\
+5 & 6 & 7 & 8 \\
+9 & 10 & 11 & 12
+\end{pNiceArray}$
+\arrayrulecolor{black}
+\end{scope}
+
+\smallskip
+On a utilisé |\arrayrulecolor| de \pkg{colortbl} pour colorier les trois traits.
+
+
+\bigskip
+\emph{Remarque} : Quand l'extension \pkg{array} (sur laquelle s'appuie \pkg{nicematrix}) est chargée, les traits
+verticaux et horizontaux que l'on insère rendent le tableau plus large ou plus long d'une quantité égale à la
+largeur du trait\footnote{En fait, cela est vrai pour |\hline| et «\verb+|+» mais pas pour |\cline|.}. Avec
+\pkg{nicematrix}, les lignes en pointillés tracées par |\hdottedline| et «|:|» ont le même effet.
+
+\section{La largeur des colonnes}
+\label{width}
+
+Dans les environnements avec un préambule explicite (comme |{NiceArray}|, |{pNiceArray}|, etc.), il est possible de
+fixer la largeur d'une colonne avec les lettres classiques |w| et |W| de l'extension \pkg{array}. Dans les
+environnements de \pkg{nicematrix}, les cases des colonnes de ce type sont composées en mode mathématique (alors
+que dans |{array}| de \pkg{array}, elles sont composées en mode texte).
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=10cm]
+$\begin{pNiceArray}{~emphase#Wc{1cm}@CC}
+1  & 12 & -123 \\
+12 & 0  & 0    \\
+4  & 1  & 2 
+\end{pNiceArray}$
+\end{BVerbatim}
+$\begin{pNiceArray}{Wc{1cm}CC}
+1  & 12 & -123 \\
+12 & 0  & 0    \\
+4  & 1  & 2 
+\end{pNiceArray}$
+
+
+\bigskip
+Dans les environnements de \pkg{nicematrix}, il est aussi possible de fixer la largeur \emph{minimale} de toutes
+les colonnes de la matrice directement avec l'option |columns-width|.
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=10cm]
+$\begin{pNiceMatrix}[~emphase#columns-width = 1cm@]
+1  & 12 & -123 \\
+12 & 0  & 0    \\
+4  & 1  & 2 
+\end{pNiceMatrix}$
+\end{BVerbatim}
+$\begin{pNiceMatrix}[columns-width = 1cm]
+1  & 12 & -123 \\
+12 & 0  & 0    \\
+4  & 1  & 2 
+\end{pNiceMatrix}$
+
+\medskip
+Noter que l'espace inséré entre deux colonnes (égal à 2 |\arraycolsep|) n'est pas supprimé (il est évidemment
+possible de le supprimer en mettant |\arraycolsep| à~$0$ avant).
+
+\bigskip
+Il est possible de donner la valeur spéciale |auto| à l'option |columns-width|: toutes les colonnes du tableau
+auront alors une largeur égale à la largeur de la case la plus large du tableau.\footnote{Le résultat est atteint
+  dès la première compilation (mais Tikz écrivant des informations dans le fichier |.aux|, un message demandant une
+  deuxième compilation apparaîtra).}\par\nobreak
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=10cm]
+$\begin{pNiceMatrix}[~emphase#columns-width = auto@]
+1  & 12 & -123 \\
+12 & 0  & 0    \\
+4  & 1  & 2 
+\end{pNiceMatrix}$
+\end{BVerbatim}
+$\begin{pNiceMatrix}[columns-width = auto]
+1  & 12 & -123 \\
+12 & 0  & 0    \\
+4  & 1  & 2 
+\end{pNiceMatrix}$
+
+\bigskip
+Sans surprise, il est possible de fixer la largeur minimale de toutes les colonnes de toutes les matrices dans une
+certaine portion de document avec la commande |\NiceMatrixOptions|.\par\nobreak
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=8.5cm]
+~emphase#\NiceMatrixOptions{columns-width=10mm}@
+$\begin{pNiceMatrix}
+a & b \\ c & d 
+\end{pNiceMatrix}
+= 
+\begin{pNiceMatrix}
+1   & 1245 \\ 345 & 2 
+\end{pNiceMatrix}$
+\end{BVerbatim}
+\begin{scope}
+\NiceMatrixOptions{columns-width=10mm}
+$\begin{pNiceMatrix}
+a & b \\
+c & d 
+\end{pNiceMatrix}
+= 
+\begin{pNiceMatrix}
+1   & 1245 \\
+345 & 2 
+\end{pNiceMatrix}$
+\end{scope}
+
+
+\bigskip
+Mais il est aussi possible de fixer une zone dans laquelle toutes les matrices auront leurs colonnes de la même
+largeur, égale à la largeur de la case la plus large de toutes les matrices de la zone. Cette construction utilise
+l'environnement |{NiceMatrixBlock}| avec l'option |auto-columns-width|\footnote{Pour le moment, c'est le seul
+  usage de l'environnement |{NiceMatrixBlock}| mais il pourrait y en avoir davantage dans le futur.}.
+L'environnement |{NiceMatrixBlock}| n'a pas de rapport direct avec la commande |\Block| présentée juste ci-dessous
+(cf.~p.~\pageref{Block}). 
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=8.5cm]
+~emphase#\begin{NiceMatrixBlock}[auto-columns-width]@
+$\begin{pNiceMatrix}
+a & b \\ c & d 
+\end{pNiceMatrix}
+= 
+\begin{pNiceMatrix}
+1   & 1245 \\ 345 & 2 
+\end{pNiceMatrix}$
+~emphase#\end{NiceMatrixBlock}@
+\end{BVerbatim}
+\begin{NiceMatrixBlock}[auto-columns-width]
+$\begin{pNiceMatrix}
+ a & b \\ c & d 
+ \end{pNiceMatrix}
+= 
+ \begin{pNiceMatrix}
+ 1   & 1245 \\  345 & 2 
+\end{pNiceMatrix}$
+\end{NiceMatrixBlock}
+
+\medskip
+\textbf{Plusieurs compilations peuvent être nécessaires pour obtenir le résultat désiré.} 
+
+\section{Les matrices par blocs}
+
+\label{Block}
+
+Cette partie, qui introduit une commande |\Block|, n'a pas de rapport direct avec l'environnement
+|{NiceMatrixBlock}| présenté dans la section précédente.
+
+\smallskip
+Dans les environnements de \pkg{nicematrix}, on peut utiliser la commande |\Block| pour placer un élément au centre
+d'un rectangle de cases fusionnées.
+
+La commande |\Block| doit être utilisée dans la case supérieure gauche du bloc avec deux arguments. Le premier
+argument est la taille de ce bloc avec la syntaxe $i$-$j$ où $i$ est le nombre de rangées et $j$ le nombre de
+colonnes du bloc. Le deuxième argument, est, sans surprise, le contenu du bloc (en mode mathématique). Un nœud Tikz
+correspondant à l'ensemble des cases fusionnées est créé sous le nom «$i$-$j$-block» où \textsl{nom} est le
+nom donné au tableau. Si on a demandé la création des nœuds |medium|, alors un nœud de ce type est aussi créé pour
+ce bloc avec un nom suffixé par |-medium|.
+
+\medskip
+Dans les exemples qui suivent, on utilise la commande |\arrayrulecolor| de \pkg{colortbl}.
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=10.6cm]
+\arrayrulecolor{cyan}
+$\begin{bNiceArray}{CCC|C}[margin]
+~emphase#\Block{3-3}{A}@ & & & 0 \\
+& \hspace*{1cm} & & \Vdots \\
+& & & 0 \\
+\hline
+0 & \Cdots& 0 & 0
+\end{bNiceArray}$
+\arrayrulecolor{black}
+\end{BVerbatim}
+\begin{scope}
+\arrayrulecolor{cyan}
+$\begin{bNiceArray}{CCC|C}[margin]
+\Block{3-3}{A} & & & 0 \\
+& \hspace*{1cm} & & \Vdots \\
+& & & 0 \\
+\hline
+0 & \Cdots& 0 & 0
+\end{bNiceArray}$
+\arrayrulecolor{black}
+\end{scope}
+
+\bigskip
+On peut souhaiter agrandir la taille du «$A$» placé dans le bloc de l'exemple précédent. Comme il est composé en
+mode mathématique, on ne peut pas directement utiliser une commande comme |\large|, |\Large| ou |\LARGE|. C'est
+pourquoi une option à mettre entre chevrons est proposée par |\Block| pour spécifier du code LaTeX qui sera inséré
+\emph{avant} le début du mode mathématique.
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=10.6cm]
+\arrayrulecolor{cyan}
+$\begin{bNiceArray}{CCC|C}[margin]
+\Block{3-3}~emphase#<\Large>@{A} & & & 0 \\
+& \hspace*{1cm} & & \Vdots \\
+& & & 0 \\
+\hline
+0 & \Cdots& 0 & 0
+\end{bNiceArray}$
+\arrayrulecolor{black}
+\end{BVerbatim}
+\begin{scope}
+\arrayrulecolor{cyan}
+$\begin{bNiceArray}{CCC|C}[margin]
+\Block{3-3}<\Large>{A} & & & 0 \\
+& \hspace*{1cm} & & \Vdots \\
+& & & 0 \\
+\hline
+0 & \Cdots& 0 & 0
+\end{bNiceArray}$
+\arrayrulecolor{black}
+\end{scope}
+
+
+\medskip
+Pour des raisons techniques, il n'est pas possible d'écrire |\Block{|$i$|-|$j$|}{<}|  
+(mais on peut écrire |\Block{|$i$|-|$j$|}<>{<}| avec le résultat attendu).
+
+
+\section{Fonctionnalités avancées}
+
+\subsection{Option d'alignement dans NiceMatrix}
+
+Les environnements sans préambule (|{NiceMatrix}|, |{pNiceMatrix}|, |{bNiceMatrix}|, etc.) proposent les options
+|l| et |r| (possédant |L| et |R| comme alias) qui imposent des colonnes alignées à gauche ou à
+droite.\footnote{Cela reprend une partie des fonctionnalités proposées par les environnements |{pmatrix*}|,
+  |{bmatrix*}|, etc. de \pkg{mathtools}.}
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=10cm]
+$\begin{bNiceMatrix}[R]
+\cos x & - \sin x \\
+\sin x & \cos x 
+\end{bNiceMatrix}$
+\end{BVerbatim}
+$\begin{bNiceMatrix}[R]
+\cos x & - \sin x \\
+\sin x & \cos x 
+\end{bNiceMatrix}$
+
+
+
+
+\subsection{La commande \textbackslash rotate}
+
+Utilisée au début d'une case, la commande |\rotate| (fournie par \pkg{nicematrix}) compose le contenu après une 
+rotation de 90° dans le sens direct. 
+
+Dans l'exemple suivant, on l'utilise dans le |code-for-first-row|.
+
+\bigskip
+
+\begin{BVerbatim}[baseline=c,boxwidth=12cm]
+\NiceMatrixOptions%
+ {code-for-first-row = \scriptstyle ~emphase#\rotate@ \text{image de },
+  code-for-last-col = \scriptstyle }
+$A = \begin{pNiceMatrix}[first-row,last-col=4]
+e_1 & e_2 & e_3       \\
+1   & 2   & 3   & e_1 \\
+4   & 5   & 6   & e_2 \\
+7   & 8   & 9   & e_3 \\
+\end{pNiceMatrix}$
+\end{BVerbatim}
+\begin{varwidth}{10cm}
+\NiceMatrixOptions%
+ {code-for-first-row = \scriptstyle\rotate \text{image de },
+  code-for-last-col = \scriptstyle }
+$ A = \begin{pNiceMatrix}[first-row,last-col=4]
+e_1 & e_2 & e_3 \\
+1   & 2   & 3  & e_1 \\
+4   & 5   & 6  & e_2 \\
+7   & 8   & 9  & e_3 \\
+\end{pNiceMatrix}$
+\end{varwidth}
+
+\bigskip
+Si la commande |\rotate| est utilisée dans la ``dernière rangée'' (extérieure à la matrice), les éléments qui
+subissent cette rotation sont alignés vers le haut.
+
+\bigskip
+\begin{BVerbatim}[baseline=c,boxwidth=12cm]
+\NiceMatrixOptions%
+ {code-for-last-row = \scriptstyle ~emphase#\rotate@ ,
+  code-for-last-col = \scriptstyle }
+$A = \begin{pNiceMatrix}[last-row,last-col=4]
+1   & 2   & 3   & e_1 \\
+4   & 5   & 6   & e_2 \\
+7   & 8   & 9   & e_3 \\
+\text{image de } e_1 & e_2 & e_3 \\
+\end{pNiceMatrix}$
+\end{BVerbatim}
+\begin{varwidth}{10cm}
+\NiceMatrixOptions%
+ {code-for-last-row = \scriptstyle\rotate ,
+  code-for-last-col = \scriptstyle }%
+$A = \begin{pNiceMatrix}[last-row,last-col=4]
+1   & 2   & 3  & e_1 \\
+4   & 5   & 6  & e_2 \\
+7   & 8   & 9  & e_3 \\
+\text{image de } e_1 & e_2 & e_3 \\
+\end{pNiceMatrix}$
+\end{varwidth}
+
+
+\subsection{L'option small}
+
+\label{small}
+
+Avec l'option |small|, les environnements de l'extension \pkg{nicematrix} sont composés d'une manière proche de ce
+que propose l'environnement |{smallmatrix}| de l'\pkg{amsmath} (et les environnements |{psmallmatrix}|,
+|{bsmallmatrix}|, etc. de \pkg{mathtools}).
+
+\bigskip
+\begin{Verbatim}
+$\begin{bNiceArray}{CCCC|C}[~emphase#small@, 
+                            last-col, 
+                            code-for-last-col = \scriptscriptstyle, 
+                            columns-width = 3mm ] 
+1 & -2 & 3 & 4 & 5 \\
+0 & 3  & 2 & 1 & 2 & L_2 \gets 2 L_1 - L_2 \\
+0 & 1  & 1 & 2 & 3 & L_3 \gets L_1 + L_3 \\
+\end{bNiceArray}$
+\end{Verbatim}
+%
+\[\begin{bNiceArray}{CCCC|C}[small, last-col, code-for-last-col = \scriptscriptstyle, columns-width=3mm]
+1 & -2 & 3 & 4 & 5 \\
+0 & 3  & 2 & 1 & 2 & L_2 \gets 2 L_1 - L_2 \\
+0 & 1  & 1 & 2 & 3 & L_3 \gets L_1 + L_3 \\
+\end{bNiceArray}\]
+
+
+
+\bigskip
+On remarquera néanmoins que l'environnement |{NiceMatrix}| avec l'option |small| ne prétend pas être composé
+exactement comme l'environnement |{smallmatrix}|. C'est que les environnements de \pkg{nicematrix} sont tous fondés
+sur |{array}| (de \pkg{array}) alors que ce n'est pas le cas de |{smallmatrix}| (fondé directement sur un |\halign|
+de TeX).
+
+\medskip
+En fait, l'option |small| correspond aux réglages suivants :
+\begin{itemize}
+\item les composantes du tableau sont composées en |\scriptstyle| ; 
+\item |\arraystretch| est fixé à $0.47$ ; 
+\item |\arraycolsep| est fixé à $1.45$~pt ; 
+\item les caractéristiques des lignes en pointillés sont également modifiées.
+\end{itemize}
+
+\subsection{Les compteurs iRow et jCol}
+
+Dans les cases du tableau, il est possible d'utiliser les compteurs LaTeX |iRow| et |jCol| qui représentent le
+numéro de la rangée courante et le numéro de la colonne courante\footnote{On rappelle que le numéro de la «première
+  rangée» (si elle existe) est $0$ et que le numéro de la «première colonne» (si elle existe) est $0$ également.}.
+Bien entendu, l'utilisateur ne doit pas modifier les valeurs de ces compteurs qui sont utilisés en interne par
+\pkg{nicematrix}.
+
+Dans le |code-after| (cf. p. \pageref{code-after}), |iRow| représente le nombre total de rangées (hors éventuelles
+rangées extérieures) et |jCol| le nombre total de colonnes (hors potentielles colonnes extérieures).
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=10.6cm]
+$\begin{pNiceMatrix}%
+    [first-row,
+     first-col,
+     code-for-first-row = \mathbf{~emphase#\alph{jCol}@} ,
+     code-for-first-col = \mathbf{~emphase#\arabic{iRow}@} ]
+&   &    &    &   \\
+& 1 & 2  & 3  & 4 \\
+& 5 & 6  & 7  & 8 \\
+& 9 & 10 & 11 & 12
+\end{pNiceMatrix}$
+\end{BVerbatim}
+$\begin{pNiceMatrix}[first-row,
+                   first-col,
+                   code-for-first-row = \mathbf{\alph{jCol}} ,
+                   code-for-first-col = \mathbf{\arabic{iRow}} ]
+&   &    &    &   \\
+& 1 & 2  & 3  & 4 \\
+& 5 & 6  & 7  & 8 \\
+& 9 & 10 & 11 & 12
+\end{pNiceMatrix}$
+
+\medskip
+Si des compteurs LaTeX nommés |iRow| ou |jCol| sont créés dans le document par d'autres extensions que
+\pkg{nicematrix} (ou tout simplement par l'utilisateur), ces compteurs sont masqués dans les environnements de
+\pkg{nicematrix}.
+
+
+\bigskip
+L'extension \pkg{nicematrix} propose aussi des commandes pour composer automatiquement des matrices à partir d'un
+motif général. Ces commandes sont nommées |\pAutoNiceMatrix|, |\bAutoNiceMatrix|, |\vAutoNiceMatrix|,
+|\VAutoNiceMatrix| et |\BAutoNiceMatrix|.
+
+Chacune de ces commandes prend deux arguments obligatoires : le premier est la taille de la matrice, sous la forme 
+$n$-$p$, où $n$ est le nombre de rangées et $p$ est le nombre de colonnes et le deuxième est le motif (c'est-à-dire
+simplement des tokens qui seront insérés dans chaque case de la matrice, exceptées celles des éventuelles rangées et
+colonnes extérieures). 
+
+\medskip
+\begin{Verbatim}
+$C = ~emphase#\pAutoNiceMatrix@{3-3}{C_{\arabic{iRow},\arabic{jCol}}}$
+\end{Verbatim}
+
+
+$C = \pAutoNiceMatrix{3-3}{C_{\arabic{iRow},\arabic{jCol}}}$
+
+\subsection{Les options hlines, vlines et hvlines}
+
+\label{hvlines}
+
+Dans les environnements de \pkg{nicematrix}, on peut bien entendu ajouter des filets horizontaux entre les rangées
+avec la commande~|\hline| et des filets verticaux avec le spécificateur ``\verb+|+'' dans le préambule de
+l'environnement. Par souci de commodité, l'extension \pkg{nicematrix} fournit aussi l'option |hlines| (resp.
+|vlines|) qui impose directement que tous les filets horizontaux (resp. verticaux) soient tracés (à l'exception,
+très naturelle, des filets extérieurs aux rangées et colonnes extérieures). L'option |lines| est la conjonction des
+options |hlines| et |vlines|.
+
+\medskip
+Dans l'exemple suivant, on utilise la commande |\arrayrulecolor| de \pkg{colortbl}.
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=11cm]
+\arrayrulecolor{cyan}
+$\begin{NiceArray}{CCCC}%
+ [~emphase#hvlines@,first-row,first-col]
+  & e & a & b & c \\
+e & e & a & b & c \\
+a & a & e & c & b \\
+b & b & c & e & a \\
+c & c & b & a & e 
+\end{NiceArray}$
+\arrayrulecolor{black}
+\end{BVerbatim}
+%
+\arrayrulecolor{cyan}
+$\begin{NiceArray}{CCCC}[hvlines,first-row,first-col]
+  & e & a & b & c \\
+e & e & a & b & c \\
+a & a & e & c & b \\
+b & b & c & e & a \\
+c & c & b & a & e 
+\end{NiceArray}$
+\arrayrulecolor{black}
+
+
+\bigskip
+Il y a néanmoins une différence entre l'utilisation de l'option |vlines| et du spécificateur ``\verb+|+'' dans le
+préambule de l'environnement : les filets tracés par |vlines| traversent les double-filets horizontaux tracés par
+|\hline\hline|. 
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=11.5cm]
+$\begin{NiceArray}{CCCC}[vlines] \hline
+a & b & c & d \\ \hline \hline
+1 & 2 & 3 & 4 \\
+1 & 2 & 3 & 4 \\ \hline
+\end{NiceArray}$
+\end{BVerbatim}
+%
+$\begin{NiceArray}{CCCC}[vlines]
+\hline
+a & b & c & d \\
+\hline \hline
+1 & 2 & 3 & 4 \\
+1 & 2 & 3 & 4 \\
+\hline
+\end{NiceArray}$
+
+\bigskip
+Dans le cas d'un environnement avec délimiteurs (par exemple |{pNiceArray}| ou |{pNiceMatrix}|), l'option |vlines| ne
+trace pas de filets verticaux au niveau des deux délimiteurs (bien entendu).
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=10.6cm]
+\setlength{\arrayrulewidth}{0.2pt}
+$\begin{pNiceMatrix}[vlines]
+1 & 2 & 3 & 4 & 5 & 6 \\
+1 & 2 & 3 & 4 & 5 & 6 \\
+1 & 2 & 3 & 4 & 5 & 6 \\
+\end{pNiceMatrix}$
+\end{BVerbatim}
+%
+\begin{scope}
+\setlength{\arrayrulewidth}{0.2pt}
+$\begin{pNiceMatrix}[vlines]
+1 & 2 & 3 & 4 & 5 & 6 \\
+1 & 2 & 3 & 4 & 5 & 6 \\
+1 & 2 & 3 & 4 & 5 & 6 \\
+\end{pNiceMatrix}$
+\end{scope}
+
+
+
+
+\subsection{L'option light-syntax}
+
+\label{light-syntax}
+
+L'option |light-syntax|\footnote{Cette option est inspirée de l'extension \pkg{spalign} de Joseph Rabinoff.} permet
+d'alléger la saisie des matrices, ainsi que leur lisibilité dans le source TeX. Lorsque cette option est activée,
+on doit utiliser le point-virgule comme marqueur de fin de rangée et séparer les colonnes par des espaces ou des
+tabulations. On remarquera toutefois que, comme souvent dans le monde TeX, les espaces après les séquences de
+contrôle ne sont pas comptées et que les éléments entre accolades sont considérés comme un tout.
+
+
+\medskip
+\begin{scope}
+\begin{BVerbatim}[baseline=c,boxwidth=10cm]
+$\begin{bNiceMatrix}[~emphase#light-syntax@,first-row,first-col]
+{} a             b                 ;
+a  2\cos a       {\cos a + \cos b} ;
+b \cos a+\cos b  { 2 \cos b }
+\end{bNiceMatrix}$
+\end{BVerbatim}
+\end{scope}
+% 
+$\begin{bNiceMatrix}[light-syntax,first-row,first-col]
+{} a             b                 ;
+a  2\cos a       {\cos a + \cos b} ;
+b \cos a+\cos b  { 2 \cos b }
+\end{bNiceMatrix}$
+
+\medskip
+On peut changer le caractère utilisé pour indiquer les fins de rangées avec l'option |end-of-row|. Comme dit
+précédemment, la valeur initiale de ce paramètre est un point-virgule.
+
+\medskip
+Lorsque l'option |light-syntax| est utilisée, il n'est pas possible de mettre d'éléments en verbatim (avec par
+exemple la commande |\verb|) dans les cases du tableau.\footnote{La raison en est que lorsque l'option
+  |light-syntax| est utilisée, le contenu complet de l'environnement est chargé comme un argument de commande TeX.
+  L'environnement ne se comporte plus comme un «vrai» environnement de LaTeX qui se contente d'insérer des
+  commandes avant et après.}
+
+\subsection{Utilisation du type de colonne S de siunitx}
+
+Si l'extension \pkg{siunitx} est chargée (avant ou après \pkg{nicematrix}), il est possible d'utiliser les colonnes
+de type |S| de \pkg{siunitx} dans les environnements de \pkg{nicematrix}. L'implémentation n'utilise explicitement
+aucune macro privée de \pkg{siunitx}. 
+
+\medskip
+\begin{BVerbatim}[baseline = c, boxwidth = 10.5cm]
+$\begin{pNiceArray}{~emphase#S@CWc{1cm}C}[nullify-dots,first-row]
+{C_1} & \Cdots &  & C_n \\
+2.3  & 0 & \Cdots & 0 \\
+12.4 & \Vdots & & \Vdots \\
+1.45 \\
+7.2  & 0 & \Cdots & 0 
+\end{pNiceArray}$
+\end{BVerbatim}
+$\begin{pNiceArray}{SCWc{1cm}C}[nullify-dots,first-row]
+{C_1} & \Cdots &  & C_n \\
+2.3  & 0 & \Cdots & 0 \\
+12.4 & \Vdots & & \Vdots \\
+1.45 \\
+7.2  & 0 & \Cdots & 0 
+\end{pNiceArray}$
+
+\medskip
+En revanche, les colonnes |d| de l'extension \pkg{dcolumn} ne sont pas prises en charge par \pkg{nicematrix}.
+
+
+
+\section{Remarques techniques}
+
+\subsection{Pour définir de nouveaux types de colonnes}
+
+\label{OnlyMainNiceMatrix}
+
+L'extension \pkg{nicematrix} fournit la commande |\OnlyMainNiceMatrix| qui est destinée à être utilisée dans des
+définitions de nouveaux types de colonnes. Son argument n'est exécuté que si on se place dans la partie principale
+du tableau, c'est-à-dire que l'on n'est pas dans l'une des éventuelles rangées extérieures.
+
+Par exemple, si on souhaite définir un type de colonne |?| pour tracer un trait fort (noir) d'épaisseur 1~pt, on
+pourra écrire\footnote{La commande |\vrule| est une commande de TeX (et non de LaTeX).} :
+\begin{Verbatim}
+\newcolumntype{?}{!{\OnlyMainNiceMatrix{\vrule width 1 pt}}}
+\end{Verbatim}
+
+Le trait fort correspondant ne s'étendra pas dans les rangées extérieures :
+
+\medskip
+\begin{scope}
+\newcolumntype{?}{!{\OnlyMainNiceMatrix{\vrule width 1 pt}}}
+
+\begin{BVerbatim}[baseline = c, boxwidth = 10.5cm]
+$\begin{pNiceArray}{CC?CC}[first-row,last-row=3]
+C_1 & C_2 & C_3 & C_4 \\
+a & b & c & d \\
+e & f & g & h \\
+C_1 & C_2 & C_3 & C_4
+\end{pNiceArray}$
+\end{BVerbatim}
+$\begin{pNiceArray}{CC?CC}[first-row,last-row=3]
+C_1 & C_2 & C_3 & C_4 \\
+a & b & c & d \\
+e & f & g & h \\
+C_1 & C_2 & C_3 & C_4
+\end{pNiceArray}$
+\end{scope}
+
+\medskip
+Le spécificateur |?| ainsi créé est aussi utilisable dans les environnements |{array}| (de \pkg{array}) et, dans ce
+cas, |\OnlyMainNiceMatrix| est sans effet.
+
+
+\subsection{Intersection des lignes pointillées}
+
+Depuis la version 3.1 de \pkg{nicematrix}, les lignes en pointillées créées par |\Cdots|, |\Ldots|, |\Vdots|, etc.
+ne peuvent pas se croiser entre elles.\footnote{En revanche, les lignes créées par |\hdottedline|, la lettre
+  ``|:|'' dans le préambule de la matrice et la commande |\line| dans le |code-after| peuvent croiser une autre
+  ligne en pointillés.}
+
+Cela signifie qu'une ligne en pointillés créée par l'une des ces commandes s'arrête automatiquement quand elle
+arrive à une autre ligne pointillée déjà tracée par l'une de ces commandes. Par conséquent, l'ordre dans lequel les
+lignes sont tracées a son importance pour le résultat final. Voici cet ordre (c'est à dessein qu'il a été choisi
+ainsi) : |\Hdotsfor|, |\Vdots|, |\Ddots|, |\Iddots|, |\Cdots| et |\Ldots|.
+
+\medskip
+De ce fait, on peut tracer la matrice suivante :\par\nobreak
+
+\smallskip
+\begin{BVerbatim}[baseline = c, boxwidth = 10.5cm]
+$\begin{pNiceMatrix}[nullify-dots]
+1 & 2 & 3 & \Cdots & n \\
+1 & 2 & 3 & \Cdots & n \\
+\Vdots & \Cdots & & \Hspace*{15mm} & \Vdots \\
+& \Cdots & & &  \\
+& \Cdots & & &  \\
+& \Cdots & & &  \\
+\end{pNiceMatrix}$
+\end{BVerbatim}
+$\begin{pNiceMatrix}[nullify-dots]
+1 & 2 & 3 & \Cdots & n \\
+1 & 2 & 3 & \Cdots & n \\
+\Vdots & \Cdots & & \Hspace*{15mm} & \Vdots \\
+& \Cdots & & &  \\
+& \Cdots & & &  \\
+& \Cdots & & &  \\
+\end{pNiceMatrix}$
+
+
+
+\subsection{Le nom des nœuds PGF créés par nicematrix}
+
+Les nœuds PGF-Tikz créés par \pkg{nicematrix} peuvent être utilisés hors des environnements de \pkg{nicematrix}
+après avoir nommé l'environnement concerné avec l'option |name| (cf. p.~\pageref{name}). Il s'agit là de la méthode
+conseillée mais on décrit néanmoins maintenant le nom Tikz interne de ces nœuds.
+
+Les environnements créés par \pkg{nicematrix} sont numérotés par un compteur global interne. La commande
+|\NiceMatrixLastEnv| donne le numéro du dernier de ces environnements (pour LaTeX, il s'agit d'une commande —
+complètement développable — et non d'un compteur).
+
+Si l'environnement concerné a le numéro $n$, alors le nœud de la rangée~$i$ et de la colonne~$j$ a pour nom
+|nm-|$n$|-|$i$|-|$j$. Les noms des nœuds |medium| et |large| correspondants s'obtiennent en suffixant par |-medium|
+et |-large|. 
+
+\subsection{Lignes diagonales} 
+
+Par défaut, toutes les lignes diagonales\footnote{On parle des lignes créées par |\Ddots| et non des lignes créées
+  par une commande |\line| dans le |code-after|.} d'un même tableau sont «parallélisées». Cela signifie que la
+première diagonale est tracée et que, ensuite, les autres lignes sont tracées parallèlement à la première (par
+rotation autour de l'extrémité la plus à gauche de la ligne). C'est pourquoi la position des instructions |\Ddots|
+dans un tableau peut avoir un effet marqué sur le résultat final.
+
+\medskip
+Dans les exemples suivants, la première instruction |\Ddots| est marquée en couleur :
+
+\medskip
+\begin{scope}
+\begin{minipage}{9.5cm}
+Exemple avec parallélisation (comportement par défaut):
+\begin{Verbatim}
+$A = \begin{pNiceMatrix}
+1      & \Cdots &        & 1      \\
+a+b    & ~emphase#\Ddots@~ &        & \Vdots \\
+\Vdots & \Ddots &        &        \\
+a+b    & \Cdots & a+b    & 1
+\end{pNiceMatrix}$
+\end{Verbatim}
+\end{minipage}
+$A = \begin{pNiceMatrix}
+1      & \Cdots &     & 1      \\
+a+b    & \Ddots &     & \Vdots \\
+\Vdots & \Ddots &     &        \\
+a+b    & \Cdots & a+b & 1
+\end{pNiceMatrix}$
+
+\bigskip
+\NiceMatrixOptions{parallelize-diags=true}%
+\begin{minipage}{9.5cm}
+\begin{Verbatim}
+$A = \begin{pNiceMatrix}
+1      & \Cdots &        & 1      \\
+a+b    &        &        & \Vdots \\
+\Vdots & ~emphase#\Ddots@~ & \Ddots &        \\
+a+b    & \Cdots & a+b    & 1
+\end{pNiceMatrix}$
+\end{Verbatim}
+\end{minipage}
+$A = \begin{pNiceMatrix}
+1      & \Cdots &        & 1      \\
+a+b    &        &        & \Vdots \\
+\Vdots & \Ddots & \Ddots &        \\
+a+b    & \Cdots & a+b    & 1
+\end{pNiceMatrix}$
+
+\bigskip
+Il est possible de désactiver la parallélisation avec l'option |parallelize-diags| mise à |false|: \par\nobreak
+
+\medskip
+\NiceMatrixOptions{parallelize-diags=false}%
+\begin{minipage}{9.5cm}
+Le même exemple sans parallélisation :
+\end{minipage}
+$A = \begin{pNiceMatrix}
+1      & \Cdots  &     & 1      \\
+a+b    & \Ddots  &     & \Vdots \\
+\Vdots & \Ddots  &     &        \\
+a+b    & \Cdots  & a+b & 1
+\end{pNiceMatrix}$
+
+
+
+\end{scope}
+
+\subsection{Les cases «vides»}
+
+\label{empty-cells}
+Une instruction comme |\Ldots|, |\Cdots|, etc. essaye de déterminer la première case vide de part et d'autre de la
+case considérée. Néanmoins, une case vide n'est pas nécessairement sans contenu dans le codage TeX (c'est-à-dire
+sans aucun token entre les deux esperluettes~|&|). En effet, une case dont le contenu est |\hspace*{1cm}| peut être
+considérée comme vide.
+
+\interitem
+Pour \pkg{nicematrix}, les règles précises sont les suivantes :
+
+\begin{itemize}
+\item Une case implicite est vide. Par exemple, dans la matrice suivante
+
+\begin{Verbatim}
+\begin{pmatrix}
+a & b \\
+c \\
+\end{pmatrix}
+\end{Verbatim}
+
+la dernière case (deuxième rangée et deuxième colonne) est vide.
+
+\medskip
+\item Chaque case avec un rendu par TeX de largeur nulle est vide.
+
+\medskip
+\item Une case avec une commande |\Hspace| (ou |\Hspace*|) est vide. Cette commande |\Hspace| est une commande
+définie par l'extension \pkg{nicematrix} avec la même signification que |\hspace| excepté que la case où cette
+commande est utilisée est considérée comme vide. Cette commande peut être utilisée pour fixer la largeur des
+colonnes sans interférer avec le tracé des lignes en pointillés par \pkg{nicematrix}.
+
+\end{itemize}
+
+
+\subsection{L'option exterior-arraycolsep}
+
+L'environnement |{array}| insère un espace horizontal égal à |\arraycolsep| avant et après chaque colonne. En
+particulier, il y a un espace égal à |\arraycolsep| avant et après le tableau. Cette caractéristique de
+l'environnement |{array}| n'était probablement pas une bonne idée\footnote{Dans la documentation de |{amsmath}|, on
+  peut lire : {\itshape The extra space of |\arraycolsep| that \pkg{array} adds on each side is a waste so we
+    remove it [in |{matrix}|] (perhaps we should instead remove it from array in general, but that's a harder
+    task).}}. L'environnement |{matrix}| et ses variantes (|{pmatrix}|,
+|{vmatrix}|, etc.) de \pkg{amsmath} préfèrent supprimer ces espaces avec des instructions explicites 
+|\hskip -\arraycolsep|\footnote{Et non en insérant |@{}| de part et d'autre du préambule, ce qui fait que la
+  longueur des |\hline| n'est pas modifiée et elle peut paraître trop longue, surtout avec des crochets.}.
+L'extension \pkg{nicematrix} fait de même dans \emph{tous} ses environnements y compris l'environnement
+|{NiceArray}|. Néanmoins, si l'utilisateur souhaite que l'environnement |{NiceArray}| se comporte par défaut comme
+l'environnement |{array}| de \pkg{array} (par exemple pour faciliter l'adaptation d'un document existant), il peut
+contrôler ce comportement avec l'option |exterior-arraycolsep| accessible via la commande |\NiceMatrixOptions|.
+Avec cette option, des espaces extérieurs de longueur |\arraycolsep| seront insérés dans les environnements
+|{NiceArray}| (les autres environnements de l'extension \pkg{nicematrix} ne sont pas affectés).
+
+
+\subsection{L'option de classe draft}
+
+Quand l'option de classe |draft| est utilisée, les lignes en pointillés ne sont pas tracées, pour accélérer la
+compilation.
+
+
+\subsection{Un problème technique avec l'argument de \textbackslash\textbackslash}
+
+
+Pour des raisons techniques, si vous utilisez l'argument optionnel de la commande |\\|, l'espace vertical sera
+aussi ajouté au nœud («normal») correspondant à la case précédente.
+
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=11cm]
+     \begin{pNiceMatrix}
+     a & \frac AB \\~emphase#[2mm]@
+     b & c
+     \end{pNiceMatrix}
+\end{BVerbatim}
+$\begin{pNiceMatrix}[
+   code-after = {\tikz \node [inner sep = 0pt,
+                              fill = red!15,
+                              blend mode = multiply,
+                              fit = (1-2) ] {} ; } ]
+a & \frac AB \\[2mm]
+b & c
+\end{pNiceMatrix}$
+
+\bigskip
+Il y a deux solutions pour résoudre ce problème. La première solution est d'utiliser une commande TeX pour insérer
+l'espace entre les deux rangées.
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=11cm]
+     \begin{pNiceMatrix}
+     a & \frac AB \\
+     ~emphase#\noalign{\kern2mm}@
+     b & c
+     \end{pNiceMatrix}
+\end{BVerbatim}
+$\begin{pNiceMatrix}[
+   code-after = {\tikz \node [inner sep = 0pt,
+                              fill = red!15,
+                              blend mode = multiply,
+                              fit = (1-2) ] {} ; } ]
+a & \frac AB \\
+\noalign{\kern2mm}
+b & c
+\end{pNiceMatrix}$
+
+
+\bigskip
+L'autre solution est d'utiliser la commande |\multicolumn| dans la case précédente :
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=11cm]
+     \begin{pNiceMatrix}
+     a & ~emphase#\multicolumn1C{\frac AB}@ \\[2mm]
+     b & c
+     \end{pNiceMatrix}
+\end{BVerbatim}
+$\begin{pNiceMatrix}[
+   code-after = {\tikz \node [inner sep = 0pt,
+                              fill = red!15,
+                              blend mode = multiply,
+                              fit = (1-2) ] {} ; } ]
+a & \multicolumn1C{\frac AB} \\[2mm]
+b & c
+\end{pNiceMatrix}$
+
+\subsection{Environnements obsolètes}      
+
+La version 3.0 de \pkg{nicematrix} a introduit l'environnement |{pNiceArray}| (et ses variantes) avec les options
+|first-row|, |last-row|, |first-col| et |last-col|.
+
+Par conséquent, les environnements suivants, présents dans les versions précédentes de \pkg{nicematrix} sont devenus
+obsolètes :
+%
+\begin{itemize}
+\item |{NiceArrayCwithDelims}| ;
+\item |{pNiceArrayC}|, |{bNiceArrayC}|, |{BNiceArrayC}|, |{vNiceArrayC}|,
+|{VNiceArrayC}| ;
+\item |{NiceArrayRCwithDelims}| ;
+\item |{pNiceArrayRC}|, |{bNiceArrayRC}|, |{BNiceArrayRC}|, |{vNiceArrayRC}|,
+|{VNiceArrayRC}|.
+\end{itemize}
+
+\medskip
+Depuis la version 3.12 de \pkg{nicematrix}, on ne peut utiliser ces environnements que si on a chargé l'extension
+\pkg{nicematrix} avec l'option |obsolete-environments|. Il faut toutefois avoir conscience que ces environnements
+seront certainement supprimés dans une prochaine version de \pkg{nicematrix}.
+
+
+
+\section{Exemples}
+
+\subsection{Lignes en pointillés}
+
+
+Une matrice de permutation.\par\nobreak
+
+À titre d'exemple, on a augmenté la valeur du paramètre |xdots/shorten|.\par\nobreak 
+
+
+\bigskip
+\begin{BVerbatim}[baseline=c]
+$\begin{pNiceMatrix}[~emphase#xdots/shorten=6em@]
+0       & 1 & 0 &        & \Cdots &   0    \\
+\Vdots  &   &   & \Ddots &        & \Vdots \\
+        &   &   & \Ddots &        &        \\
+        &   &   & \Ddots &        &   0    \\
+0       & 0 &   &        &        &   1    \\
+1       & 0 &   & \Cdots &        &   0    
+\end{pNiceMatrix}$
+\end{BVerbatim}
+\hspace{2.5cm}
+$\begin{pNiceMatrix}[xdots/shorten=0.6em]
+0       & 1 & 0 &        & \Cdots &   0    \\
+\Vdots  &   &   & \Ddots &        & \Vdots \\
+        &   &   & \Ddots &        &        \\
+        &   &   & \Ddots &        &   0    \\
+0       & 0 &   &        &        &   1    \\
+1       & 0 &   & \Cdots &        &   0    
+\end{pNiceMatrix}$
+
+\vspace{2cm}
+
+Un exemple avec |\Iddots|. On a augmenté encore davantage la valeur de |xdots/shorten|.\par\nobreak
+\bigskip
+\begin{BVerbatim}[baseline=c]
+$\begin{pNiceMatrix}[~emphase#xdots/shorten = 0.9em@]
+1       & \Cdots  &         & 1      \\
+\Vdots  &         &         & 0      \\
+        & ~emphase#\Iddots@ & ~emphase#\Iddots@ & \Vdots \\
+1       & 0       & \Cdots  & 0 
+\end{pNiceMatrix}$
+\end{BVerbatim}
+\hspace{4cm}
+$\begin{pNiceMatrix}[xdots/shorten = 0.9em]
+1       & \Cdots  &         & 1      \\
+\Vdots  &         &         & 0      \\
+        & \Iddots & \Iddots & \Vdots \\
+1       & 0       & \Cdots  & 0 
+\end{pNiceMatrix}$
+
+
+\vspace{2cm}
+Un exemple avec |\multicolumn|:\par\nobreak
+\bigskip
+\begin{BVerbatim}
+\begin{BNiceMatrix}[nullify-dots]
+1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10\\
+1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10\\
+\Cdots &  & ~emphase#\multicolumn{6}{C}{10 \text{ autres lignes}}@ & \Cdots \\
+1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10
+\end{BNiceMatrix}
+\end{BVerbatim}
+
+\bigskip
+\[\begin{BNiceMatrix}[nullify-dots]
+1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10\\
+1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10\\
+\Cdots &  & \multicolumn{6}{C}{10 \text{ autres lignes}} & \Cdots \\
+1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10
+\end{BNiceMatrix}\]
+
+\vspace{2cm}
+Un exemple avec |\Hdotsfor|:\par\nobreak
+
+\bigskip
+\begin{BVerbatim}[baseline=c,boxwidth=11cm]
+\begin{pNiceMatrix}[nullify-dots]
+0 & 1 & 1 & 1 & 1 & 0 \\
+0 & 1 & 1 & 1 & 1 & 0 \\
+\Vdots  & ~emphase#\Hdotsfor{4}@ & \Vdots \\
+ & ~emphase#\Hdotsfor{4}@ & \\
+ & ~emphase#\Hdotsfor{4}@ & \\
+ & ~emphase#\Hdotsfor{4}@ & \\
+0 & 1 & 1 & 1 & 1 & 0 
+\end{pNiceMatrix}
+\end{BVerbatim}
+$\begin{pNiceMatrix}[nullify-dots]
+0 & 1 & 1 & 1 & 1 & 0 \\
+0 & 1 & 1 & 1 & 1 & 0 \\
+\Vdots  & \Hdotsfor{4} & \Vdots \\
+ & \Hdotsfor{4} & \\
+ & \Hdotsfor{4} & \\
+ & \Hdotsfor{4} & \\
+0 & 1 & 1 & 1 & 1 & 0 
+\end{pNiceMatrix}$
+
+\vspace{2cm}
+Un exemple pour le résultant de deux polynômes :
+\par\nobreak
+\bigskip
+\begin{BVerbatim}
+\setlength{\extrarowheight}{1mm}
+\begin{vNiceArray}{CCCC:CCC}[columns-width=6mm]
+a_0   &      &&       &b_0    &      &     \\
+a_1   &\Ddots&&       &b_1    &\Ddots&     \\
+\Vdots&\Ddots&&       &\Vdots &\Ddots&b_0  \\
+a_p   &      &&a_0    &       &      &b_1   \\
+      &\Ddots&&a_1    &b_q    &      &\Vdots\\
+      &      &&\Vdots &       &\Ddots&      \\
+      &      &&a_p     &       &      &b_q    
+\end{vNiceArray}
+\end{BVerbatim}
+
+\bigskip
+
+\begin{scope}
+\setlength{\extrarowheight}{1mm}
+\[\begin{vNiceArray}{CCCC:CCC}[columns-width=6mm]
+a_0   &      &&       &b_0    &      &     \\
+a_1   &\Ddots&&       &b_1    &\Ddots&     \\
+\Vdots&\Ddots&&       &\Vdots &\Ddots&b_0  \\
+a_p   &      &&a_0    &       &      &b_1   \\
+      &\Ddots&&a_1    &b_q    &      &\Vdots\\
+      &      &&\Vdots &       &\Ddots&      \\
+      &      &&a_p     &       &      &b_q    
+\end{vNiceArray}\]
+\end{scope}   
+
+\vspace{2cm}
+Un exemple avec un système linéaire (le trait vertical a été tracé en cyan avec les outils de
+\pkg{colortbl}):\par\nobreak 
+
+\begin{Verbatim}
+\arrayrulecolor{cyan}
+$\begin{pNiceArray}{*6C|C}[nullify-dots,last-col,code-for-last-col={\scriptstyle}]
+1      & 1 & 1 &\Cdots &   & 1      & 0      & \\
+0      & 1 & 0 &\Cdots &   & 0      &        & L_2 \gets L_2-L_1 \\
+0      & 0 & 1 &\Ddots &   & \Vdots &        & L_3 \gets L_3-L_1 \\
+       &   &   &\Ddots &   &        & \Vdots & \Vdots \\
+\Vdots &   &   &\Ddots &   & 0      & \\
+0      &   &   &\Cdots & 0 & 1      & 0      & L_n \gets L_n-L_1 
+\end{pNiceArray}$
+\arrayrulecolor{black}
+\end{Verbatim}
+
+\arrayrulecolor{cyan}
+\[\begin{pNiceArray}{*6C|C}[nullify-dots,last-col,code-for-last-col={\scriptstyle}]
+1      & 1 & 1 &\Cdots &   & 1      & 0      & \\
+0      & 1 & 0 &\Cdots &   & 0      &        & L_2 \gets L_2-L_1 \\
+0      & 0 & 1 &\Ddots &   & \Vdots &        & L_3 \gets L_3-L_1 \\
+       &   &   &\Ddots &   &        & \Vdots & \Vdots \\
+\Vdots &   &   &\Ddots &   & 0      & \\
+0      &   &   &\Cdots & 0 & 1      & 0      & L_n \gets L_n-L_1 
+\end{pNiceArray}\]
+\arrayrulecolor{black}
+
+
+\subsection{Largeur des colonnes}
+
+\medskip
+Dans l'exemple suivant, nous utilisons |{NiceMatrixBlock}| avec l'option |auto-columns-width| parce que nous
+voulons la même largeur (automatique) pour toutes les colonnes.
+
+\bigskip
+\begin{BVerbatim}
+~emphase#\begin{NiceMatrixBlock}[auto-columns-width]@
+\NiceMatrixOptions{code-for-last-col = \color{blue}\scriptstyle}
+\setlength{\extrarowheight}{1mm}
+$\begin{pNiceArray}{CCCC:C}[last-col]
+1&1&1&1&1&\\
+2&4&8&16&9&\\
+3&9&27&81&36&\\
+4&16&64&256&100&
+\end{pNiceArray}$
+...
+~emphase#\end{NiceMatrixBlock}@
+\end{BVerbatim}
+
+\bigskip
+
+\begin{multicols}{2}
+\begin{NiceMatrixBlock}[auto-columns-width]
+\NiceMatrixOptions{code-for-last-col = \color{blue}\scriptstyle}
+\setlength{\extrarowheight}{1mm}
+
+\enskip $\begin{pNiceArray}{CCCC:C}[last-col]
+1&1&1&1&1&\\
+2&4&8&16&9&\\
+3&9&27&81&36&\\
+4&16&64&256&100&
+\end{pNiceArray}$
+
+\medskip
+
+\enskip $\begin{pNiceArray}{CCCC:C}[last-col]
+1&1&1&1&1&\\
+0&2&6&14&7&L_2\gets-2L_1+L_2 \\
+0&6&24&78&33&L_3\gets-3L_1+L_3 \\
+0&12&60&252&96&L_4\gets-4L_1+L_4 
+\end{pNiceArray}$
+
+\medskip
+
+\enskip $\begin{pNiceArray}{CCCC:C}[last-col]
+1&1&1&1&1&\\
+0&1&3&7&\frac72&L_2\gets\frac12L_2\\
+0&3&12&39&\frac{33}2&L_3\gets\frac12L_3 \\
+0&1&5&21&8&L_4\gets\frac1{12}L_4 
+\end{pNiceArray}$
+
+\medskip
+
+\enskip $\begin{pNiceArray}{CCCC:C}[last-col]
+1&1&1&1&1&\\
+0&1&3&7&\frac72&\\
+0&0&3&18&6&L_3 \gets -3L_2+L_3 \\
+0&0&-2&-14&-\frac92&L_4 \gets L_2-L_4 
+\end{pNiceArray}$
+
+\medskip
+
+\enskip $\begin{pNiceArray}{CCCC:C}[last-col]
+1&1&1&1&1&\\
+0&1&3&7&\frac72&\\
+0&0&1&6&2&L_3 \gets \frac13L_3\\
+0&0&-2&-14&-\frac92&
+\end{pNiceArray}$
+
+\medskip
+
+\enskip $\begin{pNiceArray}{CCCC:C}[last-col]
+1&1&1&1&1&\\
+0&1&3&7&\frac72&\\
+0&0&1&6&2& \\
+0&0&0&-2&-\frac12 & L_4 \gets 2L_3+L_4 
+\end{pNiceArray}$
+\end{NiceMatrixBlock}
+\end{multicols}
+
+
+\subsection{Comment surligner les cases}
+
+\label{highlight}
+
+\medskip
+Les exemples suivants nécessitent d'avoir chargé Tikz (\pkg{nicematrix} ne charge que \textsc{pgf}) ainsi que la
+bibliothèque Tikz |fit|, ce qui peut se faire avec les deux instructions suivantes dans le préambule du document :
+
+\begin{verbatim}
+\usepackage{tikz}
+\usetikzlibrary{fit}
+\end{verbatim}
+
+
+
+\medskip
+Pour mettre en évidence une case, il est possible de «dessiner» l'un des nœuds (le «nœud normal», le «nœud moyen»
+ou le «nœud large»). Dans l'exemple suivant, on utilise les «nœuds larges» de la diagonale de la matrice (avec la
+clé de Tikz «|name suffix|», il est facile d'utiliser les «nœuds larges»). 
+
+Nous redessinons les nœuds avec de nouveaux nœuds en utilisant la bibliothèque \pkg{fit} de Tikz. Comme nous
+voulons recréer des nœuds identiques aux premiers, nous devons fixer |inner sep = 0pt| (si on ne fait
+pas cela, les nouveaux nœuds seront plus grands que les nœuds d'origine créés par \pkg{nicematrix}).
+
+\begin{Verbatim}
+$\begin{pNiceArray}{>{\strut}CCCC}%
+   [create-large-nodes,margin,extra-margin=2pt,
+    code-after = {\begin{tikzpicture}
+                     [~emphase#name suffix = -large@,
+                      every node/.style = {draw,
+                                           ~emphase#inner sep = 0pt@}]
+                     \node [fit = (1-1)] {} ; 
+                     \node [fit = (2-2)] {} ; 
+                     \node [fit = (3-3)] {} ; 
+                     \node [fit = (4-4)] {} ; 
+                  \end{tikzpicture}}]
+a_{11} & a_{12} & a_{13} & a_{14} \\
+a_{21} & a_{22} & a_{23} & a_{24} \\
+a_{31} & a_{32} & a_{33} & a_{34} \\
+a_{41} & a_{42} & a_{43} & a_{44} 
+\end{pNiceArray}$
+\end{Verbatim}
+
+
+\[\begin{pNiceArray}{>{\strut}CCCC}[
+    create-large-nodes,margin,extra-margin=2pt,
+    code-after = {\begin{tikzpicture}[name suffix = -large,
+                                      every node/.style = {draw,
+                                                           inner sep = 0pt}]
+                     \node [fit = (1-1)] {} ; 
+                     \node [fit = (2-2)] {} ; 
+                     \node [fit = (3-3)] {} ; 
+                     \node [fit = (4-4)] {} ; 
+                  \end{tikzpicture}}]
+a_{11} & a_{12} & a_{13} & a_{14} \\
+a_{21} & a_{22} & a_{23} & a_{24} \\
+a_{31} & a_{32} & a_{33} & a_{34} \\
+a_{41} & a_{42} & a_{43} & a_{44} 
+\end{pNiceArray}\]
+%
+On remarquera que les traits que l'on vient de tracer sont dessinés \emph{après} la matrice sans modifier la
+position des composantes de celle-ci. En revanche, les traits tracés par |\hline|, le spécificateur «\verb+|+» ou
+les options |hlines| et |vlines| «écartent» les composantes de la matrice (quand l'extension \pkg{array} est
+chargée, ce qui est toujours le cas avec \pkg{nicematrix}).\footnote{En revanche les traits tracés par |\ncline|
+  n'écartent pas les lignes de la matrice.}
+
+\vspace{1cm}
+
+L'extension \pkg{nicematrix} est construite au-dessus de l'environnement |{array}| et, par conséquent, il est
+possible d'utiliser l'extension \pkg{colortbl} dans les environnements de \pkg{nicematrix}. Les possibilités de
+réglage de \pkg{colortbl} sont néanmoins assez limitées. C'est pourquoi nous proposons une autre méthode pour
+surligner une rangée de la matrice. Nous créons un nœud Tikz rectangulaire qui englobe les nœuds de la deuxième
+rangée en utilisant les outils de la bibliothèque Tikz \pkg{fit}. Ce nœud est rempli après la construction de la
+matrice. Pour que l'on puisse voir le texte \emph{sous} le nœud, nous devons utiliser la transparence avec le
+|blend mode| égal à |multiply|. 
+
+
+\tikzset{highlight/.style={rectangle,
+                           fill=red!15,
+                           blend mode = multiply, 
+                           rounded corners = 0.5 mm, 
+                           inner sep=1pt,
+                           fit=#1}}
+
+\medskip
+\begin{Verbatim}
+\tikzset{highlight/.style={rectangle,
+                           fill=red!15,
+                           ~emphase#blend mode = multiply@,
+                           rounded corners = 0.5 mm, 
+                           inner sep=1pt,
+                           fit=~#1}}
+
+$\begin{bNiceMatrix}[~emphase#code-after = {\tikz \node [highlight = (2-1) (2-3)] {} ;}@]
+0 & \Cdots & 0 \\
+1 & \Cdots & 1 \\
+0 & \Cdots & 0 
+\end{bNiceMatrix}$
+\end{Verbatim}
+
+\[\begin{bNiceMatrix}[code-after = {\tikz \node [highlight = (2-1) (2-3)] {} ;}]
+0 & \Cdots & 0 \\
+1 & \Cdots & 1 \\
+0 & \Cdots & 0 
+\end{bNiceMatrix}\]
+
+
+\bigskip
+Ce code échoue avec |latex|-|dvips|-|ps2pdf| parce que Tikz pour |dvips|, pour le moment, ne prend pas en charge
+les \emph{blend modes}. Néanmoins, le code suivant, dans le préambule du document LaTeX, devrait activer les
+\emph{blend modes} pour ce mode de compilation.
+
+
+\begin{scope} \small
+|\ExplSyntaxOn|
+
+|\makeatletter|
+
+|\tl_set:Nn \l_tmpa_tl {pgfsys-dvips.def}|
+
+|\tl_if_eq:NNT \l_tmpa_tl \pgfsysdriver|
+
+|  {\cs_set:Npn\pgfsys@blend@mode#1{\special{ps:~/\tl_upper_case:n #1~.setblendmode}}}|
+
+|\makeatother|
+
+|\ExplSyntaxOff|
+\end{scope}
+
+\vspace{1cm}
+On rappelle que dans le cas d'un ensemble de cases fusionnées (avec la commande |\Block|), un nœud Tikz est créé
+pour l'ensemble des cases avec pour nom $i$|-|$j$|-block| où $i$ et $j$ sont les numéros de ligne et de colonne de
+la case en haut à gauche (où a été utilisée la commande |\Block|). Si on a demandé la création des nœuds |medium|,
+alors un nœud de ce type est aussi créé pour ce bloc avec un nom suffixé par |-medium|.
+
+\medskip
+\begin{BVerbatim}[baseline=c,boxwidth=11.6cm]
+$\begin{pNiceMatrix}%
+  [
+    margin,
+    create-medium-nodes,
+    code-after = 
+     { \tikz \node [~emphase#highlight = (1-1-block-medium)@] {} ; } 
+  ]
+\Block{3-3}<\Large>{A} & & & 0 \\
+& \hspace*{1cm} & & \Vdots \\
+& & & 0 \\
+0 & \Cdots& 0 & 0
+\end{pNiceMatrix}$
+\end{BVerbatim}
+$\begin{pNiceMatrix}%
+  [
+   margin,
+   create-medium-nodes,
+   code-after = 
+    { \tikz \node [highlight = (1-1-block-medium)] {} ; } 
+  ]
+\Block{3-3}<\Large>{A} & & & 0 \\
+& \hspace*{1cm} & & \Vdots \\
+& & & 0 \\
+0 & \Cdots& 0 & 0
+\end{pNiceMatrix}$
+
+
+
+
+
+\vspace{1cm}
+On considère maintenant la matrice suivante que l'on a appelée |exemple|.
+
+\medskip
+\begin{Verbatim}
+$\begin{pNiceArray}{CCC}[~emphase#name=exemple@,last-col,create-medium-nodes]
+a & a + b & a + b + c & L_1 \\
+a & a     & a + b     & L_2 \\
+a & a     & a         & L_3
+\end{pNiceArray}$
+\end{Verbatim}
+                          
+\[\begin{pNiceArray}{CCC}[last-col]
+a & a + b & a + b + c & L_1 \\
+a & a     & a + b     & L_2 \\
+a & a     & a         & L_3
+\end{pNiceArray}\]
+
+\bigskip
+Si on veut surligner chaque rangée de la matrice, on peut utiliser la technique précédente trois fois.
+
+\begin{Verbatim}
+\tikzset{mes-options/.style={remember picture, 
+                             overlay,
+                             name prefix = exemple-,
+                             highlight/.style = {fill = red!15,
+                                                 blend mode = multiply,
+                                                 inner sep = 0pt,
+                                                 fit = ~#1}}}
+\end{Verbatim}
+
+
+\tikzset{mes-options/.style={remember picture, 
+                             overlay,
+                             name prefix = exemple-,
+                             highlight/.style = {fill = red!15,
+                                                 blend mode = multiply,
+                                                 inner sep = 0pt,
+                                                 fit = #1}}}
+
+
+\begin{Verbatim}
+\begin{tikzpicture}[mes-options]
+\node [highlight = (1-1) (1-3)] {} ;
+\node [highlight = (2-1) (2-3)] {} ;
+\node [highlight = (3-1) (3-3)] {} ;
+\end{tikzpicture}
+\end{Verbatim}
+
+\medskip
+On obtient la matrice suivante.
+
+\[\begin{pNiceArray}{CCC}[
+     last-col,
+     code-after = {\begin{tikzpicture}[highlight/.style = {fill = red!15,
+                                                           blend mode = multiply,
+                                                           inner sep = 0pt,
+                                                           fit = #1}]
+                   \node [highlight = (1-1) (1-3)] {} ;
+                   \node [highlight = (2-1) (2-3)] {} ;
+                   \node [highlight = (3-1) (3-3)] {} ;
+                   \end{tikzpicture}}]
+a & a + b & a + b + c & L_1 \\
+a & a     & a + b     & L_2 \\
+a & a     & a         & L_3
+\end{pNiceArray}\]
+
+\medskip
+Le résultat peut paraître décevant. On peut l'améliorer en utilisant les «nœuds moyens» au lieu des «nœuds normaux».
+
+\begin{Verbatim}
+\begin{tikzpicture}[mes-options, ~emphase#name suffix = -medium@]
+\node [highlight = (1-1) (1-3)] {} ;
+\node [highlight = (2-1) (2-3)] {} ;
+\node [highlight = (3-1) (3-3)] {} ;
+\end{tikzpicture}
+\end{Verbatim}
+
+\medskip
+On obtient la matrice suivante.
+
+\[\begin{pNiceArray}{CCC}[
+     last-col,
+     create-medium-nodes,
+     code-after = {\begin{tikzpicture}[highlight/.style = {fill = red!15,
+                                                           blend mode = multiply,
+                                                           inner sep = 0pt,
+                                                           fit = #1},
+                                       name suffix = -medium]
+                   \node [highlight = (1-1) (1-3)] {} ;
+                   \node [highlight = (2-1) (2-3)] {} ;
+                   \node [highlight = (3-1) (3-3)] {} ;
+                   \end{tikzpicture}}]
+a & a + b & a + b + c & L_1 \\
+a & a     & a + b     & L_2 \\
+a & a     & a         & L_3
+\end{pNiceArray}\]
+
+                          
+\vspace{1cm}
+
+Dans l'exemple suivant, on utilise les «nœuds larges» pour surligner une zone de la matrice.\par\nobreak
+\begin{Verbatim}
+\left(\,\begin{NiceArray}{>{\strut}CCCC}%
+   [create-large-nodes,left-margin,right-margin,
+    code-after = {\tikz \path [~emphase#name suffix = -large@,
+                               fill = red!15, 
+                               blend mode = multiply]
+                        (1-1.north west)
+                     |- (2-2.north west)
+                     |- (3-3.north west)
+                     |- (4-4.north west)
+                     |- (4-4.south east)
+                     |- (1-1.north west) ; } ]
+A_{11} & A_{12} & A_{13} & A_{14} \\
+A_{21} & A_{22} & A_{23} & A_{24} \\
+A_{31} & A_{32} & A_{33} & A_{34} \\
+A_{41} & A_{42} & A_{43} & A_{44}  
+\end{NiceArray}\,\right)
+\end{Verbatim}
+                             
+\[\left(\,\begin{NiceArray}{>{\strut}CCCC}[
+    create-large-nodes,left-margin,right-margin,
+    code-after = {\tikz \path [name suffix = -large,
+                               fill = red!15, 
+                               blend mode = multiply]
+                        (1-1.north west)
+                     |- (2-2.north west)
+                     |- (3-3.north west)
+                     |- (4-4.north west)
+                     |- (4-4.south east)
+                     |- (1-1.north west) ; } ]
+A_{11} & A_{12} & A_{13} & A_{14} \\
+A_{21} & A_{22} & A_{23} & A_{24} \\
+A_{31} & A_{32} & A_{33} & A_{34} \\
+A_{41} & A_{42} & A_{43} & A_{44}  
+\end{NiceArray}\,\right)\]
+
+
+\subsection{Utilisation directe des nœuds Tikz}
+
+Dans l'exemple suivant, on souhaite illustrer le produit mathématique de deux matrices.
+
+\medskip
+L'utilisation de |{NiceMatrixBlock}| avec l'option |auto-columns-width| va permettre que toutes les colonnes aient 
+la même largeur ce qui permettra un alignement des deux matrices superposées.
+\begin{Verbatim}
+\begin{NiceMatrixBlock}[auto-columns-width]
+\end{Verbatim}
+
+\begin{Verbatim}
+\NiceMatrixOptions{nullify-dots}
+\end{Verbatim}
+
+Les trois matrices vont être disposées les unes par rapport aux autres grâce à un tableau de LaTeX.
+\begin{Verbatim}
+$\begin{array}{cc}
+& 
+\end{Verbatim}
+
+La matrice $B$ a une «première rangée» (pour $C_j$) d'où l'option |first-row|.
+\begin{Verbatim}
+\begin{bNiceArray}{C>{\strut}CCCC}[name=B,first-row]
+       &          & ~emphase#C_j@                      \\
+b_{11} & \Cdots   & b_{1j} & \Cdots & b_{1n} \\
+\Vdots &          & \Vdots &        & \Vdots \\
+       &          & b_{kj}                   \\
+       &          & \Vdots                   \\
+ b_{n1}  & \Cdots & b_{nj} & \Cdots & b_{nn} 
+\end{bNiceArray} \\ \\
+\end{Verbatim}
+
+La matrice $A$ a une «première colonne» (pour $L_i$) d'où l'option |first-col|.
+\begin{Verbatim}
+\begin{bNiceArray}{CC>{\strut}CCC}[name=A,first-col]
+    & a_{11} & \Cdots &        &        & a_{1n} \\
+    & \Vdots &        &        &        & \Vdots \\
+~emphase#L_i@ & a_{i1} & \Cdots & a_{ik} & \Cdots & a_{in} \\
+    & \Vdots &        &        &        & \Vdots \\
+    & a_{n1} & \Cdots &        &        & a_{nn} \\
+\end{bNiceArray}
+& 
+\end{Verbatim}
+
+Dans la matrice produit, on remarquera que les lignes en pointillés sont «semi-ouvertes».
+\begin{Verbatim}
+\begin{bNiceArray}{CC>{\strut}CCC}
+       & &        & & \\
+       & & \Vdots     \\
+\Cdots & & c_{ij}     \\
+\\
+\\
+\end{bNiceArray} 
+\end{array}$
+
+\end{NiceMatrixBlock}
+\end{Verbatim}
+
+\begin{Verbatim}                             
+\begin{tikzpicture}[remember picture, overlay]
+ \node [highlight = (A-3-1) (A-3-5) ] {} ; 
+ \node [highlight = (B-1-3) (B-5-3) ] {} ; 
+ \draw [color = gray] (A-3-3) to [bend left] (B-3-3) ; 
+\end{tikzpicture}
+\end{Verbatim}
+
+
+\begin{NiceMatrixBlock}[auto-columns-width]
+\NiceMatrixOptions{nullify-dots}
+$\begin{array}{cc}
+& 
+\begin{bNiceArray}{C>{\strut}CCCC}[name=B,first-row]
+      &        & C_j \\
+b_{11} & \Cdots & b_{1j} & \Cdots & b_{1n} \\
+\Vdots &       & \Vdots &       & \Vdots \\
+       &       & b_{kj}  \\
+       &       & \Vdots \\
+ b_{n1}  & \Cdots & b_{nj} & \Cdots & b_{nn} 
+\end{bNiceArray} \\ \\
+\begin{bNiceArray}{CC>{\strut}CCC}[name=A,first-col]
+    & a_{11} & \Cdots &  &  & a_{1n} \\
+    & \Vdots &       &  &  & \Vdots \\
+L_i & a_{i1} & \Cdots & a_{ik} & \Cdots & a_{in} \\
+    & \Vdots &       &  &  & \Vdots \\
+    & a_{n1} & \Cdots &  &  & a_{nn} \\
+\end{bNiceArray}
+& 
+\begin{bNiceArray}{CC>{\strut}CCC}
+       &  &        & & \\
+       &  & \Vdots     \\
+\Cdots &  & c_{ij}      \\
+\\
+\\
+\end{bNiceArray} 
+\end{array}$
+
+\end{NiceMatrixBlock}
+
+\begin{tikzpicture}[remember picture, overlay]
+ \node [highlight = (A-3-1) (A-3-5) ] {} ; 
+ \node [highlight = (B-1-3) (B-5-3) ] {} ; 
+ \draw [color = gray] (A-3-3) to [bend left] (B-3-3) ; 
+\end{tikzpicture}
+
+\section*{Autre documentation}
+
+Le document |nicematrix.pdf| (fourni avec l'extension \pkg{nicematrix}) contient une traduction anglaise de la
+documentation ici présente, ainsi que le code source commenté et un historique des versions.
+
+
+\end{document}
+

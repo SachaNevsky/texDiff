@@ -1,0 +1,667 @@
+\documentclass{article}
+\usepackage[fleqn]{amsmath}
+\usepackage[
+    web={centertitlepage,designv,forcolorpaper,tight*,latextoc,pro},
+    eforms,aebxmp
+]{aeb_pro}
+\usepackage{grayhints}\previewOff
+\usepackage{graphicx,array,fancyvrb}
+\usepackage{aeb_mlink}
+
+\usepackage{xbmks}
+\DeclareInitView{layoutmag={navitab:UseOutlines}}
+\xbmksetup{colors={int=red},styles={intbf}}
+
+\advance\marginparwidth 8pt
+
+
+%\usepackage{myriadpro}
+%\usepackage{calibri}
+\usepackage[altbullet]{lucidbry}
+
+\def\hardspace{{\fontfamily{cmtt}\selectfont\symbol{32}}}
+\let\uif\textsf
+
+\usepackage{acroman}
+\usepackage[active]{srcltx}
+
+\urlstyle{tt}
+\renewcommand\LayoutTextField[2]{#2}
+
+%\AACalculate{\CalcToGray}
+
+%\def\tutpath{doc/tutorial}
+%\def\tutpathi{tutorial}
+%\def\expath{../examples}
+
+\def\STRUT{\rule{0pt}{14pt}}
+
+
+\DeclareDocInfo
+{
+    university={\AcroTeX.Net},
+    title={The \textsf{grayhints} Package},
+    author={D. P. Story},
+    email={dpstory@acrotex.net},
+    subject=Documentation for the grayhints,
+    talksite={\url{www.acrotex.net}},
+    version={1.2, 2018/26/04},
+    Keywords={LaTeX, form field, hints, AcroTeX},
+    copyrightStatus=True,
+    copyrightNotice={Copyright (C) \the\year, D. P. Story},
+    copyrightInfoURL={http://www.acrotex.net}
+}
+
+\universityLayout{fontsize=Large}
+\titleLayout{fontsize=LARGE}
+\authorLayout{fontsize=Large}
+\tocLayout{fontsize=Large,color=aeb}
+\sectionLayout{indent=-62.5pt,fontsize=large,color=aeb}
+\subsectionLayout{indent=-31.25pt,color=aeb}
+\subsubsectionLayout{indent=0pt,color=aeb}
+\subsubDefaultDing{\texorpdfstring{$\bullet$}{\textrm\textbullet}}
+
+\chngDocObjectTo{\newDO}{doc}
+\begin{docassembly}
+var titleOfManual="The grayhints Package";
+var manualfilename="Manual_BG_Print_grayhints.pdf";
+var manualtemplate="Manual_BG_Brown.pdf"; // Blue, Green, Brown
+var _pathToBlank="C:/Users/Public/Documents/ManualBGs/"+manualtemplate;
+var doc;
+var buildIt=false;
+if ( buildIt ) {
+    console.println("Creating new " + manualfilename + " file.");
+    doc = \appopenDoc({cPath: _pathToBlank, bHidden: true});
+    var _path=this.path;
+    var pos=_path.lastIndexOf("/");
+    _path=_path.substring(0,pos)+"/"+manualfilename;
+    \docSaveAs\newDO ({ cPath: _path });
+    doc.closeDoc();
+    doc = \appopenDoc({cPath: manualfilename, oDoc:this, bHidden: true});
+    f=doc.getField("ManualTitle");
+    f.value=titleOfManual;
+    doc.flattenPages();
+    \docSaveAs\newDO({ cPath: manualfilename });
+    doc.closeDoc();
+} else {
+    console.println("Using the current "+manualfilename+" file.");
+}
+var _path=this.path;
+var pos=_path.lastIndexOf("/");
+_path=_path.substring(0,pos)+"/"+manualfilename;
+\addWatermarkFromFile({
+    bOnTop:false,
+    bOnPrint:false,
+    cDIPath:_path
+});
+\executeSave();
+\end{docassembly}
+
+
+\begin{document}
+
+\maketitle
+
+\pdfbookmarkx[1]{Title Page}[action={\Named{FirstPage}}]{TitlePage}
+\pdfbookmarkx[1]{Links to AcroTeX.Net}[action={/S/GoTo/D(undefined)},%
+  color=magenta,style={bf}]{acrotex}
+\belowpdfbookmarkx{http://www.acrotex.net}[action={\URI{http://www.acrotex.net}},%
+  color=magenta,style={bf}]{home}
+\belowpdfbookmarkx{http://blog.acrotex.net}[action={\URI{http://blog.acrotex.net}},%
+  color=magenta,style={bf}]{blog}
+
+
+
+\selectColors{linkColor=black}
+\tableofcontents
+\selectColors{linkColor=webgreen}
+
+
+\section{Introduction}
+
+We often see in HTML pages or in compiled executable applications, form
+fields (text fields, input fields) that require user input. The untouched
+field has text within it informing the user of the nature of the data to be
+entered into the field. This ``grayed hint'' immediately disappears
+when the user focuses the cursor on the field.\footnote{Focus on the field by
+clicking inside the form field.} We illustrate the concept with an example or
+two.
+\begin{quote}
+    \textField[\textColor{\matchGray}
+       \TU{Enter your first name so I can get to know you better}
+       \AA{\AAFormat{\FmtToGray{First Name}}
+       \AAKeystroke{\KeyToGray}
+       \AAOnFocus{\JS{\FocusToBlack}}
+       \AAOnBlur{\JS{\BlurToBlack}}
+    }]{NameFirst1}{2in}{11bp}\vcgBdry[\medskipamount]
+    \textField[\textColor{\matchGray}
+       \TU{Enter your favorite date, in the indicated format}
+       \AA{\AAKeystroke{\DateKeyEx("yyyy/mm/dd");\r\KeyToGray}
+       \AAFormat{\DateFmtEx("yyyy/mm/dd");\r\FmtToGray{yyyy/mm/dd}}
+       \AAOnFocus{\JS{\FocusToBlack}}
+       \AAOnBlur{\JS{\BlurToBlack}}
+    }]{DateField1}{1in}{11bp}\cgBdry[1.5em]
+    \pushButton[\CA{Reset}
+        \TU{Press to clear to clear all fields.}
+        \A{\JS{this.resetForm();}}]{reset}{}{11bp}
+\end{quote}
+    Of course, the usual tool tips may also be provided.\medskip\noindent
+
+    It is not natural for Adobe form fields to do this, it takes some support
+    code for it to work properly; scripts for the Keystroke, Format, OnFocus,
+    OnBlur, and Calculate events are needed.
+
+The \pkg{grayhints} package works as designed for \app{Adobe Reader} and
+\app{PDF-XChange Editor}.\footnote{\app{PDF-XChange Viewer}, which is no longer
+supported by \href{https://www.tracker-software.com/}{Tracker Software
+Products}, will display the gray hints, but some of the needed JavaScript are not supported.} All {\LaTeX}
+workflows for PDF creation are also supported.
+
+\section{Package options}
+
+Without passing any options, the \pkg{eforms} package of \AEB, dated
+2017/02/27, is required; the document JavaScript function
+\texttt{AllowCalc()} and modified Adobe built-in functions are automatically
+embedded in the document. There are options, however, to modify this default
+setup.
+\begin{description}
+    \item[\texttt{usehyforms}] By default, this package requires
+        \pkg{eforms}, dated 2017/02/27; however, if you are more
+        comfortable using the form fields of \pkg{hyperref}, specify the
+        option \texttt{usehyforms}.\footnote{\pkg{eforms} and
+        \pkg{hyperref} form fields can be used in one document.} When
+        \texttt{usehyforms} is specified, \pkg{insdljs} dated 2017/03/02 or
+        later is required.
+%        This requirement is to support the
+%        \texttt{usealtadobe}, discussed next.
+    \item[\texttt{nocalcs}] If this option is taken, the document
+        JavaScript function \texttt{AllowCalc()} is not embedded in the document. The
+        implications are that you are not using any calculation fields.
+
+%    \item[\texttt{usealtadobe}] If you have the \app{Acrobat} application,
+%        you can edit form fields. When you write custom formatting scripts
+%        (as does this package) using Adobe's built-in functions, such as
+%        \texttt{AFNumber\_Keystroke} and \texttt{AFNumber\_Format}, the
+%        user-interface for editing the custom script is not available. The
+%        \texttt{usealtadobe} option is passed to \pkg{insldjs};
+%        \pkg{insdljs}, in turn, inputs alternate names for the common
+%        \app{Adobe} built-ins. Refer to
+%        \hyperref[s:altadobfuncs]{Section~\ref*{s:altadobfuncs}} for more
+%        information.
+
+    \item[\texttt{nodljs}] When this option is specified, there are no
+        requirements placed on this package; that is, neither \pkg{eforms}
+        nor \pkg{insdljs} are required. Use this option is you are not
+        using any of the Adobe built-in formatting functions.
+\end{description}
+
+\paragraph*{Demo files:} \texttt{gh-eforms.tex,\;gh-hyperref.tex}. The latter file
+uses the \opt{usehyforms} option (and \pkg{hyperref} form fields), while the
+former uses the \pkg{eforms} package. The demo files
+\texttt{gh-fmt-eforms.tex,\;gh-fmt-hyperref.tex} provided additional examples
+of the use of Adobe's built-in formatting functions.
+
+\section{Creating a form field with a gray hint}
+
+In this documentation, we use \pkg{eforms} form fields to illustrate
+concepts, the demonstration file \texttt{gh-hyperref.tex} and
+\texttt{gh-fmt-hyperref.tex} has the form field markup for the case of
+\pkg{hyperref} forms.
+
+There are two cases: (1) an ordinary variable text form field (this includes
+text fields and editable combo boxes) with no calculate script; (2) same as
+(1), but the field has a calculate script.
+
+\subsection{Variable text field, no calculate script}
+
+When there is no calculate script, to obtain a gray hint, it is necessary to
+supply scripts for the Format, Keystroke, OnFocus, and OnBlur events. The
+scripts are all defined in the \pkg{grayhints} package. In addition, the
+color of the text in the text field must be appropriate. We illustrate,
+\begin{Verbatim}[xleftmargin=\parindent,commandchars=!(),numbers=left,numbersep=3bp,fontsize=\small]
+\textField[!color(gray)\TU{Enter your first name so I can get to know you better}
+    \textColor{\matchGray}\AA{%
+    \AAKeystroke{\KeyToGray}
+    \AAFormat{\FmtToGray{First Name}}
+    \AAOnFocus{\JS{\FocusToBlack}}
+    \AAOnBlur{\JS{\BlurToBlack}}
+    \AACalculate{\CalcToGray} %!normalfont( required if !app(PDF-XChange Editor) is used)
+}]{NameFirst}{2in}{11bp}
+\end{Verbatim}
+By default, the text color is black and the grayed hint text is light gray.
+The tool tip (\cs{TU}) is grayed out, as it is optional. In line~(2) we match
+the color for the text to the gray color using the command \cs{matchGray} of
+\pkg{grayhints}. Within the argument of \cs{AA}, the \cs{AAFormat},
+\cs{AAKeystroke}, \cs{AAOnFocus}, and \cs{AAOnBlur} scripts are inserted.
+\begin{quote}
+\begin{description}
+    \item{Keystroke Script:} In line~(3), \cs{KeyToGray} is placed within
+        the argument of \cs{AAKeystroke}. This script changes the color
+        of the text to gray when the field is empty.
+    \item{Format Script:} The script snippet \cs{FmtToGray} takes a
+        single argument, which is the text of the hint. In line~(4)
+        the hint is `First Name'.
+    \item{OnFocus Script:} The code snippet \cs{FocusToBlack} is inserted
+        into the argument of \cs{OnFocus}, as seen in line~(5). When the
+        field comes into focus, this script changes the color to the
+        normal color (usually black).
+    \item{OnBlur Script:} In line~(6), the \cs{BlurToBlack} script is
+        placed within the argument of \cs{OnBlur}, in the manner
+        indicated. When the field loses focus (blurred), the script
+        changes the color of text to gray if the field is empty or to
+        its normal color (usually black), otherwise.
+    \item{Calculate Script:} In line~(7), the Calculate event resets the
+        color to gray. This is needed when the user presses the
+        \uif{Enter} key rather than exiting the field by tabbing out, or
+        clicking or tapping an area outside the field. This script is required
+        when (1) there is a possibility that \app{PDF-XChange Editor} is used; or
+        (2) a ``totals'' calculation field.
+\end{description}
+\end{quote}
+The \pkg{hyperref} form field counterpart to the above example is,
+\begin{Verbatim}[xleftmargin=\parindent,commandchars=!(),numbers=left,numbersep=3bp,fontsize=\small]
+\TextField[name={NameFirst},
+    height=11bp,width=2in,charsize=9bp,
+    color={\matchGray},
+    keystroke={\KeyToGray},
+    format={\FmtToGray{First Name}},
+    onfocus={\FocusToBlack},
+    onblur={\BlurToBlack},
+    calculate={\CalcToGray}  %!normalfont( required if !app(PDF-XChange Editor) is used)
+]{}
+\end{Verbatim}
+The two fields appear side-by-side:
+\begin{quote}
+\textField[\autoCenter{n}\textColor{\matchGray}
+    \TU{Enter your first name so I can get to know you better}
+    \AA{\AAFormat{\FmtToGray{First Name}}
+        \AAKeystroke{\KeyToGray}
+        \AAOnFocus{\JS{\FocusToBlack}}
+        \AAOnBlur{\JS{\BlurToBlack}}
+}]{NameFirst2}{2in}{11bp}\cgBdry[0.5em]
+\TextField[name={NameFirst3},
+    height=11bp,width=2in,,charsize=9bp,
+    color=\matchGray,
+    keystroke=\KeyToGray,
+    format=\FmtToGray{First Name},
+    onfocus=\FocusToBlack,
+    onblur=\BlurToBlack]{}\cgBdry[0.5em]
+\pushButton[\CA{Reset}\autoCenter{n}
+    \TU{Press to clear to clear all fields.}
+    \A{\JS{this.resetForm();}}]{reset}{}{11bp}
+\end{quote}
+Both fields appear in their `default' appearance.
+
+
+\subsection{Variable text field, with calculate script}
+
+If you want to make calculations based on entries in other fields, you will need
+the code snippet \cs{CalcToGray} as part of your calculate script.
+\begin{Verbatim}[xleftmargin=\parindent,commandchars={!~@},numbers=left,numbersep=3bp,fontsize=\small]
+\textField[!color~gray@\TU{The total for first and second integers}
+    \textColor{\matchGray}\AA{%
+    \AAKeystroke{AFNumber_Keystroke(0,1,0,0,"",true);\r\KeyToGray}
+    \AAFormat{AFNumber_Format(0,1,0,0,"",true);\r\FmtToGray{Total}}
+    \AACalculate{var cArray=new Array("Integer");\r
+        if(AllowCalc(cArray))AFSimple_Calculate("SUM", cArray );\r
+        !textbf~\CalcToGray@}
+    \AAOnFocus{\JS{\FocusToBlack}}
+    \AAOnBlur{\JS{\BlurToBlack}}
+}]{TotalNumbers}{1in}{11bp}
+\end{Verbatim}
+The use of \cs{r} is optional, the author uses this to format the script
+within the user-interface of \app{Acrobat} (or \app{PDF-XChange
+Editor}).\footnote{The helper commands \cs{r} and \cs{t} are defined in
+\pkg{eforms}; if \pkg{eforms} is not loaded, use \cs{jsR} and \cs{jsT}
+instead.} The \cs{textColor} (line~(2)), \cs{AAOnFocus} (line~(8)), and
+\cs{AAOnBlur} (line~(9)) are the same as earlier presented. Several comments
+are needed for the \cs{AAKeystroke}, \cs{AAFormat} and \cs{AACalculate}
+lines. The \cs{AACalculate} event above also shows, in general, how to integrate
+the gray hint methodology with other scripts; as a general rule, the gray hints commands
+should come last.
+\begin{itemize}
+    \item This is a number field, so we use the built-in functions
+        \texttt{AFNumber\_Keystroke} and \texttt{AFNumber\_Format} provided
+        by the \app{Adobe Acrobat} and \app{Adobe Acrobat Reader}
+        distributions. In lines~(3) and~(4), the \cs{KeyToGray} and
+        \cs{FmtToGray} code snippets follow the built-ins.\footnote{As a general rule,
+        the code snippets \cs{KeyToGray}, \cs{FmtToGray}, and
+        \cs{CalcToGray} should inserted after any built-in functions.}
+    \item For the Calculate event, special techniques are used. We define
+        an array \texttt{cArray} (line~(5)) consisting of the names of all
+        the dependent fields we use to calculate the value of this field.
+        In line~(6), we make the calculation (\texttt{AFSimple\_Calculate})
+        only if the document JavaScript function \texttt{AllowCalc(cArray)}
+        returns true. The function returns true only if at least one of the
+        fields is not empty. Following the calculation comes the code
+        snippet \cs{CalcToGray}; this changes the text color to gray if the
+        field is empty and to the normal color (usually black) otherwise.
+
+        The function \texttt{AllowCalc()} is defined for all options except
+        for the \opt{nodljs} option.
+\end{itemize}
+Let's go to the examples. Build three fields (four actually), in the first two
+enter integers, the other two fields compute their sum.
+\begin{quote} %\previewOff
+\ding{172}\ \textField[\TU{Enter an integer}
+    \textColor{\matchGray}\AA{%
+    \AAKeystroke{AFNumber_Keystroke(0,1,0,0,"",true);\r\KeyToGray}
+    \AAFormat{AFNumber_Format(0,1,0,0,"",true);\r\FmtToGray{First Integer}}
+    \AAOnFocus{\JS{\FocusToBlack}}
+    \AAOnBlur{\JS{\BlurToBlack}}}
+]{Integer.First}{1in}{11bp}\vcgBdry[3bp]
+\ding{173}\ \textField[\TU{Enter an integer}
+    \textColor{\matchGray}\AA{%
+    \AAKeystroke{AFNumber_Keystroke(0,1,0,0,"",true);\r\KeyToGray}
+    \AAFormat{AFNumber_Format(0,1,0,0,"",true);\r\FmtToGray{Second Integer}}
+    \AAOnFocus{\JS{\FocusToBlack}}
+    \AAOnBlur{\JS{\BlurToBlack}}}
+]{Integer.Second}{1in}{11bp}\vcgBdry[3bp]
+\ding{174}\ \textField[\TU{The total for first and second integers}
+    \textColor{\matchGray}\AA{%
+    \AAKeystroke{AFNumber_Keystroke(0,1,0,0,"",true);\KeyToGray}
+    \AAFormat{AFNumber_Format(0,1,0,0,"",true);\r\FmtToGray{Total}}
+    \AACalculate{var cArray=new Array("Integer");\r
+        if (AllowCalc(cArray)) AFSimple_Calculate("SUM", cArray );\r\CalcToGray}
+    \AAOnFocus{\JS{\FocusToBlack}}
+    \AAOnBlur{\JS{\BlurToBlack}}}
+]{TotalNumbers}{1in}{11bp}\vcgBdry[3bp]
+\ding{175}\ \textField[\TU{The total for first and second integers}
+    \textColor{\matchGray}\AA{%
+    \AAKeystroke{AFNumber_Keystroke(0,1,0,0,"",true);\r\KeyToGray}
+    \AAFormat{AFNumber_Format(0,1,0,0,"",true);\r\FmtToGray{Total}}
+    \AACalculate{var cArray=new Array("Integer");\r
+        AFSimple_Calculate("SUM", cArray );\r\CalcToGray}
+    \AAOnFocus{\JS{\FocusToBlack}}
+    \AAOnBlur{\JS{\BlurToBlack}}}
+]{TotalNumbers1}{1in}{11bp}\cgBdry[1em]
+\pushButton[\CA{Reset}
+    \TU{Press to clear to clear all fields.}
+    \A{\JS{this.resetForm();}}]{reset}{}{11bp}
+\end{quote}
+Enter numbers into the first two text fields (\ding{172} and \ding{173}), the
+totals of these two fields appear in the last two fields (\ding{174} and
+\ding{175}). Total field \ding{174} uses the recommended script
+\texttt{if(AllowCalc(cArray)} (see line~(6) above), whereas field \ding{175}
+does not. Initially, they both behave the same way until you press the reset
+button. For field \ding{174} the gray hint appears, for field \ding{175} the
+number zero (0) appears. This is because the calculation was allowed to go
+forward, and the calculated value is zero even through none of the dependent
+fields have a value. If you want the gray hint in the total field, you must
+use the conditional \texttt{if(AllowCalc(cArray)}.\footnote{Hence, don't use the \opt{nodljs} option.}
+
+\subsection{Changing the colors for gray hints}
+
+For the fields in which the gray hint scripts are used, there are two colors
+that are relevant, the normal color (defaults to black) and the gray color
+(defaults to light gray). The command
+\cs{normalGrayColors\darg{\ameta{normalcolor}}\darg{\ameta{graycolor}}} sets
+this pair of colors. The arguments for \cs{normalGrayColors} are JavaScript
+colors; they may be in any of the following four forms: (1) a JavaScript
+color array \texttt{["RGB",1,0,0]}; (2) a predefined JavaScript color, such
+as \texttt{color.red}; (3) a declared (or named) {\LaTeX} color such as
+\texttt{red}; or (4) a non-declared {\LaTeX} color such as
+\texttt{[rgb]\darg{1,0,0}}. If the package \pkg{xcolor} is not loaded, only
+methods (1) and (2) are supported.
+
+The package default is
+\cs{normalGrayColors\darg{color.black}\darg{color.ltGray}}. The predefined
+JavaScript colors are,
+\begin{quote}
+%    \setlength\tabcolsep{3pt}
+    \setlength{\extrarowheight}{1pt}
+    \begin{tabular}{>{\ttfamily}l>{\ttfamily}l>{\ttfamily}l}
+    \multicolumn{3}{>{\sffamily}c}{Color Models}\\\hline
+    \multicolumn{1}{>{\sffamily}c}{GRAY}&
+    \multicolumn{1}{>{\sffamily}c}{RGB}&
+    \multicolumn{1}{>{\sffamily}c}{CMYK}\\
+    color.black&color.red&color.cyan\\
+    color.white&color.green&color.magenta\\
+    color.dkGray&color.blue\\
+    color.gray\\
+    color.ltGray
+    \end{tabular}
+\end{quote}
+All these colors are defined in the {\LaTeX} color packages, except for possibly \texttt{dkGray},
+\texttt{gray}, and \texttt{ltGray}. These three are defined in \pkg{grayhints}.
+
+We repeat the `First Name' example with different declared colors. We begin by declaring,
+\begin{Verbatim}[xleftmargin=\parindent,fontsize=\small]
+\normalGrayColors{blue}{magenta}
+\end{Verbatim}
+then build a `gray hinted' field,
+\begin{quote}%\previewOff
+    \normalGrayColors{blue}{magenta}%
+    \textField[\textColor{\matchGray}
+       \TU{Enter your first name so I can get to know you better}
+       \AA{\AAFormat{\FmtToGray{First Name}}
+       \AAKeystroke{\KeyToGray}
+       \AAOnFocus{\JS{\FocusToBlack}}
+       \AAOnBlur{\JS{\BlurToBlack}}
+    }]{NameFirst4}{2in}{11bp}\cgBdry[1em]
+\pushButton[\CA{Reset}
+    \TU{Press to clear to clear all fields.}
+    \A{\JS{this.resetForm();}}]{reset}{}{11bp}
+\end{quote}
+
+\subsection{Remarks on using Adobe built-in formatting functions}\label{s:altadobfuncs}
+
+The \pkg{grayhints} package (as well as does \pkg{insdljs}) offers
+alternating naming of the \app{Adobe} built-in formatting functions. As a
+general rule, all Adobe built-in format, validate, and calculation functions
+that begin with `AF' are given alternate names that begin with `EF'. More
+specifically, \hyperref[table:builtin]{Table~\ref*{table:builtin}} lists the
+Adobe built-in formatting functions and their alternative names. The purpose
+of these alternate names is to allow the JavaScript developer to access the
+scripts through the \app{Acrobat} user-interface.
+\begin{table}[htb]\centering
+\begin{tabular}{>{\ttfamily}l>{\ttfamily}ll}
+\multicolumn{1}{>{\sffamily\bfseries}l}{Adobe function name}&%
+\multicolumn{1}{>{\sffamily\bfseries}l}{Alternate function name}&%
+\multicolumn{1}{>{\sffamily\bfseries}l}{\LaTeX{} command\protect\footnotemark}\\
+AFNumber\_Keystroke&EFNumber\_Keystroke&\cs{NumKey}\\
+AFNumber\_Format&EFNumber\_Format&\cs{NumFmt}\\
+AFPercent\_Keystroke&EFPercent\_Keystroke&\cs{PercentKey}\\
+AFPercent\_Format&EFPercent\_Format&\cs{PercentFmt}\\
+AFDate\_Keystroke&EFDate\_Keystroke&\cs{DateKey}\\
+AFDate\_Format&EFDate\_Format&\cs{DateFmt}\\
+AFDate\_KeystrokeEx&EFDate\_KeystrokeEx&\cs{DateKeyEx}\\
+AFDate\_FormatEx&EFDate\_FormatEx&\cs{DateFmtEx}\\
+AFTime\_Keystroke&EFTime\_Keystroke&\cs{TimeKey}\\
+AFTime\_Format&EFTime\_Format&\cs{TimeFmt}\\
+AFTime\_FormatEx&EFTime\_FormatEx&\cs{TimeFmtEx}\\
+AFSpecial\_Keystroke&EFSpecial\_Keystroke&\cs{SpecialKey}\\
+AFSpecial\_Format&EFSpecial\_Format&\cs{SpecialFmt}\\
+AFSpecial\_KeystrokeEx&EFSpecial\_KeystrokeEx&\cs{SpecialKeyEx}\\
+AFRange\_Validate&EFRange\_Validate&\cs{RangeValidate}\\
+AFSimple\_Calculate&EFSimple\_Calculate&\cs{SimpleCalc}\\
+AFMergeChange&EFMergeChange&\cs{MergeChange}
+\end{tabular}
+\caption{Built-in formatting commands}\label{table:builtin}
+\end{table}
+
+You can learn more about the `AF' versions and their arguments at the
+\href{http://blog.acrotex.net}{Acro\negthinspace\TeX\space Blog} web site; in
+particular, carefully read the article
+\mlurl{http://www.acrotex.net/blog/?p=218}.
+
+\begin{figure}[htb]
+\begin{minipage}[t]{.5\linewidth-2.5pt}\kern0pt\centering
+%\setlength{\fboxsep}{0pt}%
+{\setlength{\fboxsep}{0pt}{\includegraphics[width=\linewidth]{graphics/numFmt-noshowcustom}}}%
+\end{minipage}\hfill
+\begin{minipage}[t]{.5\linewidth-2.5pt}\kern0pt\centering
+{\setlength{\fboxsep}{0pt}{\includegraphics[width=\linewidth]{graphics/numFmt-showcustom}}}%
+\end{minipage}\\[3pt]
+\makebox[.5\linewidth-2.5pt][c]{(a)\ Using \texttt{AFNumber\_Format}}\hfill
+\makebox[.5\linewidth-2.5pt][c]{(b)\ Using \texttt{EFNumber\_Format}}%
+\caption{Format tab: `AF' versus `EF' functions}\label{fig:AltAdbFncs}
+\end{figure}
+
+\leavevmode\hyperref[fig:AltAdbFncs]{Figure~\ref*{fig:AltAdbFncs}} shows the
+impact of using the `EF' functions. On the left, \texttt{AFNumber\_Format} is
+used to format a number field that uses gray hints using the code
+\begin{Verbatim}[xleftmargin=\parindent]
+AFNumber_Format(0,1,0,0,"",true)\r\FmtToGray
+\end{Verbatim}
+As can be seen in sub-figure\,(a), or more accurately not seen, the code is
+not seen through the user-interface of \app{Acrobat}. In sub-figure\,(b) the
+underlying code is seen (and therefore editable through the user-interface)
+because the `EF' version of the function was used:
+\begin{Verbatim}[xleftmargin=\parindent]
+\try{EFNumber_Format(0,1,0,0,"",true)}catch(e){}\r\FmtToGray
+\end{Verbatim}
+Note this code is wrapped in a \texttt{try/catch} construct; this is
+optional. The \pkg{insdljs} package defines a helper command \cs{dlTC} to do the wrapping for you:
+\begin{Verbatim}[xleftmargin=\parindent]
+\dlTC{EFNumber_Format(0,1,0,0,"",true)}\r\FmtToGray
+\end{Verbatim}
+When using \app{pdflatex} or \app{xelatex}, \texttt{try/catch} appears not to
+be needed, but when \app{Adobe Distiller} is used, \app{Acrobat} throws an
+exception when the file is first created. The \texttt{try/\penalty0catch} suppresses
+(catches) the exception.
+
+\footnotetext{These commands are explained in \hyperref[extendGH]{Section~\ref*{extendGH}}}
+
+
+\section{Extending the functionality of \texorpdfstring{\protect\pkg{grayhints}}{grayhints}}\label{extendGH}
+
+The `gray hints' technique works well with fields that require special
+formatting such as the ones provided by built-in formats of \app{Adobe
+Acrobat}, these formats are Number, Percentage, Date, Time, Special, and
+Custom. How `gray hints' functions when one of these special formats is used
+may be acceptable, but if not, we offer an alternative. We begin by
+presenting two date text fields. The one on the left is the default, the one
+on the right is `enhanced.'\footnote{The example that follows is taken from
+\texttt{gh-fmts-forms.tex} where you will find additional
+discussion.}\medbreak
+
+\noindent\hskip-62.5pt\begingroup\advance\linewidth62.5pt
+\begin{minipage}[t]{.5\linewidth-15pt}
+\textField[\textColor{\matchGray}
+    \TU{Enter a date of your choosing}
+    \AA{%
+      \AAOnFocus{\JS{\FocusToBlack}}
+% Using the Adobe Built-in functions directly
+      \AAKeystroke{AFDate_KeystrokeEx("yyyy/mm/dd");\r
+        \KeyToGray}
+      \AAFormat{AFDate_FormatEx("yyyy/mm/dd");\r
+        \FmtToGray{yyyy/mm/dd}}
+      \AAOnBlur{\JS{\BlurToBlack}}
+    \AACalculate{\CalcToGray}
+}]{Datefield1}{1in}{11bp}\par\smallskip\noindent
+\begin{Verbatim}[xleftmargin=15pt,fontsize=\footnotesize,commandchars={!~@},numbers=left,numbersep=8pt]
+\textField[\textColor{\matchGray}
+  \TU{Enter a date of your choosing}\AA{%
+  \AAOnFocus{\JS{\FocusToBlack}}
+% !normalfont~Using the Adobe Built-in functions directly@
+  \AAKeystroke{%
+    AFDate_KeystrokeEx("yyyy/mm/dd");\r
+    \KeyToGray}
+  \AAFormat{AFDate_FormatEx("yyyy/mm/dd");\r
+    \FmtToGray{yyyy/mm/dd}}
+  \AAOnBlur{\JS{\BlurToBlack}}
+  \AACalculate{\CalcToGray}
+}]{Datefield1}{1in}{11bp}
+\end{Verbatim}
+\footnotesize\makebox[\linewidth][c]{Figure (a): Using Adobe built-in functions}
+\end{minipage}\hfill
+\begin{minipage}[t]{.5\linewidth-15pt}
+\textField[\textColor{\matchGray}
+    \TU{Enter a date of your choosing}\AA{%
+    \AAOnFocus{\JS{\FocusToBlack}}
+% using a customized version of Adobe built-in functions, with LaTeX access
+    \AAKeystroke{\DateKeyEx("yyyy/mm/dd");\r
+      \KeyToGray}
+    \AAFormat{\DateFmtEx("yyyy/mm/dd");\r
+      \FmtToGray{yyyy/mm/dd}}
+    \AAOnBlur{\JS{\BlurToBlack}}
+    \AACalculate{\CalcToGray}
+}]{Datefield2}{1in}{11bp}\par\smallskip\noindent
+\begin{Verbatim}[xleftmargin=15pt,fontsize=\footnotesize,commandchars={!~@},numbers=left,numbersep=8pt]
+\textField[\textColor{\matchGray}
+  \TU{Enter a date of your choosing}\AA{%
+  \AAOnFocus{\JS{\FocusToBlack}}
+% !normalfont~Using a customized version of Adobe built-in@
+% !normalfont~functions, with !LaTeX access@
+  \AAKeystroke{!textbf~\DateKeyEx@("yyyy/mm/dd");\r
+    \KeyToGray}
+  \AAFormat{!textbf~\DateFmtEx@("yyyy/mm/dd");\r
+    \FmtToGray{yyyy/mm/dd}}
+  \AAOnBlur{\JS{\BlurToBlack}}
+  \AACalculate{\CalcToGray}
+}]{Datefield2}{1in}{11bp}
+\end{Verbatim}
+\setlength{\fboxsep}{0pt}%
+\footnotesize\makebox[\linewidth][c]{Figure~(b): Using \LaTeX{} format commands}
+\end{minipage}
+\endgroup\par\medskip\noindent
+Try entering a bogus date, such as the number `17'. The two fields operate
+identically when you then commit your date by clicking your mouse outside the
+fields. However, the behavior of these two fields differ when you commit your
+bogus date by pressing the \uif{Enter} key. For Figure~(a), the template
+`yyyy/dd/mm' appears in black, whereas, for Figure~(b), the phrase `continue
+editing' appears in black. The latter is the `enhanced' behavior of the
+fields that use the gray hints code.
+
+\paragraph*{Remarks on the {\LaTeX} format commands.} The difference in the two code snippets
+(Figures~(a) and~(b)) is seen in lines~(6) and~(8) of Figure~(b). In these
+two lines we use the special \cs{DateKeyEx} and \cs{DateFmtEx} commands that
+ultimately call the \app{Adobe} built-in functions, but when these special
+commands are used, we can better manage what happens when the \uif{Enter} key
+is pressed. The document author is strongly encouraged to use the {\LaTeX}
+commands in the last column on the right of
+\hyperref[table:builtin]{Table~\ref*{table:builtin}}, instead of using the
+Adobe built-ins, as is done in Figure~(a), or their `EF'
+counterparts.\footnote{Some of these {\LaTeX} commands use the `AF' built-in
+(mostly for the formate events) while others use the `EF' versions of the
+built-ins.}
+
+The \pkg{grayhints} now defines \cs{EnterCommitFailEvent} and
+\cs{CommitSuccessEvent} to customize the user experience when \uif{Enter} key
+is pressed (as opposed to leaving the field by clicking in white space, or
+tabbing away from the field). See the sample files \texttt{gh-fmts-eforms}\marginpar{\small\slshape\raggedleft \texttt{gh-fmts-eforms} referenced}
+for instructions to use these two commands. We present a final example, where the `Enter' events have been changed.\medskip
+
+\EnterCommitFailEvent{\t
+  event.target.strokeColor=color.red;\r\t\t
+  event.target.textColor=color.red;\r\t\t
+  event.value=("weiter bearbeiten");
+%  event.value=(event.target.savevalue);
+}
+\CommitSuccessEvent{\t\t
+  event.target.strokeColor=color.black;
+}
+
+%event.value=("weiter bearbeiten");
+
+\noindent
+\textField[\textColor{\matchGray}
+    \TU{Enter a date of your choosing}\AA{%
+    \AAOnFocus{\JS{\FocusToBlack}}
+% using a customized version of Adobe built-in functions, with LaTeX access
+    \AAKeystroke{\DateKeyEx("yyyy/mm/dd");\r
+      \KeyToGray}
+    \AAFormat{\DateFmtEx("yyyy/mm/dd");\r
+      \FmtToGray{yyyy/mm/dd}}
+    \AAOnBlur{\JS{\BlurToBlack}}
+    \AACalculate{\CalcToGray}
+}]{Datefield3}{1in}{11bp}\qquad(enter `17' then press enter)\medskip
+
+\EnterCommitFailEvent{}\CommitSuccessEvent{}
+
+\noindent This example appears in the \texttt{gh-fmts-eforms.tex} sample file.
+
+
+\section{My retirement}
+
+Now, I simply must get back to it. \dps
+
+\end{document}
+
+\begin{minipage}{\linewidth-2in-6bp-1em-6pt}\footnotesize
+\textbf{Remark.} The underlying JS function tries hard to make a date from
+the input. You can enter a date in most any format as long it is in the order
+of the date elements YEAR MONTH DAY (yyyy/mm/dd), as determined by the
+formatting template. (For example, try 2018 Jan 10).
+\end{minipage}\medskip

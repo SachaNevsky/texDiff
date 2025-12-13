@@ -1,0 +1,175 @@
+% robustmanual.tex 2018/04/11
+\documentclass{article}
+\usepackage{makeidx}
+\usepackage[multind]{robustindex}[2018/04/15]
+\usepackage[hyperindex=false,colorlinks=true]{hyperref}
+
+\title {Manual of robustindex package}
+
+\author{Wilberd van der Kallen\index{Wilberd}}
+\date{April 2018}
+
+\makeindex    % obligatory with robustindex
+
+\begin{document}
+
+\maketitle
+
+\section*{Introduction}
+
+\index{discussion|(}
+
+Amazingly often a third party changes the page numbers without rerunning
+makeindex. We therefore want to have an index in which the page numbers automatically synchronise with the document.
+
+The package \texttt{robustindex} achieves this
+by invoking the \verb|\pageref| mechanism on automatically generated labels
+of the form \verb|ind.2|, \verb|ind.4|, \dots.
+
+Only after adding/deleting/modifying an \verb|\index{|\textit{entry}\verb|}|
+command, or after changing the order of \verb|\index{|\textit{entry}\verb|}|
+commands, does one have to rerun makeindex. (How would you change the order? By moving a block of text that contains 
+an \verb!\index! command.)
+
+Make sure to run makeindex at least once after the last change to the \verb!\index! commands.
+Keep an eye on the \TeX\ log file. It often contains a warning that you  need to rerun \LaTeX\ or makeindex. 
+
+\section*{Standard usage}
+Put 
+$$
+\verb!\usepackage{makeidx}! 
+$$
+$$
+\verb!\usepackage{robustindex}! 
+$$
+$$\verb!\makeindex!$$
+in your preamble.
+If you use the hyperref package, go against their advice and put 
+$$\verb!\usepackage{robustindex}! $$
+\emph{after} the hyperref declaration, \emph{or} 
+turn off \verb!hyperindex! as in 
+$$
+\verb!\usepackage[plainpages=false,hyperindex=false]{hyperref}!.
+$$
+
+That should be all. (You may have to trash old auxiliary files, the \verb!ind! file included.)
+
+You can now use \index{alpha}\index{gamma|textbf}
+$$\verb!\index{alpha}!$$
+$$\verb?\index{alpha!see beta}?$$
+$$\verb!\index{gamma|textbf}!$$
+$$\verb!\index{ampersand@\&|textbf}!$$
+in the usual manner. 
+\index{ampersand@\&|textbf}
+
+See \url{https://en.wikibooks.org/wiki/LaTeX/Indexing}.\\
+
+
+
+The symbol \verb!|!  has a special meaning inside an \verb!\index! command and cannot be escaped.
+To get \verb!|! as output use the \LaTeX\ command \verb!\vert!.
+
+
+We also have a command \verb!\gobblepageref!, a variant of \verb!\see!,
+used as in 
+$$\verb?\index{alpha!see also gamma\gobblepageref}?$$
+\index{alpha!see also gamma\gobblepageref}
+
+\subsection*{Page ranges}
+Some features of makeindex had to be repurposed.
+In particular, \emph{implicit} page ranges are no longer supported. 
+
+
+If you want a page range in the index you have to use 
+the \emph{explicit} page range mechanism of makeindex as in
+$$\verb!\index{discussion|(}!$$% used above
+
+
+
+
+on the first page of the range, followed by
+$$\verb!\index{discussion|)}!$$\index{discussion|)}on the last page of the range.\\
+
+\subsection*{Table of contents}
+If there is a table of contents and you want the index listed in it, put the command
+$$\verb!\indexincontents!$$
+somewhere before the \verb!\printindex!.
+\index{alpha!see beta}
+
+Before discussing the \verb|multind|  option we now use $\verb!\printindex!$ to get an index (on a new page).
+
+\printindex
+
+\section*{The \texttt{multind} option}
+The \verb!multind!  option provides
+support for many indexes. 
+Suppose the preamble contains  \verb!\usepackage[multind]{robustindex}[2018/04/15]!.
+
+Let us say we want to use four indexes. First we choose tags to identify them.
+Say we use the tags \verb|main|, \verb|bis|, \verb|a1|, \verb|b1|.
+The tag \verb|main| is always known and
+the index with tag \verb|main|  becomes active at the \verb|\begin{document}|.
+
+With the \verb!\setindex! command we activate an index.
+Thus \verb!\setindex{bis}! tells \LaTeX\ that the active index is now the index identified by the tag
+\verb|bis|, until the next \verb!\setindex! command. The other indexes are inactivated.
+If a tag has not been encountered 
+before, then a new index with that tag is created. 
+The \verb!\index! command and
+the \verb|\printindex| commands write to/from the active index. All indexes are hidden in one
+big index  file (with extension \verb!ind!) and \LaTeX\ knows how to find the active index in there.
+
+If you wish you may use \verb!\sindex[bis]{!\emph{entry}\verb!}! as shorthand for\\
+
+\hspace{5em} \verb!\setindex{bis}\index{!\emph{entry}\verb!}!\\
+ 
+and \verb!\sindex{!\emph{entry}\verb!}! as shorthand for\\
+
+ \hspace{5em} \verb!\setindex{main}\index{!\emph{entry}\verb!}!.\\
+
+
+
+Option \verb!multind! works with the original compilation sequence. That is the main point of all our hacking.
+For instance, the file \verb!multisample.tex! produces multiple indexes and may be processed in this 
+old fashioned way:
+
+latex multisample.tex
+
+makeindex multisample
+
+latex multisample.tex
+
+latex multisample.tex\\
+
+Older versions of  \verb!robustindex.sty! 
+may give different results. Use version \verb!2018/04/15! or later.
+We recommend to bundle \verb!robustindex.sty!  with your \verb!tex!  and \verb!ind! file when moving
+files to another computer.
+
+
+If you have an entry that should go before the letter a, then you may start the argument of \verb!\index! with \verb!<!,
+as in \index{<@$<$ comes before alphabet}\verb!\index{<@$<$ comes before alphabet}!.
+
+\subsection*{Embellishment}
+One may embellish an index with letter headings, like this.
+
+\verb!\setindex{main}!
+
+\verb!\renewcommand{\indexname}{Embellished Index}!
+
+\verb!\renewcommand{\indexcapstyle}[1]{\indexspace\textsc{#1}\par}!%
+
+\verb!\printindex! \\
+
+\noindent This gives 
+
+\setindex{main}
+
+\renewcommand{\indexname}{Embellished Index}
+
+\renewcommand{\indexcapstyle}[1]{\indexspace\textsc{#1}\par}%
+
+\printindex
+
+
+\end{document}

@@ -1,0 +1,414 @@
+\documentclass{article}
+\usepackage{parskip}
+\usepackage{booktabs}
+
+\usepackage{lmodern}
+\usepackage{textcomp}
+\usepackage[LGR,T1]{fontenc}
+
+% UTF8 input encoding for pdfTeX or LuaTeX in 8-bit compatibility mode:
+% (XeTeX in compatibility mode would require xetex-inputenc.sty, which is
+% not at CTAN but on https://github.com/wspr/xetex-inputenc)
+\usepackage[utf8]{luainputenc}
+
+\usepackage[pdfencoding=auto,colorlinks=true,linkcolor=blue]{hyperref}
+\usepackage{bookmark}
+% hyperrefs PU encoding supports Greek LICR macros
+\DeclareTextCommand{\ensuregreek}{PU}[1]{#1}
+
+\usepackage[normalize-symbols, % comment option out to test error reporting
+            keep-semicolon%
+           ]{textalpha}
+
+\begin{document}
+
+\title{The \emph{textalpha} package}
+\author{Günter Milde}
+\maketitle
+
+\abstract{\noindent
+The \emph{textalpha} package enables the use of Greek characters
+in text independent of font encoding or TeX engine. Input is possible via
+text commands (\verb|\textalpha| \ldots
+\verb|\textOmega|) or Unicode literals\footnote{%
+Requires \emph{\href{http://www.ctan.org/pkg/greek-inputenc}{greek-inputenc}}
+or XeTeX/LuaTeX.}.
+}
+\tableofcontents
+
+\section{Usage}
+
+Load this package in the preamble of your document with
+\begin{verbatim}
+  \usepackage{textalpha}
+\end{verbatim}
+eventually with options \texttt{normalize-symbols} and/or
+\texttt{keep-semicolon}.
+
+If \emph{textalpha} is loaded after the setup of Unicode fonts with the
+\href{http://www.ctan.org/pkg/fontspec}{\emph{fontspec}} package under
+LuaTeX and XeTeX, it provides a compatible interface for Greek in text mode.
+
+
+See the source of this document \url{textalpha-doc.tex} for a setup and
+usage example, the literate source of the package
+\href{textalpha.sty.html}{textalpha.sty} for the implementation, and
+\href{tuenc-greek-doc.pdf}{tuenc-greek-doc.pdf} for
+\emph{Font setup for Greek with XeTeX/LuaTeX}.
+
+
+\subsection{option \texttt{normalize-symbols}}
+
+Mathematical notation uses variant shapes of some Greek letters as
+additional symbols.  There are separate code points for the symbol variants
+in Unicode. TeX supports some of the variant shape symbols in mathematical
+mode ($\theta|\vartheta, \phi|\varphi, \pi|\varpi, \rho|\varrho,
+\epsilon|\varepsilon$) but not in the LGR font encoding used for Greek in
+8-bit TeX.
+
+The variations have no syntactic meaning in Greek text and text fonts may
+use the variant shapes in place of the “regular” ones as a stylistic choice.
+However, some Greek texts use these GREEK ... SYMBOL characters in place of
+the corresponding GREEK LETTER ... characters.
+
+The \texttt{normalize-symbols} option merges letters and symbols to Greek
+letters.
+This way, text copied from external sources can be compiled without
+errors even if it contains GREEK SYMBOL characters in place of GREEK LETTERS:
+\begin{quote}
+  This text uses both variants for beta (β|ϐ), theta (θ|ϑ), phi (φ|ϕ), pi
+  (π|ϖ), kappa (κ|ϰ), rho (ρ|ϱ), Theta (Θ|ϴ), and epsilon (ε|ϵ) in the LaTeX
+  source.
+
+  \greekscript
+  This text uses both variants for beta (β|ϐ), theta (θ|ϑ), phi (φ|ϕ), pi
+  (π|ϖ), kappa (κ|ϰ), rho (ρ|ϱ), Theta (Θ|ϴ), and epsilon (ε|ϵ) in the LaTeX
+  source.
+\end{quote}
+
+\textbf{Attention}: Do not use this option in cases where the distinction
+between the symbol variants may be important (e.g. in a mathematical or
+scientific context). Try the \emph{alphabeta} package with the
+respective characters in math mode or use XeTeX/LuaTeX with Unicode fonts in
+these cases.
+
+This option is ignored with Unicode fonts.
+
+\subsection{\texttt{keep-semicolon}}
+
+LGR is no ``standard font encoding''. Latin characters and some other ASCII
+symbols are mapped to Greek ``equivalents'' if LGR is the active font
+encoding. (See
+\href{http://mirrors.ctan.org/language/babel/contrib/greek/usage.pdf}{usage.pdf}
+for a description of this Latin-Greek transliteration.)
+
+Special care is required with the question mark characters: The LGR font
+encoding uses the Latin question mark as input for the \emph{erotimatiko}
+and maps the semicolon to a middle dot (\emph{ano teleia}).
+As a result, Unicode-encoded texts that use the semicolon as
+\emph{erotimatiko} end up with an \emph{ano teleia} in its place! 
+Without special care, only the deprecated character 037E GREEK QUESTION MARK%
+\footnote{The Unicode standard provides the code point 037E GREEK QUESTION MARK
+        but says character 003B SEMICOLON and not 037E is the preferred
+        character for a `Greek question mark' (erotimatiko).}
+works with both, Xe/LuaTeX and 8-bit TeX.
+
+The \verb|\textsemicolon| command inserts an \emph{erotimatiko} in LGR and a
+semicolon else (i.e. always a character that looks like a semicolon):
+\begin{quote}
+  Latin (T1) a\textsemicolon{} b,
+  Greek (LGR) \ensuregreek{a\textsemicolon{} b}
+\end{quote}
+
+With the \texttt{keep-semicolon} option, character 003B SEMICOLON can be used
+for the \emph{erotimatiko} also with LGR encoded fonts:
+
+\begin{center}
+\begin{tabular}{lll}
+  Latin (T1) & Greek (LGR) & question mark character \\
+  \midrule
+  Τί φήις; & \ensuregreek{Τί φήις;} & 037E GREEK QUESTION MARK \\
+  Τί φήις; & \ensuregreek{Τί φήις;} & 003B SEMICOLON \\
+  Τί φήις? & \ensuregreek{Τί φήις?} & 003F QUESTION MARK \\
+\end{tabular}
+\end{center}
+
+This option is ignored with Unicode fonts.
+
+
+\section{Limitations \label{sec:limitations}}
+
+Because the internal font encoding switch interferes with other work behind
+the scenes, kerning, diacritics and up/down-casing show problems if Greek
+letters are used without explicit change of the font encoding.
+
+These problems can be avoided by use of \emph{babel} and the correct
+language setting (greek), an explicit font encoding switch (e.g.
+wrapping the Greek text in \verb|\ensuregreek|%
+\footnote{The \texttt{\textbackslash ensuregreek} macro ensures the argument
+  is set in a font encoding supporting Greek.
+  % This can be used to fix these
+  % problems without adverse side-effects if the active font encoding is
+  % already LGR or TU.
+  },
+or XeTeX/LuaTeX with Unicode fonts.
+
+
+\subsection{Diacritics}
+
+Composition of diacritics (like \verb|\accdasia\acctonos| or \verb|\<\'|)
+fails in other font encodings. Long names (like \verb|\accdasiaoxia|) work.
+
+With LGR, pre-composed glyphs are chosen if available. In other font
+encodings, accent macros do not select pre-composed characters. (The
+difference is a sub-optimal placement of the accent and becomes obvious if
+you drag-and-drop text from the PDF version of this document.):
+
+\begin{quote}
+  \ensuregreek{\<'a \accdasia\acctonos a \accdasiaoxia a
+  \accdasiaoxia\textalpha} (LGR) vs. \accdasiaoxia\textalpha{} (T1).
+\end{quote}
+
+According to Greek typographical tradition, diacritics (except the
+dialytika) are placed before capital letters in Titlecase and dropped in
+UPPERCASE:
+%
+\begin{quote}
+  \ensuregreek{%
+    \<{\textalpha} \>{\textepsilon} \"'{\textiota} \`>\texteta{}
+    \'<{\textomicron} \~<{\textupsilon} \~>{\textomega}
+    \quad
+    \<{\textAlpha} \>{\textEpsilon} \"{\textIota} \`>\textEta{}
+    \'<{\textOmicron} \~<{\textUpsilon} \~>{\textOmega}
+    \quad
+    \MakeUppercase{%
+      \<{\textalpha} \>{\textepsilon} \"'{\textiota} \`\>\texteta{}
+      \'<{\textomicron} \~<{\textupsilon} \~>{\textomega}
+    }
+  }
+\end{quote}
+%
+This fails for accent macros if the active font encoding does not support
+Greek. Pre-composed literal Unicode characters are handled correctly:
+\begin{quote}
+    \begin{tabular}{ccc}
+        & LICR                       & Unicode         \\ \hline 
+    LGR & \ensuregreek{\'\textAlpha} & \ensuregreek{Ά} \\
+    T1  & \'\textAlpha               & Ά               \\
+    \end{tabular}
+\end{quote}
+
+The dialytika marks a \emph{hiatus} (break-up of a diphthong). It must be
+present in UPPERCASE even where it is redundant in lowercase (the hiatus can
+also be marked by an accent on the first character of a diphthong). The
+auto-hiatus feature works in LGR and TU font encodings only:
+\begin{quote}
+  \acctonos\textalpha\textupsilon{}, \acctonos\textepsilon\textiota{} $\mapsto$
+  \MakeUppercase{\ensuregreek{
+    \acctonos\textalpha\textupsilon{}, \acctonos\textepsilon\textiota{}
+  }} (LGR) vs.
+  \MakeUppercase{
+    \acctonos\textalpha\textupsilon{}, \acctonos\textepsilon\textiota{}%
+  } (T1)
+\end{quote}
+
+Currently, the second vowel of the diphthong must be given as macro, not
+Unicode literal if the auto-hiatus feature should work:
+\begin{quote}
+\ensuregreek{ἀ\textupsilon{}πνία} $\mapsto$
+\ensuregreek{\MakeUppercase{\ensuregreek{ἀ\textupsilon{}πνία}}} (LGR) vs.
+\ensuregreek{\MakeUppercase{\ensuregreek{ἀυπνία}}} (T1).
+\end{quote}
+
+\subsection{Kerning}
+
+No kerning occurs between Greek characters in non-Greek text due to the
+internal font encoding switch: compare
+\ensuregreek{\textAlpha\textUpsilon\textAlpha} (LGR) to
+\textAlpha\textUpsilon\textAlpha (T1).
+
+Compiling with LuaTeX provides kerning also on font encoding boundaries.
+
+\section{Test and Examples}
+
+\subsection{Greek alphabet}
+
+Greek letters via Latin transcription in LGR font encoding:
+
+\begin{quote}
+  \ensuregreek{A B G D E Z H J I K L M N X O P R S T U F Q Y W}\\
+  \ensuregreek{a b g d e z h j i k l m n x o p r sv c t u f q y w}
+\end{quote}
+
+\smallskip\noindent
+Greek letters via default macros in other font encoding (here T1):
+
+\begin{quote}
+  \textAlpha{} \textBeta{} \textGamma{} \textDelta{} \textEpsilon{}
+  \textZeta{} \textEta{} \textTheta{} \textIota{} \textKappa{}
+  \textLambda{} \textMu{} \textNu{} \textXi{} \textOmicron{} \textPi{}
+  \textRho{} \textSigma{} \textTau{} \textUpsilon{} \textPhi{}
+  \textChi{} \textPsi{} \textOmega{}
+  \\
+  \textalpha{} \textbeta{} \textgamma{} \textdelta{} \textepsilon{}
+  \textzeta{} \texteta{} \texttheta{} \textiota{} \textkappa{}
+  \textlambda{} \textmu{} \textnu{} \textxi{} \textomicron{} \textpi{}
+  \textrho{} \textsigma{} \textvarsigma{} \texttau{} \textupsilon{}
+  \textphi{} \textchi{} \textpsi{} \textomega{}
+\end{quote}
+
+\smallskip\noindent
+Archaic Greek letters and Greek punctuation
+
+\begin{quote}
+  \textDigamma
+  \textanoteleia
+  \textQoppa
+  \textSampi
+  \textStigma
+  \textnumeralsigngreek
+  \texterotimatiko
+  \\
+  \textdigamma
+  \textkoppa
+  \textqoppa
+  \textsampi
+  \textstigma
+  \textnumeralsignlowergreek
+  \textvarstigma
+\end{quote}
+
+\smallskip\noindent
+Diacritics
+
+\begin{quote}
+  Symbol macros:%
+  \footnote{Composite diacritics require wrapping in
+  \texttt{\textbackslash ensuregreek}.}
+  \"{} \'{} \`{} \~{} \<{} \>{} \u{} \={}
+  \ensuregreek{\"~{} \"'{} \"`{} \<~{} \<`{} \<'{} \>~{} \>'{} \>`{}}
+
+  Named macros:
+  \accdialytika{}
+  \acctonos{}
+  \accvaria{}
+  \accperispomeni{}
+  \accdasia{}
+  \accpsili{}
+  \ypogegrammeni{}
+  \prosgegrammeni{}
+  %
+  \accdialytikaperispomeni{}
+  \accdialytikatonos{}
+  \accdialytikavaria{}
+  \accdasiaperispomeni{}
+  \accdasiavaria{}
+  \accdasiaoxia{}
+  \accpsiliperispomeni{}
+  \accpsilioxia{}
+  \accpsilivaria{}
+  %
+  \accinvertedbrevebelow{} % == \textsubarch{}
+  \accbrevebelow{}
+
+
+\end{quote}
+
+\medskip\noindent
+Accent macros can start with \verb|\a| instead of \verb|\| when the
+short form is redefined, e.\,g. inside a \emph{tabbing} environment.
+This also works for the new-defined Dasia and Psili shortcuts:
+\begin{quote}
+  \begin{tabbing}
+       COL1\quad \= COL2\quad \= COL3\quad \= COL4\quad \\
+       COL1 \>          \> COL3 \\
+       Viele    \> Gr\a"u\ss e
+       \> \greekscript \a<\textalpha{}
+       \> \greekscript \a>\textomega
+  \end{tabbing}
+\end{quote}
+
+
+\subsection{Greek Unicode characters in non-Greek text}
+
+With the \emph{textalpha} package,
+\href{http://www.ctan.org/pkg/greek-inputenc}{greek-inputenc} and input
+encoding \texttt{utf8}, Greek Unicode characters can be used in text with
+any font encoding. See Tables \ref{tab:greek-and-coptic} and
+\ref{tab:greek-extended}.
+
+Kerning is preserved if the font encoding is LGR: \ensuregreek{AΫA}
+
+\begin{table}[tbp]
+\centerline{
+\begin{tabular}{rrrrrrrrrrrrrrrrr}
+\toprule
+    & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & A & B & C & D & E & F\\
+\midrule
+370 & ◦ & ◦ & ◦ & ◦ & ʹ & ͵ & ◦ & ◦ &   &   & ͺ & ◦ & ◦ & ◦ & ; &  \\
+380 &   &   &   &   & ΄ & ΅ & Ά & · & Έ & Ή & Ί &   & Ό &   & Ύ & Ώ\\
+390 & ΐ & Α & Β & Γ & Δ & Ε & Ζ & Η & Θ & Ι & Κ & Λ & Μ & Ν & Ξ & Ο\\
+3A0 & Π & Ρ &   & Σ & Τ & Υ & Φ & Χ & Ψ & Ω & Ϊ & Ϋ & ά & έ & ή & ί\\
+3B0 & ΰ & α & β & γ & δ & ε & ζ & η & θ & ι & κ & λ & μ & ν & ξ & ο\\
+3C0 & π & ρ & ς & σ & τ & υ & φ & χ & ψ & ω & ϊ & ϋ & ό & ύ & ώ &  \\
+3D0 & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & Ϙ & ϙ & Ϛ & ϛ & Ϝ & ϝ & ◦ & ϟ\\
+3E0 & Ϡ & ϡ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦\\
+3F0 & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦ & ◦\\
+\bottomrule
+\end{tabular}
+} % end centerline
+\caption{Greek and Coptic Unicode Block, input as literal Unicode
+   characters in T1 font encoding (legend: ◦ glyph missing in LGR).}
+\label{tab:greek-and-coptic}
+\end{table}
+
+
+\begin{table}[tbp]
+\centerline{
+\begin{tabular}{rrrrrrrrrrrrrrrrr}
+\toprule
+     & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & A & B & C & D & E & F\\
+\midrule
+1F00 & ἀ & ἁ & ἂ & ἃ & ἄ & ἅ & ἆ & ἇ & Ἀ & Ἁ & Ἂ & Ἃ & Ἄ & Ἅ & Ἆ & Ἇ\\
+1F10 & ἐ & ἑ & ἒ & ἓ & ἔ & ἕ &   &   & Ἐ & Ἑ & Ἒ & Ἓ & Ἔ & Ἕ &   &  \\
+1F20 & ἠ & ἡ & ἢ & ἣ & ἤ & ἥ & ἦ & ἧ & Ἠ & Ἡ & Ἢ & Ἣ & Ἤ & Ἥ & Ἦ & Ἧ\\
+1F30 & ἰ & ἱ & ἲ & ἳ & ἴ & ἵ & ἶ & ἷ & Ἰ & Ἱ & Ἲ & Ἳ & Ἴ & Ἵ & Ἶ & Ἷ\\
+1F40 & ὀ & ὁ & ὂ & ὃ & ὄ & ὅ &   &   & Ὀ & Ὁ & Ὂ & Ὃ & Ὄ & Ὅ &   &  \\
+1F50 & ὐ & ὑ & ὒ & ὓ & ὔ & ὕ & ὖ & ὗ &   & Ὑ &   & Ὓ &   & Ὕ &   & Ὗ\\
+1F60 & ὠ & ὡ & ὢ & ὣ & ὤ & ὥ & ὦ & ὧ & Ὠ & Ὡ & Ὢ & Ὣ & Ὤ & Ὥ & Ὦ & Ὧ\\
+1F70 & ὰ & ά & ὲ & έ & ὴ & ή & ὶ & ί & ὸ & ό & ὺ & ύ & ὼ & ώ &   &  \\
+1F80 & ᾀ & ᾁ & ᾂ & ᾃ & ᾄ & ᾅ & ᾆ & ᾇ & ᾈ & ᾉ & ᾊ & ᾋ & ᾌ & ᾍ & ᾎ & ᾏ\\
+1F90 & ᾐ & ᾑ & ᾒ & ᾓ & ᾔ & ᾕ & ᾖ & ᾗ & ᾘ & ᾙ & ᾚ & ᾛ & ᾜ & ᾝ & ᾞ & ᾟ\\
+1FA0 & ᾠ & ᾡ & ᾢ & ᾣ & ᾤ & ᾥ & ᾦ & ᾧ & ᾨ & ᾩ & ᾪ & ᾫ & ᾬ & ᾭ & ᾮ & ᾯ\\
+1FB0 & ᾰ & ᾱ & ᾲ & ᾳ & ᾴ &   & ᾶ & ᾷ & Ᾰ & Ᾱ & Ὰ & Ά & ᾼ & ᾽ & ι & ᾿\\
+1FC0 & ῀ & ῁ & ῂ & ῃ & ῄ &   & ῆ & ῇ & Ὲ & Έ & Ὴ & Ή & ῌ & ῍ & ῎ & ῏\\
+1FD0 & ῐ & ῑ & ῒ & ΐ &   &   & ῖ & ῗ & Ῐ & Ῑ & Ὶ & Ί &   & ῝ & ῞ & ῟\\
+1FE0 & ῠ & ῡ & ῢ & ΰ & ῤ & ῥ & ῦ & ῧ & Ῠ & Ῡ & Ὺ & Ύ & Ῥ & ῭ & ΅ & `\\
+1FF0 &   &   & ῲ & ῳ & ῴ &   & ῶ & ῷ & Ὸ & Ό & Ὼ & Ώ & ῼ & ´ & ῾ &  \\
+\bottomrule
+\end{tabular}
+} % end centerline
+\caption{Greek Extended Unicode Block, input as literal Unicode
+characters in T1 font encoding.}
+\label{tab:greek-extended}
+\end{table}
+
+Combined Diacritics work ᾅ, diacritics (except diaeresis) are dropped with
+MakeUppercase (μαΐστρος $\mapsto$ \MakeUppercase{μαΐστρος}).
+
+\subsection{PDF strings}
+
+With \emph{textalpha} and
+\emph{\href{http://www.ctan.org/pkg/greek-inputenc}{greek-inputenc}}, there
+are two options to get Greek letters in PDF strings: LICR macros and literal
+Unicode input.
+
+\subsubsection{\textlambda\textomicron\textgamma\textomicron\textvarsigma{},
+         λογος and \ensuregreek{logos}}
+
+The subsection title above uses: LICR macros, Unicode input and the LGR
+transcription for the Greek word \ensuregreek{logos}. Check the table of
+contents in the PDF viewer: LICR macros and Unicode literals work fine, the
+Latin transcription remains Latin in the PDF metadata.
+
+\end{document}

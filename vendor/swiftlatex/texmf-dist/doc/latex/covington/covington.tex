@@ -1,0 +1,1274 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% File covington.tex
+%%
+%% Documentation of covington
+%%
+%% This file is part of the covington LaTeX package
+%%
+%% Original author:
+%% ================
+%% Michael A. Covington
+%% Artificial Intelligence Programs
+%% The University of Georgia
+%% Athens, Georgia 30602-7415 USA
+%% mcovingt@aisun1.ai.uga.edu
+%%
+%% Current maintainer:
+%% ===================
+%% Juergen Spitzmueller <juergen@spitzmueller.org>
+%%
+%% This work may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either version 1.3
+%% of this license or (at your option) any later version.
+%% The latest version of this license is in
+%%   http://www.latex-project.org/lppl.txt
+%% and version 1.3 or later is part of all distributions of LaTeX
+%% version 2003/12/01 or later.
+%%
+%% This work has the LPPL maintenance status "maintained".
+%% 
+%% The Current Maintainer of this work is Juergen Spitzmueller.
+%%
+%% Code repository and issue tracker: https://github.com/jspitz/covington
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[english]{article}
+
+\usepackage{metre}
+\usepackage[libertine]{newtxmath}
+\usepackage[osf]{libertine}
+\usepackage[scaled=0.75]{beramono}
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+
+\usepackage{covington}
+
+\usepackage{url}
+\usepackage[bookmarks=true,
+			bookmarksnumbered=false,
+			bookmarksopen=false,
+			breaklinks=false,
+			pdfborder={0 0 0},
+			backref=false,
+			colorlinks=false
+]{hyperref}
+\hypersetup{%
+	pdftitle={The covington manual},
+	pdfauthor={Jürgen Spitzmüller},
+	pdfkeywords={latex,linguistics}
+}
+
+\usepackage{microtype}
+
+% Tweak the TOC (make it more compact)
+\usepackage{tocloft}
+\setlength{\cftbeforesecskip}{0pt}
+\renewcommand{\cfttoctitlefont}{\normalsize\bfseries}
+\renewcommand{\cftsecfont}{\footnotesize}
+\renewcommand{\cftsecpagefont}{\footnotesize}
+\renewcommand{\cftsubsecfont}{\footnotesize}
+\renewcommand{\cftsubsecpagefont}{\footnotesize}
+
+\usepackage{babel}
+
+\usepackage{listings}
+\lstset{language={[LaTeX]TeX},
+	basicstyle={\small\ttfamily},
+	frame=single}
+
+% markup
+\newcommand*\jmacro[1]{\textbf{\texttt{#1}}}
+\newcommand*\jenv[1]{\textbf{\texttt{#1}}}
+\newcommand*\jcsmacro[1]{\jmacro{\textbackslash{#1}}}
+\newcommand*\joption[1]{\textbf{\texttt{#1}}}
+\newcommand*\jfmacro[1]{\texttt{#1}}
+\newcommand*\jfenv[1]{\texttt{#1}}
+\newcommand*\jfcsmacro[1]{\jfmacro{\textbackslash{#1}}}
+\newcommand*\jparam[1]{\angus #1\angud}
+
+% Strings
+\newcommand*{\cvt}{\textsf{covington}}
+\newcommand*{\Cvt}{\textsf{Covington}}
+
+%
+% Titling
+%
+\def\pversion{Version 2.4}
+\def\pdate{January 2, 2020}
+
+\title{\textbf{The \cvt\ Package\\Macros for Linguistics}}
+\author{Michael A. Covington \and J\"urgen Spitzm\"uller\thanks{Current maintainer.
+		Please report issues via \protect\url{https://github.com/jspitz/covington}}}
+
+\date{\pversion, \pdate}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\noindent This package, initially a collection of Michael A. Covington's private macros, provides
+numerous minor \LaTeX\ enhancements for linguistics, including multiple diacritics on the
+same letter, interlinear glosses (word-by-word translations), Discourse Representation Structures,
+example numbering, and semantic markup.
+\end{abstract}
+
+\tableofcontents
+
+\clearpage
+
+\section{Introduction}\label{sec:intro}
+
+This is the documentation for \MakeLowercase{\pversion}
+of \cvt\ (\pdate), which is a \LaTeX\ package providing macros
+for typing some special notations common in linguistics.%
+\footnote{The package has a long history. It started off as a collection of private macros back in the
+\LaTeX\ 2.09 days and was initially released as \texttt{covingtn.sty} (following the old 8.3 \textsc{fat}
+file name limit). In em\TeX\ under \textsc{ms-dos}, the file was distributed as \texttt{covingto.sty}.
+Eventually, it has been renamed to \cvt\ and adapted to \LaTeXe.}
+
+To use \cvt\ with \LaTeXe, load the package as usual by adding the command
+\lstinline"\usepackage{covington}" to your document preamble.
+The package has the following options:
+\begin{description}
+	\item{\joption{force}:} Force the redefinition of environments that have already been
+	defined by other packages or the class.
+	
+	This applies to the \jenv{example}, \jenv{examples}, \jenv{subexamples} and \jenv{exercise} environments,
+	which are by default not touched if they are already defined before \cvt\ is loaded.
+	See sec.~\ref{sec:ex}, \ref{sec:exs}, \ref{sec:subexs} and \ref{sec:exercises} for details.
+	
+	\item{\joption{keeplayout}:} Do not tweak the layout.
+	
+	\Cvt\ sets \jfcsmacro{raggedbottom} and redefines the value of the \jfcsmacro{textfloatsep} length.
+	This just follows the preferences of the original package author and is not necessary
+	for the package's functionality. Yet for backwards compatibility reasons, we cannot change this.
+	Thus, we provide the option described here to opt out this presetting.
+
+\item{\joption{noglossbreaks}:} If this option is set, \cvt\ will try hard to prevent page breaks within glosses.
+
+	If this option is not set, page breaks can occur between interlinearized text and free translation of a gloss, as
+	well as between gloss preamble and interlinearized text, which is usually not what you will want.
+	Nonetheless the option is not set by default. This is for backwards compatibility reasons (in order to not change
+	page breaking of existing documents). Note that page breaks might still occur in some cases even if the option is set.
+	In order to prevent them definitely, you can put the gloss in a parbox or minipage.
+	
+\item{\joption{owncounter}:} Use an own counter for numbered examples.
+
+	By default, \cvt\ uses \LaTeX's equation counter for example numbering, so that if you use equations and numbered examples
+	in the same	paper, you get a single continuous series of numbers. While some people (including the original author of this package)
+	consider this a feature, others might prefer to number equations and linguistic examples separately. If you count to the latter sort,
+	use this option.
+\end{description}
+%
+Please note the following package-related caveats:
+\begin{itemize}
+	\item If you are using \cvt\ and the \textsf{uga} (University of Georgia thesis style) package together, you should load \textsf{uga} before \cvt.
+	\item If you are using \cvt\ with \textsf{beamer-article}, you should load \textsf{beamer-article} before \cvt.
+	\item If you are using \cvt\ with the \textsf{drs} package, you should load \textsf{drs} before \cvt. See sec.~\ref{sec:drs}.
+\end{itemize}
+%
+In what follows we presume that you know how to use \LaTeX\ and have 
+access to \LaTeX\ manuals.
+
+\section{Stacked diacritics}\label{sec:accents}
+
+\LaTeX\ provides a generous range of diacritics that can be placed on or below any
+letter, such as:
+\begin{flushleft}
+\`{x} \'{x} \^{x} \"{x} \~{x} \={x} \H{x} \t{xx} \c{x} \d{x} \b{x}
+\end{flushleft}
+which are typed, respectively, as:
+\begin{lstlisting}
+\`{x} \'{x} \^{x} \"{x} \~{x} \={x} \H{x} \t{xx} \c{x} \d{x} \b{x}
+\end{lstlisting}
+Out of the box, however, \LaTeX\ doesn't give you a convenient way to put \emph{two}
+diacritical marks on the same letter.  To fill this gap, \cvt\ provides
+the following macros:
+\begin{flushleft}
+	\jcsmacro{twodias\{<upper diac.>\}\{<lower diac.>\}\{<char>\}}\\to combine any two diacritics, e.\,g.,
+	               \lstinline[moretexcs={twodias}].\twodias{\~}{\=}{a}. = \twodias{\~}{\=}{a}\\[6pt]
+	\jcsmacro{acm\{\ldots\}} \quad for acute over macron, e.\,g., \lstinline[moretexcs={acm}].\acm{a}. = \acm{a}\\
+	\jcsmacro{grm\{\ldots\}} \quad for grave over macron, e.\,g., \lstinline[moretexcs={grm}].\grm{a}. = \grm{a}\\
+	\jcsmacro{cim\{\ldots\}} \quad for circumflex over macron, e.\,g., \lstinline[moretexcs={cim}].\cim{a}. = \cim{a}
+\end{flushleft}
+The first of these is the general case\footnote{%
+	Alternatively, there's also the old syntax \jcsmacro{twoacc[<upper diac.>|<char with lower diacr.>],}
+	e.\,g. \jfcsmacro{twoacc[\textbackslash\textasciitilde|\textbackslash=\{a\}]} to the same effect, which is however discouraged
+	due to its rather odd form.} and the latter three are special
+cases that are often used in Greek transcription. Now you can type
+\emph{Koin\acm{e}} with both accents in place.
+
+The vertical distance between the two diacritics can be adjusted via the macro \jcsmacro{SetDiaOffset\{<length>\}}
+which lets you increase or decrease the vertical space that is currently in effect.
+If you'd use \verb"\SetDiaOffset{-0.25ex}", the above examples would come out as
+
+\SetDiaOffset{-.25ex}
+\begin{flushleft}
+	\jcsmacro{twodias\{<upper diac.>\}\{<lower diac.>\}\{<char>\}}\\to combine any two diacritics, e.\,g.,
+	\lstinline[moretexcs={twodias}].\twodias{\~}{\=}{a}. = \twodias{\~}{\=}{a}\\[6pt]
+	\jcsmacro{acm\{\ldots\}} \quad for acute over macron, e.\,g., \lstinline[moretexcs={acm}].\acm{a}. = \acm{a}\\
+	\jcsmacro{grm\{\ldots\}} \quad for grave over macron, e.\,g., \lstinline[moretexcs={grm}].\grm{a}. = \grm{a}\\
+	\jcsmacro{cim\{\ldots\}} \quad for circumflex over macron, e.\,g., \lstinline[moretexcs={cim}].\cim{a}. = \cim{a}
+\end{flushleft}
+with a slightly better matching distance for the font used here.
+
+Note that not all accent macros work in the \jfenv{tabbing} environment.
+Use the \jfenv{Tabbing} package or refer to \cite{pakin} for alternative solutions.
+
+
+\section{Numbered examples}
+
+Linguistic papers often include numbered examples. With \cvt, generating those is straightforward.
+In this section, we describe how you can typeset a self-stepping example number (see section~\ref{sec:exno}),
+a single numbered example (sec.~\ref{sec:ex}), a consecutive range of numbered examples (sec.~\ref{sec:exs}),
+and alpha-numerically labeled sub-examples (sec.~\ref{sec:subexs}).
+All numbered examples can be referred to in the text via \jfcsmacro{label} and \jfcsmacro{ref} as usual
+(see sec.~\ref{sec:ref} for details).
+
+\subsection{Example numbers}\label{sec:exno}
+
+The macro \jcsmacro{exampleno} generates a new example number, stepped by 1. It can be 
+used anywhere you want the number to appear.  For example, to display a 
+sentence with a number at the extreme right, do this:
+\begin{lstlisting}[moretexcs={exampleno}]
+\begin{flushleft}
+This is a sentence. \hfill (\exampleno)
+\end{flushleft}
+\end{lstlisting}
+Here's what you get:
+\begin{flushleft}
+This is a sentence. \hfill (\exampleno)
+\end{flushleft}
+If you want to output the (current) number without stepping it, the starred form \jcsmacro{exampleno*} will do that. 
+
+Normally, however, you do not need to manually place \jcsmacro{exampleno} yourselves,
+as in the example above. For the common case where example numbers in parentheses are
+placed left to the example, \cvt\ provides more convenient solutions. These are described in turn.
+
+
+\subsection[The \texttt{example} environment]{The \jenv{example} environment}\label{sec:ex}
+
+The \jenv{example} environment (alias \jenv{covexample}) displays a single example
+with a generated example number to the left of it.
+If you type
+\begin{lstlisting}
+\begin{example}
+This is a sentence.
+\end{example}
+\end{lstlisting}
+or
+\begin{lstlisting}
+\begin{covexample}
+This is a sentence.
+\end{covexample}
+\end{lstlisting}
+you get:
+\begin{example}
+This is a sentence.\label{expl}
+\end{example}
+The example can be of any length; it can consist of many lines (separated by \verb"\\"), or even whole paragraphs.
+
+If you need more space between the example number and the text, you can increase it by means of
+the length \jcsmacro{examplenumbersep} (which is preset to \texttt{0pt}). Doing \lstinline|\setlength\examplenumbersep{1em}|,
+for instance, will increase the space by 1\,em (negative values will decrease the space accordingly).
+
+Note that, as of version 1.1, \cvt\ checks if there is already an \jenv{example} environment defined
+(e.\,g., by the class). If so, \cvt\ does not
+define its own one. However, there is always the alias environment \jenv{covexample} which can be used in order to
+produce \texttt{covington's} example. If you use the package option \joption{force}, \cvt\ will override
+existing \jenv{example} environments. In any case, the package will issue a warning if \jenv{example} is already defined
+(this is the case, for instance, if you use \cvt\ with the \texttt{beamer} class).
+
+One way to number sub-examples is to use \jfenv{itemize} or \jfenv{enumerate}
+within an example, like this:
+\begin{lstlisting}
+\begin{example}
+\begin{itemize}
+\item[(a)] This is the first sentence.
+\item[(b)] This is the second sentence.
+\end{itemize}
+\end{example}
+\end{lstlisting}
+This prints as:
+\begin{example}
+\begin{itemize}
+\item[(a)] This is the first sentence.
+\item[(b)] This is the second sentence.
+\end{itemize}
+\end{example}
+However, the \jenv{subexamples} environment, described in sec.~\ref{sec:subexs}, is usually more 
+convenient for this task.
+
+\subsection[The \texttt{examples} environment]{The \jenv{examples} environment}\label{sec:exs}
+
+To display a series of examples together, each with its own example 
+number, use \jenv{examples} (or \jenv{covexamples}) instead of \jenv{example} or \jenv{covexample}.  The only 
+difference is that there can be more than one example, and each of them 
+has to be introduced by \jfcsmacro{item}, like this:
+\begin{lstlisting}
+\begin{examples}
+\item This is the first sentence.
+\item This is the second sentence.
+\end{examples}
+\end{lstlisting}
+or, respectively:
+\begin{lstlisting}
+\begin{covexamples}
+\item This is the first sentence.
+\item This is the second sentence.
+\end{covexamples}
+\end{lstlisting}
+This prints as:
+\begin{examples}
+\item This is the first sentence.
+\item This is the second sentence.
+\end{examples}
+As for \jenv{example}, \cvt\ checks if there is already an \jenv{examples} environment defined,
+and if this is the case, \cvt\ does not define its own one. The alias environment \jenv{covexamples}
+is always available as a fallback. If you use the package option \joption{force}, \cvt\ will override
+existing \jenv{examples} environments. The package will issue a warning if \jenv{examples} is already defined
+(this is the case, for instance, if you use \cvt\ with the \texttt{beamer} class), telling you
+how it has dealt with the situation.
+
+
+\subsection[The \texttt{subexamples} environment]{The \jenv{subexamples} environment}\label{sec:subexs}
+
+Sometimes a set of (paradigmatic) sub-examples gets only one main example number with alphabetic sub-numbering,
+as in \pxref{sbex}. To achieve this most conveniently, \cvt\ provides the \jenv{subexamples} (or \jenv{covsubexamples})
+environment.  The difference to \jenv{examples}\slash \jenv{covexamples} is the numbering:
+\begin{lstlisting}
+\begin{subexamples}
+\item This is the first sentence.
+\item This is the second sentence.
+\end{subexamples}
+\end{lstlisting}
+or, respectively:
+\begin{lstlisting}
+\begin{covsubexamples}
+\item This is the first sentence.
+\item This is the second sentence.
+\end{covsubexamples}
+\end{lstlisting}
+prints as:
+\begin{subexamples}
+	\item This is the first sentence.\label{sbex}
+	\item This is the second sentence.
+\end{subexamples}
+%
+Again, \cvt\ checks if there is already an \jenv{subexamples} environment defined,
+and if this is the case, \cvt\ does not define its own one. The alias environment \jenv{covsubexamples}
+is always available as a fallback. If you use the package option \joption{force}, \cvt\ will override
+existing \jenv{subexamples} environments. The package will issue a warning if \jenv{subexamples} is already defined.
+
+\medskip
+\noindent The \jenv{subexamples} environment provides the following option:
+\begin{description}
+	\item[\joption{preamble=\{\jparam{arbitrary text}\}}] Arbitrary text that is inserted in the first line
+	(after the main number and before the first sub-example, which then follows in a new line).
+	This might be useful, for instance, to give context information, to specify the language or the source
+	in case of cited sub-examples. You can globally set the markup of this preamble	text (see sec.~\ref{sec:custno}).
+\end{description}
+%
+For instance,
+\begin{lstlisting}
+\begin{subexamples}[preamble={Here are two sentences}]
+\item This is the first sentence.
+\item This is the second sentence.
+\end{subexamples}
+\end{lstlisting}
+or, respectively:
+\begin{lstlisting}
+\begin{covsubexamples}[preamble={Here are two sentences}]
+\item This is the first sentence.
+\item This is the second sentence.
+\end{covsubexamples}
+\end{lstlisting}
+prints as:
+\begin{subexamples}[preamble={Here are two sentences}]
+	\item This is the first sentence.
+	\item This is the second sentence.
+\end{subexamples}
+%
+The distance between example number and subnumber (letter) can be changed via the length \jcsmacro{examplenumbersep}
+(which is preset to \texttt{0pt}). The distance between example subnumber and text can be changed  via the length
+\jcsmacro{subexamplenumbersep} (preset to \texttt{0pt} as well). In both cases, a positive value will increase, a negative
+value will decrease the respective distance.
+Doing 
+\begin{lstlisting}[moretexcs={setlength,examplenumbersep,subexamplenumbersep}]
+\setlength{\examplenumbersep}{-0.5em}
+\setlength{\subexamplenumbersep}{0.5em}
+\end{lstlisting}
+for instance, will come out like this:
+
+\bgroup
+\setlength{\examplenumbersep}{-0.5em}
+\setlength{\subexamplenumbersep}{0.5em}
+
+\begin{subexamples}
+	\item This is the first sentence.
+	\item This is the second sentence.
+\end{subexamples}
+\egroup
+
+
+\subsection{Customizing number display and example markup}\label{sec:custno}
+
+You can change the display of the example number by redefining (via \jfcsmacro{renewcommand*}) the macro
+\jcsmacro{covexnumber}, which has the following default definition:
+\begin{lstlisting}[moretexcs={covexnumber}]
+\newcommand*\covexnumber[1]{(#1)}
+\end{lstlisting}
+%
+with the variable \texttt{\#1} representing the number.
+
+In the same vein, you can customize the display of the subexample letter by redefining
+the macro \jcsmacro{covsubexnumber}, which has the following default definition:
+\begin{lstlisting}[moretexcs={covsubexnumber}]
+\newcommand*\covsubexnumber[1]{(#1)}
+\end{lstlisting}
+%
+To remove the parentheses from the subexample letter, for instance, to this:
+\begin{lstlisting}[moretexcs={covsubexnumber}]
+\renewcommand*\covsubexnumber[1]{#1}
+\end{lstlisting}
+%
+\noindent You can also customize the markup of the example sentences by redefining the macro
+\jcsmacro{covexamplefs} (which is empty by default). To have all example sentences italicized, for instance, do:
+\begin{lstlisting}[moretexcs={covexamplefs}]
+\renewcommand*{\covexamplefs}{\itshape}
+\end{lstlisting}
+%
+Note that this does, deliberately, not include the numbers, since those are controlled by another font setting macro,
+\jcsmacro{covexamplenofs}, which defaults to \jfcsmacro{normalfont}. Of course you are free to redefine this as well,
+if you wish do to so.
+
+Finally, you can customize the markup of the sub-example preamble text by redefining the macro
+\jcsmacro{subexpreamblefs}, which also defaults to \jfcsmacro{normalfont}. To have it italicized, analogously do:
+\begin{lstlisting}[moretexcs={\subexpreamblefs}]
+\renewcommand*{\subexpreamblefs}{\itshape}
+\end{lstlisting}
+
+
+\subsection{Referring to examples}\label{sec:ref}
+
+References to examples and sub-examples can be made the usual way via the \jcsmacro{ref} command
+(which refers to a \jcsmacro{label} that is placed in the respective example paragraph).
+The references do not have parentheses by default, i.\,e., a reference to the example
+in section~\ref{sec:ex} would be printed as \ref{expl}, a reference to the sub-example
+in section~\ref{sec:subexs} as \ref{sbex}.
+For convenience, though, \cvt\ provides a command \jcsmacro{pxref} that also prints the parentheses,
+as in \pxref{expl} and \pxref{sbex}. It is defined as follows and can be redefined if needed:
+\begin{lstlisting}[moretexcs={providecommand,pxref}]
+\providecommand*\pxref[1]{(\ref{#1})}
+\end{lstlisting}
+
+
+\section{Glossing sentences word-by-word}\label{sec:gloss}
+
+To gloss a sentence is to annotate it word-by-word.  Most commonly, a 
+sentence in a foreign language is followed by a word-for-word 
+translation (with the words lined up vertically) and then a smooth 
+translation (not lined up), like this:
+\digloss{Dit is een Nederlands voorbeeld}
+        {This is a Dutch example}
+        {This is an example in Dutch.}
+\Cvt\ provides different ways to typeset such glosses. The most convenient
+way is via gloss macros (see sec.~\ref{sec:gmacros}), an alternative (and the
+traditional) way is via a set of commands (see sec.~\ref{sec:glosscmds}).
+Both are described in turn.
+
+\subsection{Gloss macros}\label{sec:gmacros}
+
+\Cvt\ provides two gloss macros:
+\begin{itemize}
+	\item \jcsmacro{digloss[\jparam{options}]\{\jparam{gloss line 1}\}\{\jparam{gloss line 2}\}\{\jparam{free translation}\}}\\
+	       typesets two-line glosses with a translation line (the macro name
+	       puns on Greek \lexp{diglossía}, lit. \lmean{two tongues}, \lmean{bilingualism})
+	\item \jcsmacro{trigloss[\jparam{options}]\{\jparam{gloss l.\,1}\}\{\jparam{gloss l.\,2}\}\{\jparam{gloss l.\,3}\}\{\jparam{free tr.}\}}\\
+	       typesets three-line\footnote{The additional line can be useful for instance
+	       to gloss cited forms, morphology, or an additional translation.
+	       See sec.~\ref{sec:glossex} for examples.}
+       	   glosses with a translation line (cf. Greek \lexp{triglossía},
+       	   lit. \lmean{three tongues}, \lmean{trilingualism})
+\end{itemize}
+%
+The example given above would thus be typed as:
+\begin{lstlisting}[moretexcs={digloss}]
+\digloss{Dit is een Nederlands voorbeeld}
+        {This is a Dutch example}
+        {This is an example in Dutch.}
+\end{lstlisting}
+%
+Note that:
+\begin{itemize}
+	\item The \jparam{free translation} argument can be left empty. In this case, no translation line is added
+	      (and no extra space taken).
+	\item The macros automatically markup the lines. By default, the first gloss
+          line is in italics, subsequent lines are set upright, and the free translation in single
+          quotation marks (using the language-sensitive \textsf{csquotes} \cite{csquotes} macros if
+          this package is loaded). This can be customized, though, via the macro options or globally
+          (for the latter, see sec.~\ref{sec:glossfc}).
+    \item By default, page breaks might occur within glosses. In order to prevent it, the option
+          \joption{noglossbreaks} (see sec.~\ref{sec:intro}) will help in many cases.
+          If it doesn't, you can wrap the whole gloss into a minipage or parbox.
+    \item The words do not have to be typed lining up; \TeX\ counts and aligns them.
+    \item On the other hand, multiple blanks are ignored, so you can, but do not need to,
+          use the space key to line up the words to your liking in the \TeX\ file.
+          The example above could thus also have been input like this, with no change to the output:
+\begin{lstlisting}[moretexcs={digloss}]
+\digloss{Dit  is een Nederlands voorbeeld}
+        {This is a   Dutch      example}
+        {This is an example in Dutch.}
+\end{lstlisting}
+    \item If the words in the two languages do not correspond one-to-one, you can use curly brackets
+          to group words and a pair of empty curly brackets to mark null forms.
+          For example, to print
+          \digloss{Dit  is een voorbeeldje      in het Nederlands}
+                  {This is a   {little example} in {}  Dutch}
+                  {This is a little example in Dutch.}
+          you would type:
+\begin{lstlisting}[moretexcs={digloss}]
+\digloss{Dit  is een voorbeeldje      in het Nederlands}
+        {This is a   {little example} in {}  Dutch}
+        {This is a little example in Dutch.}
+\end{lstlisting}
+\end{itemize}
+
+\medskip
+\noindent The following \joption{\jparam{options}} (key-value pairs) are provided for the two gloss macro:%
+\footnote{Please consult sec.~\ref{sec:glossex} below for examples that showcase these options.}
+
+\begin{description}
+	\item[\joption{ex=\jparam{true|false}}] Default: \emph{false}. Wraps the gloss in an example environment
+	      (i.\,e., it is numberered).
+	\item[\joption{tlr=\jparam{true|false}}] Default: \emph{false}. If set to true, the translation line (content
+          of the \jparam{free translation} argument) is set right to the gloss lines, rather than into a new line below.
+          Since the gloss itself is set in a box, this means the \jparam{free translation} will appear lined up with the
+          first line of the gloss. This can be useful when no translation, but an aligned number or something similar,
+          is to be inserted right to the gloss (please refer to sec.~\ref{sec:glossex} for an example).
+	\item[\joption{fsi=\{\jparam{font settings}\}}] Adjusts the font settings of the first gloss line.
+	        Valid values are \LaTeX\ font switches such as \jfcsmacro{itshape}, \jfcsmacro{bfseries} etc.
+	\item[\joption{fsii=\{\jparam{font settings}\}}] Adjusts the font settings of the second gloss line.
+	        Valid values are \LaTeX\ font switches such as \jfcsmacro{itshape}, \jfcsmacro{bfseries} etc.
+	\item[\joption{fsiii=\{\jparam{font settings}\}}] Adjusts the font settings of the third gloss line.
+	        Valid values are \LaTeX\ font switches such as \jfcsmacro{itshape}, \jfcsmacro{bfseries} etc.
+	\item[\joption{preamble=\{\jparam{arbitrary text}\}}] Arbitrary text that is inserted on an own line
+	     before the interlinearized gloss. This might be useful, for instance, to give context information,
+	     to specify the language or the source in case of cited glosses. 
+	     
+	     The advantages over just adding a line manually above the gloss are that you can globally set the
+	     markup (see sec.~\ref{sec:glossfc}), and that such lines are kept on the same page than the gloss
+	     with the option \joption{noglossbreaks} (at least as long as preamble does not exceed one line). 
+	     Furthermore, this option is the only way to add such text when the \joption{ex} option is used.
+\end{description}
+%
+If given as optional arguments to a \jcsmacro{digloss} or \jcsmacro{trigloss} macro, the options will only apply to
+this very gloss. If you want to make a permanent change, you can use the macro
+\begin{itemize}
+	\item \jcsmacro{setglossoptions\{\jparam{options}\}}
+\end{itemize}
+and pass either of the above options to it. This will apply to all subsequent glosses (until further global
+change and unless the setting is altered locally via macro option).
+
+\subsection{Glossing with low-level commands}\label{sec:glosscmds}
+
+The gloss macros described above build on low-level commands\footnote{The commands are adapted
+with permission from \texttt{gloss.tex}, by Marcel R. van der Goot.} which can also
+be used directly (this was actually the only way up to \cvt\ 2.0 which introduced the macros).
+Low-level commands can be useful if you want to do fancy things in a gloss.
+Note, though, that using them also has limitations:
+Some commands cannot be used inside macros (such as footnotes), and the markup is not done automatically
+in all cases (as documented in what follows); furthermore, you cannot make use of the options the macros have.
+Thus, we strongly suggest to use the macros,
+unless you have very good reasons not to do that.
+
+The following is a complete list of all low-level glossing commands:
+\begin{description}\setlength\itemsep{0pt}
+	\item[\jcsmacro{gll}] introduces two lines of words vertically aligned, and 
+	      activates an environment very similar to \jfenv{flushleft}.
+	      The two lines are separated by a normal line break (carriage return).
+	      This is possible since the command makes the line-ending character active.
+	      As a consequence, however, this command does not work inside macros
+	      (such as \jfcsmacro{footnote}).
+	\item[\jcsmacro{glll}] is like \jcsmacro{gll} except that it introduces
+	      \emph{three} lines of lined-up words.
+	\item[\jcsmacro{xgll}] is similar to \jcsmacro{gll} except that it does not make
+	       the line ending active. It thus works inside macros such as footnotes but
+	       requires explicit gloss line termination via \jcsmacro{xgle}.
+	\item[\jcsmacro{xglll}] is similar to \jcsmacro{glll} except that it does not make
+	      the line ending active. It thus works inside macros such as footnotes but
+	      requires explicit gloss line termination via \jcsmacro{xgle}.
+	\item[\jcsmacro{xgle}] is a gloss line ending marker to be used with \jcsmacro{xgll}
+	      and \jcsmacro{xglll}.
+	\item[\jcsmacro{glt}] ends the set of lined-up lines and introduces a line 
+	      (or more) of translation. Note that this command does not markup the translation
+	      line (no automatic enquoting). Also, it outputs an empty line if no text follows.
+	\item[\jcsmacro{gln}] is like \jcsmacro{glt} but does not start a new line 
+	      (useful when no translation follows but you want to put a number on the 
+	       right).
+	\item[\jcsmacro{glot\{\jparam{free translation}\}}] is an alternative to \jcsmacro{glt}
+	     and a smarter way to insert a translation line. Other than \jcsmacro{glt}, it marks up
+	     (by default: enquotes) the translation line. Also, it does not add an empty line if the
+	     translation is empty. This command has been introduced in \cvt\ 2.0.
+	\item[\jcsmacro{glosspreamble\{\jparam{arbitrary text}\}}] lets you enter text that is printed immediately
+	     before the interlinearized gloss (on a line of its own). This might be useful, for instance,
+	     to give context information, to specify the language or the source in case of cited glosses.
+	     The advantages over just adding a line manually above the gloss are that you can globally set the markup
+	     (see sec.~\ref{sec:glossfc})   and that such lines are kept on the same page than the gloss with the option
+	     \joption{noglossbreaks}. Note, however, that page breaks might occur if this text spans multiple lines.
+	     In this case, you can wrap the whole gloss into a minipage.
+	     This command has been introduced in \cvt\ 2.1.
+	\item[\jcsmacro{glend}] ends the special \jfenv{flushleft}-like environment.
+\end{description}
+%
+Using the low-level commands, the examples given in the previous section would be
+coded as follows:
+\begin{lstlisting}[moretexcs={gll,glt,glend}]
+\gll Dit is een Nederlands voorbeeld. 
+     This is a Dutch example. 
+\glt `This is an example in Dutch.'
+\glend
+\end{lstlisting}
+\begin{lstlisting}[moretexcs={gll,glt,glend}]
+\gll Dit is een voorbeeldje     in het Nederlands
+     This is a {little example} in {}  Dutch
+\glt `This is a little example in Dutch.'
+\glend
+\end{lstlisting}
+%
+Observe that you need to markup (i.\,e., enquote) the translation line yourself if you use \jcsmacro{glt}.
+This is not so if you use \jcsmacro{glot}:
+\begin{lstlisting}[moretexcs={gll,glot,glend}]
+\gll Dit is een Nederlands voorbeeld
+     This is a Dutch example
+\glot{This is an example in Dutch.}
+\glend
+\end{lstlisting}
+%
+The advantage of \jcsmacro{glot} is that you can easily customize the translation markup globally.
+Also, \jcsmacro{glot} uses the language-sensitive \textsf{csquotes} \cite{csquotes} macros if
+this package is loaded (see sec.~\ref{sec:glossfc}).
+
+Since \jcsmacro{gll} and \jcsmacro{glll} locally activate the end of line in glosses in order to
+identify the different lines of the gloss (via category code change), they do not work inside macros
+(e.\,g., if the gloss is in a footnote). To work around this, special versions of the \jcsmacro{gll}
+and \jcsmacro{glll} commands are provided that do without the character activation: \jcsmacro{xgll}
+and \jcsmacro{xglll}, respectively.
+These can also be used in macro arguments; however, the end of each gloss line needs to be explicitly
+specified by the \jcsmacro{xgle} command in this case.
+If you want to put the above gloss in a footnote, thus, you would type:
+\begin{lstlisting}[moretexcs={xgll,xgle,glt,glend}]
+\xgll Dit is een voorbeeldje     in het Nederlands.\xgle
+      This is a {little example} in {}  Dutch.\xgle
+\glt `This is a little example in Dutch.'
+\glend
+\end{lstlisting}
+%
+Note, again, that the macros described in sec.~\ref{sec:gmacros} do not have this problem.
+
+To sum up: With low-level commands, every glossed sentence begins with either \jcsmacro{gll},
+\jcsmacro{xgll}, \jcsmacro{glll} or \jcsmacro{xglll}, then contains either \jcsmacro{glt} or
+\jcsmacro{gln}, and ends with \jcsmacro{glend}.
+Layout is critical in the part preceding \jcsmacro{glt} or \jcsmacro{gln}, and fairly free afterward.
+
+
+\subsection{Customization}\label{sec:glossfc}
+
+The font settings of each gloss line can be customized globally by way of
+the global options macro \jcsmacro{setglossoptions} and the \joption{fsi},
+\joption{fsii} or \joption{fsiii} key, respectively (see sec.~\ref{sec:gmacros}).
+Alternatively, you can also redefine these macros:
+\begin{lstlisting}[moretexcs={glosslineone,glosslinetwo,glosslinethree}]
+\newcommand*\glosslineone{\normalfont\itshape}% font settings 1st gloss line
+\newcommand*\glosslinetwo{\normalfont\upshape}% font settings 2nd gloss line
+\newcommand*\glosslinethree{\normalfont\upshape}% font settings 3rd gloss line
+\end{lstlisting}
+%
+The markup of the translation line (if the \jcsmacro{digloss} or \jcsmacro{trigloss}
+macro or the \jcsmacro{glot} low-level command is used) can be customized by redefining
+the following macro.
+\begin{lstlisting}[moretexcs={glosslinetrans,covenquote}]
+\newcommand*\glosslinetrans[1]{\covenquote{#1}}
+\end{lstlisting}
+Note that for \jcsmacro{covenquote}, as used in the default definition, \cvt\ checks at
+document begin whether the \textsf{csquotes} \cite{csquotes} package is loaded. If so,
+it uses its language-sensitive \jcsmacro{enquote*} macro for enquoting the translation.
+If not, a fallback quotation (using English single quotation marks) is used. The usage of
+\textsf{csquotes} is highly recommended!
+
+The markup of the preamble line (which is not marked up at all by default) can be customized
+by redefining the macro:
+\begin{lstlisting}[moretexcs={glosslinetrans,covenquote}]
+\newcommand*\glosslinepreamble[1]{#1}
+\end{lstlisting}
+
+
+\subsection{Examples}\label{sec:glossex}
+
+This section gives some further examples. First, a sentence with three lines aligned, 
+instead of just two:
+\trigloss[fsii={\normalfont\scshape}]
+         {Hoc est aliud exemplum}
+         {n.sg.nom 3sg n.sg.nom n.sg.nom}
+         {This is another example}
+         {This is another example.}
+In order to produce this, we use the \jcsmacro{trigloss} macro for a three-line gloss
+and pass the \joption{fsii} option with the respective font switches in order to
+get small capitals in the second line:
+\begin{lstlisting}[moretexcs={trigloss}]
+\trigloss[fsii={\normalfont\scshape}]
+         {Hoc est aliud exemplum}
+         {n.sg.nom 3sg n.sg.nom n.sg.nom}
+         {This is another example}
+         {This is another example.}
+\end{lstlisting}
+%
+Next, an example with a gloss but no translation, with an example number 
+at the right:
+\digloss[tlr]{Hoc habet numerum}
+             {This has number}
+             {\hfill (\exampleno)}
+%
+That one was typed using the option \joption{tlr}:
+\begin{lstlisting}[moretexcs={digloss,exampleno}]
+\digloss[tlr]{Hoc habet numerum}
+             {This has number}
+             {\hfill (\exampleno)}
+\end{lstlisting}
+%
+Third, we'll put a glossed sentence inside the \texttt{example} 
+environment, which is a very common way of using it:
+\digloss[ex]{Hoc habet numerum praepositum}
+            {This has number preposed}
+            {This one has a number in front of it.}
+This last example was, of course, typed as:
+\begin{lstlisting}[moretexcs={digloss}]
+\digloss[ex]{Hoc habet numerum praepositum}
+            {This has number preposed}
+            {This one has a number in front of it.}
+\end{lstlisting}
+although you could also construct it manually as:
+\begin{lstlisting}[moretexcs={digloss}]
+\begin{example}
+\digloss{Hoc habet numerum praepositum}
+        {This has number preposed}
+        {This one has a number in front of it.}
+\end{example}
+\end{lstlisting}
+%
+And finally, an example that uses the \emph{Leipzig glossing rules} (\cite{leipzig},
+cited example: p.~2) and also exemplifies the use of \joption{preamble}:
+\digloss[ex, preamble={Lezgian (Haspelmath 1993:207)}]
+            {Gila abur-u-n              ferma hami¨alu\v{g} gü\v{g}üna amuq'-da-\v{c}.}
+            {now  they-\textsc{obl-gen} farm  forever       behind     stay-\textsc{fut-neg}}
+            {Now their farm will not stay behind forever.}
+This has been input as follows:
+\begin{lstlisting}[moretexcs={digloss},basicstyle={\footnotesize\ttfamily}]
+\digloss[ex,preamble={Lezgian (Haspelmath 1993:207)}]
+        {Gila abur-u-n              ferma hami¨alu\v{g} gü\v{g}üna amuq'-da-\v{c}.}
+        {now  they-\textsc{obl-gen} farm  forever       behind     stay-\textsc{fut-neg}}
+        {Now their farm will not stay behind forever.}
+\end{lstlisting}
+%
+Of course, you would use \jfcsmacro{cite} in a real document for the citation.
+Also, if you adhere to the \emph{Leipzig glossing rules}, you might want to check out the \textsf{leipzig}
+\LaTeX\ package \cite{leipzig-ltx} that facilitates the use of the gloss abbreviations that have
+been entered and marked-up manually here.
+
+
+\section{Phrase structure rules}
+
+To print phrase structure rules such as \psr{S}{NP~VP} you can use \texttt{covington's} macro
+\jcsmacro{psr\{\jparam{constituent}\}\{\jparam{sub-constituents}\}} (for the given example,
+\lstinline[moretexcs={psr}]"\psr{S}{NP~VP}").
+
+\section{Feature structures}
+
+To print a feature structure such as
+\begin{flushleft}
+\fs{case:nom \\ person:P}
+\end{flushleft}
+you can type:
+\begin{lstlisting}[moretexcs={fs}]
+\fs{case:nom \\ person:P}
+\end{lstlisting}
+
+The feature structure can appear anywhere -- in continuous text, in a
+displayed environment such as \jfenv{flushleft}, or inside a
+phrase-structure rule, or even inside another feature structure.
+
+To put a category label at the top of the feature structure, like this,
+\begin{flushleft}
+\lfs{N}{case:nom \\ person:P}
+\end{flushleft}
+here's what you type:
+\begin{lstlisting}[moretexcs={lfs}]
+\lfs{N}{case:nom \\ person:P}
+\end{lstlisting}
+And here is an example of a \textsc{ps}-rule made of labeled feature structures:
+\begin{flushleft}
+\psr{\lfs{S}{tense:T}}
+    {\lfs{NP}{case:nom \\  number:N}
+     \lfs{VP}{tense:T \\ number:N} }
+\end{flushleft}
+which was obviously coded as:
+\begin{lstlisting}[moretexcs={lfs,psr}]
+\psr{\lfs{S}{tense:T}}
+    {\lfs{NP}{case:nom \\  number:N}
+     \lfs{VP}{tense:T \\ number:N} }
+\end{lstlisting}
+
+
+\section{Discourse Representation Structures}\label{sec:drs}
+
+Several macros in \cvt\ facilitate display of \emph{Discourse Representation Structures}
+(\textsc{drs}es) in the box notation introduced by Hans Kamp \cite{kamp}.
+The simplest one is \jcsmacro{drs}, which takes two arguments:
+a list of discourse variables joined by \verb"~", and a list of \textsc{drs} 
+conditions separated by \verb"\\".  Nesting is permitted.  
+
+Note that the \jcsmacro{drs} macro itself does not give you a displayed environment; you 
+must use \jfenv{flushleft} or the like to display the \textsc{drs}.
+
+\medskip
+\noindent Here are some examples:
+
+\begin{lstlisting}[moretexcs={drs}]
+\begin{flushleft}
+  \drs{X}
+      {
+       donkey(X)\\
+       green(X)
+      }
+\end{flushleft}
+\end{lstlisting}
+%
+prints as:
+\begin{flushleft}
+\drs{X}
+    {
+     donkey(X)\\
+     green(X)
+    }
+\end{flushleft}
+
+\medskip
+
+\begin{lstlisting}[moretexcs={drs}]
+\begin{flushleft}
+  \drs{X}
+      {
+       named(X,`Pedro')\\
+       \drs{Y}
+           {
+            donkey(Y)\\
+            owns(X,Y)
+           }
+       ~~{\large $\Rightarrow$}~
+       \drs{~}
+           {feeds(X,Y)}
+      }
+\end{flushleft}
+\end{lstlisting}
+%
+comes out as:
+\begin{flushleft}
+  \drs{X}
+      {
+       named(X,`Pedro')\\
+	   \drs{Y}
+	       {
+	       	donkey(Y)\\
+	       	owns(X,Y)
+       	   }
+	   ~~{\large $\Rightarrow$}~
+	   \drs{~}
+	   {feeds(X,Y)}
+      }
+\end{flushleft}
+%
+Note that the alignment of the input is fairly free, so you can also write the
+two arguments of \jcsmacro{drs} in one line, like:
+\begin{lstlisting}[moretexcs={drs}]
+\drs{X}{donkey(X)\\green(X)}
+\end{lstlisting}
+
+\medskip
+\noindent To display a sentence above the \textsc{drs}, use \jcsmacro{sdrs}, which has one
+extra argument for this purpose, as in:
+\begin{lstlisting}[moretexcs={sdrs}]
+\begin{flushleft}
+  \sdrs{A donkey is green.}
+       {X}
+       {donkey(X)\\green(X)}
+\end{flushleft}
+\end{lstlisting}
+which prints as:
+%
+\begin{flushleft}
+	\sdrs{A donkey is green.}{X}{donkey(X)\\green(X)}
+\end{flushleft}
+%
+Some \textsc{drs} connectives are also provided (normally for forming
+\textsc{drs}es that are to be nested within other \textsc{drs}es).
+The macro \jcsmacro{negdrs} forms a \textsc{drs} preceded by a negation symbol, so
+\begin{lstlisting}[moretexcs={negdrs}]
+\negdrs{X}
+       {
+        donkey(X)\\
+        green(X)
+       }
+\end{lstlisting}
+%
+comes out as
+%
+\begin{flushleft}
+\negdrs{X}{donkey(X)\\green(X)}
+\end{flushleft}
+Finally, \jcsmacro{ifdrs} forms a pair of \textsc{drs}es joined by a big arrow,
+like this:
+\begin{lstlisting}[moretexcs={ifdrs}]
+\ifdrs{X}
+      {
+       donkey(X)\\
+       hungry(X)
+      }
+      {~}
+      {feeds(Pedro,X)}
+\end{lstlisting}
+\begin{flushleft}
+\ifdrs{X}{donkey(X)\\hungry(X)}
+      {~}{feeds(Pedro,X)}
+\end{flushleft}
+If you have an ``if''-structure appearing among ordinary predicates 
+inside a \textsc{drs}, you may prefer to use \jcsmacro{alifdrs}, which is just like 
+\jcsmacro{ifdrs} but shifted slightly to the left for better alignment:
+\begin{flushleft}
+\alifdrs{X}{donkey(X)\\hungry(X)}
+        {~}{feeds(Pedro,X)}
+\end{flushleft}
+
+\medskip
+\noindent Note that for more extended \textsc{drs} representations, dedicated packages are meanwhile available,
+most notably the \textsf{drs} \cite{drs} and the \textsf{sdrt} \cite{sdrt} package.
+Both packages actually draw on \cvt, add some additional features and, in some cases, tweak the layout to
+(what strikes those package authors) the better. If the rather basic \textsc{drs} macros provided by \cvt\
+do not suit you, please check if one of those packages does.
+
+Note, though, that while \textsf{sdrt} introduces new (capitalized) macro naming which lets the package peacefully
+coexist with \cvt, \textsf{drs} simply re-uses \cvt's macro names, which makes the two packages incompatible.
+In order to fix this, \cvt\ checks whether the \textsc{drs} macros are already defined when it is loaded; if so, it does not define its own ones.
+So if you want to use the \textsc{drs} macros of the \textsf{drs} package together with \cvt's non-\textsc{drs} features, you can do so,
+provided that \textsf{drs} is loaded \emph{before} \cvt. In that case, \cvt's own \textsc{drs} macros are disabled.
+
+\section{Exercises}\label{sec:exercises}
+
+The \jenv{exercise} environment (alias \jenv{covexercise}) generates an exercise numbered according 
+to chapter, section, and subsection (suitable for use in a large book; 
+in this example, the subsection number is going to come out as 0). Here is an example:
+\begin{exercise}[Project]
+Prove that the above assertion is true.
+\end{exercise}
+This was coded as
+\begin{lstlisting}
+\begin{exercise}[Project]
+Prove that the above assertion is true.
+\end{exercise}
+\end{lstlisting}
+The argument (\verb"[Project]" in the example) is optional.
+
+Note that, as of version 1.1, \cvt\ checks if there is already an \jenv{exercise} environment
+defined (e.\,g., by the class). If so, \cvt\ does not define its own one. However, there is always
+the alias environment \jenv{covexercise} which can be used in order to produce \texttt{covington's} exercise.
+If you use the package option \joption{force}, \cvt\ will override existing \jenv{exercise}
+environments. In any case, the package will issue a warning if \jenv{exercise} is already defined.
+
+\section{Reference Lists}\label{sec:reflists}
+
+To type a simple \textsc{lsa}-style hanging-indented reference list, you can use the \jenv{reflist}
+environment.  (\emph{Note:} \jenv{reflist} is not integrated with Bib\TeX\ in any way.%
+\footnote{For Bib\TeX, there are several options: the \textsc{lsa} style, as used in the journal \emph{Language},
+can be obtained by means of the style files \texttt{lsalike.bst}
+(\url{http://www.icsi.berkeley.edu/ftp/pub/speech/jurafsky/lsalike.bst}) or \texttt{language.bst}
+(\url{http://ron.artstein.org/resources/language.bst}); the latter uses \texttt{natbib}.
+The so-called \emph{Unified Style Sheet for Linguistics}, as proposed by the \textsc{cel}x\textsc{j}
+(\emph{Committee of Editors of Linguistics Journals}), which slightly differs from the \textsc{lsa} style,
+is followed by the style file \texttt{unified.bst} (available at \url{http://celxj.org/downloads/unified.bst}).
+A \texttt{biblatex} style file for the unified style is available at
+\url{https://github.com/semprag/biblatex-sp-unified} or on \textsc{ctan} as part of the \textsf{univie-ling} bundle.})  For example,
+\begin{lstlisting}
+\begin{reflist}
+Barton, G. Edward; Berwick, Robert C.; and Ristad, Eric Sven.  1987.
+Computational complexity and natural language.  Cambridge, 
+Massachusetts: MIT Press.
+
+Chomsky, Noam.  1965.  Aspects of the theory of syntax.  Cambridge,
+Massachusetts: MIT Press.
+
+Covington, Michael.  1993.  Natural language processing for Prolog
+programmers.  Englewood Cliffs, New Jersey: Prentice-Hall.
+\end{reflist}
+\end{lstlisting}
+prints as:
+\begin{reflist}
+Barton, G. Edward; Berwick, Robert C.; and Ristad, Eric Sven.  1987.
+Computational complexity and natural language.  Cambridge, 
+Massachusetts: MIT Press.
+
+Chomsky, Noam.  1965.  Aspects of the theory of syntax.  Cambridge,
+Massachusetts: MIT Press.
+
+Covington, Michael A.  1993.  Natural language processing for Prolog 
+programmers.  Englewood Cliffs, New Jersey: Prentice-Hall.
+\end{reflist}
+By default, the references have a hanging indentation of 3\,em. This can
+be globally changed by altering the length \jcsmacro{reflistindent}.
+Doing \lstinline|\setlength\reflistindent{1.5em}|, for instance,
+will shorten the indentation by half. Likewise, the length \jcsmacro{reflistitemsep}
+(6\,pt by default) and \jcsmacro{reflistparsep} (ca. 4\,pt by default) can be adjusted
+to alter the vertical separation (\jfcsmacro{itemsep} and \jfcsmacro{parsep}, for that
+matter) of reference entries.
+
+Notice that within the reference list, ``French spacing'' is in effect 
+--- that is, spaces after periods are no wider than normal spaces. Thus 
+you do not have to do anything special to avoid excessive space after 
+people's initials.
+
+
+\section{Semantic markup}\label{sec:markup}
+
+The macro \jcsmacro{sentence} displays an italicized sentence (it is a 
+combination of \jfenv{flushleft} and \jfmacro{itshape}).  If you type
+\begin{lstlisting}[moretexcs={sentence}]
+\sentence{This is a sentence.}
+\end{lstlisting}
+you get:
+\sentence{This is a sentence.}
+%
+The font shape can be modified by redefining the following macro:
+\begin{lstlisting}[moretexcs={sentencefs}]
+\newcommand*\sentencefs{\itshape}
+\end{lstlisting}
+%
+The following macros provide further markup options common in linguistics:
+
+\begin{itemize}
+	\item \lstinline[moretexcs={lexp}]|\lexp{word}| is used to mark word forms
+	      (italic by default, as in \lexp{word})
+	\item \lstinline[moretexcs={lcon}]|\lcon{concept}| is used to mark concepts
+	       (small caps by default, as in \lcon{concept})
+	\item \lstinline[moretexcs={lmean}]|\lmean{meaning}| is used to mark meaning
+	      (single quotes by default, as in \lmean{meaning})
+\end{itemize}
+%
+Note that for \jcsmacro{lmean}, \cvt\ checks at document begin whether the \textsf{csquotes}
+\cite{csquotes} package is loaded. If so, it uses its language-sensitive \jcsmacro{enquote*}
+macro for quoting. If not, a fallback quotation (using English single quotation marks) is used.
+The usage of \textsf{csquotes} is highly recommended!
+
+Here are the definitions of the macros. They can be redefined via \jcsmacro{renewcommand}:
+\begin{lstlisting}[moretexcs={providecommand,lexp,lcon,lmean,covenquote}]
+\providecommand*\lexp[1]{\textit{#1}}
+\providecommand*\lcon[1]{\textsc{#1}}
+\providecommand*\lmean[1]{\covenquote{#1}}
+\end{lstlisting}
+%
+
+\section{Big curly brackets (disjunctions)}
+
+Last of all, the two-argument macro \jcsmacro{either} expresses alternatives
+within a sentence or \textsc{ps}-rule:
+\begin{flushleft}
+\lstinline[moretexcs={either}]"the \either{big}{large} dog" $=$ the \either{big}{large} dog \\
+\end{flushleft}
+\begin{flushleft}
+\lstinline[moretexcs={either,psr}]"\psr{A}{B~\either{C}{D}~E} " $=$ \psr{A}{B~\either{C}{D}~E}
+\end{flushleft}
+%
+That's all there is for now.
+Suggestions for improving \cvt\ are welcome, and bug
+reports are actively solicited (via \url{https://github.com/jspitz/covington}).  Please note, however, that this is free
+software, and the authors make no commitment to do any further work on 
+it.
+
+\section{Release history}
+
+\subsection*{2.4 (2020 January 2)}
+
+\begin{itemize}
+	\item Fix definition of covexercise theorem when no subsection counter is defined.
+\end{itemize}
+
+\subsection*{2.3 (2019 June 21)}
+
+\begin{itemize}
+	\item Add preamble option to subexamples environment. See sec.~\ref{sec:subexs}.
+	\item Allow to use \cvt\ together with the \textsf{drs} package.
+	\item Documentation fixes and restructuring.
+\end{itemize}
+
+\subsection*{2.2 (2019 June 4)}
+
+\begin{itemize}
+	\item Add new option \joption{owncounter} that makes \cvt\ use an own counter for examples (rather than the equation counter).
+	\item Add starred \jcsmacro{exampleno*} command that outputs the current example number value without stepping it.
+	      See sec.~\ref{sec:exno}.
+	\item Add macros \jcsmacro{covexamplefs} and \jcsmacro{covexamplenofs} for global setting of example text markup.
+	      See sec.~\ref{sec:custno}.
+\end{itemize}
+
+\subsection*{2.1 (2019 May 12)}
+
+\begin{itemize}
+	\item Add new option \joption{noglossbreaks} that tries to prevent page breaks within glosses.
+	\item Add \jcsmacro{glosspreamble} command and \joption{preamble} gloss macro option for arbitrary text preceding glosses.
+\end{itemize}
+
+\subsection*{2.0 (2018 December 10)}
+
+\begin{itemize}
+	\item Add new gloss macros (\jcsmacro{digloss} and \jcsmacro{trigloss})
+	      for a more convenient, flexible and robust gloss insertion. See sec.~\ref{sec:gmacros}.
+	\item Add \jcsmacro{glot} command for customizable gloss translation line, together with customization possibilities.
+	      See sec.~\ref{sec:glosscmds}.
+	\item Add possibility to customize \jcsmacro{sentence} font setting. See sec.~\ref{sec:markup}.
+	\item Add \jcsmacro{lexp}, \jcsmacro{lcon} and \jcsmacro{lmean} markup macros. See sec.~\ref{sec:markup}.
+\end{itemize}
+
+\subsection*{1.8 (2018 December 7)}
+
+\begin{itemize}
+	\item Fix font markup of second gloss line (do not force rm).
+	\item Add possibility to customize gloss line font setting. See sec.~\ref{sec:custno}.
+	\item Add possibility to customize example number display. See sec.~\ref{sec:custno}.
+\end{itemize}
+
+\subsection*{1.7 (2018 September 8)}
+
+\begin{itemize}
+	\item Fix alignment in \jenv{subexamples}.
+	\item Improve manual.
+\end{itemize}
+
+\subsection*{1.6 (2018 September 7)}
+
+\begin{itemize}
+	\item Introduce new environment \jenv{subexamples} (see sec.~\ref{sec:subexs}).
+	\item Introduce new command \jcsmacro{pxref} (see sec.~\ref{sec:ref}).
+\end{itemize}
+
+\subsection*{1.5 (2018 August 24)}
+
+\begin{itemize}
+	\item Introduce new option \joption{keeplayout} which allows to opt-out the
+	      layout presettings \cvt\ does (\jfcsmacro{raggedbottom}, \jfcsmacro{textfloatsep}).
+\end{itemize}
+
+\subsection*{1.4 (2017 May 23)}
+
+\begin{itemize}
+	\item Introduce a new macro \jcsmacro{twodias} that supersedes the rather odd \jcsmacro{twoacc}
+	      (which is kept for backwards compatibility). See sec.~\ref{sec:accents} for details.
+	\item Introduce macro \jcsmacro{SetDiaOffset} for more convenient setting of vertical distance
+	      in stacked diacritics. See sec.~\ref{sec:accents} for details.
+	\item \LaTeX\ 2.09 is no longer officially supported (it might continue to work, but is not
+	      tested).
+\end{itemize}
+
+\subsection*{1.3 (2017 April 5)}
+
+\begin{itemize}
+	\item Gloss variants \jcsmacro{xgll} and \jcsmacro{xglll} that work
+	      inside macros (such as footnotes) but require explicit gloss
+	      line end markers (\jcsmacro{xgle}). See sec.~\ref{sec:gloss} for details.
+	\item New lengths \jcsmacro{reflistindent}, \jcsmacro{reflistparsep} and
+	      \jcsmacro{reflistitemsep} to globally adjust the indentation or vertical
+	      space, respectively, of reflist items.
+	      See sec.~\ref{sec:reflists} for details.
+\end{itemize}
+
+\subsection*{1.2 (2016 August 26)}
+
+\begin{itemize}
+	\item New length \jcsmacro{examplenumbersep} to adjust (increase) the horizontal space
+	between example number and example text. See sec.~\ref{sec:ex} for details.
+	\item Add some more info about bibliography generation.
+\end{itemize}
+
+\subsection*{1.1a (2016 July 7)}
+
+\begin{itemize}
+	\item Fix encoding problem in documentation and some typos. No change in functionality.
+\end{itemize}
+
+\subsection*{1.1 (2016 July 6)}
+
+\begin{itemize}
+	\item The package now uses \textsc{nfss} font commands if available (fallback for \LaTeX\ 2.09 is still provided).
+	\item Work around clash with classes\slash packages that define their own \jenv{example} and
+               \jenv{examples} environments (most notably the \texttt{beamer} class) as well as \jenv{execise} environments.
+               The \cvt\ package no longer blindly attempts to define these environments. By default, it does not
+               define them if they are already defined (\texttt{covington's} own environments, however, are still available via aliases).
+               By means of a new package option, a redefinition can also be forced.  See sec.~\ref{sec:ex} and \ref{sec:exs} for details.
+	\item New length \jcsmacro{twoaccsep} allows for the adjustment of the distance between stacked accents (see sec.~\ref{sec:accents}).
+	\item Update manual.
+	\item New maintainer: J. Spitzm\"uller.
+	\item License has been changed to \textsc{lppl} (in agreement with M. Covington)
+	\item Introduce version numbers. Arbitrarily, we start with 1.1.
+\end{itemize}
+
+\subsection*{2014 May 16}
+
+\begin{itemize}
+	\item Patches by Robin Fairbairns:
+	\begin{itemize}
+		\item Setting of \jfcsmacro{textfloatsep} uses \jfcsmacro{setlength} rather than \jfcsmacro{renewcommand}
+		\item Style file converted to un*x line endings
+	\end{itemize}
+\end{itemize}
+
+\subsection*{2001 March 27}
+
+\begin{itemize}
+	\item It is no longer necessary to type \jfcsmacro{it} to get proper italic type in feature structures.
+	\item Instructions have been rewritten with \LaTeXe\ users in mind.
+\end{itemize}
+
+\subsection*{Older versions}
+
+\begin{itemize}
+	\item Multiple accents on a single letter (e.\,g., \emph{\acm{a}}) are supported.
+	\item This package is now called \cvt\ (with the o)
+	and is compatible with \LaTeXe\ and \textsc{nfss} as well as \LaTeX\ 2.09.
+	\item The vertical placement of labeled feature structures has 
+	been changed
+	so that the category labels line up regardless of the size of
+	the structures.
+\end{itemize}
+
+\begin{thebibliography}{99}
+	\bibitem{leipzig} Bickel, Balthasar, Bernard Comrie, and Martin Haspelmath:
+		\emph{The Leipzig glossing rules: Conventions for interlinear morpheme
+		by morpheme glosses}. Revised version of February 2008. Department
+		of Linguistics, Max Plank Institute for Evolutionary Anthropology.
+		\url{http://www.eva.mpg.de/lingua/resources/glossing-rules.php}.
+	\bibitem{drs} Dimitriadis, Alexis: \emph{drs -- Typeset Discourse Representation Structures (DRS)}.
+	     June 10, 2010. \url{https://ctan.org/pkg/drs}.
+	\bibitem{sdrt} Isambert, Paul: \emph{sdrt -- Macros for Segmented Discourse Representation Theory}.
+	     May 13, 2007. \url{https://ctan.org/pkg/sdrt}.
+	\bibitem{kamp} Kamp, Hans: A Theory of Truth and Semantic Representation.
+	      In Jeroen A.\,G. Groenendijk, Theo M.\,V. Janssen, and Martin J.\,B. Stokhof (eds.):
+	      Formal Methods in the Study of Language. Amsterdam: Mathematics Center, 1981, 277--322.
+	\bibitem{csquotes} Lehman, Philipp and Joseph Wright:
+	    \emph{csquotes: Context sensitive quotation facilities}. April 4, 2018.
+	    \url{https://www.ctan.org/pkg/csquotes}.
+	\bibitem{pakin} Pakin, Scott: The Comprehensive \LaTeX\ Symbol List.
+	     November 30, 2015. \url{https://www.ctan.org/pkg/comprehensive}.
+	\bibitem{leipzig-ltx} Weber, Nathalie: \emph{leipzig: Typeset and index linguistic
+	     gloss abbreviations}. June 16, 2017. \url{https://ctan.org/pkg/leipzig}.
+\end{thebibliography}
+
+\end{document}
+

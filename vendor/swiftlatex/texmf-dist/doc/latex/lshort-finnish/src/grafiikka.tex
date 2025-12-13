@@ -1,0 +1,634 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\setcounter{chapter}{4}
+\newcommand{\graphicscompanion}{\emph{The \LaTeX{} Graphics Companion}~\cite{graphicscompanion}} 
+\newcommand{\hobby}{\emph{A User's Manual for MetaPost}~\cite{metapost}}
+\newcommand{\hoenig}{\emph{\TeX{} Unbound}~\cite{unbound}}
+\newcommand{\graphicsinlatex}{\emph{Graphics in \LaTeXe{}}~\cite{ursoswald}}
+
+\chapter{Grafiikan tuottaminen matematiikan tarpeisiin}
+
+\begin{intro}
+Useimmat käyttävät {\LaTeX}:ia tekstin latomiseen. \LaTeX\ tarjoaa myös
+rajallisen mahdollisuuden tuottaa grafiikkaa käskyjen avulla.
+Rajoittuneita mahdollisuuksia lisäävät lukuisat {\LaTeX}-lisäykset. Tässä osassa opitaan
+muutama niistä.
+\end{intro}
+
+\section{Yleiskatsaus}
+
+{\LaTeX}:ssa voidaan määritellä kuvia \ei{picture}-ympäristöllä.
+Yksityiskohtainen kuvaus löytyy ohjeesta \manual. Toisaalta menetelmässä
+on pahoja puutteita. Kulmat, joissa vinoja viivoja voidaan esittää, sekä
+ympyröiden säteet on rajattu tiettyihin arvoihin. Toisaalta taas {\LaTeX}:n
+\ei{picture}-ympäristö sisältää \ci{qbezier}-komennon, jossa ''\texttt{q}''
+tarkoittaa neliötä (quadratic). Monet usein käytetyistä käyristä eli
+ympyrät, ellipsit tai katenoidikäyrät voidaan esittää lähestulkoon tyydyttävästi
+toisen asteen Bézier-käyrillä, vaikka tämä voi vaatia hieman matemaattista
+vaivannäköä. Mikäli lisäksi käytetään Javan tapaista ohjelmointikieltä
+\ci{qbezier}-blokkien luomiseksi {\LaTeX}-tiedostoista, tulee \ei{picture}-ympäristöstä
+melko tehokas.
+
+Vaikka kuvien piirtäminen {\LaTeX}:ssa on hyvin rajoittunutta ja usein
+hankalaa, on siihen kuitenkin hyvät syynsä. Näin tuotetut dokumentit
+ovat tiedostokooltaan pieniä eikä ylimääräisiin grafiikkatiedostoihin
+ole mitään tarvetta.
+
+{\LaTeX}:n graafisia ominaisuuksia voidaan parantaa käyttämällä pakkauksia
+\pai{epic} ja \pai{eepic} (nämä on kuvattu teoksessa \companion) tai \pai{pstricks},
+jotka poistavat alkuperäisen \ei{picture}-ympäristön rajoituksia.
+
+Kaksi ensinmainittua makropakkausta parantavat \ei{picture}-ympäristöä, mutta
+\pai{pstricks} sisältää aivan oman piirustusympäristön \ei{pspicture}.
+\pai{pstricks}-pakkauksen voima on siinä, että se käyttää hyvin tarkkaan
+PostScriptin ominaisuuksia. Lisäksi on vielä lukuisia erityisiin tarkoituksiin tehtyjä
+makropakkauksia. Eräs niistä on \texorpdfstring{\Xy}{Xy}-pic, joka on kuvattu
+tämän luvun lopussa. Teoksessa \graphicscompanion{} (jota ei pidä sekoittaa
+teokseen \companion{}) on kuvattu yksityiskohtaisesti
+useita näitä makropakkauksia.
+
+Ehkä tehokkain {\LaTeX}:iin liittyvä graafinen työkalu on \texttt{MetaPost}, joka
+on Donald E. Knuthin \texttt{METAFONT}:n kaksoissisar. \texttt{MetaPost} käyttää
+\texttt{METAFONT}:n hyvin tehokasta ja matemaattisesti sofistikoitua ohjelmointikieltä.
+\texttt{METAFONT}:n bittikarttakuvien sijasta \texttt{MetaPost} tuottaa
+PostScript-tiedostoja, joita voidaan liittää {\LaTeX}-dokumenttiin. Johdantona
+voidaan käyttää teosta {\hobby} tai teoksesta \cite{ursoswald} löytyvää oppijaksoa.
+
+Teoksessa on \hoenig{} on hyvin perinpohjainen esitys {\LaTeX}:n ja {\TeX}:n graafisista
+ominaisuuksista (sekä kirjasimista).
+
+\section{\texttt{picture}-ympäristö}
+\secby{Urs Oswald}{osurs@bluewin.ch}
+
+\subsection{Peruskomennot}
+
+\ei{picture}-ympäristö\footnote{Kaiken huipuksi tämä kuvaympäristö toimii ilman mitään
+erityisiä makropakkauksia.} otetaan käyttöön joko komennolla
+\begin{lscommand}
+\ci{begin}\verb|{picture}(|$x,y$\verb|)|\ldots\ci{end}\verb|{picture}|
+\end{lscommand}
+\noindent tai
+\begin{lscommand}
+\ci{begin}\verb|{picture}(|$x,y$\verb|)(|$x_0,y_0$\verb|)|\ldots\ci{end}\verb|{picture}|
+\end{lscommand}
+Numerot $x,\,y,\,x_0,\,y_0$ viittaavat \ci{unitlength}-muuttujaan, jolle voidaan asettaa
+arvo milloin tahansa (ei kuitenkaan \ei{picture}-ympäristön sisällä) esimerkiksi komennolla
+
+\begin{lscommand}
+\ci{setlength}\verb|{|\ci{unitlength}\verb|}{1.2cm}|
+\end{lscommand}
+Muuttujan \ci{unitlength} oletusarvo on \texttt{1pt}. Ensimmäinen pari, $(x,y)$, varaa
+kuvalle nelikulmaisen tilan dokumentista. Toista paria, $(x_0,y_0)$, voidaan käyttää
+tarvittaessa asettamaan mielivaltaiset koordinaatit nelikulmion vasemmasta alakulmasta.
+
+Useimmat piirustuskomennot ovat joko muotoa
+\begin{lscommand}
+\ci{put}\verb|(|$x,y$\verb|){|\emph{objekti}\verb|}|
+\end{lscommand}
+\noindent tai
+\begin{lscommand}
+\ci{multiput}\verb|(|$x,y$\verb|)(|$\Delta x,\Delta y$\verb|){|$n$\verb|}{|\emph{objekti}\verb|}|\end{lscommand}
+Bézier-käyrät ovat poikkeus. Ne piirretään komennolla
+\begin{lscommand}
+\ci{qbezier}\verb|(|$x_1,y_1$\verb|)(|$x_2,y_2$\verb|)(|$x_3,y_3$\verb|)|
+\end{lscommand}
+
+\subsection{Suorat viivat}
+
+\begin{example}
+\setlength{\unitlength}{5cm}
+\begin{picture}(1,1)
+  \put(0,0){\line(0,1){1}}
+  \put(0,0){\line(1,0){1}}  
+  \put(0,0){\line(1,1){1}}  
+  \put(0,0){\line(1,2){.5}}
+  \put(0,0){\line(1,3){.3333}}
+  \put(0,0){\line(1,4){.25}}  
+  \put(0,0){\line(1,5){.2}}
+  \put(0,0){\line(1,6){.1667}}
+  \put(0,0){\line(2,1){1}}
+  \put(0,0){\line(2,3){.6667}}
+  \put(0,0){\line(2,5){.4}}
+  \put(0,0){\line(3,1){1}}  
+  \put(0,0){\line(3,2){1}}
+  \put(0,0){\line(3,4){.75}}
+  \put(0,0){\line(3,5){.6}}
+  \put(0,0){\line(4,1){1}}
+  \put(0,0){\line(4,3){1}}  
+  \put(0,0){\line(4,5){.8}}
+  \put(0,0){\line(5,1){1}}
+  \put(0,0){\line(5,2){1}}
+  \put(0,0){\line(5,3){1}}
+  \put(0,0){\line(5,4){1}}
+  \put(0,0){\line(5,6){.8333}}
+  \put(0,0){\line(6,1){1}}
+  \put(0,0){\line(6,5){1}}
+\end{picture}
+\end{example}
+Suorat viivat piirretään komennolla
+\begin{lscommand}
+\ci{put}\verb|(|$x,y$\verb|){|\ci{line}\verb|(|$x_1,y_1$\verb|){|$length$\verb|}}|
+\end{lscommand}
+Komennolla \ci{line} on kaksi parametria:
+\begin{enumerate}
+  \item suuntavektori,
+  \item pituus.
+\end{enumerate}
+Suuntavektori koostuu kokonaisluvuista
+\[
+  -6,\,-5,\,\ldots,\,5,\,6,
+\]
+ja niiden on oltava lisäksi keskenään jaottomia (eli ei yhteistä jakajaa ykköstä lukuunottamatta).
+Kuvassa esitetään kaikki 25 ensimmäisen kvadrantin mahdollista arvoa. Pituus riippuu
+\ci{unitlength}-muuttujan arvosta. Pituusparametri on vaakaviivan tapauksessa vaakakoordinaatti,
+muussa tapauksessa kyseessä on pystykordinaatti.
+
+\subsection{Nuolet}
+
+\begin{example}
+\setlength{\unitlength}{1mm}
+\begin{picture}(60,40)
+  \put(30,20){\vector(1,0){30}}
+  \put(30,20){\vector(4,1){20}}
+  \put(30,20){\vector(3,1){25}}
+  \put(30,20){\vector(2,1){30}}
+  \put(30,20){\vector(1,2){10}}
+  \thicklines
+  \put(30,20){\vector(-4,1){30}}
+  \put(30,20){\vector(-1,4){5}}
+  \thinlines
+  \put(30,20){\vector(-1,-1){5}}
+  \put(30,20){\vector(-1,-4){5}}
+\end{picture}
+\end{example}
+Nuolet piirretään komennolla
+\begin{lscommand}
+\ci{put}\verb|(|$x,y$\verb|){|\ci{vector}\verb|(|$x_1,y_1$\verb|){|$length$\verb|}}|
+\end{lscommand}
+Nuolien suuntavektorit ovat jopa suorien suuntavektoreita rajoitutempia.
+Niiden argumentteina voivat olla ainoastaan kokonaisluvut 
+\[
+  -4,\,-3,\,\ldots,\,3,\,4.
+\]
+Argumenttien on lisäksi oltava keskenään jaottomia (ei yhteistä jakajaa ykköstä lukuunottamatta). On syytä
+huomata komennon \ci{thicklines} vaikutus kahteen vasempaan yläkulmaan osoittavaan nuoleen.
+
+\subsection{Ympyrät}
+
+\begin{example}
+\setlength{\unitlength}{1mm}
+\begin{picture}(60, 40)
+  \put(20,30){\circle{1}}
+  \put(20,30){\circle{2}}
+  \put(20,30){\circle{4}}
+  \put(20,30){\circle{8}}
+  \put(20,30){\circle{16}}
+  \put(20,30){\circle{32}}
+  
+  \put(40,30){\circle{1}}
+  \put(40,30){\circle{2}}
+  \put(40,30){\circle{3}}
+  \put(40,30){\circle{4}}
+  \put(40,30){\circle{5}}
+  \put(40,30){\circle{6}}
+  \put(40,30){\circle{7}}
+  \put(40,30){\circle{8}}
+  \put(40,30){\circle{9}}
+  \put(40,30){\circle{10}}
+  \put(40,30){\circle{11}}
+  \put(40,30){\circle{12}}
+  \put(40,30){\circle{13}}
+  \put(40,30){\circle{14}}
+  
+  \put(15,10){\circle*{1}}
+  \put(20,10){\circle*{2}}
+  \put(25,10){\circle*{3}}
+  \put(30,10){\circle*{4}}
+  \put(35,10){\circle*{5}}
+\end{picture}
+\end{example}
+Komento
+\begin{lscommand}
+  \ci{put}\verb|(|$x,y$\verb|){|\ci{circle}\verb|{|\emph{halkaisija}\verb|}}|
+\end{lscommand}
+\noindent piirtää ympyrän, jonka keskipiste on $(x,y)$ ja halkaisija (ei siis säde)
+on \emph{halkaisija}. \ei{picture}-ympäristössä suurin mahdollinen halkaisija on
+noin 14\,mm. Kaikki tätä pienemmät halkaisijat eivät kuitenkaan ole mahdollisia.
+Komennolla \ci{circle*} piirretään täytettyjä ympyröitä.
+
+Aivan kuten suorien viivojen tapauksessa, voi olla tarpeen käyttää lisämakropakkauksia
+\pai{eepic} tai \pai{pstricks}. Nämä on kuvattu perinpohjin teoksessa \graphicscompanion.
+
+Mikäli ylimääräisten laskelmien tekeminen ei pelota, ympyröitä ja käyriä voidaan
+kasata myös toisen asteen Bézier-käyrien avulla.
+Esimerkkejä ja Java-lähdekoodia löytyy teoksesta \graphicsinlatex{}.
+
+\subsection{Tekstiä ja kaavoja}
+
+\begin{example}
+\setlength{\unitlength}{1cm}
+\begin{picture}(6,5)
+  \thicklines
+  \put(1,0.5){\line(2,1){3}}
+  \put(4,2){\line(-2,1){2}}
+  \put(2,3){\line(-2,-5){1}}
+  \put(0.7,0.3){$A$}
+  \put(4.05,1.9){$B$}
+  \put(1.7,2.95){$C$}
+  \put(3.1,2.5){$a$}
+  \put(1.3,1.7){$b$}
+  \put(2.5,1.05){$c$}
+  \put(0.3,4){$F=
+    \sqrt{s(s-a)(s-b)(s-c)}$}  
+  \put(3.5,0.4){$\displaystyle
+    s:=\frac{a+b+c}{2}$}
+\end{picture}
+\end{example}
+Esimerkin mukaisesti tekstiä ja kaavoja voidaan kirjoittaa \ei{picture}-ympäristössä
+\ci{put}-komentoa käyttämällä.
+
+\subsection{Komennot \ci{multiput} ja \ci{linethickness}}
+
+\begin{example}
+\setlength{\unitlength}{2mm}
+\begin{picture}(30,20)
+  \linethickness{0.075mm}
+  \multiput(0,0)(1,0){31}%
+    {\line(0,1){20}}
+  \multiput(0,0)(0,1){21}%
+    {\line(1,0){30}}
+  \linethickness{0.15mm}    
+  \multiput(0,0)(5,0){7}%
+    {\line(0,1){20}}
+  \multiput(0,0)(0,5){5}%
+    {\line(1,0){30}}
+  \linethickness{0.3mm}    
+  \multiput(5,0)(10,0){3}%
+    {\line(0,1){20}}
+  \multiput(0,5)(0,10){2}%
+    {\line(1,0){30}}
+\end{picture}
+\end{example}
+Komennolla
+\begin{lscommand}
+  \ci{multiput}\verb|(|$x,y$\verb|)(|$\Delta x,\Delta y$\verb|){|$n$\verb|}{|\emph{objekti}\verb|}|
+\end{lscommand}
+\noindent on 4 parametriä: aloituspiste, siirtymävektori objektista toiseen, objektien
+lukumäärä sekä piirrettävä objekti. Komento \ci{linethickness} vaikuttaa vaaka- ja pystyviivoihin,
+muttei vinoviivoihin eikä ympyröihin. Se vaikuttaa kuitenkin toisen asteen Bézier-käyriin!
+
+\subsection{Ovaalit. Komennot \ci{thinlines} ja \ci{thicklines}}
+
+\begin{example}
+\setlength{\unitlength}{1cm}
+\begin{picture}(6,4)
+  \linethickness{0.075mm}
+  \multiput(0,0)(1,0){7}%
+    {\line(0,1){4}}
+  \multiput(0,0)(0,1){5}%
+    {\line(1,0){6}}
+  \thicklines
+  \put(2,3){\oval(3,1.8)} 
+  \thinlines
+  \put(3,2){\oval(3,1.8)} 
+  \thicklines
+  \put(2,1){\oval(3,1.8)[tl]} 
+  \put(4,1){\oval(3,1.8)[b]} 
+  \put(4,3){\oval(3,1.8)[r]} 
+  \put(3,1.5){\oval(1.8,0.4)}     
+\end{picture}
+\end{example}
+Komento
+\begin{lscommand}
+  \ci{put}\verb|(|$x,y$\verb|){|\ci{oval}\verb|(|$w,h$\verb|)}|
+\end{lscommand}
+\noindent tai
+\begin{lscommand}
+  \ci{put}\verb|(|$x,y$\verb|){|\ci{oval}\verb|(|$w,h$\verb|)[|\emph{sijainti}\verb|]}|
+\end{lscommand}
+\noindent piirtävät ovaalin, jonka keskipiste on $(x,y)$, leveys $w$ ja korkeus $h$.
+Mahdolliset \emph{sijainti}-parametrit \texttt{b}, \texttt{t}, \texttt{l}, \texttt{r}
+tarkoittavat vastaavasti ''alhaalla'', ''ylhäällä'', ''vasemalla'', ''oikealla''
+ja niitä voidaan yhdistellä esimerkin mukaisesti.
+
+Viivan paksuuteen voidaan vaikuttaa komennolla:\\
+\ci{linethickness}\verb|{|\emph{mitta}\verb|}|
+toisaalta myös komennoilla \ci{thinlines} and \ci{thicklines}.
+Vaakaviivoihin (ja toisen asteen Bézier-käyriin) vaikuttaa \ci{linethickness}\verb|{|\emph{mitta}\verb|}|,
+vinoviivoihin sekä ympyröihin ja ovaaleihin vaikuttavat \ci{thinlines} ja \ci{thicklines}.
+
+\subsection{Ennalta määriteltyjen kuvalaatikoiden käyttö}
+
+\begin{example}
+\setlength{\unitlength}{0.5mm}
+\begin{picture}(120,168)
+\newsavebox{\laatikkoa}% uusi laatikko
+\savebox{\laatikkoa}
+  (40,32)[bl]{% määritykset 
+  \multiput(0,0)(0,28){2}
+    {\line(1,0){40}}
+  \multiput(0,0)(40,0){2}
+    {\line(0,1){28}}
+  \put(1,28){\oval(2,2)[tl]}
+  \put(1,29){\line(1,0){5}}
+  \put(9,29){\oval(6,6)[tl]}
+  \put(9,32){\line(1,0){8}}
+  \put(17,29){\oval(6,6)[tr]}
+  \put(20,29){\line(1,0){19}}
+  \put(39,28){\oval(2,2)[tr]}  
+}
+\newsavebox{\laatikkob}% uusi laatikko
+\savebox{\laatikkob}
+  (40,32)[l]{%         määritykset 
+  \put(0,14){\line(1,0){8}}
+  \put(8,0){\usebox{\laatikkoa}}
+}
+\put(34,26){\line(0,1){102}} 
+\put(14,128){\usebox{\laatikkoa}}
+\multiput(34,86)(0,-37){3}
+  {\usebox{\laatikkob}} 
+\end{picture}
+\end{example}
+Kuvalaatikko voidaan \emph{nimetä} komennolla
+\begin{lscommand}
+  \ci{newsavebox}\verb|{|\emph{nimi}\verb|}|
+\end{lscommand}
+\noindent sitten sen ominaisuudet \emph{määritellään} 
+\begin{lscommand}
+  \ci{savebox}\verb|{|\emph{nimi}\verb|}(|\emph{leveys,korkeus}\verb|)[|\emph{sijainti}\verb|]{|\emph{sisältö}\verb|}|
+\end{lscommand}
+\noindent ja lopuksi se voidaan tarvittaessa piirtää
+\begin{lscommand}
+  \ci{put}\verb|(|$x,y$\verb|)|\ci{usebox}\verb|{|\emph{nimi}\verb|}|
+\end{lscommand}
+
+Mahdollinen \emph{sijainti}-parametri määrittelee kuvalaatikon
+origon. Esimerkissä sillä on arvo \texttt{bl}, joka
+sijoittaa origon laatikon vasempaan yläkulmaan. Muut mahdolliset arvot
+ovat \texttt{t} (ylös) ja \texttt{r} oikealle.
+
+Parametri \emph{name} viittaa {\LaTeX}:n muuttujiin ja siitä johtuen
+se muistuttaa komentoa (tästä syystä sen edessä on kenoviiva).
+Kuvalaatikot voivat olla toistensa sisällä: esimerkissä \ci{laatikkoa}
+on osa \ci{laatikkob}-laatikon määrityksiä.
+
+Tässä piti käyttää komentoa \ci{oval}, koska \ci{line} ei toimi, mikäli segmentin pituus on
+alle 3\,mm.
+
+\subsection{Toisen asteen Bézier-käyrät}
+
+\begin{example}
+\setlength{\unitlength}{1cm}
+\begin{picture}(6,4)
+  \linethickness{0.075mm}
+  \multiput(0,0)(1,0){7}
+    {\line(0,1){4}}
+  \multiput(0,0)(0,1){5}
+    {\line(1,0){6}}
+  \thicklines
+  \put(0.5,0.5){\line(1,5){0.5}}    
+  \put(1,3){\line(4,1){2}} 
+  \qbezier(0.5,0.5)(1,3)(3,3.5)
+  \thinlines   
+  \put(2.5,2){\line(2,-1){3}}
+  \put(5.5,0.5){\line(-1,5){0.5}}
+  \linethickness{1mm}
+  \qbezier(2.5,2)(5.5,0.5)(5,3)
+  \thinlines
+  \qbezier(4,2)(4,3)(3,3)
+  \qbezier(3,3)(2,3)(2,2)
+  \qbezier(2,2)(2,1)(3,1)
+  \qbezier(3,1)(4,1)(4,2)
+\end{picture}
+\end{example}
+Esimerkistä selviää, että ympyrän jakaminen neljään toisen asteen Bézier-käyrään
+ei tuo tyydyttävää tulosta. Tarvitaan ainakin kahdeksan. Kuvasta selviää lisäksi
+\ci{linethickness}-komennon vaikutus pysty- tai vaakaviivoihin ja komentojen \ci{thinlines}
+sekä \ci{thicklines} vaikutus vinoviivoihin. Siitä näkyy myös, että kummatkin
+komentotyypit vaikuttavat toisen asteen Bézier-käyriin, jokainen seuraava komento
+ohittaa vaikutuksiltaan edellisen.
+
+Päätepisteitä kuvatkoon $P_1=(x_1,\,y_1),\,P_2=(x_2,\,y_2)$ ja vastaavasti $m_1,\,m_2$
+toisen asteen Bézier-käyrän kaarta. Näiden välissä oleva kontrollipiste 
+$S=(x,\,y)$ seuraa silloin yhtälöistä
+\begin{equation} \label{zwischenpunkt}
+  \left\{
+    \begin{array}{rcl}
+      x & = & \displaystyle \frac{m_2 x_2-m_1x_1-(y_2-y_1)}{m_2-m_1}, \\
+      y & = & y_i+m_i(x-x_i)\qquad (i=1,\,2).
+    \end{array}
+  \right.
+\end{equation}
+\noindent Teoksessa \graphicsinlatex\ esitetään Java-ohjelma, joka
+luo tarvittavan \ci{qbezier}-komennon.
+
+\subsection{Katenoidikäyrä}
+
+\begin{example}
+\setlength{\unitlength}{1.3cm}
+\begin{picture}(4.3,3.6)(-2.5,-0.25)
+  \put(-2,0){\vector(1,0){4.4}}
+  \put(2.45,-.05){$x$}
+  \put(0,0){\vector(0,1){3.2}}
+  \put(0,3.35){\makebox(0,0){$y$}}
+  \qbezier(0.0,0.0)(1.2384,0.0)
+    (2.0,2.7622) 
+  \qbezier(0.0,0.0)(-1.2384,0.0)
+    (-2.0,2.7622)
+  \linethickness{.075mm}
+  \multiput(-2,0)(1,0){5}
+    {\line(0,1){3}}
+  \multiput(-2,0)(0,1){4}
+    {\line(1,0){4}}
+  \linethickness{.2mm}
+  \put( .3,.12763){\line(1,0){.4}}
+  \put(.5,-.07237){\line(0,1){.4}}
+  \put(-.7,.12763){\line(1,0){.4}}
+  \put(-.5,-.07237){\line(0,1){.4}}
+  \put(.8,.54308){\line(1,0){.4}}
+  \put(1,.34308){\line(0,1){.4}}
+  \put(-1.2,.54308){\line(1,0){.4}}
+  \put(-1,.34308){\line(0,1){.4}}
+  \put(1.3,1.35241){\line(1,0){.4}}
+  \put(1.5,1.15241){\line(0,1){.4}}
+  \put(-1.7,1.35241){\line(1,0){.4}}
+  \put(-1.5,1.15241){\line(0,1){.4}}
+  \put(-2.5,-0.25){\circle*{0.2}}
+\end{picture}
+\end{example}
+
+Tässä kuvassa kumpikin katenoidikäyrän $y=\cosh x -1$ symmetrinen puolisko esitetään toisen
+asteen Bézier-käyrällä. Käyrän oikea puoli päättyy pisteeseen \((2,\,2.7622)\), missä
+kaarteella on arvo \(m=3.6269\). Käyttämällä jälleen yhtälöä (\ref{zwischenpunkt}) voidaan
+laskea keskimmäiset kontrollipisteet. Ne näyttävät olevan $(1.2384,\,0)$ ja $(-1.2384,\,0)$.
+Ristit osoittavat \emph{oikean} katenoidikäyrän pisteitä. Virhettä tuskin huomaa sen ollessa
+alle yhden prosentin.
+
+Tämä esimerkki esittää \verb|\begin{picture}|-komennon mahdollisen parametrin käyttöä.
+Kuva määritellään tarkoituksenmukaisilla ''matemaattisilla'' koordinaateilla, kun taas
+komennolla
+\begin{lscommand} 
+  \ci{begin}\verb|{picture}(4.3,3.6)(-2.5,-0.25)|
+\end{lscommand}
+\noindent sen vasempaan alakulmaan (merkitty mustalla pallolla) on
+liitetty koordinaatit $(-2.5,-0.25)$. 
+
+\subsection{Nopeus suhteellisuusteoriassa}
+
+\begin{example}
+\setlength{\unitlength}{1cm}
+\begin{picture}(6,4)(-3,-2)
+  \put(-2.5,0){\vector(1,0){5}}
+  \put(2.7,-0.1){$\chi$}
+  \put(0,-1.5){\vector(0,1){3}}
+  \multiput(-2.5,1)(0.4,0){13}
+    {\line(1,0){0.2}}
+  \multiput(-2.5,-1)(0.4,0){13}
+    {\line(1,0){0.2}}
+  \put(0.2,1.4)
+    {$\beta=v/c=\tanh\chi$}
+  \qbezier(0,0)(0.8853,0.8853)
+    (2,0.9640)
+  \qbezier(0,0)(-0.8853,-0.8853)
+    (-2,-0.9640)
+  \put(-3,-2){\circle*{0.2}}
+\end{picture}
+\end{example}
+Näiden kahden Bézier-käyrän kiintopisteet laskettiin kaavalla (\ref{zwischenpunkt}).
+Positiivisen haaran määrittelee $P_1=(0,\,0),\,m_1=1$ ja $P_2=(2,\,\tanh 2),\,m_2=1/\cosh^2 2$.
+Kuva on jälleen määritelty matemaattisesti sopivin koordinaatein ja vasempaan alakulmaan
+sijoittuvat matemaattiset koordinaatit $(-3,-2)$ (musta ympyrä).
+
+\section{\texorpdfstring{\Xy}{Xy}-pic}
+\secby{Alberto Manuel Brand\~ao Sim\~oes}{albie@alfarrabio.di.uminho.pt}
+\pai{xy} sisältää erityismakroja kaavioiden piirtämiseen.
+Sen käyttämiseksi riittää seuraavan rivin lisääminen dokumentin määrittelyosaan:
+\begin{lscommand}
+\verb|\usepackage[|\emph{optiot}\verb|]{xy}|
+\end{lscommand}
+\emph{optiot} ovat lista \Xy-picin funktioita, jotka halutaan ladata käyttöön.
+Näitä optioita käytetään lähennä makrojen virheitä etsittäessä. Suosittelen
+käyttämään optiota \verb!all!, joka saa {\LaTeX}:n lataamaan kaikki {\Xy}:n komennot.
+
+\Xy-kaaviot piirretään matriisiin, jossa kaavion jokainen elementti
+on sijoitettu johonkin matriisin kohtaan:
+\begin{example}
+\begin{displaymath}
+\xymatrix{A & B \\
+          C & D }
+\end{displaymath}
+\end{example}
+Komentoa \ci{xymatrix} täytyy käyttää matematiikkatilassa. Tässä
+määritellään kaksi viivaa ja kaksi saraketta. Jotta matriisista
+saadaan kaavio, siihen lisätään nuolia \ci{ar}-komentoa käyttämällä.
+
+\begin{example}
+\begin{displaymath}
+\xymatrix{ A \ar[r] & B \ar[d] \\
+           D \ar[u] & C \ar[l] }
+\end{displaymath}
+\end{example}
+Nuolikomento sijoitetaan nuolen alkupisteeseen. Parametrit kertovat
+nuolen suunnan (\texttt{u} ylös, \texttt{d} alas, \texttt{r} oikealle ja
+\texttt{l} vasemmalle).
+
+\begin{example}
+\begin{displaymath}
+\xymatrix{
+  A \ar[d] \ar[dr] \ar[r] & B \\
+  D                       & C }
+\end{displaymath}
+\end{example}
+Vinoviivojen tekemiseen käytetään yhtä useampaa suuntaa.
+Suuntaparametreja voi itseasiassa toistaa suurempien nuolten
+tekemiseksi.
+\begin{example}
+\begin{displaymath}
+\xymatrix{
+  A \ar[d] \ar[dr] \ar[drr] & & \\
+  B                      & C & D }
+\end{displaymath}
+\end{example}
+
+Kaavioista saadaan vielä mielenkiintoisempia lisäämällä
+nuoliin tunnisteita. Niiden tekemiseen käytetään yleisiä
+ylä- ja alaindeksioperaattoreita.
+\begin{example}
+\begin{displaymath}
+\xymatrix{
+  A \ar[r]^f \ar[d]_g &
+             B \ar[d]^{g'} \\
+  D \ar[r]_{f'}       & C }
+\end{displaymath}
+\end{example}
+
+Näitä operaattoreita käytetään kuten normaalisti matematiikkatilassa.
+Ainoa ero on merkityksessä: yläindeksi tarkoittaa ''nuolen päällä''
+ja alaindeksi tarkoittaa ''nuolen alla''. On myös olemassa kolmas operaattori:
+pystyviiva (\verb+|+). Se sijoittaa tekstin \emph{keskelle} nuolta.
+
+\begin{example}
+\begin{displaymath}
+\xymatrix{
+  A \ar[r]|f \ar[d]|g &
+             B \ar[d]|{g'} \\
+  D \ar[r]|{f'}       & C }
+\end{displaymath}
+\end{example}
+
+Nuoli, jossa on reikä, piirretään \verb!\ar[...]|\hole!.
+
+Joissain tilanteissa on tärkeää erottaa erityyppiset nuolet toisistaan.
+Se voidaan tehdä panemalla niihin tunnisteita tai muuttamalla niiden
+ulkoasua:
+
+\begin{example}
+\shorthandoff{"}
+\begin{displaymath}
+\xymatrix{
+ \bullet\ar@{->}[rr] && \bullet\\
+ \bullet\ar@{.<}[rr] && \bullet\\
+ \bullet\ar@{~)}[rr] && \bullet\\
+ \bullet\ar@{=(}[rr] && \bullet\\
+ \bullet\ar@{~/}[rr]  && \bullet\\
+ \bullet\ar@{^{(}->}[rr]  && \bullet\\
+ \bullet\ar@2{->}[rr]  && \bullet\\
+ \bullet\ar@3{->}[rr]  && \bullet\\
+ \bullet\ar@{=+}[rr]   && \bullet
+}
+\end{displaymath}
+\shorthandon{"}
+\end{example}
+
+Huomaa ero kahden seuraavan kaavion välillä:
+
+\begin{example}
+\begin{displaymath}
+\xymatrix{
+ \bullet \ar[r] 
+         \ar@{.>}[r] & 
+ \bullet
+}
+\end{displaymath}
+\end{example}
+
+\begin{example}
+\begin{displaymath}
+\xymatrix{
+ \bullet \ar@/^/[r] 
+         \ar@/_/@{.>}[r] &
+ \bullet
+}
+\end{displaymath}
+\end{example}
+
+Kauttaviivojen välissä olevat modifikaattorit määrittelevät
+miten käyrät piirretään. \Xy-pic tarjoaa useita tapoja
+käyrien piirtämiseksi. Lisätietoja saa \Xy-picin käyttöohjeista.
+
+% \begin{example}
+% \begin{lscommand}
+% \ci{dum}
+% \end{lscommand}
+% \end{example}
+

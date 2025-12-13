@@ -1,0 +1,81 @@
+% Time-stamp: <2019-08-28 11:48:38 administrateur>
+% ReCréation : 2019-08-26T12:32:29+0200
+\ExplSyntaxOn
+\seq_new:N \kaprun_seq
+\seq_new:N \kaprekar_seq
+\int_new:N \l_tmpc_int
+
+
+\cs_new:Nn \KAP_int_to_seq:NN { 
+  \int_set:Nn \l_tmpa_int { #1 }
+  \int_do_until:nNnn { \l_tmpa_int } = { 0 }
+  { \int_set:Nn \l_tmpb_int { \int_mod:nn { \l_tmpa_int } { 10 } }
+    \seq_put_left:NV #2 \l_tmpb_int 
+    \int_set:Nn \l_tmpa_int
+    { \int_div_truncate:nn { \l_tmpa_int - \l_tmpb_int } { 10 } } } }
+
+\cs_new:Nn \KAP_seq_to_int:NN {
+  \seq_pop_right:NNT #1 \l_tmpa_tl
+  { \int_set:Nn #2 { \l_tmpa_tl }
+    \bool_do_until:nn { \seq_if_empty_p:N #1 }
+    { \seq_pop_right:NNT #1 \l_tmpa_tl
+      \int_set:Nn #2 { 10 * #2 + \l_tmpa_tl } } } }
+
+\cs_new:Nn \KAP_remplir_seq:Nn { 
+  \int_while_do:nNnn { \seq_count:N #1 } < { #2 }
+  { \seq_put_left:Nn #1 { 0 } } }
+
+\cs_new:Nn \KAP_ranger_seq:N {
+  \seq_sort:Nn #1
+  { \int_compare:nNnTF { ##1 } > { ##2 }
+    { \sort_return_swapped: }
+    { \sort_return_same:    } } }
+
+\cs_new:Nn \KAP_suivant:nNN {
+  \KAP_int_to_seq:NN #2 \kaprun_seq 
+  \KAP_remplir_seq:Nn \kaprun_seq { #1 }
+  \KAP_ranger_seq:N \kaprun_seq
+  
+  \seq_set_eq:NN \kaprdx_seq \kaprun_seq
+  \seq_reverse:N \kaprdx_seq
+
+  \KAP_seq_to_int:NN \kaprdx_seq \l_tmpa_int
+  \KAP_seq_to_int:NN \kaprun_seq \l_tmpb_int
+  \int_set:Nn #3 { \l_tmpb_int - \l_tmpa_int } }
+
+\cs_new:Nn \KAP_ecrire_tous_les_suivants:nn { 
+  \group_begin:
+  \bool_set_true:N \l_tmpa_bool 
+  \seq_clear:N \kaprekar_seq
+  \int_set:Nn \l_tmpc_int { #2 } 
+  \seq_put_right:NV \kaprekar_seq \l_tmpc_int
+  \KAP_suivant:nNN {#1} \l_tmpc_int \l_tmpc_int
+  \seq_if_in:NVT \kaprekar_seq \l_tmpc_int {\bool_set_false:N \l_tmpa_bool}
+  \bool_while_do:nn { \l_tmpa_bool }
+  { \seq_put_right:NV \kaprekar_seq \l_tmpc_int
+    \KAP_suivant:nNN {#1} \l_tmpc_int \l_tmpc_int
+    \seq_if_in:NVT \kaprekar_seq \l_tmpc_int { \bool_set_false:N \l_tmpa_bool } }
+  % \seq_show:N \kaprekar_seq
+  % \seq_use:Nnnn \kaprekar_seq {~et~} {,~} {~et~}\par{}
+  \int_set:Nn \l_tmpa_int { \seq_count:N \kaprekar_seq }
+  \seq_map_inline:Nn \kaprekar_seq
+  { \( \np{##1} \)
+    \int_decr:N \l_tmpa_int
+    \int_case:nnF { \l_tmpa_int }
+    { 
+      { 1 } {~et~}
+      { 0 } { }
+    }
+    {~;~}
+  }
+  \group_end: }
+
+\NewDocumentCommand{\Kaprekar}{ O{4} m }{
+  \KAP_ecrire_tous_les_suivants:nn { #1 } { #2 } }
+
+\ExplSyntaxOff
+%%% Local Variables:
+%%% coding: utf-8 
+%%% mode: latex
+%%% TeX-master: "../dun19expl3"
+%%% End:

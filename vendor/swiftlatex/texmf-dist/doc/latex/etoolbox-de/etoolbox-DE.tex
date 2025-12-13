@@ -1,0 +1,1497 @@
+% $Id: etoolbox.tex,v 2.1 2011/01/03 19:14:10 lehman stable $
+\documentclass{ltxdockit}[2010/09/26]
+\usepackage[latin1]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[strict]{csquotes}
+\usepackage{shortvrb}
+\MakeAutoQuote{«}{»}
+\MakeAutoQuote*{<}{>}
+\MakeShortVerb{\|}
+\emergencystretch=11pt
+
+\rcsid{$Id: etoolbox.tex,v 2.1 2011/01/03 19:14:10 lehman stable $}
+
+\titlepage{%
+  title={Das Paket \sty{etoolbox}},
+  subtitle={\etex-Werkzeuge für Klassen- und Paketautoren},
+  url={http://www.ctan.org/tex-archive/macros/latex/contrib/etoolbox/},
+  author={Philipp Lehman\footnote{Übersetzung von Tim Enderling (\texttt{t.enderling@gmx.de})}},
+  email={plehman@gmx.net},
+  revision={\rcsrevision},
+  date={\rcstoday}}
+
+\hypersetup{%
+  pdftitle={Das Paket etoolbox},
+  pdfsubject={e-TeX-Werkzeuge für Klassen und Paket-Autoren},
+  pdfauthor={Philipp Lehman},
+  pdfkeywords={tex, e-tex, latex, Klassen, Pakete, Programmierung}}
+
+\begin{document}
+
+\newcommand{\subtrans}[1]{ (#1)}
+\newcommand{\wtrans}[1]{\emph{#1}}
+\newcommand{\itrans}[1]{\subtrans{\wtrans{#1}}}
+\newcommand{\open}[2][]{\textbf{\textcolor{green}{#2}}\footnote{#1}}
+
+\printtitlepage
+\tableofcontents
+
+\section{Einführung}
+\label{int}
+
+\subsection[Über etoolbox]{Über \sty{etoolbox}}
+
+Das Paket \sty{etoolbox} ist eine Sammlung von Programmierwerkzeugen, die vorrangig für Autoren von \latex-Klassen und Paketen gedacht ist. Es liefert \latex-Schnitt\-stellen für einige neue Grundfunktionen von \etex, sowie einige allgemeine Werkzeuge, die nicht \etex-spezifisch sind, aber zum Profil dieses Paketes passen.
+
+\subsection{Lizenz}
+
+Copyright \textcopyright\ 2007--2011 Philipp Lehman. Gestattet ist das Kopieren, Verteilen und Anpassen unter Einhaltung der \lppl, Version 1.3.\fnurl{http://www.ctan.org/tex-archive/macros/latex/base/lppl.txt} Das Paket wird vom Autor gepflegt\subtrans{Status \wtrans{author-maintained} in der \lppl}.
+
+\section{Befehle für Anwender}
+\label{use}
+
+Die Befehle in diesem Abschnitt richten sich an Anwender von \latex, sowie an Klassen- und Paketautoren.
+
+\subsection[Schutz mit Neudefinition]{Schutz durch Neudefinition}
+\label{use:def}
+
+\begin{ltxsyntax}
+
+\cmditem{newrobustcmd}{Befehl}[Parameter][Standardwert]{Ersetzungstext}
+\cmditem*{newrobustcmd*}{Befehl}[Parameter][Standardwert]{Ersetzungstext}
+
+Dieser Befehl verhält sich wie \cmd{newcommand}, macht den neu definierten \prm{Befehl} aber zusätzlich robust\subtrans{\wtrans{robust command}\footnote{\url{http://www.matthiaspospiech.de/blog/2008/04/16/definition-von-makros-und-umgebungen/\#toc-protect-fragile-und-robust} oder \\ \url{http://de.wikibooks.org/wiki/LaTeX-W\%C3\%B6rterbuch:_protect}}}. Der Befehl unterscheidet sich vom \latex-Befehl \cmd{DeclareRobustCommand} darin, dass er eine Fehlermeldung und nicht nur eine Warnung ausgibt, falls der \prm{Befehl} bereits definiert wurde. Da er den systemnahen Mechanismus von \etex statt der höher angesiedelten \latex-Befehle verwendet, wird kein zusätzliches Makro benötigt um den \prm{Befehl} robust zu machen.
+
+\cmditem{renewrobustcmd}{Befehl}[Parameter][Standardwert]{Ersetzungstext}
+\cmditem*{renewrobustcmd*}{Befehl}[Parameter][Standardwert]{Ersetzungstext}
+
+Dieser Befehl verhält sich wie \cmd{renewcommand}, macht den umdefinierten \prm{Befehl} aber zusätzlich robust.
+
+\cmditem{providerobustcmd}{Befehl}[Parameter][Standardwert]{Ersetzungstext}
+\cmditem*{providerobustcmd*}{Befehl}[Parameter][Standardwert]{Ersetzungstext}
+
+Dieser Befehl verhält sich wie \cmd{providecommand}, macht den neu definierten \prm{Befehl} aber zusätzlich robust. Allerdings stellt der Befehl nur dann eine robuste Variante des \prm{Befehls} zur Verfügung, wenn der \prm{Befehl} vorher undefiniert war. Bereits definierte Befehle können damit nicht robust gemacht werden.
+
+\end{ltxsyntax}
+
+\subsection[\quad für existierende Befehle]{Schutz existierender Befehle}
+\label{use:pat}
+
+\begin{ltxsyntax}
+
+\cmditem{robustify}{Befehl}
+
+Definiert einen \prm{Befehl}, der mit \cmd{newcommand} definiert wurde, als robusten Befehl neu. Seine Parameter, seine Präfixe und sein Ersetzungstext bleiben dabei erhalten. Falls der \prm{Befehl} ursprünglich mit \cmd{DeclareRobustCommand} definiert wurde, wird dies automatisch erkannt und der höher angesiedelter Schutzmechanismus von \latex durch den systemnahen Mechanismus von \etex ersetzt.
+
+\end{ltxsyntax}
+
+\subsection[\quad beliebigen Codes]{Schutz beliebigen Codes}
+\label{use:pro}
+
+\begin{ltxsyntax}
+
+\cmditem{protecting}{Code}
+
+Dieser Befehl wendet den \latex-eigenen Schutzmechanismus auf einen Block beliebigen \prm{Codes} an, was normalerweise die Angabe von \cmd{protect} vor jedem fragilen Befehl\itrans{fragile command} verlangt. Sein Verhalten hängt vom aktuellen Zustand von \cmd{protect} ab. Wichtig ist, dass der \prm{Code} in Klammern gesetzt werden muss, auch wenn es sich um einen einzelnen Befehl handelt.
+
+\end{ltxsyntax}
+
+\subsection[Längen und Zähler]{Definition von Längen und Zählern}
+\label{use:cal}
+
+Die Werkzeuge in diesem Abschnitt können anstelle der Befehle \cmd{setcounter} und \cmd{setlength} verwendet werden und unterstützten arithmetische Ausdrücke.
+
+\begin{ltxsyntax}
+
+\cmditem{defcounter}{Zähler}{ganzzahliger Ausdruck}
+
+Weist einem zuvor mit \cmd{newcounter} initialisierten \latex{}-\prm{Zähler} einen Wert zu. Dieser Befehl verhält sich wie \cmd{setcounter} mit zwei wichtigen Unterschieden:\\ 1.) Der zweite Parameter kann ein \prm{ganzzahliger Ausdruck} sein, der mit \cmd{numexpr} ausgewertet wird. Der \prm{ganzzahlige Ausdruck} kann beliebiger, in diesem Kontext gültiger Code sein. Dem \prm{Zähler} wird das Ergebnis der Berechnung als Wert zugewiesen. 2.) Im Gegensatz zu \cmd{setcounter} ist die Zuweisung standardmäßig lokal. Es ist aber möglich, \cmd{defcounter} ein \cs{global} voranzustellen. Die funktionale Entsprechung zu \cmd{setcounter} ist also \cs{global}\cmd{defcounter}.
+
+\cmditem{deflength}{Längenvariable}{Abstandsausdruck}
+
+Weist einer zuvor mit \cmd{newlength} initialisierten Längenvariable einen Wert zu. Dieser Befehl verhält sich wie \cmd{setlength}. Allerdings kann der zweite Parameter ein \prm{Abstandsausdruck}\subtrans{Ausdruck vom \etex-Typ \wtrans{glue}} sein, der mit \cmd{glueexpr} ausgewertet wird. Der \prm{Abstandsausdruck} kann beliebiger, in diesem Kontext gültiger Code sein. Der \prm{Längenvariable} wird das Ergebnis der Berechnung als Wert zugewiesen. Die Zuweisung ist standardmäßig lokal, es ist aber möglich \cmd{deflength} ein \cs{global} voranzustellen und den resultierenden Befehl anstelle von \cmd{setlength} zu verwenden. 
+
+\end{ltxsyntax}
+
+\subsection[Dokumenten-Hooks]{Zusätzliche Hooks für Dokumente}
+\label{use:pre}
+
+\latex sieht zwei Hooks\itrans{Einsprungpunkte} vor, die den Ausführungszeitpunkt von Code auf den Anfang oder das Ende des Textteils verschieben. Jeder mit \cmd{AtBeginDocument} markierte Code wird zu Beginn des Textteils ausgeführt, nachdem die \file{aux}-Hauptdatei zum ersten Mal gelesen wurde. Jeder mit \cmd{AtEndDocument} markierte Code wird am Ende des Textteils ausgeführt, bevor die \file{aux}-Hauptdatei zum zweiten Mal gelesen wird. Die hier vorgestellten Hooks verfolgen dieselbe Grundidee, verschieben den Ausführungszeitpunkt des \prm{Codes} aber an geringfügig abweichende Stellen im Dokument. Der Parameter \prm{Code} kann beliebiger \tex-Code sein. Parameterzeichen im \prm{Code} sind zulässig und müssen nicht verdoppelt werden.
+
+\begin{ltxsyntax}
+
+\cmditem{AfterPreamble}{Code}
+
+Dieser Hook ist eine Variante von \cmd{AtBeginDocument}, die sowohl in der Präambel als auch im Textteil verwendet werden kann. Wird er in der Präambel verwendet, verhält er sich genau wie \cmd{AtBeginDocument}. Wird er im Textteil verwendet, führt er den \prm{Code} sofort aus. \cmd{AtBeginDocument} würde in diesem Fall einen Fehler melden. Dieser Hook ist nützlich um den Ausführungszeitpunkt von Code zu verschieben, der in die \file{aux}-Hauptdatei schreibt.
+
+\cmditem{AtEndPreamble}{Code}
+
+Dieser Hook unterscheidet sich von \cmd{AtBeginDocument} dadurch, dass der \prm{Code} am Ende der Präambel ausgeführt wird, bevor die \file{aux}-Hauptdatei (wie vom vorergehenden \latex-Lauf ausgegeben) gelesen wird und vor jedem mit \cmd{AtBeginDokument} makierten Code. Zu beachten ist, dass der \prm{Code} zu diesem Zeitpunkt nicht in die \file{aux}-Datei schreiben kann.
+
+\cmditem{AfterEndPreamble}{Code}
+
+Dieser Hook unterscheidet sich von \cmd{AtBeginDocument} dadurch, dass der \prm{Code} als Allerletztes im Befehl |\begin{document}| ausgeführt wird, nach jedem mit \cmd{AtBeginDocument} markierten Code. Befehle, deren Gültigkeitsbereich mit Hilfe von \cmd{@onlypreamble} auf die Präambel beschränkt wurde, stehen zur Ausführungszeit des \prm{Codes} nicht mehr zur Verfügung.
+
+\cmditem{AfterEndDocument}{Code}
+
+Dieser Hook unterscheidet sich von \cmd{AtEndDocument} dadurch, dass der \prm{Code} als Allerletztes im Dokument ausgeführt wird, nachdem die \file{aux}-Hauptdatei (wie vom aktuellen \latex-Lauf ausgegeben) gelesen wurde und außerdem nach jedem mit \cmd{AtEndDocument} markierten Code.
+
+\end{ltxsyntax}
+
+In bestimmter Hinsicht gehört mit \cmd{AtBeginDocument} markierter Code weder zur Präambel noch zum Textteils, sondern liegt dazwischen, weil er mitten in der Initialisierungssequenz ausgeführt wird, die dem Textsatz vorausgeht. Manchmal ist es wünschenswert, Code am Ende der Präambel auszuführen, weil dann alle benötigten Pakete geladen sind. Mit \cmd{AtBeginDocument} markierter Code wird allerdings zu spät ausgeführt, um in die \file{aux}-Datei einzugehen. Im Gegensatz dazu gehört mit \cmd{AtEndPreamble} markierter Code zur Präambel; mit \cmd{AfterEndPreamble} markierter Code gehört zum Textteil und kann darstellbaren Text enthalten, der im Dokument zuallererst gesetzt wird. Zusammengefasst werden von \latex folgende Schritte <innerhalb> von |\begin{document}| ausgeführt:
+
+\begin{itemize}
+\setlength{\itemsep}{0pt}
+\item Ausführen sämtlichen mit \cmd{AtEndPreamble} markierten Codes
+\item Initialisieren des Textteils (Seitenlayout, Standardschriften, usw.)
+\item Laden der \file{aux}-Hauptdatei, wie sie vom vorangegangen \latex-Lauf ausgegeben wurde
+\item Öffnen der \file{aux}-Hauptdatei zum Schreiben durch den aktuellen Lauf
+\item Initialisierung des Textteils fortsetzen
+\item Ausführen sämtlichen mit \cmd{AtBeginDocument} markierten Codes
+\item Initialisierung des Textteils abschließen
+\item Deaktivieren aller mit \cmd{@onlypreamble} markierten Befehle
+\item Ausführen sämtlichen mit \cmd{AfterEndPreamble} markierten Codes
+\end{itemize}
+%
+Innerhalb von |\end{document}| werden von \latex folgende Schritte ausgeführt:
+
+\begin{itemize}
+\setlength{\itemsep}{0pt}
+\item Ausführen sämtlichen mit \cmd{AtEndDocument} markierten Codes
+\item abschließendes Ausführen von \cmd{clearpage}
+\item Schließen der \file{aux}-Hauptdatei für den schreibenden Zugriff
+\item Laden der \file{aux}-Hauptdatei, wie sie vom aktuellen \latex-Lauf ausgegeben wurde
+\item abschließendes Testen und eventuell Ausgabe von Fehlermeldungen
+\item Ausführen sämtlichen mit \cmd{AfterEndDocument} markierten Codes
+\end{itemize}
+%
+Mit \cmd{AtEndDocument} markierter Code gehört insofern noch zum Textteil, als dass er immer noch Text setzen und in die \file{aux}-Hauptdatei schreiben kann. Mit \cmd{AfterEndDocument} markierter Code gehört nicht mehr zum Textteil. Dieser Hook ist nützlich, um die Daten in der \file{aux}-Datei am Ende eines \latex-Laufs auszuwerten.
+
+\subsection[Umgebungs-Hooks]{Hooks für Umgebungen}
+\label{use:env}
+
+Die Werkzeuge in diesem Abschnitt liefern Hooks für beliebige Umgebungen. Sie verändern dabei nicht die Definition der \prm{Umgebung}, sondern verschieben den Ausführungszeitpunkt des Codes in \cmd{begin} und \cmd{end}. Neudefinieren der \prm{Umgebung} führt deshalb nicht zum Löschen bestehender Hooks. Der Parameter \prm{Code} kann beliebiger \tex-Code sein. Parameterzeichen im \prm{Code} sind zulässig und müssen nicht verdoppelt werden.
+
+\begin{ltxsyntax}
+
+\cmditem{AtBeginEnvironment}{Umgebung}{Code}
+
+Hängt beliebigen \prm{Code} an einen Hook an, der vom \cmd{begin}-Befehl am Anfang einer gegebenen \prm{Umgebung} genau vor \cmd{\prm{Umgebung}} ausgeführt wird, innerhalb der von \cmd{begin} mit \texttt{\{} geöffneten Gruppierung.
+
+\cmditem{AtEndEnvironment}{Umgebung}{Code}
+
+Hängt beliebigen \prm{Code} an einen Hook an, der vom \cmd{end}-Befehl am Ende einer gegebenen \prm{Umgebung} genau vor \cmd{end\prm{environment}} ausgeführt wird, innerhalb der von \cmd{begin} geöffneten Gruppierung.
+
+\cmditem{BeforeBeginEnvironment}{Umgebung}{Code}
+
+Hängt beliebigen \prm{Code} an einen Hook an, der vom \cmd{begin}-Befehl noch vor Öffnen der Gruppierung ausgeführt wird.
+
+\cmditem{AfterEndEnvironment}{Umgebung}{Code}
+
+Hängt beliebigen \prm{Code} an einen Hook an, der vom \cmd{end}-Befehl nach Schließen der Gruppierung ausgeführt wird.
+
+\end{ltxsyntax}
+
+\section{Befehle für Autoren}
+
+Die Werkzeuge in diesem Abschnitt richten sich an Klassen- und Paketautoren.
+
+\subsection{Definitionen}
+
+\subsubsection{Definieren von Makros}
+\label{aut:def:def}
+
+Die Werkzeuge in diesem Abschnitt sind einfache, aber oft gebrauchte Kurzschreibweisen, die den Anwendungsbereich der Makros \cmd{@namedef} und \cmd{@nameuse} vergrößern.
+
+\begin{ltxsyntax}
+
+\cmditem{csdef}{Name}<Parameter>{Ersetzungstext}
+
+Wie die \tex-Primitive \cmd{def}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist. Dieser Befehl ist robust und entspricht \cmd{@namedef}.
+
+\cmditem{csgdef}{Name}<Parameter>{Ersetzungstext}
+
+Wie die \tex-Primitive \cmd{gdef}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist. Dieser Befehl ist robust.
+
+\cmditem{csedef}{Name}<Parameter>{Ersetzungstext}
+
+Wie die \tex-Primitive \cmd{edef}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist. Dieser Befehl ist robust.
+
+\cmditem{csxdef}{Name}<Parameter>{Ersetzungstext}
+
+Wie die \tex-Primitive \cmd{xdef}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist. Dieser Befehl ist robust.
+
+\cmditem{protected@csedef}{Name}<Parameter>{Ersetzungstext}
+
+Wie \cmd{csedef}, außer dass vorübergehend der \latex-eigene Schutzmechanismus aktiviert wird. Mit anderen Worten: Dieser Befehl verhält sich wie \cmd{protected@edef} aus dem \latex-Kern, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist. Dieser Befehl ist robust.
+
+\cmditem{protected@csxdef}{Name}<Parameter>{Ersetzungstext}
+
+Wie \cmd{csxdef}, außer dass vorübergehend der \latex-eigene Schutzmechanismus aktiviert wird. Mit anderen Worten: Dieser Befehl verhält sich wie \cmd{protected@xdef} aus dem \latex-Kern, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist. Dieser Befehl ist robust.
+
+\cmditem{cslet}{Name}{Befehl}
+
+Wie die \tex-Primitive \cmd{let}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist. Ist der übergebene  \prm{Befehl} undefiniert, so ist nach der Zuweisung auch die Kontrollsequenz undefiniert. Dieser Befehl ist robust und kann mit \cs{global} versehen werden.
+
+\cmditem{letcs}{Befehl}{Name}
+
+Wie die \tex-Primitive \cmd{let}, außer dass der zweite Parameter der \prm{Name} einer Kontrollsequenz ist. Ist die Kontrollsequenz undefiniert, so ist nach der Zuweisung auch der übergebene \prm{Befehl} undefiniert. Dieser Befehl ist robust und kann mit \cs{global} versehen werden.
+
+\cmditem{csletcs}{Name}{Name}
+
+Wie die \tex-Primitive \cmd{let}, außer dass beide Parameter \prm{Namen} von Kontrollsequenzen sind. Ist die zweite Kontrollsequenz undefiniert, so ist nach der Zuweisung auch die erste Kontrollsequenz undefiniert. Dieser Befehl ist robust und kann mit \cs{global} versehen werden.
+
+\cmditem{csuse}{Name}
+
+Erhält den \prm{Namen} einer Kontrollsequenz als Parameter und erzeugt den zugehörigen Befehlstoken. Dieser Befehl unterscheidet sich vom Makro \cmd{@nameuse} aus dem \latex-Kern darin, dass er eine leere Zeichenfolge liefert, falls die Kontrollsequenz undefiniert ist.
+
+\cmditem{undef}<Befehl>
+
+Löscht einen \prm{Befehl}, so dass die Tests \cmd{ifdefined} und \cmd{ifcsname} ihn als undefiniert behandeln. Dieser Befehl ist robust und kann mit \cs{global} versehen werden.
+
+\cmditem{csundef}{Name}
+
+Wie \cmd{undef}, außer dass der Parameter der \prm{Name} einer Kontrollsequenz ist. Dieser Befehl ist robust und kann mit \cs{global} versehen werden.
+
+\cmditem{csshow}{Name}
+
+Wie die \tex-Primitive \cmd{show}, außer dass der Parameter der \prm{Name} einer Kontrollsequenz ist. Ist die Kontrollsequenz undefiniert, weist der Befehl der Kontrollsequenz nicht automatisch die Bedeutung von \cmd{relax} zu. Dieser Befehl ist robust.
+
+\end{ltxsyntax}
+
+\subsubsection{Definieren arithmetischer Makros}
+\label{aut:def:cal}
+
+Die Werkzeuge in diesem Abschnitt erlauben  anstelle von Längenvariablen und Zählern Makros für Berechnungen zu verwenden.
+
+\begin{ltxsyntax}
+
+\cmditem{numdef}<Befehl>{ganzzahliger Ausdruck}
+
+Wie \cmd{edef}, außer dass der \prm{ganzzahlige Ausdruck} mit \cmd{numexpr} ausgewertet wird. Der \prm{ganzzahlige Ausdruck} kann beliebiger, in diesem Kontext gültiger Code sein. Der Ersetzungstext des \prm{Befehls} ist das Ergebnis der Berechnung. Ist der \prm{Befehl} undefiniert, wird er auf \texttt{0} initialisiert, bevor der \prm{ganzzahlige Ausdruck} ausgewertet wird.
+
+\cmditem{numgdef}<Befehl>{ganzzahliger Ausdruck}
+
+Wie \cmd{numdef}, außer dass die Zuweisung global ist.
+
+\cmditem{csnumdef}{Name}{ganzzahliger Ausdruck}
+
+Wie \cmd{numdef}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{csnumgdef}{Name}{ganzzahliger Ausdruck}
+
+Wie \cmd{numgdef}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{dimdef}<Befehl>{Längenausdruck}
+
+Wie \cmd{edef}, außer dass der \prm{Längenausdruck}\subtrans{Ausdruck vom \etex-Typ \wtrans{dimen}} mit \cmd{dimexpr} ausgewertet wird. Der \prm{Längenausdruck} kann beliebiger, in diesem Kontext gültiger Code sein. Der Ersetzungstext des \prm{Befehls} ist das Ergebnis der Berechnung. Ist der \prm{Befehl} undefiniert, wird er auf \texttt{0} initialisiert, bevor der \prm{Längenausdruck} ausgewertet wird.
+
+\cmditem{dimgdef}<Befehl>{Längenausdruck}
+
+Wie \cmd{dimdef}, außer dass die Zuweisung global ist.
+
+\cmditem{csdimdef}{Name}{Längenausdruck}
+
+Wie \cmd{dimdef}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{csdimgdef}{Name}{Längenausdruck}
+
+Wie \cmd{dimgdef}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{gluedef}<Befehl>{Abstandsausdruck}
+
+Wie \cmd{edef}, außer dass der \prm{Abstandsausdruck}\subtrans{Ausdruck vom \etex-Typ \wtrans{glue}} mit \cmd{glueexpr} ausgewertet wird. Der \prm{Abstandsausdruck} kann beliebiger, in diesem Kontext gültiger Code sein. Der Ersetzungstext des \prm{Befehls} ist das Ergebnis der Berechnung. Ist der \prm{Befehl} undefiniert, wird er auf \texttt{0pt plus 0pt minus 0pt} initialisiert, bevor der \prm{Abstandsausdruck} ausgewertet wird.
+
+\cmditem{gluegdef}<Befehl>{Abstandsausdruck}
+
+Wie \cmd{gluedef}, außer dass die Zuweisung global ist.
+
+\cmditem{csgluedef}{Name}{Abstandsausdruck}
+
+Wie \cmd{gluedef}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{csgluegdef}{Name}{Abstandsausdruck}
+
+Wie \cmd{gluegdef}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{mudef}<Befehl>{Abstandsausdruck in mu}
+
+Wie \cmd{edef}, außer dass der \prm{Abstandsausdruck in mu}\subtrans{Ausdruck vom \etex-Typ \wtrans{muglue}; Abstand in \wtrans{math units}} mit \cmd{muexpr} ausgewertet wird. Der übergebene \prm{Abstandsausdruck} kann beliebiger, in diesem Kontext gültiger Code sein. Der Ersetzungstext des \prm{Befehls} ist das Ergebnis der Berechnung. Ist der \prm{Befehl} undefiniert, wird er auf \texttt{0mu} initialisiert, bevor der \prm{Abstandsausdruck} ausgewertet wird.
+
+\cmditem{mugdef}<Befehl>{Abstandsausdruck in mu}
+
+Wie \cmd{mudef}, außer dass die Zuweisung global ist.
+
+\cmditem{csmudef}{Name}{Abstandsausdruck in mu}
+
+Wie \cmd{mudef}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{csmugdef}{Name}{Abstandsausdruck in mu}
+
+Wie \cmd{mugdef}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\end{ltxsyntax}
+
+\subsection{Expansionssteuerung}
+\label{aut:exp}
+
+Die Werkzeuge in diesem Abschnitt sind nützlich, um die Expansion von Definitionen mit \cmd{edef} oder ähnlichen Befehlen zu steuern.
+
+\begin{ltxsyntax}
+
+\cmditem{expandonce}<Befehl>
+
+Dieser Befehl expandiert einen \prm{Befehl} einmalig und verhindert jede weitere Expansion des Ersetzungstextes. Dieser Befehl ist selbst expandierbar.
+
+\cmditem{csexpandonce}{Name}
+
+Wie \cmd{expandonce}, außer dass der Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\end{ltxsyntax}
+
+\subsection{Hook-Verwaltung}
+\label{aut:hok}
+
+Die Werkzeuge in diesem Abschnitt dienen der Verwaltung von Hooks. Ein \prm{Hook} ist in diesem Zusammenhang ein einfaches Makro ohne Parameter und Präfixe, dessen Zweck es ist, Code zur späteren Ausführung zusammenzufassen. Diese Werkzeuge können auch verwendet werden, um einfache Makros durch Anhängen von Code an ihren Ersetzungstext anzupassen. Für komplexe Anpassungen, siehe Abschnitt \ref{aut:pat}. Alle Befehle in diesem Abschnitt initialisieren den \prm{Hook}, wenn er undefiniert ist.
+
+\subsubsection{Code an einen Hook anhängen}
+\label{aut:hok:app}
+
+Die Werkzeuge in diesem Abschnitt hängen beliebigen Code an einen Hook an.
+
+\begin{ltxsyntax}
+
+\cmditem{appto}<Hook>{Code}
+
+Dieser Befehl hängt beliebigen \prm{Code} an einen \prm{Hook} an. Falls der \prm{Code} Parameterzeichen enthält, müssen sie nicht verdoppelt werden. Dieser Befehl ist robust.
+
+
+\cmditem{gappto}<Hook>{Code}
+
+Wie \cmd{appto}, außer dass die Zuweisung global ist. Dieser Befehl kann anstelle des Makros \cmd{g@addto@macro} aus dem \latex-Kern verwendet werden.
+
+\cmditem{eappto}<Hook>{Code}
+
+Dieser Befehl hängt beliebigen \prm{Code} an einen \prm{Hook} an. Der \prm{Code} wird bei der Definition expandiert. Nur der neue \prm{Code} wird expandiert, nicht der bereits bestehende Ersetzungtext des \prm{Hooks}. Dieser Befehl ist robust.
+
+\cmditem{xappto}<Hook>{Code}
+
+Wie \cmd{eappto}, außer dass die Zuweisung global ist.
+
+\cmditem{protected@eappto}<Hook>{Code}
+
+Wie \cmd{eappto}, außer dass vorübergehend der \latex{}-eigene Schutzmechanismus \\aktiviert wird.
+
+\cmditem{protected@xappto}<Hook>{Code}
+
+Wie \cmd{xappto}, außer dass vorübergehend der \latex{}-eigene Schutzmechanismus \\aktiviert wird.
+
+\cmditem{csappto}{Name}{Code}
+
+Wie \cmd{appto}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{csgappto}{Name}{Code}
+
+Wie \cmd{gappto}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{cseappto}{Name}{Code}
+
+Wie \cmd{eappto}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{csxappto}{Name}{Code}
+
+Wie \cmd{xappto}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{protected@cseappto}{Name}{Code}
+
+Wie \cmd{protected@eappto}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{protected@csxappto}{Name}{Code}
+
+Wie \cmd{protected@xappto}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\end{ltxsyntax}
+
+\subsubsection{Einem Hook Code voranstellen}
+\label{aut:hok:pre}
+
+Die Werkzeuge in diesem Abschnitt stellen einem Hook beliebigen Code voran, d.\,h. der Code wird am Anfang des Hooks eingefügt, statt ans Ende angehängt zu werden.
+
+\begin{ltxsyntax}
+
+\cmditem{preto}<Hook>{Code}
+
+Wie \cmd{appto}, außer dass der \prm{Code} vorangestellt wird.
+
+\cmditem{gpreto}<Hook>{Code}
+
+Wie \cmd{preto}, außer dass die Zuweisung global ist.
+
+\cmditem{epreto}<Hook>{Code}
+
+Wie \cmd{eappto}, außer dass der \prm{Code} vorangestellt wird.
+
+\cmditem{xpreto}<Hook>{Code}
+
+Wie \cmd{epreto}, außer dass die Zuweisung global ist.
+
+\cmditem{protected@epreto}<Hook>{Code}
+
+Wie \cmd{epreto}, außer dass vorübergehend der \latex{}-eigene Schutzmechismus \\aktiviert wird.
+
+\cmditem{protected@xpreto}<Hook>{Code}
+
+Wie \cmd{xpreto}, außer dass vorübergehend der \latex{}-eigene Schutzmechismus \\aktiviert wird.
+
+\cmditem{cspreto}{Name}{Code}
+
+Wie \cmd{preto}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{csgpreto}{Name}{Code}
+
+Wie \cmd{gpreto}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{csepreto}{Name}{Code}
+
+Wie \cmd{epreto}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{csxpreto}{Name}{Code}
+
+Wie \cmd{xpreto}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{protected@csepreto}{Name}{Code}
+
+Wie \cmd{protected@epreto}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{protected@csxpreto}{Name}{Code}
+
+Wie \cmd{protected@xpreto}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\end{ltxsyntax}
+
+\subsection[Anpassung]{Anpassung existierender Befehle}
+\label{aut:pat}
+
+Die Werkzeuge in diesem Abschnitt sind nützlich, um bestehenden Code anzupassen oder ihn mit Hooks zu versehen. Bei allen hier vorgestellten Befehlen bleiben die Parameter und Präfixe des angepassten \prm{Befehls} erhalten. Befehle, die mit \cs{outer} markiert wurden, können nicht angepasst werden. Die hier vorgestellten Befehle melden nicht automatisch einen Fehler, wenn die Anpassung fehlschlägt. Statt dessen erwarten sie einen Parameter \prm{Fehlerroutine}, der eine angebrachte Ausweichlösung oder Fehlermeldung liefert. Die Verwendung von \cmd{tracingpatches} in der Präambel führt zur Aufnahme von Debug-Informationen in die Log-Datei.
+
+\begin{ltxsyntax}
+
+\cmditem{patchcmd}[Präfix]{Befehl}{Suchmuster}{Ersatztext}{Erfolgsroutine}{Fehlerroutine}
+
+Dieser Befehl ermittelt den Ersetzungstext des \prm{Befehls}, ersetzt das \prm{Suchmuster} durch den \prm{Ersatztext}, und fügt den \prm{Befehl} wieder zusammen. Die Mustererkennung ignoriert Kategoriecodes und liefert das erste Vorkommen des 
+\prm{Suchmusters} im Ersetzungstext des anzupassenden \prm{Befehls}. Dabei wird für den Anpassungsprozess der Ersetzungstext des \prm{Befehls} aus seinen Token zusammengesetzt und nach der Anpassung anhand der aktuellen Regeln für Kategoriecodes wieder in Token zerlegt. Der Kategoriecode des @-Zeichens wird zwischenzeitlich auf 11 gesetzt. Sollte der Ersetzungstext des \prm{Befehls} Token mit benutzerdefinierten Kategoriecodes enthalten, müssen die entsprechenden Kategoriecodes vor der Anpassung eingestellt werden. Falls der \prm{Ersatztext} sich auf die Parameter des anzupassenden \prm{Befehls} bezieht, müssen Parameterzeichen nicht verdoppelt werden. Wird das optionale \prm{Präfix} angegeben, so ersetzt es alle bestehenden Präfixe des \prm{Befehls}. Ein leeres \prm{Präfix} entfernt alle bestehenden Präfixe des \prm{Befehls}. Die Zuweisung ist lokal. Der Befehl führt vor der Anpassung automatisch einen zu \cmd{ifpatchable} äquivalenten Test durch. Ist der Test erfolgreich, wird der \prm{Befehl} angepasst und die \prm{Erfolgsroutine} ausgeführt. Schlägt der Test fehl, wird die \prm{Fehlerroutine} durchgeführt, ohne den \prm{Befehl} zu verändern. Dieser Befehl ist robust.
+
+\cmditem{ifpatchable}{Befehl}{Suchmuster}{Erfolgsroutine}{Fehlerroutine}
+
+Dieser Befehl führt die \prm{Erfolgsroutine} aus, falls der \prm{Befehl} mit \cmd{patchcmd} angepasst werden kann und das \prm{Suchmuster} in seinem Ersetzungstext vorkommt. Sonst wird die \prm{Fehlerroutine} ausgeführt. Dieser Befehl ist robust.
+
+\cmditem*{ifpatchable*}{Befehl}{Erfolgsroutine}{Fehlerroutine}
+
+Wie \cmd{ifpatchable}, außer dass die Variante mit Stern kein Suchmuster als Parameter benötigt. Dieser Version ermittelt, ob der \prm{Befehl} mit \cmd{apptocmd} und \cmd{pretocmd} angepasst werden kann.
+
+\cmditem{apptocmd}{Befehl}{Code}{Erfolgsroutine}{Fehlerroutine}
+
+Dieser Befehl hängt den angegebenen \prm{Code} an den Ersetzungstext eines \prm{Befehls} an. Wenn der \prm{Befehl} keine Parameter erwartet, verhält sich \cmd{apptocmd} wie \cmd{appto} im Abschnitt \ref{aut:hok:app}. Im Gegensatz zu \cmd{appto} kann \cmd{apptocmd} auch für Befehle mit Parametern verwendet werden. In diesem Fall wird der Ersetzungstext des \prm{Befehls} aus seinen Token zusammengesetzt, angepasst und anhand der aktuellen Regeln für Kategoriecodes wieder in Token zerlegt. Der Kategoriecode des @-Zeichens wird zwischenzeitlich auf 11 gesetzt. Der anzuhängende \prm{Code} kann sich auf die Parameter des \prm{Befehls} beziehen. Die Zuweisung ist lokal. Ist die Anpassung erfolgreich, wird die \prm{Erfolgsroutine} ausgeführt. Schlägt die Anpassung fehl, wird die \prm{Fehlerroutine} ausgeführt, on den \prm{Befehl} zu verändern. Dieser Befehl ist robust.
+
+\cmditem{pretocmd}{Befehl}{Code}{Erfolgsroutine}{Fehlerroutine}
+
+Dieser Befehl verhält sich wie \cmd{apptocmd}, außer dass der \prm{Code} dem Ersetzungstext des \prm{Befehls} vorangestellt wird. Wenn der \prm{Befehl} keine Parameter erwartet, verhält er sich wie \cmd{preto} im Abschnitt \ref{aut:hok:app}. Im Gegensatz zu \cmd{preto} kann \cmd{pretocmd} auch für Befehle mit Parametern verwendet werden. In diesem Fall wird der Ersetzungstext des \prm{Befehls} aus seinen Token zusammengesetzt, angepasst und anhand der aktuellen Regeln für Kategoriecodes wieder in Token zerlegt. Der Kategoriecode des @-Zeichens wird zwischenzeitlich auf 11 gesetzt. Der voranzustellende \prm{Code} kann sich auf die Parameter des \prm{Befehls} beziehen. Die Zuweisung ist lokal. Ist die Anpassung erfolgreich, wird die \prm{Erfolgroutine} ausgeführt. Schlägt die Anpassung fehl, wird die \prm{Fehlerroutine} ausgeführt, ohne den \prm{Befehl} zu verändern. Dieser Befehl ist robust.
+
+\csitem{tracingpatches}
+
+Aktiviert die Ablaufverfolgung für alle Anpassungsbefehle inklusive \cmd{ifpatchable}. Die Debug-Informationen werden in die Log-Datei geschrieben. Dies ist nützlich, wenn der Grund für das Fehlschlagen der Anpassung oder die Ausführung der Fehlerroutine von \cmd{ifpatchable} unklar ist. Dieser Befehl muss in der Präambel stehen.
+
+\end{ltxsyntax}
+
+\subsection{Flags}
+\label{aut:bol}
+
+Dieses Paket beinhaltet zwei Schnittstellen für Flags\itrans{boolesche Variablen}, die völlig unabhängig voneinander arbeiten. Die Werkzeuge im Abschnitt \ref{aut:bo1:bol} bilden eine \latex-Schnittstelle zu \cmd{newif}, während die Werkzeuge im Abschnitt \ref{aut:bo1:tgl} auf einem anderen Mechanismus basieren.
+
+\subsubsection{\tex-Flags}
+\label{aut:bo1:bol}
+
+Da die Werkzeuge in diesem Abschnitt intern auf \cmd{newif} zurückgreifen, können sie zum Abfragen und Verändern von Flags verwendet werden, die zuvor mit \cmd{newif} definiert wurden. Des Weiteren sind sie kompatibel mit den booleschen Tests des Paketes \sty{ifthen} und können als \latex-Schnittstelle zum Abfragen von \tex-Primitiven wie \cmd{ifmmode} dienen.  Der Ansatz von \cmd{newif} erfordert ingesamt drei Makros pro Flag.
+
+\begin{ltxsyntax}
+
+\cmditem{newbool}{Name}
+
+Definiert ein neues boolesches Flag mit dem angegebenen \prm{Namen}. Ist das Flag bereits definiert, meldet der Befehl einen Fehler. Der Ausgangszustand von neu definierten Flags ist \texttt{false}. Dieser Befehl ist robust.
+
+\cmditem{providebool}{Name}
+
+Definiert ein neues boolesches Flag mit dem angegebenen \prm{Namen}, falls es nicht bereits definiert wurde. Dieser Befehl ist robust.
+
+\cmditem{booltrue}{Name}
+
+Setzt das Flag mit dem angegebenen \prm{Namen} auf \texttt{true}. Dieser Befehl ist robust und kann mit \cs{global} versehen werden. Er meldet einen Fehler, falls das Flag undefiniert ist.
+
+\cmditem{boolfalse}{Name}
+
+Setzt das Flag mit dem angegebenen \prm{Namen} auf \texttt{false}. Dieser Befehl ist robust und kann mit \cs{global} versehen werden. Er meldet einen Fehler, falls das Flag undefiniert ist.
+
+\cmditem{setbool}{Name}{Wert}
+
+Setzt das Flag mit dem angegebenen \prm{Namen} auf einen \prm{Wert}, der entweder \texttt{true} oder \texttt{false} sein kann. Dieser Befehl ist robust und kann mit \cs{global} versehen werden. Er meldet einen Fehler, falls das Flag undefiniert ist.
+
+\cmditem{ifbool}{Name}{Wahrausgabe}{Falschausgabe}
+
+Liefert die \prm{Wahrausgabe}, wenn das Flags mit dem angegebenen \prm{Namen} den Zustand \texttt{true} hat, sonst die \prm{Falschausgabe}. Ist das Flag undefiniert, meldet der Befehl einen Fehler. Dieser Befehl kann jeden booleschen Test durchführen, der auf Basis der einfachen \tex-Syntax funktioniert, d.\,h. jeder Test, der normalerweise wie folgt geschrieben wird:
+
+\begin{ltxcode}
+<<\iftest>> Wahrausgabe<<\else>> Falschausgabe<<\fi>>
+\end{ltxcode}
+
+Das schließt alle Flags ein, die mit \cmd{newif} definiert wurden, sowie alle \tex-Primitiven wie \cmd{ifmmode}. Das  \cmd{if}-Präfix der Primitiven oder des Flags wird dabei im \prm{Namen} weggelassen. Beispiel:
+
+\begin{ltxcode}
+<<\ifmytest>> Wahrausgabe\else Falschausgabe\fi
+<<\ifmmode>> Wahrausgabe\else Falschausgabe\fi
+\end{ltxcode}
+%
+wird zu
+
+\begin{ltxcode}
+\ifbool{<<mytest>>}{Wahrausgabe}{Falschausgabe}
+\ifbool{<<mmode>>}{Wahrausgabe}{Falschausgabe}
+\end{ltxcode}
+
+\cmditem{notbool}{Name}{Falschausgabe}{Wahrausgabe}
+
+Wie \cmd{ifbool}, kehrt aber den Test um.
+
+\end{ltxsyntax}
+
+\subsubsection{\latex-Flags}
+\label{aut:bo1:tgl}
+
+Im Gegensatz zu den Flags im Abschnitt \ref{aut:bo1:bol} erfordern die Werkzeuge in diesem Abschnitt nur ein Makro pro Flag. Außerdem haben sie einen eigenen Namensraum, um Namenskonflikte mit gewöhnlichen Makros zu vermeiden.
+
+\begin{ltxsyntax}
+
+\cmditem{newtoggle}{Name}
+
+Definiert ein neues boolesches Flag mit dem angegebenen \prm{Namen}. Ist das Flag bereits definiert, meldet der Befehl einen Fehler. Der Ausgangszustand von neu definierten Flags ist \texttt{false}. Dieser Befehl ist robust.
+
+\cmditem{providetoggle}{Name}
+
+Definiert ein neues boolesches Flag mit dem angegebenen \prm{Namen}, falls es nicht bereits definiert wurde. Dieser Befehl ist robust.
+
+\cmditem{toggletrue}{Name}
+
+Setzt das Flag mit dem angegebenen \prm{Namen} auf \texttt{true}. Dieser Befehl ist robust und kann mit \cs{global} versehen werden. Er meldet einen Fehler, falls das Flag undefiniert ist.
+
+
+\cmditem{togglefalse}{Name}
+
+Setzt das Flag mit dem angegebenen \prm{Namen} auf \texttt{false}. Dieser Befehl ist robust und kann mit \cs{global} versehen werden. Er meldet einen Fehler, falls das Flag undefiniert ist.
+
+\cmditem{settoggle}{Name}{Wert}
+
+Setzt das Flag mit dem angegebenen \prm{Namen} auf einen \texttt{Wert}, der entweder \texttt{true} oder \texttt{false} sein kann. Dieser Befehl ist robust und kann mit \cs{global} versehen werden. Er meldet einen Fehler, falls das Flag undefiniert ist.
+
+\cmditem{iftoggle}{Name}{Wahrausgabe}{Falschausgabe}
+
+Liefert die \prm{Wahrausgabe}, wenn das Flag mit dem angegebenen \prm{Namen} den Zustand \texttt{true} hat, sonst die \prm{Falschausgabe}. Ist das Flag undefiniert, meldet der Befehl einen Fehler.
+
+\cmditem{nottoggle}{Name}{Falschausgabe}{Wahrausgabe}
+
+Wie \cmd{iftoggle}, kehrt aber den Test um.
+
+\end{ltxsyntax}
+
+\subsection{Tests}
+\label{aut:tst}
+
+\subsubsection{Makrotests}
+\label{aut:tst:def}
+
+\begin{ltxsyntax}
+
+\cmditem{ifdef}{Kontrollsequenz}{Wahrausgabe}{Falschausgabe}
+
+Liefert die \prm{Wahrausgabe}, wenn die \prm{Kontrollsequenz} definiert ist, im anderen Fall die \prm{Falschausgabe}. Die Kontrollsequenz wird auch dann als definiert angesehen, wenn ihre Bedeutung \cmd{relax} lautet. Dieser Befehl ist eine \latex-Schnittstelle für die \etex-Primitive \cmd{ifdefined}.
+
+\cmditem{ifcsdef}{Name}{Wahrausgabe}{Falschausgabe}
+
+Wie \cmd{ifdef}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist. Dieser Befehl ist eine \latex-Schnittstelle für die \etex-Primitive \cmd{ifcsname}.
+
+\cmditem{ifundef}{Kontrollsequenz}{Wahrausgabe}{Falschausgabe}
+
+Liefert die \prm{Wahrausgabe}, wenn die \prm{Kontrollsequenz} undefiniert ist, sonst die \prm{Falschausgabe}. Abgesehen vom Umkehren der Logik unterscheidet sich dieser Befehl außerdem dadurch von \cmd{ifdef}, dass die \prm{Kontrollsequenz} als undefiniert angesehen wird, falls ihre Bedeutung \cmd{relax} lautet.
+
+\cmditem{ifcsundef}{Name}{Wahrausgabe}{Falschausgabe}
+
+Wie \cmd{ifundef}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist. Dieser Befehl kann anstelle des Tests \cmd{@ifundefined} aus dem \latex-Kern verwendet werden.
+
+\cmditem{ifdefmacro}{Kontrollsequenz}{Wahrausgabe}{Falschausgabe}
+
+Liefert die \prm{Wahrausgabe}, wenn die \prm{Kontrollsequenz} definiert ist und ein Makro darstellt, sonst die \prm{Falschausgabe}.
+
+\cmditem{ifcsmacro}{Name}{Wahrausgabe}{Falschausgabe}
+
+Wie \cmd{ifdefmacro}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{ifdefparam}{Kontrollsequenz}{Wahrausgabe}{Falschausgabe}
+
+Liefert die \prm{Wahrausgabe}, wenn die \prm{Kontrollsequenz} definiert ist und ein Makro mit einem oder mehr Parametern darstellt, sonst die \prm{Falschausgabe}.
+
+\cmditem{ifcsparam}{Name}{Wahrausgabe}{Falschausgabe}
+
+Wie \cmd{ifdefparam}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{ifdefprefix}{Kontrollsequenz}{Wahrausgabe}{Falschausgabe}
+
+Liefert die \prm{Wahrausgabe}, wenn die \prm{Kontrollsequenz} definiert ist und ein Makro darstellt, das mit \cs{long} und\slash oder \cs{protected} versehen wurde, sonst die \prm{Falschausgabe}. Auf das Präfix \cs{outer} kann nicht getestet werden.
+
+\cmditem{ifcsprefix}{Name}{Wahrausgabe}{Falschausgabe}
+
+Wie \cmd{ifdefprefix}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{ifdefprotected}{Kontrollsequenz}{Wahrausgabe}{Falschausgabe}
+
+Liefert die \prm{Wahrausgabe}, wenn die \prm{Kontrollsequenz} definiert ist und ein Makro darstellt, das mit \cs{protected} versehen wurde, sonst die \prm{Falschausgabe}.
+
+\cmditem{ifcsprotected}{Name}{Wahrausgabe}{Falschausgabe}
+
+Wie \cmd{ifdefprotected}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{ifdefltxprotect}{Kontrollsequenz}{Wahrausgabe}{Falschausgabe}
+
+Liefert die \prm{Wahrausgabe}, wenn die \prm{Kontrollsequenz} definiert ist und einen Hüllenbefehl im Rahmen des \latex-eigenen Schutzmechanismus darstellt, sonst die \prm{Falschausgabe}. Damit lassen sich Befehle erkennen, die mit dem Schutzbefehl  \cmd{DeclareRobustCommand} oder einem ähnlichen Mechanismus definiert wurden.
+
+\cmditem{ifcsltxprotect}{Name}{Wahrausgabe}{Falschausgabe}
+
+Wie \cmd{ifdefltxprotect}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{ifdefempty}{Kontrollsequenz}{Wahrausgabe}{Falschausgabe}
+
+Liefert die \prm{Wahrausgabe}, wenn die \prm{Kontrollsequenz} definiert ist und ein Makro ohne Parameter darstellt, dessen Ersetzungstext leer ist, sonst die \prm{Falschausgabe}. Im Gegensatz zu \cmd{ifx} ignoriert dieser Test die Präfixe des Makros.
+
+\cmditem{ifcsempty}{Name}{Wahrausgabe}{Falschausgabe}
+
+Wie \cmd{ifdefempty}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{ifdefvoid}{Kontrollsequenz}{Wahrausgabe}{Falschausgabe}
+
+Liefert die \prm{Wahrausgabe}, wenn die \prm{Kontrollsequenz} undefiniert ist, ihre Bedeutung \cmd{relax} lautet oder sie ein Makro ohne Parameter darstellt, dessen Ersetzungstext leer ist, sonst die \prm{Falschausgabe}.
+
+\cmditem{ifcsvoid}{Name}{Wahrausgabe}{Falschausgabe}
+
+Wie \cmd{ifdefvoid}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{ifdefequal}{Kontrollsequenz}{Kontrollsequenz}{Wahrausgabe}{Falschausgabe}
+
+Vergleicht zwei Kontrollsequenzen und liefert die \prm{Wahrausgabe}, wenn sie im Sinne von \cmd{ifx} gleich sind, sonst die \prm{Falschausgabe}. Im Gegensatz zu \cmd{ifx}, liefert dieser Test auch  dann die \prm{Falschausgabe}, wenn beide Kontrollsequenzen undefiniert sind oder ihre Bedeutung \cmd{relax} lautet.
+
+\cmditem{ifcsequal}{Name}{Name}{Wahrausgabe}{Falschausgabe}
+
+Wie \cmd{ifdefequal}, außer dass die ersten beiden Parameter \prm{Namen} von Kontrollsequenzen sind.
+
+\cmditem{ifdefstring}{Befehl}{Zeichenfolge}{Wahrausgabe}{Falschausgabe}
+
+Vergleicht den Ersetzungtext eines \prm{Befehls} mit einer \prm{Zeichenfolge} und liefert die \prm{Wahrausgabe}, wenn sie gleich sind, sonst die \prm{Falschausgabe}. Weder der \prm{Befehl} noch die \prm{Zeichenfolge} werden für den Test expandiert, Kategoriecodes werden ignoriert. Kontrollsequenzen in der \prm{Zeichenfolge} werden aus ihren Token zusammengesetzt und als Zeichenfolgen behandelt. Dieser Befehl ist robust. Dieser Test berücksichtigt nur den Ersetzungstext des \prm{Befehls}. Zum Beispiel liefert der Test
+
+\begin{ltxcode}
+\long\edef\MeinMakro#1#2{\string&}
+\ifdefstring{\MeinMakro}{&}{Wahrausgabe}{Falschausgabe}
+\end{ltxcode}
+%
+die \prm{Wahrausgabe}. Das Präfix und die Parameter von \cmd{MeinMakro} werden ignoriert, ebenso die Kategoriecodes im Ersetzungstext.
+
+\cmditem{ifcsstring}{Name}{Zeichenfolge}{Wahrausgabe}{Falschausgabe}
+
+Wie \cmd{ifdefstring}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{ifdefstrequal}{Befehl}{Befehl}{Wahrausgabe}{Falschausgabe}
+
+Führt einen Vergleich der Ersetzungstexte zweier \prm{Befehle} durch und ignoriert dabei die Kategoriecodes. Dieser Befehl funktioniert wie \cmd{ifdefstring}, außer dass beide zu vergleichenden Parameter Makros sind. Dieser Befehl ist robust.
+
+\cmditem{ifcsstrequal}{Name}{Name}{Wahrausgabe}{Falschausgabe}
+
+Wie \cmd{ifdefstrequal}, außer dass die ersten beiden Parameter \prm{Namen} von Kontrollsequenzen sind.
+
+\end{ltxsyntax}
+
+\subsubsection{Tests für Zähler- und Längenvariablen}
+\label{aut:tst:cnt}
+
+\begin{ltxsyntax}
+
+\cmditem{ifdefcounter}{Kontrollsequenz}{Wahrausgabe}{Falschausgabe}
+
+Liefert die \prm{Wahrausgabe}, wenn die \prm{Kontrollsequenz} ein \tex-Register vom Typ \cmd{count} ist, das mit \cmd{newcount} allokiert wurde, sonst die \prm{Falschausgabe}.
+
+\cmditem{ifcscounter}{Name}{Wahrausgabe}{Falschausgabe}
+
+Wie \cmd{ifdefcounter}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{ifltxcounter}{Name}{Wahrausgabe}{Falschausgabe}
+
+Liefert die \prm{Wahrausgabe}, wenn der erste Parameter der \prm{Name} eines \latex-Zählers ist, der mit \cmd{newcounter} allokiert wurde, sonst die \prm{Falschausgabe}.
+
+\cmditem{ifdeflength}{Kontrollsequenz}{Wahrausgabe}{Falschausgabe}
+
+Liefert die \prm{Wahrausgabe}, wenn die \prm{Kontrollsequenz} ein \tex-Register vom Typ \cmd{skip} ist, das mit \cmd{newskip} oder \cmd{newlength} allokiert wurde, im anderen Fall die \prm{Falschausgabe}.
+
+\cmditem{ifcslength}{Name}{Wahrausgabe}{Falschausgabe}
+
+Wie \cmd{ifdeflength}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{ifdefdimen}{Kontrollsequenz}{Wahrausgabe}{Falschausgabe}
+
+Liefert die \prm{Wahrausgabe}, wenn die \prm{Kontrollsequenz} ein \tex-Register vom Typ \cmd{dimen} ist, das mit \cmd{newdimen} allokiert wurde, sonst die \prm{Falschausgabe}.
+
+\cmditem{ifcsdimen}{Name}{Wahrausgabe}{Falschausgabe}
+
+Wie \cmd{ifdefdimen}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\end{ltxsyntax}
+
+\subsubsection{Tests für Zeichenfolgen}
+\label{aut:tst:str}
+
+\begin{ltxsyntax}
+
+\cmditem{ifstrequal}{Zeichenfolge}{Zeichenfolge}{Wahrausgabe}{Falschausgabe}
+
+Vergleicht zwei \prm{Zeichenfolgen} und liefert die \prm{Wahrausgabe}, falls sie gleich sind, sonst die \prm{Falschausgabe}. Die Zeichenfolgen werden für den Test nicht expandiert, Kategoriecodes werden ignoriert. Kontrollsequenzen in den \prm{Zeichenfolgen} werden aus ihren Token zusammengesetzt und als Zeichenfolgen behandelt. Dieser Befehl ist robust.
+
+\cmditem{ifstrempty}{Zeichenfolge}{Wahrausgabe}{Falschausgabe}
+
+Liefert die \prm{Wahrausgabe}, wenn die \prm{Zeichenfolge} leer ist, sonst die \prm{Falschausgabe}. Die Zeichenfolge wird für den Test nicht expandiert.
+
+\cmditem{ifblank}{Zeichenfolge}{Wahrausgabe}{Falschausgabe}
+
+Liefert die \prm{Wahrausgabe}, wenn die \prm{Zeichenfolge} leer ist oder aus Leerzeichen besteht, sonst die \prm{Falschausgabe}. Die Zeichenfolge wird für den Test nicht expandiert.\footnote{Dieses Makro basiert auf Code von Donald Arseneau.}
+
+\cmditem{notblank}{Zeichenfolge}{Falschausgabe}{Wahrausgabe}
+
+Wie \cmd{ifblank}, kehrt aber den Test um.
+
+\end{ltxsyntax}
+
+\subsubsection{Arithmetische Tests}
+\label{aut:tst:num}
+
+\begin{ltxsyntax}
+
+\cmditem{ifnumcomp}{Ausdruck}{Operator}{Ausdruck}{Wahrausgabe}{Falschausgabe}
+
+Vergleicht zwei ganzzahlige \prm{Ausdrücke} anhand des gegebenen \prm{Operators} und liefert die \prm{Wahrausgabe} oder die \prm{Falschausgabe}, abhängig vom Ergebnis des Vergleichs. Als \prm{Operatoren} stehen |<|, |>| und |=| zur Verfügung. Beide ganzzahligen \prm{Ausdrücke} werden mit \cmd{numexpr} ausgewertet und können beliebiger, in diesem Kontext gültiger Code sein. Alle arithmetischen Ausdrücke können Leerzeichen enthalten. Hier einige Beispiele:
+
+\begin{ltxcode}
+\ifnumcomp{<<3>>}{<<>>>}{<<6>>}{wahr}{<<falsch>>}
+\ifnumcomp{<<(7 + 5) / 2>>}{<<=>>}{<<6>>}{<<wahr>>}{falsch}
+\ifnumcomp{<<(7+5) / 4>>}{<<>>>}{<<3*(12-10)>>}{wahr}{<<falsch>>}
+\newcounter{zaehlerA}
+\setcounter{zaehlerA}{<<6>>}
+\newcounter{zaehlerB}
+\setcounter{zaehlerB}{<<5>>}
+\ifnumcomp{<<\value{zaehlerA} * \value{zaehlerB}/2}>>{<<=>>}{<<15>>}{<<wahr>>}{falsch}
+\ifnumcomp{<<6/2>>}{<<=>>}{<<5/2>>}{<<wahr>>}{falsch}
+\end{ltxcode}
+%
+Technisch gesehen ist dieser Befehl eine \latex-Schnittstelle zur \tex-Primitiven \cmd{ifnum} unter Einbeziehung von \cmd{numexpr}. Wichtig ist, dass \cmd{numexpr} die Ergebnisse aller Ausdrücke rundet, d.\,h. beide Ausdrücke werden vor dem Vergleich ausgewertet und gerundet. In der letzten Zeile des Beispiels lautet das Ergebnis des zweiten Ausdruck 2{,}5, das vor dem Vergleich auf 3 gerundet wird, \cmd{ifnumcomp} liefert also \prm{wahr}.
+
+\cmditem{ifnumequal}{Ausdruck}{Ausdruck}{Wahrausgabe}{Falschausgabe}
+
+Alternative Syntax für |\ifnumcomp{...}{=}{...}{...}{...}|.
+
+\cmditem{ifnumgreater}{Ausdruck}{Ausdruck}{Wahrausgabe}{Falschausgabe}
+
+Alternative Syntax für |\ifnumcomp{...}{>}{...}{...}{...}|.
+
+\cmditem{ifnumless}{Ausdruck}{Ausdruck}{Wahrausgabe}{Falschausgabe}
+
+Alternative Syntax für |\ifnumcomp{...}{<}{...}{...}{...}|.
+
+\cmditem{ifnumodd}{Ausdruck}{Wahrausgabe}{Falschausgabe}
+
+Wertet einen ganzzahligen \prm{ Ausdruck} aus und liefert die \prm{Wahrausgabe}, wenn das Ergebnis eine ungerade Zahl ist, sonst die \prm{Falschausgabe}. Technisch gesehen ist dieser Befehl eine \latex-Schnittstelle zur \tex-Primitiven \cmd{ifodd} unter Einbeziehung von \cmd{numexpr}.
+
+\cmditem{ifdimcomp}{Längenausdruck}{Operator}{Längenausdruck}{Wahrausgabe}{Falschausgabe}
+
+
+Vergleicht zwei \prm{Längenausdrücke}\subtrans{Ausdrücke vom \tex-Typ \wtrans{dimen}} anhand des gegebenen \prm{Operators} und liefert die \prm{Wahrausgabe} oder die \prm{Falschausgabe}, abhängig vom Ergebnis des Vergleichs. Als \prm{Operatoren} stehen |<|, |>| und |=| zur Verfügung. Beide \prm{Längenausdrücke} werden mit \cmd{dimenexpr} ausgewertet und können beliebiger, in diesem Kontext gültiger Code sein. Alle arithmetischen Ausdrücke können Leerzeichen enthalten. Hier einige Beispiele:
+
+\begin{ltxcode}
+\ifdimcomp{<<1cm>>}{<<=>>}{<<28.45274pt>>}{<<wahr>>}{falsch}
+\ifdimcomp{<<(7pt + 5pt) / 2>>}{<<<>>}{2pt}{wahr}{<<falsch>>}
+\ifdimcomp{<<(3.725pt + 0.025pt) * 2>>}{<<<>>}{<<7pt>>}{wahr}{<<falsch>>}
+\newlength{\laengeA}
+\setlength{\laengeA}{<<7.25pt>>}
+\newlength{\laengeB}
+\setlength{\laengeB}{<<4.75pt>>}
+\ifdimcomp{<<(\laengeA + \laengeB) / 2>>}{<<>>>}{<<2.75pt * 2>>}{<<wahr>>}{falsch}
+\ifdimcomp{<<(\laengeA + \laengeB) / 2>>}{<<>>>}{<<25pt / 6>>}{<<wahr>>}{falsch}
+\end{ltxcode}
+%
+Technisch gesehen ist dieser Befehl eine \latex-Schnittstelle zur \tex-Primitiven \cmd{ifdim} unter Einbeziehung von \cmd{dimenexpr}. Da \cmd{ifdimcomp} und \cmd{ifnumcomp} expandierbar sind, können sie auch verschachtelt werden.
+
+\begin{ltxcode}
+<<\ifnumcomp>>{<<\ifdimcomp>>{<<5pt+5pt>>}{<<=>>}{<<10pt>>}{<<1>>}{<<0>>}}{<<>>>}{<<0>>}{<<wahr>>}{falsch}
+\end{ltxcode}
+
+\cmditem{ifdimequal}{Längenausdruck}{Längenausdruck}{Wahrausgabe}{Falschausgabe}
+
+Alternative Syntax für  |\ifdimcomp{...}{=}{...}{...}{...}|.
+
+\cmditem{ifdimgreater}{Längenausdruck}{Längenausdruck}{Wahrausgabe}{Falschausgabe}
+
+Alternative Syntax für  |\ifdimcomp{...}{>}{...}{...}{...}|.
+
+\cmditem{ifdimless}{Längenausdruck}{Längenausdruck}{Wahrausgabe}{Falschausgabe}
+
+Alternative Syntax für |\ifdimcomp{...}{<}{...}{...}{...}|.
+
+\end{ltxsyntax}
+
+\subsubsection{Boolesche Ausdrücke}
+\label{aut:tst:bol}
+
+Die Befehle in diesem Abschnitt können anstelle des Befehls \cmd{ifthenelse} aus dem Paket \sty{ifthen} verwendet werden. Sie dienen dem gleichen Zweck, unterscheiden sich aber in Syntax, Konzeption und Implementierung. Im Gegensatz zu \cmd{ifthenelse} liefern sie keine eigenen Tests, sondern bilden eine Schnittstelle zu anderen Tests. Jeder Test, der bestimmte syntaktische Voraussetzungen erfüllt, kann in booleschen Ausdrücken verwendet werden.
+
+\begin{ltxsyntax}
+
+\cmditem{ifboolexpr}{Ausdruck}{Wahrausgabe}{Falschausgabe}
+
+Wertet den gegebenen \prm{Ausdruck} aus und liefert die \prm{Wahrausgabe}, wenn der Ausdruck wahr ist, sonst die \prm{Falschausgabe}. Der \prm{Ausdruck} wird von links nach rechts ausgewertet. Die folgenden Bausteine können im \prm{Ausdruck} verwendet werden (Details siehe unten): die Testoperatoren \texttt{togl}, \texttt{bool} und \texttt{test}, die logischen Operatoren \texttt{not}, \texttt{and} und \texttt{or}, sowie die Klammern \texttt{(...)} zur Gruppierung von Teilausdrücken. Leerzeichen, Tabulatoren und Zeilenumbrüche können beliebig zur optischen Gestaltung des \prm{Ausdrucks} eingesetzt werden. Leerzeilen im \prm{Ausdruck} sind nicht zulässig. Dieser Befehl ist robust.
+
+\cmditem{ifboolexpe}{Ausdruck}{Wahrausgabe}{Falschausgabe}
+
+Eine expandierbare Fassung von \cmd{ifboolexpr}, die in einem reinen Expansionskontext verwendet werden kann, z.\,B. in einer Definition mit \cmd{edef} oder einer \cmd{write}-Operation. Wichtig ist, dass alle im \prm{Ausdruck} vorkommenden Tests expandierbar sein müssen, auch wenn \cmd{ifboolexpe} nicht in einem reinen Expansionskontext verwendet wird.
+
+\cmditem{whileboolexpr}{Ausdruck}{Code}
+
+Wertet den gegebenen \prm{Ausdruck} wie \cmd{ifboolexpr} aus und wiederholt die Ausführung des \prm{Codes}, solange der Ausdruck wahr ist. Der \prm{Code} kann beliebiger gültiger \tex- oder \latex-Code sein. Dieser Befehl ist robust.
+
+\cmditem{unlessboolexpr}{Ausdruck}{code}
+
+Wie \cmd{whileboolexpr}, aber mit negiertem \prm{Ausdruck}, d.\,h. der \prm{Code} wird wiederholt, bis der \prm{Ausdruck} wahr ist. Dieser Befehl ist robust.
+
+\end{ltxsyntax}
+%
+Folgende Testoperatoren stehen in booleschen \prm{Ausdrücken} zur Verfügung:
+
+\begin{marglist}
+\appto\marglistfont{\verbatimfont}
+
+\item[togl]
+
+Der Operator \texttt{togl} testet den Zustand eines Flags, das mit \cmd{newtoggle} definiert wurde. Beispiel:
+
+\begin{ltxcode}
+<<\iftoggle{BoolescheVariable}>>{Wahrausgabe}{Falschausgabe}
+\end{ltxcode}
+%
+wird zu
+
+\begin{ltxcode}
+\ifboolexpr{ <<togl>> {<<BoolescheVariable>>} }{Wahrausgabe}{Falschausgabe}
+\end{ltxcode}
+%
+Der Operator \texttt{togl} kann sowohl mit \cmd{ifboolexpr}, als auch mit \cmd{ifboolexpe} verwendet werden.
+
+\item[bool]
+
+Der Operator \texttt{bool} testet auf Basis der einfachen \tex-Syntax, d.\,h. jeder Test, der normalerweise wie folgt geschrieben wird:
+
+\begin{ltxcode}
+<<\iftest>> Wahrausgabe<<\else>> Falschausgabe<<\fi>>
+\end{ltxcode}
+%
+
+Das schließt alle Flags ein, die mit \cmd{newif} definiert wurden, sowie alle \tex-Primitiven wie \cmd{ifmmode}. Das  \cmd{if}-Präfix der Primitiven oder des Flags wird dabei im \prm{Namen} weggelassen. Beispiele:
+
+\begin{ltxcode}
+<<\ifmmode>> Wahrausgabe\else Falschausgabe\fi
+<<\ifmytest>> Wahrausgabe\else Falschausgabe\fi
+\end{ltxcode}
+%
+wird zu
+
+\begin{ltxcode}
+\ifboolexpr{ <<bool>> {<<mmode>>} }{Wahrausgabe}{Falschausgabe}
+\ifboolexpr{ <<bool>> {<<mytest>>} }{Wahrausgabe}{Falschausgabe}
+\end{ltxcode}
+%
+Das funktioniert auch mit Flags, die mit \cmd{newbool} definiert wurden (siehe \secref{aut:bo1:bol}). In diesem Fall wird
+
+\begin{ltxcode}
+<<\ifbool{BoolescheVariable}>>{Wahrausgabe}{Falschausgabe}
+\end{ltxcode}
+%
+zu
+
+\begin{ltxcode}
+\ifboolexpr{ <<bool>> {<<BoolescheVariable>>} }{Wahrausgabe}{Falschausgabe}
+\end{ltxcode}
+%
+Der Operator \texttt{bool} kann sowohl mit \cmd{ifboolexpr}, als auch mit \cmd{ifboolexpe} verwendet werden.
+
+\item[test]
+
+Der Operator \texttt{test} testet auf Basis der \latex-Syntax, d.\,h. jeder Test, der normalerweise wie folgt geschrieben wird:
+
+\begin{ltxcode}
+<<\iftest>>{<<Wahrausgabe>>}{<<Falschausgabe>>}
+\end{ltxcode}
+%
+Dies schließt alle Makros ein, die die \latex-Syntax verwenden, d.\,h. das Makro muss die beiden Parameter \prm{Wahrausgabe} und \prm{Falschausgabe} erwarten und zwar am Ende der Parameterliste. Beispiele:
+
+
+\begin{ltxcode}
+<<\ifdef>>{\EinMakro}<<{Wahrausgabe}{Falschausgabe}>>
+<<\ifdimless>>{\textwidth}{365pt}<<{Wahrausgabe}{Falschausgabe}>>
+<<\ifnumcomp>>{\value{EinZaehler}}{>}{3}<<{Wahrausgabe}{Falschausgabe}>>
+\end{ltxcode}
+
+Bei der Verwendung solcher Tests in booleschen \prm{Ausdrücken}, werden ihre Parameter \prm{Wahrausgabe} und \prm{Falschausgabe} weggelassen. Beispiel:
+
+\begin{ltxcode}
+<<\ifcsdef{EinMakro}>>{Wahrausgabe}{Falschausgabe}
+\end{ltxcode}
+%
+wird zu
+
+\begin{ltxcode}
+\ifboolexpr{ <<test>> {<<\ifcsdef{EinMakro}>>} }{Wahrausgabe}{Falschausgabe}
+\end{ltxcode}
+%
+und
+
+\begin{ltxcode}
+<<\ifnumcomp{\value{EinZaehler}}{>}{3}>>{Wahrausgabe}{Falschausgabe}
+\end{ltxcode}
+%
+wird zu
+
+\begin{ltxcode}
+\ifboolexpr{
+  <<test>> {<<\ifnumcomp{\value{EinZaehler}}{>}{3}>>}
+}
+{Wahrausgabe}
+{Falschausgabe}
+\end{ltxcode}
+%
+Der Operator \texttt{test} kann mit \cmd{ifboolexpr} ohne Einschränkungen verwendet werden. Er kann auch mit \cmd{ifboolexpe} verwendet werden, wenn der Test expandierbar ist. Einige Tests in \secref{aut:tst} sind robust, können aber nicht mit \cmd{ifboolexpe} verwendet werden, auch wenn \cmd{ifboolexpe} nicht in einem reinen Expansionskontext steht. Statt dessen kann \cmd{ifboolexpr} verwendet werden, wenn der Test nicht expandierbar ist.
+
+\end{marglist}
+
+Da \cmd{ifboolexpr} und \cmd{ifboolexpe} mit einem gewissen Berechnungsaufwand verbunden sind, ist es wenig sinnvoll sie für einzelne Tests zu verwenden. Die Tests in \secref{aut:tst} sind effizienter als \texttt{test}, \cmd{ifbool} in \secref{aut:bo1:bol} ist effizienter als \texttt{bool} und \cmd{iftoggle} in \secref{aut:bo1:tgl} ist effizienter als \texttt{togl}. Der Sinn von \cmd{ifboolexpr} und \cmd{ifboolexpe} ist, dass sie logische Operatoren und Teilausdrücke unterstützen. Die folgenden Operatoren stehen in booleschen \prm{Ausdrücken} zur Verfügung:
+
+\begin{marglist}
+\appto\marglistfont{\verbatimfont}
+
+\item[not]
+
+Der Operator \texttt{not} negiert den Wahrheitswert des unmittelbar darauffolgenden Bausteins. Es ist möglich ihn vor \texttt{togl}, \texttt{bool}, \texttt{test} und Teilausdrücken zu verwenden. Beispiele:
+
+\begin{ltxcode}
+\ifboolexpr{
+  <<not>> bool {BoolescheVariable}
+}
+{Wahrausgabe}
+{Falschausgabe}
+\end{ltxcode}
+%
+liefert  \prm{Wahrausgabe}, wenn die \texttt{BoolescheVariable} falsch ist und \prm{Falschausgabe}, wenn die Variable wahr ist. Des Weiteren liefert
+
+\begin{ltxcode}
+\ifboolexpr{
+  <<not (>> bool {boolA} or bool {boolB} <<)>>
+}
+{Wahrausgabe}
+{Falschausgabe}
+\end{ltxcode}
+%
+\prm{Wahrausgabe}, wenn \texttt{boolA} und \texttt{boolB} falsch sind.
+
+\item[and]
+
+Der Operator \texttt{and} stellt die Konjunktion (sowohl \emph{a} als auch \emph{b}) dar. Der boolesche \prm{Ausdruck} ist wahr, wenn alle mit \texttt{and} verbundenen Bausteine wahr sind. Beispiele:
+
+\begin{ltxcode}
+\ifboolexpr{
+  bool {boolA} <<and>> bool {boolB}
+}
+{Wahrausgabe}
+{Falschausgabe}
+\end{ltxcode}
+%
+liefert \prm{Wahrausgabe}, wenn beide booleschen Tests wahr sind. Der Operator \texttt{nand} (negiertes \texttt{and}, d.\,h. nicht beide) ist nicht definiert, kann aber aus \texttt{and} und einer Negation zusammengesetzt werden. Beispiel:
+
+\begin{ltxcode}
+bool {boolA} <<nand>> bool {boolB}
+\end{ltxcode}
+%
+kann ausgedrückt werden als
+
+\begin{ltxcode}
+<<not>> <<(>> bool {boolA} <<and>> bool {boolB} <<)>>
+\end{ltxcode}
+
+\item[or]
+
+Der Operator \texttt{or} stellt die nicht-exklusive Disjunktion (entweder \emph{a} oder \emph{b} oder beide) dar. Der boolesche \prm{Ausdruck} ist wahr, wenn mindestens einer der mit \texttt{or} verbundenen Bausteine wahr ist. Beispiel:
+
+\begin{ltxcode}
+\ifboolexpr{
+  togl {toglA} <<or>> togl {toglB}
+}
+{Wahrausgabe}
+{Falschausgabe}
+\end{ltxcode}
+%
+liefert \prm{Wahrausgabe} wenn einer von beiden Tests \texttt{toglA}, \texttt{toglB} oder beide wahr sind. Der Operator \texttt{nor} (negiertes \texttt{or}, d.\,h. weder weder \emph{a} noch \emph{b}, noch beide) ist nicht definiert, kann aber aus \texttt{or} und einer Negation zusammengesetzt werden. Beispiel:
+
+\begin{ltxcode}
+bool {boolA} <<nor>> bool {boolB}
+\end{ltxcode}
+%
+kann ausgedrückt werden als
+
+\begin{ltxcode}
+<<not>> <<(>> bool {boolA} <<or>> bool {boolB} <<)>>
+\end{ltxcode}
+
+\item[(...)]
+
+Klammern begrenzen einen Teilausdruck im booleschen \prm{Ausdruck}. Der Teilausdruck wird ausgewertet und im umgebenden Ausdruck als einzelner Wahrheitswert behandelt. Teilausdrücke können verschachtelt werden. So ist beispielsweise der Ausdruck:
+
+\begin{ltxcode}
+  <<(>> bool {boolA} or bool {boolB} <<)>>
+  and
+  <<(>> bool {boolC} or bool {boolD} <<)>>
+\end{ltxcode}
+%
+wahr, wenn beide Teilausdrücke wahr sind, d.\,h. wenn mindestens eine der Variablen \texttt{boolA}/\texttt{boolB} und mindestens eine der Variablen \texttt{boolC}/\texttt{boolD} wahr ist. Die Bildung von Teilausdrücken ist im Allgemeinen nicht erforderlich, wenn alle Bausteine entweder nur mit \texttt{and} oder nur mit \texttt{or} verbunden werden. Beispielsweise verhalten sich die Ausdrücke
+
+\begin{ltxcode}
+bool {boolA} <<and>> bool {boolB} <<and>> {boolC} <<and>> bool {boolD}
+bool {boolA} <<or>> bool {boolB} <<or>> {boolC} <<or>> bool {boolD}
+\end{ltxcode}
+%
+wie man es erwartet: Der erste ist wahr, wenn alle Bausteine wahr sind. Der zweite ist wahr, wenn mindestens ein Baustein wahr ist. Werden dagegen \texttt{and} und \texttt{or} kombiniert, ist es immer ratsam, die Bausteine in Teilausdrücken zu gruppieren um mögliche Irrtümer zu vermeiden, die aus den Unterschieden der Semantik von booleschen Ausdrücken und  natürlicher Sprache erwachsen können. So ist beispielsweise der Ausdruck
+
+\begin{ltxcode}
+bool {<<Kaffee>>} <<and>> bool {<<Milch>>} <<or>> bool {<<Zucker>>}
+\end{ltxcode}
+%
+schon wahr, wenn nur \texttt{Zucker} wahr ist, weil ohne Angabe der Gruppierung in diesem Fall \texttt{and} zuerst ausgewertet wird und als Teilausdruck für \texttt{or} dient. Im Gegensatz zur Bedeutung des Ausdrucks, wenn er in natürlicher Sprache (d.\,h. Kaffee und Milch oder Zucker) erscheint, wird der boolesche Ausdruck nicht wie folgt ausgewertet:
+
+\begin{ltxcode}
+bool {<<Kaffee>>} <<and>> <<(>> bool {<<Milch>>} <<or>> bool {<<Zucker>>} <<)>>
+\end{ltxcode}
+%
+sondern streng von links nach rechts:
+
+\begin{ltxcode}
+<<(>> bool {<<Kaffee>>} <<and>> bool {<<Milch>>} <<)>> <<or>> bool {<<Zucker>>}
+\end{ltxcode}
+%
+
+was vermutlich nicht die gewünschte Bestellung ist.
+
+\end{marglist}
+
+\subsection{Listenverarbeitung}
+\label{aut:lst}
+
+\subsubsection{Benutzereingaben}
+\label{aut:lst:inp}
+
+Die Werkzeuge in diesem Abschnitt dienen vorangig der Verarbeitung von Benutzereingaben. Sollen Listen für die interne Verwendung in einem Paket erstellt werden, sind die Werkzeuge im Abschnitt \ref{aut:lst:int} vermutlich besser geeignet, weil sie testen können, ob ein Element in einer Liste enthalten ist.
+
+\begin{ltxsyntax}
+
+\cmditem{DeclareListParser}{Befehl}{Trennzeichen}
+
+Dieser Befehl definiert einen Listenparser analog zum Befehl \cmd{docsvlist}, der wie folgt definiert ist:
+
+\begin{ltxcode}
+\DeclareListParser{\docsvlist}{,}
+\end{ltxcode}
+%
+Der Kategoriecode des \prm{Trennzeichens} wird vom Listenparser beachtet.
+
+\cmditem*{DeclareListParser*}{Befehl}{Trennzeichen}
+
+Eine mit Stern markierte Variante von \cmd{DeclareListParser} definiert einen Listenparser analog zum Befehl \cmd{forcsvlist}, der wie folgt definiert ist:
+
+\begin{ltxcode}
+\DeclareListParser*{\forcsvlist}{,}
+\end{ltxcode}
+
+\cmditem{docsvlist}{Element, Element, ...}
+
+Dieser Befehl führt den Hilfsbefehl \cmd{do} in einer Schleife für jedes Element einer Komma-separierten Liste aus und übergibt das Element als Parameter. Im Gegensatz zur \cmd{@for}-Schleif aus dem \latex-Kern ist \cmd{docvslist} expandierbar. Mit einer passenden Definition für \cmd{do} können Listen im Kontext von \cmd{edef} oder vergleichbarer Befehle verarbeitet werden. Durch Anfügen von \cmd{listbreak} am Ende des Ersetzungstextes von \cmd{do} kann die Verarbeitung der Liste unter Auslassung der verbleibenden Elemente abgebrochen werden. Leerraum nach Trennzeichen wird ignoriert. Soll ein Listenelement ein Komma oder Leerzeichen enthalten, muss es in geschwungene Klammern eingeschlossen werden. Die Klammern werden bei der Verarbeitung der Liste entfernt. Ein Beispiel, das eine Komma-separierte Liste in einer \env{itemize}-Umgebung ausgibt:
+
+\begin{ltxcode}
+\begin{itemize}
+\renewcommand*{\do}[1]{\item #1}
+\docsvlist{Element1, Element2, {Element3a, Element3b}, Element4}
+\end{itemize}
+\end{ltxcode}
+%
+Ein weiteres Beispiel:
+
+\begin{ltxcode}
+\renewcommand*{\do}[1]{* #1\MessageBreak}
+\PackageInfo{MeinPaket}{%
+  Beispielliste:\MessageBreak
+  \docsvlist{Element1, Element2, {Element3a, Element3b}, Element4}}
+\end{ltxcode}
+%
+In diesem Beispiel wird die Liste als Teil der Informationsnachricht in die Log-Datei geschrieben. Die Listenverarbeitung findet hier während der Schreiboperation \cmd{write} statt.
+
+\cmditem{forcsvlist}{Elementroutine}{Element, Element, ...}
+
+Dieser Befehl verhält sich wie \cmd{docvslist}, außer dass anstelle von \cmd{do} eine bei jedem Aufruf anzugebende \prm{Elementroutine} verwendet wird. Die \prm{Elementroutine} kann auch eine Folge von Befehlen sein, vorausgesetzt der letzte Befehl erwartet das Element als letzten Parameter. Beispielsweise wandelt folgender Code eine Komma-separierte Liste in eine interne List mit dem Namen \cmd{MeineListe} um:
+
+\begin{ltxcode}
+\forcsvlist{\listadd\MeineListe}{Element1, Element2, Element3}
+\end{ltxcode}
+
+\end{ltxsyntax}
+
+\subsubsection{Interne Listen}
+\label{aut:lst:int}
+
+Die Werkzeuge in diesem Abschnitt verarbeiten interne Listen. Eine <interne Liste> ist in diesem Kontext ein einfaches Makro ohne Parameter oder Präfixe, das zur Datensammlung verwendet wird. Diese Listen verwenden ein spezielles Zeichen als internen Elementtrenner.\footnote{Das Zeichen \texttt{\string|} mit dem Kategoriecode 3. Eine Liste kann deshalb nicht mit dem nach ihr benannten Befehl \cmd{Listenname} gesetzt werden. Stattdessen kann \cmd{show} zur Analyse verwendet werden.} Zur Verarbeitung von Benutzereingaben in Listenform, siehe die Werkzeuge in Abschnitt \ref{aut:lst:inp}.
+
+\begin{ltxsyntax}
+
+\cmditem{listadd}{Listenmakro}{Element}
+
+Dieser Befehl hängt ein \prm{Element} an ein \prm{Listenmakro} an. Ein leeres oder aus Leerraum bestehendes \prm{Element} wird nicht zur Liste hinzugefügt.
+
+\cmditem{listgadd}{Listenmakro}{Element}
+
+Wie \cmd{listadd}, außer dass die Zuweisung global ist.
+
+\cmditem{listeadd}{Listenmakro}{Element}
+
+Wie \cmd{listadd}, außer dass das \prm{Element} bei der Definition expandiert wird. Nur das neue \prm{Element} wird expandiert, nicht das \prm{Listenmakro}. Wenn das expandierte \prm{Element} leer ist oder aus Leeraum besteht, wird es nicht zur Liste hinzugefügt.
+
+\cmditem{listxadd}{Listenmakro}{Element}
+
+Wie \cmd{listeadd}, außer dass die Zuweisung global ist.
+
+\cmditem{listcsadd}{Name}{Element}
+
+Wie \cmd{listadd}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{listcsgadd}{Name}{Element}
+
+Wie \cmd{listcsadd}, außer dass die Zuweisung global ist.
+
+\cmditem{listcseadd}{Name}{Element}
+
+Wie \cmd{listeadd}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{listcsxadd}{Name}{Element}
+
+Wie \cmd{listcseadd}, außer dass die Zuweisung global ist.
+
+\cmditem{dolistloop}{Listenmakro}
+
+Dieser Befehl führt den Hilfsbefehl \cmd{do} in einer Schleife für jedes Element einer Liste aus und übergibt das Element als Parameter. Die Schleife selbst ist expandierbar. Durch Anfügen von \cmd{listbreak} am Ende des Ersetzungstextes von \cmd{do} kann die Verarbeitung der Liste unter Auslassung der verbleibenden Elemente abgebrochen werden. Hier ein Anwendungsbespiel, das eine interne Liste mit dem Namen \cmd{MeineListe} in einer \env{itemize}-Umgebung ausgibt:
+
+\begin{ltxcode}
+\begin{itemize}
+\renewcommand*{\do}[1]{\item #1}
+\dolistloop{\MeineListe}
+\end{itemize}
+\end{ltxcode}
+
+\cmditem{dolistcsloop}{Name}
+
+Wie \cmd{dolistloop}, außer dass der erste Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{forlistloop}{Elementroutine}{Listenmakro}
+
+Dieser Befehl verhält sich wie \cmd{dolistloop}, außer dass anstelle von \cmd{do} eine \prm{Elementroutine} verwendet wird, die bei jedem Aufruf angegeben wird. Die \prm{Elementroutine} kann auch eine Folge von Befehlen sein, vorausgesetzt der letzte Befehl erwartet das Element als letzten Parameter. Das folgende Beispiel gibt alle Elemente der internen Liste \cmd{MeineListe} in einer \cmd{itemize}-Umgebung aus, zählt sie dabei und gibt am Ende die Anzahl aus:
+
+\begin{ltxcode}
+\newcounter{Elementzaehler}
+\begin{itemize}
+\forlistloop{\stepcounter{Elementzaehler}\item}{\MeineListe}
+\item Gesamt: \number\value{Elementzaehler} Elemente
+\end{itemize}
+\end{ltxcode}
+
+\cmditem{forlistcsloop}{Elementroutine}{Name}
+
+Wie \cmd{forlistloop}, außer dass der zweite Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{ifinlist}{Element}{Listenmakro}{Wahrausgabe}{Falschausgabe}
+
+Dieser Befehl liefert die \prm{Wahrausgabe}, falls ein angegebenes \prm{Element} in einem \prm{Listenmakro} enthalten ist, sonst die \prm{Falschausgabe}. Dieser Befehl verwendet eine Mustererkennung, die auf dem Parameterscanner von \tex basiert, um zu ermitteln, ob die gesuchte Zeichenfolge in der Liste enthalten ist. Das ist für gewöhnlich schneller als eine Schleife über alle Listenelemente, aber es führt dazu, dass die Elemente keine geschweiften Klammern enthalten dürfen, weil sie sonst vom Scanner überlesen werden. Mit anderen Worten: Dieser Befehl ist nützlich, wenn es um den Umgang mit einfachen Zeichenfolgen geht statt mit formatierten Daten. Soll eine Liste mit formatierten Daten durchsucht werden, ist es sicherer \cmd{dolistloop} zu verwenden und wie folgt auf das Vorhandensein eines Elementes zu prüfen:
+
+
+\begin{ltxcode}
+\renewcommand*{\do}[1]{%
+  \ifstrequal{#1}{<<Element>>}
+    {Element gefunden!\listbreak}
+    {}}
+\dolistloop{\MeineListe}
+\end{ltxcode}
+
+\cmditem{xifinlist}{Element}{Listenmakro}{Wahrausgabe}{Falschausgabe}
+
+Wie \cmd{ifinlist}, außer dass das \prm{Element} vor der Suche expandiert wird.
+
+\cmditem{ifinlistcs}{Element}{Name}{Wahrausgabe}{Falschausgabe}
+
+Wie \cmd{ifinlist}, außer dass der zweite Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\cmditem{xifinlistcs}{Element}{Name}{Wahrausgabe}{Falschausgabe}
+
+Wie \cmd{xifinlist}, außer dass der zweite Parameter der \prm{Name} einer Kontrollsequenz ist.
+
+\end{ltxsyntax}
+
+\subsection{Verschiedenes}
+\label{aut:msc}
+
+\begin{ltxsyntax}
+
+\cmditem{rmntonum}{römische Zahl}
+
+Die \tex-Primitive \cmd{romannumeral} wandelt eine Ganzzahl in eine römische Zahl um, aber \tex und \latex liefern keinen Befehl für die Rückrichtung. Der Befehl \cmd{rmntonum} füllt diese Lücke. Er erwartet eine \prm{römische Zahl} und wandelt sie in die entsprechende Ganzzahl um. Da der Befehl expandierbar ist, kann er auch in Zuweisungen zu Zählern oder arithmetischen Tests verwendet werden:
+
+\begin{ltxcode}
+<<\rmntonum>>{<<mcmxcv>>}
+\setcounter{Zaehler}{<<\rmntonum>>{<<CXVI>>}}
+\ifnumless{<<\rmntonum>>{<<mcmxcviii>>}}{2000}{Wahrausgabe}{Falschausgabe}
+\end{ltxcode}
+%
+Der Parameter \prm{römische Zahl} muss eine einfache Zeichenfolge sein. Er wird vor der Berechnung aus seinen Token zusammengesetzt. Die Berechnung ignoriert \mbox{Groß-/} Kleinschreibung und Leerraum. Enthält die \prm{römische Zahl} einen ungültigen Token, liefert \cmd{rmntonum} den Wert \texttt{-1} - ein leerer Parameter liefert dagegen eine leere Zeichenfolge. \cmd{rmntonum} prüft die \prm{römische Zahl} nicht auf formelle Richtigkeit. Z.\,B. liefern \texttt{V} und \texttt{VX} beide \texttt{5}, \texttt{IC} ergibt \texttt{99}.
+
+\cmditem{ifrmnum}{Zeichenfolge}{Wahrausgabe}{Falschausgabe}
+
+Liefert die \prm{Wahrausgabe}, wenn die \prm{Zeichenfolge} eine römische Zahl ist, sonst die \prm{Falschausgabe}. Die \prm{Zeichenfolge} wird vor dem Test aus ihren Token zusammengesetzt. Der Test ignoriert Groß-/Kleinschreibung und Leerraum.  Der Test \cmd{ifrmnum} prüft die römische Zahl nicht auf formelle Richtigkeit. Z.\,B. liefern \texttt{V} und \texttt{VXV} beide die \prm{Wahrausgabe}. Genau genommen untersucht \cmd{ifrmnum} lediglich ob die \prm{Zeichenfolge} nur aus Zeichen besteht, die in römischen Zahlen vorkommen dürfen, aber nicht ob sie in der Reihenfolge auch eine gültige römische Zahl bilden.
+
+\end{ltxsyntax}
+
+\section{Versionsgeschichte}
+
+Die Versionsgeschichte ist eine Liste aller Änderungen, die für Benutzer dieses Paketes relevant sind. Änderungen technischer Art, die nicht die Benutzerschnittstelle betreffen, wurden nicht aufgenommen. Änderungen, bei denen etwas  \emph{verbessert} oder \emph{hinzugefügt} wurde, sind syntaktisch rückwärtskompatibel - wie das Hinzufügen optionaler Parameter oder neuer Befehle. Änderungen, bei denen etwas \emph{modifiziert} wurde, bedürfen der Aufmerksamkeit der Benutzers. Durch sie ist es möglicherweise in einigen, hoffentlich sehr wenigen Fällen nötig, existierende Dokumente anzupassen. Die Zahlen am rechten Rand bezeichnen den betreffenden Abschnitt dieses Handbuchs.
+
+\begin{changelog}
+
+\begin{release}{2.1}{2011-01-03}
+\item \cmd{AtBeginEnvironment} hinzugefügt\see{use:env}
+\item \cmd{AtEndEnvironment} hinzugefügt\see{use:env}
+\item \cmd{BeforeBeginEnvironment} hinzugefügt\see{use:env}
+\item \cmd{AfterEndEnvironment} hinzugefügt\see{use:env}
+\item \cmd{ifdefstrequal} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifcsstrequal} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifdefcounter} hinzugefügt\see{aut:tst:cnt}
+\item \cmd{ifcscounter} hinzugefügt\see{aut:tst:cnt}
+\item \cmd{ifltxcounter} hinzugefügt\see{aut:tst:cnt}
+\item \cmd{ifdeflength} hinzugefügt\see{aut:tst:cnt}
+\item \cmd{ifcslength} hinzugefügt\see{aut:tst:cnt}
+\item \cmd{ifdefdimen} hinzugefügt\see{aut:tst:cnt}
+\item \cmd{ifcsdimen} hinzugefügt\see{aut:tst:cnt}
+\end{release}
+
+\begin{release}{2.0a}{2010-09-12}
+\item Fehler in \cmd{patchcmd}, \cmd{apptocmd} und \cmd{pretocmd} behoben\see{aut:pat}
+\end{release}
+
+\begin{release}{2.0}{2010-08-21}
+
+\item \cmd{csshow} hinzugefügt\see{aut:def:def}
+\item \cmd{DeclareListParser*} hinzugefügt\see{aut:lst:inp}
+\item \cmd{forcsvlist} hinzugefügt\see{aut:lst:inp}
+\item \cmd{forlistloop} hinzugefügt\see{aut:lst:int}
+\item \cmd{forlistcsloop} hinzugefügt\see{aut:lst:int}
+\item Testen von \cmd{par} in Makrotests erlaubt\see{aut:tst:def}
+\item Einige Fehler behoben
+
+\end{release}
+
+\begin{release}{1.9}{2010-04-10}
+
+\item \cmd{letcs} verbessert\see{aut:def:def}
+\item \cmd{csletcs} verbessert\see{aut:def:def}
+\item \cmd{listeadd} verbessert\see{aut:lst:int}
+\item \cmd{listxadd} verbessert\see{aut:lst:int}
+\item \cmd{notblank} hinzugefügt\see{aut:tst:str}
+\item \cmd{ifnumodd} hinzugefügt\see{aut:tst:num}
+\item \cmd{ifboolexpr} hinzugefügt\see{aut:tst:bol}
+\item \cmd{ifboolexpe} hinzugefügt\see{aut:tst:bol}
+\item \cmd{whileboolexpr} hinzugefügt\see{aut:tst:bol}
+\item \cmd{unlessboolexpr} hinzugefügt\see{aut:tst:bol}
+
+\end{release}
+
+\begin{release}{1.8}{2009-08-06}
+
+\item \cmd{deflength} verbessert\see{use:cal}
+\item \cmd{ifnumcomp} hinzugefügt\see{aut:tst:num}
+\item \cmd{ifnumequal} hinzugefügt\see{aut:tst:num}
+\item \cmd{ifnumgreater} hinzugefügt\see{aut:tst:num}
+\item \cmd{ifnumless} hinzugefügt\see{aut:tst:num}
+\item \cmd{ifdimcomp} hinzugefügt\see{aut:tst:num}
+\item \cmd{ifdimequal} hinzugefügt\see{aut:tst:num}
+\item \cmd{ifdimgreater} hinzugefügt\see{aut:tst:num}
+\item \cmd{ifdimless} hinzugefügt\see{aut:tst:num}
+
+\end{release}
+
+\begin{release}{1.7}{2008-06-28}
+
+\item \cmd{AfterBeginDocument} in \cmd{AfterEndPreamble} umbenannt (Namenskonflikt)\see{use:pre}
+\item Konflikte mit \sty{hyperref} ausgeräumt
+\item Handbuch geringfügig überarbeitet
+
+\end{release}
+
+\begin{release}{1.6}{2008-06-22}
+
+\item \cmd{robustify} verbessert\see{use:pat}
+\item \cmd{patchcmd} und \cmd{ifpatchable} verbessert \see{aut:pat}
+\item \cmd{apptocmd} verbessert und modifiziert\see{aut:pat}
+\item \cmd{pretocmd} verbessert und modifiziert\see{aut:pat}
+\item \cmd{ifpatchable*} hinzugefügt\see{aut:pat}
+\item \cmd{tracingpatches} hinzugefügt\see{aut:pat}
+\item \cmd{AfterBeginDocument} hinzugefügt\see{use:pre}
+\item \cmd{ifdefmacro} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifcsmacro} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifdefprefix} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifcsprefix} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifdefparam} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifcsparam} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifdefprotected} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifcsprotected} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifdefltxprotect} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifcsltxprotect} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifdefempty} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifcsempty} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifdefvoid} verbessert\see{aut:tst:def}
+\item \cmd{ifcsvoid} verbessert\see{aut:tst:def}
+\item \cmd{ifstrempty} hinzugefügt\see{aut:tst:str}
+\item \cmd{setbool} hinzugefügt\see{aut:bo1:bol}
+\item \cmd{settoggle} hinzugefügt\see{aut:bo1:tgl}
+
+\end{release}
+
+\begin{release}{1.5}{2008-04-26}
+
+\item \cmd{defcounter} hinzugefügt\see{use:cal}
+\item \cmd{deflength} hinzugefügt\see{use:cal}
+\item \cmd{ifdefstring} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifcsstring} hinzugefügt\see{aut:tst:def}
+\item \cmd{rmntonum} verbessert\see{aut:msc}
+\item \cmd{ifrmnum} hinzugefügt\see{aut:msc}
+\item Dem Handbuch erweiterte \pdf-Lesezeichen hinzugefügt
+\item Handbuch geringfügig überarbeitet
+
+\end{release}
+
+\begin{release}{1.4}{2008-01-24}
+
+\item Konflikt mit \sty{tex4ht} ausgeräumt
+
+\end{release}
+
+\begin{release}{1.3}{2007-10-08}
+
+\item Paket von \sty{elatex} in \sty{etoolbox} umbenannt\see{int}
+\item \cmd{newswitch} in \cmd{newtoggle} umbenannt (name clash)\see{aut:bo1:tgl}
+\item \cmd{provideswitch} in \cmd{providetoggle} umbenannt (consistency)\see{aut:bo1:tgl}
+\item \cmd{switchtrue} in \cmd{toggletrue} umbenannt (consistency)\see{aut:bo1:tgl}
+\item \cmd{switchfalse} in \cmd{togglefalse} umbenannt (consistency)\see{aut:bo1:tgl}
+\item \cmd{ifswitch} in \cmd{iftoggle} umbenannt (consistency)\see{aut:bo1:tgl}
+\item \cmd{notswitch} in \cmd{nottoggle} umbenannt (consistency)\see{aut:bo1:tgl}
+\item \cmd{AtEndPreamble} hinzugefügt\see{use:pre}
+\item \cmd{AfterEndDocument} hinzugefügt\see{use:pre}
+\item \cmd{AfterPreamble} hinzugefügt\see{use:pre}
+\item \cmd{undef} hinzugefügt\see{aut:def:def}
+\item \cmd{csundef} hinzugefügt\see{aut:def:def}
+\item \cmd{ifdefvoid} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifcsvoid} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifdefequal} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifcsequal} hinzugefügt\see{aut:tst:def}
+\item \cmd{ifstrequal} hinzugefügt\see{aut:tst:str}
+\item \cmd{listadd} hinzugefügt\see{aut:lst:int}
+\item \cmd{listeadd} hinzugefügt\see{aut:lst:int}
+\item \cmd{listgadd} hinzugefügt\see{aut:lst:int}
+\item \cmd{listxadd} hinzugefügt\see{aut:lst:int}
+\item \cmd{listcsadd} hinzugefügt\see{aut:lst:int}
+\item \cmd{listcseadd} hinzugefügt\see{aut:lst:int}
+\item \cmd{listcsgadd} hinzugefügt\see{aut:lst:int}
+\item \cmd{listcsxadd} hinzugefügt\see{aut:lst:int}
+\item \cmd{ifinlist} hinzugefügt\see{aut:lst:int}
+\item \cmd{xifinlist} hinzugefügt\see{aut:lst:int}
+\item \cmd{ifinlistcs} hinzugefügt\see{aut:lst:int}
+\item \cmd{xifinlistcs} hinzugefügt\see{aut:lst:int}
+\item \cmd{dolistloop} hinzugefügt\see{aut:lst:int}
+\item \cmd{dolistcsloop} hinzugefügt\see{aut:lst:int}
+
+\end{release}
+
+\begin{release}{1.2}{2007-07-13}
+
+\item \cmd{patchcommand} in \cmd{patchcmd} umbenannt (Namenskonflikt)\see{aut:pat}
+\item \cmd{apptocommand} in \cmd{apptocmd} umbenannt (Einheitlichkeit)\see{aut:pat}
+\item \cmd{pretocommand} in \cmd{pretocmd} umbenannt (Einheitlichkeit)\see{aut:pat}
+\item \cmd{newbool} hinzugefügt\see{aut:bo1:bol}
+\item \cmd{providebool} hinzugefügt\see{aut:bo1:bol}
+\item \cmd{booltrue} hinzugefügt\see{aut:bo1:bol}
+\item \cmd{boolfalse} hinzugefügt\see{aut:bo1:bol}
+\item \cmd{ifbool} hinzugefügt\see{aut:bo1:bol}
+\item \cmd{notbool} hinzugefügt\see{aut:bo1:bol}
+\item \cmd{newswitch} hinzugefügt\see{aut:bo1:tgl}
+\item \cmd{provideswitch} hinzugefügt\see{aut:bo1:tgl}
+\item \cmd{switchtrue} hinzugefügt\see{aut:bo1:tgl}
+\item \cmd{switchfalse} hinzugefügt\see{aut:bo1:tgl}
+\item \cmd{ifswitch} hinzugefügt\see{aut:bo1:tgl}
+\item \cmd{notswitch} hinzugefügt\see{aut:bo1:tgl}
+\item \cmd{DeclareListParser} hinzugefügt\see{aut:lst:inp}
+\item \cmd{docsvlist} hinzugefügt\see{aut:lst:inp}
+\item \cmd{rmntonum} hinzugefügt\see{aut:msc}
+
+\end{release}
+
+\begin{release}{1.1}{2007-05-28}
+
+\item \cmd{protected@csedef} hinzugefügt\see{aut:def:def}
+\item \cmd{protected@csxdef} hinzugefügt\see{aut:def:def}
+\item \cmd{gluedef} hinzugefügt\see{aut:def:cal}
+\item \cmd{gluegdef} hinzugefügt\see{aut:def:cal}
+\item \cmd{csgluedef} hinzugefügt\see{aut:def:cal}
+\item \cmd{csgluegdef} hinzugefügt\see{aut:def:cal}
+\item \cmd{mudef} hinzugefügt\see{aut:def:cal}
+\item \cmd{mugdef} hinzugefügt\see{aut:def:cal}
+\item \cmd{csmudef} hinzugefügt\see{aut:def:cal}
+\item \cmd{csmugdef} hinzugefügt\see{aut:def:cal}
+\item \cmd{protected@eappto} hinzugefügt\see{aut:hok:app}
+\item \cmd{protected@xappto} hinzugefügt\see{aut:hok:app}
+\item \cmd{protected@cseappto} hinzugefügt\see{aut:hok:app}
+\item \cmd{protected@csxappto} hinzugefügt\see{aut:hok:app}
+\item \cmd{protected@epreto} hinzugefügt\see{aut:hok:pre}
+\item \cmd{protected@xpreto} hinzugefügt\see{aut:hok:pre}
+\item \cmd{protected@csepreto} hinzugefügt\see{aut:hok:pre}
+\item \cmd{protected@csxpreto} hinzugefügt\see{aut:hok:pre}
+\item Fehler in \cmd{newrobustcmd} behoben\see{use:def}
+\item Fehler in \cmd{renewrobustcmd} behoben\see{use:def}
+\item Fehler in \cmd{providerobustcmd} behoben\see{use:def}
+
+\end{release}
+
+\begin{release}{1.0}{2007-05-07}
+
+\item Erste Veröffentlichung
+
+\end{release}
+
+\end{changelog}
+
+\end{document}

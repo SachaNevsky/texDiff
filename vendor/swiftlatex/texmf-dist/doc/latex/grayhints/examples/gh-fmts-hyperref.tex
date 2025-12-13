@@ -1,0 +1,257 @@
+\documentclass{article}
+\usepackage[designiv]{web}
+\usepackage[usehyforms]{grayhints}
+\usepackage{fancyvrb}
+
+
+\addtoWebHeight{1in}
+\def\cs#1{\texttt{\char`\\#1}}
+\let\app\textsf
+\let\pkg\textsf
+\let\uif\textsf
+\parindent0pt
+
+%\EnterCommitFailEvent{\jsT\jsT
+%  event.target.strokeColor=color.blue;\jsR\jsT\jsT
+%  event.value=(event.target.savevalue);}
+%\CommitSuccessEvent{event.target.strokeColor=color.red;}
+
+
+\begin{document}
+\begin{Form}
+\begin{center}\large\bfseries Gray Hints - Formats
+\end{center}
+The `gray hint' technique requires modifications to the Format,
+Keystroke, OnFocus, OnBlur, and Calculate events. Refer to \texttt{gh-fmts-eforms} for a more
+discussion of these fields.\medskip
+
+\renewcommand\LayoutTextField[2]{#2}
+\renewcommand\LayoutChoiceField[2]{#2}
+
+\TextField[%
+    name={Datefield1},
+    height=11bp,
+    width=1in,
+    color={\matchGray},
+    keystroke={AFDate_KeystrokeEx("yyyy/mm/dd");\jsR
+        \KeyToGray},
+    format={AFDate_FormatEx("yyyy/mm/dd");\jsR
+        \FmtToGray{yyyy/mm/dd}},
+    onfocus={\FocusToBlack},
+    onblur={\BlurToBlack},
+    calculate={\CalcToGray}
+]{}\kern2bp\quad
+\TextField[%
+    name={Datefield2},
+    height=11bp,
+    width=1in,
+    color={\matchGray},
+    keystroke={\DateKeyEx("yyyy/mm/dd");\jsR
+        \KeyToGray},
+    format={\DateFmtEx("yyyy/mm/dd");\jsR
+        \FmtToGray{yyyy/mm/dd}},
+    onfocus={\FocusToBlack},
+    onblur={\BlurToBlack},
+    calculate={\CalcToGray}
+]{}\medskip
+
+\textbf{Note:} In the discussion that follows, we assume you are using
+\app{Adobe Acrobat DC} (or prior), \app{Adobe Reader DC} (or prior) or
+\app{PDF-XChange Editor}. These PDF viewers support the JavaScript used
+by this package.\medskip
+
+The behavior of the field on the right requires some special code.
+\begin{Verbatim}[xleftmargin=15pt,fontsize=\small,numbers=left,numbersep=9pt,commandchars={!~@}]
+\TextField[%
+    name={Datefield2},
+    height=11bp,width=1in,charsize=9bp,
+    color={\matchGray},
+    keystroke={\DateKeyEx("yyyy/mm/dd");\jsR
+        \KeyToGray},
+    format={\DateFmtEx("yyyy/mm/dd");\jsR
+        \FmtToGray{yyyy/mm/dd}},
+    onfocus={\FocusToBlack},
+    onblur={\BlurToBlack},
+    calculate={\CalcToGray}   % <-!normalfont~ required for !app~PDF-XChange Editor@@
+]{}\end{Verbatim}
+The code above is identical to that of the left-hand field with two
+exceptions, marked above by (5) and~(7). On these lines, the commands
+\cs{DateKeyEx} and \cs{DateFmtEx} are used (instead of the Adobe built-in
+functions directly). When these two are inserted, then we get the behavior of
+the field on the right on page 1.\medskip
+
+When the changes shown in lines~(5) and~(7) are made, you can customize the
+behavior of the field when the date is committed by pressing the \uif{Enter}
+key.\medskip
+
+\EnterCommitFailEvent{event.value=("weiter bearbeiten");}
+\TextField[%
+    name={Datefield3},
+    height=11bp,width=1in,charsize=9bp,
+    color={\matchGray},
+    keystroke={\DateKeyEx("yyyy/mm/dd");\jsR
+        \KeyToGray},
+    format={\DateFmtEx("yyyy/mm/dd");\jsR
+        \FmtToGray{yyyy/mm/dd}},
+    onfocus={\FocusToBlack},
+    onblur={\BlurToBlack},
+    calculate={\CalcToGray}
+]{}\medskip
+
+Here, we use \cs{EnterCommitFailEvent} and declare,
+\begin{Verbatim}[xleftmargin=15pt,fontsize=\small]
+\EnterCommitFailEvent{event.value=("weiter bearbeiten");}
+\end{Verbatim}
+which changes the text string that appears when \uif{Enter} is pressed for an invalid date.\medskip
+
+\EnterCommitFailEvent{%
+  event.target.strokeColor=color.blue;
+  event.value=(event.target.savevalue);}
+\CommitSuccessEvent{event.target.strokeColor=color.red;}
+We can get a different effect with
+\begin{Verbatim}[xleftmargin=15pt,fontsize=\small]
+\EnterCommitFailEvent{%
+  event.target.strokeColor=color.blue;
+  event.value=(event.target.savevalue);}
+\CommitSuccessEvent{event.target.strokeColor=color.black;}
+\end{Verbatim}
+The action declared by \cs{EnterCommitFailEvent} is to change the border
+color to blue, and secondly, to set the value of the field to the saved value
+(\texttt{event.target.savevalue}). The property \texttt{savevalue} is defined
+through the use of the special commands \cs{DateKeyEx} and \cs{DateFmtEx}.
+The action of \cs{CommitSuccessEvent} returns the fields border color to
+black.\medskip
+
+\TextField[%
+    name={Datefield4},
+    height=11bp,width=1in,charsize=9bp,
+    color={\matchGray},
+    keystroke={\DateKeyEx("yyyy/mm/dd");\jsR
+        \KeyToGray},
+    format={\DateFmtEx("yyyy/mm/dd");\jsR
+        \FmtToGray{yyyy/mm/dd}},
+    onfocus={\FocusToBlack},
+    onblur={\BlurToBlack},
+    calculate={\CalcToGray}
+]{}\medskip
+
+Now, when an invalid date is entered using the \uif{Enter} key, the border
+color of the field is changed to blue to indicate to the user that the date
+in invalid and needs to be modified. Tabbing or clicking outside the field, as
+usual, blurs the field; any invalid date is removed and the grayed hint
+appears.\medskip
+
+To return to the default declarations, expand \verb!\EnterCommitFailEvent{}! and
+\verb!\CommitSuccessEvent{}!. The underlying default actions are,
+\begin{Verbatim}[xleftmargin=15pt,fontsize=\small]
+\newcommand\FailStringDef{continue editing}
+\newcommand\EnterCommitFailDef{event.value=("\FailStringDef");}
+\end{Verbatim}
+A localization of language can be performed by redefining
+\cs{FailStringDef}
+\begin{Verbatim}[xleftmargin=15pt,fontsize=\small]
+\renewcommand\FailStringDef{weiter bearbeiten}
+\end{Verbatim}
+
+The next example changes the border, the text color, and the error message.\medskip
+
+\EnterCommitFailEvent{\jsT
+  event.target.strokeColor=color.blue;\jsR\jsT\jsT
+  event.target.textColor=color.blue;\jsR\jsT\jsT
+  event.value=("needs editing");
+}
+\CommitSuccessEvent{\jsT\jsT
+  event.target.strokeColor=color.red;
+}
+
+\noindent
+\TextField[%
+    name={Datefield5},
+    height=11bp,width=1in,charsize=9bp,
+    color={\matchGray},
+    keystroke={\DateKeyEx("yyyy/mm/dd");\jsR
+        \KeyToGray},
+    format={\DateFmtEx("yyyy/mm/dd");\jsR
+        \FmtToGray{yyyy/mm/dd}},
+    onfocus={\FocusToBlack},
+    onblur={\BlurToBlack},
+    calculate={\CalcToGray}
+]{}\qquad(enter `17' then press enter)\medskip
+
+
+
+This same scheme should work for all the built-in Acrobat formats, let's look
+at the number format.\medskip
+
+\EnterCommitFailEvent{}\CommitSuccessEvent{}
+\TextField[%
+    name=Integer,
+    height=11bp,width=1in,charsize=9bp,
+    color={\matchGray},
+    keystroke={\NumKey(0,1,0,0,"",true);\jsR\KeyToGray},
+    format={\NumFmt(0,1,0,0,"",true);\jsR
+      \FmtToGray{Enter an Integer}},
+    onfocus={\FocusToBlack},
+    onblur={\BlurToBlack},
+    calculate={\CalcToGray}
+]{}\smallskip
+
+\textbf{Creating a Percent text field.}\medskip
+
+\TextField[%
+  name=Percent,
+  height=11bp,width=2in,charsize=9bp,
+  color=\matchGray,
+  keystroke={\PercentKey(2,1);\jsR
+      \KeyToGray},
+  format={\PercentFmt(2,1);\jsR
+    \FmtToGray{Enter a number}},
+    onfocus={\FocusToBlack},
+    onblur={\BlurToBlack},
+    calculate={\CalcToGray}
+]{} (don't enter the percent symbol \%)\medskip
+
+\textbf{Creating a Phone Number text field.}\medskip
+
+Enter a phone number: \TextField[%
+  name=Phone,
+  height=11bp,width=2in,charsize=9bp,
+  color=\matchGray,
+  keystroke={\SpecialKey(2);\jsR
+      \KeyToGray},
+  format={\SpecialFmt(2);\jsR
+    \FmtToGray{(123) 456-7890}},
+    onfocus={\FocusToBlack},
+    onblur={\BlurToBlack},
+    calculate={\CalcToGray}
+]{}\medskip
+
+The underlying JS function tries hard to make a phone number out of the input. The phone number can
+be entered in any recognized format; even something like 1234567890 is recognized and formatted.\medbreak
+
+\textbf{Creating a Custom time format text field.}\medskip
+
+\def\parentt{(tt)} % necessary to insert within arg of \TimeFmtEx
+\TextField[%
+  name=Time,
+  height=11bp,width=2in,charsize=9bp,
+  color=\matchGray,
+  keystroke={\TimeKey(0);\jsR
+      \KeyToGray},
+  format={\TimeFmtEx("h:MM \parentt");\jsR
+    \FmtToGray{Enter a time}},
+    onfocus={\FocusToBlack},
+    onblur={\BlurToBlack},
+    calculate={\CalcToGray}
+]{}\quad\PushButton[%
+    height=11bp,
+    name=pbtime,
+    onclick={var cTime=util.printd("h:MM",new Date());\jsR
+    var f=this.getField("Time");\jsR
+    f.value=cTime;}]{UCT}\medskip
+
+Detailed information on formatting with the built-in functions of \app{Acrobat} may be found at
+the \href{http://blog.acrotex.net}{Acro\negthinspace\TeX\space Blog}; in particular, see the article \url{http://www.acrotex.net/blog/?p=218}.
+
+\end{Form}
+\end{document}

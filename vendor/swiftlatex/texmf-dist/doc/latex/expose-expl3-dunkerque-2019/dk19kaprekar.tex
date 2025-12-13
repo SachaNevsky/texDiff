@@ -1,0 +1,244 @@
+% Time-stamp: <2019-09-22 16:32:18 administrateur>
+% Création : 2019-08-26T12:37:33+0200
+
+\section{Suites de \textsc{Kaprekar}}
+\label{sec:suiteskaprekar}
+
+Une suite de \textsc{Kaprekar} est définie par la donnée d'un nombre
+entier, p.~ex. \(125\), d'une base \TO je prendrai systématiquement et
+uniquement~\(10\) comme base de l'écriture des nombres entiers\TF et
+d'un nombre~\(N\) de chiffres que j'appellerai la \emph{taille} du
+nombre. On obtient un terme~\(u\sb{n+1}\) à partir du terme
+précédent~\(u\sb{n}\) en appliquant l'algorithme suivant:
+\begin{enumerate}\label{algokap}
+\item on écrit \(u\sb{n}\) avec \(N\) chiffres dans la base choisie
+  quitte à compléter avec des zéros; 
+\item on range les \(N\) chiffres ainsi obtenus dans l'ordre
+  décroissant pour obtenir \(v\sb{n}\); 
+\item on range les \(N\) chiffres dans l'ordre croissant pour obtenir
+  \(w\sb{n}\); 
+\item enfin, \(u\sb{n+1} = v\sb{n} - w\sb{n}\).
+\end{enumerate}
+
+Une telle suite est évidemment finie. La commande que nous allons
+détailler s'arrête sur le dernier nombre déjà obtenu.
+
+En voici deux exemples.
+
+On obtient \og \Kaprekar{125}\fg avec |\Kaprekar{125}| qui, par
+défaut, travaille avec \(N=4\), et \og \Kaprekar[6]{125}\fg pour
+lequel on a pris \(N=6\).
+
+L'objet qui va nous servir à créer ces suites est la \gls{sequence}
+\TO dont le sigle est \texttt{seq} \TF que fournit l'extension
+\Pkg{l3seq}.
+
+
+\section{Le code}
+\label{sec:kaprekarcode}
+
+Je rappelle que tout le code est placé entre \Macro{ExplSyntaxOn}
+et \Macro{ExplSyntaxOff} pour les raisons déjà exposées.
+
+La commande de document est \Macro{Kaprekar} dont voici le code.
+
+\Fragment[Kaprekar, commande de
+document]{73}{74}{./codes/kaprekar-def}
+
+On y retrouve l'habituelle \Macro{NewDocumentCommand} mais un nouveau
+descripteur d'argument, à savoir |O{4}|: le premier argument est
+optionnel et sa valeur par défaut est~\(4\). Si on veut en fournir une
+autre, on le placera entre crochet comme d'habitude.
+
+La commande n'est, de fait et à part le truc de l'argument optionnel,
+qu'un alias de \Macro{KAP_ecrire_tous_les_suivants+nn} que je vais
+maintenant détailler. Mais commençons par la phase d'initialisation.
+
+\subsection{Initialisation}
+\label{sec:kaprinit}
+
+\Fragment[Kaprekar, initialisation]{4}{6}{./codes/kaprekar-def}
+
+Avec \Macro{seq_new+N} je crée deux \glspl{sequence}: \Macro{kaprun_seq}
+et \Macro{kaprekar_seq}. La première \gls{variable} a vocation à
+recevoir la suite des chiffres du nombre traité. La seconde contiendra
+la suite de \textsc{Kaprekar}.
+
+Je crée ensuite un \gls{entier} \emph{local} en suivant le modèle
+de l'extension \Pkg{int}.
+
+\subsection{De l'entier à la suite et retour}
+\label{sec:entiersuiteretour}
+
+J'ai besoin de commandes internes \TO qui pourraient être privées\TF
+pour \emph{découper} un entier en la suite de ses chiffres et pour
+créer un entier à partir d'une suite de chiffres. Le fait de
+travailler en base fixée \TO et en base~\(10\) qui plus est\TF
+facilite largement le travail. Là encore, si le cœur vous en dit,
+exercice!
+
+\Fragment[Kaprekar, de l'entier à la
+suite]{9}{15}{./codes/kaprekar-def}
+
+Le premier argument de \Macro{KAP_int_to_seq+NN} est le nombre à
+découper, le second la suite qui contiendra ses chiffres. Dans les
+deux cas, la commande attend une \gls{variable}.
+
+Nous avons déjà rencontré la majorité des commandes utilisées dans la
+définition. Avec \Macro{seq_put_left+NV} je place en première place
+\TO à gauche \InEnglish{left}\TF la valeur contenue dans la
+\gls{variable} \Macro{l_tmpb_int}. Le~|V| dans la signature assure que
+la commande \Macro{l_tmpb_int} sera traitée de telle sorte que l'on
+récupère bien son contenu.
+
+Dans la boucle, on trouve \Macro{int_div_truncate+nn} qui permet de
+récupérer le quotient entier de~|#1| par~|#2|.
+
+\medbreak
+
+\Fragment[Kaprekar, de la suite à
+l'entier]{17}{22}{./codes/kaprekar-def}
+
+Cette commande transforme une suite de chiffres en un \gls{entier}. On
+trouve, en~\Ligne{18},  la commande \Macro{seq_pop_right+NNT} qui
+prend la valeur la plus à droite dans la suite passée en 1\ier
+argument pour la placer dans la \gls{variable} donnée en 2\ieme
+argument. Si cette opération est possible \TO \CAD si la pile n'était
+pas vide\TF le 3\ieme argument est développé.
+
+La suite, après cette opération, est amputée de sa dernière
+valeur. J'utilise ici la suite comme une pile \TO c'est le fameux
+\textsc{lifo} pour \English{Last In First Out} \TF. \Expliii{} fournit
+aussi des commandes qui permettent d'utiliser la suite comme une queue
+\TO \textsc{fifo} pour \English{First In First Out}\TF.
+
+Dans la boucle, j'utilise \Macro{seq_if_empty_p+N} qui prend la valeur
+\VRAI{} si la \gls{sequence} est vide. Tant qu'elle n'est pas vide, je
+multiplie par~\(10\) la valeur conservée dans la \gls{variable} donnée
+en~|#2| et j'y ajoute la dernière valeur extraite de la pile.
+
+De fait, le chiffre le plus à droite est celui de \emph{poids} le plus
+grand. 
+
+\medbreak
+
+\Fragment[Kaprekar, remplissage]{24}{26}{./codes/kaprekar-def}
+
+Cette commande assure que la suite contient le bon nombre de chiffres
+en ajoutant des zéros si nécessaire. La seule nouveauté est
+\Macro{seq_count+N} qui donne le nombre de valeurs contenues dans la
+suite.
+
+\medbreak
+
+\Fragment[Kaprekar, tri]{28}{32}{./codes/kaprekar-def}
+
+\Macro{seq_sort+Nn} trie la \gls{sequence} donnée \TO par son \og
+nom\fg\TF en 1\ier argument à l'aide du code donnée en 2\ieme
+argument. Ici, j'échange |##1| et |##2| si le premier est strictement
+supérieur au second, autrement dit, je trie les éléments de la suite du
+plus petit au plus grand. Les commandes \Macro{sort_return_swapped+}
+\TO retourner en échangeant\TF et \Macro{sort_return_same+} \TO
+retourner le même\TF assurent le tri.
+
+\medbreak
+
+\Fragment[Kaprekar, calcul du terme
+suivant]{34}{44}{./codes/kaprekar-def} 
+
+Le terme courant est donné par une \gls{variable} comme 2\ieme
+argument, le 1\ier est la taille, le 3\ieme doit être la
+\gls{variable} qui recevra le terme suivant.
+
+\Macro{kaprun_seq} prend en~\Ligne{35} les chiffres du terme courant
+puis on remplit puis on range dans l'ordre croissant.
+
+Avec \Macro{seq_set_eq:NN}, en~\Ligne{39}, on crée, localement et sans
+contrôle, \Macro{kaprdx_seq} comme copie de \Macro{kaprun_seq} puis,
+en ligne suivante, on la range dans l'ordre décroissant.
+
+Les trois dernières lignes traduisent l'algorithme de \textsc{Kaprekar}
+tel qu'exposé en~\pageref{algokap}.
+
+Il ne reste plus qu'à utiliser tout cela.
+
+\subsection{Commande interne}
+
+\Fragment[Kaprekar, commande interne]{46}{71}{./codes/kaprekar-def}
+
+La commande \Macro{KAP_ecrire_tous_les_suivants+nn} prend la valeur
+de~\(N\) \TO la \emph{taille}\TF en premier argument et le premier
+terme de la suite comme 2\ieme argument.
+
+Une fois de plus, tout se passe dans un groupe, ouvert en~\Ligne{47}
+et fermé en~\Ligne{71}.
+
+J'utilise la \gls{variable} booléenne locale \Macro{l_tmpa_bool}
+fournie par \Expliii{}. Je lui donne la valeur \VRAI{}
+en~\Ligne{48}. Quand elle prendra la valeur \FAUX{} il sera temps de
+sortir de la boucle \TO lignes~\(54\) à~\(57\)\TF qui remplit la
+\gls{sequence} \Macro{kaprekar_seq}.
+
+Avec \Macro{seq_clear+N}, en~\Ligne{49}, je vide la suite
+\Macro{kaprekar_seq}.
+
+En \Ligne{51} je place le 1\ier terme de la suite dans la
+\gls{sequence} \Macro{kaprekar_seq}. Cette fois je remplis par la
+droite avec \Macro{seq_put_right+NV} \TO j'utilise la suite comme une
+\emph{queue}\TF.
+
+C'est parce que j'ai besoin que cette valeur soit placée dans la
+\gls{variable} \Macro{l_tmpc_int} que j'utilise
+\Macro{seq_put_right+NV}. S'il suffisait de placer la valeur
+directement dans la suite, on pourrait utiliser
+\Macro{seq_put_right+Nn} avec le code
+\vspace{-\baselineskip}
+\begin{Verbatim}[frame=lines,framesep=0.75\baselineskip]
+\seq_put_right:Nn \kaprekar_seq {#2}
+\end{Verbatim}
+
+Je place dans \Macro{l_tmpc_int} le terme suivant calculé avec
+\Macro{KAP_suivant+nNN} en~\Ligne{52} et si ce terme est déjà présent
+dans la suite \TO cas ou \(u\sb{1} = u\sb{0}\)\TF je donne à
+\Macro{l_tmpa_bool} la valeur \FAUX. C'est \Macro{seq_if_in+NVT} qui
+permet de vérifier que la valeur~|#2| est présente dans la suite~|#1|
+et de développer, si besoin le code placé dans~|#3|.
+
+À la fin de la \Ligne{57} la suite a été créée.
+
+J'ai laissé, commentée, la \Ligne{58} que j'ai utilisée à titre de
+diagnostic: la commande \Macro{seq_show+N} permet d'écrire le
+contenu de la \gls{sequence} dans le fichier~|.log|.
+
+À la ligne suivante, la commande \Macro{seq_use+Nnnn} permet d'écrire
+le contenu de la \gls{sequence}, donnée en 1\ier argument. Les trois
+arguments suivants donnent, dans l'ordre, le séparateur du premier et
+deuxième élément quand il n'y a que deux éléments; ce qui précède
+chaque élément, sauf le dernier, quand il y plus de deux éléments;
+enfin, ce qui sépare l'avant-dernier du dernier élément. Comme je veux
+que les nombres soient écrits à l'aide de \Macro{np} je ne peux pas me
+contenter de cette ligne d'où ce qui suit.
+
+Après avoir placé dans un compteur le nombre d'éléments de la suite,
+j'utilise \Macro{seq_map_inline+Nn} pour appliquer à chaque élément de
+la suite passée en 1\ier argument le code contenu dans le 2\ieme
+argument \TO \Ligne{62} à~\(70\)\TF.
+
+Dans ce code, j'écris l'élément en en donnant la valeur à \Macro{np}
+en mode mathématique en ligne puis je décrémente le compteur à l'aide
+de \Macro{int_decr+N}.
+
+Avec \Macro{int_case+nnF}, je sélectionne le séparateur à placer: si
+le compteur vaut~\(1\) j'écris \og |~et~|\fg, s'il vaut~\(0\), je n'écris
+rien \TO \Ligne{67}\TF et, dans tous les autres cas \TO \Ligne{69}\TF,
+j'écris \og |~;~|\fg.
+
+% \subsection{\texorpdfstring{\Kaprekar[2]{12}}{kaprekar 2-12}}
+
+% \Fragment[Kaprekar]{4}{45}{./codes/kaprekar-def}
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "dun19expl3"
+%%% End:

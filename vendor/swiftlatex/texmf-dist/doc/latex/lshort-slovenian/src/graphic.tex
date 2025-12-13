@@ -1,0 +1,669 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\setcounter{chapter}{4}
+\newcommand{\graphicscompanion}{\emph{The \LaTeX{} Graphics Companion}~\cite{graphicscompanion}} 
+\newcommand{\hobby}{\emph{A User's Manual for MetaPost}~\cite{metapost}}
+\newcommand{\hoenig}{\emph{\TeX{} Unbound}~\cite{unbound}}
+\newcommand{\graphicsinlatex}{\emph{Graphics in \LaTeXe{}}~\cite{ursoswald}}
+
+\chapter{Priprava matematičnih slik}
+\label{chap:graphics}
+
+\begin{intro}
+Večina uporabnikov z \LaTeX{}om ureja besedila. Čeprav \LaTeX{}ov pristop
+k urejanju besedil poudarja strukturo pred vsebino, \LaTeX{} vseeno 
+ponuja nekaj zelo omejenih možnosti za prikaz grafičnih 
+vsebin, ki jih opišemo z ukazi v vhodni datoteki. Obstaja veliko
+razširitev \LaTeX{}a, ki premostijo te omejitve in omogočajo še
+lažjo pripravo slik. Nekaj jih bomo predstavili v tem poglavju.
+\end{intro}
+
+\section{Kratki pregled}
+
+V okolju \ei{picture} lahko slike programiramo direktno v \LaTeX{}u. Podroben
+opis lahko poiščete v  \manual. Na eni strani smo v tem okolju 
+zelo omejeni z nekaterimi pogoji, tako so npr.~nakloni daljic in 
+polmeri krogov omejeni na majhen izbor možnih vrednosti.  
+Na drugi strani pa imamo v okolju \ei{picture} v \LaTeXe\ na voljo ukaz
+\ci{qbezier} za B\'ezierove krivulje, kjer ">\texttt{q}"< pomeni 
+"<kvadratna"< (quadratic)"<.  Številne pogosto uporabljene
+krivulje kot so krogi, elipse, verižnice in ostale, se da dovolj 
+dobro aproksimirati s kvadratnimi B\'ezierovimi krivuljami, res pa je, da
+za to včasih potrebujemo malo računanja. Za pripravo
+slik iz ukazov \ci{qbezier} lahko uporabimo tudi programski jezik kot je 
+npr.~Java in v tem primeu postane okolje \ei{picture} zelo zmogljivo.
+
+Čeprav je zapisovanje slike direktno v \LaTeX{} dokaj omejeno in dostikrat
+tudi zelo utrudljivo, še vedno obstajajo razlogi, da se slik 
+lotimo na ta način. Tako dobljeni dokumenti zavzamejo manj spomina kot če
+vključujemo zunanje slike, pa še nobenih dodatnih datotek s slikami ne
+potrebujemo.
+
+Paketi kot so \pai{epic}, \pai{eepic} 
+(ta dva sta med drugim opisana v \companion) in 
+\pai{pstricks} odpravljajo omejitve originalnega okolja
+\ei{picture} in močno povečajo grafične sposobnosti \LaTeX{}a.
+
+
+Med tem ko prva dva prej omenjena paketa le razširita okolje
+\ei{picture}, ima paket \pai{pstricks} svoje okolje \ei{pspicture}. 
+Moč paketa \pai{pstricks} izvira iz dejstva, da se v paketu v veliki 
+meri uporabljajo možnosti, ki jih ponuja \PSi{}.
+Poleg tega obstajajo še številni paketi za posebne potrebe. En izmed
+teh je 
+\texorpdfstring{\Xy}{Xy}-pic, ki ga bomo predstavili na koncu tega poglavja.
+Širok izbor teh paketov je podrobno predstavljen v \graphicscompanion{} 
+(ne zamenjujte z \companion).
+
+
+Najmočnejše grafično orodje, povezano z \LaTeX{}om, je najbrž
+\texttt{MetaPost}, dvojček 
+Donald E. Knuthovega orodja \texttt{METAFONT}. 
+\texttt{MetaPost} vsebuje zelo zmogljiv in matematično prefinjen 
+programski jezik tako kot \texttt{METAFONT}. Razlika je, da \texttt{METAFONT}
+generira bitne slike, \texttt{MetaPost} pa generira slike v formatu 
+Encapsulated \PSi{}, ki jih lahko vključimo v \LaTeX. Za uvod v 
+\texttt{MetaPost} poglejte \hobby{} ali navodila na \cite{ursoswald}.
+
+Zelo temeljito razpravo o strategijah za vključevanje slik (in
+pisav) v \LaTeX{} in \TeX{} lahko najdete v \hoenig.
+
+\section{Okolje \texttt{picture}}
+\secby{Urs Oswald}{osurs@bluewin.ch}
+
+\subsection{Osnovni ukazi}
+
+Okolje \ei{picture}\footnote{Če verjamete ali ne, okolje picture
+deluje v povsem navadnem \LaTeXe{} in zanj ni potrebno 
+naložiti nobenega paketa.} vključimo z enim izmed
+naslednjih dveh ukazom
+\begin{lscommand}
+\ci{begin}\verb|{picture}(|$x,y$\verb|)|\ldots\ci{end}\verb|{picture}|
+\end{lscommand}
+\noindent ali
+\begin{lscommand}
+\ci{begin}\verb|{picture}(|$x,y$\verb|)(|$x_0,y_0$\verb|)|\ldots\ci{end}\verb|{picture}|
+\end{lscommand}
+Števila $x,\,y,\,x_0,\,y_0$ se nanašajo na količino \ci{unitlength}, ki jo lahko
+spremenimo kadarkoli
+(a ne znotraj okolja \ei{picture}) z ukazom v stilu
+\begin{lscommand}
+\ci{setlength}\verb|{|\ci{unitlength}\verb|}{1.2cm}|
+\end{lscommand}
+Privzeta vrednost za \ci{unitlength} je \texttt{1pt}. Prvi par, $(x,y)$, pove, koliko pravokotnega prostora znotraj dokumenta je potrebno rezervirati za sliko,
+neobvezni drugi par, $(x_0,y_0)$, pa nastavi te koordinate v spodnji levi kot rezerviranega pravokotnika. 
+
+Večina ukazov za risanje ima eno izmed naslednjih dve oblik
+\begin{lscommand}
+\ci{put}\verb|(|$x,y$\verb|){|\emph{object}\verb|}|
+\end{lscommand}
+\noindent ali
+\begin{lscommand}
+\ci{multiput}\verb|(|$x,y$\verb|)(|$\Delta x,\Delta y$\verb|){|$n$\verb|}{|\emph{object}\verb|}|\end{lscommand}
+Izjema so B\'ezierove krivulje, ki jih narišemo z ukazom
+\begin{lscommand}
+\ci{qbezier}\verb|(|$x_1,y_1$\verb|)(|$x_2,y_2$\verb|)(|$x_3,y_3$\verb|)|
+\end{lscommand}
+%\newpage
+
+\subsection{Daljice}
+\begin{example}
+\setlength{\unitlength}{5cm}
+\begin{picture}(1,1)
+  \put(0,0){\line(0,1){1}}
+  \put(0,0){\line(1,0){1}}  
+  \put(0,0){\line(1,1){1}}  
+  \put(0,0){\line(1,2){.5}}
+  \put(0,0){\line(1,3){.3333}}
+  \put(0,0){\line(1,4){.25}}  
+  \put(0,0){\line(1,5){.2}}
+  \put(0,0){\line(1,6){.1667}}
+  \put(0,0){\line(2,1){1}}
+  \put(0,0){\line(2,3){.6667}}
+  \put(0,0){\line(2,5){.4}}
+  \put(0,0){\line(3,1){1}}  
+  \put(0,0){\line(3,2){1}}
+  \put(0,0){\line(3,4){.75}}
+  \put(0,0){\line(3,5){.6}}
+  \put(0,0){\line(4,1){1}}
+  \put(0,0){\line(4,3){1}}  
+  \put(0,0){\line(4,5){.8}}
+  \put(0,0){\line(5,1){1}}
+  \put(0,0){\line(5,2){1}}
+  \put(0,0){\line(5,3){1}}
+  \put(0,0){\line(5,4){1}}
+  \put(0,0){\line(5,6){.8333}}
+  \put(0,0){\line(6,1){1}}
+  \put(0,0){\line(6,5){1}}
+\end{picture}
+\end{example}
+Daljico narišemo z ukazom
+\begin{lscommand}
+\ci{put}\verb|(|$x,y$\verb|){|\ci{line}\verb|(|$x_1,y_1$\verb|){|$length$\verb|}}|
+\end{lscommand}
+Ukaz \ci{line} ima dva argumenta:
+\begin{enumerate}
+  \item smerni vektor,
+  \item dolžino.
+\end{enumerate}
+Vrednosti komponent v smernem vektorju so omejene 
+na cela števila
+\[
+  -6,\,-5,\,\ldots,\,5,\,6,
+\]
+komponenti pa morata biti tuji števili (razen 1 nimata nobenega skupnega delitelja). Na sliki je predstavljenih vseh 25 možnih naklonov v prvem kvadrantu. Dolžina je podana relativno glede na \ci{unitlength}.
+V primeru navpične daljice kot dolžino podamo navpično koordinato, v vseh drugih pa vodoravno koordinato konca daljice.
+
+\subsection{Puščice}
+
+\begin{example}
+\setlength{\unitlength}{0.75mm}
+\begin{picture}(60,40)
+  \put(30,20){\vector(1,0){30}}
+  \put(30,20){\vector(4,1){20}}
+  \put(30,20){\vector(3,1){25}}
+  \put(30,20){\vector(2,1){30}}
+  \put(30,20){\vector(1,2){10}}
+  \thicklines
+  \put(30,20){\vector(-4,1){30}}
+  \put(30,20){\vector(-1,4){5}}
+  \thinlines
+  \put(30,20){\vector(-1,-1){5}}
+  \put(30,20){\vector(-1,-4){5}}
+\end{picture}
+\end{example}
+Puščico narišemo z ukazom
+\begin{lscommand}
+\ci{put}\verb|(|$x,y$\verb|){|\ci{vector}\verb|(|$x_1,y_1$\verb|){|$length$\verb|}}|
+\end{lscommand}
+Pri puščicah so komponente smernega vektorja
+še bolj omejene kot pri daljicah, saj jih lahko izbiramo le
+med celimi števili
+\[
+  -4,\,-3,\,\ldots,\,3,\,4.
+\]
+Tako kot pri daljicah morata komponenti biti tuji števili.
+Bodite pozorni na vpliv ukaza 
+\ci{thicklines} na dve puščici, ki kažeta v zgornji levi kot.
+
+\subsection{Krožnice}
+
+\begin{example}
+\setlength{\unitlength}{1mm}
+\begin{picture}(60, 40)
+  \put(20,30){\circle{1}}
+  \put(20,30){\circle{2}}
+  \put(20,30){\circle{4}}
+  \put(20,30){\circle{8}}
+  \put(20,30){\circle{16}}
+  \put(20,30){\circle{32}}
+  
+  \put(40,30){\circle{1}}
+  \put(40,30){\circle{2}}
+  \put(40,30){\circle{3}}
+  \put(40,30){\circle{4}}
+  \put(40,30){\circle{5}}
+  \put(40,30){\circle{6}}
+  \put(40,30){\circle{7}}
+  \put(40,30){\circle{8}}
+  \put(40,30){\circle{9}}
+  \put(40,30){\circle{10}}
+  \put(40,30){\circle{11}}
+  \put(40,30){\circle{12}}
+  \put(40,30){\circle{13}}
+  \put(40,30){\circle{14}}
+  
+  \put(15,10){\circle*{1}}
+  \put(20,10){\circle*{2}}
+  \put(25,10){\circle*{3}}
+  \put(30,10){\circle*{4}}
+  \put(35,10){\circle*{5}}
+\end{picture}
+\end{example}
+Ukaz
+\begin{lscommand}
+  \ci{put}\verb|(|$x,y$\verb|){|\ci{circle}\verb|{|\emph{diameter}\verb|}}|
+\end{lscommand}
+\noindent nariše krožnico s središčem v točki $(x,y)$ in premerom \emph{diameter}. V okolju \ei{picture} lahko uporabljamo le premere do
+približno 14\,mm, s tem da pod to vrednostjo niso dopustni vse premeri.
+Ukaz \ci{circle*} nariše zapolnjeni krog.
+
+Tako kot pri daljicah se moramo, če želimo premer, ki ni podprt, obrniti
+na dodatne pakete, kot sta \pai{eepic} in \pai{pstricks}. 
+Temeljit opis teh dveh paketov lahko najdete v \graphicscompanion.
+
+Obstaja pa tudi možnost znotraj okolja 
+\ei{picture}. Če lahko opravite potrebne izračune (oziroma
+jih prepustite ustreznemu programu), potem lahko poljubne daljice
+in krožnice sestavite iz kvadratnih B\'ezierovih krivulj. 
+Poglejte \graphicsinlatex\ za primere in kode pomožnih programov v Javi.
+
+\subsection{Besedila in formule}
+
+\begin{example}
+\setlength{\unitlength}{0.8cm}
+\begin{picture}(6,5)
+  \thicklines
+  \put(1,0.5){\line(2,1){3}}
+  \put(4,2){\line(-2,1){2}}
+  \put(2,3){\line(-2,-5){1}}
+  \put(0.7,0.3){$A$}
+  \put(4.05,1.9){$B$}
+  \put(1.7,2.95){$C$}
+  \put(3.1,2.5){$a$}
+  \put(1.3,1.7){$b$}
+  \put(2.5,1.05){$c$}
+  \put(0.3,4){$F=
+    \sqrt{s(s-a)(s-b)(s-c)}$}  
+  \put(3.5,0.4){$\displaystyle
+    s:=\frac{a+b+c}{2}$}
+\end{picture}
+\end{example}
+Kot prikazuje ta zgled, lahko besedilo in formule vstavimo
+v okolje \ei{picture} s ukazom \ci{put} na povsem 
+običajni način.
+
+\subsection{\ci{multiput} in \ci{linethickness}}
+
+\begin{example}
+\setlength{\unitlength}{2mm}
+\begin{picture}(30,20)
+  \linethickness{0.075mm}
+  \multiput(0,0)(1,0){26}%
+    {\line(0,1){20}}
+  \multiput(0,0)(0,1){21}%
+    {\line(1,0){25}}
+  \linethickness{0.15mm}    
+  \multiput(0,0)(5,0){6}%
+    {\line(0,1){20}}
+  \multiput(0,0)(0,5){5}%
+    {\line(1,0){25}}
+  \linethickness{0.3mm}    
+  \multiput(5,0)(10,0){2}%
+    {\line(0,1){20}}
+  \multiput(0,5)(0,10){2}%
+    {\line(1,0){25}}
+\end{picture}
+\end{example}
+Ukaz
+\begin{lscommand}
+  \ci{multiput}\verb|(|$x,y$\verb|)(|$\Delta x,\Delta y$\verb|){|$n$\verb|}{|\emph{object}\verb|}|
+\end{lscommand}
+\noindent ima 4 argumente: začetno točko, vektor premika od enega
+objekta do naslednjega, število objektov in objekt, ki naj se nariše.
+Ukaz \ci{linethickness} vpliva na vodoravne in navpične daljice,
+ne pa na poševne daljice in krožnice. Vpliva pa, presenetljivo, 
+na kvadratne B\'ezierove krivulje!
+
+\subsection{Ovali}
+
+\begin{example}
+\setlength{\unitlength}{0.75cm}
+\begin{picture}(6,4)
+  \linethickness{0.075mm}
+  \multiput(0,0)(1,0){7}%
+    {\line(0,1){4}}
+  \multiput(0,0)(0,1){5}%
+    {\line(1,0){6}}
+  \thicklines
+  \put(2,3){\oval(3,1.8)} 
+  \thinlines
+  \put(3,2){\oval(3,1.8)} 
+  \thicklines
+  \put(2,1){\oval(3,1.8)[tl]} 
+  \put(4,1){\oval(3,1.8)[b]} 
+  \put(4,3){\oval(3,1.8)[r]} 
+  \put(3,1.5){\oval(1.8,0.4)}     
+\end{picture}
+\end{example}
+Ukaz
+\begin{lscommand}
+  \ci{put}\verb|(|$x,y$\verb|){|\ci{oval}\verb|(|$w,h$\verb|)}|
+\end{lscommand}
+\noindent ali v obliki
+\begin{lscommand} \ci{put}\verb|(|$x,y$\verb|){|\ci{oval}\verb|(|$w,h$\verb|)[|\emph{polozaj}\verb|]}|
+\end{lscommand}
+\noindent vrne oval s središčem v $(x,y)$, s širino $w$ in z višino $h$. 
+Neobvezni argument
+\emph{polozaj} ima lahko vrednosti \texttt{b}, \texttt{t}, \texttt{l}, \texttt{r} ki po vrsti pomenijo zgoraj, spodaj, levo, desno, lahko pa jih
+tudi kombiniramo, kot je prikazano v zgledu.
+
+\subsection{Debelina črt}
+
+Na debelino črt lahko vplivamo z dvema razredoma ukazov. Na eni strani je 
+\ci{linethickness}\verb|{|\emph{length}\verb|}|
+na drugi strani pa sta ukaza \ci{thinlines} in \ci{thicklines}.
+Medtem kot \ci{linethickness}\verb|{|\emph{length}\verb|}|
+vpliva le na vodoravne in navpične črte (in na kvadratne B\'ezierove krivulje),
+ukaza \ci{thinlines} in \ci{thicklines}
+vplivata na poševne črte, krožnice in ovale. 
+
+
+\subsection{Večkratna uporaba vnaprej pripravljenih škatel s slikami}
+
+\begin{example}
+\setlength{\unitlength}{0.5mm}
+\begin{picture}(120,168)
+\newsavebox{\foldera}
+\savebox{\foldera}
+  (40,32)[bl]{% definicija 
+  \multiput(0,0)(0,28){2}
+    {\line(1,0){40}}
+  \multiput(0,0)(40,0){2}
+    {\line(0,1){28}}
+  \put(1,28){\oval(2,2)[tl]}
+  \put(1,29){\line(1,0){5}}
+  \put(9,29){\oval(6,6)[tl]}
+  \put(9,32){\line(1,0){8}}
+  \put(17,29){\oval(6,6)[tr]}
+  \put(20,29){\line(1,0){19}}
+  \put(39,28){\oval(2,2)[tr]}  
+}
+\newsavebox{\folderb}
+\savebox{\folderb}
+  (40,32)[l]{%         definicija
+  \put(0,14){\line(1,0){8}}
+  \put(8,0){\usebox{\foldera}}
+}
+\put(34,26){\line(0,1){102}} 
+\put(14,128){\usebox{\foldera}}
+\multiput(34,86)(0,-37){3}
+  {\usebox{\folderb}} 
+\end{picture}
+\end{example}
+Škatlo s sliko lahko \emph{napovemo} z ukazom
+\begin{lscommand}
+  \ci{newsavebox}\verb|{|\emph{ime}\verb|}|
+\end{lscommand}
+\noindent potem jo \emph{definiramo} z   
+\begin{lscommand}
+  \ci{savebox}\verb|{|\emph{ime}\verb|}(|\emph{width,height}\verb|)[|\emph{position}\verb|]{|\emph{content}\verb|}|
+\end{lscommand}
+\noindent na koncu pa jo lahko \emph{narišemo} kolikor krat želimo z
+\begin{lscommand}
+  \ci{put}\verb|(|$x,y$\verb|)|\ci{usebox}\verb|{|\emph{ime}\verb|}|
+\end{lscommand}
+
+Dodatno neobvezni parameter \emph{pozicija} definira mesto, na katerem
+je referenčna točka shranjene škatle s sliko, oziroma mesto, kjer je 
+škatla ">zasidrana"<. V zgornjem primeru je to mesto nastavljeno na \texttt{bl} kar
+postavlja mesto priveza v gornji levi kot škatle. Ostale možno
+vrednosti za ta parameter so še \texttt{t} (zgoraj) in \texttt{r} (desno).
+
+Argument \emph{ime} se nanaša na \LaTeX{}ov pomnilnik in ima naravo
+ukaza (zato v zgornjem primeru imena vsebujejo tudi poševnice). 
+Škatle s slikami lahko vlagamo v druge škatle, v zgornjem primeru je
+tako npr.~\ci{foldera} uporabljen v definiciji \ci{folderb}.
+
+V definiciji smo morali uporabiti ukaz \ci{oval}, saj ukaz \ci{line} 
+ne podpira daljic, kjer je dolžina segmenta manjša od 3\,mm.
+
+\subsection{Kvadratne B\'ezierove krivulje}
+
+\begin{example}
+\setlength{\unitlength}{0.8cm}
+\begin{picture}(6,4)
+  \linethickness{0.075mm}
+  \multiput(0,0)(1,0){7}
+    {\line(0,1){4}}
+  \multiput(0,0)(0,1){5}
+    {\line(1,0){6}}
+  \thicklines
+  \put(0.5,0.5){\line(1,5){0.5}}    
+  \put(1,3){\line(4,1){2}} 
+  \qbezier(0.5,0.5)(1,3)(3,3.5)
+  \thinlines   
+  \put(2.5,2){\line(2,-1){3}}
+  \put(5.5,0.5){\line(-1,5){0.5}}
+  \linethickness{1mm}
+  \qbezier(2.5,2)(5.5,0.5)(5,3)
+  \thinlines
+  \qbezier(4,2)(4,3)(3,3)
+  \qbezier(3,3)(2,3)(2,2)
+  \qbezier(2,2)(2,1)(3,1)
+  \qbezier(3,1)(4,1)(4,2)
+\end{picture}
+\end{example}
+Kot prikazuje ta primer, ni dovolj dobro, če krožnico razdelimo le
+na 4 kvadratne B\'ezierove krivulje. Potrebujemo jih najmanj 8.
+Na sliki vidimo tudi, kakšne je vpliv ukazov
+\ci{linethickness} na vodoravne in navpične premice in kako
+\ci{thinlines} in \ci{thicklines} vplivata na poševne daljice. Vidimo
+lahko tudi, da oba razreda ukazov delujeta na kvadratne B\'ezierove krivulje,
+kjer vsak nov ukaz povozi prejšnjega.
+
+Naj $P_1=(x_1,\,y_1),\,P_2=(x_2,\,y_2)$ označujeta končni točki, in naj
+bosta $m_1$ in $m_2$ naklona kvadratne B\'ezierove krivulje v teh točkah. 
+Vmesna kontrolna točka
+$S=(x,\,y)$ je potem podana z enačbami
+\begin{equation} \label{zwischenpunkt}
+  \left\{
+    \begin{array}{rcl}
+      x & = & \displaystyle \frac{m_2 x_2-m_1x_1-(y_2-y_1)}{m_2-m_1}, \\
+      y & = & y_i+m_i(x-x_i)\qquad (i=1,\,2).
+    \end{array}
+  \right.
+\end{equation}
+\noindent Poglejte \graphicsinlatex\ za program v Javi, ki generira vrstice
+s potrebnimi ukazi \ci{qbezier}.
+
+\subsection{Verižnica}
+
+\begin{example}
+\setlength{\unitlength}{1cm}
+\begin{picture}(4.3,3.6)(-2.5,-0.25)
+\put(-2,0){\vector(1,0){4.4}}
+\put(2.45,-.05){$x$}
+\put(0,0){\vector(0,1){3.2}}
+\put(0,3.35){\makebox(0,0){$y$}}
+\qbezier(0.0,0.0)(1.2384,0.0)
+  (2.0,2.7622) 
+\qbezier(0.0,0.0)(-1.2384,0.0)
+  (-2.0,2.7622)
+\linethickness{.075mm}
+\multiput(-2,0)(1,0){5}
+  {\line(0,1){3}}
+\multiput(-2,0)(0,1){4}
+  {\line(1,0){4}}
+\linethickness{.2mm}
+\put( .3,.12763){\line(1,0){.4}}
+\put(.5,-.07237){\line(0,1){.4}}
+\put(-.7,.12763){\line(1,0){.4}}
+\put(-.5,-.07237){\line(0,1){.4}}
+\put(.8,.54308){\line(1,0){.4}}
+\put(1,.34308){\line(0,1){.4}}
+\put(-1.2,.54308){\line(1,0){.4}}
+\put(-1,.34308){\line(0,1){.4}}
+\put(1.3,1.35241){\line(1,0){.4}}
+\put(1.5,1.15241){\line(0,1){.4}}
+\put(-1.7,1.35241){\line(1,0){.4}}
+\put(-1.5,1.15241){\line(0,1){.4}}
+\put(-2.5,-0.25){\circle*{0.2}}
+\end{picture}
+\end{example}
+
+Na tej sliki je vsaka simetrična polovica grafa verižnice $y=\cosh x -1$ 
+aproksimirana s kvadratno B\'ezierovo krivuljo. 
+Desna polovica krivulje se konča v točki \((2,\,2.7622)\), kjer ima
+odvod vrednost \(m=3.6269\). S pomočjo enačb (\ref{zwischenpunkt}) lahko
+izračunamo vmesne kontrolne točke. Za njiju se izkaže, da sta 
+ $(1.2384,\,0)$ in $(-1.2384,\,0)$. 
+Križi označujejo točke \emph{prave} verižnice. Vidimo, da razlika
+skoraj ni opazna in je povsod pod enim procentom.
+
+Ta primer kaže, kako lahko uporabljamo neobvezni argument
+v ukazu \\
+\verb|\begin{picture}|.
+Slika je definirana v smiselnih matematičnih koordinatah, 
+medtem ko ukaz
+\begin{lscommand} 
+  \ci{begin}\verb|{picture}(4.3,3.6)(-2.5,-0.25)|
+\end{lscommand}
+\noindent za njen spodnji levi kot (označen z črnim pobarvanim diskom)
+privzame koordinate $(-2.5,-0.25)$. 
+
+\subsection{Hitrost v posebni teoriji relativnosti}
+
+\begin{example}
+\setlength{\unitlength}{0.8cm}
+\begin{picture}(6,4)(-3,-2)
+  \put(-2.5,0){\vector(1,0){5}}
+  \put(2.7,-0.1){$\chi$}
+  \put(0,-1.5){\vector(0,1){3}}
+  \multiput(-2.5,1)(0.4,0){13}
+    {\line(1,0){0.2}}
+  \multiput(-2.5,-1)(0.4,0){13}
+    {\line(1,0){0.2}}
+  \put(0.2,1.4)
+    {$\beta=v/c=\tanh\chi$}
+  \qbezier(0,0)(0.8853,0.8853)
+    (2,0.9640)
+  \qbezier(0,0)(-0.8853,-0.8853)
+    (-2,-0.9640)
+  \put(-3,-2){\circle*{0.2}}
+\end{picture}
+\end{example}
+Kontrolne točke dveh B\'ezierovih krivulj so bile izračunane s pomočjo
+formul (\ref{zwischenpunkt}).
+Pozitivna veja je določena s $P_1=(0,\,0),\,m_1=1$ in $P_2=(2,\,\tanh 2),\,m_2=1/\cosh^2 2$.
+Slika je definirana z matematično najustreznejšimi koordinatami, potem pa 
+levemu spodnjemu kotu določimo koordinate $(-3,-2)$ (črn krog).
+
+
+\section{\texorpdfstring{\Xy}{Xy}-pic}
+\secby{Alberto Manuel Brand\~ao Sim\~oes}{albie@alfarrabio.di.uminho.pt}
+\pai{xy} je poseben paket za risanje diagramov. Za njegovo
+uporabo moramo v preambulo dokumenta dodati:
+\begin{lscommand}
+\verb|\usepackage[|\emph{opcije}\verb|]{xy}|
+\end{lscommand}
+Pri tem v \emph{opcije} navedemo seznam funkcij iz 
+ \Xy-pic ki jih želimo naložiti. Te opcije pridejo prav kadar je potrebno
+iskati napake v paketu, sicer pa je najbolj priporočljivo 
+na mestu \emph{opcije} podati \verb!all!, s čimer povzročimo,
+da \LaTeX{} naloži vse ukaze iz paketa \Xy-pic.
+
+\Xy-pic diagrami se rišejo na podlago, ki je urejena v 
+stilu matrike, pri čemer se vsak element
+diagrama zapiše na mesto elementa matrike:
+\begin{example}
+\begin{displaymath}
+\xymatrix{A & B \\
+          C & D }
+\end{displaymath}
+\end{example}
+Ukaz \ci{xymatrix} moramo uporabiti v matematičnem načinu. V tem primeru
+smo podali dve vrstici in dva stolpca. Iz te matrike dobimo diagram, ko
+dodamo usmerjene povezave z ukazom \ci{ar}.
+\begin{example}
+\begin{displaymath}
+\xymatrix{ A \ar[r] & B \ar[d] \\
+           D \ar[u] & C \ar[l] }
+\end{displaymath}
+\end{example}
+Ukaz za puščico je potrebno postaviti na mesto tistega elementa
+v matriki, od koder puščica izvira. Argumenti ukaza \texttt{ar} so
+smeri, kamor naj kaže puščica (\texttt{u} (gor),
+\texttt{d} (dol), \texttt{r} (desno) in \texttt{l} (levo).
+
+\begin{example}
+\begin{displaymath}
+\xymatrix{
+  A \ar[d] \ar[dr] \ar[r] & B \\
+  D                       & C }
+\end{displaymath}
+\end{example}
+Diagonalne puščice dobimo tako, da uporabimo več kot eno črko za opis smeri. 
+Opis smeri lahko tudi sestavimo iz več črk in tako dobimo daljše diagonale.
+\begin{example}
+\begin{displaymath}
+\xymatrix{
+  A \ar[d] \ar[dr] \ar[drr] & & \\
+  B                      & C & D }
+\end{displaymath}
+\end{example}
+
+Še bolj zanimive diagrame dobimo, če puščice opremimo z napisi. To dosežemo
+z uporabo običajnih operatorjev za indekse in potence..
+\begin{example}
+\begin{displaymath}
+\xymatrix{
+  A \ar[r]^f \ar[d]_g &
+             B \ar[d]^{g'} \\
+  D \ar[r]_{f'}       & C }
+\end{displaymath}
+\end{example}
+
+Kot vidite, operatorje za napise na puščicah uporabljamo kot v matematičnem načinu.Edina razlika je, da sedaj potenca (zgornji indeks) pomeni 
+">na vrhu puščice,"< indeks pa pomeni ">pod puščico."< Obstaja še tretji
+operator, pokončna črta: \verb+|+
+Ta operator razporedi tekst \emph{na} puščico.
+\begin{example}
+\begin{displaymath}
+\xymatrix{
+  A \ar[r]|f \ar[d]|g &
+             B \ar[d]|{g'} \\
+  D \ar[r]|{f'}       & C }
+\end{displaymath}
+\end{example}
+
+Če potrebujemo puščico z luknjo, uporabimo \verb!\ar[...]|\hole!.
+
+V nekaterih primerih je potrebno ločiti 
+med različnimi tipi puščic. To lahko naredimo tako,
+ da jih opremimo z napisi ali pa spremenimo njihov videz:
+
+\begin{example}
+\shorthandoff{"}
+\begin{displaymath}
+\xymatrix{
+\bullet\ar@{->}[rr] && \bullet\\
+\bullet\ar@{.<}[rr] && \bullet\\
+\bullet\ar@{~)}[rr] && \bullet\\
+\bullet\ar@{=(}[rr] && \bullet\\
+\bullet\ar@{~/}[rr] && \bullet\\
+\bullet\ar@{^{(}->}[rr] &&
+                       \bullet\\
+\bullet\ar@2{->}[rr] && \bullet\\
+\bullet\ar@3{->}[rr] && \bullet\\
+\bullet\ar@{=+}[rr]  && \bullet
+}
+\end{displaymath}
+\shorthandon{"}
+\end{example}
+
+Bodite pozorni na razlike med naslednjima dvema diagramoma:
+
+\begin{example}
+\begin{displaymath}
+\xymatrix{
+ \bullet \ar[r] 
+         \ar@{.>}[r] & 
+ \bullet
+}
+\end{displaymath}
+\end{example}
+
+\begin{example}
+\begin{displaymath}
+\xymatrix{
+ \bullet \ar@/^/[r] 
+         \ar@/_/@{.>}[r] &
+ \bullet
+}
+\end{displaymath}
+\end{example}
+
+Znamenje med poševnicama pove, kako 
+naj se nariše krivulja.
+\Xy-pic ponuja mnogo možnosti, ki vplivajo
+na risanje krivulj. Za več informacij poglejte v dokumentacijo, ki je
+priložena paketu.
+
+
+% \begin{example}
+% \begin{lscommand}
+% \ci{dum}
+% \end{lscommand}
+% \end{example}
+

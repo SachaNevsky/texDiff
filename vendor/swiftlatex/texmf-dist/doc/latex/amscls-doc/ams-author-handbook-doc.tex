@@ -1,0 +1,366 @@
+%%
+%% This is file `ams-author-handbook-doc.tex'
+%%
+%% Copyright 2017 American Mathematical Society.
+%% 
+%% American Mathematical Society
+%% Technical Support
+%% Publications Technical Group
+%% 201 Charles Street
+%% Providence, RI 02904
+%% USA
+%% tel: (401) 455-4080
+%%      (800) 321-4267 (USA and Canada only)
+%% fax: (401) 331-3842
+%% email: tech-support@ams.org
+%% 
+%% This work may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either version 1.3c
+%% of this license or (at your option) any later version.
+%% The latest version of this license is in
+%%   http://www.latex-project.org/lppl.txt
+%% and version 1.3c or later is part of all distributions of LaTeX
+%% version 2005/12/01 or later.
+%% 
+%% This work has the LPPL maintenance status `maintained'.
+%% 
+%% The Current Maintainer of this work is the American Mathematical
+%% Society.
+%% 
+%% ========================================================================
+\documentclass{amsart}
+
+% The option [openright] is used in the macro set, which assumes the use
+% of amsbook; it is not provided by amsart, so set it up here.
+\makeatletter
+\newif\if@openright
+\makeatother
+
+% Use the same macros applied to the Handbooks.
+\usepackage{ahandinstr-r}
+
+% test redefinition to get \tt underscore
+%\catcode`\_=12
+\renewcommand{\fn}[1]{{\def\_{\ttfamily\char`\_}%
+  \mbox{\texttt{\ignorespaces#1\unskip}}}}
+%\catcode`\_=8
+
+% Replace \scshape in section headings to preserve file names.
+\makeatletter
+\renewcommand{\section}{\@startsection{section}{1}%
+  \z@{.7\linespacing\@plus\linespacing}{.5\linespacing}%
+  {\normalfont\bfseries\centering}}
+\makeatother
+\setcounter{secnumdepth}{0}
+
+\newcommand{\BibTeX}{\textsf{Bib\!\TeX}}
+\newcommand{\XeTeX}{\textsf{Xe\TeX}}
+
+\begin{document}
+\title{Compiling the AMS Author Handbooks from~a~complex source}
+\author[AMS Technical Support Group]%
+  {AMS Technical Support Group\\Version 1.0, September 2017}
+
+\begin{abstract}
+ Publications of the American Mathematical Society (AMS) are of several
+ types, each based on an AMS-specific document class.  Manuscripts are
+ prepared by authors and (after editorial acceptance) are submitted to
+ the Society's production department where they are processed for
+ printing and publication.
+
+ In order to make this process as painless as possible for both authors
+ and production staff, instructions for authors---the AMS Author
+ Handbook---has been created in separate versions, one for each type of
+ publication.  Author instructions are in large part common to all
+ publication types, with specific additions or variations as needed.
+ The core material is contained in one large \LaTeX\ file, with variant
+ material selected on the basis of binary switch settings, either from
+ embedded options or pulled in from subsidiary files.  Creation and
+ management of that exercise is the subject of this overview.
+\end{abstract}
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+\label{sec:intro}
+The purpose of the present document is to explain how a four-version
+user manual is generated from a ``single'' source, consisting of a
+core central text, modified by or augmented with product-specific
+material provided by command-specified variants or additional files
+addressing specific topics.  The manual(s) being described are entitled
+``AMS Author Handbook'', and will be referred to collectively here as
+the ``Handbooks''.
+
+This overview is directed toward \latex/ users who are already familiar
+with the general mechanics of developing packages and writing the
+associated documentation.
+
+AMS publications fall into four types, each based on an AMS-specific
+document class:
+\begin{itemize}
+\item Journals: articles use the \cls{amsart} document class.
+\item Monographs and textbooks: \cls{amsbook} defines the core style,
+ with variations---sometimes extensive---provided in the form of
+ series-specific document classes.
+\item Proceedings and similar collections: articles are prepared using
+ \cls{amsproc} or a series-specific variation.  There is no attempt to
+ process a complete volume as a unit; articles are processed separately
+ and combined later from individual \fn{pdf} files.  Front matter is
+ also prepared separately using a dedicated \cls{editor} class, which
+ will not be further discussed here.
+\item \Memos: this is a hybrid series with individual units based on
+ \cls{amsbook} with modifications; it is treated as a subscription
+ journal for distribution.  (The name \Memos\ is the formal title of
+ the publication, and each individual issue is referred to in the
+ singular form.)
+\end{itemize}
+
+\newpage
+
+The four variations of the Handbook are launched by separate ``driver''
+files, each of which contains only the few instructions necessary to
+set the scene:
+\begin{trivlist}
+\item\relax
+\leftskip=2\normalparindent
+\verb+\documentclass+\\
+\verb+%  [openany]  %+\qquad
+  The \texttt{openany} option may be used for screen viewing.\\
+\verb+  {amsbook}+\\
+\verb+\usepackage{ahandinstr-r}+\\
+\verb+\setboolean{+\<document type>\verb+}{true}+\\
+\verb+\input{Author_Handbook_Body}+\\
+\verb+\end{document}+
+\end{trivlist}
+
+The components are described in the following sections.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{The macro package:
+ \texorpdfstring{\fn{ahandinstr-r.sty}}{ahandinstr-r.sty}}
+This collection of macros provides commands for selecting the document
+type and formatting the contents.
+
+Document type selection is controlled by two types of commands: binary
+switches (a.k.a.\ ``booleans'') and macros with arguments.  The latter
+are defined based on the switches for making the desired selection, and
+in turn are most often used to select small text strings or to pull in
+subsidiary files.  Here are a couple of examples, with typical uses.
+\begin{verbatim}|leftskip=2|normalbaselineskip
+\newcommand{\jmp}[3]{%
+        \ifjournal #1\fi
+        \ifmonograph #2\fi
+        \ifproceedings #3\fi
+}
+\jmp{\input J-Series}{\input M-Series}{\input PC-Series}
+
+\newcommand{\notmonograph}[1]{%
+        \ifmonograph
+        \else #1\fi
+}
+\item Do not use \textbf{author-defined macros} in author names,
+ titles, \notmonograph{abstract, }%
+ section and theorem headings, or references;
+\end{verbatim}
+Choice of a boolean or macro has been based on what seemed to be most
+robust and easy to maintain as the document was written or updated.
+
+It is also possible to tailor the output for printing or reading online.
+The default formatting option for \cls{amsbook} is \opt{openright}; that
+is, start every chapter on a right-hand page.  But the resulting blank
+pages are a distraction for online reference, so \opt{openany} can be
+specified if that is the expected use.  This option had already been
+applied selectively to the handbooks, to force the two-page table of
+contents onto a page span, and for all but the monographs version (which
+has a two-page introduction) to run the introduction in on the otherwise
+blank page following the contents.  To permit this exception, while
+retaining the ability to follow the intended document-wide formatting,
+an internal option, \cn{if@openany}, has been added.
+
+The subject macro package has been used in compiling the present document
+in order to maintain a consistent format.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Files composing the Author Handbook complex}
+
+The four versions of the Handbook are produced by separate driver files,
+already described in the introduction, on page~\pageref{sec:intro}.
+\begin{itemize}
+\item \fn{Author\_Handbook\_Journals.tex}
+\item \fn{Author\_Handbook\_Mono.tex}
+\item \fn{Author\_Handbook\_ProcColl.tex}
+\item \fn{Author\_Handbook\_Memo.tex}
+\end{itemize}
+
+The macro package responsible for styling the contents,
+\fn{ahandinstr-r.sty}\,, has also been described above.
+
+A single file, \fn{Author\_Handbook\_Body.tex}, contains the main content;
+see page~\pageref{sec:body}.
+
+One version of the Handbook covers only a single publication, \Memos;
+the coverage of the other three is provided as three separate lists,
+each in its own file to permit easy updates:
+\begin{itemize}
+\item \fn{J-Series.tex}
+\item \fn{M-Series.tex}
+\item \fn{PC-Series.tex}
+\end{itemize}
+
+Each version of the Handbook contains a list of requirements tailored
+for the specific type of publication:
+\begin{itemize}
+\item \fn{J-Checklist.tex}
+\item \fn{M-Checklist.tex}
+\item \fn{PC-Checklist.tex}
+\item \fn{Mem-Checklist.tex}
+\end{itemize}
+Since many checklist items are identical in more than one version, they
+are defined as token strings.  A name is assigned to each token string
+by the \cn{newtoks} command, in the macro file.  The (variant) texts are
+defined in the body, just before the section in which each is to be used;
+only the token string name appears in the input text.
+
+The content of a publication's top matter differs by publication type,
+so the details are provided in separate files:
+\begin{itemize}
+\item \fn{TopMatterTags\_J.tex}
+\item \fn{TopMatterTags\_M.tex}
+\item \fn{TopMatterTags\_PC.tex}
+\item \fn{TopMatterTags\_Mem.tex}
+\end{itemize}
+
+The requirements for graphics are common to all types of publications,
+but a different author is responsible for this material, so the text
+is in a file by itself.  Several illustrations are present as \fn{.eps}
+files, with equivalent \fn{.pdf} versions.
+\begin{itemize}
+\item \fn{Graphics\_Guidelines.tex}
+\item \fn{Color2Gray.eps} / \fn{Color2Gray.pdf}
+\item \fn{gamuts.eps} / \fn{gamuts.pdf}
+\item \fn{rgb-cmyk.eps} / \fn{rgb-cmyk.pdf}
+\item \fn{spectrum.eps} / \fn{spectrum.pdf}
+\end{itemize}
+
+Finally, two chapters dealing with procedures and the bibliography
+complete the collection.  That they are in separate files is an
+accident of history.
+\begin{itemize}
+\item \fn{Submitting2AMS.tex}
+\item \fn{ResourcesHelp.tex}
+\item \fn{AH\_Bibliography.tex}
+\end{itemize}
+
+Total distinct files in the collection making up the Handbooks: 29.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{The main text file:
+\texorpdfstring{\fn{Author\_Handbook\_Body.tex}}{Author\_Handbook\_Body.tex}}
+\label{sec:body}
+
+This file contains the bulk of the text.
+
+If a difference between versions is small (e.g., a few words), or can
+be represented by a compact instruction (e.g.,
+\verb+\input{+\<file name>\verb+}+, a macro with arguments denoting the
+requisite version(s) is used.
+
+If the difference is extensive---more than one paragraph is changed or
+variations are nested---the boolean \cn{if} commands are used directly.
+
+An effort has been made to avoid repetition, sometimes at the cost of
+input coding that is more complex than desirable.  The reason for this
+choice is the high probability that duplicated content could be
+overlooked when updates are made.  In the case of an instruction manual,
+this can affect a large number of users and result in unnecessary
+questions, whereas getting the input coding right usually depends on
+only one person or a small group.
+
+Rather than showing involved examples here, it is more instructive to
+look at the actual files.  Some examples of varying complexity can be
+found following these lines: \verb+\chapter{Introduction}+ and
+\verb+\subsection{indexing}+.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Rationale for determining segmentation}
+
+As hinted at earlier, the decision to include material in a single file
+or multiple files is based on several factors.
+
+For the project described here, the use of several independent driver
+files makes it possible to preserve the output for all versions while
+working on only one of them.  It also makes identification of the
+different versions straightforward, since the appropriate version name
+is permanantly associated with each.
+
+Segregation of project-specific macros in a dedicated style file
+(loaded with \cn{usepackage}) brings such benefits as the ability to
+use ``internal'' control sequence names without having to bother with
+\cn{makeatletter} and the like.
+
+Development and maintenance of the content can easily be divided among
+multiple authors if it is possible to \cn{input} or \cn{include} it.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Environmental considerations affecting this document}
+
+The AMS production environment in great measure affects what is described
+in the Handbooks, and indeed in the present document as well.  The AMS
+published more than 60,000 pages in 2016 from \LaTeX\ input.  To support
+an operation of this size, automation and consistency of input are key
+considerations.
+
+The principal engine used for AMS production is \textsf{pdflatex}, with
+\fn{dvi} output for print and \fn{pdf} output for online posting.  This
+supports the essential requirements that line and page breaks must be
+identical in the two forms of a paper or book, and also that hyperlinks
+must be accurately placed in the electronic version.
+
+A third requirement is the ability to perform automated checking of
+graphics, which are becoming increasingly common in mathematical
+publications.  This is, so far, all but impossible once a document is in
+pdf form; as a former member of the AMS technical support group once put
+it, ``In a \fn{pdf} file, everything is just hamburger.''  A line in a
+graph is no longer distinguishable from many other features in the file,
+and it is not always possible even to isolate the content of a graphic
+from the surrounding text.  A graphic in a separate file, along with the
+sizing information in the \fn{dvi} file, can be processed by a script to
+determine (among other things) line thickness (color-adjusted if
+necessary), font size, and color usage (RGB vs.\ CMYK), and only those
+graphics containing a questionable element are flagged for review by a
+human.
+
+Another production decision of long standing is to use the Computer
+Modern fonts.  Again, there are exceptions, but they must be given
+special handling; processing of documents using the STIX fonts will
+require the use of \XeTeX, and the infrastructure necessary for that
+change is being developed.  (\textsf{LuaLaTeX} has, until recently, been
+too unstable to consider for production use; even now, consistency and
+backward compatibility are not guaranteed, but the time may have come to
+study the possibility.)
+
+Bibliography processing is supported only for \BibTeX\ and \pkg{amsrefs};
+for journals and proceedings papers, bibliography input is normalized to
+\pkg{amsrefs}, drawing ``standard'' coding and content from the
+MathSciNet database.  \pkg{amsrefs} was developed and adopted as an
+alternative to \BibTeX\ before the creation of \pkg{biblatex}, and the
+(rather extensive) effort to provide support for \pkg{biblatex} was
+therefore never undertaken.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Reporting problems}
+
+Inaccuracies or other problems in either this overview or in the various
+files that make up the Handbook complex can be reported to the AMS
+technical support group by email, to \texttt{tech-support@ams.org}\,.
+Please specify ``Author Handbook'' as the subject.  Suggestions for
+improvement are welcome as well.
+
+\end{document}

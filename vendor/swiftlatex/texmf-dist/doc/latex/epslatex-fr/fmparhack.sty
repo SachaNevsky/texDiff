@@ -1,0 +1,315 @@
+%%
+%% This is file `fmparhack.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% mparhack.dtx  (with options: `sty')
+%% 
+%% Workaround for the marginpar bug.
+%% 
+%% This program is free software; you can redistribute it and/or
+%% modify it under the terms of the GNU General Public License
+%% as published by the Free Software Foundation; either version 2
+%% of the License, or (at your option) any later version.
+%% 
+%% This program is distributed in the hope that it will be useful,
+%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%% GNU General Public License for more details.
+%% 
+%% You should have received a copy of the GNU General Public License
+%% along with this program; if not, write to the Free Software
+%% Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+%% 
+\NeedsTeXFormat{LaTeX2e}
+  \ProvidesPackage{fmparhack}
+      [1999/03/02 v1.0  (T. Sgouros and S. Ulrich)]
+\def\@pkg@name{fmparhack}
+\newif\if@mph@firstcol@
+\newif\if@mph@warning@
+\newif\if@mph@warning@notdone@ %JPFD
+\@mph@warning@notdone@true %JPFD
+\newif\if@debug@
+\newcommand*\mph@debug[2][]{%
+    \if@debug@
+%%%       \PackageInfo{\@pkg@name}{#1}%
+       \typeout{DBG: #2}%
+    \else
+        \ifx#1\@empty\else
+            \typeout{DBG (#1): #2}%
+        \fi
+    \fi
+}
+
+\DeclareOption{debug}{%
+  \global\@debug@true
+}%
+\ProcessOptions*
+\newcommand*\mph@nr{0}
+\newcommand*\mph@save{0}
+\newcommand*\mph@lastpage{0}
+\newcommand*\mph@cnt{0}
+\newcommand*\mph@step@cnt[1]{%
+    \begingroup
+    \@tempcnta#1
+    \advance\@tempcnta\@ne
+    \protected@xdef#1{\the\@tempcnta}%
+    \endgroup
+}
+
+\newcommand\mph@setcol[2]{%
+  \expandafter\xdef\csname mph@last@#1\endcsname{#2}%
+}
+\newcommand\mph@check[2]{%
+    \edef\reserved@a{#2}%
+    \expandafter\ifx\csname mph@last@#1\endcsname\reserved@a
+        \mph@debug{#2 == \csname mph@last@#1\endcsname}%
+    \else
+            \mph@debug{#2 != \csname mph@last@#1\endcsname!}%
+            \global\@mph@warning@true
+    \fi
+}
+\newcommand\mph@do@warn{%
+  \if@mph@warning@notdone@ %JPFD
+  \if@mph@warning@
+	\global\@mph@warning@notdone@false %JPFD
+        \PackageWarningNoLine{fmparhack}{Marginpars may have
+            changed.\MessageBreak Rerun to get them right%
+        }%
+    \fi
+    \fi %JPFD
+}
+\AtEndDocument{%
+    \let\mph@setcol\mph@check
+    \clearpage
+    \immediate\write\@auxout{%
+        \string\gdef\string\mph@lastpage{\thepage}%
+        \string\mph@do@warn
+    }%
+}
+\newcommand\mph@ifundef@or@gt[1]{%
+    \expandafter\ifx#1\relax
+        \let\@tempa\@firstoftwo
+    \else
+        \ifnum\mph@cnt>#1\relax
+            \let\@tempa\@firstoftwo
+        \else
+            \let\@tempa\@secondoftwo
+        \fi
+    \fi
+    \@tempa
+}
+
+\newcommand\mph@get@margin{%
+    \begingroup
+    \loop
+    \@tempswafalse
+    \mph@debug{checking \mph@cnt}%
+    \if@twocolumn
+        \mph@debug{last on page \thepage:
+                \csname mph@last@i..\thepage\endcsname(i)
+                \csname mph@last@ii..\thepage\endcsname(ii),
+                switch \if@tempswa true \else false\fi
+        }%
+        \mph@ifundef@or@gt{%
+            \csname mph@last@i..\thepage\endcsname
+        }{%
+            \mph@ifundef@or@gt{%
+                \csname mph@last@ii..\thepage\endcsname
+            }{%
+                \global\@mph@firstcol@true
+                \@tempswatrue
+                \advance\c@page by 1
+                \mph@debug{++page.. \thepage, set col to i,
+                    switch \if@tempswa true \else false\fi
+                }%
+            }{%
+                \global\@mph@firstcol@false
+                \@tempswafalse
+                \mph@debug{exiting loop}%
+            }%
+        }{%
+            \@tempswafalse
+            \global\@mph@firstcol@true
+            \mph@debug{exiting loop}%
+        }%
+    \else
+        \mph@debug{last on page \thepage:
+                \csname mph@last@ii..\thepage\endcsname,
+                switch \if@tempswa true \else false\fi
+        }%
+        \mph@ifundef@or@gt{%
+            \csname mph@last@ii..\thepage\endcsname
+        }{%
+            \@tempswatrue
+            \advance\c@page by 1
+            \mph@debug{++page.. \thepage,
+                switch \if@tempswa true \else false\fi
+            }%
+        }{%
+            \@tempswafalse
+            \mph@debug{exiting loop}%
+        }%
+    \fi
+    \ifnum\mph@lastpage>\c@page
+    \else
+        \@tempswafalse
+        \mph@debug{\thepage >= \mph@lastpage,
+            switch \if@tempswa true \else false\fi
+        }%
+    \fi
+    \if@tempswa
+        \mph@debug{iterating ...}%
+    \repeat
+    \mph@debug{=== marginpar \mph@cnt\space is on page \thepage%
+        \if@twocolumn, col \if@mph@firstcol@ 1 \else 2 \fi\fi
+        }%
+    \protected@xdef\mph@save{\thepage}%
+    \endgroup
+}
+
+\def\@addmarginpar{%
+    \mph@step@cnt\mph@cnt
+    \protected@write\@auxout{}%
+         {\string\def\string\mph@nr{\mph@cnt}}%
+    \mph@get@margin
+    \@next\@marbox\@currlist{\@cons\@freelist\@marbox
+    \@cons\@freelist\@currbox}\@latexbug\@tempcnta\@ne
+    \if@twocolumn
+        \if@mph@firstcol@ \@tempcnta\m@ne \fi
+    \else
+      \if@mparswitch
+        \ifodd\mph@save \else\@tempcnta\m@ne \fi
+      \fi
+      \if@reversemargin \@tempcnta -\@tempcnta \fi
+    \fi
+    \ifnum\@tempcnta <\z@  \global\setbox\@marbox\box\@currbox \fi
+    \@tempdima\@mparbottom
+    \advance\@tempdima -\@pageht
+    \advance\@tempdima\ht\@marbox
+    \ifdim\@tempdima >\z@
+      \@latex@warning@no@line {Marginpar on page \thepage\space moved}%
+    \else
+      \@tempdima\z@
+    \fi
+    \global\@mparbottom\@pageht
+    \global\advance\@mparbottom\@tempdima
+    \global\advance\@mparbottom\dp\@marbox
+    \global\advance\@mparbottom\marginparpush
+    \advance\@tempdima -\ht\@marbox
+    \global\setbox \@marbox
+                   \vbox {\vskip \@tempdima
+                          \box \@marbox}%
+    \global \ht\@marbox \z@
+    \global \dp\@marbox \z@
+    \kern -\@pagedp
+    \nointerlineskip
+    \hb@xt@\columnwidth
+      {\ifnum \@tempcnta >\z@
+          \hskip\columnwidth \hskip\marginparsep
+       \else
+          \hskip -\marginparsep \hskip -\marginparwidth
+       \fi
+       \if@debug@
+            \smash{\llap{\tiny\mph@cnt}}%
+       \fi
+       \box\@marbox \hss}%
+    \nointerlineskip
+    \hbox{\vrule \@height\z@ \@width\z@ \@depth\@pagedp}%
+}
+
+\def\@outputpage{%
+\begingroup           % the \endgroup is put in by \aftergroup
+  \let \protect \noexpand
+  \@resetactivechars
+  \@parboxrestore
+  \shipout \vbox{%
+    \set@typeset@protect
+    \aftergroup \endgroup
+    \aftergroup \set@typeset@protect
+                                % correct? or just restore by ending
+                                % the group?
+  \if@specialpage
+    \global\@specialpagefalse\@nameuse{ps@\@specialstyle}%
+  \fi
+  \if@twoside
+    \ifodd\count\z@ \let\@thehead\@oddhead \let\@thefoot\@oddfoot
+         \let\@themargin\oddsidemargin
+    \else \let\@thehead\@evenhead
+       \let\@thefoot\@evenfoot \let\@themargin\evensidemargin
+    \fi
+  \fi
+  \reset@font
+  \normalsize
+  \normalsfcodes
+  \let\label\@gobble
+  \let\index\@gobble
+  \let\glossary\@gobble
+  \baselineskip\z@skip \lineskip\z@skip \lineskiplimit\z@
+    \@begindvi
+    \vskip \topmargin
+    \moveright\@themargin \vbox {%
+      \setbox\@tempboxa \vbox to\headheight{%
+        \vfil
+        \color@hbox
+          \normalcolor
+          \hb@xt@\textwidth{\@thehead}%
+        \color@endbox
+        }%                        %% 22 Feb 87
+      \dp\@tempboxa \z@
+      \box\@tempboxa
+      \vskip \headsep
+      \box\@outputbox
+      \baselineskip \footskip
+      \color@hbox
+        \normalcolor
+        \hb@xt@\textwidth{\@thefoot}%
+      \color@endbox
+      }%
+    }%
+  \global \@colht \textheight
+  \immediate\write\@auxout{%
+        \string\mph@setcol{ii..\thepage}{\string\mph@nr}%
+  }%
+  \stepcounter{page}%
+  \let\firstmark\botmark
+}
+
+\def\@outputdblcol{%
+  \if@firstcolumn
+    \global \@firstcolumnfalse
+    \global \setbox\@leftcolumn \box\@outputbox
+  \else
+    \global \@firstcolumntrue
+    \setbox\@outputbox \vbox{%
+              \hb@xt@\textwidth {%
+                \hb@xt@\columnwidth {%
+                  \box\@leftcolumn \hss
+                  \write\@auxout{%
+                      \string\mph@setcol{i..\thepage}{\string\mph@nr}}%
+                }%
+                \hfil
+                \vrule \@width\columnseprule
+                \hfil
+                \hb@xt@\columnwidth {%
+                  \box\@outputbox \hss
+                  \write\@auxout{%
+                      \string\mph@setcol{ii..\thepage}{\string\mph@nr}}%
+                }%
+                }%
+              }%
+    \@combinedblfloats
+    \@outputpage
+    \begingroup
+      \@dblfloatplacement
+      \@startdblcolumn
+      \@whilesw\if@fcolmade \fi
+        {\@outputpage
+         \@startdblcolumn}%
+    \endgroup
+  \fi
+}
+\endinput
+%%
+%% End of file `fmparhack.sty'.

@@ -1,0 +1,382 @@
+\documentclass{article}
+\usepackage[latin1]{inputenc}%
+\usepackage[T1]{fontenc}
+\usepackage[a4paper,margin=2cm]{geometry}
+%% Manuel LUQUE <Mluque5130aol.com> %%
+%% 1 Octobre 1999 pour le dodécaèdre %%
+%% 23 avril 2003 pour le calendrier %%
+%% 26 avril : calcul de la date de Pâques %%
+%% 27 avril 20003 : repérer une date particulière,
+%% suggestion de Jean-Michel Sarlat %%
+%% jours fériés : 1 et 8 mai, 1 et 11 décembre
+%% 25 août et lundi de Pâques
+\pagestyle{empty}
+%
+\usepackage[french]{pst-calendar}
+%
+\usepackage{url}
+\newcommand\Encadre[1]{\psframebox[fillstyle=solid,fillcolor=yellow,linecolor=red]{#1}}
+\title{Calculer un calendrier avec \LaTeX{},\\
+le dessiner en 3D avec PSTricks (version 0.47)}
+\author{Manuel Luque}
+\date{\today}
+\begin{document}
+
+\maketitle
+%{\typein[\Year]{Entrez l'année (2000...2099)?}
+%\def\Year{2006}
+\begin{center}
+\psset{An=2006}
+\begin{tabular}{ll}
+\psCalendar[Mois=1]&\psCalendar[Mois=2]\\
+\psCalendar[Mois=3]&\psCalendar[Mois=4]\\
+\psCalendar[Mois=5]&\psCalendar[Mois=6]
+\end{tabular}
+
+\end{center}
+\begin{center}
+\begin{tabular}{ll}
+\psCalendar[Mois=7]&\psCalendar[Mois=8]\\
+\psCalendar[Mois=9]&\psCalendar[Mois=10]\\
+\psCalendar[Mois=11]&\psCalendar[Mois=12]
+\end{tabular}
+\end{center}
+%}
+\begin{center}
+\psscalebox{0.5}{\psCalDodecaeder[Vx=-\rd,Vy=\rc,Vz=0,viewangle=198]}
+\end{center}
+\section{Objectifs, outils et méthodes adoptés}
+\subsection{Objectifs}
+Il s'agissait de calculer avec \LaTeX{}, un calendrier valable de l'an
+2\,000 à l'an 2\,099 (je suis optimiste), puis d'adopter une méthode
+originale de représentation en 3D, en plaçant chaque mois sur l'une des
+faces d'un dodécaèdre. Un calendrier de ce type était, il y quelques années,
+offert par les visiteurs médicaux des laboratoires \textsc{Pfizer}.
+\subsection{Outils adoptés}
+Il existe déjà un calendrier écrit en \LaTeX{}, dont les calculs sont faits
+directement en \TeX{}. Il s'agit de \texttt{calendar}, écrit par Michael
+Barret et disponible sur le serveur du \texttt{CTAN} ; c'est très bien fait.
+
+Un calendrier en 3D, dessiné avec PSTricks, est déjà proposé depuis plusieurs d'années par Denis
+Girou sur : \url{http://tug.org/applications/PSTricks/More}.
+
+Donc, rien de neuf, mais revu à ma façon : pour ma part j'ai décidé d'utiliser les macros du package \texttt{fp} de Michael
+Mehlich, qui forment un excellent outil de calcul. La lecture du code écrit
+avec ce package est plus compréhensible que celui écrit en \TeX{} de base.
+
+Pour la représentation en 3d, j'ai aussi, utilisé PSTricks de Timothy Van Zandt, et
+en particulier l'extension \texttt{pst-3d}.
+\subsection{Méthode adoptée}
+La méthode de calcul des jours de semaine du calendrier est déduite de quelques
+observations :
+\begin{enumerate}
+  \item Le 1 janvier 2\,000 est un samedi. On adopte la convention de
+  représenter les jours de semaine par un numéro : j'ai choisi :
+\begin{center}
+  \renewcommand{\arraystretch}{1.5}
+  \begin{tabular}{ccccccc}
+  lundi&mardi&mercredi&jeudi&vendredi&samedi&dimanche\\ \hline
+  1&2&3&4&5&6&7
+  \end{tabular}
+\end{center}
+  \item Une année ordinaire comprend 365 jours, or $365=52\times7+1$. Il y a
+  donc un décalage de 1~jour dans le nom des jours pour l'année suivante si
+  elle est ordinaire elle aussi. Autrement dit le 1~janvier 2\,001 devrait
+  être un dimanche ($6+1=7$). Or l'an 2\,000 est bissextile et comporte 366~jours : le
+  décalage sera de 2, le 1~janvier 2\,001 correspondra au numéro $6+2=8=1\ (modulo\ 7)$.
+  \item Sur la période retenue 2\,000/2\,099 les années divisibles par 4 :
+  2\,000, 2\,004, 2\,008 etc. sont bissextiles. On déterminera donc si
+  l'année choisie est bissextile en testant si elle est un multiple de~4.
+\begin{verbatim}
+% test d'une année bissextile
+\FPeval{\YearBissextil}{(\psk@CalendrierA)/4}
+\FPtrunc{\YearBissextil}{\YearBissextil}{0}
+\FPeval{\YearBissextil}{(\YearBissextil)*4}
+\FPtrunc{\YearBissextil}{\YearBissextil}{0}
+\ifnum\YearBissextil=\psk@CalendrierA
+etc.
+\end{verbatim}
+  \item Pour une année choisie, on calculera le décalage par rapport à
+  2\,000, en comptant les années et en ajoutant 1 chaque fois qu'il y aura
+  dans cet intervalle une année bissextile (en tenant compte de 2\,000).
+  \item On retient pour le début de chaque mois :
+\begin{center}
+  \renewcommand{\arraystretch}{1.5}
+  \begin{tabular}{c|c|c}
+  mois&année ordinaire&année bissextile\\ \hline
+  janvier&1&1\\
+  février&32&32\\
+  mars&60&61\\
+  avril&91&92\\
+  mai&121&122\\
+  juin&152&153\\
+  juillet&182&183\\
+  août&213&214\\
+  septembre&244&245\\
+  octobre&274&275\\
+  novembre&305&306\\
+  décembre&335&336\\
+  \end{tabular}
+\end{center}
+\end{enumerate}
+
+
+
+
+\section{L'utilisation}
+\subsection{Utilisation simple}
+Si on veut voir uniquement le mois de l'année choisie, on fera, par exemple :
+\begin{verbatim}
+\psCalendar[An=2099,Mois=12,Jour=25,MoisChoisi=12]
+\end{verbatim}
+\begin{center}
+\psCalendar[An=2099,Mois=12,Jour=25,MoisChoisi=12]
+\end{center}
+Cette étude ne teste pas si les valeurs introduites pour l'année(\texttt{An}) et le mois(\texttt{Mois}), sont correctes !
+
+Par défaut, la commande \verb+\psCalendar+ affiche le mois et l'année en
+cours et entoure la date du jour (suggestion de Jean-Michel \textsc{Sarlat}).
+
+Si on veut voir afficher, un jour d'un mois particulier, on rajoutera le
+paramètre \Encadre{\texttt{MoisChoisi=valeur}} aux autres, comme dans
+l'exemple précédent et le suivant.
+\begin{center}
+\psCalendar
+\end{center}
+\begin{verbatim}
+\psCalendar[An=2004,Mois=6,Jour=21,MoisChoisi=6]
+\end{verbatim}
+\begin{center}
+\psCalendar[An=2004,Mois=6,Jour=21,MoisChoisi=6]
+\end{center}
+\subsection{Le calendrier en 3D}
+La commande s'écrit très simplement :
+\begin{verbatim}
+\psCalDodecaeder
+\end{verbatim}
+\begin{center}
+\psscalebox{0.5}{\psCalDodecaeder}
+\end{center}
+pour avoir le calendrier de l'année en cours. Si le schéma est trop grand à
+votre goût, encadrez la commande par un \verb+\psscalebox{0.5}{\psCalDodecaeder}+
+
+Pour avoir le mois de mai face à soi, on écrira, par exemple :
+\begin{verbatim}
+\psscalebox{0.5}{\psCalDodecaeder[style=mai]}
+\end{verbatim}
+\begin{center}
+\psscalebox{0.5}{\psCalDodecaeder[style=mai]}
+\end{center}
+\verb+Vx, Vy, Vz+ sont les valeurs des paramètres de \texttt{viewpoint=-5.85 -3.62
+0} de la commande \verb+\ThreeDput+ de \verb+pst-3d+, qui sont les
+coordonnées d'un vecteur définissant la direction où se trouve
+l'observateur (la direction de la projection parallèle).
+
+On jouera aussi sur le paramètre \verb+viewangle+, pour amener la face
+observée dans le bon sens de la lecture.
+
+Pour avoir le mois de janvier face à soi, on écrira :
+\begin{verbatim}
+\psscalebox{0.35}{\psCalDodecaeder[style=janvier]}
+\end{verbatim}
+\begin{center}
+\psscalebox{0.35}{\psCalDodecaeder[style=janvier]}
+\end{center}
+Pour avoir le mois de février face à soi, on écrira :
+\begin{verbatim}
+\psscalebox{0.35}{\psCalDodecaeder[style=fevrier]}
+\end{verbatim}
+\begin{center}
+\psscalebox{0.35}{\psCalDodecaeder[style=fevrier]}
+\end{center}
+Pour avoir le mois de mars face à soi, on écrira :
+\begin{verbatim}
+\psscalebox{0.35}{\psCalDodecaeder[style=mars]}
+\end{verbatim}
+\begin{center}
+\psscalebox{0.35}{\psCalDodecaeder[style=mars]}
+\end{center}
+Pour avoir le mois d'avril face à soi, on écrira :
+\begin{verbatim}
+\psscalebox{0.35}{\psCalDodecaeder[style=avril]}
+\end{verbatim}
+\begin{center}
+\psscalebox{0.35}{\psCalDodecaeder[style=avril]}
+\end{center}
+Pour avoir le mois de juin face à soi, on écrira :
+\begin{verbatim}
+\psscalebox{0.35}{\psCalDodecaeder[style=juin]}
+\end{verbatim}
+\begin{center}
+\psscalebox{0.35}{\psCalDodecaeder[style=juin]}
+\end{center}
+Pour avoir le mois de juillet face à soi, on écrira :
+\begin{verbatim}
+\psscalebox{0.35}{\psCalDodecaeder[style=juillet]}
+\end{verbatim}
+\begin{center}
+\psscalebox{0.35}{\psCalDodecaeder[style=juillet]}
+\end{center}
+Pour avoir le mois d'août face à soi, on écrira :
+\begin{verbatim}
+\psscalebox{0.35}{\psCalDodecaeder[style=aout]}
+\end{verbatim}
+\begin{center}
+\psscalebox{0.35}{\psCalDodecaeder[style=aout]}
+\end{center}
+Pour avoir le mois de septembre face à soi, on écrira :
+\begin{verbatim}
+\psscalebox{0.35}{\psCalDodecaeder[style=septembre]}
+\end{verbatim}
+\begin{center}
+\psscalebox{0.35}{\psCalDodecaeder[style=septembre]}
+\end{center}
+Pour avoir le mois d'octobre face à soi, on écrira :
+\begin{verbatim}
+\psscalebox{0.35}{\psCalDodecaeder[style=octobre]}
+\end{verbatim}
+\begin{center}
+\psscalebox{0.35}{\psCalDodecaeder[style=octobre]}
+\end{center}
+Pour avoir le mois de novembre face à soi, on écrira :
+\begin{verbatim}
+\psscalebox{0.35}{\psCalDodecaeder[style=novembre]}
+\end{verbatim}
+\begin{center}
+\psscalebox{0.35}{\psCalDodecaeder[style=novembre]}
+\end{center}
+Pour avoir le mois de décembre face à soi, on écrira :
+\begin{verbatim}
+\psscalebox{0.35}{\psCalDodecaeder[style=decembre]}
+\end{verbatim}
+\begin{center}
+\psscalebox{0.35}{\psCalDodecaeder[style=decembre]}
+\end{center}
+Pour visualiser une année particulière, avec un mois choisi face à soi, et un jour de ce mois, (15~mai~2004) on
+fera :
+\begin{verbatim}
+\psscalebox{0.35}{\psCalDodecaeder[style=mai,An=2004,MoisChoisi=5,Jour=15]}
+\end{verbatim}
+\begin{center}
+\psscalebox{0.35}{\psCalDodecaeder[style=mai,An=2004,MoisChoisi=5,Jour=15]}
+\end{center}
+\section{Calcul de la date de Pâques}
+On trouve sur internet, à propos de ce sujet de nombreux sites. \'A partir
+de la \textit{définition} de la fête proprement dite, les formules <<
+magiques >> abondent. L'une d'elle a retenu mon attention, je l'ai
+retranscrite avec le package \texttt{fp}. Dans l'ordre, un aperçu de la
+page, puis le codage des calculs avec \texttt{fp}.
+
+Le site : \texttt{http://www.altcal.com/elmcal.html}, et un extrait :
+
+\begin{verbatim}
+Version 2.0 - 11 Nov 1998
+
+Copyright and disclaimer
+------------------------
+        This document is Copyright (C) 1998 by Claus Tondering.
+        E-mail: claus@tondering.dk.
+        The document may be freely distributed, provided this
+        copyright notice is included and no money is charged for
+        the document.
+        This document is provided "as is". No warranties are made as
+        to its correctness.
+
+G = year mod 19
+
+For the Julian calendar:
+    I = (19*G + 15) mod 30
+    J = (year + year/4 + I) mod 7
+
+For the Gregorian calendar:
+    C = year/100
+    H = (C - C/4 - (8*C+13)/25 + 19*G + 15) mod 30
+    I = H - (H/28)*(1 - (H/28)*(29/(H + 1))*((21 - G)/11))
+    J = (year + year/4 + I + 2 - C + C/4) mod 7
+
+Thereafter, for both calendars:
+L = I - J
+EasterMonth = 3 + (L + 40)/44
+EasterDay = L + 28 - 31*(EasterMonth/4)
+\end{verbatim}
+
+\hrule
+{\blue
+\begin{verbatim}
+\FPset{\Year}{1981}  % placer ici l'année
+\FPeval\GY{(\Year)-19*trunc((\Year)/19,0)}
+\FPeval{\Cent}{trunc((\Year)/100,0)}
+\FPeval{\Iter}{trunc((\Cent)-trunc((\Cent)/4,0)-trunc((8*(\Cent)+13)/25,0)+
+                (\GY)*19+15,0)}
+\FPeval{\Iterdiv}{trunc((\Iter)/30,0)}
+\FPeval\Hepact{(\Iter)-30*(\Iterdiv)}
+\FPeval\Inbre{trunc((\Hepact)-trunc((\Hepact)/28,0)*
+              (1-trunc((\Hepact)/28,0))*(trunc(29/((\Hepact)+1),0)*trunc((21-(\GY))/11,0)),0)}
+\FPeval\Jnbreinter{trunc((\Year)+trunc((\Year)/4,0)+(\Inbre)+2-(\Cent)+trunc((\Cent)/4,0),0)}
+\FPeval\Jnbre{trunc((\Jnbreinter)-7*trunc((\Jnbreinter)/7,0),0)}
+\FPeval\Lnbre{trunc((\Inbre)-(\Jnbre),0)}
+\FPeval\Month{trunc(3+trunc(((\Lnbre)+40)/44,0),0)}
+\FPeval\Day{trunc((\Lnbre)+28-31*trunc((\Month)/4,0),0)}
+\ifnum\Month=4
+  \ifnum\Day>25 \FPeval{\Day}{trunc((\Day)-7,0)} \fi
+\fi
+
+P\^aques le Dimanche \FPprint\Day/\FPprint\Month/\FPprint\Year
+\end{verbatim}}
+\FPset{\Year}{1981}  % placer ici l'année
+\FPeval\GY{(\Year)-19*trunc((\Year)/19,0)}
+\FPeval{\Cent}{trunc((\Year)/100,0)}
+\FPeval{\Iter}{trunc((\Cent)-trunc((\Cent)/4,0)-trunc((8*(\Cent)+13)/25,0)+
+                (\GY)*19+15,0)}
+\FPeval{\Iterdiv}{trunc((\Iter)/30,0)}
+\FPeval\Hepact{(\Iter)-30*(\Iterdiv)}
+\FPeval\Inbre{trunc((\Hepact)-trunc((\Hepact)/28,0)*
+              (1-trunc((\Hepact)/28,0))*(trunc(29/((\Hepact)+1),0)*trunc((21-(\GY))/11,0)),0)}
+\FPeval\Jnbreinter{trunc((\Year)+trunc((\Year)/4,0)+(\Inbre)+2-(\Cent)+trunc((\Cent)/4,0),0)}
+\FPeval\Jnbre{trunc((\Jnbreinter)-7*trunc((\Jnbreinter)/7,0),0)}
+\FPeval\Lnbre{trunc((\Inbre)-(\Jnbre),0)}
+\FPeval\Month{trunc(3+trunc(((\Lnbre)+40)/44,0),0)}
+\FPeval\Day{trunc((\Lnbre)+28-31*trunc((\Month)/4,0),0)}
+\ifnum\Month=4
+  \ifnum\Day>25 \FPeval{\Day}{trunc((\Day)-7,0)} \fi
+\fi
+
+\centerline{\Encadre{P\^aques tombe le dimanche
+\FPprint\Day/\FPprint\Month/\FPprint\Year}}
+
+Vous y reconnaîtrez sans peine l'algorithme initial, j'ai rajouté les trois
+dernières lignes, car l'auteur des formules précédentes semble avoir oublié
+que Pâques peut varier seulement entre le 22~mars et le 25~avril inclus
+ Sans cette correction, le programme affiche dans l'exemple précédent (1981), le dimanche 26~avril au lieu du
+ 19~avril.
+
+Pour le tester quelques dates :
+\begin{center}
+\begin{tabular}{c|c}
+1978& 26 mars \\ \hline
+1979&15 avril \\ \hline
+1980&6 avril \\ \hline
+2000&23 avril \\ \hline
+2002&31 mars \\ \hline
+2003&20 avril \\ \hline
+\end{tabular}
+\end{center}
+Ce n'est pas garanti sans erreurs, l'emploi des fonctions \texttt{trunc} ou
+\texttt{round} ou \texttt{clip} ne donnent pas à 100\% toujours, le résultat
+attendu. Par exemple si \texttt{fp} calcule $14.99999999$, alors que
+de toute évidence c'est $15$, il ne vaut mieux pas faire
+\texttt{trunc} pour avoir la partie entière, mais \texttt{round},
+car sinon on commet une erreur d'une unité en moins ! Il faudrait
+donc prévoir de tester ces cas !
+\section{Que reste-t-il à faire ? Problèmes !}
+\begin{itemize}
+  \item Placer les jours fériés du lundi de Pâques et du lundi de
+  Pentecôte.
+  \item Dessiner automatiquement le mois en cours, face à notre regard.
+  \item Prévoir un test qui limite l'année choisie à l'intervalle permis,
+  soit $[2000-2099]$.
+  \item Trouver un moyen simple, élégant et cohérent d'entourer la date choisie.
+  \item Débusquer les erreurs, si vous en trouvez\ldots
+\end{itemize}
+
+\end{document}

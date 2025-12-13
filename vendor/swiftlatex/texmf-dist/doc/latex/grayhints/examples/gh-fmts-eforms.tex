@@ -1,0 +1,273 @@
+\documentclass{article}
+\usepackage[designiv]{web}
+\usepackage{grayhints}\previewOff
+\usepackage{fancyvrb}
+
+\addtoWebHeight{1in}
+\def\cs#1{\texttt{\char`\\#1}}
+\let\app\textsf
+\let\pkg\textsf
+\let\uif\textsf
+\parindent0pt
+
+%\EnterCommitFailEvent{\jsT\jsT
+%  event.target.strokeColor=color.red;\jsR\jsT\jsT
+%  event.value=(event.target.savevalue);}
+%\CommitSuccessEvent{event.target.strokeColor=color.black;}
+
+\begin{document}
+
+\begin{center}
+    \large\bfseries Gray Hints - Formats
+\end{center}
+The `gray hints' technique works well with fields that require special
+formatting such as the ones provided by built-in formats of \app{Adobe
+Acrobat}, these formats are Number, Percentage, Date, Time, Special, and
+Custom. How `gray hints' functions when one of these special formats is
+used may be acceptable, but if not, we offer an alternative. First we compare
+two date fields. The one on the left is the default, the one on the right is
+`enhanced.'\medskip
+
+\textField[\textColor{\matchGray}
+    \TU{Enter a date of your choosing}
+    \AA{%
+      \AAOnFocus{\JS{\FocusToBlack}}
+% Using the Adobe Built-in functions directly
+      \AAKeystroke{AFDate_KeystrokeEx("yyyy/mm/dd");\r
+        \KeyToGray}
+      \AAFormat{AFDate_FormatEx("yyyy/mm/dd");\r
+        \FmtToGray{yyyy/mm/dd}}
+      \AAOnBlur{\JS{\BlurToBlack}}
+    \AACalculate{\CalcToGray}
+}]{Datefield1}{1in}{11bp}\kern2bp\quad
+\textField[\textColor{\matchGray}
+    \TU{Enter a date of your choosing}
+    \AA{%
+      \AAOnFocus{\JS{\FocusToBlack}}
+% using a customized version of Adobe built-in functions, with LaTeX access
+      \AAKeystroke{\DateKeyEx("yyyy/mm/dd");\r
+        \KeyToGray}
+      \AAFormat{\DateFmtEx("yyyy/mm/dd");\r
+        \FmtToGray{yyyy/mm/dd}}
+      \AAOnBlur{\JS{\BlurToBlack}}
+    \AACalculate{\CalcToGray}
+}]{Datefield2}{1in}{11bp}\hfill\begin{minipage}{\linewidth-2in-6bp-1em-6pt}\footnotesize
+The underlying JS function tries hard to make a date from the input. You can enter a date
+in most any format as long it is in the order of the date elements YEAR MONTH DAY (yyyy/mm/dd), as determined by the
+formatting template. (For example, try 2018 Jan 10).
+\end{minipage}\medskip
+
+
+\textbf{Note:} In the discussion that follows, we assume you are using
+\app{Adobe Acrobat DC} (or prior), \app{Adobe Reader DC} (or prior) or
+\app{PDF-XChange Editor}. These PDF viewers support the JavaScript used
+by this package.\medskip
+
+\textbf{Discussion:} Enter an \emph{invalid date} into each field (such as
+the number 17), and \emph{commit} that number to the field. There are several
+ways of committing form data: (1) press the \uif{Enter} key; (2) tab out of the
+field; (3) click or tap outside the field; and (4) move to another
+page.\footnote{Apparently, \app{PDF-XChange Editor} does not commit field
+data when the page is turned, unlike the Adobe PDF viewer.} The behavior of
+the field is the same for cases (2)--(4); in those cases, the field loses
+focus (or is blurred). In the first case, the data is committed, but
+\emph{not blurred}. This latter case is a bit of a problem because the blur
+event has JavaScript that sets the field text color, as appropriate.\medskip
+
+In the above two fields, enter the number 17 (or any invalid date) and commit
+the data using method (2) or (3); now repeat the exercise for the two fields,
+but commit using method (1). Do you notice a difference?\medskip
+
+\textbf{Discussion of (2) and (3):} This is the usual case; after the alert
+dialog box is dismissed, the fields are grayed out again. That's the effect
+desired by this package.\medskip
+
+\textbf{Discussion of (1):} When the data is committed by pressing the
+\uif{Enter} key and the alert box is dismissed, for the field on the left
+`yyyy/mm/dd' appears in black, whereas, for the field on the right, the
+string `continue editing' appears in black. In each case, you can click
+within the field and continue editing the date. Use methods (2) or (3) to
+commit your final response. Of the two fields, the behavior of the field on
+the right is the preferred one.\medskip
+
+The behavior of the field on the right requires some special code.
+\begin{Verbatim}[xleftmargin=15pt,fontsize=\small,numbers=left,numbersep=9pt,commandchars={!~@}]
+\textField[\textColor{\matchGray}
+    \TU{Enter a date of your choosing}
+    \AA{%
+      \AAOnFocus{\JS{\FocusToBlack}}
+      \AAKeystroke{\DateKeyEx("yyyy/mm/dd");\r
+        \KeyToGray}
+      \AAFormat{\DateFmtEx("yyyy/mm/dd");\r
+        \FmtToGray{yyyy/mm/dd}}
+      \AAOnBlur{\JS{\BlurToBlack}}
+    \AACalculate{\CalcToGray}   % <-!normalfont~ required for !app~PDF-XChange Editor@@
+}]{Datefield2}{1in}{11bp}
+\end{Verbatim}
+The code above is identical to that of the left-hand field with two
+exceptions, marked above by (5) and~(7). On these lines, the commands
+\cs{DateKeyEx} and \cs{DateFmtEx} are used (instead of the Adobe built-in
+functions directly). When these two are inserted, then we get the behavior of
+the field on the right on page 1.\medskip
+
+
+
+When the changes shown in lines~(5) and~(7) are made, you can customize the
+behavior of the field when the date is committed by pressing the \uif{Enter}
+key.\medskip
+
+\EnterCommitFailEvent{event.value=("weiter bearbeiten");}
+\textField[\textColor{\matchGray}
+    \TU{Enter a date of your choosing}
+    \AA{%
+      \AAOnFocus{\JS{\FocusToBlack}}
+      \AAKeystroke{\DateKeyEx("yyyy/mm/dd");\r
+        \KeyToGray}
+      \AAFormat{\DateFmtEx("yyyy/mm/dd");\r
+        \FmtToGray{yyyy/mm/dd}}
+      \AAOnBlur{\JS{\BlurToBlack}}
+    \AACalculate{\CalcToGray}
+}]{Datefield3}{1in}{11bp}\medskip
+
+Here, we use \cs{EnterCommitFailEvent} and declare,
+\begin{Verbatim}[xleftmargin=15pt,fontsize=\small]
+\EnterCommitFailEvent{event.value=("weiter bearbeiten");}
+\end{Verbatim}
+which changes the text string that appears when \uif{Enter} is pressed for an invalid date.\medskip
+
+\EnterCommitFailEvent{%
+  event.target.strokeColor=color.red;
+  event.value=(event.target.savevalue);}
+\CommitSuccessEvent{event.target.strokeColor=color.black;}
+We can get a different effect with
+\begin{Verbatim}[xleftmargin=15pt,fontsize=\small]
+\EnterCommitFailEvent{%
+  event.target.strokeColor=color.red;
+  event.value=(event.target.savevalue);}
+\CommitSuccessEvent{event.target.strokeColor=color.black;}
+\end{Verbatim}
+The action declared by \cs{EnterCommitFailEvent} is to change the border
+color to red, and secondly, to set the value of the field to the saved value
+(\texttt{event.target.savevalue}). The property \texttt{savevalue} is defined
+through the use of the special commands \cs{DateKeyEx} and \cs{DateFmtEx}.
+The action of \cs{CommitSuccessEvent} returns the fields border color to
+black.\medskip
+
+\textField[\textColor{\matchGray}
+    \TU{Enter a date of your choosing}
+    \AA{%
+      \AAOnFocus{\JS{\FocusToBlack}}
+      \AAKeystroke{\DateKeyEx("yyyy/mm/dd");\r
+        \KeyToGray}
+      \AAFormat{\DateFmtEx("yyyy/mm/dd");\r
+        \FmtToGray{yyyy/mm/dd}}
+      \AAOnBlur{\JS{\BlurToBlack}}
+    \AACalculate{\CalcToGray}
+}]{Datefield4}{1in}{11bp}\medskip
+
+Now, when an invalid date is entered using the \uif{Enter} key, the border
+color of the field is changed to red to indicate to the user that the date
+in invalid and needs to be modified. Tabbing or clicking outside the field, as
+usual, blurs the field; any invalid date is removed and the grayed hint
+appears.\medskip
+
+To return to the default declarations, expand \verb!\EnterCommitFailEvent{}! and
+\verb!\CommitSuccessEvent{}!. The underlying default actions are,
+\begin{Verbatim}[xleftmargin=15pt,fontsize=\small]
+\newcommand\FailStringDef{continue editing}
+\newcommand\EnterCommitFailDef{event.value=("\FailStringDef");}
+\end{Verbatim}
+A localization of language can be performed by redefining
+\cs{FailStringDef}
+\begin{Verbatim}[xleftmargin=15pt,fontsize=\small]
+\renewcommand\FailStringDef{weiter bearbeiten}
+\end{Verbatim}
+
+The next example changes the border, the text color, and the error message.\medskip
+
+\EnterCommitFailEvent{\t
+  event.target.strokeColor=color.red;\r\t\t
+  event.target.textColor=color.red;\r\t\t
+  event.value=("needs editing");
+}
+\CommitSuccessEvent{\t\t
+  event.target.strokeColor=color.black;
+}
+
+\noindent
+\textField[\textColor{\matchGray}
+    \TU{Enter a date of your choosing}\AA{%
+    \AAOnFocus{\JS{\FocusToBlack}}
+% using a customized version of Adobe built-in functions, with LaTeX access
+    \AAKeystroke{\DateKeyEx("yyyy/mm/dd");\r
+      \KeyToGray}
+    \AAFormat{\DateFmtEx("yyyy/mm/dd");\r
+      \FmtToGray{yyyy/mm/dd}}
+    \AAOnBlur{\JS{\BlurToBlack}}
+    \AACalculate{\CalcToGray}
+}]{Datefield5}{1in}{11bp}\qquad(enter `17' then press enter)\medskip
+
+This same scheme should work for all the built-in Acrobat formats, let's look
+at the number format.\medskip
+
+\EnterCommitFailEvent{}\CommitSuccessEvent{}
+\textField[\TU{Enter an integer}
+    \textColor{\matchGray}\AA{%
+    \AAKeystroke{\NumKey(0,1,0,0,"",true);\r\KeyToGray}
+    \AAFormat{\NumFmt(0,1,0,0,"",true);\r
+      \FmtToGray{Enter an Integer}}
+    \AAOnFocus{\JS{\FocusToBlack}}
+    \AAOnBlur{\JS{\BlurToBlack}}
+    \AACalculate{\CalcToGray}
+}]{Integer}{1in}{11bp}\medskip
+
+\textbf{Creating a Percent text field.}\medskip
+
+\textField[\textColor{\matchGray}\AA{%
+    \AAKeystroke{\PercentKey(2,1);\r
+      \KeyToGray}
+    \AAFormat{\PercentFmt(2,1);\r
+    \FmtToGray{Enter a number}}
+    \AAOnFocus{\JS{\FocusToBlack}}
+    \AAOnBlur{\JS{\BlurToBlack}}
+    \AACalculate{\CalcToGray}
+}]{Percent}{2in}{11bp} (don't enter the percent symbol \%)\medskip
+
+\textbf{Creating a Phone Number text field.}\medskip
+
+Enter a phone number: \textField[\textColor{\matchGray}\AA{%
+    \AAKeystroke{\SpecialKey(2);\r
+    \KeyToGray}
+    \AAFormat{\SpecialFmt(2);\r
+    \FmtToGray{(123) 456-7890}}
+    \AAOnFocus{\JS{\FocusToBlack}}
+    \AAOnBlur{\JS{\BlurToBlack}}
+    \AACalculate{\CalcToGray}
+}]{Phone}{2in}{11bp}\medskip
+
+The underlying JS function tries hard to make a phone number out of the input. The phone number can
+be entered in any recognized format; even something like 1234567890 is formatted.\medbreak
+
+\textbf{Creating a Custom time format text field.}\medskip
+
+\def\parentt{(tt)} % necessary to insert within arg of \TimeFmtEx
+\textField[\textColor{\matchGray}\AA{%
+    \AAKeystroke{\TimeKey(0);\r
+    \KeyToGray}
+    \AAFormat{\TimeFmtEx("h:MM \parentt");\r
+    \FmtToGray{Enter a time}}
+    \AAOnFocus{\JS{\FocusToBlack}}
+    \AAOnBlur{\JS{\BlurToBlack}}
+    \AACalculate{\CalcToGray}
+}]{Time}{2in}{11bp}\kern1bp\pushButton[\TU{Push to Use Current Time}
+\CA{UCT}\A{\JS{%
+    var cTime=util.printd("h:MM",new Date());\r
+    var f=this.getField("Time");\r
+    f.value=cTime;
+}}]{pbTime}{}{11bp}\medskip
+
+Detailed information on formatting with the built-in functions of \app{Acrobat} may be found at
+the \href{http://blog.acrotex.net}{Acro\negthinspace\TeX\space Blog}; in particular, see the article
+\url{http://www.acrotex.net/blog/?p=218}.
+
+\end{document}

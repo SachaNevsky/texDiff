@@ -1,0 +1,20 @@
+
+This is the README file
+
+ Copyright (C) 2019 Zoran Filipovi\'{c}
+
+This package provide nice layout and typeout for a 
+small books.
+
+This package is publisher under GNU GENERAL PUBLIC LICENCE.
+You can redistribute it and/or modify it under the terms 
+og he GNU General Public Licence as published by the 
+Free Software Foundation; either version 2 od the Licence,
+or (at your options) any later version. 
+See www.gnu.org for details.
+
+Zoran T. Filipovic
+Jurija Gagarina 263/6
+11070 Novi Beograd
+Srbija
+zoran dot filipovic at yahoo dot com

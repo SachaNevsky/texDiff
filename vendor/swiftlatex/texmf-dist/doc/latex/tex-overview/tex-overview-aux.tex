@@ -1,0 +1,322 @@
+%% This document is part of the document tex-overview and should not be distributed without it. This file contains the formatting and definitions for typesetting. Please do *not* consider anything here as an example of good TeX coding style – it's not.
+%% author: Arno Trautmann
+
+% !TeX root = tex-overview.tex
+%% (for the TeXworks-users.)
+\documentclass{scrartcl}
+\usepackage[svgnames]{xcolor}
+
+\usepackage{
+  array,
+  bookmark,
+  booktabs,
+  colortbl,
+  fontspec,
+  geometry,
+  hyperref,
+  longtable,
+  luacode,
+  metalogo,
+  multicol,
+  microtype,
+%  pdftexcmds,
+  tabu,
+  tikz,
+  xparse
+}
+%% copied definitions from old dtklogos, which are no longer supported:
+\makeatletter
+\providecommand\NTS{\mbox{\mathsurround=0pt
+    \(\cal N\mkern -4mu\lower .5ex\hbox{$\cal T$}\mkern -2mu S\)}}
+\providecommand\AMS{{\normalfont\(\cal A\)\kern-.1667em\lower.5ex\hbox{\(\cal M\)}\kern-.125em{\(\cal S\)}}}
+\providecommand\LamSTeX{%
+  L\raise.42ex\hbox{\kern-.3em\the\scriptfont2 A}%
+  \kern-.2em\lower.376ex\hbox{\the\textfont2 M}%
+  \kern-.125em {\the\textfont2 S}-\TeX}
+\DeclareRobustCommand{\BibTeX}{B\kern-.05em%
+    \hbox{$\m@th$% %% force math size calculations
+          \csname S@\f@size\endcsname
+          \fontsize\sf@size\z@
+          \math@fontsfalse\selectfont
+          I\kern-.025emB}%
+    \kern-.08em%
+    \-\TeX}
+
+\newcommand*{\noaddvspace}{\renewcommand*{\addvspace}[1]{}}
+\addtocontents{toc}{\protect\noaddvspace}
+
+\renewcommand*{\addparttocentry}[2]{%
+  \addtocentrydefault{part}{#1}{\Large #2 \normalsize}
+}
+
+\microtypesetup{stretch=35} %% allow for a bit more expansion to improve typesetting of the columns.
+\frenchspacing
+
+%% define the look-and-feel of the document
+\setmainfont{TeX Gyre Pagella}
+\setsansfont{TeX Gyre Pagella}
+
+%% setup the style of hyperlinks.
+\hypersetup{
+  unicode=true,
+  colorlinks=true,
+  linkcolor=DarkRed,
+  urlcolor=blue
+}
+\hyperbaseurl{.}
+
+%% page layout, headings
+\pagestyle{empty}
+\addtokomafont{disposition}{\color[rgb]{0 0 .7}}
+\addtokomafont{section}{\Huge}
+\addtokomafont{subsection}{\LARGE}
+\addtokomafont{subsubsection}{\Large}
+
+\ExplSyntaxOn
+%% some missing definitions for \TeX-like things
+\tl_set:Nn\XeT{X\kern -.1667em\lower .5ex\hbox {E}\kern -.125emT\@}
+\tl_set:Nn\ConTeXt{Con\TeX{}t}
+
+%% constants for the colors. Might change from time to time …
+\tl_set:Nn\vip{red}
+\tl_set:Nn\normalimportant{blue}
+\tl_set:Nn\experimental{yellow}
+\tl_set:Nn\planned{LightSkyBlue}
+\tl_set:Nn\fonttechnology{pink}
+\tl_set:Nn\program{black}
+\tl_set:Nn\package{green}
+\tl_set:Nn\distro{orange}
+\tl_set:Nn\histdistro{purple}
+\tl_set:Nn\annotation{black}
+
+%% shorthand to keep a good structure of the node positions
+\fp_new:N\layer_num
+\fp_new:N\layerdist_num
+\fp_set:Nn\layer_num{0}
+\fp_set:Nn\layerdist_num{-1}
+
+\cs_new:Npn\layer{\fp_use:N\layer_num}
+
+%% width of the tooltip-boxes (negative value to make them disappear at all)
+\dim_set:Nn\fboxrule{-1mm}
+
+%% to separate important from not-so-important nodes
+\bool_new:N\to_short
+
+%% the token list to save all the textviews. When set once, it is reset. May be useful anyhow. Or not.
+\tl_set:Nn\to_textviews{}
+\NewDocumentCommand\settextviews{}{
+  \setcounter{section}{4} %% to enable equal section numbers for both text and tree views
+  \to_textviews
+  \tl_set:Nn\to_textviews{}
+}
+\cs_gset:Nn\addtotextviews:f{\tl_gput_right:No\to_textviews{#1}}
+
+%% environment to set the graphs
+\NewDocumentCommand\tograph{s+D(){}+m}
+{
+  \IfBooleanT{#1}{
+    \ExplSyntaxOn
+    \bool_gset_true:N\to_short
+    \ExplSyntaxOff
+    #2
+    \begin{tikzpicture}
+      #3
+    \end{tikzpicture}
+    \clearpage
+  }
+  \ExplSyntaxOn
+  \bool_gset_false:N\to_short
+  \ExplSyntaxOff
+  #2
+  \begin{tikzpicture}
+  	#3
+  \end{tikzpicture}
+}
+
+%% Style of the nodes: shade from a light 
+\tikzstyle{coolnode} = [
+	draw=\nodecolor!50!black!70,
+	top~color=\nodecolor!10!white!105,
+	bottom~color= \nodecolor!50!black!50
+]
+
+%% set the first default node style (will change to \distro or \program in the document)
+\cs_set_eq:NN\tonodestyle\normalimportant
+
+%% tonode ⇒ tex-overview node, now with better argument specifier
+\NewDocumentCommand\tonode{O{\tonodestyle}D(){no label given}D(){no position given}D<>{no description given}m}{
+
+%% test if we are in the short or full view
+  \tl_gset:Nn\nodecolor{#1}
+  \bool_if:NTF\to_short{
+  %% short view
+    \tl_if_eq:NNT#1{\vip}{   %% then check if this is an important node
+      \node[coolnode] (#2) at (#3) {
+	  \href{#4}{\color{black}#5\strut}
+      };
+    }
+  }{
+  %% long view
+    \node[coolnode] (#2) at (#3) {
+	  \href{#4}{\color{black}#5\strut}
+    };
+  %% and the text view, to be added only once!
+  \addtotextviews:f{\subsubsection*{\color{blue}#5}\parbox{\columnwidth}{#4}}
+  }
+}
+
+%% we want to make use of two pdf layers: the upper (main) one for the nodes
+%% and the lower (background) one for the lines. That way, the lines will not cross the nodes
+\pgfdeclarelayer{background}
+\pgfsetlayers{background,main}
+
+%% the command to draw from one node to the other one. Fine tuning is possible via optional argument #3
+\NewDocumentCommand{\todraw}{st{'}t{.}t{-}O{}d()d()}{
+  \begin{pgfonlayer}{background}
+    %% draw in the case that: either a * is given (always draw) or (' is given and \to_short) or nothing is given
+    \bool_if:nT{#1 || (#2 && \to_short) || !(#2 || \to_short)}
+      {\draw [thick,gray,\IfBooleanT{#3}{dotted},\IfBooleanT{#4}{dashed},#5] (#6) to (#7);}  %% I’m just loooving expl3!
+  \end{pgfonlayer}
+}
+
+%% a nice way to control the vertical position of nodes
+\NewDocumentCommand{\setlayer}{m}{
+  \fp_set:Nn\layer_num{#1}
+}
+\NewDocumentCommand{\steplayer}{O{\layerdist_num}}{
+  \fp_add:Nn\layer_num{#1}
+}
+
+\NewDocumentCommand\topart{m}{
+%  \clearpage
+% \pdfpagewidth is not available in LuaTeX > 0.85. So we skip this gimmick, might come back later.
+%%  \dim_set:Nn\pdfpagewidth{9cm}       %% make a smaller paper so the header won’t feel so alone on the big, cold paper
+%%  \dim_set:Nn\pdfpageheight{4cm}
+%  \newgeometry{margin=1cm}
+	\part{#1}
+	\newpage
+%  \restoregeometry
+%%  \dim_set:Nn\pdfpagewidth{21cm}     %% back to a4
+%%  \dim_set:Nn\pdfpageheight{29.7cm}
+}
+
+%% the following code is made to avoid code doubling on cost of readability. Seems to be stable enough to work here.
+%% the first argument, given in (), determines the level (sub/sub/section) of the entry.
+% second argument: Short name of the struct for toc
+% third argument: Full name of the struct
+% forth argument: default node style for this struct. Default for the default is the default style.
+\NewDocumentCommand\tostruct{D(){0}omO{\tonodestyle}}{
+  \tl_set:Nn\to_disp{section}
+  \int_compare:nT{#1 > 0}{\tl_put_left:Nn\to_disp{sub}}
+  \int_compare:nT{#1 > 1}{\tl_put_left:Nn\to_disp{sub}}
+  \bool_if:NTF\to_short
+  {
+    \int_compare:nT{#1 = 0}{\stepcounter{section}}
+    \tl_gset:cn{\to_disp mand}{\cs:w the\to_disp\cs_end:.\hspace{.175em} #3\newline short~view}
+    \IfNoValueTF{#2}{\tl_gset:cn{\to_disp opt}{\tl_use:c{\to_disp mand}}}{\tl_gset:cn{\to_disp opt}{~#2, short~view}}
+    \cs:w \to_disp \cs_end:*{\cs:w\to_disp mand\cs_end:}
+    \int_compare:nT{#1 = 0}{\addtocounter{section}{-1}}
+  }
+  {
+    \tl_gset:cn{\to_disp mand}{#3}
+    \IfNoValueTF{#2}{\tl_gset:cn{\to_disp opt}{\cs:w \to_disp mand\cs_end:}}{\tl_gset:cn{\to_disp opt}{~#2}}
+    \addtotextviews:f{\cs:w \to_disp\cs_end:[~#2]{#3}}
+    \cs:w \to_disp\cs_end:[\cs:w \to_disp opt\cs_end:]{\cs:w \to_disp mand\cs_end:}
+  }
+  \cs_gset_eq:NN\tonodestyle#4
+}
+
+%% the sectioning of the names table
+\NewDocumentCommand\totablesec{m}{
+~ \\[-2ex]
+  \rowcolor[gray]{0.9}\hspace*{2em}\Large \strut \large\rmfamily #1 \\
+ ~ \\[-2ex]
+}
+
+%% a command for creation of bib-items.
+\NewDocumentCommand\tobibsection{m}{
+  \subsection*{#1}
+}
+\NewDocumentCommand\tobibsubsection{m}{
+  \subsection*{#1}
+}
+\NewDocumentCommand\tobib{mD<>{}O{}}{
+  \medskip
+\begin{minipage}{\textwidth}  %% to prevent page breaks within bib-items
+  \large #1\normalsize\\ \hspace*{1em} \parbox{.95\textwidth}
+{\url{#2} #3}
+\end{minipage}
+}
+
+\ExplSyntaxOff
+
+\AtBeginDocument{
+  {
+    \centering
+    \huge\bfseries An overview of \TeX, its children\\
+                             and their friends~\dots
+    \vspace*{-.2cm}
+    \flushright\parbox{4cm}{
+      \large \color[rgb]{0 0 .7} Arno Trautmann\\
+      \fontsize{8.25}{10}\selectfont arno.trautmann@gmx.de
+    }
+    \hspace*{.7cm}\par
+  }
+  \vspace*{1cm}
+}
+
+%% ok, now something just for fun, but I wanted to use this in a "real life" document:
+% we first define some Lua functions for drawing and then use them to colorize the corners of the document.
+\begin{luacode}
+function pdf_print (...)
+  for _, str in ipairs({...}) do
+    pdf.print(str .. " ")
+  end
+  pdf.print("\string\n")
+end
+
+function move (p)
+  pdf_print(p[1],p[2],"m")
+end
+
+function line (p)
+  pdf_print(p[1],p[2],"l")
+end
+
+function curve(p1,p2,p3)
+  pdf_print(p1[1], p1[2],
+            p2[1], p2[2],
+            p3[1], p3[2], "c")
+end
+
+function linewidth (w)
+  pdf_print(w,"w")
+end
+
+function disturb_point(point,strength)
+  if strength then else strength = 5 end
+  return {point[1] + math.random()*2*strength - strength,
+          point[2] + math.random()*2*strength - strength}
+end
+
+function sloppyline(start,stop)
+  local start_line = disturb_point(start,10)
+  local stop_line = disturb_point(stop,10)
+  move(start) curve(start_line,stop_line,stop)
+  pdf_print("S") -- stroke
+end
+\end{luacode}
+
+\AtBeginShipout{%
+  \AtBeginShipoutUpperLeft{%
+	\color[rgb]{0 0 .7}
+	\luatexlatelua{
+      linewidth(40)
+      sloppyline({-30,-30},{30,30})
+      sloppyline({620,-30},{560,30})
+      sloppyline({-30,-800},{30,-860})
+      sloppyline({620,-800},{560,-860})
+    }
+  }%
+}

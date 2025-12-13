@@ -1,0 +1,445 @@
+\documentclass[english,a4paper,10pt]{article}
+\usepackage{fontspec}
+\usepackage[bookmarks=true,bookmarksopen=true,colorlinks=true,hyperfootnotes=false,filecolor=black,linkcolor=blue,urlcolor=blue,pdfauthor={Robert Blazek},pdftitle={pinouTikz},pdfsubject={package for strings of tokens},pdfkeywords={pinouTikz,latex,chip,pinout},pdfcreator={LaTeX}]{hyperref}
+\usepackage[margin=1.9cm]{geometry}
+\usepackage{libertine}
+\usepackage[scale=0.85]{noto-mono}
+\usepackage[bottom]{footmisc}
+\usepackage{amsmath,amssymb,amsfonts,color,eurosym,xspace,babel,listings}
+\usepackage{pinoutikz}
+\makeatletter
+\definecolor{@xs@bckgcolor}{rgb}{0.9,1,1}
+\definecolor{@xs@keywordspinouTikz}{rgb}{0,0,0.9}
+\definecolor{@xs@keywordslatex}{rgb}{1,0,0}
+\definecolor{@xs@arguments}{rgb}{0,0,0}
+\definecolor{@xs@comments}{rgb}{0.5,0.5,0.5}
+\definecolor{violet}{rgb}{0.66,0,0.66}
+\lstset{%
+	language=[AlLaTeX]TeX,%
+	morekeywords={numexpr,detokenize},%
+	float=hbp,%
+	basicstyle=\small\ttfamily,%
+	identifierstyle=\color{@xs@arguments},%
+	keywordstyle=\color{@xs@keywordslatex},%
+	commentstyle=\itshape\color{@xs@comments},%
+	columns=fixed,%
+	tabsize=4,%
+	frame=single,%
+	extendedchars=true,%
+	showspaces=false,%
+	showstringspaces=false,%
+	numbers=left,%
+	numberstyle=\tiny\ttfamily,%
+	breaklines=true,%
+	breakindent=3em,%
+	backgroundcolor=\color{@xs@bckgcolor},%
+	breakautoindent=true,%
+	captionpos=t,%
+	xleftmargin=1em,%
+	xrightmargin=1em,%
+	lineskip=0pt,%
+	numbersep=1em,%
+	classoffset=1,%
+	morekeywords={% macros and commands of pinouTikz
+		PDIP,%
+		PLCC,%
+		SOP},%
+	keywordstyle=\color{@xs@keywordspinouTikz},%
+	classoffset=0}
+\makeatother
+
+\newcommand\guill[1]{"#1"}
+\newcommand\argu[1]{$\langle$\textit{#1}$\rangle$}
+\newcommand\ARGU[1]{\texttt{\{}\argu{#1}\texttt{\}}}
+\newcommand\arguC[1]{\texttt{[}\argu{#1}\texttt{]}}
+\newcommand\arguCC[2]{\texttt{[}\argu{#1}{,}\argu{#2}\texttt{]}}
+\newcommand\arguD[1]{\texttt{(}\argu{#1}\texttt{)}}
+\newcommand\texte[1]{\texttt{text}${}_{#1}$}
+\newcommand\etoile{$\langle$\texttt{[*]}$\rangle$}
+\newenvironment{Conditions}[1][1cm]%
+{\begin{list}%
+	{$\vartriangleright$}%
+	{\setlength{\leftmargin}{#1}
+	 \setlength{\itemsep}{0pt}
+	 \setlength{\parsep}{0pt}
+	 \setlength{\topsep}{2ptplus3ptminus2pt}
+	}}%
+{\end{list}}
+\renewcommand\th{${}^\text{th}$\xspace}
+\newcommand\US{syntax unit\xspace}
+\newcommand\USs{syntax units\xspace}
+\newcommand\pinouTikz{\textsf{pinouTikz}\xspace}
+\newcommand\styleexemple{\small\baselineskip1.03\baselineskip\vskip\baselineskip\relax}
+\newcommand\styleexercice{\footnotesize}
+\newcommand\verbinline{\lstinline[basicstyle=\normalsize\ttfamily]}
+\newcommand\colorise{\color{violet}}
+\begin{document}
+\setlength{\parindent}{0pt}
+\begin{titlepage}
+	\null\par\vfill
+	\begin{center}
+		\begin{minipage}{0.75\linewidth}
+			\begin{center}
+				\Huge\bfseries \pinoutikzname\par\vspace{5pt}
+				\small v\pinoutikzversion\par\vspace{25pt}
+				\normalsize User's manual
+			\end{center}
+		\end{minipage}
+	\end{center}
+	\vspace{1cm}
+	\begin{center}
+		Robert {\sc Blazek}\par\small
+		\href{mailto:robert.h.blazek@gmail.com}{\nolinkurl{robert.h.blazek@gmail.com}}\par\vspace{5pt}
+		%\xstringenglishdate
+	\end{center}
+	\vfill\hrulefill
+	\begin{center}
+		\begin{minipage}{0.85\linewidth}
+			\noindent
+			\hfill\textbf{\textit{Abstract}}\hfill{}\medskip\par
+			This package which requires $\varepsilon$-\TeX{}, provides macros for creating pinout diagrams of chips. 
+
+		\end{minipage}
+	\end{center}
+	\hrulefill\vfill{}
+\end{titlepage}
+
+\tableofcontents
+
+\section{Introduction}
+\subsection{Description}
+This package defines macros for generating symbolic pinout diagrams for different package classes, such as DIP, PLCC, etc.
+
+\subsection{Motivation}
+Whoever has ever had to do with FPGA or MCUs (whether for living and leisure), it's just natural he or she might have been in a need to document some pins. So was my case and since I failed in finding any package in \LaTeX{} to suit my needs, I opted for creating one myself.
+
+I hope others will find it as useful as it was to me and my colleagues.
+
+This is my first latex package documentation ever - and since I hate reinventing the wheel - this manual has been based upon that of \textbf{xstrings} - with the courtesy of the author, of course.
+
+\section{The macros}
+For a better understanding, let's see first the macros with the simpler arguments possible. No special catcode, no exotic token, no control sequence either: only alphanumeric chars will be contained in the arguments.\medskip
+
+In the following chapters, all the macros will be presented this way:
+\begin{itemize}
+	\item a short description of the operation;
+	\item the operation under special conditions. For each conditions considered, the operation described has priority on that (those) below;
+	\item finally, several examples are given. I tried to find them most easily comprehensible and most representative of the situations met in normal use.
+\end{itemize}\smallskip
+
+\textbf{Important}: in the following, a \argu{number} can be an integer written with numeric chars, a counter, or the result of an arithmetic operation made with the command \verbinline|\numexpr|.\smallskip
+
+All the macros of \pinouTikz are displayed in {\makeatletter\color{@xs@keywordspinouTikz}red}.
+
+\subsection{The pinout diagrams}
+\subsubsection{\ttfamily\textbackslash PDIP}
+\verbinline|\PDIP|\arguD{pincount}\ARGU{pinarray}
+\smallskip
+
+Draws a PDIP package with generic number of pins.
+
+\begin{itemize}
+	\item \argu{pincount} the  number of pins of a DIP package and should be an even number.
+	\item \ARGU{pinarray} is a comma-separated list of pins  - each pin definition is as follows: \argu{pinnumber}/\ARGU{pinlabel}.
+\end{itemize}
+
+%% 4-pin example
+%\begin{minipage}[t]{0.65\linewidth}
+\begin{lstlisting}
+\begin{figure}
+  \centering
+  \PDIP(4){%
+  	1/{E},2/B,3/NC,4/C}
+  \caption{NPN-Transistor, 4-pin PDIP package} \label{fig:X_DIP4}
+\end{figure}
+\end{lstlisting}%
+
+%% 4-pin example
+\begin{figure}[ht!]
+  \centering
+  \PDIP(4){%
+  	1/{E},
+  	2/B,
+  	3/NC,
+  	4/C
+  	}%
+  \caption{NPN-Transistor, 4-pin PDIP package} \label{fig:X_DIP4}
+\end{figure}
+
+%\end{minipage}\hfill
+%% 8-pin example
+%\begin{minipage}[t]{0.65\linewidth}
+\begin{lstlisting}
+\begin{figure}
+  \centering
+  \PDIP(8){%
+  	1/CLK,
+  	2/A,
+  	3/B,
+  	4/GND,
+  	5/Y,
+  	6/{\FormatPinLabel{~Y~}/RESET},
+  	7/NC,
+  	8/$V_{cc}$%
+  	}
+  \caption{TTL logic chip, 8-pin PDIP package} \label{fig:X_DIP8}
+\end{figure}
+\end{lstlisting}%
+
+%% 8-pin example
+\begin{figure}[ht!]
+  \centering
+  \PDIP(8){%
+  	1/CLK,
+  	2/A,
+  	3/B,
+  	4/GND,
+  	5/Y,
+  	6/{\FormatPinLabel{~Y~}/RESET},
+  	7/NC,
+  	8/$V_{cc}$%
+  	}
+  \caption{TTL logic chip, 8-pin PDIP package} \label{fig:X_DIP8}
+\end{figure}
+%\end{minipage}\hfill
+
+%% 14-pin example
+\begin{figure}[ht!]
+  \centering
+  \PDIP(14){%
+  	1/A1,									
+  	2/B1,									
+  	3/\FormatPinLabel{\#1 AND/~OR~/GPIO1},		
+  	4/Y1,									
+  	5/C1,									
+  	6/\FormatPinLabel{\#2 AND/~OR~/GPIO2},		
+  	7/GND,								
+  	8/PCLK,								
+  	9/PDAT,								
+  	10/A2,								
+  	11/B2,								
+  	12/\FormatPinLabel{\#2 INV/~SME~/GPIO3},	
+  	13/C2,								
+  	14/$V_{cc}$}							
+  \caption{Generic programmable TTL logic chip, 14-pin PDIP package} \label{fig:X_DIP14}
+\end{figure}
+
+%% 14-pin example
+\begin{minipage}[t]{0.65\linewidth}
+\begin{lstlisting}
+\begin{figure}[ht!]
+  \centering
+  \PDIP(14){%
+  	1/A1,										
+  	2/B1,										
+  	3/\FormatPinLabel{\#1 AND/~OR~/GPIO1},			
+  	4/Y1,										
+  	5/C1,										
+  	6/\FormatPinLabel{\#2 AND/~OR~/GPIO2},			
+  	7/GND,									
+  	8/PCLK,									
+  	9/PDAT,									
+  	10/A2,									
+  	11/B2,									
+  	12/\FormatPinLabel{\#2 INV/~SME~/GPIO3},		
+  	13/C2,									
+  	14/$V_{cc}$}								
+  \caption{Generic programmable TTL logic chip, 14-pin PDIP package} \label{fig:X_DIP14}
+\end{figure}
+\end{lstlisting}%
+\end{minipage}\hfill
+
+\subsubsection{\ttfamily\textbackslash TQFP}
+\verbinline|\TQFP|\arguD{pinnumber}\ARGU{pinarray}
+\smallskip
+
+Draws a TQFP package with generic number of pins.
+
+\begin{itemize}
+	\item \argu{pincount} the  number of pins of a DIP package and should be an even number.
+	\item \ARGU{pinarray} is a comma-separated list of pins  - each pin definition is as follows: \argu{pinnumber}/\ARGU{pinlabel}.
+\end{itemize}
+
+%% 32-pin TQFP example
+\begin{minipage}[t]{0.65\linewidth}
+\begin{lstlisting}
+\begin{figure}[ht!]
+  \centering
+  \TQFP(32){%
+  	1/{PD.0/RTX1},
+  	2/{PA.0/STX1},
+  	3/PA.1,										
+  	4/PA.2,										
+  	5/PA.3,										
+  	6/PA.4,										
+  	7/PA.5,										
+  	8/GND,									
+  	9/PA.6,
+  	10/PA.7,
+  	11/{PB.0/RTX1},
+  	12/{PB.1/STX1},
+  	13/PB.2,										
+  	14/PB.3,										
+  	15/PB.4,										
+  	16/PB.5,										
+  	17/PB.6,										
+  	18/PB.7,										
+  	19/\FormatPinLabel{PC.0/~ALE~/PLPBC0},
+  	20/PC.1,										
+  	21/PC.2,										
+  	22/PC.3,										
+  	23/PC.4,										
+  	24/PC.5,										
+  	25/PC.6,									
+  	26/PC.7,
+  	27/XTAL1/PD.3,
+  	28/XTAL2/PD.4,
+  	29/RST,
+  	30/PD.1,										
+  	31/PD.2,										
+  	32/$V_{cc}$}								
+  \caption{A generic MCU chip, 32-pin TQFP package} \label{fig:X_TQFP32}
+\end{figure}
+\end{lstlisting}%
+\end{minipage}\hfill
+
+%% 32-pin TQFP example
+\begin{figure}[ht!]
+  \centering
+  \TQFP(32){%
+  	1/{PD.0/RTX1},
+  	2/{PA.0/STX1},
+  	3/PA.1,										
+  	4/PA.2,										
+  	5/PA.3,										
+  	6/PA.4,										
+  	7/PA.5,										
+  	8/GND,									
+  	9/PA.6,										
+  	10/PA.7,										
+  	11/{PB.0/RTX1},
+  	12/{PB.1/STX1},
+  	13/PB.2,
+  	14/PB.3,
+  	15/PB.4,
+  	16/PB.5,
+  	17/PB.6,
+  	18/PB.7,
+  	19/\FormatPinLabel{PC.0/~ALE~/PLPBC0},
+  	20/PC.1,
+  	21/PC.2,
+  	22/PC.3,
+  	23/PC.4,
+  	24/PC.5,
+  	25/PC.6,
+  	26/PC.7,
+  	27/XTAL1/PD.3,
+  	28/XTAL2/PD.4,
+  	29/RST,
+  	30/PD.1,
+  	31/PD.2,
+  	32/$V_{cc}$}
+  \caption{A generic MCU chip, 32-pin TQFP package} \label{fig:X_TQFP32}
+\end{figure}
+
+\subsubsection{\ttfamily\textbackslash PLCC}
+\verbinline|\PLCC|\arguD{pinnumber}\ARGU{pinarray}
+\smallskip
+
+Draws a PLCC package with generic number of pins.
+
+\begin{itemize}
+	\item \argu{pincount} the  number of pins of a DIP package and should be an even number.
+	\item \ARGU{pinarray} is a comma-separated list of pins  - each pin definition is as follows: \argu{pinnumber}/\ARGU{pinlabel}.
+\end{itemize}
+
+%% 28-pin PLCC example
+\begin{minipage}[t]{0.65\linewidth}
+\begin{lstlisting}
+\begin{figure}[ht!]
+  \centering
+  \PLCC(28){%
+  	1/{PD.0/RTX1},
+  	2/{PA.0/STX1},
+  	3/PA.1,										
+  	4/PA.2,										
+  	5/PA.3,										
+  	6/PA.4,										
+  	7/PA.5,										
+  	8/GND,									
+  	9/PA.6,
+  	10/PA.7,
+  	11/{PB.0/RTX1},
+  	12/{PB.1/STX1},
+  	13/PB.2,										
+  	14/PB.3,										
+  	15/PB.4,										
+  	16/PB.5,										
+  	17/PB.6,										
+  	18/PB.7,										
+  	19/\FormatPinLabel{PC.0/~ALE~/PLPBC0},
+  	20/PC.1,										
+  	21/PC.2,										
+  	22/PC.3,										
+  	23/{XTAL1/PD.3},
+  	24/{XTAL2/PD.4},
+  	25/RST,
+  	26/PD.1,										
+  	27/PD.2,										
+  	28/$V_{cc}$}								
+  \caption{A generic MCU chip, 28-pin PLCC package} \label{fig:X_PLCC28}
+\end{figure}
+\end{lstlisting}%
+\end{minipage}\hfill
+
+%% 28-pin PLCC example
+\begin{figure}[ht!]
+  \centering
+  \PLCC(28){%
+  	1/{PD.0/RTX1},
+  	2/{PA.0/STX1},
+  	3/PA.1,										
+  	4/PA.2,										
+  	5/PA.3,										
+  	6/PA.4,										
+  	7/PA.5,										
+  	8/GND,									
+  	9/PA.6,										
+  	10/PA.7,										
+  	11/{PB.0/RTX1},
+  	12/{PB.1/STX1},
+  	13/PB.2,
+  	14/PB.3,
+  	15/PB.4,
+  	16/PB.5,
+  	17/PB.6,
+  	18/PB.7,
+  	19/\FormatPinLabel{PC.0/~ALE~/PLPBC0},
+  	20/PC.1,
+  	21/PC.2,
+  	22/PC.3,
+  	23/{XTAL1/PD.3},
+  	24/{XTAL2/PD.4},
+  	25/RST,
+  	26/PD.1,
+  	27/PD.2,
+  	28/$V_{cc}$}
+  \caption{A generic MCU chip, 28-pin PLCC package} \label{fig:X_PLCC28}
+\end{figure}
+
+%% Examples for PDIP packages
+\begin{minipage}[t]{0.35\linewidth}
+	\styleexemple
+\end{minipage}%
+
+
+%\bigskip\bigskip
+\begin{center}
+$\star$\par
+$\star$\quad$\star$
+\end{center}
+\par\nobreak\bigskip\bigskip
+That's all, I hope you will find this package useful!\par\nobreak
+Please, send me an \href{mailto:robert.h.blazek@gmail.com}{email} if you find a bug or if you have any idea of improvement\ldots\par\nobreak\medskip
+Robert Blazek
+\end{document}

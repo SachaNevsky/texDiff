@@ -1,0 +1,965 @@
+\documentclass[11pt]{report}
+\usepackage{euclide_bg}
+\usepackage{fancyvrb}
+%\newenvironment{bgcyr}{\inputencoding{cp1251}\fontencoding{T2A}\selectfont}{}
+\textheight= 8.5in
+\textwidth= 6.1in
+\oddsidemargin= 0in
+\evensidemargin= 0in
+\topmargin= 0in
+%\headsep 0in
+\setlength{\parindent}{.5cm}
+\setlength{\parskip}{0.07in}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{Пакет \texttt{pst-eucl}\thanks{Превод: Стефка Караколева, e-mail: skarakoleva@uni-ruse.bg}\\ Евклидова геометрия с \PStricks\thanks{Бел.пр. Благодаря на Бойко Банчев и Людмила Черчеланска за корекциите по българския вариант на тази документация.}}
+\author{\Version\\ Доминик Родригес \\ \texttt{domino.rodriguez@laposte.net}}
+\date{\Date\thanks{Публикуване на български език: \today}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+\maketitle
+\begin{abstract}
+   Пакетът \texttt{pst-eucl} позволява изобразяването на фигури в Евклидова геометрия, използвайки \LaTeX{} макроси при определени математически ограничения. Следователно, възможно е да се построява точка чрез използване на общи трансформации или сечения. Използването на координати е ограничено от точките, които контролират фигурата.
+  \vfill
+
+  \begin{center}\bfseries
+    Благодарности
+  \end{center}
+
+  Бих искал да благодаря на следните хора за помощта, която ми оказаха за развитието на този пакет.
+
+  \begin{itemize}
+  \item Denis Girou за неговите подходящи критики и насърчаване по време на първоначалната разработка и за коригирането на това ръководство;
+  \item Michael Vulis за бързото тестване на документацията с използване на  V\TeX, което доведе до корекцията на грешката в кода на \PostScript;
+  \item Manuel Luque и Olivier Reboux за техните забележки и примери;
+  \item Alain Delplanque за неговите предложения за изменение на автоматичното поставяне на име на точки и възможността за създаване на списък от точки в \com{pstGeonode}.
+  \end{itemize}
+\end{abstract}
+%%%%%%%%%%%%%%%%%%%%
+\renewcommand{\abstractname}{Внимание}
+\begin{abstract}
+Това е първото публикуване в архивите на \texttt{CTAN}.
+
+  \vfill
+
+  \begin{center}\bfseries
+    Лиценз
+  \end{center}
+  Тази програма и документацията \'и  могат да бъдат разпространени и/или променени съгласно условията на „\LaTeX{} Project Public License“, разпространен от архивите на \texttt{CTAN} в директория \texttt{macros/latex/base/lppl.txt}. Въпреки това, Вие можете да ми изпратите e-mail с кратък коментар. В такъв случай, трябва да помислите за дарение\footnote{особено ако ползвате закупена операционна система! Още повече, не забравяйте, че \LaTeX{} е свободно достъпна и че много потребители купуват програми за стотици Евро (долари, лири) с ниско качество.}:
+ \begin{enumerate}
+\item директно към колектива на \LaTeX3 ;
+\item и/или към мен за поддръжка на този пакет \footnote{1~\MonEuro, Ј1 или \$1 е добре, но аз приемам и повече.}.
+\end{enumerate}
+
+ Дарение на време в зависимост от компетентността е възможно: поправка на  документацията (особено на тази), тест за функционалност, предложение за развитие\ldots
+\end{abstract}
+
+\twocoltoc{}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter[Ръководство]{Ръководство за потребителя}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Специални уточнения}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Опции на  \PStricks}
+Пакетът активира режим \com{SpecialCoor}. Този режим  разширява спецификациите на координатите.  Освен това, типът на чертане се установява на \texttt{dimen=middle}, което означава, че позицията на чертане е спрямо средата на линията. Моля, разгледайте ръководството на потребителя за повече информация.
+
+Накрая, координатните оси се установяват да са (орто)нормирани.
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Означения}
+В това ръководство са използвани френските геометрични означения за именуване на точките:
+\begin{itemize}
+          \item $O$ е център (окръжност, оси, симетрия, хомотетия, ротация);
+          \item $I$ определя единицата по абсцисната ос или средна точка;
+          \item $J$ дефинира единицата по ординатната ос;
+          \item $A, B, C, D$  са точки;
+          \item $M'$  е образът на $M$ при трансформация.
+        \end{itemize}
+
+Накрая, въпреки че има възли (nodes) в \PStricks, те се разглеждат умишлено като точки.
+
+\section{Основни обекти}
+\subsection{Точки}
+\subsubsection*{Оси по подразбиране}
+\defcom[Syzdava spisyk ot toqki s izpolzvane na obsti osi.% Създава списък от точки с използване на общи оси.
+\protect\ParamList{\param{PointName}, \param{PointNameSep}, \param{PosAngle}, \param{PointSymbol}, \param{PtNameMath}}]%
+  {pstGeonode}{\OptArg{par}$(x_1,y_1)$\Arg{$A_1$}$(x_2,y_2)$\Arg{$A_2$}\ldots$(x_n,y_n)$\Arg{$A_n$}}
+
+Командата \com{pstGeonode} дефинира една или повече геометрични точки, свързани с възли. На всяка точка се съпоставя възел с име \Argsans{$A_i$}, което дефинира етикет. По подразбиране етикетът (името) на точката се изобразява на чертежа и се обработва в математически режим. Двоичният  параметър  \param{PtNameMath} \DefaultVal{true}  позволява да се превключва към обработка на етикета в нормален режим. Етикетът се поставя на разстояние  \param{PointNameSep} \DefaultVal{1em} от центъра на възела под ъгъл \param{PosAngle} \DefaultVal{0}. Възможно е да се определи друг етикет с използване на параметъра \param{PointName} \DefaultVal{default}.  Празен етикет се задава чрез избор на стойност на  параметъра \texttt{none}; в този случай точката няма етикет на изображението.
+
+Символът за изобразяване на точка се задава чрез параметъра  \param{PointSymbol} \DefaultVal{*}. Използва се същия символът като в макрото  \com{pstdot}. Ако на параметъра \param{PointSymbol} се зададе стойност \texttt{none}, точката не се изобразява на чертежа.
+
+Възможни стойности за този параметър са:
+
+\begin{multicols}{3}
+  \begin{itemize}\psset{dotscale=2}
+  \item \param{*}: \psdots(.5ex,.5ex)
+  \item \param{o}: \psdots[dotstyle=o](.5ex,.5ex)
+  \item \param{+}: \psdots[dotstyle=+](.5ex,.5ex)
+  \item \param{x}: \psdots[dotstyle=x](.5ex,.5ex)
+  \item \param{asterisk} : \psdots[dotstyle=asterisk](.5ex,.5ex)
+  \item \param{oplus}: \psdots[dotstyle=oplus](.5ex,.5ex)
+  \item \param{otimes}: \psdots[dotstyle=otimes](.5ex,.5ex)
+  \item \param{triangle}: \psdots[dotstyle=triangle](.5ex,.5ex)
+  \item \param{triangle*}: \psdots[dotstyle=triangle*](.5ex,.5ex)
+  \item \param{square}: \psdots[dotstyle=square](.5ex,.5ex)
+  \item \param{square*}: \psdots[dotstyle=square*](.5ex,.5ex)
+  \item \param{diamond}: \psdots[dotstyle=diamond](.5ex,.5ex)
+  \item \param{diamond*}: \psdots[dotstyle=diamond*](.5ex,.5ex)
+  \item \param{pentagon}: \psdots[dotstyle=pentagon](.5ex,.5ex)
+  \item \param{pentagon*}: \psdots[dotstyle=pentagon*](.5ex,.5ex)
+  \item \param{|}: \psdots[dotstyle=|](.5ex,.5ex)
+  \end{itemize}
+\end{multicols}
+
+ \cbstart Освен това, тези символи могат да бъдат контролирани и с други \PStricks, някои от които са:
+
+\begin{itemize}
+  \item Мащабът се контролира чрез параметъра  \param{dotscale}, стойността на който е или две числа, определящи  хоризонталния и вертикален мащабиращ множител, или една единствена стойност, която се отнася и за вертикала, и за хоризонтала;
+  \item Техният ъгъл се контролира с параметъра \param{dotangle}.
+\end{itemize}
+
+Допълнителна информация има в документацията на \PStricks.
+\cbend
+
+Параметрите се определят изрично в частта \Argsans{par}. Параметрите \param{PosAngle}, \param{PointSymbol},  \param{PointName} и  \param{PointNameSep}  могат да се установят на:
+\begin{itemize}
+  \item или единствена стойност, една и съща за всички точки;
+  \item или списък от стойности, заградени с \texttt{\{ ... \}}  и отделени със запетая \emph{без никакви интервали}, позволяващи да се диференцират стойностите за всяка отделна точка.
+\end{itemize}
+
+В последния случай, списъкът може да има по-малко стойности от броя на точките. Това означава, че последната стойност се използва за всички останали точки.
+
+\cbstart Параметърът \param{CurveType} \DefaultVal{none} може да се използва за изобразяване на линия между точките:
+\begin{itemize}
+  \item отворена \verb$polyline$;
+  \item затворен \verb$polygon$;
+  \item отворена и затворена \verb$curve$.
+\end{itemize}
+\cbend
+
+% EXEMPLE GEONODE
+\tabex{geonode}
+
+Очевидно възлите, появяващи се на фигурата, могат да бъдат използвани като нормални \PStricks възли. Следователно, възможно е да се цитира точка \rnode{ici}{тук}. \nccurve[arrowscale=2]{->}{ici}{B_1}
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsubsection{Оси, дефинирани от потребителя}
+
+\defcom[Syzdava spisyk ot toqki v koordinatnata sistema $(O,I,J)$.%Създава списък от точки в координатната система $(O,I,J)$.
+\protect\ParamList{\param{PointName}, \param{PointNameSep}, \param{PosAngle}, \param{PointSymbol}, \param{PtNameMath}}]%
+   {pstOIJGeonode}%
+  {\OptArg{par}$(x_1,y_1)$\Arg{$A_1$}\Arg{$O$}\Arg{$I$}\Arg{$J$}$(x_2,y_2)$\Arg{$A_2$}\ldots$(x_n,y_n)$\Arg{$A_n$}}
+
+Командата \com{pstOIJGeonode} позволява поставянето на точки в някаква област, дефинирана посредством трите точки $(O, I, J)$.
+
+%% EXAMPLE
+
+\tabex{oij}
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Маркиране на отсечки}
+
+Отсечка може да бъде изобразена с използване на командата \com{ncline}. Но, за маркиране на отсечка, се използва следната команда:
+
+\defcom[Markira otseqka \Segment{AB}  kato postavja v sredata znak, zadaden s %Маркира отсечка \Segment{AB} в средата \'и чрез знак, зададен със
+\protect\param{SegmentSymbol}. %
+\protect\ParamList{\param{SegmentSymbol}}]%
+  {pstSegmentMark}{\OptArg{par}\Arg{$A$}\Arg{$B$}}
+
+Командата \com{pstSegmentMark} маркира отсечка. Символът, изобразяван върху отсечката, се задава с параметъра \param{SegmentSymbol}. Негова стойност може да бъде валидна команда, използвана в математически режим. Стойността по подразбиране на този параметър е \texttt{pstslashh}, която води до маркиране на отсечката с две наклонени линии. Отсечката се изобразява.
+
+Няколко команди са предефинирани за маркиране на отсечка:
+\begin{multicols}{2}
+  \psset{PointSymbol=none, PointName=none, unit=.8}
+  \newcommand{\Seg}[1]{%
+    \com{#1} : \begin{pspicture}(0,.3)(2,1)
+                 \pstGeonode(0.3,.5){A}(1.7,.5){B}\pstSegmentMark[SegmentSymbol=#1]{A}{B}
+               \end{pspicture}}%
+  \begin{itemize}
+  \item \Seg{pstslash}
+  \item \Seg{pstslashh}
+  \item \Seg{pstslashhh}
+  \item \Seg{MarkHash}
+  \item \Seg{MarkHashh}
+  \item \Seg{MarkHashhh}
+  \item \Seg{MarkCros}
+  \item \Seg{MarkCross}
+  \end{itemize}
+\end{multicols}
+
+
+ Трите команди от семейството \texttt{MarkHash} чертаят линии, чиито наклони се контролират от параметъра \param{MarkAngle} \DefaultVal{45}. Дебелината и цвета на маркиращите линии зависят от дебелината и цвета на изобразената отсечка, както показва следващият пример.
+
+%% EXAMPLE
+\tabex{segmentmark}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Триъгълници}
+
+Класическата фигура! Тя има собствено макро за бърза дефиниция:
+
+\defcom[Cherate triygylnik.%Чертае триъгълник.
+  \protect\ParamList{\param{PointName}, \param{PointNameSep}, \param{PointSymbol}, \param{PointNameA}, \param{PosAngleA}, \param{PointSymbolA}, \param{PointNameB},
+  \param{PosAngleB}, \param{PointSymbolB}, \param{PointNameC},  \param{PosAngleC}, \param{PointSymbolC}}]%
+  {pstTriangle}{\OptArg{par}$(x_A,y_A)$\Arg{$A$}$(x_B,y_B)$\Arg{$B$}$(x_C,y_C)$\Arg{$C$}}
+
+За да се поставят прецизно имената на точките, се използват три параметъра: \param{PosAngleA}, \param{PosAngleB} и \param{PosAngleC}, които са свързани  съответно с възлите \Argsans{$A$}, \Argsans{$B$} и \Argsans{$C$}. Очевидно, те имат същия смисъл  като параметъра \param{PosAngle}. Ако няма зададен ъгъл за някоя точка, нейното име се поставя на ъглополовящата линия.
+
+Аналогично, има параметри за контролиране на символа, използван за всяка от точките: \param{PointSymbolA}, \param{PointSymbolB} и
+\param{PointSymbolC}. Те са еквивалентни на параметъра  \param{PointSymbol}. Управлението на стойността по подразбиране следва същото правило.
+
+\tabex{triangle}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Ъгли}
+
+Всеки ъгъл се дефинира с три точки. Върхът е втората точка. Техният ред е важен, защото се предполага, че ъгълът се определя в положителна посока (обратно на часовниковата стрелка). Командата \com{pstRightAngle} се използва за маркиране на прав ъгъл:
+
+\defcom[Markira prav ygyl \protect\Angle{ABC}, zadaden v polovitelna posoka.%Маркира прав ъгъл \protect\Angle{ABC}, зададен в положителна посока.
+\protect\ParamList{\param{RightAngleType}, \param{RightAngleSize}, \param{RightAngleSize}}]%
+  {pstRightAngle}%
+  {\OptArg{par}\Arg{$A$}\Arg{$B$}\Arg{$C$}}
+
+ \cbstart Използваният символ се контролира от параметъра \param{RightAngleType} \DefaultVal{default}. Неговите възможни стойности са:
+\begin{itemize}
+\item \verb$default$: стандартен символ;
+\item \verb$german$: германски символ (дефиниран от U. Dirr);
+\item \verb$suisseromand$: швейцарски символ (дефиниран от P. Schnewlin).
+\end{itemize}\cbend
+
+
+Единственият параметър, контролиращ тази команда, (освен онези, които контролират линията) е  \param{RightAngleSize}. Той дефинира размера на символа \DefaultVal{0.28 unit}. За други ъгли се използва командата:
+
+\defcom[Markira ygyla \protect\Angle{ABC}, zadaden v polojitelna posoka.%Маркира ъгъла \protect\Angle{ABC}, зададен в положителна посока.
+  \protect\ParamList{\param{MarkAngleRadius}, \param{LabelAngleOffset}, \param{Mark}}]%
+  {pstMarkAngle}%
+  {\OptArg{par}\Arg{$A$}\Arg{$B$}\Arg{$C$}\Arg{label}}
+
+Етикет \param{label} може да бъде всеки валиден \TeX{} box, поставен на разстояние \param{LabelSep} \DefaultVal{1 unit}  от възела по направление на ъглополовящата на ъгъла, модифициран чрез \param{LabelAngleOffset} \DefaultVal{0} и позициониран с използване на \param{LabelRefPt} \DefaultVal{c}. Освен това, дъгата, използвана за маркиране, има радиус, зададен чрез параметъра \param{MarkAngleRadius} \DefaultVal{.4~unit}. Възможно е дъгата да завършва със стрелка като се използва параметъра \param{arrows}. Накрая, дъгата на ъгъла може да се маркира чрез поставяне на \TeX-команда като аргумент на параметъра \param{Mark} (виж примера).
+
+\tabex%
+ [@{}m{.25\linewidth}@{\hspace{.05\linewidth}}>{\small}m{.7\linewidth}@{}]%
+ {angle}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Прави, лъчи и отсечки}
+
+Класическата линия!
+
+\defcom[Чертае права линия $(AB)$.]{pstLineAB}{\OptArg{par}\Arg{$A$}\Arg{$B$}}
+
+За да се контролира дължината на видимата част от правата, се използват параметрите  \param{nodesepA} и \param{nodesepB}.  Те  определят абсцисата  на края на изчертаваната част от правата. Отрицателна абсциса определя външна точка, а положителна абсциса определя вътрешна точка. Ако тези параметри са равни, вместо тях се използва \param{nodesep}. Стойността по подразбиране на тези параметри е 0, което означава, че се чертае отсечката $AB$.
+
+\tabex%
+ [@{}m{.25\linewidth}@{\hspace{.05\linewidth}}>{\small}m{.7\linewidth}@{}]%
+ {droite}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  \subsection{Окръжности}
+Окръжност се дефинира или с нейния център и точка от нея, или с две диаметрално противоположни точки. Има две команди:
+
+\renewcommand{\ComUnDescr}{Cherate okryjnostta s centyr  $O$, minavasta prez $A$.%Чертае окръжността с център $O$, минаваща през $A$.
+\protect\ParamList{\param{Radius}, \param{Diameter}}.}
+\renewcommand{\ComDeuxDescr}{Chertae okryjnostta s diametyr $AB$.%Чертае окръжността с диаметър $AB$.
+\protect\ParamList{\param{Radius}, \param{Diameter}}.}
+\defcomdeux{pstCircleOA}{\OptArg{par}\Arg{$O$}\Arg{$A$}}%
+           {pstCircleAB}{\OptArg{par}\Arg{$A$}\Arg{$B$}}
+
+За първото макро е възможно да се пропусне втората точка и след това да се определят радиуса или диаметъра чрез параметрите \param{Radius} и  \param{Diameter}. Стойностите на тези параметри могат да бъдат определени чрез един от следните два макроса:
+
+\renewcommand{\ComUnDescr}{Opredelya razstoyanieto $AB$ za parametrite%
+\protect\param{Radius} i \protect\param{Diameter}.%Определя разстоянието $AB$ за параметрите \protect\param{Radius} и \protect\param{Diameter}.
+ \protect\ParamList{\param{DistCoef}}.}
+\renewcommand{\ComDeuxDescr}{Opredelya qislena stojnost za parametrite \protect\param{Radius} i \protect\param{Diameter}.
+%Определя числена стойност за параметрите \protect\param{Radius} и \protect\param{Diameter}.%
+\protect\ParamList{\param{DistCoef}}.}
+\defcomdeux{pstDistAB}{\OptArg{par}\Arg{$A$}\Arg{$B$}}%
+           {pstDistVal}{\OptArg{par}\Arg{x}}
+
+Първият макрос определя разстоянието между двете точки. Параметърът  \param{DistCoef}  може да бъде използван за определяне на коефициент за намаляване или увеличаване на това разстояние. За да бъде взет под внимание последния параметър, той трябва да бъде определен преди разстоянието. Второто макро се използва за определяне на точна числена стойност. Ще видим по-късно как се чертае окръжност, минаваща през три точки.
+
+%\vspace{1.1\baselineskip}
+%\begin{minipage}[m]{.45\linewidth}
+ С този пакет вероятно ще се налага да се чертае:
+ \begin{itemize}
+ \item {\color{red}окръжност с център $A$, минаваща през $B$;}
+\item {\color{green} окръжност с център $A$, чийто радиус е $AC$;}
+\item {\color{blue}окръжност с център $A$, чийто радиус е $BC$;}
+\item {\color{magenta} окръжност с център $B$, чийто радиус е $AC$;}
+\item {\color{cyan} окръжност с център $B$ и диаметър $AC$;}
+\item {\color{yellow} окръжност, чийто диаметър е $BC$.}
+\end{itemize}
+%\end{minipage}
+%
+\begin{center}
+\input{Exemples/cercle}
+\end{center}
+
+\VerbatimInput[numbers=left]{Exemples/cercle_in}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Дъги от окръжност}
+
+\renewcommand{\ComUnDescr}{Cherate dyga ot okryvnost s centyr  $O$ i radius $OA$, ograniqena ot ygyla $\protect\Angle{AOB}$, otchitan v polovitelna posoka.}
+%Чертае дъга от окръжност с център  $O$ и  радиус $OA$, ограничена  от ъгъла $\protect\Angle{AOB}$, отчитан в положителна посока.
+\renewcommand{\ComDeuxDescr}{Cherate dyga ot okryvnost s centyr  $O$ i radius $OA$, ograniqena ot ygyla $\protect\Angle{AOB}$, otchitan v otricatelna posoka.}
+%Чертае дъга от окръжност с център $O$ и радиус $OA$, ограничена от ъгъла $\protect\Angle{AOB}$, отчитан в отрицателна посока.
+\defcomdeux{pstArcOAB}{\OptArg{par}\Arg{$O$}\Arg{$A$}\Arg{$B$}}%
+           {pstArcnOAB}{\OptArg{par}\Arg{$O$}\Arg{$A$}\Arg{$B$}}
+\tabex%
+ [@{}m{.25\linewidth}@{\hspace{.05\linewidth}}>{\small}m{.7\linewidth}@{}]%
+ {arc}
+
+Макросите \com{pstArcOAB} и \com{pstArcnOAB} чертаят дъги от окръжност. $O$ е центърът, радиусът се дефинира чрез $OA$, началният ъгъл се задава с $A$, а крайният ъгъл -- чрез $B$. Първото макро чертае дъгата в положителна посока, а второто--в отрицателна (по часовниковата стрелка). Не е необходимо двете точки да са на едно и също разстояние от $O$.
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Кръгова абсциса}
+Точка може да бъде позиционирана върху окръжност чрез задаване на дължина на дъгата от нея до дадена точка от същата окръжност. Тук е използван терминът кръгова абсциса (curved abscissa) за това разстояние.
+
+\defcom[Postawya tochka vyrhu okryvnost qrez izpolzvane na krygova abscisa.%Поставя точка върху окръжност чрез използване на кръгова абсциса.
+  \protect\ParamList{\param{PointSymbol}, \param{PosAngle}, \param{PointName}, \param{PointNameSep}, \param{PtNameMath}, \param{CurvAbsNeg}}]%
+  {pstCurvAbsNode}{\OptArg{par}\Arg{$O$}\Arg{$A$}\Arg{$B$}\Arg{Abs}}
+%
+%Точката \Argsans{$B$} принадлежи на окръжност с център \Argsans{$O$},  минаваща през \Argsans{$A$}, с кръгова абсциса \Argsans{Abs}. Центърът е \Argsans{$A$}, а посоката на въртене е (по подразбиране) обратно на часовата стрелка. Параметърът \param{CurvAbsNeg} \DefaultVal{false}  може да смени това поведение, т.е ако стойността му е \param{true}, посоката е по часовата стрелка.
+
+Командата \com{pstCurvAbsNode} построява точка \Argsans{$B$} върху окръжност с център \Argsans{$O$}, минаваща
+през \Argsans{$A$}, така че разстоянието на дъгата от окръжността от \Argsans{$A$} до \Argsans{$B$} да бъде \Argsans{Abs}. Разстоянието („кръгова абсциса“) се отмерва в положителна посока (обратна на движението на часовниковата стрелка). За отмерване в обратна посока трябва да се даде на параметъра \param{CurvAbsNeg}
+стойност \param{true} \DefaultVal{false}.
+
+Ако параметърът \param{PosAngle} не е определен, етикетът на точката се поставя автоматично така, че да е подравнен с центъра на окръжността и точката.
+\tabex{abscur}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Обща крива}
+Възможно е да се генерира набор от точки с използване на стъпка (нарастване), като им се дава общо име, дефинирано чрез основа (префикс) и число. Командата \com{pstGenericCurve} изобразява интерполирана крива, минаваща през всички тези точки.
+
+\defcom[Cherate interpolirana kriva s izpolzvane na familiq toqki, qieto ime se systoi ot obst prefis i qislo.%Чертае интерполирана крива с използване на фамилия точки, чието име се състои от общ префикс и число.%
+  \protect\ParamList{\param{GenCurvFirst}, \param{GenCurvInc}, \param{GenCurvLast}}]%
+  {pstGenericCurve}{\OptArg{par}\Arg{Radical}\Arg{$n_1$}\Arg{$n_2$}}
+
+Кривата се чертае през точките, чието име е дефинирано чрез основата \Argsans{Radical} и число в интервала от \Argsans{$n_1$} до \Argsans{$n_2$}. Параметрите \param{GenCurvFirst}  и \param{GenCurvLast} се използват за определяне на специална първа и последна точка. Параметърът  \param{GenCurvInc} се използва за промяна на нарастването от една точка към следващата точка \DefaultVal{1}.
+
+\tabex{gencur}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[Геoмeтрични трансформации]{Геoмeтрични трансформации}
+\cbstart Геометричните трансформации са идеални инструменти за конструиране на геометрични фигури. Всички класически трансформации са достъпни със следните макроси,  които имат сходна синтактична схема, завършваща с два параметъра.
+
+При всички тези команди накрая има два списъка от точки. Вторият списък не е задължителен. Първият списък съдържа първообрази на точки при трансформация, а вторият --  техните съответни образи. Ако във втория списък не се посочва образ за някоя точка, името по подразбиране на образа \'и се построява с добавяне на \verb$'$ към името на първообраза.
+
+Макросите за геометрични трансформации имат два общи параметъра:
+\begin{itemize}
+  \item Първият общ параметър е \param{CodeFig}, който чертае специфичните линии за конструиране на образите при трансформация. Неговата стойност по подразбиране е \param{false}, а стойността \param{true} активира това незадължително конструиране. Изчертаването се прави с използване на стил на линията \param{CodeFigStyle}
+\DefaultVal{dashed}, с цвят \param{CodeFigColor} \DefaultVal{cyan}.
+  \item
+Вторият общ параметър е \param{CurveType}, който контролира изобразяването на линия през всички образи и позволява бързо описание на трансформираната фигура.
+\end{itemize}
+\cbend
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Обща симетрия}
+
+\defcom[Postroyava simetriqnata toqka  $M'_i$ на $M_i$ po otnoshenie na toqka $O$.%Построява симетричната точка $M'_i$ на $M_i$ по отношение на точка $O$.%
+  \protect\ParamList{\param{PointSymbol}, \param{PosAngle}, \param{PointName}, \param{PointNameSep}, \param{PtNameMath}, \param{CodeFig}, \param{CodeFigColor}, \param{CodeFigStyle}}]%
+  {pstSymO}%
+  {\OptArg{par}\Arg{$O$}\Arg{$M_1, M_2, \cdots, M_n$}\OptArg{$M'_1, M'_2, \cdots, M'_p$}}
+
+Командата \com{pstSymO} изобразява симетрична на дадена точка спрямо точка $O$ (централна симетрия). За конструиране на образите може да се използва класическия параметър \param{CodeFig}.
+
+\tabex%
+ [@{}m{.35\linewidth}@{\hspace{.013\linewidth}}>{\small}m{.627\linewidth}@{}]%
+ {symcentrale}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Ортогонална (осева) симетрия}
+
+\defcom[Postroqva simetriqnata toqka $M'_i$ на $M_i$ po otnoshenie na prawa $(AB)$.%Построява симетричната точка $M'_i$ на $M_i$ по отношение на права $(AB)$.%
+  \protect\ParamList{\param{PointSymbol}, \param{PosAngle}, \param{PointName}, \param{PointNameSep}, \param{PtNameMath}, \param{CodeFig}, \param{CodeFigColor}, \param{CodeFigStyle}}]%
+  {pstOrtSym}%
+  {\OptArg{par}\Arg{$A$}\Arg{$B$}\Arg{$M_1, M_2, \cdots, M_n$}\OptArg{$M'_1, M'_2, \cdots, M'_p$}}
+
+Командата \com{pstOrtSym} изобразява симетрична точка по отношение на правата $(AB)$.
+
+\tabex{symorthogonale}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Ротация}
+
+\defcom[Postroqva obraza $M'_i$ на $M_i$ pri rotaciya okolo tochka $O$ s ygyl na rotaciyata \protect\param{RotAngle}, zadaden s mqrka v gardusi, otchitan v polovitelna posoka.%
+%Построява образа $M'_i$ на $M_i$ при ротация около точка $O$ с ъгъл на ротацията \protect\param{RotAngle}, зададен с мярка в градуси, отчитан в положителна посока.%
+  \protect\ParamList{\param{PointSymbol}, \param{PosAngle}, \param{PointName}, \param{PointNameSep}, \param{PtNameMath}, \param{RotAngle}}]%
+  {pstRotation}%
+  {\OptArg{par}\Arg{$O$}\Arg{$M_1, M_2, \cdots, M_n$}\OptArg{$M'_1, M'_2, \cdots, M'_p$}}
+
+
+Командата \com{pstRotation} чертае образ на $M_i$ при ротация с център $O$ и ъгъл, зададен с параметъра \param{RotAngle}. Ъгълът на ротация може да бъде ъгъл, определен от три точки. В този случай се използва следната функция:
+
+\defcom[Operdelya mqrkata na \protect\Angle{AOB} (v polovitelna posoka ) za opredelqne na parametyra  \protect\param{RotAngle}.%
+%Определя мярката на \protect\Angle{AOB} (в положителна посока) за определяне на параметъра  \protect\param{RotAngle}.
+ \protect\ParamList{\param{AngleCoef}}]{pstAngleAOB}{\Arg{$A$}\Arg{$O$}\Arg{$B$}}
+
+Никога \cbstart не забравяйте да използвате ротацията за чертане на квадрат или равностранен триъгълник.  Параметърът \param{CodeFig} поставя дъга със стрелка между точката и нейния образ. Ако \param{TransformLabel} \DefaultVal{none} съдържа някакъв текст, записан в математически режим, с него се означава ъгълът на ротация.\cbend
+
+\medskip
+\tabex%
+ [@{}m{.25\linewidth}@{\hspace{.03\linewidth}}>{\small}m{.72\linewidth}@{}]%
+ {rotation}
+\medskip
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Транслация}
+
+\defcom[Postroyava obraz  $M'_i$ на  $M_i$ pri translaciq s vektor \protect\Vecteur{AB}.%Построява образ $M'_i$ на  $M_i$ при транслация с вектор \protect\Vecteur{AB}.%
+  \protect\ParamList{\param{PointSymbol}, \param{PosAngle}, \param{PointName}, \param{PointNameSep}, \param{PtNameMath}, \param{DistCoef}}]%
+  {pstTranslation}%
+  {\OptArg{par}\Arg{$A$}\Arg{$B$}\Arg{$M_1, M_2, \cdots, M_n$}\OptArg{$M'_1, M'_2, \cdots, M'_p$}}
+
+ Командата \com{pstTranslation} чертае  образ  $M'_i$ на точка $M_i$  при транслация с вектор \Vecteur{AB}. Командата се използва за изобразяване на успоредни прави.
+
+\tabex%
+ [@{}m{.25\linewidth}@{\hspace{.03\linewidth}}>{\small}m{.72\linewidth}@{}]%
+ {translation}
+
+\bigskip\cbstart
+Параметърът \param{DistCoef} може да се използва като мащабиращ множител за модифициране  вектора на транслация.  Параметърът \param{CodeFig} чертае транслационния вектор между точката и нейния образ, поставяйки етикет в средата му с името на вектора или текст, определен с \param{TransformLabel} \DefaultVal{none}.\cbend
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Хомотетия}
+
+\defcom[Postroqva obraz  $M'_i$ на $M_i$ pri homotetiya s centyr  $O$ i koeficient na homotetiya \protect\param{HomCoef}.
+%Построява образ $M'_i$ на $M_i$ при хомотетия с център $O$ и коефициент на хомотетия \protect\param{HomCoef}.%
+  \protect\ParamList{\param{PointSymbol}, \param{PosAngle}, \param{PointName}, \param{PointNameSep}, \param{PtNameMath}, \param{HomCoef}}]%
+  {pstHomO}%
+  {\OptArg{par}\Arg{$O$}\Arg{$M_1, M_2, \cdots, M_n$}\OptArg{$M'_1, M'_2, \cdots, M'_p$}}
+
+ Командата \com{pstHomO} чертае образ  $M'_i$ при хомотетия на $M_i$ с център $O$ и коефициент, определен от параметъра \param{HomCoef}.
+
+\tabex%
+ [@{}m{.25\linewidth}@{\hspace{.03\linewidth}}>{\small}m{.72\linewidth}@{}]%
+{homothetie}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Ортогонална проекция}
+
+\defcom[Postroqva proekciqta  $M'_i$ na toqka  $M_i$ vyrhu pravata $(AB)$.%Построява проекцията  $M'_i$ на точка $M_i$ върху правата $(AB)$.%
+  \protect\ParamList{\param{PointSymbol}, \param{PosAngle}, \param{PointName}, \param{PointNameSep}, \param{PtNameMath}, \param{CodeFig}, \param{CodeFigColor}, \param{CodeFigStyle}}]%
+  {pstProjection}%
+  {\OptArg{par}\Arg{$A$}\Arg{$B$}\Arg{$M_1, M_2, \cdots, M_n$}\OptArg{$M'_1, M'_2, \cdots, M'_p$}}
+
+ Командата \com{pstProjection}  проектира ортогонално точката $M_i$ върху правата $(AB)$.  Командата е полезна за построяване на височина на триъгълник. Името на ортогоналната проекция на точка се подравнява с името на точката, както е показано в примера.
+
+\tabex%
+ [@{}m{.35\linewidth}@{\hspace{.03\linewidth}}>{\small}m{.62\linewidth}@{}]%
+ {projection}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Специални обекти}
+\subsection{Средна точка}
+
+\defcom[Postroqva sredata $I$ na otseqkata \Segment{AB}.%Построява средата $I$ на отсечката \Segment{AB}.%
+  \protect\ParamList{\param{PointSymbol}, \param{PosAngle}, \param{PointName}, \param{PointNameSep}, \param{PtNameMath}, \param{SegmentSymbol}, \param{CodeFig}, \param{CodeFigColor}, \param{CodeFigStyle}}]%
+  {pstMiddleAB}%
+  {\OptArg{par}\Arg{$A$}\Arg{$B$}\Arg{$I$}}
+
+   Командата \com{pstMiddleAB} изобразява средната точка  $I$ на отсечката $[AB]$. По подразбиране, името на точката автоматично се поставя под отсечката.
+
+\tabex%
+ [@{}m{.35\linewidth}@{\hspace{.03\linewidth}}>{\small}m{.62\linewidth}@{}]%
+ {milieu}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Център на гравитация на триъгълник}
+
+\defcom[Postroqva centyra na gravitaciyata $G$ na triygylnik $ABC$.%Построява центъра на гравитация $G$ на триъгълник $ABC$.%
+        \protect\ParamList{\param{PointName}, \param{PointNameSep}, \param{PosAngle}, \param{PointSymbol}, \param{PtNameMath}}]%
+{pstCGravABC}%
+{\OptArg{par}\Arg{$A$}\Arg{$B$}\Arg{$C$}\Arg{$G$}}
+
+Командата \com{pstCGravABC} изобразява центъра на гравитация $G$ на триъгълник $ABC$.
+
+\tabex%
+ [@{}m{.35\linewidth}@{\hspace{.03\linewidth}}>{\small}m{.62\linewidth}@{}]%
+ {grav}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Център на описана окръжност на триъгълник}
+
+\defcom[Postroqva centra  $O$ na op[isnata okolo triygylnika $ABC$ okryxnost. %Построява центъра $O$ на описаната около триъгълника $ABC$ окръжност.%
+ \protect\ParamList{\param{PointName}, \param{PointNameSep}, \param{PosAngle}, \param{PointSymbol}, \param{PtNameMath}, \param{DrawCirABC}, \param{CodeFig}, \param{CodeFigColor}, \param{CodeFigStyle}, \param{SegmentSymbolA}, \param{SegmentSymbolB}, \param{SegmentSymbolC}}]%
+  {pstCircleABC}{\OptArg{par}\Arg{$A$}\Arg{$B$}\Arg{$C$}\Arg{$O$}}
+
+\cbstart Командата \com{pstCircleABC} изобразява  окръжност, минаваща през три точки (описана окръжност) и поставя нейния център $O$. Ефективното чертане се контролира от двоичния параметър  \param{DrawCirABC} \DefaultVal{true}. Освен това, конструирането (чрез симетралите)  може да бъде начертано чрез установяване на двоичния параметър \param{CodeFig=true}. В този случай, средните точки се маркират върху отсечките чрез използване на различни символи, зададени с параметрите \param{SegmentSymbolA}, \param{SegmentSymbolB} и \param{SegmentSymbolC}.\cbend
+
+\tabex%
+  [@{}m{.4\linewidth}@{\hspace{.013\linewidth}}>{\small}m{.642\linewidth}@{}]%
+  {ccirc}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Симетрала на отсечка}
+
+\defcom[Postroyava simetralata na otseqka \Segment{AB}  prez nejnata sredana toqka $I$ и %
+toqka  $M$ ot simetralata, ko[to e obraz na $B$ pri rotaciya na  $90^\circ$ okolo $I$.%
+%Построява симетралата на отсечка \Segment{AB}  през нейната средна точка $I$ и %
+%точка $M$ от симетралата, която е образ на $B$ при ротация на $90^\circ$ около $I$.%
+\protect\ParamList{\param{PointName}, \param{PointNameSep}, \param{PosAngle}, \param{PointSymbol}, \param{PtNameMath}, \param{CodeFig}, \param{CodeFigColor}, \param{CodeFigStyle}, \param{SegmentSymbol}}]%
+{pstMediatorAB}{\OptArg{par}\Arg{$A$}\Arg{$B$}\Arg{$I$}\Arg{$M$}}
+
+Симетралата на отсечка е права, перпендикулярна на тази отсечка през нейната средна точка. Отсечката е $[AB]$, средната точка - $I$, а $M$ е точка, принадлежаща на  симетралата. Тя се построява чрез ротация на $B$ на $90^\circ$ около $I$. Това означава, че редът на $A$ и $B$ е важен; той контролира положението на точка $M$.
+
+Командата \com{pstMediatorAB} създава двете точки M и I. Конструкцията се контролира от следните параметри:
+\begin{itemize}
+\item \param{CodeFig}, \param{CodeFigColor} и \param{SegmentSymbol}
+ за маркиране на правия ъгъл;
+\item \param{PointSymbol} и \param{PointName} за контролиране изобразяването на двете точки, всяка от които може да бъде определена отделно с параметрите \param{...A} и \param{...B};
+\item параметри, контролиращи изобразената линия.
+\end{itemize}
+
+\tabex%
+  [@{}m{.4\linewidth}@{\hspace{.01\linewidth}}>{\small}m{.59\linewidth}@{}]%
+  {mediator}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Ъглополовящи на ъгли}
+
+\defcom[Postroyava vytreshnata yglopolovyasta na ygyl \protect\Angle{BAC} i edna ot nejnite toqki $M$, obraz na $B$ pri rotaciya okolo $A$.%
+%Построява вътрешната ъглополовяща на ъгъл \protect\Angle{BAC} и една от нейните точки $M$, образ на $B$ при ротация около $A$.%
+  \protect\ParamList{\param{PointSymbol}, \param{PosAngle}, \param{PointName}, \param{PointNameSep}, \param{PtNameMath}}]%
+  {pstBissectBAC}{\OptArg{par}\Arg{$B$}\Arg{$A$}\Arg{$C$}\Arg{$N$}}
+
+\defcom[Postroyava vynshnata yglopolovyasta na ygyl \protect\Angle{BAC} i edna ot nejnite tochki $M$, obraz na $B$ pri rotaciya okolo $A$.%
+%Построява външната ъглополовяща на ъгъл \protect\Angle{BAC} и една от нейните точки $M$, образ на $B$ при ротация около $A$.%
+  \protect\ParamList{\param{PointSymbol}, \param{PosAngle}, \param{PointName}, \param{PointNameSep}, \param{PtNameMath}}]%
+  {pstOutBissectBAC}{\OptArg{par}\Arg{$B$}\Arg{$A$}\Arg{$C$}\Arg{$N$}}
+
+Има две ъглополовящи за даден геометричен ъгъл: вътрешна и външна, затова има и две команди. Ъгълът е определен от три точки и се отчита в положителна посока (обратно на часовниковата стрелка). В резултат от горните команди се получават права и точка от нея. Тази точка се построява като образ на точка $B$ при ротация с център $A$ и ъгъл на ротация дадения ъгъл.
+
+\tabex%
+  [@{}m{.4\linewidth}@{\hspace{.01\linewidth}}>{\small}m{.59\linewidth}@{}]%
+  {bissec}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Сечения}
+
+Точки могат да бъдат дефинирани чрез сечения. Работи се с шест вида сечения:
+
+\begin{itemize}
+\item права--права;
+  \item права--окръжност;
+  \item окръжност--окръжност;
+  \item функция--функция;
+  \item функция--права;
+  \item функция--окръжност.
+\end{itemize}
+
+Сечение може да не съществува: случай на успоредни прави. В този случай, точката(ите) се позиционират в началото на координатната система. Всъщност, потребителят сам трябва да определи съществуването на тези точки.
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Права--права}
+
+\defcom[Izobrazyava tochka kato seqenie na dvete pravi $(AB)$ и $(CD)$.%Изобразява точка като сечение на двете прави  $(AB)$ и $(CD)$.%
+  \protect\ParamList{\param{PointSymbol}, \param{PosAngle}, \param{PointName}, \param{PointNameSep}, \param{PtNameMath}}]%
+  {pstInterLL}%
+  {\OptArg{par}\Arg{$A$}\Arg{$B$}\Arg{$C$}\Arg{$D$}\Arg{$M$}}
+
+Командата \com{pstInterLL} изобразява пресечната точка на правите $(AB)$ и $(CD)$.
+
+\begin{description}
+\item[Основно използване]
+
+  \tabex{interDD}
+
+\item[Ортоцентър]
+
+  \tabex%
+  [@{}m{.35\linewidth}@{\hspace{.1\linewidth}}>{\small}m{.55\linewidth}@{}]
+    {orthocentre}
+\end{description}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Окръжност--права}
+
+\defcom[Izobrazyava presechnata tochka na prava  $(AB)$ i okryvnost s ventyr  $O$, minavasta prez $C$.%
+%Изобразява пресечната точка(и) на права $(AB)$ и окръжност с център $O$ минаваща през $C$.%
+\protect\ParamList{\param{PointSymbol}, \param{PosAngle}, \param{PointName}, \param{PointNameSep}, \param{PtNameMath}, \param{PointSymbolA}, \param{PosAngleA}, \param{PointNameA}, \param{PointSymbolB}, \param{PosAngleB}, \param{PointNameB}, \param{Radius}, \param{Diameter}}]%
+  {pstInterLC}%
+  {\OptArg{par}\Arg{$A$}\Arg{$B$}\Arg{$O$}\Arg{$C$}\Arg{$M_1$}\Arg{$M_2$}}
+
+Командата \com{pstInterLC} изобразява една или две пресечни точки между права $(AB)$ и окръжност с център $O$ и радиус $OC$.
+
+Окръжността е определена или с център и точка от нея, или с център и  радиус.  Радиусът се определя или чрез параметъра \param{Radius}, или от диаметъра на окръжността, зададен чрез параметъра  \param{Diameter}. Тези два параметъра могат да се модифицират посредством коефициента \param{DistCoef}.
+
+Положението на двете пресечни точки на окръжността и правата е такова, че векторите \Vecteur{AB}  и \Vecteur{M_1M_2} са с една и съща посока. Следователно, ако точките, определящи правата, се разменят, то получените точки също ще се разменят. Ако сечението  липсва, то точките се позиционират в центъра на окръжността.
+
+\tabex
+  [@{}m{.4\linewidth}@{\hspace{.1\linewidth}}>{\small}m{.5\linewidth}@{}]
+  {interDC}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Окръжност--окръжност}
+
+\defcom[izobrazyava persechnite tochki na dve okryvnosti: ednata s centyr $O_1$ i minavasta prez $B$ i druga - s centyr  $O_2$, minavasta prez $C$.]%
+%Изобразява пресечните точки (точка) на две окръжности: едната с център $O_1$ и минаваща през $B$ и друга с център $O_2$, минаваща през $C$.
+  {pstInterCC}%
+  {\OptArg{par}\Arg{$O_1$}\Arg{$B$}\Arg{$O_2$}\Arg{$C$}%
+    \Arg{$M_1$}\Arg{$M_2$}}
+
+Командата \com{pstInterCC} е подобна на предходната команда. Двоичните параметри \param{CodeFigA} и \param{CodeFigB} позволяват изчертаването на дъги от сеченията. Параметърът \param{CodeFig} позволява изчертаването на двете дъги. Двоичните параметри  \param{CodeFigAarc} и \param{CodeFigBarc} определят посоката върху тези незадължителни дъги: положителна (обратно на движението на часовниковата стрелка) или отрицателна. По подразбиране движението по дъгите е в положителна посока. Следва първия пример.
+
+\tabex%
+ [@{}m{.3\linewidth}@{\hspace{.01\linewidth}}>{\small}m{.69\linewidth}@{}]
+ {interCC}
+
+И един по-завършен пример, който включва специално дефиниране на окръжност с използване на радиус и диаметър. За подобни случаи съществуват параметрите  \param{RadiusA},  \param{RadiusB}, \param{DiameterA} и \param{DiameterB}.
+
+\begin{center}
+  \rule[-.5cm]{0pt}{8cm}
+  \begin{pspicture}(-3,-4)(7,3)\psgrid
+    \input{Exemples/interCC_bis_in}
+  \end{pspicture}
+\end{center}
+
+\VerbatimInput[numbers=left]{Exemples/interCC_bis_in}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Функция--функция}
+
+\defcom[Izobrazyava presechnata tochka na dve krivi, zdadeni kato funkcii.%Изобразява пресечната точка на две криви, зададени като функции.
+]{pstInterFF}{\OptArg{par}\Arg{$f$}\Arg{$g$}\Arg{$x_0$}\Arg{$M$}}
+
+Командата \com{pstInterFF} изобразява точка--сечение на две криви, дефинирани като функции. $x_0$ е приближена стойност на  абсцисата на пресечната точка. Очевидно е възможно да се използва тази функция няколко пъти, ако съществува повече от едно сечение. Всяка функция се описва на езика \PostScript по същия начин, както описанието, използвано в макрото \com{psplot}  на \PStricks. Може да се дефинира функция и след това да се търсят корените \'и. За търсенето се използва методa на Нютон, при което сечение може и да не бъде намерено. В този случай точката се позиционира в началото на координатната система. От друга страна, търсенето може да попадне в капан (локален екстремум близо до нулата).
+
+\tabex{interFF}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Функция--права}
+
+\defcom[Izobrazyava presechnata tochka na kriva, zadadena kato funkciya i pravata $(AB)$.%Изобразява пресечната точка на крива, зададена като функция и правата $(AB)$.
+]{pstInterFL}{\OptArg{par}\Arg{$f$}\Arg{$A$}\Arg{$B$}\Arg{$x_0$}\Arg{$M$}}
+
+Командата \com{pstInterFL} изобразява точка като сечение на графиката на функцията  $f$ и правата  $(AB)$.
+
+\tabex{interFL}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Функция--окръжност}
+
+\defcom[Izobrazyava persechnata tochka na kriva, zаdadena kato funkciya i okryjnost.%
+%Изобразява пресечната точка на крива, зададена като функция и окръжност.%
+]{pstInterFC}{\OptArg{par}\Arg{$f$}\Arg{$O$}\Arg{$A$}\Arg{$x_0$}\Arg{$M$}}
+
+Командата \com{pstInterFC} изобразява точка като сечение на графиката на функцията $f$ и окръжността с център $O$ и радиус $OA$.
+
+\tabex{interFC}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Галерия с примери}
+\section{Основи на геометрията}
+\subsection{Чертане на ъглополовяща}
+%    \nopagebreak[4]
+
+\tabex%
+ [@{}m{.3\linewidth}@{\hspace{.1\linewidth}}>{\small}m{.6\linewidth}@{}]
+{gal_biss}
+
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \subsection{Трансформации на многоъгълници и криви}
+Ето пример за използването на  \param{CurveType} с трансформации.
+%\nopagebreak[4]
+
+\begin{center}
+\input{Exemples/curvetype}
+\end{center}\nopagebreak[4]
+
+\VerbatimInput[numbers=left]{Exemples/curvetype_in}
+
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsection{Прави в триъгълник}
+
+\VerbatimInput[numbers=left]{Exemples/remarq_in}
+
+\begin{center}
+\psset{unit=2cm}
+\input{Exemples/remarq}
+\end{center}\nopagebreak[4]
+
+
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsection{Окръжност на Ойлер}
+
+\begin{center}
+\psset{unit=2cm}
+\input{Exemples/euler}
+\end{center}%\nopagebreak[4]
+
+\VerbatimInput[numbers=left]{Exemples/euler_in}
+
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsection{Ортоцентър и хипербола}
+Ортоцентърът на триъгълник, чиито върхове лежат на клоновете на хипербола  ${\mathcal H} : y=a/x$, принадлежи на тази хипербола.
+%\nopagebreak[4]
+
+\begin{center}
+\psset{unit=.5cm}
+\input{Exemples/orthoethyper}
+\end{center}\nopagebreak[4]
+
+\VerbatimInput[numbers=left]{Exemples/orthoethyper_in}
+
+%\pagebreak[4]
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsection{Правилен седемнадесетоъгълник}
+Прави впечатление изображението, начертано от K. F. Gauss. Той също доказва, че е възможно да се построи правилен многоъгълник, който има $2^{2^p} + 1$ страни, следващият има 257 страни!
+%\nopagebreak[4]
+\begin{center}
+\psset{unit=1.3cm, CodeFig=true, RightAngleSize=.14, CodeFigColor=red,
+  CodeFigB=true, linestyle=dashed, dash=2mm 2mm}
+\input{Exemples/gauss}
+\end{center}
+
+\VerbatimInput[numbers=left]{Exemples/gauss_in}
+%\pagebreak[4]
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsection{Окръжности и тангенти}
+
+Изобразяване  на допирателни към окръжност, минаващи през дадена точка.
+%\nopagebreak[4]
+
+\begin{center}
+\input{Exemples/tg1c}
+\end{center}
+
+\VerbatimInput[numbers=left]{Exemples/tg1c_in}
+
+Изобразяване на обща тангента на две окръжности.
+%\nopagebreak[4]
+\begin{center}
+\input{Exemples/tg2c}
+\end{center}
+
+\VerbatimInput[numbers=left]{Exemples/tg2c_in}
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsection{Точки на Ферма}
+
+Изработено от Manuel Luque.%\nopagebreak[4]
+\VerbatimInput[numbers=left]{Exemples/ptfermat_in}
+
+\begin{center}
+\input{Exemples/ptfermat}
+\end{center}
+
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsection{Външно и вътрешно вписана окръжност на триъгълник}
+
+\begin{center}
+\psset{unit=1cm, dash=5mm 4mm}%, PointSymbolA=none, PointSymbolB=none}
+\input{Exemples/cinscex}
+\end{center}
+
+\VerbatimInput[numbers=left]{Exemples/cinscex_in}
+
+  \section{Някои геометрични места от точки}
+\subsection{Парабола}
+
+Параболата е множество от точки, които са на едно и също разстояние до точка и права.
+%\begin{minipage}[m]{.33\linewidth}
+%\end{minipage}
+
+\newcommand{\NbPt}{11}
+\begin{center}
+\input{Exemples/parabole}%\nopagebreak[4]
+\end{center}
+
+\VerbatimInput[numbers=left]{Exemples/parabole_in}
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsection{Хипербола}
+
+Хиперболата е множество от точки, такива, че разликата от разстоянията им до две точки (фокуси) е константа.
+
+\begin{center}
+\input{Exemples/hyperbole}%\nopagebreak[4]
+\end{center}
+
+\begin{verbatim}
+%% QQ RAPPELS : a=\Sommet, c=\PosFoyer,
+%% b^2=c^2-a^2, e=c/a
+%% pour une hyperbole -> e>1, donc c>a,
+%% ici on choisi a=\sqrt{2}, c=2, e=\sqrt{2}
+%% M est sur H <=> |MF-MF'|=2a
+\end{verbatim}
+%% QQ DEFINITIONS
+
+\VerbatimInput[numbers=left]{Exemples/hyperbole_in}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Циклоида}
+
+Колело се търкаля от $M$ до $A$. Точките от окръжността описват циклоида.
+%\nopagebreak[4]
+
+\begin{center}
+\input{Exemples/cyclo}
+\end{center}%\nopagebreak[4]
+
+\VerbatimInput[numbers=left]{Exemples/cyclo_in}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Хипоциклоиди (астроид и делтоид)}
+
+Колело се търкаля вътре в окръжност. В зависимост от големината на радиуса, точките от окръжността описват астроид, делтоид и в общия случай хипоциклоиди.
+%\nopagebreak[4]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% ASTROIDE
+\input{Exemples/hypocyclo}
+\VerbatimInput[numbers=left]{Exemples/hypocyclo}
+
+\VerbatimInput[numbers=left]{Exemples/delto}
+
+\begin{center}
+\input{Exemples/delto}\input{Exemples/astro}
+\end{center}
+
+
+\VerbatimInput[numbers=left]{Exemples/astro_in}
+
+\section{Обвивки}
+\subsection{Конични сечения}
+Да разгледаме окръжност и точка $A$, която не е върху окръжността. Множеството от всички симетрали на отсечките, дефинирани от $A$ и точка от окръжността, образуват две конични сечения, в зависимост от позицията на $A$:
+\begin{itemize}
+  \item вътре в окръжността - хипербола;
+  \item извън окръжността - елипса.
+\end{itemize}
+(фигура на O. Reboux).
+
+\begin{center}\input{Exemples/envellipse}\end{center}
+
+\VerbatimInput[numbers=left]{Exemples/envellipse_in}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsection{Кардиоида}
+Кардиоидата се дефинира чрез окръжност с център върху дадена окръжност и минаваща през дадена точка.
+
+
+%\begin{center}\input{Exemples/envcardi}\end{center}
+
+\tabex%
+  [@{}m{.35\linewidth}@{\hspace{.07\linewidth}}>{\small}m{.58\linewidth}@{}]%
+  {envcardi}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \section{Хомотетия и фрактали}
+
+\tabex{fracthom}
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \section[Хиперболична геометрия]{Хиперболична геометрия: триъгълник и неговите височини}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Tracй de gйodйsique en gйomйtrie hyperbolique
+%% Attention ne fonctionne que si les points ne sont pas alignйs avec O
+%% Ceci est un cas particulier, je ne crois pas que les hauteurs
+%% soient concourantes pour tous les triangles hyperboliques.
+\begin{center}
+\input{Exemples/geohyper}
+\end{center}
+
+\VerbatimInput[numbers=left]{Exemples/geohyper_in}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+\chapter{Глосарий на командите}\markboth{Глосарий на командите}{\thepage}%
+%\addcontentsline{toc}{chapter}{\protect\numberline{}Глосарий на командите}%
+
+Това е пълен списък на макросите, дефинирани в \texttt{pst-eucl}. Всеки макрос е представен с кратко описание и параметрите, които го контролират. Очевидно, могат да бъдат използвани и  други \PStricks параметри, например онези, които контролират чертането на линии (шириина, тип/стил, цвят).
+
+\lhead{Приложения}
+\input{euclide_bulgarian_macros.ind}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Параметри на \texttt{pst-eucl}}
+
+
+\begin{longtable}{|l|l|p{8.5cm}|}
+  \hline
+  \multicolumn{1}{|c|}{\textbf{Параметри}} &
+  \multicolumn{1}{c|}{\textbf{По подразбиране}} &
+  \multicolumn{1}{c|}{\textbf{Означение}} \\\hline\hline
+  \endfirsthead
+  \hline
+  \multicolumn{1}{|c|}{\textbf{Параметри}} &
+  \multicolumn{1}{c|}{\textbf{По подразбиране}} &
+  \multicolumn{1}{c|}{\textbf{Означение}} \\\hline\hline
+  \endhead
+  \hline
+  \multicolumn{3}{|c|}{$\ldots$ продължава на следващата страница $\ldots$}\\
+  \hline
+  \endfoot
+  \hline
+  \endlastfoot
+  \param{PointSymbol}&\verb$default$&Символ, използван за чертане на точка.\\\hline
+  \param{PointSymbolA}&\verb$default$&Обозначаване на първата от няколко точки.\\\hline
+  \param{PointSymbolB}&\verb$default$&...на втората от няколко точки. \ldots\\\hline
+  \param{PointSymbolC}&\verb$default$&...на третата от няколко точки.\ldots\\\hline
+  \param{PointName}&\verb$default$&Етикет (име) на точка.\\\hline
+  \param{PointNameA}&\verb$default$&Обозначаване на първата от няколко точки.\\\hline
+  \param{PointNameB}&\verb$default$&на втората\ldots\\\hline
+  \param{PointNameC}&\verb$default$&на третата\ldots\\\hline
+  \param{PtNameMath}&\verb$true$&двоичен параметър за (де)активиране на математически стил за име на точка.\\\hline
+  \param{SegmentSymbol}&\verb$default$&Символ, използван за маркиране на отсечка.\\\hline
+  \param{SegmentSymbolA}&\verb$default$&Обозначаване на първа отсечка в макро, което маркира няколко отсечки.\\\hline
+  \param{SegmentSymbolB}&\verb$default$&на втората отсечка\ldots\\\hline
+  \param{SegmentSymbolC}&\verb$default$&на третата отсечка\ldots\\\hline
+  \param{Mark}&\verb$default$&Маркиращ символ за ъгъл.\\\hline
+  \param{MarkAngle}&\verb$default$&Ъгъл на маркиране с предходния символ.\\\hline
+  \param{PointNameSep}&\verb$1em$&Разстояние между точка и нейния етикет (име).\\\hline
+  \param{PosAngle}&\verb$undef$&Позициониране на етикет около точка.\\\hline
+  \param{PosAngleA}&\verb$undef$&Позициониране на етикета на първата точка от няколко.\\\hline
+  \param{PosAngleB}&\verb$undef$&на втората\ldots\\\hline
+  \param{PosAngleC}&\verb$undef$&на третата\ldots\\\hline
+  \param{RightAngleSize}&\verb$.4$&Големина на символа на правия ъгъл \\\hline
+  \param{RightAngleType}&\verb$default$&Тип на правия ъгъл, възможни стойности:
+  \verb$german$ et \verb$suisseromand$\\\hline
+  \param{MarkAngleRadius}&\verb$.4$&Радиус на означението на ъгъл.\\\hline
+  \param{LabelAngleOffset}&\verb$0$&Ъглово отклонение за етикета на ъгъла.\\\hline
+  \param{LabelSep}&\verb$1$&Разстояние от върха на ъгъла до неговия етикет.\\\hline
+  \param{LabelRefPt}&\verb$c$&Отправна точка, използвана за етикета на ъгъл.\\\hline
+  \param{HomCoef}&\verb$.5$&Ъгъл на хомотетия.\\\hline
+  \param{RotAngle}&\verb$60$&Ъгъл на ротация (завъртане).\\\hline
+  \param{DrawCirABC}&\verb$true$&Двоичен параметър, управляващ чертането на описана окръжност.\\\hline
+  \param{CodeFig}&\verb$false$&Двоичен параметър, управляващ  кодирането на конструкцията.\\\hline
+  \param{CodeFigA}&\verb$false$&Обозначаване на кодиране за първа точка\ldots\\\hline
+  \param{CodeFigB}&\verb$false$&Обозначаване на кодиране за втора точка\ldots\\\hline
+  \param{CodeFigColor}&\verb$cyan$&Цвят на линиите за кодирането.\\\hline
+  \param{CodeFigStyle}&\verb$dashed$&Вид/стил на линиите за кодирането.\\\hline
+  \param{CodeFigAarc}&\verb$true$&Двоичен параметър, управляващ изчертаването на дъги около първото сечение.\\\hline
+  \param{CodeFigBarc}&\verb$true$&Обозначаване на второто сечение.\ldots\\\hline
+  \param{Radius}&\verb$none$&Радиус на окръжност.\\\hline
+  \param{RadiusA}&\verb$undef$&...на първата окръжност\\\hline
+  \param{RadiusB}&\verb$undef$&...на втората окръжност\\\hline
+  \param{Diameter}&\verb$none$&Диаметър на окръжност.\\\hline
+  \param{DiameterA}&\verb$undef$&...на първата окръжност\\\hline
+  \param{DiameterB}&\verb$undef$&...на втората окръжност\\\hline
+  \param{DistCoef}&\verb$none$&Коефициент за промяна на разстояние/вектор.\\\hline
+  \param{AngleCoef}&\verb$none$&Коефициент за промяна на ъгъл.\\\hline
+  \param{CurvAbsNeg}&\verb$false$&Двоичен параметър, управляващ посоката на отчитане на криволинейна абсциса.\\\hline
+  \param{GenCurvFirst}&\verb$none$&Име на първата точка от обща крива.\\\hline
+  \param{GenCurvLast}&\verb$none$&Име на последната точка от обща крива.\\\hline
+  \param{GenCurvInc}&\verb$none$&Нарастваща стойност за обща крива.\\\hline
+   \param{CurveType}&\verb$none$&Режим на чертане за списък от точки.\\\hline
+  \param{TransformLabel}&\verb$none$&Използван етикет при ротация или транслация.\\\hline
+\end{longtable}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Съвместимост с предходни версии на \texttt{pst-eucl}}
+
+Специално за тази версия, някои макроси имат променен синтаксис, без да бъде променено името им. Това означава, че съвместимост към следваща версия не се поддържа. Все пак, за да се помогне на потребителите, е възможно да се възстанови стария синтаксис чрез установяване на опция \texttt{old} при използване на пакета \verb$\usepackage[old]{pst-eucl}$. В тази версия това се отнася до макроси за геометрични трансформации. Трябва да имате предвид последния наръчник за синтаксис.
+\end{document}

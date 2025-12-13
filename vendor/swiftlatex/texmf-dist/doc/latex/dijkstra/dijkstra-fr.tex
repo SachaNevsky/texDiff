@@ -1,0 +1,437 @@
+% !TeX encoding = ISO-8859-1
+% Ceci est la documentation du package "dijkstra"
+%
+% Fichier compilé avec pdflatex
+\documentclass[french,a4paper,10pt]{article}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=2cm]{geometry}
+\usepackage[bottom]{footmisc}
+\usepackage{libertine,boites,tikz,enumitem,MnSymbol,babel,xspace,listings,dijkstra}
+\usetikzlibrary{arrows.meta}
+\usepackage[scaled=0.85]{luximono}
+\frenchbsetup{og=«,fg=»}
+\def\DIJK{\texttt{\dijkname}\xspace}
+\makeatletter
+\def\code{\expandafter\code@i\string}
+\def\code@i#1{%
+	\begingroup
+		\par\nobreak\medskip\parindent0pt
+		\leftskip.1\linewidth
+		\catcode`\^^I 13 \begingroup\lccode`\~`\^^I \lowercase{\endgroup\def~{\leavevmode\space\space\space\space}}%
+		\let\do\@makeother \dospecials
+		\ttfamily\small\@noligs
+		\make@car@active\,{\string,{}}%
+		\obeylines\obeyspaces
+		\def\code@ii##1#1{##1\par\medbreak\endgroup}%
+		\code@ii
+}
+\long\def\grab@toks#1\relax{\gdef\right@content{#1}}
+
+\newcommand\disable@lig[1]{%
+	\catcode`#1\active
+	\begingroup
+		\lccode`\~`#1\relax
+		\lowercase{\endgroup\def~{\leavevmode\kern\z@\string#1}}%
+}
+
+\newcommand\make@car@active[1]{%
+	\catcode`#1\active
+	\begingroup
+		\lccode`\~`#1\relax
+		\lowercase{\endgroup\def~}%
+}
+
+\newcommand\exemple{%
+	\begingroup
+	\parskip\z@
+	\exemple@}
+
+\newcommand\exemple@{%
+	\medbreak\noindent
+	\begingroup
+		\let\do\@makeother\dospecials
+		\make@car@active\ { {}}%
+		\make@car@active\^^M{\par\leavevmode}%
+		\make@car@active\^^I{\space\space}%
+		\make@car@active\,{\leavevmode\kern\z@\string,}%
+		\make@car@active\-{\leavevmode\kern\z@\string-}%
+		\make@car@active\>{\leavevmode\kern\z@\string>}%
+		\make@car@active\<{\leavevmode\kern\z@\string<}%
+		\@makeother\;\@makeother\!\@makeother\?\@makeother\:% neutralise frenchb
+		\exemple@@
+}
+
+\newcommand\exemple@@[2][37]{%
+	\xdef\@hparta{0.#1\linewidth}\xdef\@hpartb{0.\number\numexpr95-#1\relax\linewidth}%
+	\def\@tempa##1#2{\exemple@@@{##1}}%
+	\@tempa
+}
+
+\newcommand\exemple@@@[1]{%
+	\xdef\the@code{#1}%
+	\endgroup
+		\begingroup
+			\fboxrule0.4pt \fboxsep=5pt
+			\let\breakboxparindent\z@
+			\def\bkvz@top{\hrule\@height\fboxrule}%
+			\def\bkvz@bottom{\hrule\@height\fboxrule}%
+			\let\bkvz@before@breakbox\relax
+			\def\bkvz@set@linewidth{\advance\linewidth\dimexpr-2\fboxrule-2\fboxsep\relax}%
+			\def\bkvz@left{\vrule\@width\fboxrule\kern\fboxsep}%
+			\def\bkvz@right{\kern\fboxsep\vrule\@width\fboxrule}%
+			\breakbox
+				\kern.5ex\relax
+				\leavevmode$\vcenter{\hsize=\@hparta\relax
+					\ttfamily\small\the@code\par}$%
+				\hfill
+				$\vcenter{\hsize=\@hpartb\relax
+					\newlinechar`\^^M\everyeof{\noexpand}\scantokens{#1}\par}$%
+			\endbreakbox
+		\endgroup
+	\medbreak
+	\endgroup
+}
+\begingroup
+	\catcode`\<13 \catcode`\>13
+	\gdef\verb{\relax\ifmmode\hbox\else\leavevmode\null\fi
+		\bgroup
+			\verb@eol@error \let\do\@makeother \dospecials
+			\verbatim@font\@noligs
+			\catcode`\<13 \catcode`\>13 \def<{\begingroup$\langle$\itshape}\def>{$\rangle$\endgroup}%
+			\@ifstar\@sverb\@verb}
+\endgroup
+\def\longfrdijkdate@i#1/#2/#3\@nil{\number#3\relax\space \ifcase#2 \or janvier\or février\or mars\or avril\or mai\or juin\or juillet\or aout\or septembre\or octobre\or novembre\or décembre\fi\space#1}
+\edef\longfrdijkdate{\expandafter\longfrdijkdate@i\dijkdate\@nil}
+\makeatother
+\begingroup
+	\catcode`\_11 
+	\gdef\cleval#1#2{%
+		\bigbreak\noindent
+		\hbox to .25\linewidth{%
+			\color{teal}\bfseries\ttfamily
+			\detokenize{#1}=$\langle$\detokenize{#2}$\rangle$\hss}\kern2.5em 
+		(\textit{Défaut} : {\color{teal}\ttfamily
+		\skv_eearg\skv_ifempty{\useKV[\dijkname]{#1}}
+			{$\langle$vide$\rangle$}
+			{"\detokenize\expandafter\expandafter\expandafter{\useKV[\dijkname]{#1}}"}})%
+		\par\nobreak
+	}
+\endgroup
+\begin{document}
+\parindent=0pt
+\thispagestyle{empty}
+\begin{titlepage}
+	\begingroup
+		\centering
+		\null\vskip.25\vsize
+		{\large\bfseries L'extension pour \LaTeX\par \Huge \dijkname\par}%
+		\bigbreak
+		v \dijkver
+		\smallbreak
+		\longfrdijkdate
+		\vskip1.5cm
+		Christian \bsc{Tellechea}\par
+		\texttt{unbonpetit@netc.fr}\par
+	\endgroup
+	\vskip2cm
+	\leftskip=.2\linewidth \rightskip=.2\linewidth \small
+	Cette petite extension met en \oe uvre l'algorithme de Dijkstra pour des graphes pondérés, orientés ou non : le tableau de recherche du plus court chemin peut être affiché, la distance minimale entre deux sommets et le chemin correspondant sont stockés dans des macros.
+\end{titlepage}
+\parindent0pt
+
+\section{Un exemple}
+Dans le graphe \emph{non orienté} suivant, quel est le plus court chemin pour aller de A à F ?
+
+\begin{center}
+	\begin{tikzpicture}[scale=1.75]
+	\begin{scope}[every node/.style={inner sep=1pt,outer sep=0pt,circle,draw}]
+	\node(A) at(0,0) {A}
+	node(B) at(1,1) {B}
+	node(C) at(3,1) {C}
+	node(D) at(1,-1) {D}
+	node(E) at(3,-1) {E}
+	node(F) at(4,0) {F};
+	\end{scope}
+	\begin{scope}[every node/.style={inner sep=0pt,outer sep=2pt,midway,sloped,above}]
+	\footnotesize\bfseries
+	\draw(A)--(B) node{7}
+	(B)--(C) node{12}
+	(C)--(D) node[pos=0.35]{5}
+	(A)--(D) node{15}
+	(D)--(E) node{2}
+	(E)--(F) node{14}
+	(B)--(E) node[pos=0.65]{4}
+	(C)--(F) node{3}
+	(B)--(F) node[pos=.65]{16};
+	\end{scope}
+	\end{tikzpicture}
+\end{center}
+
+\paragraph{Lire le graphe}
+Pour trouver le plus court chemin pour aller de A à F, il faut d'abord lire le graphe. Comme il est fréquent que les graphes sont peu peuplés, j'ai pris le parti de définir un graphe par une liste d'adjacence. Ainsi, la macro \verb|\readgraph|, qui va lire le graphe, admet comme argument obligatoire une liste d'adjacence :
+
+\code/\readgraph{
+		A [B=7, D=15],
+		B [C=12, E=4, F=16],
+		C [D=5, F=3],
+		D [E=2],
+		E [F=14]
+}/
+
+Les espaces sont ignorés de part et d'autre des noms des sommets, des crochets (ouvrants et fermants), des signes «\verb/=/» et des virgules. Ainsi, ce n'est que dans les noms des sommets que les espaces ne sont pas ignorés : par exemple, le sommet «\verb*|A 1|» est distinct du sommet «\verb*|A1|».
+
+\paragraph{Conditions sur les distances}
+Les distances entre sommets \emph{doivent} être positives, c'est une limitation intrinsèque à l'algorithme de Dijkstra pour qu'il fonctionne sans erreur. La méthode de programmation utilisée dans cette extension exige de plus que ces distances soient des nombres \emph{entiers}.\medbreak
+Une fois que le graphe a été lu, celui-ci est rendu \emph{non orienté} en interne et donc en coulisses, la liste d'adjacence devient
+
+\code/A [B=7, D=15],
+B [A=7, C=12, E=4, F=16],
+C [B=12, D=5, E=3],
+D [A=15, C=5, E=2],
+E [D=2, B=4, F=14],
+F [B=16, C=3, E=14]/
+
+Par conséquent, la liste d'adjacence entrée par l'utilisateur ne doit pas contenir d'incohérence. Si l'on spécifie la distance entre un sommet A et un sommet B par \verb|A[B=<x>,...]| on peut s'économiser la peine de spécifier cette même distance entre B et A puisque c'est fait par l'extension \DIJK automatiquement. En revanche, une erreur sera émise si dans la liste d'adjacence, on trouve \verb|A[B=<x>,...]| puis \verb|B[A=<y>,...]| où \verb-<y>- et \verb-<x>- sont différents.
+
+\paragraph{Lancer l'algorithme}
+Une fois que le graphe est lu par la macro \verb|\readgraph|, on peut lancer l'algorithme avec la macro \verb|\dijkstra{<A>}{<B>}| où \verb-<A>- et \verb-<B>- sont deux sommets du graphe. La distance minimale entre ces deux sommets est stockée dans la macro \verb|\dijkdist| et le chemin correspondant dans \verb|\dijkpath|.
+
+\exemple|\readgraph{
+	A [B=7, D=15],
+	B [C=12, E=4, F=16],
+	C [D=5, F=3],
+	D [E=2],
+	E [F=14]}
+Tableau : \dijkstra{A}{F}\par
+Distance A-F = \dijkdist\par
+Chemin = \dijkpath|
+
+Dans le tableau, les colonnes sont disposées dans le \emph{même ordre} que celui des sommets dans la liste d'adjacence lue par \verb|readgraph|.
+
+\section{Graphe non orienté}
+Pour spécifier à \verb|\readgraph| que la liste d'adjacence est celle d'un graphe \emph{orienté}, la macro doit être suivie d'une étoile.
+
+\begin{center}
+	\begin{tikzpicture}[scale=1.75]
+	\begin{scope}[every node/.style={inner sep=1pt,outer sep=0pt,circle,draw}]
+	\node(A) at(0,0) {A}
+	node(B) at(1,1) {B}
+	node(C) at(1,0) {C}
+	node(D) at(1,-1) {D}
+	node(E) at(2,0) {E}
+	node(F) at(3,1) {F}
+	node(G) at(3,-1) {G}
+	node(H) at(4,0) {H};
+	\end{scope}
+	\begin{scope}[-{Stealth[length=7pt,width=5pt,inset=3pt]},every node/.style={inner sep=0pt,outer sep=2pt,midway,sloped,above}]
+		\footnotesize\bfseries
+		\draw(A)--(B) node{5};
+		\draw(A)--(C) node{3};
+		\draw(A)--(D) node{2};
+		\draw(C)--(B)node{1};
+		\draw(D)--(C) node{1};
+		\draw(B)--(F) node {2};
+		\draw(B)--(E) node {2};
+		\draw(D)--(E) node {3};
+		\draw(D)--(G) node{2};
+		\draw(F)--(E) node{4};
+		\draw(E)--(G)node{4};
+		\draw(G)--(F)node{1};
+		\draw(G)--(H)node{8};
+		\draw(F)--(H)node{5};
+		
+	\end{scope}
+\end{tikzpicture}
+\end{center}
+
+Cela donne
+\exemple|\readgraph*{
+	A[B=5, C=3, D=2],
+	B[E=2, F=2],
+	C[B=1],
+	D[C=1, E=3, G=2],
+	E[G=4],
+	F[E=4, H=5],
+	G[F=1, H=8]}
+Tableau : \dijkstra{A}{H}\par
+Distance A-H = \dijkdist\par
+Chemin = \dijkpath|
+
+\section{Paramètres}
+\paragraph{Paramètres de \texttt{\char`\\ dijkstra}}
+Des \verb|<paramètres>| peuvent être passés à la macro \verb|\dijkstra| dans son argument optionnel qui prend la forme d'une liste de \verb|<clé>=<valeur>|.
+
+On peut également régler des \verb|<paramètres>| pour toutes les exécutions de la macro \verb|\dijkstra| à venir avec
+\begin{center}
+	\verb|\setdijk{<paramètres>}|
+\end{center}
+mais aussi modifier des \verb|<paramètres>| \emph{par défaut} avec 
+\begin{center}
+	\verb|\setdijkdefault{<paramètres>}|
+\end{center}
+
+Voici toutes les \verb|<clés>|, leur \verb|<valeur>| par défaut et leur description.
+
+\cleval{show-tab}{booléen}
+Lorsque cette \verb|<clé>| est \verb|true|, le tableau est affiché par la macro \verb|\dijkstra|. Il ne l'est pas dans le cas contraire.
+
+\cleval{v-position}{texte}
+Ce paramètre est placé dans l'argument optionnel de \verb|\begin{tabular}[<v-position>]| pour spécifier la position que doit avoir le tableau par rapport à la ligne de base.
+
+\cleval{pre-tab}{code}
+Ce \verb|<code>| arbitraire est exécuté juste avant le \verb|\begin{tabular}|.
+
+\cleval{post-tab}{code}
+Ce \verb|<code>| arbitraire est exécuté juste après le \verb|\end{tabular}|.
+
+\cleval{col-type}{code}
+Ce \verb|<code>| est le descripteur des colonnes contenant les sommets.
+
+\cleval{infinity-code}{code}
+Ce \verb|<code>| est exécuté pour exprimer une distance infinie dans le tableau et dans la macro \verb|\dijkdist|.
+
+\cleval{norevisit-code}{code}
+Ce \verb|<code>| est exécuté dans le tableau pour exprimer qu'un sommet a déjà été fixé.
+
+\cleval{h-rules}{booléen}
+Lorsque ce booléen est \verb|true|, les réglures horizontales entre les étapes sont tracées dans le tableau.
+
+\exemple|\readgraph{
+	A [B=7, D=15],
+	B [C=12, E=4, F=16],
+	C [D=5, F=3],
+	D [E=2],
+	E [F=14]}
+Tableau :
+\dijkstra[h-rules=true,
+          v-position=b]{A}{F}|
+
+\cleval{show-lastcol}{booléen}
+Lorsque ce booléen est \verb|true|, une colonne supplémentaire est affichée dans le tableau; cette colonne correspond au sommet fixé.
+
+\cleval{lastcol-type}{code}
+Ce \verb|<code>| est le descripteur de la colonne correspondant au sommets fixés.
+
+\cleval{lastcol-label}{code}
+Ce \verb|<code>| contient le nom de la colonne correspondant aux sommets fixés.
+
+\exemple|\readgraph{
+	A [B=7, D=15],
+	B [C=12, E=4, F=16],
+	C [D=5, F=3],
+	D [E=2],
+	E [F=14]}
+Tableau :
+\dijkstra[show-lastcol]{A}{F}|
+
+\cleval{nopath-string}{code}
+Ce \verb|<code>| est placé dans la macro \verb|\dijkpath| dans le cas où aucun chemin n'a pu être trouvé, comme cela peut être le cas si le graphe est non connexe.
+
+\exemple|\readgraph{
+	A [B=2],
+	B [C=3],
+	D [E=5]}
+\dijkstra[show-tab=false]{A}{E}
+Chemin = \dijkpath\par
+Distance A-E= \dijkdist|
+
+\cleval{path-sep}{code}
+Ce \verb|<code>| est inséré entre chaque sommet dans la macro \verb|\dijkpath|.
+
+\paragraph{Formatage distance/sommet}
+Lorsqu'un sommet a un prédécesseur, la macro \verb|\formatnodewithprev| se charge d'afficher la distance et le sommet. Cette macro prend deux arguments (la \verb|<distance>| et le \verb|<sommet>|) et sa définition par défaut est
+
+\code|\newcommand*\formatnodewithprev[2]%
+{% #1=distance, #2=nom du noeud de provenance
+	$#1_{\mathrm{#2}}$%
+}|
+
+ce qui a pour effet de mettre le sommet de provenance en indice de la distance. On peut redéfinir cette macro pour choisir une autre mise en forme comme ci-dessous où le sommet est placé entre parenthèses.
+
+\exemple|\renewcommand*\formatnodewithprev[2]%
+{%
+	#1 (#2)%
+}
+\readgraph{
+	A [B=7, D=15],
+	B [C=12, E=4, F=16],
+	C [D=5, F=3],
+	D [E=2],
+	E [F=14]}
+Tableau : \dijkstra{A}{F}|
+
+\paragraph{Mise en évidence du sommet fixé}
+Le premier sommet fixé est celui de départ et sa distance est toujours 0. La macro \verb|\highlightfistnode| prend comme argument la distance (qui est 0) et le traite pour effectuer sa mise en forme. Sa définition par défaut, qui compose cette distance en gras, est :
+
+\code|\newcommand*\highlightfirstnode[1]{$\mathbf{#1}$}|
+
+Les autres sommets, lorsqu'ils sont fixés, apparaissent dans le tableau avec leur distance et leur nom et sont traités par la macro \verb|\highlightnode| qui rend deux arguments. Sa définition permet une mise en forme similaire à ce que fait \verb|\formatnodewithprev|, sauf que la distance et le sommet sont en gras:
+
+\code|\newcommand*\highlightnode[2]%
+{% #1=distance, #2=nom du noeud de provenance
+	$\mathbf{#1}_{\mathrm{\mathbf{#2}}}$%
+}|
+
+Pour obtenir d'autre effets, on peut redéfinir ces macros. L'exemple donné n'est pas réaliste tant les effets sont incohérents, c'est simplement un aperçu de ce qu'il est possible de faire :
+
+\exemple|\renewcommand*\highlightfirstnode[1]%
+{%
+	\fboxsep=1pt 
+	\fbox{\color{blue}$\mathbf{#1}$}%
+}%
+\renewcommand*\highlightnode[2]%
+{% #1=distance, 
+ %  #2=nom du noeud de provenance
+	\color{red}$#1_\mathrm{#2}$%
+}
+\readgraph{
+	A [B=7, D=15],
+	B [C=12, E=4, F=16],
+	C [D=5, F=3],
+	D [E=2],
+	E [F=14]}
+Tableau : \dijkstra{A}{F}|
+
+\section{Historique des versions}
+Merci d'envoyer \emph{via} email tout bug, dysfonctionnement, erreur ou demande de fonctionnalité à \verb|unbonpetit@netc.fr|
+
+\paragraph{v0.1\quad 06/09/2017} Première version.
+\paragraph{v0.2\quad 10/09/2017} Retrait d'un \verb|\show| dans le code, laissé par oubli après les phases de débogage.
+
+Nettoyage du code.
+
+\section{Code}
+Le code ci-dessous est l'exact verbatim du fichier \verb|dijkstra.sty| :
+
+\lstinputlisting[
+	language=TeX,
+	moretexcs={unless,ifcsname,ifdefined,detokenize,numexpr,dimexpr,glueexpr,unexpanded},
+	basicstyle=\small\ttfamily\color{black!25},
+	identifierstyle=\bfseries\color{white},%
+	backgroundcolor=\color{black!85},
+	keywordstyle=\bfseries\color{orange},
+	commentstyle=\color{cyan!66},
+	columns=fixed,
+	alsoletter={\_},
+	tabsize=2,
+	extendedchars=true,
+	showspaces=false,
+	showstringspaces=false,
+	numbers=left,
+	numberstyle=\tiny\ttfamily\color{black},
+	breaklines=true,
+	prebreak={\hbox{$\rhookswarrow$}},
+	breakindent=3em,
+	breakautoindent=true,
+	xleftmargin=1em,
+	xrightmargin=0pt,
+	lineskip=0pt,
+	numbersep=1em,
+	classoffset=1,
+	alsoletter={\_},
+	morekeywords={dijkstra,dijkdist,dijkpath,initdijk,setdijk,setdijkdefault,formatnodewithprev,highlightnode,highlightfirstnode},
+	keywordstyle=\bfseries\color{red!85!black},
+	classoffset=0,
+]{dijkstra.sty}
+\end{document}

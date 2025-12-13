@@ -1,0 +1,102 @@
+\RequirePackage{filecontents}
+\begin{filecontents*}{\jobname.xdy}
+(merge-rule "\*" "" :eregexp)
+(markup-locclass-list :open ": " :sep ", ")
+\end{filecontents*}
+% Compile with --shell-escape
+\documentclass{article}
+\usepackage[english]{babel}
+
+\usepackage{hyperref}
+\hypersetup{colorlinks, hidelinks, pdfauthor={Robert
+    Alessi}, pdftitle={icite and BibLaTeX}}
+
+\usepackage{fancyvrb}
+\fvset{numbers=left,obeytabs,frame=lines}
+
+\usepackage{ccicons}
+\usepackage{enumitem}
+\setlist{nosep}
+\setlist[itemize]{label=\textendash}
+\setlist[enumerate,1]{label=(\alph*)}
+\setlist[enumerate,2]{label=\roman*.}
+
+\usepackage[citecmd=autocite, defaultindex=none]{icite}
+\IndexSubtypeAs{ancient}{\jobname-primary}
+\bibinput{bibsample}
+
+\usepackage{classics}
+\newclassic{plat}{#1|#1|#1}
+\newclassic{arist}{#1|\textit{#1}|#1}
+
+\usepackage[xindy,nonewpage]{imakeidx}
+\makeindex[name=\jobname-primary, title={Index locorum citatorum}]
+
+\usepackage[style=oxnotes]{biblatex}
+\addbibresource{bibsample.bib}
+
+\begin{document}
+\DefineShortVerb{\|}
+\vspace*{-.5in}
+\noindent
+\textbf{\textsf{icite sample file}} --- \cczero\ This
+file is public domain
+
+\section*{Preamble}
+This file demonstrates how \textsf{icite} can be used to produce an
+index of passages cited in combination with Bib\LaTeX.
+
+The relevant part of the preamble which is used here follows:
+\begin{Verbatim}
+\usepackage[citecmd=autocite, defaultindex=none]{icite}
+\IndexSubtypeAs{ancient}{icite-biblatex-primary}
+\bibinput{bibsample}
+
+\usepackage{classics}
+\newclassic{plat}{#1|#1|#1}
+\newclassic{arist}{#1|\textit{#1}|#1}
+
+\usepackage[xindy]{imakeidx}
+\makeindex[name=icite-biblatex-primary, title={Index locorum citatorum}]
+
+\usepackage[style=oxnotes]{biblatex}
+\addbibresource{bibsample.bib}
+\end{Verbatim}
+
+\paragraph{Remarks}
+\begin{enumerate}
+\item |citecmd=autocite| instructs \textsf{icite} to use the
+  |\autocite| command to insert the citations in the body text.
+\item |defaultindex=none| disables indexing by default.
+\item |\IndexSubtypeAs{ancient}{icite-biblatex-primary}| makes an
+  exception for authors whose |entrysubtype| field matches the string
+  |ancient| and instructs \textsf{icite} to have them indexed in an
+  index named\\ |icite-biblatex-primary|.
+\item To actually produce the index,
+  |\printindex[icite-biblatex-primary]| is needed at the end of the
+  document.
+\end{enumerate}
+
+\section*{Body text}
+Plato, \emph{Laches}: first
+citation\icite[\plat{179}[a][1--4]]{Plato:Laches}. And
+another\icite[\plat*{179}[c][5]{180}[a][1]]{Plato:Laches}, and
+another\icite[\plat*{181}[b][5]{181}[c][3]]{Plato:Laches}.
+
+Plato, \emph{Theaetetus}: first
+citation\icite[\plat*{142}[c][2]{142}[d][3]]{Plato:Theaetetus}. And
+another\icite[\plat{142}[d][4--5]]{Plato:Theaetetus}, and
+another\icite[\plat{143}[b][5]]{Plato:Theaetetus}.
+
+Aristotle, \emph{Politica}: first
+citation\icite[\arist*{1252}[a][25]{1252}[b][27]]{Aristotle:Politica}. And
+another\icite[\arist{1253}[a][5]]{Aristotle:Politica}, and
+another\icite[\arist{1253}[a][30--39]]{Aristotle:Politica}.
+
+This passage should not be indexed\icite[44--78]{Reynolds.Wilson1994}.
+
+\printindex[\jobname-primary]
+
+\section*{Bibliographical database}
+\VerbatimInput{bibsample.bib}
+\end{document}

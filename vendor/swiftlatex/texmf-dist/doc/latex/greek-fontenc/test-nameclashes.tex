@@ -1,0 +1,66 @@
+\documentclass[]{article}
+
+% PROBLEM
+% \(re)newcommand gets overwritten for Accents \< and \>:
+
+\newcommand{\<}{\emph{first definition of <-accent}}
+\renewcommand{\>}{\emph{early redefinition of >-accent}}
+
+% WORKAROUNDS
+
+% save original definition and overwrite later
+\let\MyLessThanSaved\<
+
+% define as TextDefault (can be done before or after loading fontenc):
+\DeclareTextCommandDefault{\>}{\emph{TextDefault of >-accent}}
+
+
+\usepackage{lmodern}
+\usepackage[LGR,T1]{fontenc}
+\usepackage{textalpha}
+% font encoding switch declarations:
+\newcommand{\LGR}{\fontencoding{LGR}\selectfont}
+\newcommand{\Latin}{\fontencoding{\encodingdefault}\selectfont}
+
+
+% RESTORING
+% restoring as "normal" macro results in problems in Greek text
+% \renewcommand{\<}{\MyLessThanSaved}
+% restore as "TextCommandDefault" (for all font encodings except LGR):
+\DeclareTextCommandDefault{\<}{\MyLessThanSaved}
+
+
+\begin{document}
+
+\section*{Test accent macro name clashes}
+
+The LGR font encoding defined until version 0.12 from 2014-12-12 the
+\verb+\<+ and \verb+\>+ shortcuts for Greek dasia and psili accents as
+``TextAccent'' macros (see fntguide.pdf).
+
+This definition moved to ``textalpha.sty'' wich also
+makes LGR the default encoding for these accents.
+
+This means that with \verb+\usepackage{textalpha}+, the accent macros
+are undefined in all other font encodings and can be given another definition.
+However, due to the internal working of \verb+\DeclareTextAccent+, earlier
+definitions of these macros are overwritten.
+
+Test: macro defined before fontenc loading: \<
+
+Test: macro (re)defined after fontenc loading: \>a
+
+Test: accent macro kept in LGR: \LGR \<h \Latin
+
+Test: accent macro overwritten also in LGR: \LGR \>h \Latin
+
+Test: TextCommandDefault at end of group: \texttt{\<}
+
+Test: Tab accent kludge: \a<
+
+\section*{LGR Transkription und Makros}
+
+\LGR  'a  `a  "u  <a  >a \\
+     \'a \`a \"u \<a \>a \~a
+
+\end{document}

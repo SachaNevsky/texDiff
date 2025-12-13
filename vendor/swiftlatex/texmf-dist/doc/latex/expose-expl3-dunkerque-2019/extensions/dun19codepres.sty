@@ -1,0 +1,321 @@
+% Time-stamp: <2019-08-28 08:02:26 administrateur>
+% Création : 2019-08-05T10:18:51+0200
+%%%%% ---------------------------------------------------------------------
+%%%%% © Yvon Henel, 2019
+%%%%% ---------------------------------------------------------------------
+\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+\RequirePackage{l3keys2e,xparse}
+\ProvidesExplPackage
+{dun19codepres} {2019/08/05} {1} {pour article dun19expl3}
+
+\RequirePackage{xspace}
+\RequirePackage{hologo}
+\RequirePackage[dvipsnames]{xcolor}
+
+%%%%% ---------------------------------------------------------------------
+%%%%% outils
+%%%%% ---------------------------------------------------------------------
+
+\def\makeunderlineletter{\catcode`\_=11\relax}
+
+\makeatletter
+
+\newcommand\TdSfrCP@CODE{\texttt}
+
+\let\CODE=\TdSfrCP@CODE
+
+\newcommand\TdSfrCP@ENCODE{\ttfamily}
+
+\newcommand\TdSfrCP@PRESENTATIONMETA{\TdSfrCP@ENCODE\itshape}
+
+\DeclareRobustCommand\0{\discretionary{}{}{}}
+
+\DeclareRobustCommand\1{\0\TdSfrCP@CODE{\_}\0}
+
+\DeclareRobustCommand\2{\TdSfrCP@CODE{:}\0}
+
+\DeclareRobustCommand\3{\discretionary{.}{}{.}}
+
+\DeclareRobustCommand\6{\0\TdSfrCP@CODE{@}\0}
+
+\DeclareRobustCommand\7{\0\TdSfrCP@CODE{/}\0}
+
+\DeclareRobustCommand\9{%
+  \hspace{0pt plus 1pt}\discretionary{}{}{}\hspace{0pt plus 1pt}}
+
+\DeclareRobustCommand\8{\0\TdSfrCP@CODE{-}\0}
+
+\newcommand{\Meta}[1]{%
+  \ensuremath{\langle}{\TdSfrCP@PRESENTATIONMETA #1\/}\ensuremath{\rangle}}
+
+\let\M=\Meta
+
+%%%%% ---------------------------------------------------------------------
+%%%%% Présentation extensions, etc.
+%%%%% ---------------------------------------------------------------------
+
+\newcommand{\Pkg}[1]{\texttt{#1}}
+
+\newcommand{\Mdl}[1]{\textsf{#1}}
+
+\newcommand*{\Expliii}{Expl3\xspace}
+
+\newcommand*{\TdS}{TdS\xspace}
+
+%%%%% ---------------------------------------------------------------------
+%%%%% Présentation macros et arguments
+%%%%% ---------------------------------------------------------------------
+
+\DeclareRobustCommand\Cs[1]{\TdSfrCP@CODE{\char`\\#1}}
+
+\newcommand\Accolades[1]{\TdSfrCP@CODE{\{\0#1\}}}
+
+\newcommand{\Crochets}[1]{\TdSfrCP@CODE{[\0#1]}}
+
+\newcommand{\Parentheses}[1]{\TdSfrCP@CODE{(\0#1)}}
+
+\newcommand{\Inegalites}[1]{\TdSfrCP@CODE{\string<\0#1\string>}}
+
+\DeclareRobustCommand\MargAux[1]{\TdSfrCP@CODE{\{\0\M{#1}\}}}
+\DeclareRobustCommand\OargAux[1]{\TdSfrCP@CODE{[\0\M{#1}]}}
+\DeclareRobustCommand\ParargAux[1]{\TdSfrCP@CODE{(\0\M{#1})}}
+\DeclareRobustCommand\INEGargAux[1]{\TdSfrCP@CODE{\string<\0\M{#1}\string>}}
+
+\newcounter{codefragment}[section]
+
+\makeatother
+
+% -------------------------------------------------------------------------
+% Déclaration et présentation des macros et de leurs arguments
+% -------------------------------------------------------------------------
+
+\str_new:N \__CMD_vedette_str
+
+\NewDocumentCommand{\MacroPresentation}{ m }{
+  \textcolor{MidnightBlue}{\Cs{#1}}
+}
+
+\NewDocumentCommand{\FausseMacroPresentation}{ m }{
+  \textcolor{RedOrange}{\Cs{#1}}
+}
+
+\NewDocumentCommand{\Macro}{s o v}{
+  \IfBooleanTF{#1}
+  {\FausseMacroPresentation{#3}}
+  {
+    \str_set:Nn \__CMD_vedette_str {#3}
+    \str_replace_all:Nnn \__CMD_vedette_str {:} {+}
+    \gls{\str_use:N \__CMD_vedette_str}
+  }
+}
+
+
+\NewDocumentCommand{\Code}{s t+ v}{
+  \IfBooleanTF{#1}
+  { \Crochets{#3} }
+  { \IfBooleanTF{#2}
+    { \Parentheses{#3} }
+    { \Accolades{#3} }
+  }
+}
+
+\NewDocumentCommand{\Marg}{ s }{
+  \IfBooleanTF{#1}
+  { \Accolades }
+  { \MargAux }
+}
+
+\NewDocumentCommand{\Oarg}{ s }{
+  \IfBooleanTF{#1}
+  { \Crochets }
+  { \OargAux }
+}
+
+\NewDocumentCommand{\Parg}{ s }{
+  \IfBooleanTF{#1}
+  { \Parentheses }
+  { \ParargAux }
+}
+
+\NewDocumentCommand{\Iarg}{ s }{
+  \IfBooleanTF{#1}
+  { \Inegalites }
+  { \INEGargAux }
+}
+
+\NewDocumentCommand{\SyntaxeMacro}{ s o }{
+  \IfBooleanF{#1}{\par}
+  \IfNoValueTF{#2}
+  { \SyntaxeMacro_Package_Courant }
+  { \SyntaxeMacro_Autre_Package {#2} }
+}
+
+\NewDocumentCommand{\SyntaxeMacro_Package_Courant}{ m m }
+{
+  \Macro{#1} \TraiterListeArguments{#2}
+}
+
+\NewDocumentCommand{\SyntaxeMacro_Autre_Package}{ m m m }
+{
+  \Macro[#1]{#2} \TraiterListeArguments{#3}
+}
+
+\NewDocumentCommand {\TraiterListeArguments} 
+{ > { \SplitList{ , } } m } {
+  \ProcessList {#1} { \Traiter_un_argument }
+}
+
+\NewDocumentCommand {\Traiter_un_argument} { >{ \SplitArgument{1}{/} } m }
+{
+  \Traiter_un_argument_aux #1
+}
+
+\NewDocumentCommand {\Traiter_un_argument_aux} { m m }{
+  \use:c {#1arg}{#2}\9 
+}
+
+%%%%% ---------------------------------------------------------------------
+%%%%% Termes techniques, etc.
+%%%%% ---------------------------------------------------------------------
+
+\NewDocumentCommand{\VRAI}{ }{ \textsc{vrai}\xspace }
+
+\NewDocumentCommand{\FAUX}{ }{ \textsc{faux}\xspace }
+
+\NewDocumentCommand{\TANTQUE}{ }{
+  \index{tant~que}\index{boucle}\index{boucle!tant~que}
+  \textsc{tant~que}\xspace
+}
+
+\NewDocumentCommand{\JUSQUA}{}{
+  \index{jusqu'à}\index{boucle}\index{boucle!jusqu'à}
+  \textsc{jusqu'à}\xspace
+}
+
+\NewDocumentCommand{\POUR}{}{
+  \index{pour}\index{boucle}\index{boucle!pour}
+  \textsc{pour}\xspace
+}
+
+\NewDocumentCommand{\SIALORSSINON}{}{
+  \index{si}\index{saut}\index{si!si~alors~sinon}
+  \textsc{si}\dots{}~\textsc{alors}\dots{}~\textsc{sinon}\xspace
+}
+
+\NewDocumentCommand{\SIALORS}{}{
+  \index{si}\index{saut}\index{si!si~alors}
+  \textsc{si}\dots{}~\textsc{alors}\xspace
+}
+
+\NewDocumentCommand{\SISINON}{}{
+  \index{si}\index{saut}\index{si!si~sinon}
+  \textsc{si}\dots{}~\textsc{sinon}\xspace
+}
+
+\NewDocumentCommand{\Ligne}{m}{
+  ligne\nobreakspace\(#1\)
+}
+
+%%%%% ---------------------------------------------------------------------
+%%%%% Traduction, francisation
+%%%%% ---------------------------------------------------------------------
+
+%%% -----------------------------------------------------------------------
+%%% tirets ouvrant et fermant: 
+%%% -----------------------------------------------------------------------
+
+\cs_new:Nn \TDS_tiret: { \textemdash }
+
+\cs_new:Nn \TDS_tiret_espace_int: { \  }
+
+\NewDocumentCommand {\TO} { } { 
+  \TDS_tiret: \TDS_tiret_espace_int: \ignorespaces }
+
+\NewDocumentCommand {\TF} {t.} {
+  \IfBooleanTF {#1} {
+    \string.} {
+    \unskip \TDS_tiret_espace_int: \TDS_tiret:\xspace}
+}
+
+%%% -----------------------------------------------------------------------
+%%% abbréviations: c'est-à-dire, par exemple, 
+%%% -----------------------------------------------------------------------
+
+\cs_new:Nn \TDS_pex_abrev: { p.\nobreakspace ex.\xspace }
+
+\cs_new:Nn \TDS_Pex_abrev: { P.\nobreakspace ex.\xspace }
+
+\NewDocumentCommand {\PX} { s } {
+  \IfBooleanTF{#1}{\TDS_Pex_abrev:}{\TdS_PX_auxi}
+}
+
+\NewDocumentCommand {\TdS_PX_auxi} { t. } {
+  \IfBooleanTF{#1}{\TDS_pex_abrev:}{\TdS_PX_auxii}
+}
+
+\NewDocumentCommand {\TdS_PX_auxii} { t+ } {
+  \IfBooleanTF{#1}{par~exemple\xspace}{\TDS_pex_abrev:}
+}
+
+\NewDocumentCommand {\CAD} { t+ } {
+  \IfBooleanTF{#1}{c'est-\`a-dire}{c.-\`a-d.}\xspace
+}
+
+%%% -----------------------------------------------------------------------
+%%% traduction
+%%% -----------------------------------------------------------------------
+
+\NewDocumentCommand { \English } { m }{
+  \emph{\foreignlanguage{english}{#1}}
+}
+
+\NewDocumentCommand { \InEnglish } { m }{
+  \emph{\foreignlanguage{english}{#1}}
+}
+
+\NewDocumentCommand { \TdSTrad } { m m }{
+  \emph{#1}~\TO anglais~\InEnglish{#2}\TF
+}
+
+%%% -----------------------------------------------------------------------
+%%% notes et remarques
+%%% -----------------------------------------------------------------------
+
+\NewDocumentCommand { \NdT } { m }{
+  \footnote{NdTdS~:~#1}
+}
+
+\NewDocumentEnvironment { TdSrem } { }
+{
+  \par\sffamily\footnotesize
+}
+{
+  \par\bigbreak
+}
+
+\NewDocumentCommand{\Fragment}{O{\TdS{} \textemdash{} \emph{définitions}} m m m}
+{
+  \refstepcounter{codefragment}
+  \VerbatimInput[frame=lines,
+  framesep=0.75\baselineskip, 
+  numbers=left,
+  firstline=#2,
+  lastline=#3,
+  label={[#1]fragment
+    \arabic{codefragment}},
+  ]{#4.tex}
+}
+
+% \NewDocumentCommand { \Macro } { s o v } {
+%   \IfBooleanTF{#1}
+%   {\textcolor{RedOrange}}
+%   {\textcolor{MidnightBlue}}
+%   {\CODE{#3}}
+% }
+
+% \NewDocumentCommand{\Macro}{s o v}{
+%   \IfBooleanTF{#1}
+%   {\FausseMacroPresentation{#3}}
+%   {\gls{#3}}
+% }
+

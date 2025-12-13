@@ -1,0 +1,1902 @@
+\documentclass[a4paper,italian]{article}
+\usepackage{multicol}
+\usepackage{float}
+\usepackage{makeidx}
+\usepackage{layout}
+\usepackage{array}
+\usepackage{a4wide}
+\usepackage{boxedminipage}
+\usepackage{babel}
+\ifx\pdfoutput\undefined % if we are not running pdftex
+	\usepackage[T1]{fontenc}
+\else			 % if we are running pdftex
+	\usepackage{ae}
+	\usepackage[pdftex]{thumbpdf}
+	\pdfcompresslevel=9
+	\usepackage[pdftitle={Layout di pagina in LaTeX},
+	pdfauthor={Piet van Oostrum},linktocpage,
+	pdftex,colorlinks,hyperindex,plainpages=false]{hyperref}
+\fi
+\usepackage{url}
+\frenchspacing
+%% layout.sty does not support italian language
+  \renewcommand{\Headertext}{Intestazione}
+  \renewcommand{\Bodytext}{Corpo}
+  \renewcommand{\Footertext}{Pi\`e di pagina}
+  \renewcommand{\MarginNotestext}{Note a\\margine}
+  \renewcommand{\oneinchtext}{un pollice}
+  \renewcommand{\notshown}{non visibile}
+%%\usepackage{fancyheadings}
+%%\pagestyle{fancy}
+%%\lhead{\rightmark}
+%%\rhead{\thepage}
+%%\cfoot{}
+\makeindex
+\title{Layout di pagina in \LaTeX}
+\author{Piet van Oostrum\thanks{Una parte considerevole di questo
+    articolo \`e stata scritta da George Gr\"atzer (University of
+    Manitoba) in \emph{Notices Amer. Math. Soc.}
+    Grazie George!}\\
+    Dept.\ of Computer Science\\
+    Utrecht University}
+\date{23 marzo 2001}
+\def\latex/{\protect\LaTeX{}}
+\def\tex/{\TeX}
+\def\ams/{\protect\pAmS}
+\def\pAmS{{\the\textfont2
+        A\kern-.1667em\lower.5ex\hbox{M}\kern-.125emS}}
+\def\amslatex/{\ams/-\latex/}
+\newcommand{\PSNFSS}{{\sf
+    PSNFSS}}
+\newcommand{\bs}{\symbol{'134}}
+\newcommand{\Cmd}[1]{\texttt{\def\{{\char`\{}\def\}{\char`\}}\bs#1}}
+\newcommand{\CmdIndex}[1]{\index{#1@\texttt{\bs#1}}}
+\newcommand{\TTindex}[1]{\index{#1@\texttt{#1}}}
+\newcommand{\SFindex}[1]{\index{#1@\textsf{#1}}}
+\newcommand{\EMindex}[1]{\index{#1@\emph{#1}}}
+\newcommand{\PSindex}[1]{\index{stile di pagina!#1@\texttt{#1}}}
+%\floatstyle{ruled}
+\restylefloat{figure}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.9}
+\renewcommand{\textfraction}{0.05}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+\setlength{\emergencystretch}{4em}
+\makeatletter
+\renewcommand\l@section      {\@dottedtocline{1}{1.5em}{2.3em}}
+\makeatother
+\newenvironment{block}{\vspace{8pt}\begin{minipage}{\textwidth}}{\end{minipage}\vspace{8pt}}
+\newenvironment{fblock}{\vspace{8pt}\begin{boxedminipage}{\textwidth}}{\end{boxedminipage}\vspace{8pt}}
+\begin{document}
+\maketitle
+\begin{abstract}
+  Questo articolo spiega come personalizzare l'aspetto della pagina
+  nei documenti LaTeX, ossia come modificarne le dimensioni e i
+  margini, le intestazioni e le righe a pi\`e di pagina, il corretto
+  posizionamento di figure e tabelle (collettivamente chiamate oggetti
+  flottanti). Originariamente, questa era la documentazione del
+  pacchetto \textsf{fancyheadings}, ma conteneva anche altre
+  informazioni relative, per esempio, all'uso avanzato delle
+  marche. In seguito sono stati aggiunti ulteriori argomenti, come il
+  trattamento degli oggetti flottanti. La documentazione di
+  \textsf{fancyheadings} \`e stata aggiornata per adattarla alla
+  versione 2 di questo pacchetto\footnote{Questa versione dovrebbe
+  essere rilasciata molto presto.}.  Per ragioni di compatibilit\`a
+  con alcuni sistemi operativi, il nome del pacchetto \`e stato
+  cambiato in \textsf{fancyhdr}.
+
+  Sebbene in questo articolo si utilizzino comandi \LaTeXe{}, la
+  maggior parte delle tecniche pu\`o essere utilizzata, con le
+  appropriate modifiche, anche su versioni pi\`u vecchie di \LaTeX.
+
+  Traduzione italiana di Giulio Agostini % <giulio.agostini@bigfoot.com>
+  e Mileto Rigido.                       % <m.rigido@inwind.it>
+\end{abstract}
+\tableofcontents
+
+%%% Nota dei traduttori
+\subsubsection*{Nota alla traduzione italiana}
+Una copia di questo documento e altre traduzioni in italiano di
+manuali su \LaTeX\ sono reperibili presso
+\begin{itemize}
+\item\url{http://guild.prato.linux.it}
+\item\url{ftp://lorien.prato.linux.it/pub/guild}
+\item\url{ftp://ftp.unina.it/pub/TeX/info/italian}
+\end{itemize}
+e su ogni sito CTAN, per esempio \url{ftp://ftp.tex.ac.uk/tex-archive/info/italian}.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduzione}
+\label{sec:intro}
+
+La pagina di un documento \LaTeX{} \`e costituita da vari elementi,
+come mostra la figura \ref{fig:layout}. 
+\begin{figure}[htbp]
+  \begin{center}
+    \leavevmode
+    \layout
+    \vspace{3cm}
+    \caption{Elementi della pagina. I valori indicati sono quelli
+    usati in questo documento, non quelli predefiniti.}
+    \label{fig:layout}
+  \end{center}
+\end{figure}
+%\thispagestyle{fancy}
+\thispagestyle{plain}
+Il corpo contiene il testo principale assieme ai cosiddetti oggetti flottanti
+(tabelle e figure).
+
+Le pagine sono costruite con la routine di output di \LaTeX, la quale
+\`e abbastanza complicata e pertanto non dovrebbe essere modificata
+dall'utente.  Alcuni dei pacchetti descritti in questo articolo
+contengono delle piccole modifiche alla routine di output finalizzate
+al compimento di operazioni che non potrebbero essere realizzate in
+altro modo. Per ottenere i risultati desiderati \`e preferibile
+utilizzare questi pacchetti piuttosto che modificare direttamente la
+routine di output.
+
+Ci sono un certo numero di cose delle quali si deve essere a conoscenza:
+\begin{enumerate}
+
+\item I margini sulla sinistra non si chiamano \Cmd{leftmargin}, ma
+  \Cmd{evensidemargin} (nelle pagine con numerazione pari) e \Cmd{oddsidemargin}
+  (nelle pagine dispari). Nei documenti a una facciata si usa
+  \Cmd{oddsidemargin} per entrambe.  Anche \Cmd{leftmargin} \`e un parametro
+  \latex/ valido ma ha un utilizzo differente (vale a dire per il rientro
+  delle liste).
+\item La maggior parte dei parametri non dovrebbe essere cambiata nel
+  mezzo di un documento poich\'e alcune modifiche potrebbero avere effetto
+  dopo un'interruzione di pagina.
+  Se si vuole cambiare l'altezza di una sola pagina, si pu\`o usare il
+  comando \Cmd{enlargethispage}.
+\end{enumerate}
+
+L'area delle note a margine contiene brevi informazioni
+create col comando \Cmd{marginpar}. Nei documenti a due facciate le
+note a margine appaiono alternativamente a sinistra e a destra.  Le
+note a margine non sono collocate in un posto fisso rispetto al foglio, ma
+approssimativamente alla stessa altezza del paragrafo a cui si riferiscono.
+Sfortunatamente, a causa dell'algoritmo usato per decidere il loro
+posizionamento, in un documento a due facciate
+potrebbero apparire sul lato sbagliato se sono collocate nei pressi di
+un'interruzione di pagina.
+Se invece si vuole che le informazioni appaiano in posti
+prefissati ai margini della pagina, si pu\`o usare la tecnica
+descritta nelle sezioni \ref{sec:movie} e \ref{sec:thumb}.
+
+La prima parte di questo articolo descrive come modificare le aree
+dell'intestazione e del pi\`e di pagina. L'ultima parte descrive come
+collocare gli oggetti flottanti nel punto desiderato.
+
+\section{Intestazioni e pi\`e di pagina}
+
+In \LaTeX{} le intestazioni e i pi\`e di pagina sono definiti dai
+comandi \Cmd{pagestyle} e \Cmd{pagenumbering}. \Cmd{pagestyle}
+definisce il contenuto generale delle intestazioni e dei pi\`e di
+pagina (per esempio dove sar\`a stampato il numero della pagina),
+mentre \Cmd{pagenumbering} definisce il formato del numero della
+pagina.  \LaTeX{} ha quattro stili di pagina predefiniti:
+
+\begin{tabular}{>{\tt}lp{10cm}}
+empty & nessuna intestazione o pi\`e di pagina \\
+plain & nessuna intestazione, il pi\`e di pagina contiene al centro il numero
+della pagina \\
+headings & nessun pi\`e di pagina, l'intestazione contiene il nome del capitolo/sezione e/o
+subsezione e il numero della pagina \\
+myheadings & nessun pi\`e di pagina, l'intestazione contiene il numero
+della pagina e altre informazioni fornite dall'utente.
+\end{tabular}
+
+Questi stili, sebbene utili, sono abbastanza limitati. Si
+possono definire degli stili di pagina aggiuntivi attraverso comandi
+del tipo \Cmd{ps@xxx}. Questo comando \`e eseguito quando un
+\Cmd{pagestyle\{xxx\}} \`e dato nel documento.  Il comando
+\Cmd{ps@xxx} dovrebbe definire i seguenti comandi per il contenuto
+delle intestazioni e dei pi\`e di pagina:
+
+\noindent
+\begin{tabular}{lp{10cm}}
+\Cmd{@oddhead} & intestazione delle pagine dispari nei documenti a due
+facciate (valido per tutte le pagine nei documenti a facciata singola) \\
+\Cmd{@evenhead} & intestazione delle pagine pari nei documenti a due
+facciate \\
+\Cmd{@oddfoot} & pi\`e di pagina delle pagine dispari nei documenti a due
+facciate (valido per tutte le pagine nei documenti a facciata singola) \\
+\Cmd{@evenfoot} & pi\`e di pagina delle pagine pari nei documenti a due
+facciate \\
+\end{tabular}
+
+Questi non sono comandi utente, ma piuttosto ``variabili'' utilizzate
+dalla routine di output di \latex/.
+Poich\'e i nomi dei comandi contengono il carattere '\texttt{@}',
+dovrebbero essere definiti all'interno di un pacchetto, o altrimenti
+essere inseriti tra i comandi \Cmd{makeatletter} e \Cmd{makeatother}.
+
+Il comando \Cmd{pagenumbering} definisce l'aspetto del numero della
+pagina e accetta uno dei seguenti parametri:
+
+\begin{tabular}{>{\tt}ll}
+arabic & numeri arabi \\
+roman & numeri romani a caratteri minuscoli \\
+Roman & numeri romani a caratteri maiuscoli \\
+alph & lettere minuscole \\
+Alph & lettere maiuscole
+\end{tabular}
+
+\Cmd{pagenumbering\{xxx\}} fa in modo che il comando \Cmd{thepage} sia
+l'espansione del numero di pagina nella forma \texttt{xxx}. 
+Il comando pagestyle include quindi \Cmd{thepage} nel posto
+appropriato. Inoltre il comando \Cmd{pagenumbering} resetta il
+numero di pagina riportandolo a~1. \Cmd{pagestyle} e  \Cmd{pagenumbering} hanno
+effetto sulla pagina corrente, quindi dovrebbero essere collocati in
+un punto del documento in cui sia chiaro a quale pagina vengono applicati (vd. sezione
+\ref{sec:change}).
+
+\section{Cosa \`e \textsf{fancyhdr}}
+
+Il pacchetto di macro \textsf{fancyhdr} permette di personalizzare in
+modo facile le intestazioni e i pi\`e di pagina in \latex/. Si possono
+definire:
+\begin{itemize}
+\item intestazioni e pi\`e di pagina divisi in tre parti
+\item linee decorative nelle intestazioni e nei pi\`e di pagina
+\item intestazioni e pi\`e di pagina pi\`u larghi del testo
+\item intestazioni e pi\`e di pagina su pi\`u linee
+\item intestazioni e pi\`e di pagina distinti per le pagine pari e dispari
+\item intestazioni e pi\`e di pagina diversi per le pagine in cui inizia un  capitolo
+\item intestazioni e pi\`e di pagina diversi sulle pagine con oggetti flottanti
+\end{itemize}
+
+Ovviamente si pu\`o anche avere completo controllo sui font, sull'uso
+di caratteri maiuscoli o minuscoli, eccetera.
+
+%%% \section{Where to get it?}\label{get}
+%%% You only need the file \verb|fancyhdr.sty| which you can find at the
+%%% \index{ftp}
+%%% CTAN sites: \verb|ftp.shsu.edu| (U.S.), \verb|ftp.tex.ac.uk| (U.K.), and
+%%% \verb|ftp.dante.de| (Germany).
+%%% You will find it in the directory\\
+%%% \verb|/tex-archive/macros/latex209/contrib/fancyhdr|. Although
+%%% \textsf{fancyhdr}
+%%% is a \latex/ 2.09 style file, it will work with \LaTeXe{}. Also this
+%%% \TTindex{fixmarks.sty}
+%%% \TTindex{extramarks.sty}
+%%% article and the two packages \texttt{fixmarks} and \texttt{extramarks} can
+%%% be found there. (The code for these packages given in this article is a
+%%% simplified version.)
+
+\section{Uso basilare di \textsf{fancyhdr}}
+
+Per usare questo pacchetto in un documento \LaTeXe, si deve installare
+il file \verb|fancyhdr.sty| in una directory/cartella dove \tex/ possa
+trovarlo (normalmente nella directory/cartella di input) e includere
+nel preambolo del documento, dopo
+
+\begin{verbatim}
+\documentclass{...}
+\end{verbatim}
+i commandi\footnote{Con LaTeX2.09 si deve specificare \texttt{[fancyhdr]}
+in \Cmd{documentstyle} anzich\'e usare il comando \Cmd{usepackage}.}: 
+\PSindex{fancy}
+\begin{verbatim}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\end{verbatim}
+
+Possiamo rappresentare il layout di pagina che pu\`o essere ottenuto con
+\textsf{fancyhdr} in questo modo:
+
+\begin{fblock}
+\noindent\makebox[\textwidth]{Intestazione S.\hfill
+Intestazione C.\hfill Intestazione D.}
+\noindent\makebox[\textwidth]{\hrulefill}\\[\baselineskip]
+\noindent\makebox[\textwidth]{\hfill corpo della pagina\hfill}\\[\baselineskip]
+\noindent\makebox[\textwidth]{\hrulefill}
+\noindent\makebox[\textwidth]{Pi\`e di pagina S.\hfill
+Pi\`e di pagina C.\hfill Pi\`e di pagina D.}
+\end{fblock}
+
+Intestazione S. e Pi\`e di pagina S. sono giustificati a sinistra;
+Intestazione C. e Pi\`e di pagina C. sono centrati;
+Intestazione D. e Pi\`e di pagina D. sono giustificati a sinistra.
+
+Ognuno dei sei ``campi'' e le due linee decorative sono definiti
+separatamente.
+
+\section{Un semplice esempio}  K. Grant scrive una relazione per Dean
+A. Smith, su ``Il rendimento dei neolaureati'' con il seguente layout
+di pagina:
+
+\begin{fblock}
+\noindent\makebox[\textwidth]{\hfill\bfseries Il rendimento dei neolaureati}
+\noindent\makebox[\textwidth]{\hrulefill}\\[\baselineskip]
+\noindent\makebox[\textwidth]{\hfill corpo della pagina\hfill}\\[\baselineskip]
+\noindent\makebox[\textwidth]{\hrulefill}
+\noindent\makebox[\textwidth]{Da parte di: K. Grant\phantom{3}\hfill
+Per: Dean A. Smith\hfill \phantom{Da parte di: K. Grant}3}
+\end{fblock}
+
+\noindent dove ``3'' \`e il numero della pagina.  Il titolo: ``Il
+rendimento dei neolaureati'' \`e in grassetto.
+
+Il tutto \`e realizzato con \Cmd{pagestyle\{fancy\}} seguito da questi
+comandi%
+\footnote{Notare che la versione 1 di fancyheadings usava il comando
+\Cmd{setlength} per cambiare i parametri di \texttt{\bs...rulewidth}.}:
+\CmdIndex{lhead}
+\CmdIndex{rhead}
+\CmdIndex{chead}
+\CmdIndex{lfoot}
+\CmdIndex{rfoot}
+\CmdIndex{cfoot}
+\CmdIndex{headrulewidth}
+\CmdIndex{footrulewidth}
+\begin{verbatim}
+\lhead{}
+\chead{}
+\rhead{\bfseries Il rendimento dei neolaureati}
+\lfoot{Da parte di: K. Grant}
+\cfoot{Per: Dean A. Smith}
+\rfoot{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\end{verbatim}
+(La macro \Cmd{thepage} mostra il numero della pagina corrente,
+\Cmd{bfseries} \`e il comando di \LaTeXe per selezionare i caratteri
+in grassetto).
+
+In questo modo le impostazioni sono quasi del tutto corrette, l'unico
+problema \`e che la prima pagina non ha bisogno di intestazioni e
+pi\`e di pagina. Per eliminare tutto tranne il numero della pagina
+centrato si usa il comando
+
+\CmdIndex{thispagestyle}
+\begin{verbatim}
+\thispagestyle{plain}
+\end{verbatim}
+dopo i comandi
+\Cmd{begin\{document\}}
+e
+\CmdIndex{maketitle}
+\Cmd{maketitle}.
+
+In alternativa, si pu\`o usare
+\begin{verbatim}
+\thispagestyle{empty}
+\end{verbatim}
+se non si vogliono intestazioni o pi\`e di pagina di alcun tipo.
+
+Infatti le classi standard di \latex/ definiscono il comando \Cmd{maketitle}
+in modo tale da utilizzare automaticamente
+\Cmd{thispagestyle\{plain\}}, quindi se si vuole il layout fancy in una
+pagina contenente \Cmd{maketitle} si deve mettere
+\Cmd{thispagestyle\{fancy\}} subito dopo il comando \Cmd{maketitle}.
+
+\section{Un esempio di stampa fronte/retro}\label{two-sided}
+
+\TTindex{twoside}
+Alcune classi di documenti, come \verb|book.cls|, sono predefinite per
+la stampa fronte/retro: le pagine pari e quelle dispari hanno quindi
+un aspetto differente. Altre classi di documenti, invece, richiedono
+l'opzione \verb|twoside| per la stampa fronte/retro.
+
+Proviamo adesso a stampare la nostra relazione su due facciate. Il
+layout precedente sar\`a usato per le pagine dispari (sul lato destro)
+e il seguente per le pagine pari (sul lato sinistro).
+
+\begin{fblock}
+
+\noindent\makebox[\textwidth]{\bfseries Il rendimento dei neolaureati \hfill}
+\noindent\makebox[\textwidth]{\hrulefill}\\[\baselineskip]
+\noindent\makebox[\textwidth]{\hfill corpo della pagina\hfill}\\[\baselineskip]
+\noindent\makebox[\textwidth]{\hrulefill}
+\noindent\makebox[\textwidth]{4\phantom{Per: Dean A. Smith}\hfill
+ Da parte di: K. Grant\hfill \phantom{4}Per: Dean A. Smith}
+
+\end{fblock}
+\noindent dove ``4'' \`e il numero della pagina.
+
+Ecco i comandi:
+
+\begin{verbatim}
+\fancyhead{} % cancella tutti i campi
+\fancyhead[RO,LE]{\bfseries Il rendimento dei neolaureati}
+\fancyfoot[LE,RO]{\thepage}
+\fancyfoot[LO,CE]{Da parte di: K. Grant}
+\fancyfoot[CO,RE]{Per: Dean A. Smith}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\end{verbatim}
+
+\CmdIndex{fancyhead}
+\CmdIndex{fancyfoot}
+
+Sono stati usati i comandi, pi\`u generici, \Cmd{fancyhead} e \Cmd{fancyfoot}.
+Questi prevedono un parametro addizionale tra parentesi quadre che
+specifica a quali pagine e/o parti dell'intestazione/pi\`e di pagina
+si applicano. Questo parametro \`e stato omesso nel primo comando
+\Cmd{fancyhead}, che pertanto si applica a tutti i campi
+dell'intestazione: in generale questo \`e utile solo per sbarazzarsi
+di una definizione precedente, come in questo caso. I selettori che
+possono essere usati tra parentesi quadre sono indicati nella
+figura~\ref{fig:sel}. I selettori possono essere combinati insieme,
+cos\`{\i} \Cmd{fancyhead[LE,RO]\{text\}} definir\`a il campo sia per
+l'intestazione sinistra sulle pagine pari, sia per l'intestazione destra
+sulle pagine dispari; se non si specifica \texttt{E} o \texttt{O}, la definizione si
+applica a tutte. Un discorso analogo vale per \texttt{LRC}. Quindi l'uso di
+\Cmd{lhead} nella sezione precedente non \`e che un'abbreviazione di
+\Cmd{fancyhead[L]}. I selettori possono essere indicati
+indifferentemente con le lettere maiuscole o minuscole.
+
+\CmdIndex{fancyhf}
+C'\`e anche un pi\`u generico comando \Cmd{fancyhf} che pu\`o essere
+usato per specificare contemporaneamente le intestazioni e i pi\`e di
+pagina. Questo comando ammette i selettori generali \texttt{H} (intestazione) e \texttt{F}
+(pi\`e di pagina), infatti \Cmd{fancyhead} e \Cmd{fancyfoot} non sono
+che \Cmd{fancyhf} con \texttt{H} e \texttt{F} gi\`a specificati.
+\begin{figure}[tb]
+  \begin{center}
+    \leavevmode
+    \begin{tabular}{|l|l|}
+      \hline
+      E & Pagina pari       \\
+      O & Pagina dispari    \\
+      \hline
+      L & Campo sinistro    \\
+      C & Campo centrale    \\
+      R & Campo destro      \\
+      \hline
+      H & Intestazione      \\
+      F & Pi\`e di pagina   \\
+      \hline
+%%      T & float at Top      \\
+%%      B & float at Bottom   \\
+%%      F & Float page         \\
+%%      \hline
+    \end{tabular}
+  \end{center}
+  \caption{Selettori.}
+  \label{fig:sel}
+\end{figure}
+
+Inoltre si pu\`o usare \Cmd{thispagestyle\{plain\}} per ottenere un
+layout adatto alla prima pagina.
+
+\section{Ridefinire lo stile \texttt{plain}}
+
+Alcuni comandi \latex/, come \Cmd{chapter}, usano il comando
+\Cmd{thispagestyle} per selezionare automaticamente lo stile di pagina
+\texttt{plain}, ignorando cos\`{\i} quello attualmente in uso.
+Per personalizzare anche queste pagine, si deve ridefinire lo stile di
+pagina \texttt{plain}. Come \`e stato indicato precedentemente, questo 
+pu\`o essere fatto ridefinendo il comando \Cmd{ps@plain}, ma
+\textsf{fancyhdr} fornisce un modo pi\`u facile attraverso il comando
+\Cmd{fancypagestyle}. Questo comando pu\`o essere usato per ridefinire gli
+stili di pagina esistenti (come \texttt{plain}), o per definirne di
+nuovi, ad esempio se una parte del documento deve usare uno stile di
+pagina differente. Questo comando ha due parametri: uno \`e il nome
+dello stile di pagina che si vuole definire, l'altro \`e costituito
+dai comandi che cambiano le intestazioni e/o i pi\`e di pagina, ad
+esempio \verb|fancyhead| eccetera. Sono anche ammesse delle modifiche a
+\Cmd{headrulewidth} e \Cmd{footrulewidth}.
+Come esempio, si pu\`o ridefinire lo stile \texttt{plain} per la
+relazione della sezione~\ref{two-sided}, mettendo il  numero di
+pagina in grassetto. 
+\PSindex{plain}
+
+\begin{verbatim}
+\fancypagestyle{plain}{%
+\fancyhf{} % cancella tutti i campi di  intestazione e pi\`e di pagina
+\fancyfoot[C]{\bfseries \thepage} % tranne il centro
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}}
+\end{verbatim}
+
+
+\section{Il layout predefinito}\label{default}
+Usiamo la classe \verb|book.cls| e le impostazioni predefinite di
+\textsf{fancyhdr}, cos\`{\i} da dare soltanto i comandi
+
+\begin{verbatim}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\end{verbatim}
+e lasciamo che \textsf{fancyhdr} si occupi di tutto: nelle pagine in
+cui inizia un nuovo capitolo, avremo al centro del pi\`e di pagina il
+numero della pagina stessa, non ci sar\`a nessuna intestazione e
+nessuna linea decorativa.
+
+Sulle pagine pari, otterremo il layout:
+
+\begin{fblock}
+\noindent\makebox[\textwidth]{\sl 1.2  VALUTAZIONE\hfill
+ CAPITOLO 1. INTRODUZIONE}
+\noindent\makebox[\textwidth]{\hrulefill}\\[\baselineskip]
+\noindent\makebox[\textwidth]{\hfill corpo della pagina\hfill}\\[\baselineskip]
+\noindent\makebox[\textwidth]{\hrulefill}
+\noindent\makebox[\textwidth]{\hfill4\hfill}
+\end{fblock}
+
+Sulle pagine dispari, avremo il layout:
+
+\begin{fblock}
+\noindent\makebox[\textwidth]{\sl CAPITOLO 1. INTRODUZIONE\hfill
+ 1.2  VALUTAZIONE}
+\noindent\makebox[\textwidth]{\hrulefill}\\[\baselineskip]
+\noindent\makebox[\textwidth]{\hfill corpo della pagina\hfill}\\[\baselineskip]
+\noindent\makebox[\textwidth]{\hrulefill}
+\noindent\makebox[\textwidth]{\hfill
+3\hfill }
+\end{fblock}
+
+\noindent dove il testo dell'intestazione \`e a caratteri maiuscoli inclinati.
+
+Questo layout predefinito \`e prodotto dai seguenti comandi:
+\CmdIndex{rightmark}
+\CmdIndex{leftmark}
+\begin{verbatim}
+\fancyhead[LE,RO]{\slshape \rightmark}
+\fancyhead[LO,RE]{\slshape \leftmark}
+\fancyfoot[C]{\thepage}
+\end{verbatim}
+
+Le impostazioni seguenti sono usate per le linee decorative:
+
+\begin{tabbing}
+\CmdIndex{headrulewidth}
+\noindent \Cmd{headrulewidth}\qquad \qquad \qquad \=0.4\=pt\\
+\CmdIndex{footrulewidth}
+\Cmd{footrulewidth}\>0\>pt
+\end{tabbing}
+
+In \verb|book.cls| il testo delle intestazioni appare in caratteri
+maiuscoli.
+
+\section{Lo scoop sulle marche di \latex/}\label{sec:custom}
+
+Di solito, per i documenti delle classi \verb|book| e \verb|report|,
+\`e preferibile includere le informazioni sul capitolo e la sezione
+nelle intestazioni (solo il capitolo se si stampa su una sola
+facciata) e per i documenti della classe \verb|article|, le
+informazioni sulla sezione e sulla sottosezione (solo la sezione se si
+stampa su una facciata).  \latex/ usa un meccanismo basato sulle marche
+per ricordare le informazioni relative al capitolo e alla sezione (o alla
+sezione e alla sottosezione) per una pagina. Questo argomento \`e
+discusso in dettaglio nella sezione 4.3.1 del \emph{\latex/ Companion}.
+
+Si possono utilizzare due modi per cambiare le informazioni di alto e
+basso livello accessibili all'utente. Le macro:
+\CmdIndex{rightmark}
+\CmdIndex{leftmark}
+\Cmd{leftmark}
+(alto livello) e \Cmd{rightmark} (basso livello) contengono le
+informazioni processate da \latex/ e possono essere utilizzati
+direttamente come mostrato nella sezione~\ref{default}.
+
+\Cmd{leftmark} contiene l'argomento di sinistra dell'\emph{ultimo} comando 
+\Cmd{markboth} nella pagina, mentre \Cmd{rightmark} contiene l'argomento di 
+destra del \emph{primo} comando \Cmd{markboth} o l'unico argomento del 
+\emph{primo} comando \Cmd{markright} nella pagina. Se in una pagina non ci 
+sono marche, esse sono ``ereditate'' dalla pagina precedente.
+
+Si pu\`o influenzare il modo in cui le informazioni relative a capitolo,
+sezione e sottosezione (solo due di questi!) sono mostrate ridefinendo
+i comandi
+\CmdIndex{chaptermark}
+\Cmd{chaptermark},
+\CmdIndex{sectionmark}
+\CmdIndex{subsectionmark}
+\Cmd{sectionmark} e \Cmd{subsectionmark}\footnote{Ci sono dei comandi
+simili per \texttt{paragraph} e \texttt{subparagraph} ma sono usati
+raramente.}. La ridefinizione deve essere messa dopo la prima
+dichiarazione di \Cmd{pagestyle\{fancy\}}, poich\'e questo imposta i
+valori predefiniti.
+
+Si pu\`o illustrare quanto detto finora prendendo come esempio le
+informazioni relative al capitolo, le quali sono composte da tre
+parti:
+\begin{itemize}
+\CmdIndex{thechapter}
+\item  il numero (ad esempio, 2), mostrato dalla macro \Cmd{thechapter}
+\item  il nome (Capitolo), mostrato dalla macro
+\CmdIndex{chaptername}
+   \Cmd{chaptername}
+\item  il titolo, contenuto nell'argomento di \Cmd{chaptermark}.
+\end{itemize}
+
+La figura~\ref{fig:markers} mostra alcune varianti di ``Capitolo 2.\
+Tutto e subito'' (l'ultimo esempio \`e appropriato per alcune lingue
+diverse dall'inglese). I segni \verb|%| alla fine delle righe servono a
+evitare degli spazi indesiderati: si potrebbero togliere questi segni
+e continuare su una sola riga\footnote{Il comando \texttt{\bs MakeUppercase}
+  \`e usato in \LaTeXe{} per generare del testo a
+  caratteri maiuscoli, mentre in \LaTeX{} 2.09 si usa \Cmd{uppercase}. 
+  La differenza \`e che \Cmd{MakeUppercase} si occupa anche di lettere
+  non ASCII. Fancyhdr fa in modo che \Cmd{MakeUppercase}, se non \`e
+  definito, sia un alias di \Cmd{uppercase}.}.
+
+\begin{figure}[tb]
+\CmdIndex{chaptermark}
+\CmdIndex{uppercase}
+\CmdIndex{MakeUppercase}
+\setlength{\columnsep}{20pt}\small
+\begin{multicols}{2}
+\noindent Codice:\\
+\mbox{}\\
+\verb|\renewcommand{\chaptermark}[1]{%|\\
+\verb| \markboth{\chaptername|\\
+\verb| \ \thechapter.\ #1}{}}|\\
+\mbox{}\\
+\verb|\renewcommand{\chaptermark}[1]{%|\\
+\verb| \markboth{\MakeUppercase{%|\\
+\verb| \chaptername}\ \thechapter.%|\\
+\verb| \ #1}{}}|\\
+\mbox{}\\
+\verb|\renewcommand{\chaptermark}[1]{%|\\
+\verb| \markboth{\MakeUppercase{%|\\
+\verb| \chaptername\ \thechapter.%|\\
+\verb| \ #1}}{}}|\\
+\mbox{}\\
+\verb|\renewcommand{\chaptermark}[1]{%|\\
+\verb| \markboth{#1}{}}|\\
+\mbox{}\\
+\verb|\renewcommand{\chaptermark}[1]{%|\\
+\verb| \markboth{\thechapter.\ #1}{}}|\\
+\mbox{}\\
+\verb|\renewcommand{\chaptermark}[1]{%|\\
+\verb| \markboth{\thechapter.%|\\
+\verb| \ \chaptername.\ #1}{}}|\\
+Stampa:\\
+\mbox{}\\
+Capitolo 2.\ Tutto e subito\\
+\mbox{}\\
+\mbox{}\\
+\mbox{}\\
+CAPITOLO 2.\ Tutto e subito\\
+\mbox{}\\
+\mbox{}\\
+\mbox{}\\
+\mbox{}\\
+CAPITOLO 2.\ TUTTO E SUBITO\\
+\mbox{}\\
+\mbox{}\\
+\mbox{}\\
+\mbox{}\\
+Tutto e subito\\
+\mbox{}\\
+\mbox{}\\
+2.\ Tutto e subito\\
+\mbox{}\\
+\mbox{}\\
+2.\ Capitolo.\ Tutto e subito\\
+\mbox{}\\
+\end{multicols}
+\caption{Varianti di marche.}\label{fig:markers}
+\end{figure}
+
+Per le informazioni sul sezionamento di basso livello si pu\`o fare lo
+stesso con \Cmd{markright}.
+
+Cos\`{\i} se ``Sezione 2.2.\ Primi passi''  \`e la sezione corrente,
+allora
+
+\begin{verbatim}
+\renewcommand{\sectionmark}[1]{\markright{\thesection.\ #1}}
+\end{verbatim}
+dar\`a
+   ``2.2.\ Primi passi''.
+
+La ridefinizione dei comandi \Cmd{chaptermark} e \Cmd{sectionmark}
+potrebbe non eliminare tutte le maiuscole, ad esempio la bibliografia
+avr\`a il titolo
+\CmdIndex{uppercase}
+\index{Bibliografia}
+\textsc{bibliografia} nell'intestazione, poich\'e \Cmd{MakeUppercase}
+\`e dato esplicitamente nella definizione di \Cmd{thebibliography}. Lo
+stesso discorso vale per
+\textsc{Indice Analitico} eccetera. Se non si vogliono ridefinire questi comandi, si
+pu\`o usare il comando \Cmd{nouppercase} che \textsf{fancyhdr} mette a
+disposizione nei campi dell'intestazione e del pi\`e di pagina. Si
+noti che questo potrebbe dare problemi in altri casi, come per i
+numerali romani maiuscoli nelle intestazioni, quindi dovrebbe essere
+usato con cautela. Essenzialmente, questo comando compone il suo
+argomento in un ambiente in cui \Cmd{MakeUppercase} e \Cmd{uppercase}
+sono trasformati in operazioni nulle.
+
+\begin{verbatim}
+\lhead{\nouppercase{\rightmark}}
+\rhead{\nouppercase{\leftmark}}
+\end{verbatim}
+
+Si dovrebbe tener presente che il meccanismo delle marche di \latex/
+funziona bene con i capitoli (che cominciano sempre su una nuova
+pagina) e le sezioni (che sono ragionevolmente lunghe), ma non
+funziona altrettanto bene nel caso di sezioni brevi e di
+sottosezioni. Ma questo problema riguarda \latex/, non \textsf{fancyhdr}.
+
+Come esempio si consideri un layout di pagina in cui i \Cmd{leftmark} sono
+generati dalle sezioni e i \Cmd{rightmark} dalle sottosezioni (com'\`e
+predefinito nella classe \texttt{article}). Si ipotizzi una pagina con
+alcune brevi sezioni, ad esempio
+
+\begin{samepage}
+\noindent Sezione 1.\\
+sottosezione 1.1\\
+sottosezione 1.2\\
+Sezione 2.  
+\end{samepage}
+
+Poich\'e il \Cmd{leftmark} contiene l'\emph{ultima} marca della pagina,
+esso sar\`a ``Sezione 2.'', mentre il \Cmd{rightmark} sar\`a ``sottosezione
+1.1'', dato che conterr\`a la \emph{prima} marcha della
+pagina. Cos\`{\i} l'informazione dell'intestazione di pagina
+combiner\`a la sezione 2 con la sottosezione 1.1, il che non \`e
+molto coerente.
+La miglior cosa da fare in questa situazione \`e usare solo i
+\Cmd{rightmark} e ridefinire \Cmd{sectionmark} di conseguenza.
+Un comando \latex/
+\CmdIndex{firstleftmark}
+\Cmd{firstleftmark} sarebbe auspicabile (vd. il pacchetto
+\textsf{extramarks} nella sezione~\ref{sec:xmarks}). 
+
+Un altro problema con le marche nelle classi standard di \latex/ \`e
+che i comandi di sezionamento di alto livello (ad esempio \Cmd{chapter})
+invocano \Cmd{markboth} con un argomento destro vuoto. Questo
+significa che sulla prima pagina di un capitolo (o di una sezione nello
+stile article) \Cmd{rightmark} sar\`a vuoto. Se questo \`e un problema
+si devono inserire manualmente dei comandi \Cmd{markright} aggiuntivi oppure
+ridefinire i comandi \Cmd{chaptermark} (e \Cmd{sectionmark}) per dare
+il comando \Cmd{markboth} con due parametri accettabili.
+
+Come osservazione finale si noti che la forma asteriscata
+dei comandi di sezionamento \emph{non} invoca i comandi
+di marchio. Quindi, se si vuole che la prefazione imposti le
+informazioni dell'intestazione ma non sia numerata e non compaia
+nell'indice, si deve invocare manualmente il comando \Cmd{markboth}, ad esempio
+
+\begin{verbatim}
+\chapter*{Prefazione\markboth{Prefazione}{}}
+\end{verbatim}
+
+L'inserimento del comando \Cmd{markboth} dentro \Cmd{chapter*}
+assicura che la marca non sia separata dal titolo del capitolo da
+un'interruzione di pagina. Ovviamente con \Cmd{chapter*} non c'\`e,
+questo rischio, anche mettendo il comando di marca dopo il titolo del
+capitolo, poich\'e il comando \Cmd{chapter*} comincia su una nuova
+pagina. Tuttavia con \Cmd{section*} potrebbe essere pericoloso dare:
+
+\begin{verbatim}
+\section*{Prefazione}
+\markboth{Prefazione}{}
+\end{verbatim}
+poich\'e potrebbe verificarsi un'interruzione di pagina tra i due
+comandi.
+
+\section{Intestazioni stile dizionario}
+
+\index{dizionario}
+%\index{concordance}
+I dizionari hanno, solitamente, un'intestazione
+contenente la prima (oppure la prima e l'ultima) voce definita nella
+pagina. Questo pu\`o essere facilmente realizzato utilizzando
+\textsf{fancyhdr} e il meccanismo delle marche di \latex/. Ovviamente,
+se si usano le marche per ottenere delle intestazioni stile
+dizionario, non le si pu\`o usare per le informazioni relative al
+capitolo e alla sezione. Perci\`o, qualora nel documento siano
+presenti anche capitoli e sezioni, bisogna ridefinire \Cmd{chaptermark} e
+\Cmd{sectionmark} al fine di renderli innocui.
+
+\begin{verbatim}
+\renewcommand{\chaptermark}[1]{}
+\renewcommand{\sectionmark}[1]{}
+\end{verbatim}
+
+Basta ora invocare un comando \Cmd{markboth\{\#1\}\{\#1\}} per ogni
+voce \verb|#1| del dizionario e usare \Cmd{rightmark} per la prima
+voce definita nella pagina e \Cmd{leftmark} per l'ultima.
+
+Se si vuole avere un'intestazione del tipo \textsf{prima voce--ultima
+voce} sarebbe bene che questa assuma semplicemente la forma
+\textsf{prima voce} se le due voci coincidono, cosa che pu\`o accadere
+quando una sola voce occupa tutta la pagina. In questo caso si dovrebbe
+compiere una verifica per controllare se le due marche sono
+identiche, tuttavia le marche di \tex/ sono brutte bestie e non
+possono essere messe a confronto con i comandi \Cmd{if} del plain
+\tex/.
+\SFindex{ifthen}
+Fortunatamente, il pacchetto \textsf{ifthen} funziona bene:
+
+\begin{verbatim}
+\newcommand{\mymarks}{
+  \ifthenelse{\equal{\leftmark}{\rightmark}}
+    {\rightmark} % se uguali
+    {\rightmark--\leftmark}} % se non uguali
+\fancyhead[LE,RO]{\mymarks}
+\fancyhead[LO,RE]{\thepage}
+\end{verbatim}
+
+I dizionari sono spesso impostati su due colonne. Sfortunatamente
+c'\`e un bug nell'opzione twocolumn di \latex/ che provoca la perdita
+di alcune marche. Si pu\`o risolvere questo problema usando il
+pacchetto illustrato nella figura~\ref{fig:fixmarks}\footnote{Si
+tratta, in realt\`a, di una semplificazione del codice del pacchetto
+vero e proprio, il quale pu\`o essere scaricato da un sito del
+CTAN. Il pacchetto \textsf{multicol} usa una tecnica simile.}.
+
+\begin{figure}[tb]
+\small
+\TTindex{fixmarks.sty}
+\begin{verbatim}
+% fixmarks.sty:
+% Patch LaTeX's output routine to handle marks correctly with two columns.
+% Joe Pallas <pallas@edu.stanford.neon>
+% Corrected by Piet van Oostrum <piet@cs.ruu.nl> on Feb 5, 1993, Oct 5, 1994
+
+\def\@outputdblcol{\if@firstcolumn \global\@firstcolumnfalse
+% Remember the marks from the first column
+    \global\setbox\@leftcolumn\copy\@outputbox
+    \splitmaxdepth=\maxdimen \cbaddness=10000
+    \setbox\@outputbox\vsplit\@outputbox to\maxdimen
+    \xdef\@firstcoltopmark{\topmark}%
+    \xdef\@firstcolfirstmark{\splitfirstmark}%
+    \ifx\@firstcolfirstmark\empty\global\let\@setmarks\relax\else
+      \gdef\@setmarks{\let\firstmark\@firstcolfirstmark
+        \let\topmark\@firstcoltopmark}%
+    \fi
+% End of change
+  \else \global\@firstcolumntrue
+    \setbox\@outputbox\vbox{\hbox to\textwidth{\hbox to\columnwidth
+      {\box\@leftcolumn \hss}\hfil \vrule width\columnseprule\hfil
+       \hbox to\columnwidth{\box\@outputbox \hss}}}\@combinedblfloats
+% Override current first and top with those of first column if necessary
+       \@setmarks
+% End of change
+       \@outputpage \begingroup \@dblfloatplacement \@startdblcolumn
+       \@whilesw\if@fcolmade \fi{\@outputpage\@startdblcolumn}\endgroup
+    \fi}
+\end{verbatim}
+
+  \caption{Correzione del comportamento delle marche nello stile a due colonne.}
+  \label{fig:fixmarks}
+\end{figure}
+
+\section{Layout fantasiosi}
+
+\index{linee multiple}
+Si pu\`o creare un campo multilinea con il comando \Cmd{\bs}. \`E
+anche possibile mettere dello spazio aggiuntivo in un campo con il
+comando \Cmd{vspace}. Si noti che, se si fa questo, si dovr\`a
+probabilmente aumentare l'altezza dell'intestazione
+\CmdIndex{headheight}
+\CmdIndex{footskip}
+(\Cmd{headheight}) e/o del pi\`e di pagina (\Cmd{footskip}),
+\index{Overfull \verb+\vbox+ \ldots}
+altrimenti si potrebbero ottenere dei messaggi di errore \texttt{``Overfull
+\Cmd{vbox} \ldots has occurred while \Cmd{output} is active''}%
+\footnote{Probabilmete questo accorgimento sar\`a necessario anche se
+si usa \texttt{11pt} o \texttt{12pt}, perch\'e i valori predefiniti di
+\latex/ sono abbastanza piccoli.}.  Si veda la sezione 4.1 del \latex/
+\emph{Companion} per i dettagli.
+
+Per esempio, il codice seguente metter\`a su due righe, nell'angolo in
+alto a destra, il titolo della sezione e della sottosezione di un
+articolo:
+
+\begin{verbatim}
+\documentclass{article}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\addtolength{\headheight}{\baselineskip}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+\renewcommand{\subsectionmark}[1]{\markright{#1}}
+\rhead{\leftmark\\\rightmark}
+\end{verbatim}
+
+Si possono anche personalizzare le lineee decorative, rendendole molto
+sottili con
+
+\CmdIndex{headrulewidth}
+\begin{verbatim}
+\renewcommand{\headrulewidth}{0.6pt}
+\end{verbatim}
+oppure si possono far scomparire le linee decorative nell'intestazione
+e nel pi\`e di pagina con
+\CmdIndex{footrulewidth}
+\begin{verbatim}
+\renewcommand{\footrulewidth}{0pt}
+\end{verbatim}
+
+Le linee decorative sono definite nelle due macro \Cmd{headrule} e
+\Cmd{footrule}. Per esempio, se nell'intestazione si vuole una linea
+punteggiata anzich\'e intera, si pu\`o ridefinire il comando
+\Cmd{headrule}:
+
+\begin{verbatim}
+\renewcommand{\headrule}{\vbox to 0pt{\hbox
+    to\headwidth{\dotfill}\vss}}
+\end{verbatim}
+
+\CmdIndex{footruleskip}
+Si pu\`o inoltre impostare un parametro addizionale \Cmd{footruleskip}
+che definisce la distanza tra la linea decorativa e la parte superiore
+della riga di testo del pi\`e di pagina. L'impostazione predefinita
+\`e pari al 30\% della normale distanza tra le righe. Se nel pi\`e di
+pagina si usano dei font particolarmente grandi o particolarmente
+piccoli, potrebbe essere opportuno ridimensionarla con
+\Cmd{renewcommand}.
+
+\section{Due esempi di libri}
+Le definizioni seguenti forniscono approssimativamente lo stile usato nel
+libro di \latex/ di L.~Lamport.
+
+L'intestazione di Lamport sporge sul margine, vediamo come si ottiene questo
+effetto.
+
+L'ampiezza dell'intestazione e del pi\`e di pagina \`e \Cmd{headwidth},
+il cui valore predefinito \`e pari alla larghezza del testo
+(\Cmd{textwidth}). Si pu\`o allargare o stringere questa misura ridefinendo
+\Cmd{headwidth} con i comandi \Cmd{setlength} e \Cmd{addtolength}.
+Per far sporgere l'intestazione sull'area dove vengono stampate le note
+al margine,
+\CmdIndex{marginparsep}
+\CmdIndex{marginparwidth}
+si aggiunga \Cmd{marginparsep} e \Cmd{marginparwidth} a
+\Cmd{headwidth} con i comandi:
+
+\begin{verbatim}
+\addtolength{\headwidth}{\marginparsep}
+\addtolength{\headwidth}{\marginparwidth}
+\end{verbatim}
+
+\begin{flushleft}
+Bisogna inserire questi comandi \emph{dopo} il primo comando
+\Cmd{pagestyle\{fancy\}}, perch\'e quest'ultimo ripristiner\`a il valore
+predefinito di \Cmd{headwidth}\footnote{Nella versione 2 di
+ \textsf{fancyhdr}, generalmente, funziona anche se li si mette prima,
+ ma si consiglia comunque di metterli dopo.}.
+\end{flushleft}
+
+Ed ora una definizione completa dello stile del libro di Lamport:
+
+\begin{verbatim}
+\documentclass{book}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\addtolength{\headwidth}{\marginparsep}
+\addtolength{\headwidth}{\marginparwidth}
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}}
+\fancyhf{}
+\fancyhead[LE,RO]{\bfseries\thepage}
+\fancyhead[LO]{\bfseries\rightmark}
+\fancyhead[RE]{\bfseries\leftmark}
+\fancypagestyle{plain}{%
+   \fancyhead{} % leva l'intestazione
+   \renewcommand{\headrulewidth}{0pt} % e la linea
+}
+\end{verbatim}
+\PSindex{plain}
+
+Si noti che i comandi \Cmd{chaptermark} e \Cmd{sectionmark} sono stati
+ridefiniti per eliminare i numeri di capitolo e le maiuscole.
+
+Come secondo esempio, consideriamo il libro di \amslatex/.% \cite{gG93B}.
+% George Gratzer, Math into LaTeX, An Introduction to LaTeX and AMS-LaTeX,
+% Birkhauser Boston, ISBN 0-8176-3805-9
+
+Le pagine in cui iniziano i capitoli sono prive di intestazione e pi\`e
+di pagina. Si dichiari perci\`o
+\begin{verbatim}
+\thispagestyle{empty}
+\end{verbatim}
+per ogni pagina di questo tipo, cos\`{\i} non c'e' bisogno di ridefinire
+\texttt{plain}.
+
+I titoli dei capitoli e delle sezioni appaiono nella forma:
+\mbox{2.\ TUTTO E SUBITO}, quindi bisogna ridefinire \Cmd{chaptermark}
+e \Cmd{sectionmark} come segue (si veda la sezione~\ref{sec:custom}):
+
+\begin{verbatim}
+\renewcommand{\chaptermark}[1]%
+   {\markboth{\MakeUppercase{\thechapter.\ #1}}{}}
+\renewcommand{\sectionmark}[1]%
+   {\markright{\MakeUppercase{\thesection.\ #1}}}
+\end{verbatim}
+
+In un'intestazione ``pari'', il numero di pagina viene stampato
+nell'intestazione a sinistra, e le informazioni relative al capitolo
+nell'intestazione a destra; in un'intestazione ``dispari'', le
+informazioni relative alla sezione sono stampate nell'intestazione a
+sinistra e il numero di pagina nell'intestazione a destra. Le parti
+centrali delle intestazioni sono vuote.  Non ci sono pi\`e di pagina.
+
+C'\`e una linea decorativa nell'intestazione. \`E alta \texttt{0.5pt},
+quindi bisogna inserire i comandi:
+
+\begin{verbatim}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0pt}
+\end{verbatim}
+
+Il font usato nell'intestazione \`e lo Helvetica, grassetto, 9 pt.
+Il sistema \PSNFSS\ ideato da Sebastian Rahtz usa il nome abbreviato
+(Karl Berry) \verb|phv| per indicare Helvetica, quindi questo font
+\`e selezionato con i comandi:
+\begin{verbatim}
+\fontfamily{phv}\fontseries{b}\fontsize{9}{11}\selectfont
+\end{verbatim}
+(Si vedano le sezioni~7.6.1 e~11.9.1 del \emph{\latex/ Companion}.)
+Definiamo una scorciatoia per questa selezione:
+\begin{verbatim}
+\newcommand{\helv}{%
+   \fontfamily{phv}\fontseries{b}\fontsize{9}{11}\selectfont}
+\end{verbatim}
+
+Ora tutto \`e pronto per l'intero layout:
+
+\begin{verbatim}
+\documentclass{book}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\renewcommand{\chaptermark}[1]%
+   {\markboth{\MakeUppercase{\thechapter.\ #1}}{}}
+\renewcommand{\sectionmark}[1]%
+   {\markright{\MakeUppercase{\thesection.\ #1}}}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0pt}
+\newcommand{\helv}{%
+   \fontfamily{phv}\fontseries{b}\fontsize{9}{11}\selectfont}
+\fancyhf{}
+\fancyhead[LE,RO]{\helv \thepage}
+\fancyhead[LO]{\helv \rightmark}
+\fancyhead[RE]{\helv \leftmark}
+\end{verbatim}
+
+
+\section{Layout di pagina speciale per le pagine di soli oggetti flottanti}
+\label{sec:float}
+
+\EMindex{float page}
+Alcuni preferiscono conferire un aspetto particolare alle pagine che raccolgono
+solo oggetti flottanti (\emph{float pages}). Dato che queste pagine sono generate
+automaticamente da \latex/, l'utente non ha alcun controllo su di esse.
+Non esiste un comando \Cmd{thispagestyle} per le pagine di soli oggetti flottanti,
+e qualsiasi cambiamento di stile influenzer\`a almeno anche la pagina che le precede.
+Con \textsf{fancyhdr}, comunque, nei campi dell'intestazione e del pi\`e di pagina,
+si pu\`o specificare 
+
+\Cmd{iffloatpage\{}testo per pagine di oggetti flottanti\verb|}{|testo per le altre pagine\verb|}|
+
+Si pu\`o usare questo sistema anche per sbarazzarsi della linea decorativa,
+basta definire:
+
+\begin{verbatim}
+\renewcommand{\headrulewidth}{\iffloatpage{0pt}{0.4pt}}
+\end{verbatim}
+
+Se si desidera cambiare il layout anche per pagine che contengono
+un oggetto flottante in cima o in fondo alla pagina, \textsf{fancyhdr} fornisce
+i comandi \Cmd{iftopfloat} e  \Cmd{ifbotfloat}, simili a \Cmd{iffloatpage}.
+
+Nota: le marche negli oggetti flottanti non saranno visibili nella routine
+di output di \latex/, perci\`o \`e inutile mettercele. Attualmente non \`e
+possibile far s\`{\i} che un oggetto flottante (ad esempio una didascalia di una
+figura) influenzi l'intestazione o il pi\`e di pagina.
+
+
+\section{Quelle pagine vuote\ldots}
+\label{sec:blank}
+
+Nella classe \texttt{book}, quando non si fornisce l'opzione
+\texttt{openany}, o nella classe \texttt{report}, quando si fornisce
+l'opzione \texttt{openright}, i capitoli iniziano nelle pagine
+dispari, causando nella met\`a dei casi l'inserimento di una pagina
+vuota.  Alcuni preferiscono che queste pagine siano completamente
+vuote, cio\`e senza intestazione e pi\`e di pagina. Questo non si
+pu\`o ottenere con \Cmd{thispagestyle}, in quanto sarebbe necessario
+invocare questo comando nella pagina \emph{precedente}. Non \`e
+necessaria alcuna magia per ottenere questo effetto, comunque:
+
+\PSindex{empty}
+\CmdIndex{clearpage}
+\CmdIndex{cleardoublepage}
+\begin{verbatim}
+\clearpage{\pagestyle{empty}\cleardoublepage}
+\end{verbatim}
+
+Dal momento che il comando \Cmd{pagestyle\{empty\}} \`e contenuto in un
+gruppo, ha effetto solo sulla pagina che potrebbe essere generata da
+\Cmd{cleardoublepage}. Si pu\`o ovviamente definire tutto ci\`o in un comando
+``privato''. Se si vuole che questo sia fatto automaticamente all'inizio di
+ogni capitolo o quando si vuole che compaia del testo in quelle pagine, 
+allora bisogna ridefinire il comando \Cmd{cleardoublepage}.
+\index{pagine vuote}
+\begin{verbatim}
+\makeatletter
+\def\cleardoublepage{\clearpage\if@twoside \ifodd\c@page\else
+  \hbox{}
+  \vspace*{\fill}
+  \begin{center}
+    Questa pagina contiene intenzionalmente solo questa frase.
+  \end{center}
+  \vspace{\fill}
+  \thispagestyle{empty}
+  \newpage
+  \if@twocolumn\hbox{}\newpage\fi\fi\fi}
+\makeatother
+\end{verbatim}
+
+\section{Numeri di pagina nella forma ``\textsf{m} di \textsf{n}''}
+\label{sec:nofm}
+
+Alcuni autori adottano una nuerazione delle pagine nella forma ``\textsf{m} di
+\textsf{n}'', dove \textsf{m} \`e il numero di pagine nel documento.
+\`E 
+\TTindex{nofm.sty}
+disponibile un pacchetto chiamato \texttt{nofm.sty}, ma alcune versioni
+sono difettose, e perlopi\`u non funzionano con \textsf{fancyhdr} perch\'e
+prendono il controllo dell'intero
+\TTindex{lastpage.sty}
+layout di pagina. C'\`e un pacchetto per \LaTeXe{} chiamato
+\textsf{lastpage}, che pu\`o essere usato con \textsf{fancyhdr} come
+segue:
+
+\begin{verbatim}
+\usepackage{lastpage}
+...
+\cfoot{\thepage\ di \pageref{LastPage}}
+\end{verbatim}
+
+Se si utilizza il vecchio \latex/2.09 e non si pu\`o passare a \LaTeXe{},
+bisogna usarne una versione compatibile con \latex/2.09,
+\texttt{lastpage209.sty}, che \`e definita di seguito:
+
+\begin{verbatim}
+\let\origenddocument=\enddocument
+\def\enddocument{\clearpage\if@filesw
+  {\addtocounter{page}{-1} \immediate\write\@mainaux
+    {\string\newlabel{LastPage}{{}{\thepage}}}}\origenddocument}
+\end{verbatim}
+
+Il valore dell'etichetta \texttt{LastPage} pu\`o essere usato per
+ottenere intestazioni o pi\`e di pagina differenti per l'ultima pagina
+del documento. Ad esempio, se si vuole che il pi\`e di pagina in ogni pagina
+dispari, eccetto l'ultima, contenga il testo ``voltare pagina, prego'',
+lo si pu\`o fare in questo modo\footnote{Per questo \`e necessaria una versione
+  ragionevolmente recente del pacchetto \textsf{ifthen}.}:
+
+\begin{verbatim}
+\usepackage{lastpage}
+\usepackage{ifthen}
+...
+\rfoot{\ifthenelse{\isodd{\value{page}} \and \not
+    \value{page}=\pageref{LastPage}{voltare pagina, prego}{}}
+\end{verbatim}
+
+\section{Numeri di pagina legati ai capitoli o alle sezioni}
+
+Nella documentazione tecnica molto spesso le pagine sono numerate nella
+forma ``2-10'', dove il primo numero \`e il numero del capitolo e il secondo
+\`e il numero di pagina relativo al capitolo. A volte si usa il numero di
+sezione al posto di quello del capitolo. Il pacchetto \textsf{chappg}
+pu\`o essere usato per ottenere questo effetto. Se si desidera cambiare
+il layout, ad esempio per usare un punto invece di un trattino,
+o le sezioni invece dei capitoli, bisogna fare una copia del pacchetto e
+modificarla.
+
+Esso ridefinisce \Cmd{thepage} cos\`{\i}:
+\Cmd{arabic\{chapter\}-}\Cmd{arabic\{page\}}.
+Sfortunatamente questo fornisce numeri, e non lettere, per le appendici.
+Una definizione migliore potrebbe essere
+\Cmd{thechapter-}\Cmd{arabic\{page\}}, ma si pu\`o comunque dare questa
+definizione dopo il comando \Cmd{usepackage\{chappg\}}.
+Il pacchetto, inoltre, riporta il numero di pagina a 1 all'inizio di ogni
+capitolo.
+
+C'\`e una differenza fondamentale tra la numerazione del tipo
+``\textsf{m} di \textsf{n}'' descritta nella sezione precedente e quella appena
+esposta. Lo stile ``\textsf{m} di \textsf{n}'' si usa solo nell'intestazione o
+nel pi\`e di pagina, ma non nell'indice, nell'indice analitico, o nei
+riferimenti, come ``Vedi pagina \textsf{m}''.
+Perci\`o il comando \Cmd{thepage} non viene alterato. Lo stile di numerazione
+``2-10'', invece, va utilizzato in tutti i riferimenti al numero di pagina,
+quindi il comando \Cmd{thepage} va ridefinito. 
+
+
+\section{Quando cambiare intestazione e pi\`e di pagina?}
+\label{sec:change}
+
+A volte si vuole cambiare il layout dell'intestazione e del
+pi\`e di pagina all'interno del documento. Alcuni di questi cambiamenti
+possono essere realizzati usando il meccanismo delle marche come si \`e visto
+nelle sezioni~\ref{sec:custom} e \ref{sec:xmarks}.
+Comunque, in alcuni casi sono necessari cambiamenti pi\`u drastici,
+ad esempio cambiare la numerazione della pagina da romana ad araba
+(con \Cmd{pagenumbering}), cambiare uno dei campi
+\index{stile di pagina!cambiamenti}
+di \textsf{fancyhdr} o impostare un altro stile di pagina.
+A volte si potrebbe rimanere sorpresi del fatto che i cambiamenti hanno
+effetto troppo presto. Generalmente i cambiamenti summenzionati hanno effetto
+immediato, cio\`e nella pagina che il sistema sta analizzando attualmente.
+Se l'intenzione \`e quella di attuare i cambiamenti nella pagina
+successiva bisogna assicurarsi che la pagina corrente sia finita. Nella
+\CmdIndex{clearpage}
+maggior parte dei casi, questo pu\`o essere ottenuto utilizzando il comando
+\Cmd{clearpage} prima di questi cambiamenti. Se questo non \`e possibile,
+si pu\`o usare il pacchetto
+\TTindex{afterpage.sty}
+\textsf{afterpage} cos\`{\i}:\\
+\Cmd{afterpage\{}\Cmd{lhead\{nuovo valore\}\}} oppure
+\CmdIndex{pagenumbering}
+\Cmd{afterpage\{}\Cmd{pagenumbering\{roman\}}. Non si pu\`o usare
+\Cmd{afterpage} per cambiare il \Cmd{pagestyle}, in quanto i comandi
+invocati da \Cmd{afterpage} sono locali al gruppo, e il comando
+\Cmd{pagestyle} effettua solo cambiamenti locali. Il comando
+\Cmd{pagenumbering} e i comandi del pacchetto \textsf{fancyhdr}
+effettuano cambiamenti globali, e perci\`o funzioneranno, cos\`{\i} come
+il comando \Cmd{thispagestyle}. 
+
+Si noti che, sebbene i comandi di \textsf{fancyhdr}, come \Cmd{fancyhead},
+abbiano effetto immediato, questo non significa che qualsiasi 
+``variabile'' usata all'interno di questi comandi prenda il valore
+che ha nel punto in cui \`e stata invocata. Ad esempio, se si scrive
+\Cmd{fancyfoot[C]\{}\Cmd{thepage\}}, il numero di pagina che sar\`a
+inserito nel pi\`e di pagina non \`e il numero della pagina dove questo
+comando viene invocato, ma piuttosto il numero della pagina dove
+effettivamente il pi\`e di pagina viene costruito. Naturalmente per
+il numero di pagina questo \`e ci\`o che ci si aspetta, ma questo \`e
+anche vero per altri comandi.
+
+Perci\`o, se in un libro ogni capitolo \`e stato scritto da un autore
+diverso, e si vuole che il suo nome appaia nell'angolo in basso a sinistra,
+si possono usare i seguanti comandi:
+
+\begin{verbatim}
+\newcommand{\TheAuthor}{}
+\newcommand{\Author}[1]{\renewcommand{\TheAuthor}{#1}}
+\lfoot{\TheAuthor}
+\end{verbatim}
+
+\noindent e cominciare ogni capitolo con
+\Cmd{Author\{Nome Cognome\}}.
+Se, comunque, il nome dell'autore cambiasse prima del completamento
+di una pagina, nel pi\`e di pagina comparirebbe il nome sbagliato.
+Questo succede se si invoca il comando \emph{prima} del comando
+\Cmd{chapter}, invece che dopo. 
+Un'altra fonte di problemi \`e il fatto che la routine di output di \tex/
+elabora i comandi in anticipo, quindi potrebbe aver gi\`a elaborato 
+qualche comando che produce testo che appare nella pagina successiva.
+Nella prossima sezione viene fornito un esempio.
+
+\section{Intestazioni e pi\`e di pagina indotti dal testo}
+\label{sec:xmarks}
+
+Si \`e visto come si possono usare le marche di \LaTeX{} per
+visualizzare informazioni relative al contenuto del documento nelle
+intestazioni e nei pi\`e di pagina. Quello delle marche \`e
+l'unico meccanismo affidabile che si pu\`o usare per ottenere informazioni
+dinamiche in queste parti di pagina. Questo \`e perch\'e \latex/ potrebbe
+impaginare il documento prima di decidere di interrompere la pagina. 
+
+A volte le due marcature che \latex/ offre non sono sufficienti. Ad esempio:
+\begin{quote}
+ Se la soluzione di un esercizio supera la lunghezza della pagina, si
+ desidera avere ``Segue nella pagina successiva\ldots\index{Segue\ldots}''
+ in fondo alla prima pagina e ``Seguito\ldots'' nel margine superiore della
+ pagina successiva.
+\end{quote}
+
+Non si pu\`o usare il meccanismo di marcatura di \latex/ in questo caso,
+se si vogliono anche usare informazioni relative a capitoli e sezioni.
+
+Il codice della figura~\ref{fig:xmarks} costituisce un pacchetto che fornisce
+altre due marche che possono essere utilizzate in queste situazioni%
+\footnote{Dopo aver realizzato questo pacchetto ho scoperto il paccheto
+  \texttt{secret.sty}, che fa una cosa simile, marcando paragrafi
+  confidenziali se attraversano un'interruzione di pagina. Lo fa, comunque,
+  cambiando la routine di output.}.
+\begin{figure}[tb]\small
+\CmdIndex{extramarks}
+\begin{verbatim}
+% extramarks.sty
+\def\@leftmark#1#2#3#4{#1}
+\def\@rightmark#1#2#3#4{#2}
+
+\def\markboth#1#2{{\def\protect{\noexpand\protect\noexpand}
+     \let\label\relax \let\index\relax \let\glossary\relax
+     \expandafter\@markboth\@themark{#1}{#2}
+     \mark{\@themark}}\if@nobreak\ifvmode\nobreak\fi\fi}
+\def\markright#1{{\def\protect{\noexpand\protect\noexpand}
+     \let\label\relax \let\index\relax \let\glossary\relax
+     \expandafter\@markright\@themark
+     {#1}\mark{\@themark}}\if@nobreak\ifvmode\nobreak\fi\fi}
+\def\@markright#1#2#3#4#5{\gdef\@themark{{#1}{#5}{#3}{#4}}}
+\def\@markboth#1#2#3#4#5#6{\gdef\@themark{{#5}{#6}{#3}{#4}}}
+\def\leftmark{\expandafter\@leftmark\botmark{}{}{}{}}
+\def\rightmark{\expandafter\@rightmark\firstmark{}{}{}{}}
+\def\firstleftmark{\expandafter\@leftmark\firstmark{}{}{}{}}
+\def\lastrightmark{\expandafter\@rightmark\botmark{}{}{}{}}
+
+\def\@themark{{}{}{}{}}
+
+\def\extramarks#1#2{{\def\protect{\noexpand\protect\noexpand}
+     \let\label\relax \let\index\relax \let\glossary\relax
+     \expandafter\@markextra\@themark{#1}{#2}
+     \mark{\@themark}}\if@nobreak\ifvmode\nobreak\fi\fi}
+\def\@markextra#1#2#3#4#5#6{\gdef\@themark{{#1}{#2}{#5}{#6}}}
+\def\firstxmark{\expandafter\@firstxmark\firstmark{}{}{}{}}
+\def\topxmark{\expandafter\@firstxmark\topmark{}{}{}{}}
+\def\lastxmark{\expandafter\@lastxmark\botmark{}{}{}{}}
+\def\@firstxmark#1#2#3#4{#3}
+\def\@lastxmark#1#2#3#4{#4}
+\end{verbatim}
+  \caption{Pacchetto per marche aggiuntive in \latex/.}
+  \label{fig:xmarks}
+\end{figure}
+Ecco un modo di usare questo pacchetto:
+
+\begin{verbatim}
+\usepackage{extramarks}
+...
+\pagestyle{fancy}
+\lhead{\firstxmark}
+\rfoot{\lastxmark}
+...
+\extramarks{}{Segue nella pagina successiva\ldots}
+Il testo pu\`o attraversare l'interruzione di pagina oppure no\ldots
+\extramarks{Seguito\ldots}{}
+\end{verbatim}
+
+\CmdIndex{extramarks}
+Si noti che i comandi \Cmd{extramarks} devono trovarsi attaccati al testo,
+ovvero senza linee vuote in mezzo, altrimenti la pagina potrebbe spezzarsi
+proprio l\`{\i}, e le ``\emph{extramarks}'' apparirebbero nella pagina sbagliata.
+
+Ci sono due nuove marche che possono essere usate nel layout della
+pagina con questo pacchetto. Se si invocano i comandi nella forma
+\verb|\extramarks{|$m_1$\verb|}{|$m_2$\verb|}|
+\CmdIndex{firstxmark}
+\CmdIndex{lastxmark}
+\Cmd{firstxmark} fornisce il primo valore di $m_1$ e
+\Cmd{lastxmark} fornisce l'ultimo valore di $m_2$
+nella pagina corrente.
+\CmdIndex{firstleftmark}
+\CmdIndex{lastrightmark}
+Il pacchetto fornisce inoltre i comandi \Cmd{firstleftmark}
+e \Cmd{lastrightmark}, che complementano le marche standard di \latex/.
+
+Per sottolineare il fatto che usare le marche \`e il modo corretto di
+procedere, si vuole esporre una ``soluzione'' che non
+funziona\footnote{In effetti c'\`e un altro modo, ma richiede due passate
+  di \latex/: si possono mettere comandi \Cmd{label}
+  prima e dopo il testo e confrontare le \Cmd{pageref}.}:
+
+\begin{verbatim}
+\lhead{Seguito\ldots}
+\rfoot{Segue nella pagina successiva\ldots}
+Il testo pu\`o attraversare l'interruzione di pagina oppure no\ldots
+\lhead{}
+\rfoot{}
+\end{verbatim}
+
+Si potrebbe essere tentati di pensare che i primi \Cmd{lhead} e \Cmd{rfoot}
+saranno attivi quando \tex/ interrompe la pagina nel mezzo del testo,
+e che gli ultimi lo saranno quando la pagina si interrompe dopo il testo.
+Questo non \`e vero, in quanto l'intero paragrafo (incluse le ultime
+definizioni) sar\`a processato
+\index{interruzione di pagina}
+prima che \tex/ consideri l'interruzione di pagina, perci\`o quando
+effettivamente avviene l'interruzione, le ultime definizioni sono attive,
+sia che l'interruzione di pagina capiti all'interno del testo che al di
+fuori di esso. Nemmeno mettere una interruzione di paragrafo
+tra il testo e le ultime definizioni funzioner\`a, perch\`e non si
+desidera che le prime definizioni siano attive quando \tex/ decide di
+interrompere la pagina esattamente in quel punto. A dire il vero, il
+meccanismo delle marche \`e stato inventato per sbarazzarsi di questo tipo
+di problemi.
+
+Nell'esempio precedente, ``Seguito\ldots'' compare nell'intestazione.
+Potrebbe
+\index{margine}
+essere preferibile metterlo al margine. Questo effetto pu\`o essere 
+raggiunto facilmente mettendolo in una posizione ben precisa rispetto
+all'intestazione.
+In plain \tex/ bisognerebbe usare un cumulo di \Cmd{hbox to 0pt},
+\Cmd{vbox to 0pt}, \Cmd{hskip},\Cmd{vskip}, \Cmd{hss} e
+\Cmd{vss}, ma fortunatamente l'ambiente \texttt{picture} di 
+\latex/ d\`a la possibilit\`a di farlo in un modo pi\`u pulito.
+Per non disturbare il normale layout dell'intestazione, si pu\`o
+mettere il testo in un ambiente \texttt{picture} di dimensione zero.
+Generalmente questo \`e il modo migliore di posizionare oggetti in punti
+fissi della pagina, dopodich\'e si possono usare anche le normali
+intestazioni.
+Si veda anche la sezione~\ref{sec:thumb} per un altro esempio di questa
+tecnica.
+
+\TTindex{picture}
+\begin{verbatim}
+\lhead{\setlength{\unitlength}{\baselineskip}%
+\begin{picture}(0,0)
+  \put(-2,-3){\makebox(0,0)[r]{\firstxmark}}
+  \end{picture}\leftmark}
+\end{verbatim}
+
+Questa soluzione, naturalmente, pu\`o essere usata per il pi\`e di pagina.
+Basta assicurarsi di mettere l'ambiente \texttt{picture} all'inizio per le
+voci sul lato sinistro e alla fine per quelle sul lato destro.
+
+Per finire si potrebbe voler mettere ``(Seguito\ldots)'' nel \emph{testo}
+piuttosto che nell'intestazione o nel margine. In quel caso bisogna usare
+il pacchetto \TTindex{afterpage.sty}
+\texttt{afterpage}. Si pu\`o anche decidere di avere un ambiente separato per
+questo.
+
+\begin{verbatim}
+\newenvironment{continued}{\par
+  \extramarks{}{Segue nella pagina successiva\ldots}
+  \afterpage{\noindent\firstxmark\vspace{1ex}}
+  }{\extramarks{(Seguito\ldots)}{}\par}
+\end{verbatim}
+
+\`E un po' pericoloso usare \Cmd{firstxmark} fuori dalla routine
+del layout di pagina, ma sembra che con \Cmd{afterpage} funzioni.
+Se si ha bisogno delle informazioni pi\`u avanti all'interno della
+pagina, bisogna registrare lo stato delle marche in una variabile opportuna.
+Questo pu\`o essere fatto in uno dei campi di \textsf{fancyhdr}. Per
+esempio, se si vuole aggiungere qualcosa \emph{dopo} il brano che \`e stato
+interrotto, si pu\`o fare cos\`{\i}:
+
+\begin{verbatim}
+\newcommand{\mysaved}{}
+
+\newenvironment{continued}{\par
+  \extramarks{}{Segue nella pagina successiva\ldots}
+  }{\extramarks{(Seguito\ldots)}{}\par\vspace{1ex}\mysaved}
+\lhead{\leftmark}
+\chead{\ifthenelse{\equal{\lastxmark}{}}
+  {\gdef\mysaved{}}
+  {\gdef\mysaved{\noindent[Segue dalla pagina precedente]}}}
+\end{verbatim}
+
+Se si vuole includere una marca o altre informazioni variabili nel testo
+salvato, bisogna usare \Cmd{xdef} invece di \Cmd{gdef}.
+
+
+\section{Animazioni}
+\label{sec:movie}
+
+\index{animazioni}
+\TTindex{picture}
+Se si stampa nello stesso punto di ogni pagina una figura che cambia di poco
+da una pagina all'altra, si pu\`o ottenere un effetto simile ad
+un'animazione scorrendo rapidamente le pagine. Con \textsf{fancyhdr} \`e
+facile farlo. Per semplicit\`a si assuma che ogni
+immagine sia un file PostScript (EPS) di nome
+\texttt{img}$\langle n\rangle$.\texttt{ps}, dove $\langle n\rangle$ \`e il
+numero di pagina, e si utilizzi il pacchetto \textsf{graphics} o
+\textsf{graphicx}\footnote{Se si usa una versione non aggiornata di
+  \LaTeX{} si pu\`o usare il pacchetto \textsf{epsf} o \textsf{epsfig}.}. 
+\SFindex{graphics}
+\SFindex{graphicx}
+\SFindex{epsf}
+\SFindex{epsfig}
+Per mettere l'animazione nell'angolo in basso a destra, si proceda in questo
+modo:
+
+\begin{verbatim}
+\rfoot{\setlength{\unitlength}{1mm}
+  \begin{picture}(0,0)
+    \put(5,0){\includegraphics{img\thepage.ps}}
+  \end{picture}}
+\end{verbatim}
+
+Si noti che il parametro \Cmd{unitlength} va modificato localmente
+nel campo di \textsf{fancyhdr} in modo da evitare interferenze 
+indesiderate con il suo valore all'interno del testo.
+
+\section{Indici stile rubrica}
+\label{sec:thumb}
+
+\index{bibbie}
+Alcune guide stradali e bibbie di lusso hanno il cosiddetto
+\EMindex{thumb-index}
+\emph{thumb-index}, cio\`e dei segni sul bordo delle pagine che
+indicano dove si trovano i capitoli. Si pu\`{o} ottenere questo effetto stampando
+riquadri neri sul margine delle pagine. La posizione verticale
+va determinata in base al numero del capitolo, o in base a qualche altro
+contatore. Dal momento che la posizione \`e indipendente dal contenuto
+della pagina, questi riquadri devono far parte dell'intestazione
+in una \texttt{picture} di dimensioni zero, come descritto nella precedente
+sezione.
+
+Naturalmente bisogna prestare attenzione alla stampa in fronte/retro,
+inoltre si potrebbe volere una pagina di indice con tutti i riquadri posizionati
+correttamente. Sono richieste un po' di regolazioni di fino per
+ottenere dei riquadri distanziati verticalmente.
+Nel documento che ho dovuto redigere c'erano 12 sezioni, perci\`o le ho
+posizionate a 18~mm l'una dall'altra, cio\`e riquadri larghi 9~mm separati
+da 9~mm di spazio. Per evitare calcoli le ho costruite in un ambiente
+\texttt{picture} con \Cmd{unitlength} uguale a 18~mm. Ho messo i numeri
+di pagina nei lati esterni dell'intestazione e ad essi ho collegato i
+riquadri. In questo esempio i numeri di sezione sono utilizzati per
+posizionare i riquadri, ma potete sostituirli con qualsiasi valore
+numerico. 
+Si rimanda alla figura~\ref{fig:overview} per la pagina di riepilogo e alla
+figura~\ref{fig:thumb} per il codice.
+
+\begin{figure}[htbp]
+\setlength{\unitlength}{9mm}
+\newcommand{\blob}{\rule[-.2\unitlength]{1\unitlength}{.5\unitlength}}
+\newcounter{line}
+\newcommand{\secname}[1]{\addtocounter{line}{1}%
+  \put(1,-\value{line}){\blob}
+  \put(-7.5,-\value{line}){\arabic{line}}
+  \put(-7,-\value{line}){#1}}
+
+\newcommand{\overview}{1
+  \begin{picture}(0,0)
+    \secname{Introduzione}
+    \secname{Il primo anno}
+    \secname{Specializzazione}
+  \end{picture}}
+ 
+  \begin{center}
+    \leavevmode
+    \begin{picture}(11.3,5)
+      \put(0,0){\framebox(11.3,5)[tr]{}}
+      \put(9,4.5){\overview}
+    \end{picture}
+  \end{center}
+  \caption{Pagina di riepilogo del \emph{thumb-index}.}
+  \label{fig:overview}
+\end{figure}
+\begin{figure}[hp]\small
+\begin{verbatim}
+\setlength{\unitlength}{18mm}
+\newcommand{\blob}{\rule[-.2\unitlength]{2\unitlength}{.5\unitlength}}
+
+\newcommand\rblob{\thepage
+  \begin{picture}(0,0)
+    \put(1,-\value{section}){\blob}
+  \end{picture}}
+
+\newcommand\lblob{%
+  \begin{picture}(0,0)
+    \put(-3,-\value{section}){\blob}
+  \end{picture}%
+  \thepage}
+
+\pagestyle{fancy}
+\cfoot{}
+
+\newcounter{line}
+\newcommand{\secname}[1]{\addtocounter{line}{1}%
+  \put(1,-\value{line}){\blob}
+  \put(-7.5,-\value{line}){\Large \arabic{line}}
+  \put(-7,-\value{line}){\Large #1}}
+
+\newcommand{\overview}{\thepage
+  \begin{picture}(0,0)
+    \secname{Introduzione}
+    \secname{Il primo anno}
+    \secname{Specializzazione}
+...etc...
+  \end{picture}}
+
+\begin{document}
+\fancyhead[R]{\overview}\mbox{}\newpage % Questo produce la pagina di riepilogo
+\fancyhead[R]{} % Qui si puo' mettere altro "front matter"
+\clearpage
+\fancyhead[RE]{\rightmark}
+\fancyhead[RO]{\rblob}
+\fancyhead[LE]{\lblob}
+\fancyhead[LO]{{\leftmark}
+...
+\end{verbatim}
+  \caption{Codice per il \emph{thumb-index}.}
+  \label{fig:thumb}
+\end{figure}
+
+\section{Posizionamento degli oggetti flottanti}
+
+Gli oggetti flottanti sono elementi della pagina che ``fluttuano''
+rispetto al resto del documento. Gli oggetti flottanti standard 
+sono le tabelle e le figure, ma con il pachetto \textsf{float} se ne
+possono facilmente creare di nuovi, come gli algoritmi. Perlopi\`u
+questi oggetti funzionano in modo soddisfacente, ma a volte \LaTeX{}
+sembra intestardirsi e non fa quello che gli si chiede. Questa sezione
+descrive come si pu\`o influenzare \LaTeX{} in modo che faccia come
+gli si dice. Ci potrebbero essere, comunque, alcuni casi patologici
+in cui \`e impossibile convincere \LaTeX{} a comportarsi bene.
+Nel seguito si adopereranno le figure come esempio, ma tutto ci\`o
+pu\`o applicarsi anche ad altri oggetti flottanti.
+
+I problemi pi\`u frequenti con gli oggetti flottanti sono:
+\begin{enumerate}
+\item Si desidera un oggetto in una certa posizione nel testo, ma \LaTeX{}
+  lo sposta, solitamente nella pagina successiva.
+\item Da un certo punto in avanti, \LaTeX{} sposta tutti gli oggetti
+  flottanti alla fine del documento o alla fine del capitolo.
+\item \LaTeX{} si lamenta del fatto che ci sono troppi oggetti flottanti
+  (\texttt{Too many floats}).
+\end{enumerate}
+
+Nei primi due casi bisogna prima controllare se all'oggetto \`e stato
+fornito un corretto parametro di posizionamento (``placement''). Ad
+esempio, \Cmd{begin\{figure\}[htp]} specifica che la figura pu\`o essere
+posizionata: qui (``Here'') (cio\`e nel punto del testo dove viene
+invocato il comando), nella parte superiore (``Top'') di una pagina (che
+potrebbe essere la stessa pagina dove viene invocato il comando), oppure
+in una pagina (``Page'') separata di soli oggetti flottanti. Si pu\`o
+anche specificare \texttt{[b]} per la parte inferiore (``Bottom'') di una pagina.
+L'ordine delle lettere \`e irrilevante, non si pu\`o costringere \LaTeX{} a
+provare prima in fondo ad una pagina e poi in cima specificando \texttt{[bt]}.
+
+Se \LaTeX{} non mette gli oggetti flottanti dove ci si aspettava, la causa \`e
+solitamente una delle seguenti:
+\begin{enumerate}
+\item L'oggetto era troppo grande per quella pagina. In questo caso deve
+  essere spostato nella pagina successiva, o anche oltre. Se non si \`e
+  specificato \texttt{[t]} o \texttt{[b]} come parametro di posizionamento,
+  \latex/ deve tenerlo in memoria finch\'e ne ha abbastanza per una pagina di
+  soli oggetti flottanti. Per questo motivo, \`e meglio non specificare solo
+  \texttt{[h]}. Se si vuole dare a \latex/ la possibilit\`a di mettere
+  l'oggetto in una pagina di soli oggetti mobili, bisogna anche specificare
+  \texttt{[p]}.
+\item Il posizionamento violerebbe i vincoli imposti dai parametri di \latex/
+  riguardanti il posizionamento degli oggetti flottanti. Questa \`e una delle
+  cause pi\`u frequenti e pu\`o essere corretta facilmente cambiando i
+  parametri. Eccone un elenco:
+\end{enumerate}
+\begin{center}
+\CmdIndex{topfraction}
+\CmdIndex{bottomfraction}
+\CmdIndex{textfraction}
+\CmdIndex{floatpagefraction}
+\TTindex{topnumber}
+\TTindex{bottomnumber}
+\TTindex{totalnumber}
+  \begin{tabular}{>{\tt}l p{8cm} c}
+    \hline
+    \multicolumn{3}{c}{Contatori -- modificabili con \Cmd{setcounter}}\\
+    \hline
+    topnumber & Numero massimo di oggetti in cima alla pagina & 2 \\
+    bottomnumber & Numero massimo di oggetti in fondo alla pagina & 1 \\
+    totalnumber &  Numero massimo di oggetti su una pagina & 3\\
+    \hline
+    \multicolumn{3}{c}{Comandi -- modificabili con \Cmd{renewcommand}}\\
+    \hline
+    \bs topfraction & Massima frazione della parte superiore della pagina
+        allocabile ad oggetti flottanti & 0.7 \\
+    \bs bottomfraction & Massima frazione della parte inferiore della pagina
+        allocabile ad oggetti flottanti  & 0.3 \\
+    \bs textfraction & Minima frazione della pagina da allocare al testo
+        & 0.2 \\
+    \bs floatpagefraction & Minima frazione di una pagina di soli oggetti
+        flottanti da allocare ad essi & 0.5 \\ 
+    \hline
+  \end{tabular}
+\end{center}
+
+Possono essercene altri nel caso di oggetti flottanti larghi due colonne
+in documenti a due colonne.
+
+Nella colonna di destra sono rappresentati i valori predefiniti per le
+classi \latex/ standard. Altre classi potrebbero usare valori
+diversi. Come si pu\`o notare, con i valori predefiniti, un oggetto
+non pu\`o comparire in fondo ad una pagina se la sua altezza \`e maggiore
+del 30\% dell'altezza della pagina. Quindi se si specifica \texttt{[hb]} per
+un oggetto che \`e pi\`u alto di questa misura, verr\`a spostato in una
+pagina di soli oggetti flottanti. Tuttavia, se \`e alto meno del 50\%
+dell'altezza della pagina, dovr\`a aspettare finch\'e qualche altro oggetto
+viene inserito, prima che una pagina di questo tipo possa essere riempita in
+modo da soddisfare il parametro \Cmd{floatpagefraction}. Se ci si imbatte in
+comportamenti di questo tipo, si possono facilmente aggiustare i parametri,
+ad esempio:
+\begin{verbatim}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\bottomfraction}{0.95}
+\renewcommand{\floatpagefraction}{0.35}
+\setcounter{totalnumber}{5}
+\end{verbatim}
+Bisogna stare attenti a non rendere \Cmd{floatpagefraction} troppo piccolo,
+altrimenti si otterranno tante piccole pagine di soli oggetti flottanti.
+
+Si pu\`o costringere \latex/ ad ignorare gran parte dei parametri per uno
+specifico oggetto includendo un punto esclamativo (\texttt{!}) tra i
+parametri di posizionamento, ad esempio
+\begin{verbatim}
+\begin{figure}[!htb]
+\end{verbatim}
+
+Oggetti flottanti che contengono \texttt{[t]} tra i parametri possono
+essere posizionati prima del punto in cui ne viene richiesto l'inserimento
+(ma sulla stessa pagina).
+Questo \`e il comportamento normale di \latex/, ma ad alcuni questo non piace.
+Ci sono diversi modi di impedirlo: 
+\begin{enumerate}
+\item Certamente cancellare \texttt{[t]} risolver\`a, ma generalmente
+  questo non \`e desiderabile, in quanto si potrebbe voler posizionare
+  l'oggetto in cima alla pagina successiva.
+\item Usare il pacchetto \textsf{flafter}, che fa in modo che gli oggetti
+  flottanti non siano mai posizionati ``prematuramente''.
+\item Usare il comando \Cmd{suppressfloats[t]}\footnote{Questo comando e
+  il parametro di posizionamento \texttt{[!]} non sono definiti in
+  \LaTeX2.09.}.  Questo comando far\`a in modo che gli oggeti flottanti
+  posizionati nella parte superiore \emph{di questa pagina} siano spostati
+  in quella successiva. Questo pu\`o essere fatto anche per il parametro
+  \texttt{[b]} o senza parametro per tutti gli oggetti di questa pagina.
+\end{enumerate}
+
+Se nonostante tutti questi tentativi \latex/ sposta ancora gli oggetti
+alla fine del documento o di un capitolo, si pu\`o usare un comando
+\Cmd{clearpage}. Esso comincer\`a una nuova pagina, e vi inserir\`a tutti gli
+oggetti flottanti in coda prima di continuare. Se non si desidera avere
+un'interruzione di pagina, si pu\`o usare il pacchetto \textsf{afterpage}
+e il seguente comando:
+\begin{verbatim}
+\afterpage{clearpage}
+\end{verbatim}
+
+In questo modo, \latex/ aspetter\`a fino alla fine della pagina corrente e
+poi scaricher\`a tutti gli oggetti flottanti in coda. In alcune circostanze
+patologiche, comunque, \texttt{afterpage} potrebbe fornire risultati inaspettati.
+
+Per finire, se si vuole un oggetto flottante solo dove \`e stato specificato,
+senza che \latex/ lo sposti da qualche altra parte, si pu\`o usare il pacchetto
+\textsf{float} e inserire il comando:
+\begin{verbatim}
+\restylefloat{figure}
+\end{verbatim}
+nel preambolo. Si pu\`o ora specificare \texttt{[H]} come parametro di
+posizionamento, che significa ``QUI e soltanto QUI''. Questo, comunque,
+potrebbe causare un'interruzione di pagina indesiderata\footnote{Esisteva
+uno stile \texttt{here.sty} con lo stesso effetto, ma questo \`e
+incompatibile con \LaTeXe}. Se la si vuole evitare, cio\`e lasciare che
+\LaTeX{} sposti l'oggetto solo se non ci sta sulla pagina, si usi il pacchetto
+\textsf{afterpage} e il seguente comando:
+\begin{verbatim}
+\afterpage{\clearpage \begin{figure}[H] \ldots \end{figure}}
+\end{verbatim}
+
+Il fatto che \latex/ si lamenti che ci sono troppi oggetti flottanti
+(\texttt{Too many floats}) \`e solitamente causato da uno dei problemi sopracitati:
+oggetti impossibili da sistemare e \latex/ che di conseguenza ne raccoglie
+troppi in coda. Le soluzioni fornite sopra, specialmente quelle contenenti
+\Cmd{clearpage}, di solito funzionano. In alcuni casi ci sono veramente
+troppi oggetti flottanti, in quanto \latex/ ha un numero limitato di
+``scatole'' in cui memorizzare gli oggetti flottanti. Il pacchetto
+\textsf{morefloats} pu\`o essere usato per aumentare questo numero. Se ancora
+non bastano, bisogna modificare una copia privata di questo file,
+ma ci potrebbe ancora essere qualche limite che non pu\`o essere oltrepassato.
+A questo punto l'unica cosa che rimane da fare \`e cambiare il documento.
+
+\section{Oggetti flottanti su pi\`u pagine}
+
+Gli oggetti flottanti di \LaTeX\ non possono essere spezzati su pi\`u pagine.
+Qualche volta, comunque, sorge la necessit\`a di disporre tabelle o
+figure che non stanno su una pagina. La soluzione pi\`u semplice \`e
+quella di suddividerle in pi\`u ambienti \texttt{table} o \texttt{figure},
+ma questo causa diversi effetti indesiderati:
+\begin{itemize}
+\item Dove si divide? Questo \`e generalmente pi\`u difficile per le tabelle
+  che per le figure.
+\item Come tenerle unite?
+\item Bisognerebbe avere una sola voce nell'elenco delle figure/tabelle.
+\end{itemize}
+
+Anche se questi problemi non sempre sono completamente risolvibili, ecco
+un paio di suggerimenti:
+
+
+\subsection{Tabelle}
+
+Per tabelle pi\`u lunghe di una pagina si pu\`o usare il pacchetto
+\textsf{longtable}.
+\SFindex{longtable}
+Questo pacchetto definisce un ambiente \texttt{longtable} che \`e una specie
+di fusione tra \texttt{table} e \texttt{tabular}. Ha approssimativamente
+la stessa sintassi dell'ambiente \texttt{tabular}, ma gli aggiunge alcune
+funzionalit\`a di \texttt{table}, come le didascalie. Le \texttt{longtable}
+saranno automaticamente spezzate quando non ci stanno su una pagina, e
+saranno immesse nell'elenco delle tabelle se si fornisce una didascalia.
+Esse non saranno flottanti, comunque, e non possono essere usate all'interno
+di un ambiente flottante. Questo potrebbe significare che un altro ambiente
+\texttt{table}, che \`e stato definito prima della \texttt{longtable}, verr\`a
+spostato pi\`u avanti, e quindi la numerazione potrebbe risultarne alterata.
+Inoltre, se la \texttt{longtable} comincia troppo in basso nella pagina,
+non \`e una vista piacevole. Se l'intenzione \`e quella di far cominciare
+la \texttt{longtable} all'inizio di una pagina, la cosa migliore da fare \`e
+quella di includerla in un comando \Cmd{afterpage} (fornito dal pacchetto
+\textsf{afterpage}). Dal momento che una \texttt{longtable} \`e grande per
+definizione, \`e meglio metterla in un file separato, e usare \Cmd{input}
+all'interno del comando \Cmd{afterpage}:
+\CmdIndex{afterpage}
+\begin{verbatim}
+\afterpage{\input{miatabella}}
+\end{verbatim}
+\begin{verbatim}
+\afterpage{\clearpage\input{miatabella}}
+\end{verbatim}
+La seconda forma ha il vantaggio che alcuni degli oggetti flottanti
+pendenti potranno essere stampati.
+
+
+\subsection{Figure}
+
+Non esiste una soluzione equivalente tipo \textsf{longfigure}, perci\`o
+le figure vanno spezzate a cura dell'autore. Generalmente questo \`e il
+problema minore. Comunque, il problema che si pone adesso \`e come tenerle
+unite, cio\`e come distribuire i pezzi su pi\`u pagine, e ottenere una sola
+voce nell'elenco delle figure.
+
+Bisogna spezzare la figura in pi\`u parti, e mettere ogni pezzo in un 
+diverso ambiente \texttt{figure}. Per tenerli insieme \`e meglio usare
+l'argomento \texttt{[p]}, in modo che saranno disposti su pagine di soli
+oggetti flottanti. Dato che sono pi\`u grandi di una pagina, questo \`e 
+appropriato. Alla prima parte si attribuir\`a quindi una didascalia
+(\Cmd{caption}), mentre le parti successive ne saranno prive. Se si vuole
+aggiungere testo a mo' di didascalia, inseritelo come testo normale,
+anzich\'e come \Cmd{caption}, in modo che non sar\`a inserito nell'elenco
+delle figure. Potrebbe anche essere desiderabile l'utilizzo del comando
+\Cmd{clearpage}, proprio come per le \texttt{longtable}, racchiudendolo
+nel comando \Cmd{afterpage}. Ad esempio:
+\begin{verbatim}
+\afterpage{\clearpage\input{miafigura}}
+\end{verbatim}
+dove \texttt{miafigura.tex} contiene:
+\begin{verbatim}
+\begin{figure}[p]
+\includegraphics{miafigura1.eps}
+\caption{Questa \`e una figura spezzata su pi\`u pagine.}
+\label{fig:xxx}
+\end{figure}
+\begin{figure}[p]
+\includegraphics{miafigura2.eps}
+\begin{center}
+Figura~\ref{fig:xxx} (continua)
+\end{center}
+\end{figure}
+\end{verbatim}
+
+Bisogna accertarsi che l'ultima parte sia grande abbastanza, altrimenti \LaTeX{}
+potrebbe decidere di posticiparla fino a che ha raccolto abbastanza oggetti
+flottanti. Questo si pu\`o fare rendendo la figura grande abbastanza (ad
+esempio aggiungendo un po' di \Cmd{vspace}), oppure aggiustando
+il parametro \Cmd{floatpagefraction}% 
+\CmdIndex{floatpagefraction}.
+
+Se si vuole far cominciare la figura spezzata in una pagina a sinistra
+(in una pagina pari) si pu\`o introdurre una condizione (fornita dal pacchetto
+\texttt{ifthen}) nel comando \Cmd{afterpage}:
+\begin{verbatim}
+\afterpage{\clearpage
+\ifthenelse{\isodd{\value{page}}{\afterpage{\input{miafigura}}} % pagina dispari
+    {\input{miafigura}}}} % pagina pari
+\end{verbatim}
+Se ci sono troppi oggetti flottanti nella pagina che viene saltata, comunque,
+pu\`o darsi che la figura non cominci sulla pagina pari.
+
+\clearpage
+\section{Contatti}
+
+Piet van Oostrum\\
+Dept.\ of Computer Science\\
+Utrecht University\\
+P.O. Box 80.089\\
+3508 TB Utrecht, The Netherlands\\
+Telefono: +31 30 2531806 Telefax: +31 30 2513791\\
+E-mail: piet@cs.ruu.nl \\
+WWW: http://www.cs.ruu.nl/people/piet
+
+\printindex
+
+\end{document}
+
+
+% Local Variables:
+% mode: latex
+% TeX-master: t
+% End:

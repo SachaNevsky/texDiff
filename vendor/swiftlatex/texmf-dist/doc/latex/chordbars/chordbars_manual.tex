@@ -1,0 +1,294 @@
+%% file: chordbars_manual.tex
+%% Copyright 2018 M. Sebastien Kramm
+%
+% This work may be distributed and/or modified under the
+% conditions of the LaTeX Project Public License, either version 1.3c
+% of this license or (at your option) any later version.
+% The latest version of this license is in
+%   http://www.latex-project.org/lppl.txt
+% and version 1.3 or later is part of all distributions of LaTeX
+% version 2005/12/01 or later.
+%
+% This work has the LPPL maintenance status `maintained'.
+% 
+% The Current Maintainer of this work is M. Sebastien Kramm
+%
+% This work consists of the files chordbars.sty and chordbars_manual.tex
+
+% Home page: https://github.com/skramm/chordbars
+
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage[left=2.00cm,vmargin=1cm]{geometry}
+\usepackage{mathcomp} % for \textdiscount
+\usepackage{listings}
+
+\lstset{
+	frame=single
+	,language=TeX
+	,basicstyle=\ttfamily
+	,escapechar=\*
+}
+\usepackage{chordbars}
+
+% Add an extra line between paragraphs.
+\setlength{\parskip}{0.5\baselineskip}
+
+% Remove the indent at the start of paragraphs.
+\setlength{\parindent}{0pt}
+
+% Bold + tt
+\newcommand{\btt}{\bfseries \ttfamily } 
+
+% shorthand
+\newcommand{\tbs}{\textbackslash{}} 
+
+%\usepackage{parskip}
+
+\title{The chordbars Package}
+\author{S. Kramm}
+\date{\today {} - release 1.1}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This Tikz-based musical notation related package is targeted at guitar / bass / piano / whatever players that are playing "popular music" accompaniment.
+They usually need only the chords and the song structure.
+This package produces rectangular song patterns with "1 square per bar", with the chord shown inside the square.
+It also handles the song structure by showing the bar count, and the repetitions of the patterns.
+\end{abstract}
+
+Package home page: \url{https://github.com/skramm/chordbars}
+
+\section{Motivation}
+
+This type of acompaniment notation is used when you don't need the melody, but you do need the exact chord and bar count.
+In that case, the full musical sheet is useless, although it can be used to print the chords.
+So some people like to write down the requested song/chord structure in a graphical view (see below).
+To produce these, some people use GUI software such as word processors, but this has a lot of drawbacks.
+The aim of this package is to have a \LaTeX way of producing these, with minimal effort.
+
+
+\section{Usage}
+\subsection{Basic usage}
+This package provides a single environnment, named {\ttfamily chordbar}, that has 2 mandatory arguments.
+The first argument is the number of bars, and the second is the pattern name.
+The latter one can be empty.
+Inside this environment, you can use several commands, the most basic one is 
+\verb|\chordf| (for "Chord Full bar") that has as unique argument the chord name.
+This argument will just be printed out "as is", usually something like Cm7, Db9, FMaj7, etc.
+
+For example, the classical 12-bar blues progression will be written as:
+
+\lstinputlisting{listing_blues.lst}
+
+
+This will be rendered as:
+
+\input{listing_blues.lst}
+
+Each square stands for a 4-beat bar, and this is read left to right.
+The special symbol you can see in bars 4, 6 and 8 means "play the same content on this bar as the previous bar".
+
+As usual with \LaTeX{} source files, spaces and line-feeds are ignored.
+
+The default behavior is to have 4-bars long lines, but you can change this anytime by giving a different value to {\btt \tbs NumberOfBarsPerLine}. For example, issuing the command
+
+\begin{lstlisting}
+\def\NumberOfBarsPerLine{3}
+\end{lstlisting}
+
+just before the above source code will print out the same 12-bars blues as above, but in a rather awkward view with 6 bars per line\footnote{Don't do this, of course!}.
+
+\def\NumberOfBarsPerLine{6}
+\input{listing_blues.lst}
+
+\subsection{Handling song structure and bar count}
+
+This package can also be used to print the song structure by showing the number of repetitions of each part and by counting the bars.
+The number of repetitions of the part can be given as an optional argument to the environment.
+To enable this, you need to activate this option, with this inserted after the \verb!\begin{document}! :
+
+\begin{lstlisting}
+\countbarsYes
+\end{lstlisting}
+
+Then, this:
+\lstinputlisting{listingA.lst}
+
+will give the following output, correctly printing out '13' as the initial bar number of the second part (part 1 is 4 bars long and is repeated 3 times).
+
+\def\NumberOfBarsPerLine{4}
+\resetchordbars
+\countbarsYes
+%\mbox{
+\input{listingA.lst}
+%}
+
+\subsection{Two chords per bar.} 
+The command \verb|\chordh| enables printing two chords per bar, as this happens quite often.
+Its two arguments are the two chords of the bar.
+For example, the well-know tune "House of the Rising Sun"\footnote{The Animals} chord structure can be printed as this:
+
+\lstinputlisting{listing_HOTRS.lst}
+
+This will be rendered as:
+\resetchordbars
+\countbarsNo
+\input{listing_HOTRS.lst}
+
+\subsection{Sharps and flats.} If you know \LaTeX, you may know that the {\btt \#} character is a "reserved character" and as such you should'nt be able to use it inside your source file.
+However a special trick has been used here so you can directly type {\btt \tbs chordf\{C\#\}}.
+
+Warning: this {\bf may} lead to some problems in "some" situations, that are not yet clearly identified\footnote{See \url{https://tex.stackexchange.com/a/467566/11083} for details.}.
+If you encounter an issue, please report it on the home page of this package and post an MCVE\footnote{Minimal, Complete, and Verifiable Example}.
+
+The alternate solution is either to escape the \# or to use the {\btt \tbs sharp} and {\btt \tbs flat} symbols, that have been "textified" so you don't need to enter math mode.
+This has the advantage of being also a bit "prettier", although maybe less readable (?).
+You can see below the compared renderings of the two alternatives:
+
+\vspace{1em}
+
+\noindent
+\begin{minipage}{0.54\textwidth}
+\lstinputlisting{listing_sharp_flat.lst}
+\end{minipage}
+%
+\begin{minipage}{0.42\textwidth}
+\input{listing_sharp_flat.lst}
+\end{minipage}
+
+\subsection{Long parts on same chord}
+In some songs, you often have several bars on the same chord, say as an introduction or a bridge between two parts.
+Instead of filling a whole chordbars environment, a command is provided that will simply render the desired number of bars with the initial chord noted in first bar.
+
+For example, if you need a 8 bar intro on Gm7 chord, you can do this:
+\begin{lstlisting}
+\chordline{C#m7}{8}{Intro}
+\end{lstlisting}
+
+that will be rendered as this:
+
+\chordline{C#m7}{8}{Intro}
+
+Of course, the part and bar count will take this into account.
+Please note that this will always be a single line, so it is limited to standard situations (4 or 8 bars), it should not be used for longer parts.
+
+\subsection{Half bars}
+
+In some tunes, there can be a "special" bar inserted at one point that only has 2 beats instead of the regular 4-beat bars .
+This is handled with the special command {\btt \tbs addHalfBar} thats needs to be inserted in last position in a {\btt chordbar} environment.
+
+See for example this chord progression and its rendering:
+
+\lstinputlisting{listing_halfbar.lst}
+
+\resetchordbars
+\countbarsYes
+\input{listing_halfbar.lst}
+
+"Part 1" has an extra 2-beats bar added at the end, and the bar count is adjusted to take this into account.
+So "Part 2" starts at bar 6.
+
+\subsection{Song title}
+
+The package provides a {\btt \tbs songtitle} command that will format nicely the data given in the preamble with the classical 
+{\btt \tbs title} and {\btt \tbs author} commands.
+
+
+\section{Configuration}
+\label{sec:config}
+
+Several commands allow to customize the way the grids are printed out.
+
+\begin{itemize}
+
+\item The size of the grids can be adjusted with the internal variable 
+{\btt \tbs barsize}.
+The default value is 1.6, but you can adjust it anytime inside your document, for example with:\\
+{\btt \tbs def\tbs barsize\{1.8\}}
+
+The font used for the chords can be adjusted by redefining the variable {\btt \tbs chordFontSize} with classical \LaTeX{} font specifications.
+The default value is {\btt \tbs normalsize \tbs bfseries}.
+If you need better readability when extending grid size, you can add for example this, in the preamble of the document:
+
+{\btt \tbs def\tbs chordFontSize\{\tbs large\tbs bfserie\}}
+
+
+\item The command {\btt \tbs countbarsYes} enables counting the bars of the song:
+each grid will have printed on the left side the number of the first bar of the grid.
+It also enables printing the number of repetitions of this part on the right side of the grid.
+
+This command is useful in the sense that this package can be used in two ways:
+it can provide the whole structure of a song.
+In that case, it is useful to have for each part the number of repetitions and the bar count, so that when the band leader says "lets start again at bar 75", everybody can find it easily.
+
+On the other side, this package can be used also to provide a quick way to show the harmony of the different parts, without any structure or bar count.
+This, printing the bar number becomes useless.
+
+To stop this behaviour (anytime), the command is {\btt \tbs countbarsNo}.
+
+\item Additionaly, if the bar counting is enabled, then the package can compute the total number of bars and the duration of the song.
+This is done by issuing the command {\btt \tbs printNbBars} at the end of the file.
+The duration of the song depends on both the {\em tempo} of the song, expressed in BPM, and the number of beats per bar.
+The latter can be given with the command {\btt \tbs bpm}, for example:
+{\btt \tbs bpm\{120\}}.
+
+The number of beats per bar is limited at present at two values, 3 or 4, with the two commands
+{\btt \tbs bpbfour} or {\btt \tbs bpbthree}.
+The default value is 4 beats per bar.
+
+\item As you have seen above, the command {\btt \tbs repeatBar} will be rendered as "./."
+%$\textdiscount${}
+and means "repeat last bar".
+In some situations, it can be useful to show a repetition spanning two bars.
+For this you can use {\btt \tbs repeatBarPair}.
+For example, see the source below showing a classical II-V-I pattern played twice and its rendering:
+
+\noindent
+\begin{minipage}{0.45\textwidth}
+\lstinputlisting{listing_RBP.lst}
+\end{minipage}
+%
+\begin{minipage}{0.42\textwidth}
+\countbarsNo
+\input{listing_RBP.lst}
+\end{minipage}
+
+\item {\ttfamily \textbackslash resetchordbars}: this will reset the bar and part counters, useful if you want to print two songs in the same document.
+\end{itemize}
+
+
+\section{Reference}
+
+This section is useful for those who want to contribute or expand this package.
+
+Internal counters:
+
+\begin{itemize}
+\item {\btt NumMesure}
+\item {\btt NumPart}
+\item {\btt CurrentBarInLine}
+\item {\btt CurrentBar}
+\item {\btt CurrentLine}
+\end{itemize}
+
+\section{Troubleshooting}
+
+The relative sizes of the grid and the chord printing are not automatically adjusted.
+Thus, in some case, the chord name will be too large for the grid.
+In that case, you just need to enlarge the grid size and/or adjust the font size (see section \ref {sec:config}).
+
+\section{Release history}
+
+\begin{itemize}
+\item 2018-12-28: First release (v1.0) and upload to CTAN
+
+\item 2018-12-29: Release 1.1, added commands {\btt \tbs chordline} and {\btt \tbs addHalfBar}, added font commands, fixed manual, bugfixes
+\end{itemize}
+
+
+
+
+\end{document}

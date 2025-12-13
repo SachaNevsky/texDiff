@@ -1,0 +1,3107 @@
+% latex4musicians.tex -*- LaTeX -*-
+%
+% By Guido Gonzato, PhD <guido.gonzato (at) gmail.com>
+%
+% Last updated: January 19, 2019
+
+% \RequirePackage[l2tabu,orthodox]{nag} % LaTeX syntax check
+
+\documentclass[a4paper,12pt]{article}
+\usepackage{etoolbox}       % fix alltt
+\usepackage{fancyhdr}       % fancy headers
+\usepackage{metalogo}       % LaTeX logos
+\usepackage{wasysym}        % for \twonotes
+\usepackage{graphicx}       % include PDF files
+\usepackage[colorlinks,%
+  linkcolor=red,%
+  urlcolor=blue,%
+  filecolor=blue,%
+  breaklinks=true]%
+           {hyperref}       % URLs and links
+\urlstyle{same}             % use the same font for links
+\usepackage{setspace}       % for sources
+\usepackage{fancyvrb}       % fancy verbatim
+\usepackage{color}          % for included pages
+\pagecolor{white}           % don't disrupt pdfpages
+\usepackage{pdfpages}       % include external pages
+\usepackage[breakable]%
+{tcolorbox}                 % shaded boxes
+\usepackage{alltt}          % for sources
+\usepackage{textcomp}       % for upquote
+\usepackage{upquote}        % fix ' in PDF output
+\usepackage{boxedminipage}  % for LaTeX examples
+
+\include{params}            % low-level formatting stuff
+\pagestyle{fancy}           % fancy headers
+
+% -----
+
+\begin{document}
+
+\title{\LaTeX{} for {\huge\twonotes{}}usicians}
+
+\author{Guido Gonzato, PhD}
+
+\date{Version \version\\
+\today}
+
+\maketitle
+
+\begin{center}
+  \includegraphics[width=\textwidth]{jingle.pdf}
+\end{center}
+
+\begin{abstract}
+
+  This guide shows how to create \LaTeX{} documents that include
+  several kinds of music elements, from very simple to quite complex.
+  Music features may consist of music symbols, song lyrics, guitar
+  chords diagrams, lead sheets, music excerpts, guitar tablatures,
+  multi-page scores.
+
+  Music can be produced directly by \TeX{} and \LaTeX{} using
+  packages, and also by external scorewriters. Major packages and
+  programs are listed and briefly described, providing ready-to-use
+  examples.
+
+\end{abstract}
+
+\tableofcontents
+% \listoftables
+% \listoffigures
+
+\noteseparator
+
+% -----
+
+\section{Introduction}
+
+~ \hfill%
+\begin{minipage}{0.7\linewidth}
+  \begin{quote}
+  [And] there is no such hobby that it cannot be combined with \LaTeX.
+
+  ~ \hfill --- \href{http://www.mychemistry.eu/2013/04/guitar-tablatures/}
+  {Clemens Niederberger}
+  \end{quote}
+\end{minipage}
+
+\bigskip
+
+I'm a long-time and enthusiastic \LaTeX{} user, and I'm also an
+amateur musician; I play folk music on wind instruments. Years ago, I
+used \LaTeX{} to typeset my
+\href{http://abcplus.sourceforge.net/#ABCGuide}{ABC notation tutorial}
+that I'm still maintaining. Writing that tutorial, I included many PDF
+music snippets along with the corresponding ABC sources, and I was
+very satisfied with the result. (Hopefully, other people were
+satisfied, too.)
+
+Since then, I have become interested in other music notation
+languages. I have come across many excellent programs and many great
+packages I wasn't aware of; I have collected many music snippets and I
+have taken notes. I must say that I'm impressed; there are plenty of
+options for the musician who is also a \LaTeX{} user. In fact, \TeX{}
+can typeset music by itself using extensions, such as the MusiX\TeX{}
+family. Besides, \LaTeX{} can easily include music produced by other
+scorewriters.
+
+So, to write \LaTeX{} documents that include music we have to solve
+two problems: how do we make the music in a suitable format? And how
+do we combine the music with \LaTeX?
+
+For my own self-training, and in the hope of doing something useful
+for other musicians, I have decided to write this guide that explains
+how to solve these problems in many ways. In particular, it shows how
+to create documents that include many types of music information, from
+very simple to quite complex:
+
+\begin{itemize}
+
+  \item \hyperref[sec:musicsymbols]{music symbols}:
+  \begin{minipage}[c]{\linewidth}
+    \includegraphics{glyphs}
+  \end{minipage}
+
+  \item \hyperref[sec:songbooks]{song lyrics}:
+  \begin{minipage}[c]{\linewidth}
+    \includegraphics[width=2cm]{guitar}
+  \end{minipage}
+
+  \item \hyperref[sec:guitar]{guitar chord diagrams}:
+  \begin{minipage}[c]{\linewidth}
+    \includegraphics{gdiagram}
+  \end{minipage}
+
+  \item \hyperref[sec:sheetmusic]{sheet music}:
+  \begin{minipage}[c]{\linewidth}
+    \includegraphics{sheet}
+  \end{minipage}
+
+  \item \hyperref[sec:tablatures]{guitar tablatures}:
+  \begin{minipage}[c]{\linewidth}
+    \includegraphics{gtablature}
+  \end{minipage}
+
+  \item \hyperref[sec:multimedia]{multimedia files}:
+  \begin{minipage}[c]{\linewidth}
+    \href{run:jingle.midi}{\fbox{play me!}}
+  \end{minipage}
+
+  \item \hyperref[sec:sources]{notation sources}:
+  \hspace{1em}
+  \begin{boxedminipage}[c]{0.4\linewidth}
+  \begin{alltt}
+\footnotesize
+X: 1
+L: 1/4
+K: C
+c G/G/ _AG|z !>!B!>!c z|]
+\end{alltt}
+  \end{boxedminipage}
+
+\end{itemize}
+
+This guide aims to provide a roundup of available options, along with
+ready-to-use examples. We will examine a few \TeX/\LaTeX{} packages
+and several programs that produce high-quality music output; then we
+will learn how to include the music (as PDF files, sound files, or
+notation sources) in \LaTeX{} documents.
+
+% -----
+
+\subsection{Conventions}
+
+This document is meant to be consulted in its PDF version (online, if
+possible), rather than printed on paper. Hence, it uses many external
+links.
+
+Links are written in short form whenever possible; for instance, the
+\pkgname{abc} package will be referred to as
+\href{https://www.ctan.org/pkg/abc}{abc} instead of
+\url{https://www.ctan.org/pkg/abc}.
+
+Sources (\LaTeX{} or notation languages) are shown in a frame with a
+light green background; the resulting PDF output, when applicable, has
+a light gray background. Command line sessions are shown in a frame;
+user commands are emphasised in boldface.
+
+All software described in this guide is
+\href{https://en.wikipedia.org/wiki/Free_and_open-source_software}%
+{free and open source}.
+
+% -----
+
+\subsection{Preliminaries}
+
+To begin with, we need a working \LaTeX{} system. I strongly recommend
+that you install the latest release of
+\href{https://www.tug.org/texlive/}{TeX Live}, which I used to typeset
+this manual and all included examples on a GNU/Linux system (TeX Live
+2018). Please note that on Debian-based GNU/Linux systems, and maybe
+other distributions, the default TeX Live packages may be older. I
+suppose that other \TeX{} distributions like
+\href{https://miktex.org/}{MiKTeX} or
+\href{http://www.tug.org/mactex/}{MacTeX} are just as good, but I have
+no first-hand experience with them.
+
+Secondly, we need a Bash-based command line environment; this is
+provided by default in GNU/Linux and macOS systems. Windows users
+should install the excellent \href{http://www.msys2.org/}{MSYS2}
+platform.
+
+In most cases, typesetting is done with the common \cmd{pdflatex}
+command. Some packages, though, require the \XeLaTeX{} or \LuaLaTeX{}
+engines. In this manual, \cmd{pdflatex} is the default command, unless
+otherwise specified.
+
+This manual is not meant to replace the documentation of the packages
+and programs that it briefly describes. A few examples are provided to
+get you started and to whet your appetite, but in most cases they
+don't cover all available features. The package or program
+documentation is the primary source of information you should refer
+to.
+
+% Good luck. Some programmers write awsome programs, but clearly 
+% don't know how to write good, useful, concise documentation.
+
+Finally, I assume that you are reasonably familiar with \LaTeX. Should
+you need some information, fine manuals and tutorials are available at
+the \href{https://ctan.org/tex-archive/info/}{\LaTeX{} info page}.
+
+% -----
+
+\subsection{Adding Packages}
+
+TeX Live provides a large number of packages, but in the following
+sections we will deal with packages that may not be included in less
+recent releases. Also, some features may be available in package
+releases that are newer than those included in TeX Live. In these
+cases, you will have to install the missing (or newer) package
+manually. The procedure is simple:
+
+\begin{enumerate}
+
+  \item create this directory structure:
+
+  \verb|$ mkdir -p $HOME/texmf/tex/latex|
+
+  new packages will be installed in this directory tree.
+
+  \item get the package (typically as a zip-compressed directory) from
+  your favourite CTAN mirror; let's call it \file{foo.zip}
+
+  \item unpack it in the right place:
+
+  \verb|$ mkdir $HOME/texmf/tex/latex/foo|
+
+  \verb|$ mv foo.zip $HOME/texmf/tex/latex/foo|
+
+  \verb|$ cd $HOME/texmf/tex/latex/foo ; unzip foo.zip|
+
+  \item if no \file{.sty} file exists, run the command
+  \cmd{latex foo.ins} or \cmd{latex foo.dtx} to create it;
+
+  \item run the command \cmd{texhash \$HOME/texmf}
+
+\end{enumerate}
+
+Package \pkgname{foo} is now accessible.
+
+If you are installing a package that is newer than that in TeX Live
+and want \LaTeX{} to use it, add this line to your \file{.bashrc}:
+
+\begin{verbatim}
+export TEXINPUTS=$HOME/texmf/tex//:
+\end{verbatim}
+% $
+
+Please note the double \cmd{/} at the end. This line makes \TeX{}
+search recursively in \file{\$HOME/texmf/tex/}, then it adds the
+current value of \cmd{TEXINPUTS} (if any) to the search path.
+
+% -----
+
+\subsection{Including PDF files}
+
+It's reasonable to assume that PDF is the most sensible format for
+final output. PostScript, SVG, PNG and other formats will not be
+considered, but it's easy to convert PDF files to these formats using
+applications like \href{https://inkscape.org}{Inkscape} or
+\href{https://www.imagemagick.org}{ImageMagick}.
+
+Unless you create music directly using \pkgname{MusiXTeX} and related
+packages (Section~\ref{sec:musixtex}), your \LaTeX{} document will
+include music as PDF files. Such files can be short excerpts, i.e.\
+smaller than a page, or span several pages. These files will be
+included with the \ltx{includegraphics} command (package
+\pkg{graphicx}) or with the \ltx{include\-pdf} command (package
+\pkg{pdfpages}), respectively:
+
+\begin{source}
+\begin{verbatim}
+\documentclass[oneside]{article}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\usepackage[a4paper,margin=1.5cm]{geometry}
+
+\begin{document}
+
+This is a short excerpt:
+
+\includegraphics[width=0.8\textwidth]{sample.pdf}
+
+Let's now include several pages:
+
+% pages=- means "all pages"
+\includepdf[pages=-,pagecommand={},width=\textwidth]{music.pdf}
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+I suggest that you read the excellent \pkg{epslatex} guide that
+explains many details on alignment, size, rotation etc.\ of included
+graphics files.
+
+In the case of short excerpts, we need some means of cropping the PDF
+to its actual contents (bounding box); PDF files, in fact, are usually
+created as whole pages. Cropping the PDF is accomplished with the free
+program \href{http://pdfcrop.sourceforge.net}{pdfcrop}, a very useful
+Perl script that depends on
+\href{https://www.ghostscript.com}{Ghostscript} and
+\href{http://pdfedit.cz/en/index.html}{PDFedit}.
+
+Given a file called \file{music.pdf}, we crop it with these commands:
+
+\begin{screen}
+$ \textbf{pdfcrop music.pdf}
+PDFCROP 1.38, 2012/11/02 - Copyright (c) 2002-2012 by Heiko Oberdiek.
+==> 1 page written on \verb|`|music-crop.pdf'.
+$ \textbf{mv -f music-crop.pdf music.pdf}
+$ _
+\end{screen}
+% $
+
+Pdfcrop doesn't work on MSYS2; moreover, MSYS2's Ghostscript package
+lacks the \cmd{bbox} device. However, if you install the official
+release of Ghostscript for Windows, you can use the following shell
+script, \cmd{pdfcrop.sh}. It only works with single-page PDF files:
+
+\begin{source}
+\begin{verbatim}
+#!/bin/sh
+
+# pdfcrop.sh - for MSYS2 and GhostScript
+# Guido Gonzato, PhD. GPL 2 or later.
+
+MYSELF=$(basename $0)
+
+if [ $# -eq 0 ] ; then
+  printf "Usage: ${MYSELF} <file.pdf>\n"
+  printf "This script uses 'gs' to crop a one-page pdf file.\n\n"
+  exit 1
+fi
+
+# GhostScript for Windows is installed in C:\Gs
+GS=/c/gs/gs9.26/bin/gswin64c.exe
+# GNU/Linux and others:
+# GS=/usr/bin/gs
+INPUT=$1
+PDF=$(basename $1 .pdf)
+OUTPUT=$PDF-crop.pdf
+GSOPTS="-q -sDEVICE=bbox -dBATCH -dNOPAUSE"
+
+# find out the bounding box
+$GS $GSOPTS $INPUT 2>&1 | grep "%%B" > $PDF.bbox
+
+# read bbox coordinates in variables
+read tmp X1 Y1 X2 Y2 < $PDF.bbox
+
+# write the output, cropped to bbox
+$GS -q -o $OUTPUT \
+  -sDEVICE=pdfwrite \
+  -c "[ /CropBox [$X1 $Y1 $X2 $Y2] /PAGES pdfmark" \
+  -f $INPUT
+
+/bin/rm -f $PDF.bbox
+
+echo "$INPUT cropped to $OUTPUT"
+\end{verbatim}
+\end{source}
+
+% $
+
+% -----
+
+\noteseparator
+
+% -----
+
+\section{Music Symbols}
+\label{sec:musicsymbols}
+
+The simplest music elements we may want to include in our documents
+are music symbols (\emph{glyphs}). Standard \LaTeX{} only provides the
+math mode commands \ltx{sharp}, \ltx{flat}, and \ltx{natural}:
+$\sharp$ $\flat$ $\natural$. Additional glyphs are provided by several
+packages; moreover, glyphs provided by music fonts are accessible via
+\XeLaTeX{} and Lua\LaTeX.
+
+% -----
+
+\subsection{Using Packages}
+
+The impressive
+\href{http://tug.ctan.org/info/symbols/%
+comprehensive/symbols-a4.pdf}%
+{Comprehensive LaTeX Symbol List}, Section 7, lists packages that
+provide a handful of music symbols: \pkg{textcomp}, \pkg{mnsymbol},
+\pkg{fdsymbol}, \pkg{boisik}, \pkg{wasysym}, \pkg{stix}, and
+\pkg{arev}.
+
+More symbols are provided by \pkg{musicography}, \pkg{leadsheets}, and
+\pkg{harmony}. These packages work with \cmd{pdflatex}, but still
+provide a fairly limited number of glyphs. Besides, there could be
+incompatibility between packages because of commands defined using the
+same name.
+
+% TODO: figure out what harmony glyphs are for...
+
+% -----
+
+\subsubsection{Package \pkg{musicography}}
+
+This package may be missing in less recent releases of TeX Live, so
+you might have to install it manually. If you only need a limited
+number of glyphs, then \pkg{musicography} may do the job:
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\usepackage{musicography}
+\thispagestyle{empty} % no page number
+
+\begin{document}
+
+Musicography makes the music symbol font provided by MusiX\TeX\
+available as text font and then uses it to define a number
+of symbols:
+
+\musFlat\ \musSharp\ \musNatural\ \musDoubleFlat\ \musDoubleSharp\
+\musWhole\ \musHalf\ \musQuarter\ \musEighth\ \musSixteenth\
+\musWholeDotted\ \musHalfDotted\ \musQuarterDotted\
+\musEighthDotted\ \musSixteenthDotted\
+\meterC\ \meterCutC\ \meterCThree\ \meterCThreeTwo\ \meterCZ\
+\musMeter{7}{8}
+
+\end{document}\end{verbatim}
+\end{source}
+
+\score{musicography}
+
+% -----
+
+\subsubsection{Package \pkg{leadsheets}}
+
+If you only need a limited number of glyphs, then also
+\pkg{leadsheets} may do the job:
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\usepackage[minimal]{leadsheets}
+\useleadsheetslibraries{musicsymbols}
+\thispagestyle{empty}
+
+\begin{document}
+
+Leadsheets makes the music symbol font provided by MusiX\TeX\
+available as text font and then uses it to define a number
+of symbols:
+
+\sharp\ \doublesharp\ \flat\ \doubleflat\ \natural\
+\trebleclef\ \altoclef\ \bassclef\ \meterC\ \allabreve\
+\meter{12}{8}\ \wholerest\ \halfrest\ \quarterrest\
+\eighthrest\ \sixteenthrest\ \Break\ \normalbar\
+\leftrepeat\ \rightrepeat\ \leftrightrepeat\ \doublebar\
+\stopbar
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+\score{glyphs_ls}
+
+This package also provides the \ltx{writechord} command to typeset
+chords:
+
+\begin{source}
+\begin{verbatim}
+\documentclass[12pt]{article}
+\usepackage[minimal]{leadsheets}
+\useleadsheetslibraries{chords}
+\thispagestyle{empty}
+
+\begin{document}
+
+Let's typeset some chords: \writechord{Bb7(#9)} \writechord{Bbb6}
+\writechord{C#7(b9)} \writechord{C##13}
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+\scoreshort{chords}
+
+% -----
+
+\subsubsection{Package \pkg{lilyglyphs}}
+
+One of the most complete sources of music glyphs is the
+\pkg{lilyglyphs} package. It provides all the symbols available in the
+\href{http://lilypond.org/doc/v2.18/%
+Documentation/notation/the-feta-font} {Emmentaler} music font, which
+is used by the \href{http://lilypond.org}{LilyPond} scorewriter
+(Section~\ref{sec:lilypond}). \pkgname{Lilyglyphs} only works with
+\XeLaTeX{} and \LuaLaTeX, and is incompatible with
+\pkgname{leadsheets} and \pkgname{MusiXTeX}. Available glyphs and
+corresponding commands are listed in Section 3 of the package
+\href{http://mirrors.ctan.org/macros/luatex/latex/lilyglyphs/%
+documentation/lilyglyphs.pdf}{documentation}.
+
+This is a very small example of what \pkgname{Lilyglyphs} provides:
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\usepackage{fontspec}
+\usepackage{lilyglyphs}
+\thispagestyle{empty}
+
+\begin{document}
+
+Lilyglyphs makes the music symbol font provided by LilyPond available
+as text font and then uses it to define a number of symbols, some
+\clefGInline\ of which \clefCInline\ can be used \clefFInline\ inline:
+
+clefs:~ \clefG\ \clefC\ \clefF\ ~time signatures:~
+\lilyTimeC\ \lilyTimeCHalf\ \lilyTimeSignature{7}{8}\
+~accidentals:~ \sharp\ \flat\ \natural\ \doublesharp\ \flatflat\
+~rests:~ \wholeNoteRest\ \halfNoteRest\ \crotchetRest\
+~notes:~ \wholeNote\ \halfNote\ \halfNoteDown\ \quarterNote\
+\quarterNoteDotted\
+~and much, much more.
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+\score{lilyglyphs}
+
+% -----
+
+\subsection{Using Music Fonts}
+
+The \XeLaTeX{} and Lua\LaTeX{} engines use Unicode input by default
+and support OTF/TTF fonts. We can use these engines to print any
+character provided by locally installed fonts; these can be listed
+with the \cmd{fc-list} command, provided by the
+\href{https://www.fontconfig.org/}{Fontconfig} software.
+
+Some fonts are especially useful for music. Unicode-encoded fonts
+provide \href{https://www.unicode.org/charts/PDF/U1D100.pdf}{music
+symbols}, which we can find for instance in
+\href{https://www.gnu.org/software/freefont/}{GNU FreeFont}. However,
+a font standard for music applications called
+\href{https://www.smufl.org}{SMuFL} has been developed.
+
+Specifically, \href{https://www.smufl.org/fonts}{Bravura} is a free,
+SMuFL-compliant music font that provides thousands of high-quality
+music glyphs. Bravura is available in OpenType format as
+\file{Bravura.otf} and \file{BravuraText.otf}; the first is used for
+drawing music symbols in scores, the second for inserting music
+symbols in text. Each glyph is mapped to a numerical code called
+\emph{code point}; a comprehensive list of glyphs and the
+corresponding code points is available at
+\url{https://www.smufl.org/version}.
+
+The following source shows how to use the glyphs provided by Bravura.
+We can define new commands for commonly used glyphs, or directly use
+the \ltx{char"XXXX} syntax to print Unicode characters specifying
+their code point. The fonts are expected to be installed in
+\path{/usr/share/fonts/}; if you install the fonts in a different
+directory, you'll also have change the following source accordingly:
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\usepackage{fontspec}
+\thispagestyle{empty}
+\newfontfamily\brtxt{BravuraText.otf}[Path=/usr/share/fonts/]
+\newfontfamily\brv{Bravura.otf}[Path=/usr/share/fonts/]
+
+\newcommand{\clefGi}      {{\brtxt \char"E050}}
+\newcommand{\clefCi}      {{\brtxt \char"E05C}}
+\newcommand{\clefFi}      {{\brtxt \char"E062}}
+
+\newcommand{\clefG}       {{\brv \char"E050}}
+\newcommand{\clefC}       {{\brv \char"E05C}}
+\newcommand{\clefF}       {{\brv \char"E062}}
+\newcommand{\timeC}       {{\brv \char"E08A}}
+\newcommand{\timeCHalf}   {{\brv \char"E08B}}
+\renewcommand{\flat}      {{\brv \char"E260}}
+\renewcommand{\natural}   {{\brv \char"E261}}
+\renewcommand{\sharp}     {{\brv \char"E262}}
+\newcommand{\wholeNote}   {{\brv \char"E1D2}}
+\newcommand{\halfNote}    {{\brv \char"E1D3}}
+\newcommand{\halfNoteDown}{{\brv \char"E1D4}}
+\newcommand{\quarterNote} {{\brv \char"E1D5}}
+
+\begin{document}
+
+The Bravura and BravuraText Music fonts provide thousands of music
+symbols. BravuraText glyphs are specifically \clefGi\ designed
+\clefFi\ to be used \clefCi\ inline:
+
+clefs:~ \clefG\ \clefC\ \clefF\ ~time signatures:~
+\timeC\ \timeCHalf\ ~accidentals:~ \sharp\ \flat\ \natural\
+~notes:~ \wholeNote\  \halfNote\ \halfNoteDown\ \quarterNote\
+~and much, much more.
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+\score{bravura}
+
+% -----
+
+\noteseparator
+
+% -----
+
+\section{Song Lyrics}
+\label{sec:songbooks}
+
+Several packages make it possible to typeset song lyrics, with varying
+degrees of complexity. For instance, we may want to write lyrics only;
+other useful features include chords above lyrics, guitar chords
+diagrams, transposition, index generation, etc.
+
+% -----
+
+\subsection{Package \pkg{guitar}}
+\label{sec:pkgguitar}
+
+This is a very basic and simple to use package that provides a
+\env{guitar} environment to add chords above lyrics. Customisation
+options include alignment, spacing, font, and other low-level
+details.
+
+A minimal
+example:
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\thispagestyle{empty}
+\usepackage{guitar}
+
+\begin{document}
+
+\begin{guitar}
+  \textbf{Imagine (John Lennon)}
+
+  \emph{Intro, $\times$ 2}
+   % use tilde to add some space
+  [C] ~ [Cmaj7] ~ [F] ~
+  % if chords overlap, add | at the end of the chord, like:
+  [C]Imagine there's [Cmaj7|]{no} [F]heaven
+  [C]It's easy if [Cmaj7|]{you} [F]try
+  [C]No hell [Cmaj7|]{below} [F]us
+  [C]Above us [Cmaj7|]{only} [F]sky
+\end{guitar}
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+\scoreshort{guitar}
+
+% -----
+
+\subsection{Package \pkg{gtrcrd}}
+
+This is another basic and simple to use package. Customisation options
+include chord location and name (Do-Re-Mi instead of C-D-E), font,
+transposition, and spacing. Chords overlaps need manual adjustment.
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\thispagestyle{empty}
+\usepackage{gtrcrd}
+
+\setlength{\crdheight}{2ex} % reduce spacing
+\def\crdfont{\footnotesize \itshape \sffamily} % setchord font
+\setlength{\parindent}{0pt} % no indentation
+
+\begin{document}
+
+\textbf{Imagine (John Lennon)}
+
+\emph{Intro, $\times$ 2}
+
+% if chords overlap, use \hspace:
+\C {\hspace{3mm}} \C[maj7] {\hspace{10mm}} \F ~
+
+\C Imagine there's \C[maj7] no {\hspace{5mm}} \F heaven
+
+\C It's easy if \C[maj7] you {\hspace{2mm}} \F try
+
+\C No hell \C[maj7] below \F us
+
+\C Above us \C[maj7] only {\hspace{2mm}} \F sky
+\end{document}
+\end{verbatim}
+\end{source}
+
+\scoreshort{gtrcrd}
+
+% -----
+
+\subsection{Package \pkg{songs}}
+\label{sec:pkgsongs}
+
+This is a very powerful package that provides many features: chords
+above lyrics, guitar chords diagrams (Section~\ref{sec:songs_cd}),
+transposition, index generation, multiple columns, and more. Overall,
+it allows for the creation of complete songbooks.
+
+% \enlargethispage{\baselineskip}
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\thispagestyle{empty}
+\usepackage[chorded]{songs}
+
+\begin{document}
+
+\renewcommand{\lyricfont}{\small}
+\renewcommand{\printchord}{\it\small}
+\afterpreludeskip=-18pt
+\beforepostludeskip=-8pt
+
+\begin{songs}{}
+\beginsong{Imagine}[by={John Lennon}]
+\beginverse
+  \emph{Intro, $\times$ 2}
+  \[C] \[Cmaj7] \[F]
+  \[C]Imagine there's \[Cmaj7]no \[F]heaven
+  \[C]It's easy if \[Cmaj7]you \[F]try
+  \[C]No hell \[Cmaj7]below \[F]us
+  \[C]Above us \[Cmaj7]only \[F]sky
+\endverse
+\endsong
+\end{songs}
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+\scoreshort{songs}
+
+% -----
+
+\subsection{Package \pkg{musixguit}}
+
+This package is integrated with \pkg{musixtex}
+(Section~\ref{sec:musixtex}), and is also capable of producing sheet
+music and guitar chord diagrams. Its documentation is written in
+German; if you can't read it don't worry, the provided examples are
+easy to understand. Chords overlaps need manual adjustment.
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\usepackage{musixguit}
+\thispagestyle{empty}
+
+\begin{document}
+
+\textbf{Imagine (John Lennon)}
+
+\begin{song}
+
+\emph{Intro, $\times$ 2}
+
+\chord{C} ~ \chord{Cmaj7} {\hspace{8mm}} \chord{F}
+
+\chord{C}Imagine there's \chord{Cmaj7}no~~~ \chord{F}heaven
+
+\chord{C}It's easy if \chord{Cmaj7}you~~ \chord{F}try
+
+\chord{C}No hell \chord{Cmaj7}below \chord{F}us
+
+\chord{C}Above us \chord{Cmaj7}only~ \chord{F}sky
+
+\end{song}
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+\scoreshort{musixguit}
+
+% -----
+
+\subsection{Package \pkg{leadsheets}}
+\label{sec:leadsheets}
+
+This package provides many features: music and symbols, chords,
+MuseJazz style, a \env{song} and a \env{verse} environment,
+transposition, a \cmd{leadsheet} class, and templates. Overall, this
+package allows for the creation of complete songbooks.
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\usepackage[full]{leadsheets}
+\thispagestyle{empty}
+
+\begin{document}
+
+\begin{song}{title={Imagine}, music={John Lennon}}
+\begin{verse}
+
+  Intro, $\times$ 2\\
+  \chord{C}~ \chord{Cmaj7}~ \chord{F}~
+
+  % The ^ character is a shortcut for \chord
+  \chord{C}Imagine there's ^{Cmaj7}no ^{F}heaven \\
+  ^{C}It's easy if ^{Cmaj7}you ^{F}try \\
+  ^{C}No hell ^{Cmaj7}below ^{F}us \\
+  ^{C}Above us ^{Cmaj7}only ^{F}sky \\
+
+\end{verse}
+\end{song}
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+\scoreshort{leadsheets}
+
+% -----
+
+\subsection{Package \pkg{songbook}}
+
+This is another powerful package that provides support for chords,
+songs, overhead transparencies, and index generation.
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\usepackage[chordbk]{songbook}
+\thispagestyle{empty}
+
+\begin{document}
+
+\textbf{Imagine (John Lennon)}
+
+% \medskip
+
+\emph{Intro, $\times$ 2}
+
+\Ch{C}~ \Ch{Cmaj7}~ \Ch{F}~
+
+\Ch{C}{Imagine} there's \Ch{Cmaj7}{no} \Ch{F}heaven
+
+\Ch{C}{It's} easy if \Ch{Cmaj7}{you} \Ch{F}{try}
+
+\Ch{C}No hell \Ch{Cmaj7}{below} \Ch{F}us
+
+\Ch{C}{Above} us \Ch{Cmaj7}{only} \Ch{F}{sky}
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+\scoreshort{songbook}
+
+% -----
+
+\subsection{Program: \href{https://www.vromans.org/projects/Chordii/}
+{chordii}}
+
+Chordii is a free command-line program, released under the
+\href{https://www.gnu.org/licenses/licenses.en.html}{GNU GPL}. It uses
+a simple text notation to typeset songs in PostScript format, complete
+with chords and guitar chord grid.
+
+This is the source of a song written in Chordii format:
+
+\begin{source}
+\begin{verbatim}
+{titles:left}
+{title:Imagine}
+{st:John Lennon}
+
+(Intro, x 2)
+[C] [Cmaj7] [F]
+[C]Imagine there's [Cmaj7]no [F]heaven
+[C]It's easy if [Cmaj7]you [F]try
+[C]No hell [Cmaj7]below [F]us
+[C]Above us [Cmaj7]only [F]sky
+\end{verbatim}
+\end{source}
+
+% \medskip
+
+We typeset the score with these commands:
+
+\begin{screen}
+$ \textbf{chordii -a imagine.cho > imagine.ps}
+$ \textbf{ps2pdf imagine.ps}
+$ _
+\end{screen}
+% $
+
+The \cmd{-a} switch means ``Automatic single space lines without
+chords''. The resulting song is:
+
+\bigskip
+
+\scoreshort{chordii}
+
+% -----
+
+\noteseparator
+
+% -----
+
+\section{Guitar Chord Diagrams}
+\label{sec:guitar}
+
+Guitar players may need to print \emph{guitar chords diagrams} and
+\emph{guitar tablatures}; both can be made with \LaTeX{} packages and
+external programs. As a matter of fact, these music features are not
+limited to the guitar; chord diagrams and tablatures apply to other
+stringed instruments as well.
+
+Tablatures are a form of music notation that is usually employed to
+show how a \emph{melody} should be fingered on the fretboard. Since
+tablatures are just a special form of music notation, we will deal
+with them after the section about sheet music. For the moment, let's
+see how to do guitar chord diagrams.
+
+For an authoritative list of standard guitar chords diagrams, I
+suggest that you visit \href{http://lilypond.org/doc/v2.18/%
+Documentation/notation/predefined-fretboard-diagrams}{this useful
+page}.
+
+% -----
+
+\subsection{Package \pkg{gchords}}
+\label{sec:gchords}
+
+This package makes it possible to print guitar chord diagrams using
+the \ltx{chord} command that employs a simple syntax:
+
+\medskip
+
+\ltx{chord}{\emph{\{fret
+number\}}}{\emph{\{fingering\}}}{\emph{\{chord name\}}}
+
+\begin{itemize}
+
+  \item \emph{fret number} can be \texttt{\{t\}}, which means top
+  fret, or \texttt{\{t\}} followed by a digit that denotes the fret;
+
+  \item \emph{fingering} is explained in the example below;
+
+  \item \emph{chord name} is the given chord name.
+
+\end{itemize}
+
+The \ltx{chords} command prints a row of chords, each defined by a
+\ltx{chord} command:
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\usepackage{gchords}
+\thispagestyle{empty}
+
+\begin{document}
+
+\def\numfrets{4}
+
+\chords{ % print a row of chords
+% fingers: n, x, o, p{n}, f{n}
+% C chord: finger 3 pos. 3, finger 2 pos. 2, finger 1 pos. 1
+\chord{t}{n,f3p3,f2p2,n,f1p1,n}{C}
+\chord{t}{n,n,p2,p2,p1,n}{Am}
+\chord{t}{x,n,n,p2,p3,p1}{Dm}
+\chord{t3}{n,p2,n,p1,n,n}{G7 (ugly)}
+{\tiny   % font size for string labels, t{X}
+\chord{t}{t{E}n,t{A}n,t{D}n,t{G}n,t{B}n,t{e}n}
+{std. tuning} }
+}
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+\scoreshort{gchords}
+
+% -----
+
+\subsection{Package \pkg{songs}}
+\label{sec:songs_cd}
+
+We met this package in Section~\ref{sec:pkgsongs}. It provides an
+easy way to print guitar chord diagrams (referred to as ``guitar
+tablatures'' in the package). The \ltx{gtab} command defines chord
+diagrams using a very simple syntax:
+
+\medskip
+
+\ltx{gtab}{\emph{\{chord name\}}}
+{\emph{\{fret:strings:fingering\}}}
+
+\begin{itemize}
+
+  \item \emph{chord name} is the given chord name;
+
+  \item \emph{fret} is an optional fret number;
+
+  \item \emph{strings} is a string of digits denoting the strings that
+  compose the chord;
+
+  \item \emph{fingering} is an optional string of digits denoting the
+  fingers to use.
+
+\end{itemize}
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\thispagestyle{empty}
+\usepackage[chorded]{songs}
+
+\begin{document}
+
+% \gtab{chord name}{fret:strings:fingering}
+\gtab{C}{032010:032010} \gtab{Cmaj7}{032000:032000}
+\gtab{F}{1:022100}
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+\scoreshort{songs_g}
+
+% -----
+
+\subsection{Package \pkg{guitarchordschemes}}
+
+This package enables the creation of fully customisable guitar chord
+diagrams and scales. The main command is \ltx{chordscheme}, and is
+quite self-explanatory:
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\usepackage{guitarchordschemes}
+\thispagestyle{empty}
+
+\begin{document}
+
+% general parameters
+\setchordscheme{
+  rotate=-90,
+  x-unit=2.5mm,                % chord size, x
+  y-unit=3mm,                  % chord size, y
+  name-format=\bfseries,       % chord name font
+  finger-format=\bfseries%
+    \footnotesize              % fingering font
+}
+
+\newsavebox{\Gstd}
+\savebox{\Gstd}{
+\chordscheme[        % define the chord
+  name = G (Sol),    % chord name
+  position = 1,      % first fret position
+  finger = {2/5:2} , % fret, string, finger
+  finger = {3/6:3} , % fret, string, finger
+  finger = {3/1:4} , % fret, string, finger
+  ring = {2,3,4}     % open strings
+]}
+
+\newsavebox{\Gbarre}
+\savebox{\Gbarre}{
+\chordscheme[
+  name = G (Sol) barre,
+  position = 3,
+  barre = 1/1-6,     % fret, string range
+  finger = {2/3:2},
+  finger = {3/5:3},
+  finger = {3/4:4}
+]}
+
+\usebox{\Gstd}\usebox{\Gbarre}
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+\scoreshort{gcschemes}
+
+% -----
+
+\noteseparator
+
+% -----
+
+\section{Sheet Music}
+\label{sec:sheetmusic}
+
+In this section, we will learn how to produce sheet music in PDF
+format for inclusion in \LaTeX{} documents. Sheet music can be typeset
+by \TeX{} itself, but we can also use the output produced by one of
+the several free and open source scorewriters.
+
+In the next few sections, we will briefly examine each option. Music
+notation languages will not be explained, for obvious space reasons.
+Minimal sources will be listed to give minimal working examples and to
+get acquainted with the notation complexity.
+
+% -----
+
+\subsection{Which Notation Software?}
+
+I'm not going to suggest any particular music notation software. I do
+have my personal preferences; I find some notations easier than
+others; some programs have more features than others; and so on.
+Nevertheless, I think that all packages and programs described in the
+following sections have their advantages, and all of them can typeset
+beautiful scores. Unless you need specific features, choosing a
+typesetting software is mostly a matter of personal preference. Let's
+put it this way: the best program is the one that lets you obtain the
+results you need, with the least effort, in the least amount of time,
+and the most fun.
+
+All software described below is capable of typesetting complex Western
+music: multiple voices and staves, symbols, dynamics, lyrics, text
+annotations; sone of them can also do tablatures and more.
+
+% -----
+
+\subsection{Packages \pkg{musixtex}, \pkg{m-tx}}
+\label{sec:musixtex}
+
+In the beginning, \TeX{} could not typeset music, and everyone was
+unhappy. Then the \pkg{mtex} (aka \pkgname{MuTeX}) package was
+created, but it was limited and not very easy to use. Then
+\pkgname{MuTeX} begat \pkgname{MusicTeX}, which begat \pkg{pmtex};
+then \pkgname{MusicTeX} begat \pkg{musixtex}, which begat \pkg{pmx},
+which begat \pkg{m-tx}. I hope I got the storyline right. Each package
+was a simpler interface to its predecessors.
+
+In reverse order: \pkgname{M-Tx} is a preprocessor to \pkgname{PMX},
+which in turn is a preprocessor for \pkgname{MusiXTeX}, which does the
+actual music typesetting via \TeX. It goes without saying that
+\pkgname{M-Tx} is the simplest to use, while \pkgname{MusiXTeX} is the
+most difficult to use but also the most powerful. Other packages
+related to \pkgname{MusiXTeX} are the following:
+
+\begin{itemize}
+
+  \item \pkg{autosp} generates note-spacing commands for
+  \pkgname{MusiXTeX} scores;
+
+  \item \pkg{bagpipe} provides support for typesetting bagpipe music;
+
+  \item \pkg{bizantinemusic} facilitates the writing of Byzantine
+  music;
+
+  \item \pkg{figbas} provides mini fonts for figured bass notation in
+  \pkgname{MusiXTeX};
+
+  \item \pkg{gregoriotex} provides engraving of Gregorian Chant
+  (Section~\ref{sec:gregoriotex});
+
+  \item \pkg{lyluatex} provides commands to include LilyPond scores in
+  Lua\LaTeX{} documents (Section~\ref{sec:lyluatex});
+
+  \item \pkg{musixtnt} is an extension library that enables
+  transformations of the effect of notes commands;
+
+  \item \pkg{pmxchords} produces chord information to go with pmx
+  output;
+
+  \item \pkg{snote} provides shape notes for \pkgname{MusixTeX};
+
+  \item \pkg{texmuse} is a music typesetting system using \TeX{}
+  and Metafont.
+
+\end{itemize}
+
+From \pkg{musixtex} home page:
+
+\begin{quote}
+
+  MusiXTEX provides a set of macros, based on the earlier MusicTEX,
+  for typesetting music with \TeX.
+
+\end{quote}
+
+\pkgname{MusiXTeX} is quite low-level, and the user must take care of
+such details as beam slope and note spacing; several examples are
+available \href{https://ctan.org/tex-archive/macros/%
+musixtex/doc/examples}{here}. Notably, it works with plain \TeX. (Ever
+tried plain \TeX?) A minimal example (\file{sample-mtex.tex}):
+
+\begin{source}
+\begin{verbatim}
+% bare MusiXTeX example
+
+\input musixtex
+\nopagenumbers
+
+\setstaffs1{1}         % a single stave
+\setclef1{\treble}     % with a treble clef
+\generalmeter{\meterC} % common time
+\nobarnumbers          % what it says
+\startextract          % a short music piece
+  % \qu = quarter note, stem up;
+  % \ql = quarter note, stem down;
+  % \Notes, \en = start and end of note line
+  \Notes \qu c \qu d \qu e \qu f \en
+  \bar
+  \Notes \qu g \qu{'a} \ql b \ql c \en
+\endextract
+
+\end
+\end{verbatim}
+\end{source}
+
+We typeset the score with these commands:
+
+\begin{screen}
+$ \textbf{tex sample-mtex.tex}
+$ \textbf{dvips sample-mtex.dvi}
+$ \textbf{ps2pdf sample-mtex.ps}
+$ _
+\end{screen}
+
+\scoreshort{sample-mtex}
+
+\pkgname{MusiXTeX} input can also be embedded in \LaTeX{} documents
+(\file{sam\-ple-m\-la\-tex.tex}):
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\usepackage{musixtex}
+\thispagestyle{empty}
+
+\begin{document}
+
+A short music excerpt in MusiX\TeX:
+
+\medskip
+
+\begin{music}
+  \smallmusicsize
+  \instrumentnumber{1}
+  \setstaffs1{1}
+  \generalmeter{\meterC}
+  \nobarnumbers
+  \startextract
+  % bar 1
+  \Notes \qu c \en                  % C
+  \notes \ibu1d2\qb1d\tbu1\qb1e \en % beamed DE
+  \notes \ibu1g2\qb1f\qb1g%
+    \qb1{'a}\tbu1\qb1b \en          % beamed FGAB
+  \bar % bar 2
+  \Notes \ql{'c} \en                % c
+  \notes \ibu1{'b}{-3}%
+    \qb1b\tbu1\qb1a \en             % beamed BA
+  \notes \ibu1{g}{-3}%
+    \qb1g\qb1f\qb1e\tbu1\qb1d \en   % beamed GFED
+  \bar % bar 3
+  \notes \ibu1f0\qb1c\qb1g\qb1e\tbu1\qb1g% % beamed CGEG
+    \ibu1f0\qb1c\qb1g\qb1e\tbu1\qb1g \en   % beamed CGEG
+  \bar % bar 4
+  \Notes \qu c\qu e\qu c\qp \en     % CEC
+  \endextract
+
+\end{music}
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+\score{sample-mlatex}
+
+\bigskip
+
+Admittedly it looks a bit arcane, and I'll point you to the
+\href{http://mirrors.ctan.org/macros/musixtex/doc/musixdoc.pdf}
+{documentation} for explanations. I suggest that you learn at least
+the basics of it; several useful packages are based on this syntax.
+
+\pkgname{M-Tx} employs a much simpler notation than
+\pkgname{MusiXTeX}. This is a standalone music sample
+(\file{sample-mtx.mtx}) that produces the same music as the above
+\pkgname{MusiXTeX} score:
+
+\begin{source}
+\begin{verbatim}
+% music sample in M-Tx notation
+
+Title: \bigtype Music sample in M-tx
+Style: Solo
+Meter: C
+Width: 140mm
+
+c4 d8 e f g a b | c4 b8 a g f e d | c8 g+ e g c- g+ e g | c4- e c r |
+\end{verbatim}
+\end{source}
+
+We typeset the score with this command:
+
+\begin{screen}
+$ \textbf{musixtex sample-mtx.mtx}
+This is musixtex.lua version 0.21.
+==> This is M-Tx 0.63a (Music from TeXt) <8 April 2018>
+==>> Input from file sample-mtx.mtx
+...
+sample-mtx.pdf generated by ps2pdf.
+$ _
+\end{screen}
+% $
+
+\noindent which produces \file{sample-mtx.pdf}. In older versions of
+\pkgname{M-Tx}, the command was \cmd{m-tx}; it has now been retired
+and replaced by \cmd{musixtex}. This is the resulting score:
+
+\bigskip
+
+\score{sample-mtx}
+
+\bigskip
+
+Music in \pkgname{M-Tx} format can be easily included in \LaTeX{}
+documents. \pkgname{M-Tx} provides the \env{Score}, \env{excerpts},
+and \env{mus} environments to include complete pieces, short excerpts,
+and inline short excerpts respectively. Let's see how to use
+\cmd{excerpts} and \cmd{mus}; a few steps are required.
+
+First of all, the \LaTeX{} source that includes the \pkgname{M-Tx}
+music files must not have a \file{.tex} extension; \file{.ltx} or
+\file{.latex} are ok. Let's call our sample file
+\file{sample-latexmtx.ltx}.
+
+Secondly, we need the \file{mtxlatex.sty} style file, which is not
+installed by default but is found in the \pkgname{M-Tx} documentation
+directory. In TeX Live, \file{mtxlatex.sty} is located in directory
+\path{/usr/share/doc/texlive-doc/generic/m-tx}. This file must be
+copied to the same directory as the source file; all included
+\pkgname{M-Tx} files must be copied there too.
+
+We already met \file{sample-mtx.mtx}; the following is another short
+excerpt, \file{scale.mtx}. It produces a 30mm wide scale:
+
+\begin{source}
+\begin{verbatim}
+Style: Solo
+Meter: C
+Size:  13pt
+Width: 30mm
+
+c8 d e f g2 |
+\end{verbatim}
+\end{source}
+
+Finally, this is the main file \file{sample-latexmtx.ltx}:
+
+\begin{source}
+\begin{verbatim}
+\documentclass[12pt]{article}
+\usepackage{mtxlatex} % usually not installed
+\thispagestyle{empty}
+
+\mtxlatex
+
+\begin{document}
+
+This \LaTeX{} document includes music written in M-Tx. The
+\texttt{mus} environment includes music inline:
+\begin{mus} \input{scale.tex} \end{mus} , while the
+\texttt{excerpts} environment is used for longer excerpts:
+
+\medskip
+
+\begin{excerpts}
+  \input{sample-mtx.tex}
+\end{excerpts}
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+We typeset the document with this command:
+
+\begin{screen}
+$ \textbf{musixtex sample-mtx scale sample-latexmtx.ltx}
+...
+sample-latexmtx.pdf generated by ps2pdf.
+$ _
+\end{screen}
+% $
+
+Please note that we omitted the \pkgname{M-Tx} file extensions, and
+that the main file is the last in the command line. We obtain this
+output:
+
+\bigskip
+
+\score{sample-latexmtx}
+
+\bigskip
+
+Please also note that the \pkgname{M-Tx} excerpts cannot be resized as
+if they were included PDF files: their geometry, in fact, is set in
+the \pkgname{M-Tx} source.
+
+% -----
+
+\subsection{Package \pkg{gregoriotex}}
+\label{sec:gregoriotex}
+
+This package typesets Gregorian chant. Input is in GABC format, a
+simple text notation inspired by the
+\href{http://abcnotation.com/}{ABC notation} that we'll examine later
+on. Conversion requires Lua\LaTeX.
+
+This is a sample GABC source, \file{kyrie.gabc}, taken from the
+package documentation:
+
+\begin{source}
+\begin{alltt}
+name:Kyrie XVII;
+%%
+(c4)KY(f)ri(gfg)e(h.) *()
+e(ixjvIH'GhvF'E)l\'e(ghg')i(g)son.(f.)
+<i>bis</i>(::)
+\end{alltt}
+\end{source}
+
+We also need an auxiliary \LaTeX{} source, \file{kyrie.tex}:
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\thispagestyle{empty}
+\usepackage[autocompile]{gregoriotex}
+
+\begin{document}
+
+\gregorioscore{kyrie}
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+We typeset the score with this command:
+
+\begin{screen}
+$ \textbf{lualatex kyrie.tex}
+...
+Output written on kyrie.pdf (1 page, 11290 bytes).
+Transcript written on kyrie.log.
+$ _
+\end{screen}
+% $
+
+\scoreshort{kyrie}
+
+% -----
+
+\subsection{Program: \href{http://lilypond.org/}{LilyPond}}
+\label{sec:lilypond}
+
+LilyPond is a free and multiplatform scorewriter, released under the
+GNU GPL. From the LilyPond home page:
+
+\begin{quote}
+
+  LilyPond is a music engraving program, devoted to producing the
+  highest-quality sheet music possible. It brings the aesthetics of
+  traditionally engraved music to computer printouts. LilyPond is free
+  software and part of the \href{http://gnu.org/}{GNU Project}.
+
+\end{quote}
+
+LilyPond uses a simple text notation for music input; output is PDF by
+default. This is our usual music sample in LilyPond format,
+\file{sample-lily\-pond.ly}:
+
+\begin{source}
+\begin{verbatim}
+% music sample in LilyPond notation
+
+\version "2.18.2"
+
+\paper{
+  indent = 0 \mm
+}
+
+\header {
+  title = "Music sample in LilyPond"
+  tagline = "" % no footer
+}
+
+\relative c' {
+  \time 4/4
+  \clef treble
+  c4 d8 e f8 g a b | c4 b8 a g8 f e d |
+  c8 g' e g c,8 g' e g | c,4 e c r \bar "|."
+}
+\end{verbatim}
+\end{source}
+
+We typeset the document with this command:
+
+\begin{screen}
+$ \textbf{lilypond sample-lilypond.ly}
+GNU LilyPond 2.18.2
+Processing `sample-lilypond.ly'
+Parsing...
+Interpreting music...
+Preprocessing graphical objects...
+Finding the ideal number of pages...
+Fitting music on 1 page...
+Drawing systems...
+Layout output to `sample-lilypond.ps'...
+Converting to `./sample-lilypond.pdf'...
+Success: compilation successfully completed
+$ _
+\end{screen}
+% $
+
+\bigskip
+
+LilyPond is capable of typesetting many different kinds of music, and
+it is among the most complete and powerful scorewriters available. If
+you want to find out more, the documentation page is
+\href{http://lilypond.org/manuals.html}{here}.
+
+% -----
+
+\subsubsection{\cmd{lilypond-book}}
+
+LilyPond also provides the \cmd{lilypond-book} command that can be
+used to easily embed LilyPond sources in special \LaTeX{} documents.
+These should have a \cmd{.lytex} extension, like the following source
+(\cmd{sample-lilybook.lytex}):
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\thispagestyle{empty}
+
+\begin{document}
+
+This is a LilyPond snippet \begin{lilypond} {c' e' g'}
+\end{lilypond} embedded in the \LaTeX{} source.
+
+This is another LilyPond excerpt that uses the \texttt{lilypond}
+environment:
+
+\medskip
+
+\begin{lilypond}
+  \score {
+    \relative c' {
+      \time 4/4
+      \clef treble
+      c4 d8 e f8 g a b | c4 b8 a g8 f e d |
+      c8 g' e g c,8 g' e g | c,4 e c r \bar "|."
+    }
+  } % end of  score
+\end{lilypond}
+
+\medskip
+
+End of document.
+
+\end{document}
+
+\end{verbatim}
+\end{source}
+
+We typeset the score with these commands:
+
+\begin{screen}
+$ \textbf{lilypond-book -f latex -o /tmp \textbackslash
+  --lily-output-dir=/tmp sample-lilybook.lytex}
+lilypond-book (GNU LilyPond) 2.18.2
+...
+Writing `/tmp/sample-lilybook.tex'...
+$ \textbf{cd /tmp}
+$ \textbf{pdflatex sample-lilybook.tex}
+...
+Output written on sample-lilybook.pdf (1 page, 60934 bytes).
+Transcript written on sample-lilybook.log.
+$ _
+\end{screen}
+% $
+
+\bigskip
+
+\score{sample-lilybook}
+
+% -----
+
+\subsubsection{Package \pkg{lyluatex}}
+\label{sec:lyluatex}
+
+This package may be missing in less recent releases of TeX Live, so
+you might have to install it manually. \pkgname{Lyluatex} provides a
+native Lua\LaTeX{} environment that offers the same functionality as
+\cmd{lilypond-book}, even though the output is different. This source
+is \file{sample-lyluatex.tex}:
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\usepackage{lyluatex}
+\thispagestyle{empty}
+
+\begin{document}
+
+This is a LilyPond snippet \lilypond{c' e' g'} embedded in the text
+using the \verb|\lilypond| command.
+
+This is another LilyPond excerpt that uses the \texttt{lilypond}
+environment:
+
+\medskip
+
+\begin{lilypond}
+  \score {
+    \relative c' {
+      \time 4/4
+      \clef treble
+      c4 d8 e f8 g a b | c4 b8 a g8 f e d |
+      c8 g' e g c,8 g' e g | c,4 e c r \bar "|."
+    }
+  } % end of score
+\end{lilypond}
+
+\medskip
+
+End of document.
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+We typeset the score with this command:
+
+\begin{screen}
+$ \textbf{lualatex --shell-escape sample-lyluatex.tex}
+...
+Output written on sample-lyluatex.pdf (1 page, 22334 bytes).
+  Transcript written on sample-lyluatex.log.
+$ _
+\end{screen}
+% $
+
+\score{sample-lyluatex}
+
+% -----
+
+\subsection{Program: \href{http://moinejf.free.fr}{abcm2ps}}
+
+\cmd{abcm2ps} is a free and multiplatform scorewriter, released under
+the GNU GPL.
+
+This program is currently one of the best implementations of the
+\href{http://abcnotation.com/}{ABC notation}, which describes itself
+as:
+
+\begin{quote}
+
+  \emph{the} text-based music notation system and the \emph{de
+  facto} standard for folk and traditional music.
+
+\end{quote}
+
+In fact, this notation is specifically designed to meet the needs of
+traditional musicians; hundred of thousands (really!) of tunes in ABC
+formats are available. ABC is a simple text notation, originally
+designed for single-voice music but currently capable of producing
+complex polyphonic scores.
+
+This is our usual music sample in ABC notation (\file{sample-abc.abc}):
+
+\begin{source}
+\begin{verbatim}
+% music sample in ABC notation
+
+X: 1
+T: Music sample in ABC
+M: C
+L: 1/4
+K: C
+%
+C D/E/ F/G/A/B/|c B/A/ G/F/E/D/|C/G/E/G/ C/G/E/G/|CECz|]
+\end{verbatim}
+\end{source}
+
+We typeset the score with these commands:
+
+\begin{screen}
+$ \textbf{abcm2ps -c -O= sample-abc.abc}
+abcm2ps-8.14.1 (2018-11-15)
+File sample-abc.abc
+Output written on sample-abc.ps (1 page, 1 title, 20503 bytes)
+$ \textbf{ps2pdf sample-abc.ps}
+$ _
+\end{screen}
+% $
+
+% -----
+
+\subsection{Program: \href{http://moinejf.free.fr}{abc2svg}}
+
+\cmd{abc2svg} is a free and multiplatform scorewriter, released under
+the GNU GPL. It's basically \cmd{abcm2ps} rewritten in JavaScript.
+
+Although \cmd{abc2svg} can be integrated in a
+\href{http://moinejf.free.fr/js/edit-1.xhtml}{web-based editor}, it's
+a command-line program. It reads an ABC source file and turns it to
+\file{xhtml}:
+
+\begin{screen}
+$ \textbf{abc2svg file.abc > file.xhtml}
+$ _
+\end{screen}
+
+The resulting \file{.xhtml} can then be loaded into any web browser
+and printed to PDF. \href{https://www.google.com/chrome}{Google
+Chrome} or \href{https://www.chromium.org/Home}{Chromium} are the
+recommended browsers.
+
+We can run the whole procedure non-interactively, entirely in the
+command line. This only works in GNU/Linux and macOS:
+
+\begin{screen}
+$ \textbf{abc2svg tunes.abc > tunes.xhtml}
+$ \textbf{chromium-browser --headless --print-to-pdf=tunes.pdf tunes.xhtml}
+... many log messages ...
+... Written to file tunes.pdf.
+$ _
+\end{screen}
+
+% $
+However, in this case Chromium will add headers and footers to every
+page. To remove them and obtain a clean PDF file, run the command:
+
+\begin{screen}
+$ \textbf{pdfcrop --margins "0 -9 0 -9" --clip tunes.pdf}
+PDFCROP 1.38, 2012/11/02 - Copyright (c) 2002-2012 by Heiko Oberdiek.
+==> 79 pages written on `tunes-crop.pdf'.
+$ _
+\end{screen}
+
+The same result can be obtained using \pkg{pdfpages} directly:
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\usepackage{pdfpages}
+
+\def\tunes{tunes.pdf} % PDF file to trim
+
+\begin{document}
+
+\includepdf[pages=-,pagecommand={},%
+width=\paperwidth,trim={0 0.9cm 0 0.9cm},clip]{\tunes}
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+% -----
+
+\subsection{Program: \href{http://people.ds.cam.ac.uk/ph10/pmw.html}{PMW}}
+
+Philip's Music Writer (PMW) is a free and multiplatform scorewriter,
+released under the GNU GPL. From the PMW home page:
+
+\begin{quote}
+
+  \emph{Philip's Music Writer} (PMW) is a computer program for high
+  quality music typesetting.
+
+\end{quote}
+
+PMW uses a simple text notation for music input and produces output in
+PostScript.
+
+This is our usual music sample in PMW format (\file{sample-pmw.pmw}):
+
+\begin{source}
+\begin{verbatim}
+@ music sample in PMW
+
+Heading "|Music sample in PMW"
+Key C
+Time 4/4
+
+[stave 1 treble 1]
+c d- e-; f-g-a-b-; | c' b- a-; g-f-e-d-; |
+c-g-e-g-; c-g-e-g-; |c e c r |
+[endstave]
+\end{verbatim}
+\end{source}
+
+We typeset the score with these commands:
+
+\begin{screen}
+$ \textbf{pmw -includefonts sample-pmw.pmw}
+$ \textbf{ps2pdf sample-pmw.ps}
+$ _
+\end{screen}
+% $
+
+% -----
+
+\subsection{Program: \href{http://www.arkkra.com/}{MUP}}
+
+MUP is a free and multiplatform scorewriter, released under a free
+license. From the MUP home page:
+
+\begin{quote}
+
+  Mup takes a text file as input and produces very high quality
+  PostScript output for printed music. It can handle both regular
+  notation and tablature notation. It can also produce MIDI output.
+
+\end{quote}
+
+This is our usual music sample in MUP format (\file{sample-mup.mup}):
+
+\begin{source}
+\begin{verbatim}
+// music sample in MUP notation
+
+header
+  title "Music sample in MUP"
+
+score
+  time=4/4
+
+music
+  1: 4c; 8d bm; e ebm; f bm; g; a; b ebm;
+  bar
+  1: 4c+; 8b bm; a ebm; g bm; f; e; d ebm;
+  bar
+  1: 8c bm; g; e; g ebm; c bm; g; e; g ebm;
+  bar
+  1: 4c; e; c; r;
+  endbar
+\end{verbatim}
+\end{source}
+
+We typeset the score with these commands:
+
+\begin{screen}
+$ \textbf{mup -F sample-mup.mup}
+Mup - Music Publisher   Version 6.6
+Copyright (c) 1995-2017 by Arkkra Enterprises.
+Mup is free software. Use -l option to see license terms.
+$ \textbf{ps2pdf sample-mup.ps}
+$ _
+\end{screen}
+% $
+
+% -----
+
+\subsection{Program: \href{http://musescore.org}{MuseScore}}
+\label{sec:musescore}
+
+MuseScore is a free and multiplatform scorewriter, released under the
+GNU GPL. Unlike the previous programs, it's a desktop application;
+however, it can be conveniently used from the command line.
+
+MuseScore uses its own file formats (\file{.mscz}, \file{.mscx}) but
+it can also import several other file formats;
+\href{https://www.musicxml.com/}{MusicXML} is probably the most
+important.
+
+We convert any supported file to PDF with this command:
+
+\begin{screen}
+$ \textbf{musescore file.xml -o file.pdf}
+initScoreFonts 0x30d33c0
+convert <file.xml> to <file.pdf>
+setFirstInstrument: no instrument found for part 'P1'
+$ _
+\end{screen}
+% $
+
+% -----
+
+\subsection{Package \pkg{abc}}
+\label{sec:pkgabc}
+
+This package enables the inclusion of music in ABC notation in
+\LaTeX{} sources; it's similar to \cmd{lilypond-book} or
+\pkg{lyluatex}, but targeting ABC.
+
+\pkgname{Abc} provides the \env{abc} environment and the
+\ltx{abcinput} commands. The first embeds ABC music in the source,
+while the second includes an external ABC file. This is
+(\file{sample-abc.tex}):
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\usepackage[generate,ps2eps]{abc}
+\thispagestyle{empty}
+
+\begin{document}
+
+This is an Irish reel:
+
+\begin{abc}[name=julia,program={abcm2ps -O=}]
+X:63
+T: Julia Delaney's
+M: C|
+L: 1/8
+R: reel
+K: Ddor
+|: dcAG ~F2EF|~E2 DE FD D2|dcAG FGAA|Addc d2 fe :|
+   f2fe fagf |ecgc acgc   |f2fe fagf|edcG Add2  :|
+\end{abc}
+
+This is an Irish polka, slighly smaller:
+
+\abcinput[program={abcm2ps -O=},width=0.9\abcwidth]
+{breeches}
+
+End of document.
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+The \cmd{generate} option (default) indicates that the ABC music
+should be generated by the external ABC typesetter. If the ABC music
+is not modified and it has already been generated, we could specify
+the \cmd{nogenerate} option. This is what we want to do when only the
+text is changed.
+
+We typeset the source with this command:
+
+\begin{screen}
+$ \textbf{pdflatex --shell-escape sample-abc.tex}
+...
+Output written on sample-abc.pdf (1 page, 30937 bytes).
+Transcript written on sample-abc.log.
+$ _
+\end{screen}
+
+\score{sample-abc}
+
+% -----
+
+\noteseparator
+
+% -----
+
+\section{Guitar Tablatures}
+\label{sec:tablatures}
+
+Let's go back to guitar stuff. Tablature, as already explained, is a
+form of music notation for stringed instruments; making tablatures is
+basically the same process as making sheet music.
+
+We can distinguish between \emph{automatic tablatures}, where fret
+positions are generated by the program, and \emph{manual tablatures},
+where fret positions are specified by the user.
+
+% -----
+
+\subsection{Program: \href{http://lilypond.org/}{LilyPond}}
+\label{sec:lilytab}
+
+In addition to sheet music, LilyPond can also easily typeset automatic
+guitar tablatures. A minimal example (\file{lilytab.ly}):
+
+\begin{source}
+\begin{verbatim}
+\version "2.18.2"
+\header { tagline = "" } % no footer
+\paper { left-margin = 0\cm }
+
+music = {
+  \time 3/4
+  c4 d e f g a b a b c'2 r4 \bar "|."
+}
+
+\score {
+  <<
+    \new Staff { \clef "G_8" \music } % sheet music
+    \new TabStaff { \tabFullNotation \music } % tablature
+  >>
+}
+\end{verbatim}
+\end{source}
+
+We typeset the score with this command:
+
+\begin{screen}
+$ \textbf{lilypond lilytab.ly}
+...
+Converting to `./lilytab.pdf'...
+Success: compilation successfully completed
+$ _
+\end{screen}
+% $
+
+\scoreshort{lilytab}
+
+\bigskip
+
+As we can see, the very same music line can be typeset as sheet music
+and as guitar tablature. Fretboard positions are automatically
+generated by LilyPond.
+
+% -----
+
+\subsection{Program: \href{https://wim.vree.org/svgParse/abc2xml.html}
+{abc2xml.py}}
+\label{sec:abc2xml}
+
+This Python program converts an ABC file to a
+\href{https://www.musicxml.com/}{MusicXML} file containing automatic
+tablature information; this file can then be typeset with any
+MusicXML-enabled application, like MuseScore.
+
+A minimal tablature example (\file{abctab.abc}):
+
+\begin{source}
+\begin{verbatim}
+X: 1
+M: 3/4
+L: 1/4
+K: C
+%
+V:1
+CDE | FGA | BBB | c2z |]
+V:2 clef=tab octave=-1
+CDE | FGA | BBB | c2z |]
+\end{verbatim}
+\end{source}
+
+We typeset the score with these commands (error messages can be safely
+ignored):
+
+\begin{screen}
+$ \textbf{abc2xml.py -f abctab.abc > abctab.xml}
+-- decoded from utf-8
+-- skipped header: (field X,1)
+-- done in 0.02 secs
+$ \textbf{musescore abctab.xml -o abctab.pdf}
+Jack appears to be installed on this system, so we'll use it.
+initScoreFonts 0x25ba100
+libpng warning: iCCP: known incorrect sRGB profile
+convert <abctab.xml> to <abctab.pdf>
+Error at line 18 col 16: no instrument found for part 'P1'
+Error at line 138 col 16: no instrument found for part 'P2'
+$ _
+\end{screen}
+% $
+
+\score{abctab}
+
+\bigskip
+
+As we can see, the very same music line can be typeset as sheet music
+and as guitar tablature. Fretboard positions are automatically
+generated by \cmd{abc2xml.py}.
+
+We can also use \cmd{lilypond} to typeset the ABC tablature. The
+ancillary program \cmd{musicxml2ly} converts MusicXML files to
+LilyPond format:
+
+\begin{screen}
+$ \textbf{abc2xml.py -f abctab.abc > abctab.xml}
+-- decoded from utf-8
+-- skipped header: (field X,1)
+-- done in 0.02 secs
+$ \textbf{musicxml2ly abctab.xml}
+$ musicxml2ly: Reading MusicXML from abctab.xml ...
+musicxml2ly: Converting to LilyPond expressions...
+musicxml2ly: Converting to LilyPond expressions...
+musicxml2ly: Output to `abctab.ly'
+$ \textbf{lilypond abctab.ly}
+GNU LilyPond 2.18.2
+Processing `abctab.ly'
+...
+Converting to `./abctab.pdf'...
+Success: compilation successfully completed
+$ _
+\end{screen}
+% $
+
+Regrettably, \cmd{musicxml2ly} is not as robust as MuseScore's
+MusicXML import filter, and it may fail on complex music.
+
+% -----
+
+\subsection{Package \pkg{musixtex}}
+
+Starting from version 1.29, \pkgname{MusiXTeX} can also make manual
+tablatures for several stringed instruments. A minimal example, to be
+typeset with \cmd{musixtex} (\file{sample-musixtex-tab.tex}):
+
+\begin{source}
+\begin{verbatim}
+% bare MusiXTeX example
+
+\input musixtex
+\nopagenumbers
+
+This is a MusiXTeX tablature example:
+
+\setlines16               % six lines
+\setstaffs1{1}
+\setclefsymbol1{\tabclef} % and a TAB clef
+\nobarnumbers
+\let\extractline\leftline % left aligned
+
+\startextract
+  \Notes \tab{5}{3} \tab{4}{0} \tab{4}{2} \en
+  \bar
+  \Notes \tab{4}{3} \tab{3}{0} \tab{3}{2} \en
+  \bar
+  \Notes \tab{2}{0} \tab{3}{2} \tab{2}{0} \en
+  \bar
+  \Notes \tab{2}{1} \qp \qp \en
+\endextract
+
+\end
+\end{verbatim}
+\end{source}
+
+\scoreshort{sample-musixtex-tab}
+
+% -----
+
+\subsection{Package \pkg{guitartabs}}
+
+This package may be missing in less recent releases of TeX Live, so
+you might have to install it manually. It provides a \cmd{guitartabs}
+document class and a very simple syntax to manually specify strings,
+fret positions, and note length:
+
+\begin{source}
+\begin{verbatim}
+\documentclass{guitartabs}
+\thispagestyle{empty}
+
+\begin{document}
+
+\Large
+
+\begin{tabline}{4}{4}{4}{E,A,D,G,B,e}
+  % bar 1
+  % note 1 of 3, string 5, fret 4, note length 1/4
+  \notel{1}{3}{5}{3}{4}
+  % note 2 of 3, string 4, fret 0, note length 1/4
+  \notel{2}{3}{4}{0}{4}
+  \notel{3}{3}{4}{2}{4}
+  % bar 2
+  \nextbar
+  \notel{1}{3}{4}{3}{4}
+  \notel{2}{3}{3}{0}{4}
+  \notel{3}{3}{3}{2}{4}
+  % bar 3
+  \nextbar
+  \notel{1}{3}{2}{0}{4}
+  \notel{2}{3}{3}{2}{4}
+  \notel{3}{3}{2}{0}{4}
+  % bar 4
+  \nextbar
+  \notel{1}{3}{5}{3}{2}
+  % rests
+  \restquarter{2}{3}
+  \restquarter{3}{3}
+\end{tabline}
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+\score{guitartabs}
+
+If you don't need the note length indications at the bottom of the
+tablature, use \ltx{note} instead of \ltx{notel}.
+
+% -----
+
+\subsection{Using Guitar Pro Tablatures}
+
+A \emph{de facto} standard for guitar tablatures is the
+\href{https://www.guitar-pro.com}{Guitar Pro} format, or more
+precisely a set file formats: \file{.gpX} (where X is 3, 4, 5, 6),
+\file{.gpx}, \file{.gtp}. Many sites offer free tablatures in one of
+these formats.
+
+To print them, we can use
+\href{http://www.tuxguitar.com.ar/}{TuxGuitar} or MuseScore. TuxGuitar
+is a free and multiplatform tablature editor; it's a desktop
+application that can export tablatures in PDF format. Regrettably, it
+cannot work as a command-line program.
+
+To import GuitarPro tablatures into MuseScore and export them as PDF,
+we can use the \cmd{-P} command line switch. It exports all parts to
+the PDF file; then it's up to the user to find out the pages that
+contain the tablature.
+
+% -----
+
+\noteseparator
+
+% -----
+
+\section{Bits and Pieces}
+
+\subsection{Multimedia Files}
+\label{sec:multimedia}
+
+In addition to sheet music, our documents can also include sound
+files. To be more precise, we can click on a link to an external sound
+file that is referred to in the PDF document; the default player will
+be run.
+
+This feature is made possible by the \pkg{hyperref} package, which
+provides the \ltx{href} command:
+
+\begin{source}
+\begin{verbatim}
+\href{run:jingle.midi}{this midi file}
+\end{verbatim}
+\end{source}
+
+The first parameter opens the specified file with the default
+multimedia player; the second parameter creates a link to click on.
+For example, the above line lets the reader click on
+\href{run:jingle.midi}{this midi file} and listen to it. The operating
+system must know how to play the specified sound file.
+
+The link need not be just text; we may as well apply the link to
+included graphics.
+
+% -----
+
+\subsection{Notation Source Files}
+\label{sec:sources}
+
+If we need to include notation source files, we could use a simple
+\cmd{verbatim} environment, or \cmd{alltt} (package \pkg{alltt}) if we
+also want to include \LaTeX{} commands in the source:
+
+\bigskip
+
+\noindent
+{ \small
+\begin{boxedminipage}[c]{0.52\linewidth}
+\begin{verbatim}
+\textit{\% This is a comment!}
+\textbf{X:} 1
+\textbf{L:} 1/4
+\textbf{K:} C
+\textit{\% These are notes:}
+c G/G/ _AG|z !>!B!>!c z|]
+\end{verbatim}
+\end{boxedminipage}
+\hspace{2em}
+\begin{boxedminipage}[c]{0.4\linewidth}
+\begin{alltt}
+\textit{\% This is a comment!}
+\textbf{X:} 1
+\textbf{L:} 1/4
+\textbf{K:} C
+\textit{\% These are notes:}
+c G/G/ _AG|z !>!B!>!c z|]
+\end{alltt}
+\end{boxedminipage}
+} % \small
+
+\bigskip
+
+But if you want something fancier, like the sources included in this
+document, you could also use the \pkg{tcolorbox} and define a new
+environment like the following:
+
+\bigskip
+
+\begin{tcolorbox}[breakable,boxrule=0.2pt,%
+      left=0pt,right=0pt,colback=green!7!white,arc=2pt]
+\begin{verbatim}
+\newenvironment{source}
+{ % beg def
+  \medskip
+  \small
+  \begin{margins}{-0.3cm}{-0.3cm}
+    \begin{spacing}{0.9}
+      \begin{tcolorbox}[breakable,boxrule=0.2pt,%
+      left=0pt,right=0pt,colback=green!7!white,arc=2pt]
+        \begin{alltt}
+}
+{ % end def
+        \end{alltt}
+      \end{tcolorbox}
+    \end{spacing}
+  \end{margins}
+}
+\end{verbatim}
+\end{tcolorbox}
+
+% -----
+
+\noteseparator
+
+% -----
+
+\section{Putting It All Together}
+
+We have solved the first problem; now we know how to make music files
+in several different ways. Now it's time to solve the second problem:
+how to combine music files and \LaTeX.
+
+We have two possible approaches: keeping all music in the \LaTeX{}
+source, or keeping the music in external files. Both approaches have
+advantages and disadvantages. Basically, the first method is slower,
+because any change in the source may require recompilation of music
+excerpts. The second method requires a little more work, because we
+need to maintain an additional file that takes care of music
+conversion.
+
+% -----
+
+\subsection{Package \pkg{abc}, Revisited}
+
+We met this package in Section~\ref{sec:pkgabc}, where it was used to
+include ABC music in a \LaTeX{} source. This package, however, is not
+limited to ABC. User-defined environments can provide support for
+virtually any external scorewriter; LilyPond support, however, is
+slightly bugged.
+
+The following source defines the \env{mtx} and \env{pmw} environments.
+For each, the definition specifies the external program to run, its
+command line switches, and the file extension:
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\thispagestyle{empty}
+\usepackage[generate,ps2eps]{abc}
+
+% --- M-Tx support
+\newenvironment{mtx}[1][]
+{\renewcommand{\normalabcoutputfile}{out-mtx}%
+\abc[program=musixtex,options={-g},extension=mtx,#1]}
+{\endabc}
+\newcommand{\mtxinput}[2][]{%
+\abcinput[program=musixtex,options={-g},extension=mtx,#1]{#2}}
+
+% --- PMW support
+\newenvironment{pmw}[1][]
+{\renewcommand{\normalabcoutputfile}{out-pmw}%
+\abc[program=pmw,options={-includefont},extension=pmw,#1]}
+{\endabc}
+\newcommand{\pmwinput}[2][]{%
+\abcinput[program=pmw,options={-includefont},extension=pmw,#1]{#2}}
+
+\begin{document}
+
+This document includes music excerpts written in different formats. It
+uses \texttt{abc.sty} and defines new environments.
+
+This is a short piece, typeset by M-Tx:
+
+\mtxinput{sample-mtx}
+
+The same piece, typeset by PMW:
+
+\pmwinput{sample-pmw}
+
+End of document.
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+\score{sample-all}
+
+\bigskip
+
+A complete template that implements all environments is presented in
+Section~\ref{sec:abcall}.
+
+% -----
+
+\subsection{Using \cmd{make}}
+
+Another way to make a \LaTeX{} document that includes music in
+different formats is by using a developer's tool called \cmd{make}.
+It's a program that takes care of what needs what, what needs to be
+converted first, what should be done if you modify something, and so
+on. \cmd{make} is normally used to compile programs.
+
+Let's make a practical example. We have a \LaTeX{} document,
+\file{main.tex}, which includes three PDF files, \file{music1.pdf},
+\file{music2.pdf}, and \file{music3.pdf}:
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\usepackage{graphicx}
+\thispagestyle{empty}
+
+\begin{document}
+
+This document includes three music excerpts:
+
+\includegraphics{music1}
+
+\includegraphics{music2}
+
+\includegraphics{music3}
+
+End of document.
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+Let's suppose that the three PDF files are obtained from an
+\pkgname{M-Tx} file, a LilyPond file, and an ABC file. We should
+convert the PDF files manually, then typeset \file{main.tex}. It's not
+a big deal, but what if you have dozens of music files, each of which
+must be converted with different commands? This task would soon grow
+tedious and difficult to manage.
+
+Here \cmd{make} comes to the rescue. It uses a text file, called
+\file{Makefile}, which contains rules for building the document and
+the PDF files that it includes. This is a simple \file{Makefile} that
+can be used to compose (make!) \file{main.pdf}:
+
+\begin{source}
+\begin{verbatim}
+# Makefile for main.tex
+
+FIGURES = music1.pdf music2.pdf music3.pdf
+
+# The final document depends on main.tex and the figures
+main.pdf: main.tex $(FIGURES)
+        pdflatex main.tex
+
+# music1.pdf depends on music1.mtx
+# conversion commands follow
+music1.pdf: music1.mtx
+        musixtex music1.mtx ; pdfcrop musix1.pdf ; \
+        /bin/mv musix1-crop.pdf music1.pdf
+
+# music2.pdf depends on music2.ly
+music2.pdf: music2.ly
+        lilypond music2.ly; pdfcrop musix2.pdf ; \
+        /bin/mv musix2-crop.pdf music2.pdf
+
+# music3.pdf depends on music3.abc
+music3.pdf: music3.abc
+        abcm2ps -c -O= music3.abc; ps2pdf music3.ps; \
+        pdfcrop musix3.pdf ; \
+        /bin/mv musix3-crop.pdf music3.pdf
+
+# end of Makefile
+\end{verbatim}
+\end{source}
+
+% $
+
+Let's see what it does. First of all, as you might have guessed the
+\cmd{\#} character starts a comment; the rest of the line is ignored.
+
+This line:
+
+\begin{source}
+\begin{verbatim}
+FIGURES = music1.pdf music2.pdf music3.pdf
+\end{verbatim}
+\end{source}
+
+\noindent
+creates a \emph{variable}, that is a ``name'' (\cmd{FIGURES}) that
+``contains'' the three file names \cmd{music1.pdf music2.pdf
+music3.pdf}. This variable will be referred to later on.
+
+These lines:
+
+\begin{source}
+\begin{verbatim}
+main.pdf: main.tex $(FIGURES)
+        pdflatex main.tex
+\end{verbatim}
+\end{source}
+% $
+
+\noindent
+declare that \cmd{main.pdf} is a \emph{target} that depends on
+\file{main.tex} and on the three files denoted by the \cmd{FIGURES}
+variable. The second line specifies the command that must be run to
+make \file{main.pdf}. This line starts with a TAB character, not with
+spaces: this is important!
+
+Then we have three sections, one for each music file. Each section
+tells \cmd{make} what to do to compose the PDF figure. For instance,
+the section:
+
+\begin{source}
+\begin{verbatim}
+music1.pdf: music1.mtx
+        musixtex music1.mtx ; pdfcrop musix1.pdf ; \
+        /bin/mv musix1-crop.pdf music1.pdf
+\end{verbatim}
+\end{source}
+
+\noindent
+states that \file{music1.pdf} is a target that depends on
+\file{music1.mtx}; the following lines specify the commands to create
+\file{music1.pdf}. Commands are separated by the \cmd{;} character,
+while \cmd{\textbackslash} indicates that the command continues to the
+next line.
+
+To make \file{main.pdf}, we simply run the command:
+
+\begin{screen}
+$ \textbf{make}
+...
+$ _
+\end{screen}
+
+\noindent
+in the same directory where we saved \file{Makefile}. \cmd{make} will
+make the three figures first, then \file{main.pdf} that depends on
+them.
+
+If we modify one of the files, \cmd{make} will take care of
+dependencies and rebuild the final target. For example, if we modify
+\file{music2.ly}, \cmd{make} will rebuild \file{music2.pdf} first, then
+\file{main.pdf} that depends on \file{music2.pdf}.
+
+In my opinion, this approach is the most flexible. This guide was
+compiled using \cmd{make} and a pretty long \file{Makefile}.
+
+% -----
+
+\noteseparator
+
+% -----
+
+\newpage
+\section{The End}
+
+That's it, dear fellow musicians: I really hope that this guide will
+be useful to you. Please help me improve this document: for any
+suggestions, comments, or contributions, please feel free to contact
+me by \href{mailto:guido.gonzato@gmail.com}{email}. I'd like to
+receive feedback, especially if you use this document in education.
+
+I would like to thank all the geniuses who wrote the packages and
+programs cited in this guide. Kudos and hats off, folks!
+
+This document is copyleft \copyleft{} Guido Gonzato, PhD, and released
+under the \href{https://www.gnu.org/licenses/fdl.html}{GNU Free
+Documentation Licence}.
+
+\medskip
+
+\begin{center}
+  \includegraphics{guidopiper.jpeg}
+\end{center}
+
+Ciao! \texttt{=8-)}
+
+% -----
+
+\noteseparator
+
+% -----
+
+\newpage
+
+\appendix
+
+\section{List of Packages and Programs}
+
+This manual uses many \LaTeX{} packages and includes PDF output
+produced by several programs, all of which are free and open source.
+Commercial programs were intentionally left out.
+
+The page \url{https://www.ctan.org/topic/music} is an important
+starting po\-int for those interested in combining \LaTeX{} and music.
+It's a list of \LaTeX{} packages for typesetting music and related
+stuff. The following is the complete list of packages and programs I
+used to make this manual, in order of appearance.
+
+\begin{itemize}
+
+  \item CTAN Music page. ``This topic contains packages for
+  typesetting music and related stuff.''\\
+  \url{https://www.ctan.org/topic/music}.
+
+  \item Package: musicography, v. 2018-05.21.\\
+  \url{https://ctan.org/pkg/musicography}
+
+  \item Package: leadsheets, v. 0.5b\\
+  \url{https://ctan.org/pkg/leadsheets}
+
+  \item Package: lilyglyphs, v. 0.2.3\\
+  \url{https://ctan.org/pkg/lilyglyphs}
+
+  \item Font: Bravura, v.1.272\\
+  \url{https://www.smufl.org/fonts}
+
+  \item Package: guitar, v. 1.6\\
+  \url{https://ctan.org/pkg/guitar}
+
+  \item Package: gtrcrd, v. 1.1\\
+  \url{https://ctan.org/pkg/gtrcrd}
+
+  \item Package: songs, v. 3.0\\
+  \url{https://ctan.org/pkg/songs}
+
+  \item Package: musixguit, v. 1.2.2\\
+  \url{https://ctan.org/pkg/musixguit}
+
+  \item Package: songbook, v. 4.5\\
+  \url{https://ctan.org/pkg/songbook}
+
+  \item Program: Chordii, v. 4.3\\
+  \url{https://www.vromans.org/projects/Chordii}
+
+  \item Package: gchords, v. 1.20\\
+  \url{https://ctan.org/pkg/gchords}
+
+  \item Package: guitarchordschemes, v. 0.7\\
+  \url{https://ctan.org/pkg/guitarchordschemes}
+
+  \item Package: guitartabs, v. 2018-05-01\\
+  \url{https://ctan.org/pkg/guitartabs}
+
+  \item Page: MusiXTeX and Related Software. \\
+  \url{https://icking-music-archive.org/software/htdocs/htdocs.html}
+
+  \item Package: MusiXTeX, v. 1.29\\
+  \url{https://ctan.org/pkg/musixtex}
+
+  \item Package: M-Tx, v. 0.63a\\
+  \url{https://ctan.org/pkg/m-tx}
+
+  \item Package: Gregoriotex, v. 5.1.1\\
+  \url{https://ctan.org/pkg/gregoriotex}\\
+  \url{http://gregorio-project.github.io/gregoriotex}\\
+  \url{http://gregorio-project.github.io}
+
+  \item Program: LilyPond, v. 1.18.2\\
+  \url{http://lilypond.org}
+
+  \item Package: Lyluatex, v. 1.0b\\
+  \url{https://ctan.org/pkg/lyluatex}
+
+  \item Programs: \cmd{abcm2ps} v. 8.14.2,  \cmd{and2svg} v. 1.19.0\\
+  \url{http://moinejf.free.fr}
+
+  \item Program: PMW, Philip's Music Writer, v. 4.30\\
+  \url{http://people.ds.cam.ac.uk/ph10/pmw.html}
+
+  \item Program: MUP v. 6.6\\
+  \url{http://www.arkkra.com}
+
+  \item Program: MuseScore v. 3.0\\
+  \url{http://musescore.org}
+
+  \item Package: Abc v. 2.0b\\
+  \url{https://ctan.org/pkg/abc}
+
+  \item Program: abc2xml.ly v. 218\\
+  \url{https://wim.vree.org/svgParse/abc2xml.html}
+
+\end{itemize}
+
+% -----
+
+\newpage
+
+\section{Examples}
+
+\subsection{A Complete \pkg{abc} Example}
+\label{sec:abcall}
+
+This source defines environments for M-Tx, PMW, LilyPond, and MUP; it
+also redefines the \cmd{abc} environment as \cmd{ABC}. This is
+necessary for technical reasons. Lilypond sources must begin with a
+double line \ltx{version "2.18.2"}; this is required to avoid a bug.
+
+\begin{source}
+\begin{verbatim}
+% typeset with:
+% pdflatex -shell-escape sample-abc-all.tex
+
+\documentclass{article}
+\thispagestyle{empty}
+\usepackage[generate,ps2eps]{abc}
+
+% --- M-Tx support
+\newenvironment{mtx}[1][]
+{\renewcommand{\normalabcoutputfile}{out-mtx}%
+\abc[program=musixtex,options={-g},extension=mtx,#1]}
+{\endabc}
+\newcommand{\mtxinput}[2][]{%
+\abcinput[program=musixtex,options={-g},extension=mtx,#1]{#2}}
+
+% --- PMW support
+\newenvironment{pmw}[1][]
+{\renewcommand{\normalabcoutputfile}{out-pmw}%
+\abc[program=pmw,options={-includefont},extension=pmw,#1]}
+{\endabc}
+\newcommand{\pmwinput}[2][]{%
+\abcinput[program=pmw,options={-includefont},extension=pmw,#1]{#2}}
+
+% --- LilyPond support
+% !!! BUG: the LilyPond source must begin with a \null command
+\newenvironment{lily}[1][]
+{\renewcommand{\normalabcoutputfile}{out-lily}%
+\abc[program=lilypond,options={-d backend=eps},extension=ly,#1]}
+{\endabc}
+\newcommand{\lilyinput}[2][]{%
+\abcinput[program=lilypond,options={--ps},extension=ly,#1]{#2}}
+
+% --- MUP support
+\newenvironment{mup}[1][]
+{\renewcommand{\normalabcoutputfile}{out-mup}%
+\abc[program=mup,options={-F},extension=mup,#1]}
+{\endabc}
+\newcommand{\mupinput}[2][]{%
+\abcinput[program=mup,options={-F},extension=mup,#1]{#2}}
+
+% --- ABC must be redefined
+\newenvironment{ABC}[1][]
+{\renewcommand{\normalabcoutputfile}{out-ABC}%
+\abc[program=abcm2ps,options={-O=},extension=abc,#1]}
+{\endabc}
+\newcommand{\ABCinput}[2][]{%
+\abcinput[program=abcm2ps,options={-O=},extension=abc,#1]{#2}}
+
+\begin{document}
+
+This document includes music excerpts written in several formats. It
+uses \texttt{abc.sty} and defines new environments.
+
+This is a short piece, typeset by M-Tx:
+
+\begin{mtx}
+Title: \bigtype Music sample in M-Tx
+Style: Solo
+Meter: C
+Width: 160mm
+
+c4 d8 e f g a b | c4 b8 a g f e d | c8 g+ e g c- g+ e g | c4- e c r |
+\end{mtx}
+
+The same piece, typeset by LilyPond:
+
+\begin{lily}
+% twice - it's required to avoid a bug
+\version "2.18.2"
+\version "2.18.2"
+
+\header {
+  title = "Music sample in LilyPond"
+  tagline = "" % no footer
+}
+
+\relative c' {
+  \time 4/4
+  \clef treble
+  c4 d8 e f8 g a b | c4 b8 a g8 f e d |
+  c8 g' e g c,8 g' e g | c,4 e c r \bar "|."
+}
+\end{lily}
+
+The same piece, typeset by PMW:
+
+\begin{pmw}
+Heading "|Music sample in PMW"
+Key C
+Time 4/4
+
+[stave 1 treble 1]
+c d- e-; f-g-a-b-; | c' b- a-; g-f-e-d-; |
+c-g-e-g-; c-g-e-g-; |c e c r |
+[endstave]
+\end{pmw}
+
+The same piece, typeset by MUP:
+
+\begin{mup}
+// music sample in MUP notation
+
+header
+  title "Music sample in MUP"
+
+score
+  time=4/4
+
+music
+  1: 4c; 8d bm; e ebm; f bm; g; a; b ebm;
+  bar
+  1: 4c+; 8b bm; a ebm; g bm; f; e; d ebm;
+  bar
+  1: 8c bm; g; e; g ebm; c bm; g; e; g ebm;
+  bar
+  1: 4c; e; c; r;
+  endbar
+\end{mup}
+
+The same piece, typeset by abcm2ps:
+
+\begin{ABC}
+X: 1
+T: Music sample in ABC
+M: 4/4
+L: 1/4
+K: C
+%
+C D/E/ F/G/A/B/|c B/A/ G/F/E/D/|C/G/E/G/ C/G/E/G/|CECz|]
+\end{ABC}
+
+\end{document}
+
+\end{verbatim}
+\end{source}
+
+\score{sample-abc-all}
+
+% -----
+
+\subsection{A Complete Songbook Example}
+\label{sec:songbook}
+
+The following source is a minimal template for songbooks. It uses the
+\pkg{gchords} and \pkg{guitar} packages (Sections~\ref{sec:gchords}
+and \ref{sec:pkgguitar}). The resulting PDF has its own page numbers
+(don't get confused!) and is included in this document with
+\ltx{includepdf}.
+
+\begin{source}
+\begin{verbatim}
+\documentclass[11pt]{article}
+\usepackage{graphicx}
+\usepackage{gchords}
+\usepackage{guitar}
+
+\begin{document}
+
+\title{A Minimal Songbook}
+\author{Guido Gonzato}
+\date{\today}
+
+\maketitle
+\tableofcontents
+
+% -----
+
+\section{For He's a Jolly Good Fellow}
+
+% Typically sung to congratulate somebody.
+
+\smallchords
+
+\def\numfrets{4}
+\begin{minipage}[c]{\linewidth} % use less space
+  \chords{
+  \chord{t}{n,p3,p2,n,p1,n}{C}
+  \chord{t}{p3,p2,n,n,n,p3}{G}
+  \chord{t}{n,p3,p2,p3,p1,n}{C7}
+  \chord{t1}{n,p2,p2,p1,n,n}{F}
+}
+\end{minipage}
+
+\medskip
+
+\includegraphics[width=\textwidth]{fellow}
+
+\bigskip
+
+\begin{guitar}
+
+For [C]he's a jolly good fellow,
+For [G]he's a jolly good [C]fellow,
+For [C7]he's a jolly good [F]fellow,
+Which [C]nobody [G]can [C]deny.
+
+\end{guitar}
+
+% -----
+
+\section{Happy Birthday To You}
+
+% Sung to remind somebody they're growing old.
+
+\def\numfrets{4}
+\begin{minipage}[c]{\linewidth}
+  \chords{
+  \chord{t1}{n,p2,p2,p1,n,n}{F}
+  \chord{t}{n,p3,p2,n,p1,n}{C}
+  \chord{t}{n,p3,p2,p3,p1,n}{C7}
+  \chord{t1}{n,n,p2,p2,p2,n}{Bb}
+}
+\end{minipage}
+
+\medskip
+
+\includegraphics[width=\textwidth]{happyb}
+
+\bigskip
+
+\begin{guitar}
+Happy [F]birthday to [C]you,
+Happy [C7]birthday to [F]you,
+Happy birthday dear [Bb]Guido,
+Happy [F]birthday [C]to [F]you!
+\end{guitar}
+
+% -----
+
+\section{Warm Kitty}
+
+% No need to introduce this lullaby!
+
+\def\numfrets{4}
+\begin{minipage}[c]{\linewidth}
+\chords{
+  \chord{t}{n,n,p2,p2,p2,n}{A}
+  \chord{t}{n,p2,p2,p1,n,n}{E}
+  \chord{t}{n,p2,p2,p1,p3,n}{E7}
+}
+\end{minipage}
+
+\medskip
+
+\includegraphics[width=\textwidth]{warm}
+
+\bigskip
+
+\begin{guitar}
+
+[A]Soft kitty, [E]warm kitty
+[A]Little ball of [E]fur [E7]~
+[A]Happy kitty, [E]sleepy kitty
+[A]Purr, [E]purr, [A]purr
+
+\end{guitar}
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+\newpage
+
+\pagecolor{pdfbg}
+\includepdf[pages=-,pagecommand={}]{sample-songbook.pdf}
+\pagecolor{white}
+
+% -----
+
+\subsection{A sample \file{Makefile}}
+
+This is the \file{Makefile} that was used to typeset the previous
+example. The \cmd{clean} target is used to clean up all temporary
+files.
+
+\begin{source}
+\begin{verbatim}
+# Makefile for sample-songbook
+
+FIGURES = fellow.pdf happyb.pdf warm.pdf
+
+sample-songbook: sample-songbook.tex $(FIGURES)
+        pdflatex sample-songbook.tex; \
+        pdflatex sample-songbook.tex; \
+        pdflatex sample-songbook.tex
+
+fellow.pdf: fellow.abc
+        abcm2ps -c -O= fellow.abc; \
+        ps2pdf fellow.ps; pdfcrop fellow.pdf; \
+        /bin/mv -f fellow-crop.pdf fellow.pdf
+
+happyb.pdf: happyb.abc
+        abcm2ps -O= happyb.abc; \
+        ps2pdf happyb.ps; pdfcrop happyb.pdf; \
+        /bin/mv -f happyb-crop.pdf happyb.pdf
+
+warm.pdf: warm.abc
+        abcm2ps -O= warm.abc; \
+        ps2pdf warm.ps; pdfcrop warm.pdf; \
+        /bin/mv -f warm-crop.pdf warm.pdf
+
+clean:
+        /bin/rm -f .*~ *~ *aux *bak *lo? *to? *out *tmp *bbl *ps
+\end{verbatim}
+\end{source}
+% $
+
+% -----
+
+\subsection{Verses and Guitar Chords Diagrams}
+
+Combining verses and guitar chord diagrams can be done in several
+ways. I think that the following example shows two of the easiest
+methods. Please refer to Section~\ref{sec:pkgguitar} and
+Section~\ref{sec:gchords} for further details.
+
+\begin{source}
+\begin{verbatim}
+\documentclass{article}
+\usepackage{guitar}
+\usepackage{gchords}
+\thispagestyle{empty}
+
+\newcommand{\C}{\hspace{-0.8em}\chord{t}{n,p3,p2,n,p1,n}{C}}
+\newcommand{\CmajVII}{\hspace{-0.8em}\chord{t}{n,p3,p2,n,n,n}{Cmaj7}}
+\newcommand{\F}{\hspace{-0.8em}\chord{t1}{n,p2,p2,p1,n,n}{F}}
+
+\def\chordsize{1.5mm}
+\def\numfrets{3}
+\def\namefont{\it}
+
+\begin{document}
+
+\noindent
+We can typeset verses and guitar chord grids in a \texttt{guitar}
+environment:
+
+\bigskip
+
+\begin{minipage}[c]{\linewidth} % to avoid indentation
+  \begin{guitar}
+
+    \textbf{Imagine (John Lennon)}
+    \emph{Intro, $\times$ 2}
+    [\C] \hspace{2em} [\CmajVII] \hspace{2em} [\F] \hspace{2em}
+    [\C]Imagine there's [\CmajVII|]{no} ~ [\F]heaven
+    [\C]It's easy if [\CmajVII|]{you} ~ [\F]try
+
+  \end{guitar}
+\end{minipage}
+
+\noindent
+{\ldots}and so on. But we could just use the \verb|\upchord| command,
+provided by \texttt{gchords}:
+
+\begin{verse}
+
+  \upchord{\C}Imagine there's \upchord{\CmajVII}no \qquad
+  \upchord{\F}heaven
+
+  \upchord{\C}It's easy if \upchord{\CmajVII}you \qquad
+  \upchord{\F}try
+
+\end{verse}
+
+\end{document}
+\end{verbatim}
+\end{source}
+
+\score{verses-chords}
+
+% -----
+
+\end{document}
+
+%% --- end of file latex4musicians.tex

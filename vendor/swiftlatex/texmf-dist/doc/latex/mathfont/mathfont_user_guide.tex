@@ -1,0 +1,249 @@
+%%
+%% This is file `mathfont_user_guide.tex',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% mathfont_code.dtx  (with options: `user')
+%% 
+%% This file is file from version 1.6 of the LaTeX package "mathfont,"
+%% to be used in conjunction with the XeTeX or LuaTeX engines.
+%% 
+%% Copyright 2018-2019 by Conrad Kosowsky
+%% 
+%% This file may be distributed and modified under the terms of the
+%% LaTeX Public Project License, version 1.3c or any later version.
+%% The most recent version of this license is available online at
+%% 
+%%            https://www.latex-project.org/lppl/.
+%% 
+%% This work has the LPPL status "maintained," and the current
+%% maintainer is the package author, Conrad Kosowsky. He can be
+%% reached at kosowsky.latex@gmail.com. The work consists of the
+%% following items:
+%% 
+%%   (1) the base file mathfont_code.dtx;
+%% 
+%%   (2) the package code contained in mathfont.sty;
+%% 
+%%   (3) the derived files mathfont_symbol_list.tex,
+%% mathfont_user_guide.tex, mathfont_heading.tex, and
+%% mathfont_doc_patch.tex;
+%% 
+%%   (4) the pdf documentation files mathfont_code.pdf,
+%% mathfont_symbol_list.pdf, and mathfont_user_guide.pdf;
+%% 
+%%   (5) all other files created through the configuration process
+%% such as mathfont.idx and mathfont.ind; and
+%% 
+%%   (6) the associated README.txt file.
+%% 
+%% For more information, see the original mathfont.dtx file. To
+%% install mathfont on your computer, run mathfont_code.dtx through
+%% LaTeX and place the derived file mathfont.sty in a directory
+%% searchable by TeX.
+%% 
+\documentclass[12pt,twoside]{article}
+\makeatletter
+\usepackage[margin=72.27pt]{geometry}
+\usepackage[factor=700,stretch=14,shrink=14,step=1]{microtype}
+\usepackage[bottom]{footmisc}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{tabularx}
+\usepackage{shortvrb}
+\skip\footins=7pt
+\MakeShortVerb{|}
+\hyphenpenalty=10
+\pretolerance=20
+\hyphenpenalty=10
+\exhyphenpenalty=5
+\brokenpenalty=0
+\clubpenalty=5
+\widowpenalty=5
+\finalhyphendemerits=300
+\doublehyphendemerits=500
+\renewcommand\textfraction{0.4}
+\begin{document}
+
+\def\documentname{User Guide}
+\input mathfont_heading.tex
+
+Handling fonts in \TeX\ and \LaTeX\ is a notoriously difficult task. Donald Knuth originally designed \TeX\ to support fonts created with Metafont, and while subsequent versions of \TeX\ extended this functionality to postscript fonts, Plain \TeX's font-loading capabilities remain limited. Many, if not most, \LaTeX\ users are unfamiliar with the |fd| files that must be used in font declaration, and the minutiae of \TeX's |\font| primitive can be esoteric and confusing. \LaTeXe's New Font Selection System (\textsc{nfss}) implemented a straightforward syntax for loading and managing fonts, but \LaTeX\ macros overlaying a \TeX\ core face the same versatility issues as Plain \TeX\ itself. Fonts in math mode present a double challenge: after loading a font either in Plain \TeX\ or through the \textsc{nfss}, defining math symbols can be unintuitive for users who are unfamiliar with \TeX's |\mathcode| primitive. More recent engines such as Jonathan Kew's \XeTeX\ and Hans Hagen, et al.'s Lua\TeX\ significantly extend the font-loading capabilities of \TeX.\footnote{Information on \XeTeX\ is available at \texttt{https://tug.org/xetex/}, and information on Lua\TeX\ is available at the official website for Lua\TeX: \texttt{http://www.luatex.org/}.} Both support TrueType and OpenType font formats and provide many additional primitives for managing fonts, and the \textsf{fontspec} package by Will Robertson and Khaled Hosny acts as a front-end for the font management built into these two engines.\footnote{Will Robertson and Khaled Hosny, ``\textsf{fontspec}---Advanced font selection in \XeLaTeX\ and Lua\LaTeX,'' \texttt{https://ctan.org/pkg/fontspec}.}
+
+The \textsf{mathfont} package applies \textsf{fontspec}'s advances in font selection to mathematics typesetting, and this document explains the package's user-level commands. Section~1 presents the basic functionality and related packages. Section~2 explains how to use the default font-change commands, and users in a hurry will find the most important information here. Section~3 describes the local font-change commands, and section~4 discusses mathematical symbols and aspects of their implementation. Section~5 addresses error messages. For version history and code implementation, see |mathfont_code.pdf|, and for a list of all symbols accessible with \textsf{mathfont}, see |mathfont_symbol_list.pdf|. Both of these documentation files are included with the \textsf{mathfont} installation and are available on \textsc{ctan}.
+
+\section{Basic Functionality}
+
+The \textsf{mathfont} package uses \textsf{fontspec} as a back end to load fonts for use in math mode, and it provides two ways to do this: (1) changing the default font for certain classes of math-mode characters; and (2) defining new commands that change the font locally for the so-called ``math-alphabet'' characters. The package can change the default math-mode font used for Latin, Greek, Cyrillic, and Hebrew letters; Arabic numerals; roughly 300 unicode math symbols; and standard unicode alphanumeric characters. The package accepts any OpenType or TrueType font, and tables~1 and 2 display the specific classes of characters that \textsf{mathfont}'s default font-change command acts on. The default math-alphabet characters are Latin letters, Arabic numerals, upper-case Greek characters, and diacritics. When \textsf{mathfont} sets the default font for any of these four character classes, it preserves their math alphabet status, and when the package sets the default font for lower-case Greek, ancient Greek, Cyrillic, or Hebrew characters, it recodes each symbol in the class as math-alphabet type. At that point, the local font-change commands will act on any characters in those classes.
+
+The package must be loaded with \XeLaTeX or Lua\LaTeX. It can be loaded with the standard |\usepackage| syntax, and it accepts one optional argument. It treats the argument as a font name and changes all main fonts to that option. Specifically, the package invokes both |\mathfont| and \textsf{fontspec}'s |\setmainfont|, and it defines the four local font-changing commands |\mathrm|, |\mathit|, |\mathbf|, and |\mathbfit| to produce text from the desired font in combinations of upright, italic, and bold styles according to the control sequences' last letters. \XeTeX\ users may run into trouble with fonts whose name contains multiple words because \LaTeX\ eats spaces during package-option parsing. In this case, you will have to load the package and separately declare |\setfont| in your preamble. The package loads \textsf{fontspec} with the |no-math| option if and only if the user has not already loaded \textsf{fontspec}. Users who want \textsf{fontspec} without |no-math| or with other options in place can manually load it before requiring \textsf{mathfont}. Regardless, I strongly recommend that \textsf{fontspec} be loaded with |no-math| because otherwise some font changes may not render properly.
+
+During loading, \textsf{mathfont} redefines three \LaTeX\ internal macros to make symbol declaration compatible with unicode fonts, and default math-font changes work only with the redefinitions in place. Because the internal changes are relatively unobtrusive, \textsf{mathfont}'s adjustments almost certainly do not affect \LaTeX\ packages loaded later, and the package does not restore the commands automatically. Instead, |\restoremathinternals| returns the internal commands to their default definitions, and users who want the previous definitions should reset the kernel manually. The corollary is that |\mathfont| and |\setfont| work before |\restoremathinternals| but not after. As of version~1.6, the package optional arguments |packages|, |operators|, and |no-operators| are depreciated. Instead, \textsf{mathfont} offers |\restoremathinternals| as the only way to interact directly with the kernel.\footnote{To be clear, as of version~1.6, \textsf{mathfont} does not restore the \LaTeX\ kernel when the user loads other packages. Given the scope and nature of the changes, I determined that the convenience factor of being able to use \vrb\mathfont\ anywhere in the preamble outweighs the incredibly small risk of interfering with another package. As far as I can tell, the biggest change is using a different primitive to code math symbols, but even that will probably never affect practical applications. The test \expandafter\vrb\csname if\endcsname\vrb\mathchar\vrb\alpha\ succeeds both before and after calling \vrb\mathfont, even though afterwards \vrb\alpha\ is defined with \vrb\Umathchar\ instead.} For changes to big operators, use the |bigops| keyword in section~2.
+
+The functionality of \textsf{mathfont} is most closely related to that of the \textsf{mathspec} package by Andrew Gilbert Moschou.\footnote{Andrew Gilbert Moschou, ``\textsf{mathspec}---Specify arbitrary fonts for mathematics in \XeTeX,''\hfil\break\texttt{https://ctan.org/pkg/mathspec}.} These two packages incorporate the use of individual unicode characters into math mode, and their symbol declaration process is similar. Both use \textsf{fontspec} as a back end, and both create font-changing commands for math-mode characters. However, the functionality differs in three crucial respects: (1) \textsf{mathfont} is compatible with Lua\LaTeX; (2) it can adjust the font of basic mathematical symbols such as those in the first half of table~2; and (3) \textsf{mathfont} lacks \textsf{mathspec}'s convenient space-adjustment character |"|.% footnote %
+\footnote{Compatibility with Lua\LaTeX\ comes at the expense of \textsf{mathspec}'s space-adjustment character |"|, and spacing-conscientious users can either manually add |\string\kern| or |\string\muskip| to their equations or redefine an active version of |"|. For example, the code
+\begin{code} % footnotes and verbatim really don't play well together
+\begingroup\texttt{\string\catcode`\string\"=\string\active}\par
+\texttt{\string\def"\expandafter\@gobble\string\#1\char"7B\relax
+  \expandafter\string\csname ifmmode\endcsname}\par
+\texttt{\ \ \string\kern}\argtext{dimension}%
+  \texttt{\string\relax\ \expandafter\@gobble\string\#1\string\kern}%
+  \argtext{other dimension}\texttt{\string\relax}\par
+\texttt{\expandafter\string\csname else\endcsname}\par
+\texttt{\ \ \string\char`\string\"\expandafter\@gobble\string\#1\%}\par
+\texttt{\expandafter\string\csname fi\endcsname\char"7D\relax}\endgroup
+\end{code}
+will serve as a hack that very roughly approximates \textsf{mathspec}'s |"|. This code will redefine |"| to typeset a right double quotation mark in horizontal mode, but in math mode, the character will insert \textit{dimension} and \textit{other dimension} of white space on each side respectively of the next character. More advanced users can automate the dimensions by using \TeX's \texttt{\expandafter\string\csname if\endcsname} or \LaTeX's |\string\@ifnextchar| conditionals to test whether the following character needs a particular spacing adjustment.} % end footnote %
+Further, as far as I am aware, this package is the first to provide support for the unicode alphanumeric symbols listed in Table~2, even in the context of fonts without built-in math support. (Please let me know if this is incorrect!) In this way \textsf{mathfont}, like \textsf{mathspec}, is more versatile than the \textsf{unicode-math} package, although potentially less far-reaching.\footnote{Will Robertson, ``\textsf{unicode-math}---Unicode mathematics support for \XeTeX\ and Lua\TeX,''\hfil\break\texttt{https://ctan.org/pkg/unicode-math}.}
+
+Users who want to stick with pdf\LaTeX\ should consider Jean-Fran\c cois Burnol's \textsf{mathastext} as a useful alternative to \textsf{mathfont}.\footnote{Jean-Fran\c cois Burnol, ``\textsf{mathastext}---Use the text font in maths mode,''\hfil\break\texttt{https://ctan.org/pkg/mathastext}. In several previous versions of this documentation, I mistakenly stated that \textsf{mathastext} distorts \TeX's internal mathematics spacing. In fact the opposite is true: \textsf{mathastext} preserves and in some cases extends rules for space between various math-mode characters.} This package allows the user to specify the math-mode font for a large subset of the ASCII characters and is the most closely related package to \textsf{mathfont} among those packages designed specifically for pdf\LaTeX. Whereas \textsf{mathfont} works exclusively in the context of unicode fonts, \textsf{mathastext} was designed for the T1 and related encodings of Plain \TeX\ and \LaTeX. However, the \textsf{mathastext} functionality extends beyond that of \textsf{mathfont} in two notable aspects: (1) \textsf{mathastext} makes use of math versions, extra spacing, and italic corrections; and (2) \textsf{mathastext} allows users to change the font for the twenty-five non-alphanumeric characters supported by that package multiple times. After setting the default font for a class of characters, \textsf{mathfont} allows only the local font changes outlined in section~3.
+
+\section{Setting the Default Font}
+
+The |\mathfont| command sets the default font for certain classes of characters. Its structure is given by
+\begin{code}
+|\mathfont[|\argtext{optional character classes}|]{|\argtext{font name}|}|,
+\end{code}
+where the \textit{optional character classes} can be any set of keywords from Tables~1 and 2 separated by commas, and the \textit{font name} can be any OpenType or TrueType font in a directory searchable by \TeX.\footnote{When specifying the \textit{font name}, users need to input a name that \textsf{fontspec} will recognize and be able to load. Advanced users will note that \vrb\mathfont\ uses \fontspeccommand\ and therefore loads fonts in the same way as \vrb\fontspec\ and related macros from that package.} The command loops through all keywords in the optional argument, and for each keyword, it changes the math-mode font for every character in that class to the \textit{font name}.\footnote{These changes happen through \LaTeX's \vrb\DeclareMathSymbol, and \vrb\mathfont\ is basically a very elaborately wrapped version of this command.} Currently, \textsf{mathfont} does not support OpenType features in math mode. To change both math and text fonts simultaneously, the package provides the command
+\begin{code}
+|\setfont{|\argtext{font name}|}|,
+\end{code}
+which calls both |\mathfont| and \textsf{fontspec}'s |\setmainfont| using the \textit{font name} as arguments. The package's optional argument is equivalent to calling |\setfont| and three local font-change commands from section 3, and most users will find this command sufficient for most applications. Both |\mathfont| and |\setfont| should appear only in the document preamble, i.e.\ before |\begin{document}|.
+
+The user should specify any optional arguments for |\mathfont| as entries in a comma-separated list. The order is irrelevant, and spaces throughout the optional argument are permitted. The argument should contain no braces! Leaving out the optional argument will cause the command to revert to its default behavior, where it acts on keyword classes |upper|, |lower|, |diacritics|, |greekupper|, |greeklower|, |digits|, |operator|, and |symbols|. For example, if the user writes
+\begin{code}
+|\mathfont{Arial}|,
+\end{code}
+\textsf{mathfont} will change the font of all Latin characters, Greek characters, diacritics, digits, operators such as $\log$ or $\sin$, and |symbols| characters to Arial whenever they come up in math mode. The package provides control sequences to typeset many symbols that \LaTeX\ does not include by default, and users gain access to these commands when they call |\mathfont| or |\setfont| with the appropriate keyword-option. In total, the package is capable of acting on some 800 unicode characters, and for a full list of symbols and control sequences, see |mathfont_symbol_list.pdf|, which is included in the \textsf{mathfont} installation and is available on \textsc{ctan}. Users can feed |\mathfont| a control sequence as its optional argument as long as the macro eventually expands to a comma-separated list of keywords and suboptions without braces.% footnote
+\footnote{Technically, \vrb\mathfont\ expands its optional argument inside an \vrb\edef. When it scans an optional argument, \textsf{mathfont} temporarily converts spaces to catcode~9 and ignores them. However, if you feed \vrb\mathfont\ a macro with spaces in it, \TeX\ has already scanned and tokenized those spaces, so we use \vrb\zap@space\ from the \LaTeX\ kernel instead. Braces will wreck both this process and the \vrb\@for\ loop that comes later.} % end footnote
+Finally, |\mathfont| and |\setfont| will not change the default font for a class of symbols once one of them has already done so.
+
+\begin{figure}[tb]
+\centering
+Table~1: Math Alphabet Characters\par\penalty\@M\smallskip
+\begin{tabularx}\hsize{p{1.8in}Xp{1.3in}}
+\toprule
+Keyword & Meaning & Default shape\\
+\midrule
+|upper| & Capital Latin Letters & Italic\\
+|lower| & Minuscule Latin Letters & Italic\\
+|diacritics| & Diacritics & Upright\\
+|greekupper| & Capital Greek Letters & Upright\\
+|greeklower| & Minuscule Greek Letters & Italic\\
+|agreekupper| & Capital Ancient Greek Letters & Upright\\
+|agreeklower| & Minuscule Ancient Greek Letters & Italic\\
+|cyrillicupper| & Capital Cyrillic Letters & Upright\\
+|cyrilliclower| & Minuscule Cyrillic Letters & Italic\\
+|hebrew| & Hebrew Letters & Upright\\
+|digits| & Arabic Numerals & Upright\\
+|operator| & Operator Font & Upright\\
+\bottomrule
+\end{tabularx}
+\end{figure}
+
+By default, \textsf{mathfont} will use one of an upright or italic shape for every character class, and users can override this setting by writing an |=| next to the keyword and either |roman| or |italic| following that. These two suboptions correspond respectively to an upright shape---normal shape in the language of the \textsc{nfss}---and an italic shape. Table~1 includes the default shape-values for each keyword, and the package declares characters for all keywords in table~2 as upright by default. For example, the command
+\begin{code}
+|\mathfont[upper=roman,lower=roman]{Times New Roman}|
+\end{code}
+changes all math-mode Latin letters to Times New Roman with upright shape.
+
+\begin{figure}[t]
+\centering
+Table~2: Letter-Like and Other Symbols\par\penalty\@M\smallskip
+\begin{tabularx}\hsize{p{1.8in}X}
+\toprule
+Keyword & Meaning\\
+\midrule
+|symbols| & Basic Symbols\\
+|extsymbols| & Extended Symbols\\
+|delimiters| & Parentheses, Brackets, and Braces\\
+|arrows| & Arrows\\
+|bigops| & ``Big'' Operators (see section 4)\\
+|extbigops| & Extended ``Big'' Operators\\
+|bb| & Blackboard Bold (double-struck)\\
+|cal| & Caligraphic\\
+|frak| & Fraktur\\
+|bcal| & Bold Caligraphic\\
+|bfrak| & Bold Fraktur\\
+\bottomrule
+\end{tabularx}
+\end{figure}
+
+The package provides access to several types of letterlike symbols that appear frequently in mathematical writing, and the last five keywords in table~2 constitute these classes. Unlike with other keywords, \textsf{mathfont} doesn't create control sequences to access the symbols directly but rather defines a new command that converts letters into the appropriate style. When the user calls |\mathfont| with any of the last five keywords from table~2, the package both declares the appropriate unicode characters as math symbols and defines the macro
+\begin{code}
+|\math|\argtext{keyword}|{|\argtext{argument}|}|
+\end{code}
+to typeset them. For example,
+\begin{code}
+|\mathfont[bcal]{STIXGeneral}|
+\end{code}
+will set STIXGeneral as the font for bold calligraphic characters and define the command |\mathbcal| to access them in math mode. For the |bb| case, the associated command acts on Latin letters and Arabic numerals, and for the other four keywords, the associated command acts just on Latin letters. \TeX\ will ignore and issue a warning in response to any other characters in the \textit{argument}.
+
+\section{Local Font Changes}
+
+With \textsf{mathfont}, users can locally change the font in math mode by creating and then using a new control sequence for each new font desired.\footnote{The five macros in this section are basically wrapped versions of \LaTeX's \vrb\DeclareMathAlphabet.} The control sequences created this way function analogously to the standard math font macros such as |\mathrm|, |\mathit|, and |\mathnormal| from the \LaTeX\ kernel, and the package provides four basic commands to produce them. Table~3 lists these commands. All four have the same argument structure: a control sequence as the first mandatory argument and a font name as the second. For example, the macro |\newmathrm| looks like
+\begin{code}
+|\newmathrm{|\argtext{control sequence}|}{|\argtext{font name}|}|.
+\end{code}
+It defines the \textit{control sequence} in its first argument to accept a string of characters that it then converts to the \textit{font name} in the second argument with upright shape and medium weight. Writing
+\begin{code}
+|\newmathrm{\matharial}{Arial}|
+\end{code}
+would create the macro
+\begin{code}
+|\matharial{|\argtext{argument}|}|,
+\end{code}
+which can be used only in math mode and which converts the math alphabet characters in its \textit{argument} into the Arial font with upright shape and medium weight. The other three commands in table~3 function in the same way except that they select different series or shape values for the font in question. Table~3 lists this information. As of version~1.6, |\newmathbold| has been renamed to |\newmathbf| to put it in line with \textsc{nfss} naming conventions.
+
+\begin{figure}[t]
+\centering
+Table 3: Font-changing Commands\par\penalty\@M\smallskip
+\begin{tabularx}\hsize{p{1.8in}X}
+\toprule
+Command & Font Characteristics\\
+\midrule
+|\newmathrm| & Upright shape; medium weight\\
+|\newmathit| & Italic shape; medium weight\\
+|\newmathbf| & Upright shape; bold-expanded weight\\
+|\newmathbfit| & Italic shape; bold-expanded weight\\
+\bottomrule
+\end{tabularx}
+\end{figure}
+
+Together these four commands will provide users with the tools for almost all desired local font changes, but they inevitably will be insufficient for some particular case. Accordingly, \textsf{mathfont} provides the more general |\newmathfontcommand| macro that functions similarly to the commands from table~3 but allows for more general font characteristics.\footnote{The package defines the four commands from table~3 in terms of \vrb\newmathfontcommand, and it specifies their style characteristics according to the kernel commands \vrb\updefault, \vrb\itdefault, \vrb\mddefault, and \vrb\bfdefault. Changing these macros will implicitly change the characteristics of the commands in table~3.} Its structure is
+\begin{code}
+|\newmathfontcommand{|\argtext{control sequence}|}{|\argtext{font name}|}{|\argtext{series}|}{|\argtext{shape}|}|,
+\end{code}
+where the control sequence in the first argument again becomes the macro that allows the user to access the specified font. The font name means any OpenType or TrueType font in a directory searchable by \TeX, and the series and shape information refers to the \textsc{nfss} codes for these attributes. Like |\mathfont| and |\setfont|, these commands should appear only in the document preamble.
+
+Unlike the traditional |\mathrm| and company, \textsf{mathfont}'s local font change commands create macros that can act on Greek characters. If the user specifies the font for Greek letters using |\mathfont|, macros created with the commands from Table~3 will affect those characters; otherwise, they will not.\footnote{\LaTeXe\ defines lower-case Greek letters as \vrb\mathord\ characters, and \textsf{mathfont} changes this classification to \vrb\mathalpha\ type when it declares them as symbols. The local font change commands act only on characters of class \vrb\mathalpha, so these commands will act on lower-case Greek letters if \vrb\mathfont\ redefines them to be \vrb\mathalpha.} Similarly, the local font-change commands will act on Cyrillic and Hebrew characters after the user calls |\mathfont| for those keyword-classes.
+
+\section{Math Symbols}
+
+Choosing which unicode characters to recode is something of a delicate task because few unicode fonts contain more than the most basic math symbols. In designing this portion of \textsf{mathfont}, I attempted to find the largest set of characters that reliably appears in every or nearly every major unicode font, and I coded those characters in the |symbols| keyword. This keyword contains punctuation and common symbols such as $\pm$, $\div$, and $\infty$, and it will be sufficient for basic math typesetting. That being said, most math relies on a much broader collection of characters and arrows, and in other keywords, I coded every unicode math symbol that I could reasonably see being useful. The extended math symbols keyword |extsymbols| contains quantifiers, set and element relations, just about any binary relation you can imagine, and a few miscellaneous symbols such as |\sharp| and |\flat|. The |arrows| keyword contains a swath of hooked, curved, and bar arrows and even one lightning bolt arrow. Most standard unicode fonts don't contain many of those glyphs, and users who call |\mathfont| for a font without certain characters will see blank spaces in their final output instead of the corresponding symbols from |mathfont_symbol_list.pdf|. If this happens, check the |log| file because it will display any missing characters in your fonts.
+
+It's worth emphasizing three aspects of \textsf{mathfont}'s symbol declaration process. First, the package does not provide any symbols in and of itself but rather gives users access to symbols that already exist on their computers. This is why \textsf{mathfont} provides no additional symbols directly at loading and why some package commands can create blank spaces rather than their intended output. Second, \textsf{mathfont}'s functionality currently does not include math symbols of variable sizes.% footnote
+\footnote{Dynamic math-mode character sizing is a surprisingly thorny task. OpenType font designers specifically code certain characters to change size when they design the font, and Lua\TeX's \vrb\Udelimiter\ and \vrb\Umathoperatorsize\ depend on this embedded feature. Because most unicode fonts come without resizing information, \textsf{mathfont} would have to manually add these settings to the Lua\TeX\ font table. I intend to add this functionality in some future update, but I do not know what the timeframe looks like for those changes.} % end footnote
+Recoded delimiters do not respond to |\left| and |\right|, and \LaTeX\ replaces them with their original Latin Modern equivalents before rescaling appropriately. Thus |\mathfont| with the |delimiters| keyword will produce normally sized delimiters in the font of your choice and big delimiters in Latin Modern Roman. Similarly, big operators such as |\sum| and |\prod| appear normally sized instead of larger after setting their font with |\mathfont|. This is undesirable! I have isolated all delimiter and big operator characters in their own keywords, and I hope to address this limitation in future updates. Third, the package provides an extra comma character, similar to \LaTeX's |\colon|.% footnote
+\footnote{Consider $\{x:x\not=0\}$ versus $\{x\colon x\not=0\}$. The first specification uses |:| while the second uses \vrb\colon. As a rule of thumb, use |:| for ratios and \vrb\colon\ as a punctuation mark.} % end footnote
+\TeX\ users have likely noticed the extra space surrounding commas in math mode, e.g.\ $10,000$ versus $10\mathord,000$, and \textsf{mathfont}'s |\comma| addresses this problem. Here the first ten thousand uses a standard~|,|~while the second uses |\comma|. As a rule of thumb, use |,| as a punctuation mark and |\comma| as a character separator.
+
+\section{Handling Errors}
+
+I have tried to make \textsf{mathfont}'s error messages as clear as possible, and the help text will contain instructions for how to resolve the problem. Nevertheless, some of the possible error messages warrant additional explanation.
+
+The most salient errors are the ``Could not find \textsf{fontspec}'' and ``Missing \XeTeX\ or Lua\TeX'' fatal errors. When the user loads \textsf{mathfont}, \TeX\ must be able to find the package file |fontspec.sty|, and \TeX\ must be operating under the \XeTeX\ or Lua\TeX\ engine. If either condition fails, \TeX\ will stop reading in |mathfont.sty|.% footnote
+\footnote{Note that \textsf{mathfont} doesn't actually determine the typesetting engine. Rather, it checks whether the \XeTeX\ and Lua\TeX\ primitives \vrb\Umathcode, \vrb\Umathchardef, and \vrb\Umathaccent\ are defined, so if for some reason these control sequences have definitions when the user loads \textsf{mathfont} with another engine, \textsf{fontspec}'s more robust engine checks will take over and cause \TeX\ to abort. The reasoning here is straightforward: \textsf{mathfont} verifies only that the current typesetting engine provides the commands that it directly needs, so its potential functionality remains as broad as possible. If \textsf{fontspec} becomes compatible with a third engine that also provides (analogues of) these primitives, there is no reason to prevent \textsf{mathfont} from working with that engine as well.} % end footnote
+As of version 1.6, \textsf{mathfont}'s fatal errors prevent \TeX\ from reading in the rest of the |sty| file but do not crash the compilation process, and users who continue past one of \textsf{mathfont}'s fatal error messages will see an ``invalid command'' error if they call a user-level command in their document. I designed these errors to be unobtrusive, and users can safely ignore them. Because of how \textsf{mathfont} performs its engine check, it is theoretically possible that users with very old \XeTeX\ or Lua\TeX\ distributions may see the second fatal error even when running one of these two engines, and the solution is probably to upgrade to a more recent version of the engine in question. Unfortunately, I do not know what the exact cutoff for \XeTeX\ and Lua\TeX\ versions is.\footnote{However, the manual for a beta version of Lua\TeX, v.\ 0.70.1, includes these primitives, so they are at least as old as May 2011. See\hfill\break \texttt{https://osl.ugr.es/CTAN/obsolete/systems/luatex/base/manual/luatexref-t.pdf}}
+
+The \textsf{fontspec} package includes a ``|no-math|'' option, and \textsf{mathfont} expects \textsf{fontspec} to be loaded with this option. As mentioned previously, \textsf{mathfont} loads \textsf{fontspec} by default, but users can load \textsf{fontspec} before \textsf{mathfont} if they want to manually specify the package options. Alternatively, \LaTeX's |\PassOptionsToPackage| may be an even better way to proceed. If \textsf{mathfont} detects that \textsf{fontspec} was loaded without the |no-math| option, it will issue an error message saying so. This error is not paramount in the sense that the document will compile normally if a user ignores it, but \textsf{mathfont} will probably have trouble changing the font of certain math-mode characters in this situation. During development, Arabic numerals posed a particular challenge in this regard.
+
+The ``internal commands restored'' error arises when the user calls |\mathfont| after the package already restored the small portion of the \LaTeX\ kernel that it adjusts when loaded. Typically this happens when the user calls |\mathfont| after |\restoremathinternals|. The package will ignore any |\mathfont| commands in this situation, so while the error is technically harmless, you may not see some font changes you might have been expecting. Similarly, if the user tries to set the default font multiple times for some character class, the package will ignore any additional attempts, issue a warning, and continue the compilation process.
+
+What should you do if you can't resolve an error? First, always, always make sure that you spelled all of your commands correctly and closed all braces and brackets. Then check the \textsf{mathfont} documentation---you may be trying to do something outside the scope of the package, or you may be dealing with a special case. The internet is a great resource, and websites such as the \TeX\ StackExchange, Share\LaTeX, and Wikibooks' \LaTeX\ wiki are often invaluable when dealing with \TeX-related issues. Definitely ask another human as well! At that point you should email the author about your code---you might have identified a bug. I welcome emails about \textsf{mathfont} and will make every effort to write back to correspondence about the package, but I cannot guarantee a timely response.
+
+\end{document}
+\endinput
+%%
+%% End of file `mathfont_user_guide.tex'.

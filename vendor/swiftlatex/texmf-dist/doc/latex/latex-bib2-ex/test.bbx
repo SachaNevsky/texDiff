@@ -1,0 +1,56 @@
+\ProvidesFile{test.bbx}[ 2016/01/01 v1.0 biblatex bib style ]
+\newtoggle{bbx:issn}\newtoggle{bbx:url}\newtoggle{bbx:doi}\newtoggle{bbx:eprint}
+%
+\DeclareBibliographyOption{issn}[true]{\settoggle{bbx:issn}{#1}}
+\DeclareBibliographyOption{url}[true]{\settoggle{bbx:url}{#1}}
+\DeclareBibliographyOption{doi}[true]{\settoggle{bbx:doi}{#1}}
+\DeclareBibliographyOption{eprint}[true]{\settoggle{bbx:eprint}{#1}}
+%
+\ExecuteBibliographyOptions{issn,url,doi,eprint}
+\DeclareFieldFormat{labelnumberwidth}{\mkbibbrackets{#1}}
+%
+\defbibenvironment{bibliography}
+  {\list{\printtext[labelnumberwidth]{\printfield{labelnumber}}}
+        {\setlength\labelwidth{\labelnumberwidth}%
+         \setlength\leftmargin{\labelwidth}\setlength\labelsep{\biblabelsep}%
+         \addtolength\leftmargin{\labelsep}\setlength\itemsep{\bibitemsep}%
+         \setlength\parsep{\bibparsep}}%
+    \renewcommand*\makelabel[1]{\hss##1}}
+  {\endlist}{\item}
+%
+\newbibmacro*{finentry}{\finentry}
+%
+\DeclareBibliographyDriver{article}{\usebibmacro{bibindex}%
+  \usebibmacro{author/translator+others}\setunit{\labelnamepunct}\newblock % Autor
+  \usebibmacro{title}\newunit                                       % Titel
+  \usebibmacro{in:}\usebibmacro{journal+issuetitle}\newunit         % Zeitschrift
+  \usebibmacro{note+pages}\newunit\newblock                         % Note und Seiten
+  \iftoggle{bbx:issn}{\printfield{issn}}{}\newunit\newblock         % ISSN
+  \usebibmacro{doi+eprint+url}\newunit\newblock                     % DOI, EPrint, URL
+  \usebibmacro{finentry}}
+
+\DeclareFieldFormat[article]{title}{\mkbibemph{#1\isdot}}
+\DeclareFieldFormat[article]{smallcaps}{\textsc{#1}}
+
+\newbibmacro*{doi+eprint+url}{%
+  \iftoggle{bbx:doi}{\printfield{doi}}{}\newunit\newblock
+  \iftoggle{bbx:eprint}{\usebibmacro{eprint}}{}\newunit\newblock
+  \iftoggle{bbx:url}{\usebibmacro{url+urldate}}{}}
+\newbibmacro*{journal+issuetitle}{%
+  \usebibmacro{journal}\setunit*{\addspace}%
+  \iffieldundef{series}{}{\newunit\printfield{series}\setunit{\addspace}}%
+  \usebibmacro{volume+number+eid}\setunit{\addspace}%
+  \usebibmacro{issue+date}\setunit{\addcolon\space}%
+  \usebibmacro{issue}\newunit}
+\newbibmacro*{volume+number+eid}{%
+  \printfield{volume}\setunit*{\adddot}%
+  \printfield{number}\setunit{\addcomma\space}\printfield{eid}}
+\newbibmacro*{issue+date}{%
+  \printtext[parens]{%
+    \iffieldundef{issue}%
+      {\usebibmacro{date}}
+      {\printfield{issue}\setunit*{\addspace}\usebibmacro{date}}}%
+  \newunit}
+\newbibmacro*{note+pages}{\printfield{note}\setunit{\bibpagespunct}%
+  \printfield{pages}\newunit}
+\endinput

@@ -1,0 +1,54 @@
+% This is sempdftx.sty
+% Patrick W Daly
+% March 20, 2003
+% To add pdftex functionality to seminar
+% Sets the pdf paper sizes as is done by hyperref,
+%  so hyperref need not be loaded
+
+\ProvidesPackage{sempdftx}[2003/03/20 v1.0 PWD]
+
+% \pdfoutput must exist and its value must not be 0
+\@ifundefined{pdfoutput}{\endinput}{%
+  \ifcase\pdfoutput \endinput \fi}
+%
+%  Following borrowed from hpdftex.def
+\AtBeginDocument{%
+  \setlength{\pdfhorigin}{1truein}%
+  \setlength{\pdfvorigin}{1truein}%
+  \ifportrait
+    \ifdim\paperwidth=\z@
+    \else
+      \setlength{\pdfpagewidth}{\strip@pt\paperwidth truept}%
+    \fi
+    \ifdim\paperheight=\z@
+    \else
+      \setlength{\pdfpageheight}{\strip@pt\paperheight truept}%
+    \fi
+  \else
+    \ifdim\paperheight=\z@
+    \else
+      \setlength{\pdfpagewidth}{\strip@pt\paperheight truept}%
+    \fi
+    \ifdim\paperwidth=\z@
+    \else
+      \setlength{\pdfpageheight}{\strip@pt\paperwidth truept}%
+    \fi
+  \fi
+}
+\newcommand*{\pdf@revpage}{%
+  \@tempdima=\pdfpagewidth
+  \pdfpagewidth=\pdfpageheight
+  \pdfpageheight=\@tempdima
+  \@tempdima=\paperwidth
+  \paperwidth=\paperheight
+  \paperheight=\@tempdima
+}
+\ifarticle \pdf@revpage \fi       % This way, article works as for dvips
+\renewcommand{\printlandscape}{}  % Prevents warning that should be printed landscape
+
+% Would prefer to use \leftsliderotation, but that never works
+% Here I just add \pdf@revpage to the slide* definition
+\expandafter\let\expandafter\slide@str\csname slide*\endcsname
+\@namedef{slide*}{\pdf@revpage\slide@str}
+
+\endinput

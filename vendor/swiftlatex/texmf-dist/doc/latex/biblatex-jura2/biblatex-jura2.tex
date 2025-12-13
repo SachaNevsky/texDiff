@@ -1,0 +1,635 @@
+\documentclass[headings=small,numbers=noenddot, 12pt,oneside]{scrartcl} 
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel} 
+\usepackage[hyphens]{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage{minted}
+\usepackage[babel, german=quotes]{csquotes}
+
+\hypersetup{%
+  pdftitle={Das biblatex-jura2 Paket},
+  pdfsubject={biblatex für Juristen},
+  pdfauthor={Christoph},
+  pdfkeywords={biblatex-jura2}}
+  
+% Latex-Äquivalent von Times New Roman und Helvetica
+\usepackage{tgtermes}
+\usepackage[scale=0.85]{tgheros}
+
+
+% Juristische Kurzgliederung
+\renewcommand\thesection {\Roman{section}.}
+\renewcommand\thesubsection {\arabic{subsection}.}
+\renewcommand\thesubsubsection{\alph{subsubsection})}
+
+\setcounter{tocdepth}{3}
+\RedeclareSectionCommand[tocnumwidth=2.3em,tocindent=0em]{section}
+\RedeclareSectionCommand[tocnumwidth=1.5em,tocindent=2.3em]{subsection}
+\RedeclareSectionCommand[tocnumwidth=1.5em,tocindent=3.8em]{subsubsection}
+
+% Großes Fußnotenzahlen in der Fußnote
+\deffootnote{2em}{2.5em}{\makebox[2em][l]{\thefootnotemark}}
+
+
+\newcommand\fnurl[1]{\footnote{\url{#1}}}
+
+
+\newenvironment{MyMinted}{\VerbatimEnvironment\begin{minted}[frame=single, breaklines=true, breaksymbolleft=\textcolor{red}{\tiny\ensuremath{\hookrightarrow}}, fontsize=\small]{tex}}{\end{minted}}
+
+
+\usepackage[%
+  style     = jura2,%
+  backend   = biber,%
+  sorting   = nty,%
+  sortcites = true,%
+  maxnames  = 4,%
+  minnames  = 4,%
+  articlein = false,%
+  %innamebeforetitle = true,
+  date      = comp,%short
+  urldate   = comp,
+  dateabbrev = true,
+  useprefix = true,%
+  isbn      = false,%
+  doi       = true,%
+  backref   = false,%
+  abbreviate = true,%
+]{biblatex}
+\usepackage[babel, german=quotes]{csquotes}
+\addbibresource{mylit.bib}
+
+\title{Das \texttt{biblatex-jura2} Paket}
+\subtitle{V0.3,  Dezember 2019}
+\author{\texttt{biblatex-jura2(a)gmx.net}}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\pagebreak
+\section{Einleitung}
+\label{Einleitung}
+
+Zur Zeit gibt es keinen \texttt{biblatex} Zitierstil, der für deutsche Juristen ohne größeren Anpassungsaufwand verwendbar ist. Der Stil \texttt{biblatex-juradiss} ist nicht mit dem aktuellen \texttt{biblatex} kompatibel. Es gibt zwar eine akutuelle Anpassung von Herbert Voß,\fnurl{https://comedy.dante.de/~herbert/Bibliography/juradiss/} die aber aber wohl nicht weiter gepflegt wird.\fnurl{https://golatex.de/jurabib-t19397.html} Das Paket \texttt{biblatex-dw}\fnurl{https://ctan.org/pkg/biblatex-dw} ist auf die Bedürfnisse der Geisteswissenschaftler zugeschnitten und nicht ohne weiteres für Juristen verwendbar.
+
+Das ist Schade, weil die Vorteile von \texttt{biblatex} gerade für juristische Haus- oder Doktorarbeiten auf der Hand liegen:
+
+\begin{enumerate}
+    \item Trennung von Inhalt und Form: Während des Schreibens kann man sich voll auf den Inhalt konzentrieren. Die Formatierung der Fußnoten und die Erstellung des Literaturverzeichnisses übernimmt \texttt{biblatex}.
+    \item Einheitlichkeit: Alle Zitate und alle Eintragungen im Literaturverzeichnis haben das gleiche Format. Änderungen im Zitierstil wirken sich automatisch auf alle Zitate der betreffenden Eintragsart aus.
+    \item Effizienz: \texttt{.bib}-Dateien lassen sich mit Programmen wie jabref\fnurl{https://www.jabref.org/} relativ einfach erstellen. Das Literaturverzeichnis selbst muss nicht bei jeder Überarbeitung  angepasst oder neu erstellt werden. Alle zitierten Werke werden dort automatische aufgenommen. Und falls man bei einer neuen Auflage eines Werkes prüfen möchte, wo es überall zitiert wird, kann man sich das mit der Option \texttt{backref = true} leicht anzeigen lassen.
+\end{enumerate}
+\noindent
+Diese Vorteile will das \texttt{biblatex-jura2}-Projekt nutzbar machen, indem es stellt einen Zitierstil für Juristen zur Verfügung, der für mindestens 80\,\% der juristischen Standardzitate eine Lösung bietet (80/20 Ansatz). Derzeit werden die Eintragsarten \texttt{book}, \texttt{article},  \texttt{commentary}, \texttt{jurisdiction} (für Rechtsprechung), \texttt{incollection} (für Festschriften) sowie \texttt{report} und \texttt{online} unterstützt.
+
+Vorab muss ich noch sagen, dass ich selbst kein \LaTeX{}- und erst Recht kein \texttt{biblatex}-Spezialist bin. Das Wenige was ich weiß habe ich mir im Rahmen meiner Arbeit und durch Internet-Recherchen, vor allem auf \url{https://tex.stackexchange.com/} angeeignet. Ich hoffe jedoch, dass der eine oder andere von diesem Paket profitieren kann.
+
+\section{Grundlagen}
+
+Ich setzte voraus, dass der Benutzer mit den Grundlagen von \LaTeX{} und \texttt{biblatex} vertraut ist. Falls das nicht der Fall sein sollte, fand ich für den Einstieg in \texttt{biblatex} den Artikel \emph{Literaturverwaltung für \LaTeX{}-Neulinge}\fnurl{https://mediatum.ub.tum.de/doc/1315979/1315979.pdf} der TU-München sehr gut. 
+
+Der \texttt{biblatex-jura2} Stil setzt auf \texttt{biblatex}\fnurl{https://ctan.org/pkg/biblatex} und dem Stil \texttt{biblatex-ext}\fnurl{https://ctan.org/pkg/biblatex-ext} auf. Die Dokumentation dieser beiden Pakete bildet auch die Grundlage für die von mir vorgenommenen Anpassungen.
+
+
+\section{Eintragsart \texttt{book}}
+
+Die Eintragsart \texttt{book} war am einfachsten umzusetzen. Das verwendete Zitierschema \texttt{ext-authortitle-ibid} kann diesen Eintragstyp ohne größere Veränderungen darstellen.
+
+So ergibt zum Beispiel der folgende Eintrag in die \texttt{.bib} Datei
+\begin{MyMinted}
+@BOOK{larenz:methoden,
+  author = {Larenz, Karl and Canaris, Claus-Wilhelm},
+  title = {Methodenlehre der Rechtswissenschaft},
+  edition = {3},
+  year = {2013},
+  isbn = {978-3-662-08709-1},
+  publisher = {Springer-Verlag},
+  address = {Berlin Heidelberg New York},
+  shorttitle = {Methodenlehre},
+}
+\end{MyMinted}
+zusammen mit dem Zitierbefehl
+\begin{minted}[frame=single, fontsize=\small]{tex}
+\footcite[33]{larenz:methoden}
+\end{minted}
+die folgende Fußnote.\footcite[33]{larenz:methoden} Im Literaturverzeichnis wird der Eintrag wie folgt ausgegeben: 
+\printbibliography[heading=subbibliography, keyword={book:1}]
+
+\subsection{Folgezitate mit \textit{ebd.}}
+Weil der Stil \texttt{...-ibid} gewählt wurde, führt jede weitere Zitierung mit 
+\begin{MyMinted}
+\footcite{larenz:methoden}
+\end{MyMinted}
+(die sich auf derselben (Doppel-)Seite befindet) zu der Fußnote\footcite{larenz:methoden} und eine weitere Ziterung mit 
+\begin{MyMinted}
+\footcite[34]{larenz:methoden}
+\end{MyMinted}
+zu dieser Fußnote.\footcite[34]{larenz:methoden}
+
+\subsection{Seitenzahlen, Randnummern u.ä.}
+Bei Büchern, die nach Seiten zitiert werden, muss das 'S. ' für Seite nicht mit angegeben werden. Es wird automatisch hinzugefügt. Bücher, die anders zitiert werden, z.\,B.
+\begin{minted}[frame=single, fontsize=\small]{tex}
+@BOOK{maurer:allgverwr,
+  author = {Maurer, Hartmut and Waldhoff, Christian},
+  title = {Allgemeines Verwaltungsrecht},
+  edition = {19},
+  year = {2017},
+  address = {München},
+  shorttitle = {AllgVerwR},
+}
+\end{minted}
+werden mit dem Befehl
+\begin{minted}[frame=single, fontsize=\small]{tex}
+\footcite[§~7 Rn.~7]{maurer:allgverwr}
+\end{minted}
+wie folgt zitiert.\footcite[§~7 Rn.~7]{maurer:allgverwr} Das Buch 
+\begin{MyMinted}
+@BOOK{medicus:br,
+  author = {Medicus, Dieter and Petersen, Jens},
+  title = {Bürgerliches Recht},
+  titleaddon = {Eine nach Anspruchsgrundlagen geordnete Darstellung zur Examensvorbereitung},
+  edition = {27},
+  year = {2019},
+  address = {München},
+  publisher = {Vahlen},
+}
+\end{MyMinted}
+wird dann mit dem Befehl
+\begin{minted}[frame=single, fontsize=\small]{tex}
+\footcite[Rn.~204]{medicus:br}
+\end{minted}
+nur mit Randnummer zitiert.\footcite[Rn.~204]{medicus:br}
+Das Literaturverzeichnis für die vorstehenden Bücher sieht dann wie folgt aus: 
+\printbibliography[type=book, title={Literaturverzeichnis (nur \texttt{book})},heading=subbibliography, notkeyword={book:diss}]
+\subsection{Dissertationen}
+Juristische Dissertationen lassen sich am einfachsten über die Eintragsart \texttt{book} erfassen. So ergibt zum Beispiel der Eintrag für die mit \LaTeX{} geschiebene Dissertation
+\begin{minted}[frame=single, fontsize=\small]{tex}
+@BOOK{coupette,
+  author = {Coupette, Corinna},
+  title = {Juristische Netzwerkforschung},
+  year = {2019},
+  address = {Tübingen},
+  publisher = {Mohr Siebeck},
+  doi = {10.1628/978-3-16-157012-4},
+  addendum = {(zugl. Diss. Bucerius Law School 2018)},
+}
+\end{minted}
+mit dem entsprechenden \texttt{footcite}-Befehl die folgende Fußnote.\footcite[66]{coupette}
+Im Literaturverzeichnis wird die Dissertation so ausgegeben: 
+\printbibliography[type=book, title={Literaturverzeichnis (nur Dissertationen)},heading=subbibliography, keyword={book:diss}]
+
+\subsection{Nicht-verwendete Felder}
+Dabei werden weder der Verlag (\texttt{publisher}) noch die \textsc{isbn} im Literaturverzeichnis ausgegeben. Hierfür sorgen die Befehle
+\begin{minted}[frame=single, fontsize=\small]{tex}
+\AtEveryCitekey{\clearlist{publisher}}
+\AtEveryBibitem{\clearlist{publisher}}
+\end{minted}
+in den Stil-Dateien \texttt{jura2.cbx} (für die Zitate) und  \texttt{jura2.bbx} (für das Literaturverzeichnis) sowie der Befehl \texttt{isbn = false} in den \texttt{biblatex}-Optionen.
+
+Der \textsc{doi} (\textit{Digital Object Identifier}) wird hingegen standardmäßig im Literaturverzeichnis ausgegeben. Wer das nicht möchte setzt bei den \texttt{biblatex}-Optionen \texttt{doi = false}.
+
+
+\section{Eintragsart \texttt{article}}
+Für die Demonstration der Eintragsart \texttt{article} werden  die folgenden Mustereinträge in der \texttt{.bib}-Datei verwendet: 
+\begin{minted}[frame=single, breaklines=true, breaksymbolleft=\textcolor{red}{\tiny\ensuremath{\hookrightarrow}}, fontsize=\small]{tex}
+@ARTICLE{stamm:verzinsung,
+  author = {Stamm, Jürgen},
+  title = {Die Verzinsung des zivilprozessualen Kostenerstattungsanspruchs},
+  journal = {NJW},
+  year = {2019},
+  pages = {3473-3477},
+}
+@ARTICLE{stamm:derzweite,
+  author = {Stamm, Jürgen},
+  title = {Ein ausgedachter zweiter Artikel},
+  journal = {NStZ},
+  year = {1961},
+  pages = {1-8},
+}
+@ARTICLE{stamm:dritter,
+  author = {Stamm, Otro},
+  title = {Ein dritter fiktiver Artikel},
+  journal = {JZ},
+  year = {1971},
+  pages = {123-149},
+}
+@ARTICLE{hellgardt:ar,
+  author = {Alexander Hellgardt and Sebastian Unger},
+  title = {Aufsichtsrat und Anteilseigentum},
+  journal = {ZHR},
+  volume = {183},
+  year = {2019},
+  pages = {406-454},
+}
+@ARTICLE{vierautoren,
+  author = {von Graf, Otto and de Beer, Diamant and Mustermann, Max and Nachname, Vorname},
+  title = {Ein ausgedachter Aufsatz mit vier Authoren},
+  journal = {RabelsZ},
+  year = {2019},
+  volume = {83},
+  pages = {1-35},
+}
+@ARTICLE{gehrlein:vollstreckung,
+  author = {Gehrlein, Markus},
+  title = {Effektive Durchsetzung des Rechts des Gläubigers bei der zivilrechtlichen Zwangsvollstreckung},
+  journal = {DZWIR},
+  year = {2019},
+  pages = {516-525},
+  doi = {10.1515/dwir-2019-0143},
+}
+\end{minted}
+In der Grundform gibt der Befehl
+\begin{minted}[frame=single, fontsize=\small]{tex}
+\footcite{stamm:verzinsung}
+\end{minted}
+einen Verweis auf die erste Seite des Artikels wieder.\footcite{stamm:verzinsung} Für einen Verweis auf eine Fundstelle auf einer der Folgeseiten benutzt man das \texttt{postnote}-Feld wie folgt:
+\begin{minted}[frame=single, fontsize=\small]{tex}
+\footcite[3]{stamm:zweiter}
+\end{minted}
+Die konkrete Fundstelle wird dann nach der ersten Seite in Klammern angegeben.\footcite[3]{stamm:zweiter} Unmittelbar folgende Zitate desselben Artikels werden mit \textit{ebd.} erkannt.\footcite[4]{stamm:zweiter} Andere Artikel desselben Autors werden nicht mit \textit{ebd.} zitiert. \footcite[3474]{stamm:verzinsung}
+
+Bei einer Übereinstimmung der Nachnamen wird allen  Zitaten automatisch der erste Buchstabe des Vornamens hinzugefügt.\footcite[125]{stamm:dritter}
+
+Einige Zeitschriften wie ZHR oder RabelsZ werden zusätzlich mit dem Jahrgang der Zeitschrift zitiert. Der \texttt{biblatex-jura2}-Stil berücksichtigt dies.\footcite[vgl.][431]{hellgardt:ar} Man muss dafür nur in der \texttt{.bib}-Datei das Feld \texttt{volume} verwenden.\footcite[a.\,A.][5]{vierautoren} Der Text vor dem Namen wird durch das \texttt{prenote}-Feld wie folgt in die Fußnote aufgenommen: 
+\begin{minted}[frame=single, fontsize=\small]{tex}
+\footcite[vgl.][517]{gehrlein:vollstreckung}
+\end{minted}
+Im Literaturverzeichnis wird für Artikel, die über einen \textsc{doi} verfügen, auch der \textsc{doi} im Literaturverzeichnis als Hyperlink ausgegeben.\footcite[vgl.][517]{gehrlein:vollstreckung}
+
+\printbibliography[type=article, title={Das Literaturverzeichnis für \texttt{article} sieht so aus:},heading=subbibliography,]
+
+\section{Eintragsart \texttt{commentary}}
+Die Eintragsart \texttt{commentary} war eindeutig am schwierigsten zu implementieren. 
+
+\subsection{Grundform: Kommentare, die nach dem Namen des Herausgebers bzw. Begründers und mit nachgestelltem \slash\emph{Bearbeiter} zitiert werden}
+Als Grundform ist die Zitierung nach den Namen der Herausgeber bzw. Begründer implementiert, die z.\,B. beim Palandt, bei dem dieser Eintrag in der \texttt{.bib}-Datei 
+\begin{minted}[frame=single, breaklines=true, breaksymbolleft=\textcolor{red}{\tiny\ensuremath{\hookrightarrow}}, fontsize=\small]{tex}
+@COMMENTARY{palandt,
+  editor = {Palandt, Otto},
+  editortype = {founder},
+  title = {Bürgerliches Gesetzbuch mit Nebengesetzen},
+  year = {2019},
+  edition = {79},
+  isbn = {978-3-406-73800-5},
+  publisher = {C.H. Beck},
+  address = {München},
+  shorthand = {Palandt},
+  options = {howcited},
+}
+\end{minted}
+zusammen mit diesem Befehl
+\begin{minted}[frame=single, breaklines=true, breaksymbolleft=\textcolor{red}{\tiny\ensuremath{\hookrightarrow}}, fontsize=\small]{tex}
+\footcite[(Ellenberger)§~119 Rn.~4]{palandt}
+\end{minted}
+zu dieser Fußnote führt.\footcite[(Ellenberger)§~119 Rn.~4]{palandt} Die Option \texttt{howcited} sorgt dafür, dass im Literaturverzeichnis die Klammerbemerkung \enquote{zit. als Palandt\slash\emph{Bearbeiter}} hinzugefügt wird. Bei Kommentaren funktioniert die \texttt{idib}-Funktionalität leider (noch) nicht.\footcite[(Ellenberger)§~119 Rn.~5]{palandt}
+
+Man beachte, dass als Grundform der nachgestellte  \enquote{\slash\emph{Bearbeiter}} implementiert ist. Dafür wird das \texttt{postnote}-Feld durch kluge Makros von Audrey\fnurl{https://tex.stackexchange.com/questions/95110} und moewe\fnurl{https://tex.stackexchange.com/questions/430698} wie folgt umdefiniert: 
+\begin{minted}[frame=single, fontsize=\small]{tex}
+\footcite[(<postnote:prefix>)<postnote:stem>]{<entry>}
+\end{minted}
+d.h. es wird durch runde Klammern in der \texttt{postnote} ein weiteres Feld \texttt{postnote:prefix} erzeugt, in das  der Bearbeiter eingetragen wird. 
+
+Das funktioniert auch bei Kommentaren mit mehreren Herausgebern, wie z.\,B.
+\begin{minted}[frame=single, breaklines=true, breaksymbolleft=\textcolor{red}{\tiny\ensuremath{\hookrightarrow}}, fontsize=\small]{tex}
+@COMMENTARY{erbr,
+  title = {Erbrecht},
+  editor = {Burandt, Wolfgang and Rojahn, Dieter},
+  edition = {3},
+  year = {2019},
+  publisher = {C.H. Beck},
+  address = {München},
+  shorthand  = {Burandt/Rojahn},   
+  options = {howcited},
+}  
+@COMMENTARY{ebjs1,
+  maintitle = {Handelsgesetzbuch},
+  title = {Band 1, §§~1--342e},
+  editor = {Ebenroth, Carsten Thomas and Boujong, Karlheinz and Joost, Detlev and Strohn, Lutz},
+  edition = {4},
+  year = {2020},
+  publisher = {C.H. Beck},
+  address = {München},
+  shorthand = {EBJS},   
+  options = {howcited},
+}  
+\end{minted}
+die dann mit dem Befehl
+\begin{minted}[frame=single, breaklines=true, breaksymbolleft=\textcolor{red}{\tiny\ensuremath{\hookrightarrow}}, fontsize=\small]{tex}
+\footnote{\cite[(Flechtner)§~2059 BGB Rn.~1]{erbr}; siehe auch \cite[(Kindler)Vorbem. §§~1--7 (Kaufmannsbegriff) Rn.~3]{ebjs1}.}
+\end{minted}
+so zitiert werden.\footnote{\cite[(Flechtner)§~2059 BGB Rn.~1]{erbr}; siehe auch \cite[(Kindler)Vorbem. §§~1--7 (Kaufmannsbegriff) Rn.~3]{ebjs1}.} 
+
+\subsection{Kommentare, die nach ihrem Titel zitiert werden}
+Allerdings gibt es auch eine Reihe von Kommentaren und Handbüchern, die nicht nach dem Namen des Herausgebers oder Begründers zitiert werden, sondern nach ihrem Titel. Als Beispiele sollen dienen: 
+\begin{minted}[frame=single, breaklines=true, breaksymbolleft=\textcolor{red}{\tiny\ensuremath{\hookrightarrow}}, fontsize=\small]{tex}
+@COMMENTARY{erfk,
+  title = {Erfurter Kommentar zum Arbeitsrecht},
+  editor = {Müller-Glöge, Rudi and Preis, Ulrich and Schmidt, Ingrid},
+  edition = {17},
+  address = {München},
+  year = {2017},
+  publisher = {C.H. Beck},
+  shorthand = {ErfK},
+  options = {citedbytitle, howcited},
+}
+@COMMENTARY{beckokbgb,
+  title = {Beck’scher Online-Kommentar BGB},
+  editor = {Bamberger, Georg and Roth, Herbert and Hau, Wolfgang and Poseck, Roman},
+  edition = {52. Ed., Stand 01.11.2019},
+  address = {München},
+  publisher = {C.H. Beck},
+  shorthand = {BeckOK BGB},
+  options = {citedbytitle, howcited},
+}
+\end{minted}
+Der Unterschied wird durch die Option \texttt{citedbytitle} kenntlich gemacht. Dann werden die Kommentare im Literaturverzeichnis nach dem Titel und in den Fußnoten so\footcite[(Oetker)§~15 AktG Rn.~3]{erfk} und so\footcite[(Faust)§~433 Rn.~1]{beckokbgb} zitiert.
+
+\subsection{Kommentare, bei denen der Bearbeiter vorangestellt wird}
+Ein weiterer Unterschied betrifft die Zitierweisen. Wie bereits gesagt ist als Grundform die Zitierweise \enquote{Kommentar/\emph{Bearbeiter}} implementiert. Für andere Kommentare ist jedoch das Zitierschema \enquote{\emph{Bearbeiter} in Kommentar} üblich. Dies betrifft zum Beispiel die Kommentare
+\begin{minted}[frame=single, breaklines=true, breaksymbolleft=\textcolor{red}{\tiny\ensuremath{\hookrightarrow}}, fontsize=\small]{tex}
+@COMMENTARY{maunzduerig,
+  title = {Grundgesetz},
+  editor = {Maunz,  Theodor  and  Dürig,  Günter},
+  editortype = {founder},
+  edition = {80. Erg.-Lfg., März 2019},
+  publisher = {C.H. Beck},
+  address = {München},
+  shorthand  = {Maunz/Dürig},   
+  options = {bearbeiterin, howcited}
+}
+@COMMENTARY{kkstpo,
+  title = {Karlsruher Kommentar zur Strafprozessordnung},
+  editor = {Hannich, Rolf},
+  edition = {8},
+  year = {2019},
+  address = {München},
+  publisher = {C.H. Beck},
+  shorthand = {KK-StPO},
+  options = {citedbytitle, bearbeiterin, howcited},
+}
+\end{minted}
+und viele Handbücher, wie zum Beispiel:
+\begin{minted}[frame=single, breaklines=true, breaksymbolleft=\textcolor{red}{\tiny\ensuremath{\hookrightarrow}}, fontsize=\small]{tex}
+@COMMENTARY{hdbversr,
+  title = {Versicherungsrechts-Handbuch},
+  editor = {Beckmann, Roland Michael and Matusche-Beckmann, Annemarie},
+  edition = {3},
+  address = {München},
+  year = {2015},
+  publisher = {C.H. Beck},
+  shorthand = {VersRHdb},
+  options = {citedbytitle, bearbeiterin, howcited}
+}
+\end{minted}
+Für das Literaturverzeichnis sorgt dabei die Option \texttt{bearbeiterin} dafür, dass die Option \texttt{howcited} den richtigen Klammerzusatz \enquote{zit. als \emph{Bearbeiter} in Kommentar} ausgibt. 
+
+In den Fußnoten muss für Kommentare mit vorangestelltem Bearbeiter das \texttt{prenote}-Feld 
+\begin{minted}[frame=single, breaklines=true, breaksymbolleft=\textcolor{red}{\tiny\ensuremath{\hookrightarrow}}, fontsize=\small]{tex}
+\footnote{vgl. \cite[Schmidt-Aßmann][Art.~19 Abs.~4 Rn.~36]{maunzduerig}; a.\,A. \cite[Diemer][§~151 Rn.~2]{kkstpo}.}
+\end{minted}
+für dieses Ergebnis verwendet werden.\footnote{vgl. \cite[Schmidt-Aßmann][Art.~19 Abs.~4 Rn.~36]{maunzduerig}; a.\,A. \cite[Diemer][§~151 Rn.~2]{kkstpo}.} Das funktioniert mit 
+\begin{minted}[frame=single, breaklines=true, breaksymbolleft=\textcolor{red}{\tiny\ensuremath{\hookrightarrow}}, fontsize=\small]{tex}
+\footcite[Matusche-Beckmann][§~5 Rn.~14]{hdbversr}
+\end{minted}
+auch für Handbücher.\footcite[Matusche-Beckmann][§~5 Rn.~14]{hdbversr} Wenn man sich nicht an diese Konvention halten will, kann man die Fußnote mit 
+\begin{minted}[frame=single, breaklines=true, breaksymbolleft=\textcolor{red}{\tiny\ensuremath{\hookrightarrow}}, fontsize=\small]{tex}
+\footcite[(Matusche-Beckmann)§~5 Rn.~14 (falsch zitiert)]{hdbversr}
+\end{minted}
+auch anders gestalten.\footcite[(Matusche-Beckmann)§~5 Rn.~14 (falsch zitiert)]{hdbversr}
+Dann muss man aber in der \texttt{.bib}-Datei die Option \texttt{bearbeiterin} rausnehmen, damit der \enquote{zit. als}-Zusatz im Literaturverzeichnis richtig ausgegeben wird.
+
+\subsection{Kommentare mit mehreren Bänden}
+Besondere Probleme stellen sich mit Kommentaren, die aus mehreren Bänden bestehen. Beim Maunz/Dürig ist dies zwar kein Problem, weil alle Bände denselben Bearbeitungsstand haben. Bei den verschiedenen Münchener Kommentaren oder beim Staudinger sieht das aber anders aus. Es gibt mehrere Möglichkeiten, ich empfehle, die einzelnen Bände separat in dem Feld \texttt{title} anzugeben: 
+\begin{minted}[frame=single, breaklines=true, breaksymbolleft=\textcolor{red}{\tiny\ensuremath{\hookrightarrow}}, fontsize=\small]{tex}
+@COMMENTARY{muekobgb,
+  maintitle = {Münchener Kommentar zum Bürgerlichen Gesetzbuch},
+  title = {\hfill\hfill\linebreak
+  Band 1: Allgemeiner Teil. Hrsg. von Franz Säcker. 7. Aufl., München 2015.\hfill\hfill\linebreak
+  Band 2: Schuldrecht – Allgemeiner Teil. Hrsg. von Wolfgang Krüger. 7. Aufl., München 2016.\hfill\hfill\linebreak},
+  shorthand = {MüKoBGB},
+  addendum = {(jeweils zit. als MüKoBGB/\emph{Bearbeiter})},
+  options = {citedbytitle},
+}
+@COMMENTARY{staudinger,
+  maintitle = {Kommentar zum Bürgerlichen Gesetzbuch mit Ein\-führungs\-gesetz und Nebengesetzen},
+  title = {\hfill\hfill\linebreak
+  §§~433--480 (Kaufrecht): Neubearbeitung 2014 von  Michael Beckmann, Annemarie  Matusche-Beckmann und Martin Josef Schermeier.\hfill\hfill\linebreak
+  §§~611--613 (Dienstvertragsrecht 1): Neubearbeitung 2016 von Philipp S. Fischinger und Reinhard Richardi.\hfill\hfill\linebreak},
+  editor = {Staudinger, Julius von},
+  editortype = {founder},
+  address = {Berlin},
+  shorthand = {Staudinger},
+  addendum = {(jeweils zit. als Staudinger/\emph{Bearbeiter})},
+}
+\end{minted}
+Bei den Fußnoten gibt es kein Problem, weil alle Bände mit 
+\begin{minted}[frame=single, breaklines=true, breaksymbolleft=\textcolor{red}{\tiny\ensuremath{\hookrightarrow}}, fontsize=\small]{tex}
+\footnote{\cite[(Bearbeiter)§~433 Rn.~23]{staudinger}; siehe auch \cite[(Bearbeiter)§~123 Rn.~12]{muekobgb}.}
+\end{minted}
+gleich zitiert werden.\footnote{\cite[(Bearbeiter)§~433 Rn.~23]{staudinger}; siehe auch \cite[(Bearbeiter)§~123 Rn.~12]{muekobgb}.} 
+
+\sloppy
+\printbibliography[type=commentary, title={Im Literaturverzeichnis (nur \texttt{commentary}) sieht das Ganze dann so aus:},heading=subbibliography]
+\fussy
+
+\section{Rechtsprechung über die Eintragsart \texttt{jurisdiction}}
+
+Man kann darüber streiten, ob es sinnvoll ist, Rechtsprechung mit \texttt{biblatex} zu verwalten. Vor allem spricht dagegen, dass juris und beck-online keine entsprechenden Schnittstellen anbieten. Aber sobald man eine Entscheidung mehr als einmal zitiert spart man auch bei einer manuellen Erfassung in der \texttt{.bib}-Datei Zeit.
+
+Die Benennung der Felder für die Eintragsart \texttt{jurisdiction} entspricht den von juris verwendeten Bezeichnungen:
+\begin{MyMinted}
+@jurisdiction{viiizr255.17,
+  gericht = {BGH},
+  dokumententyp = {Beschluss},
+  entscheidungsdatum = {2019-01-08},
+  aktenzeichen = {VIII ZR 225/17},
+  datenbank = {juris},
+  ecli = {ECLI:DE:BGH:2019:080119BVIIIZR225.17.0},
+}
+\end{MyMinted}
+Dann kann man mit dem normalen \texttt{footcite}-Befehl
+\begin{MyMinted}
+\footcite[Rn. 3]{viiizr255.17}
+\end{MyMinted}
+die folgende Fußnote erzeugen.\footcite[Rn. 3]{viiizr255.17} Die \texttt{ibid}-Funktionalität\footcite{viiizr255.17} gibt es auch hier.\footcite[Rn. 16]{viiizr255.17}
+
+Mann kann sich entscheiden, ob man die Zitierung nach einer juristischen Datenbank oder einer Zeitschrift vornimmt. Im letzteren Fall muss die Option \texttt{citedbypage} gesetzt werden.
+\begin{MyMinted}
+@jurisdiction{1str346.18,
+  gericht = {BGH},
+  dokumententyp = {Beschluss},
+  entscheidungsdatum = {2019-09-24},
+  aktenzeichen = {1 StR 346/18},
+  datenbank = {beck-online},
+}
+@jurisdiction{1str346.18.2,
+  gericht = {BGH},
+  dokumententyp = {Beschluss},
+  entscheidungsdatum = {2019-09-24},
+  aktenzeichen = {1 StR 346/18},
+  fundstelle = {NJW 2019, 3532},
+  options = {citedbypage},
+}
+\end{MyMinted}
+Das ergibt mit den Befehlen 
+\begin{MyMinted}
+\footcite[Rn. 15]{1str346.18}
+\footcite[3535]{1str346.18.2}
+\end{MyMinted}
+diese\footcite[Rn. 15]{1str346.18} Fußnoten.\footcite[3535]{1str346.18.2}
+
+Die folgenden Beispiele stammen aus den Richtlinien für die Zitierweise und die Verwendung von Abkürzungen in den Entscheidungen des Bundesverwaltungsgerichts, \fnurl{https://www.bverwg.de/rechtsprechung/urteile-beschluesse/zitierungen}
+wobei ich die \textsc{ecli} weglasse, weil niemand sonst sie verwendet und sie die Fußnoten unnötig aufbläht. Die Einträge
+\begin{MyMinted}
+@jurisdiction{6p7.12,
+  gericht = {BVerwG},
+  dokumententyp = {Beschluss},
+  entscheidungsdatum = {2003-02-19},
+  aktenzeichen = {6 P 7.12},
+  fundstelle = {BVerwGE 146, 48},
+  ecli = {ECLI:DE:BVerwG: 2013:190213B6P7.12.0},
+}
+@jurisdiction{1c2.94,
+  gericht = {BVerwG},
+  dokumententyp = {Urteil},
+  entscheidungsdatum = {1995-01-24},
+  aktenzeichen = {1 C 2.94},
+  fundstelle = {BVerwGE 97, 301},
+  ecli = {ECLI:DE:BVerwG:1995:240195U1C2.94.0},
+  options = {citedbypage},
+}
+\end{MyMinted}
+ergeben dabei jeweils die vorgesehenen\footcite[Rn. 14]{6p7.12} Fußnoten.\footcite[312]{1c2.94}
+
+Der Nachweis einer ständigen Rechtsprechung funktioniert,\footnote{StRspr, vgl. \cite{11b61.98}.} ebensowie wie die Zitierung der Rechtsprechung des Bundesverfassungsgerichts in BVerfGE\footcite[201]{2bvl6.78} und EuGRZ.\footcite[320]{2bvr1570.03} Auch der VGH Mannheim kommt zu seinem Recht.\footcite[Rn. 50]{11s207.11} 
+
+Schließlich können auch Entscheidungen, die mit den Namen der Parteien bezeichnet werden, wie folgt in die \texttt{.bib}-Datei aufgenommen werden: 
+\begin{MyMinted}
+@jurisdiction{c208.00,
+  gericht = {EuGH},
+  dokumententyp = {Urteil},
+  entscheidungsdatum = {2002-11-05},
+  aktenzeichen = {C-208/00},
+  datenbank = {juris},
+  ecli = {ECLI:EU:C:2002:632},
+  kurzname = {Überseering},
+}
+@jurisdiction{64387.01,
+  gericht = {EGMR},
+  dokumententyp = {Urteil},
+  entscheidungsdatum = {2005-02-10},
+  aktenzeichen = {Nr.~64387/01},
+  ecli = {ECLI:CE:ECHR:2005:0210JUD006438701},
+  kurzname = {Uhl/Deutschland},
+}
+\end{MyMinted}
+Das ergibt dann diese\footcite[Rn.~52]{c208.00} Fußnoten.\footcite[Rn.~27]{64387.01} Wer möchte macht das auch mit \emph{Reiten im Walde}.\footcite[Rn.~54]{1bvr921.85} Auch die Ziterweise des Bundesverfassungsgerichts, die neuerdings  amtliche Sammlung und Randnummer angeben, lässt sich abbilden.\footcite[(341 f.) Rn. 268]{1bvr2821.11}
+
+
+\section{Festschriften über Eintragsart \texttt{incollection}}
+
+Beiträge in Festschriften lassen sich über die Eintragsart \texttt{incollection} verhältnismäßig leicht erfassen:
+\begin{minted}[frame=single, breaklines=true, breaksymbolleft=\textcolor{red}{\tiny\ensuremath{\hookrightarrow}}, fontsize=\small]{tex}
+@INCOLLECTION{laack:infra,
+  title = {Ein ausgedachter Artikel zum Infrastukturrecht},
+  author = {van Laack, Hemd and de Beer, Diamant and Mitautor, Vorname},
+  booktitle = {Infrastruktur-Recht: Festschrift für Wilfried Erbguth zum 70. Geburtstag},
+  editor = {Sabine Schlacke and Guy Beaucamp and Mathias Schubert},
+  address = {Berlin},
+  publisher = {Duncker \& Humblot},
+  year = {2019},
+  pages = {55-75},
+  shorttitle = {FS Erbguth},
+  options = {fshowcited},
+}
+@incollection{beckemper:unvernunft,
+  title = {Unvernunft als Zurechnungskriterium in den \enquote{Retterfällen}},
+  author = {Beckemper, Katharina},
+  booktitle = {Strafrecht als Scientia Universalis -- Festschrift für Claus Roxin zum 80. Geburtstag},
+  editor = {Manfred, Heinrich},
+  year = {2011},
+  pages = {397-411},
+  address = {München},
+  shorttitle = {FS Roxin},
+  options = {fshowcited},
+}
+\end{minted}
+Die Zitate mit dem Befehl
+\begin{minted}[frame=single, breaklines=true, breaksymbolleft=\textcolor{red}{\tiny\ensuremath{\hookrightarrow}}, fontsize=\small]{tex}
+\footnote{\cite[56]{laack:infra}; siehe auch \cite[401]{beckemper:unvernunft}.}
+\end{minted}
+sehen dann so aus.\footnote{\cite[56]{laack:infra}; siehe auch \cite[401]{beckemper:unvernunft}.}
+\sloppy
+\printbibliography[type=incollection, title={Im Literaturverzeichnis (nur \texttt{incollection}) sieht das Ganze dann so aus:},heading=subbibliography]
+\fussy
+
+\section{Berichte über die Eintragsart \texttt{report}}
+
+Berichte können zum Beispiel mit diesen Einträgen in die \texttt{.bib}-Datei aufgenommen werden: 
+\begin{minted}[frame=single, breaklines=true, breaksymbolleft=\textcolor{red}{\tiny\ensuremath{\hookrightarrow}}, fontsize=\small]{tex}
+@report{weissbuchzukunft,
+  title = {Weißbuch zur Zukunft Europas},
+  titleaddon = {Die EU der 27 im Jahr 2025: Überlegungen und Szenarien},
+  author = {{Europäische Kommission}},
+  date = {2017-03-01},
+  note = {COM(2017) 2025},
+  doi = {10.2775/947247},
+}
+@report{ipcc:ocean,
+  author = {IPCC},
+  title = {Special Report on the Ocean and Cryosphere in a Changing Climate},
+  date = {2019},
+  %pubstate = {In press},
+  url = {https://www.ipcc.ch/site/assets/uploads/sites/3/2019/12/ SROCC_FullReport_FINAL.pdf},
+  urldate = {2019-12-17},
+}
+\end{minted}
+Mit den normalen \slash\texttt{footcite}-Befehlen\footcite[8]{weissbuchzukunft} entstehen dann die Fußnoten.\footcite[15]{weissbuchzukunft} Die \texttt{idib}-Funk\-tio\-nalität \footcite[32]{ipcc:ocean} gibt es auch hier.\footcite[45]{ipcc:ocean} 
+
+
+
+\section{Online-Quellen über die Eintragsart \texttt{online}}
+Online-Quellen können zum Beispiel mit desem Eintrag in die \texttt{.bib}-Datei aufgenommen
+\begin{minted}[frame=single, breaklines=true, breaksymbolleft=\textcolor{red}{\tiny\ensuremath{\hookrightarrow}}, fontsize=\small]{tex}
+@online{dskerfahrungsbericht,
+  author = {Datenschutzkonferenz},
+  title = {Erfahrungsbericht der unabhängigen Datenschutzaufsichtsbehörden  des Bundes und der Länder zur Anwendung der DS-GVO},
+  shorttitle = {Erfahrungsbericht 2019},
+  date = {2019-11},
+  url = {https://www.datenschutzkonferenz-online.de/media/dskb/ 20191213_erfahrungsbericht_zur_anwendung_der_ds-gvo.pdf},
+  urldate = {2019-12-17},
+  options = {fshowcited},
+}
+\end{minted}
+und dann so\footcite[9]{dskerfahrungsbericht} zitiert werden.\footcite[25]{dskerfahrungsbericht}
+
+
+\section{Schlussbemerkungen und Dank}
+\texttt{biblatex-jura2} deckt derzeit noch nicht alle denkbaren Eintragsarten ab. Perspektivisch möchte ich als nächstes die folgenden Probleme angehen:
+\begin{enumerate}
+    \item \texttt{idib}-Funktion für Kommentare.
+    \item sinnvoll gegliedertes Rechtsprechungsverzeichnis.
+\end{enumerate}
+Weitere Anregungen und Anmerkungen werden unter \texttt{biblatex-jura2(a)gmx.net} entgegen genommen.
+
+Mein besonderer Dank gilt Moritz Wemheuer, der sich mit viel Geduld mit meinen Fragen befasst hat.
+
+\newpage
+\sloppy
+\addcontentsline{toc}{section}{Verzeichnis der exemplarisch verwendeten Literatur}
+\printbibliography[nottype=jurisdiction]
+\fussy
+
+%\sloppy
+%\addcontentsline{toc}{section}{Verzeichnis der exemplarisch zitierten Rechtsprechung}
+%\printbibliography[type=jurisdiction, title={Verzeichnis der exemplarisch zitierten Rechtsprechung}]
+%\fussy
+
+\end{document}
+

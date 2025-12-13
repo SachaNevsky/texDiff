@@ -1,0 +1,136 @@
+%%
+%% The LaTeX Companion, 2ed (second printing August 2004)
+%%
+%% Example 12-5-49 on page 744.
+%%
+%% Copyright (C) 2004 Frank Mittelbach, Michel Goossens,
+%%    Johannes Braams, David Carlisle, and Chris Rowley
+%%
+%% It may be distributed and/or modified under the conditions
+%% of the LaTeX Project Public License, either version 1.3
+%% of this license or (at your option) any later version.
+%%
+%% See http://www.latex-project.org/lppl.txt for details.
+%%
+
+\documentclass{ttctexa}
+\pagestyle{empty}
+\setcounter{page}{6}
+\setlength\textwidth{279.0pt}
+
+\makeatletter
+%Fix for overword.sty reported to Frank Bennett
+\AtBeginDocument{\long\def\@ifowd{%
+  \ifx\@let@token\@sptoken%
+    \gdef\@preoverwordspace{ }%
+    \let\reserved@e\@xifowd%
+  \else%
+    \gdef\@preoverwordspace{}%
+    \ifx\@let@token\end%
+      \let\reserved@e\reserved@d%
+    \else%
+      \ifx\@let@token\par%
+        \let\reserved@e\@xifpargobble%
+      \else%
+        \long\def\reserved@e##1 {\long\gdef\@overword{##1}\@@ifowd}%
+      \fi%
+    \fi%
+  \fi%
+  \reserved@e}}
+
+%Fix for camel.sty reported to Frank Bennett
+\AtBeginDocument{\def\@realcite#1#2#3{%
+  \ifcat$#1$\else%
+   \setkeys{cameloptions}{#1}%             %<--- missing percent
+  \fi%
+  \if@law@requiresubjects%
+   \@law@confirmsubject%
+  \fi%
+  \global\@ltok@argtwo{}%
+  \ifcat$#3$\else%
+    {\let\@law@parse=\@law@alparseplain\@law@parse #3,,}%
+  \fi%
+  {\let\@law@parse=\@law@clparseplain\@law@parse #2,,}%
+  }}
+
+\AtBeginDocument{\def\@printbibliography[#1]#2{%
+  \global\@law@forcefootnotesfalse%
+  \gdef\@law@temp{#1}\gdef\@law@temptwo{labels=false}%
+  \let\camelrefname\refname%
+  \expandafter\ifx\csname#2inputext\endcsname\relax%
+    \global\@law@tablefalse%
+  \else%
+    \global\@law@tabletrue%
+  \fi%
+  \begingroup%
+    \def\refname{\@law@getsubjectheader{#2}}%
+      \@law@usepagesfalse%
+      \@law@getbibformat{#2}%             %<--- missing percent
+      \let\maybe\@gobble%
+      \let\camelfill\relax%
+      \let\camelarrow\relax%
+  \ifx\@law@temp\@law@temptwo%
+        \advance\@totalleftmargin -\labelsep%
+        \advance\linewidth \labelsep%
+        \def\@biblabel##1{}%
+  \fi%
+      \if@law@table%
+        \if@law@usepages%
+          \let\maybe\relax%
+          \let\camelfill\dotfill%
+          \let\camelarrow\rightarrow%
+        \fi%
+      \else%
+        \longestlabelfor{#2}%
+        \ifdim\lawlengthtwo=0pt%
+          \advance\@totalleftmargin -\labelsep%
+          \advance\linewidth \labelsep%
+          \def\@biblabel##1{}%
+        \fi%
+      \fi%
+    \if@law@requiresubjects%
+      \@law@dobibliography{#2}%
+    \else%
+      \gdef\@law@temp{#2}\gdef\@law@temptwo{all}%
+      \ifx\@law@temp\@law@temptwo%
+        \@law@dobibliography{#2}%
+      \else%
+      \message{^^J===================================================^^J%
+                  Camel bibliography ^^J
+                   Document type: without-subjects ^^J
+                   Bibliography type: subject-specific (#2) ^^J
+                   Action: impossible task, ignoring ...^^J%
+                  ===================================================^^J}% % missing percent
+      \fi%
+    \fi%
+  \endgroup}}
+
+% small headings for the example
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+                                    {1.25ex \@plus1ex \@minus.2ex}%
+                                    {.8ex}%
+                                    {\normalsize\bfseries}}
+\makeatother
+\setlength\textheight{15\baselineskip}
+
+\StartShownPreambleCommands
+\usepackage{camel}
+\citationsubject[o=tts,i=ttb]
+     {tex}{\TeX{} literature}
+\citationsubject[o=lts,i=ltb]
+                {jur}{Law}
+\forcefootnotes
+\StopShownPreambleCommands
+\begin{document}
+\citationstyle{law}
+\citationdata{jura,tex}
+
+\ldots text
+\source[a,s=tex]{Knuth-CT-a}
+see-also \source[f,s=tex]
+           {Knuth:TB10-1-31}
+\ldots later\ldots
+\source[t,s=jur]{bschur}
+\printbibliography{jur}
+\printbibliography{tex}
+\end{document}

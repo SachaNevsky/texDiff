@@ -1,0 +1,303 @@
+%%
+%% This is file `ahandinstr-r.sty'
+%% 
+%% Copyright 2017 American Mathematical Society.
+%% 
+%% This file is part of the collection comprising the AMS Author Handbooks.
+%% For details and license information, see the file README-AH.txt.
+%%
+%% The Current Maintainer of this work is the American Mathematical
+%% Society.
+%% 
+%% ========================================================================
+%% 
+
+\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+\ProvidesPackage{ahandinstr-r}
+    [2017/09/05 v1.0 AMS Author Handbook and instructions]
+
+\RequirePackage{graphicx}
+\RequirePackage{ifthen}
+\RequirePackage{amssymb}
+\RequirePackage{hologo}
+\RequirePackage{etoolbox}
+\RequirePackage{needspace}
+\RequirePackage{varioref}
+\RequirePackage[breaklinks,colorlinks]{hyperref}
+\RequirePackage{url}
+\RequirePackage{fancyvrb}
+
+%% The default for amsbook is [openright], but the contents pages are
+%% intentionally set on a page span.  To permit this exception, while
+%% providing the ability to set the remainder of the document either
+%% with (for printing) or without (for on-line reading) blank pages,
+%% it is necessary to know which option was applied initially.
+
+\newif\if@openany
+\if@openright \@openanyfalse
+\else \@openanytrue
+\fi
+
+\newboolean{monograph}
+\newboolean{proceedings}
+\newboolean{journal}
+%\newboolean{ecollproc}
+\newboolean{memoirs}
+
+\newcommand{\AMS}{American Mathematical Society}
+\newcommand{\JAMS}{\textit{Journal of the \AMS}}
+\newcommand{\JoT}{\textit{The Joy of \TeX}}
+\newcommand{\Memo}{\textit{Memoir}}
+\newcommand{\Memos}{\textit{Memoirs}}
+\newcommand{\MEMOS}{\textit{MEMOIRS}}
+\newcommand{\MSN}{MathSciNet}
+
+\renewcommand{\bibliofont}{\normalsize}
+
+\def\latex/{\hologo{LaTeX}}
+\def\latexe/{\hologo{LaTeXe}}
+%\def\amslatex/{\hologo{AmSLaTeX}}
+\def\amslatex/{AMS-\hologo{LaTeX}}
+\def\tex/{\hologo{TeX}}
+\def\amstex/{\ \vrule width 3em height1.25ex depth0pt\ }
+\def\bibtex/{Bib{\TeX}}
+%\let\BibTeX=\bibtex
+\def\XeLaTeX/{\hologo{XeLaTeX}}
+\def\LuaLaTeX/{\hologo{LuaLaTeX}}
+\def\pdfLaTeX/{\hologo{pdfLaTeX}}
+\def\TikZ{Ti\textit{k}Z}
+
+\setcounter{tocdepth}{2}
+
+\renewcommand{\bibliofont}{\normalsize}
+
+\newcommand\ttcs[1]{\leavevmode\mbox{\def\\{\char`\\}%
+    \tt\\\ignorespaces#1\unskip}}
+\newcommand{\filnam}[1]{\mbox{\texttt{\ignorespaces#1\unskip}}}
+\newcommand\cn[1]{\mbox{\def\\{\char`\\}%
+    \normalfont\ttfamily\\\ignorespaces#1\unskip}}
+\let\ttcs=\cn
+\newcommand\ttcsb[2]{%
+  \mbox{\def\\{\char`\\}%
+    \normalfont\ttfamily
+    \\begin\{\ignorespaces#1\unskip\}\ignorespaces#2\unskip}}
+\newcommand\ttcse[1]{\mbox{\def\\{\char`\\}%
+    \normalfont\ttfamily\\end\{\ignorespaces#1\unskip\}}}
+\def\{{\char`\{\relax}
+\def\}{\char`\}\relax}
+\let\fn=\filnam
+\let\cls=\filnam
+\let\env=\filnam
+\def\pkg#1{\texttt{\upshape#1}}
+\def\opt#1{\filnam{[#1]}}
+
+\newdimen\exindent
+\exindent=\parindent
+%% Add a high penalty to discourage line breaks within an example
+%% without absolutely prohibiting them.
+{\obeylines
+ \gdef^^M{\par\penalty9999}%
+ \gdef\beginexample#1{\medskip\bgroup %
+   \def\(##1){\hbox to 0pt{\hss\rm##1\hss}}%
+   \def~{\char`\~}\def\\{\char`\\}%
+   \tt\frenchspacing %
+   \parindent=0pt#1\leftskip=\exindent\obeylines}
+}%  end \obeylines
+\def\endexample{\endgraf\egroup\medskip}
+\newdimen\exboxwidth
+\exboxwidth=3in
+
+\def\exbox#1#2{\noindent \hangindent=\exboxwidth
+  \leavevmode\llap{\null\rm#1\unskip\enspace}%
+  \hbox to\exboxwidth{\tt\ignorespaces#2\hss}\rm\ignorespaces}
+  
+%%  Provide a meta-command facility; provide an alternate escape
+%%  character so it can be used within the verbatim environment.
+%%  The definition from the old handbook works, but is unattractive.
+%%  However, with the active > the cleaner version below can't be
+%%  used both in and outside of verbatim, so leave the "clean" version
+%%  for use "in the clear", so it doesn't have to be explained.
+%%  Input is encoded as ... |?meta string> ...
+\catcode`\|=0
+\begingroup \catcode`\>=13 % in LaTeX2e verbatim env makes > active
+\gdef\?#1>{{\normalfont$\langle$\textit{#1}$\rangle$}}
+\gdef\0{\relax}
+\endgroup
+
+%\def\<#1>{{\rm$\langle$#1$\rangle$}}
+\def\<#1>{{\normalfont$\langle$\textit{#1}$\rangle$}}
+
+%%  Regarding a meta command in verbatim, a request has been made
+%%  for addition of a fancyvrb mechanism using [commandchars=...]
+%%  that doesn't run into the active > problem.
+
+
+\newcommand{\secwnote}[3][]{%
+	\section{#2}%
+	\if###1##%
+	\else
+		\label{#1}%
+	\fi
+	\noindent
+	\bgroup
+	\itshape#3%
+	\par
+	\egroup
+}
+
+\newcommand{\jmp}[3]{%
+	\ifjournal #1\fi
+	\ifmonograph #2\fi
+	\ifproceedings #3\fi
+}
+
+\newcommand{\jmpm}[4]{%
+	\ifjournal #1\fi
+	\ifmonograph #2\fi
+	\ifproceedings #3\fi
+	\ifmemoirs #4\fi
+}
+
+\newcommand{\monomemo}[1]{%
+	\ifmonograph #1\fi
+	\ifmemoirs #1\fi
+}
+
+\newcommand{\monoormemo}[2]{%
+	\ifmonograph #1\fi
+	\ifmemoirs #2\fi
+}
+
+\newcommand{\bookseries}[1]{%
+	\ifmonograph #1\fi
+	\ifproceedings #1\fi
+}
+
+\newcommand{\notarticle}[1]{%
+	\ifmonograph #1\fi
+%	\ifproceedings #1\fi
+	\ifmemoirs #1\fi
+	\ifjournal
+	\else #1\fi
+}
+
+\newcommand{\notmonograph}[1]{%
+%	\ifjournal #1\fi
+%	\ifproceedings #1\fi
+%	\ifmemoirs #1\fi
+	\ifmonograph
+	\else #1\fi
+}
+
+%  Abolish indents following section headings.
+
+\patchcmd{\@startsection}{\@afterindenttrue}{\@afterindentfalse}{}{}
+\def\subsection{\@startsection{subsection}{2}%
+  \z@{.5\linespacing\@plus.7\linespacing}{-.5em}%
+  {\normalfont\bfseries}}
+
+
+%%  "Repair" the item indentations; they are wider than desirable
+%%  in the AMS document classes (on the list for the "overhaul").
+
+\AtBeginDocument{%
+  \labelsep=5pt\relax
+  \setcounter{enumi}{13}\setcounter{enumii}{13}%
+  \setcounter{enumiii}{13}\setcounter{enumiv}{13}%
+  \settowidth\leftmargini{\labelenumi\hskip\labelsep}%
+%  \advance\leftmargini by \normalparindent
+  \settowidth\leftmarginii{\labelenumii\hskip\labelsep}%
+  \settowidth\leftmarginiii{\labelenumiii\hskip\labelsep}%
+  \settowidth\leftmarginiv{\labelenumiv\hskip\labelsep}%
+  \setcounter{enumi}{0}\setcounter{enumii}{0}%
+  \setcounter{enumiii}{0}\setcounter{enumiv}{0}%
+  \leftmarginv=10pt  \leftmarginvi=\leftmarginv
+  \leftmargin=\leftmargini
+  \labelwidth=\leftmargini \advance\labelwidth-\labelsep
+  \@listi}
+
+%%  Repair indentations of toc levels below section.
+%%  When amsbook is updated to include \ams@measure, use that instead
+%%  of \check@string, and remove \check@string and related definitions.
+
+\newif\if@string@empty
+\@string@emptyfalse
+\newcommand{\check@string@length}[1]{%
+  \setbox\@tempboxa\hbox{\ignorespaces#1\unskip}%
+  \ifdim\wd\@tempboxa=\z@
+    \@string@emptytrue
+  \else
+    \@string@emptyfalse
+  \fi
+}
+\renewcommand{\tocsection}[3]{%
+    \check@string@length{#2}%
+    \indentlabel{%
+        \if@string@empty\else
+            \ignorespaces#1 #2%
+            \check@string@length{#3}%
+            \if@string@empty\else
+                .\quad
+            \fi
+        \fi
+    }%
+    #3%
+}
+\def\l@subsection{\@tocline{2}{0pt}{2pc}{2.5pc}{}}
+\let\tocsubsection\tocsection
+
+%%  Allow more space for page numbers (not needed for numbers, but
+%%  makes multiline toc entries break better)
+
+\renewcommand{\@pnumwidth}{2.5em}  % was 1.6em
+
+%  Provide token strings for elements that are common to more than
+%  one type of publication, but not to all; the actual text is
+%  defined in the file Author_Handbook_Body just before the section
+%  in which it will be used.
+
+\newtoks\FirstPageFootnotes  % used for journal and proceedings
+\newtoks\ArticleTitleDesc    % used for journal and proceedings
+\newtoks\ArticleTitleUC      % used for journal and proceedings
+\newtoks\RunHeadJP           % used for journal and proceedings
+\newtoks\BiblioInFile        % used for journal and proceedings
+\newtoks\AcadAffil           % used for journal and proceedings
+\newtoks\UseDriverFile       % used for Memoirs and monographs
+\newtoks\ChapterRight        % used for Memoirs and monographs
+\newtoks\ChapterTitleUC      % used for Memoirs and monographs
+\newtoks\RunHeadMM	     % used for Memoirs and monographs
+\newtoks\BiblioBooks	     % used for Memoirs and monographs
+\newtoks\AddHyperref         % used for all but monographs
+\newtoks\GrantsThanks        % used for all but monographs
+\newtoks\ConsentToPublish    % used for all but monographs
+
+%%  \bibintro is defined in the in-house version of amsbook, but not
+%%  the current public version.  When the public version gets updated,
+%%  this definition should be removed.
+
+\let\bibintro\@empty
+\renewcommand{\bibliofont}{\small}
+\renewenvironment{thebibliography}[1]{%
+  \@bibtitlestyle
+  \normalfont\bibliofont \labelsep.5em\relax
+  \ifx\@empty\bibintro
+  \else
+    \begingroup
+      \settowidth{\leftmargini}{\kern\captionindent}
+      \bibintro\par
+    \endgroup
+    \vspace{12\p@}
+  \fi
+  \renewcommand\theenumiv{\arabic{enumiv}}\let\p@enumiv\@empty
+  \list{\@biblabel{\theenumiv}}{\settowidth\labelwidth{\@biblabel{#1}}%
+    \leftmargin\labelwidth \advance\leftmargin\labelsep
+    \usecounter{enumiv}}%
+  \itemsep3\p@ plus\p@ minus\p@
+  \sloppy \clubpenalty\@M \widowpenalty\clubpenalty
+  \sfcode`\.=\@m
+}{%
+  \def\@noitemerr{\@latex@warning{Empty `thebibliography' environment}}%
+  \endlist
+}
+
+\endinput

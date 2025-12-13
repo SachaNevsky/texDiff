@@ -1,0 +1,885 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Contents: Customising LaTeX output
+% $Id: custom.tex,v 1.2 2003/03/19 20:57:45 oetiker Exp $
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Prilagajanje \LaTeX{}a}
+
+\begin{intro}
+Dokumenti narejeni z ukazi, ki smo jih spoznali do tega trenutka, bodo sprejemljivi za
+večji del občinstva. Kljub temu da njihov videz ni razkošen, se držijo vseh uveljavljenih 
+pravil dobrega stavljenja, kar jih naredi lahko berljive in prijetnega videza.
+
+Toda, obstajajo situacije v katerih \LaTeX{} nima na voljo ukaza ali okolja,
+ki ustreza našim potrebam, ali pa rezultat dobljen z obstoječimi ukazi ne
+izpolni naših želja.
+
+V tem poglavju bomo dali nekaj namigov, kako lahko \LaTeX{} naučimo novih trikov in kako
+lahko naredimo dokumente z drugačnim videzom od običajno privzetega.
+\end{intro}
+
+\section{Novi ukazi, okolja in paketi}
+
+Verjetno ste že opazili, da so vsi ukazi, ko so prvič predstavljeni v knjigi, 
+uokvirjeni, hkrati pa se pojavijo tudi v stvarnem kazalu na koncu knjige. 
+Namesto direktne uporabe potrebnih \LaTeX{}ovih ukazov, s katerimi se da to doseči,
+sem napisal \wi{paket}, v katerem so definirani novi ukazi in okolja za ta namen. 
+Tako lahko preprosto napišemo:
+
+\begin{example}
+\begin{lscommand}
+\ci{dum}
+\end{lscommand}
+\end{example}
+
+V tem zgledu smo uporabili novo okolje \ei{lscommand}, ki nariše okvir okrog 
+ukaza in nov ukaz \ci{ci}, ki zapiše ime ukaza, hkrati pa ustrezni podatek 
+vstavi še v stvarno kazalo. To lahko preverite tako, da v stvarnem kazalu na 
+koncu knjige poiščete geslo \ci{dum}.
+Tam boste pri \ci{dum} našli referenco na vsako stran, kjer je v tekstu ukaz 
+\ci{dum}.
+
+Če se odločimo, da nočemo več imeti novih ukazov v okvirjih,
+lahko preprosto popravimo definicijo okolja \texttt{lscommand} in naredimo nov videz. 
+To je veliko enostavneje kot pa v celem dokumentu popravljati ustrezen tekst
+na vseh mestih, kjer se direktno uporabljajo \LaTeX{}ovi ukazi za risanje okvirja okrog
+besede.
+
+\subsection{Novi ukazi}
+
+Svoje nove ukaze lahko definiramo z ukazom 
+\begin{lscommand}
+\ci{newcommand}\verb|{|%
+       \emph{ime}\verb|}[|\emph{num}\verb|]{|\emph{definicija}\verb|}|
+\end{lscommand}
+\noindent Ukaz potrebuje dva argumenta: \emph{ime} je ime ukaza, ki ga 
+želimo definirati, \emph{definicija} pa je opis tega, kar želimo, da se izvede, zapisan 
+z ustreznimi \LaTeX{} ukazi. Argument \emph{num} v oglatih oklepajih je neobvezen in 
+določa število argumentov, ki jih potrebuje naš novi ukaz (maksimalno možno število parametrov je 9).
+Če tega argumenta ni, se privzame vrednost $0$, kar pomeni, da gre za ukaz brez 
+argumentov.
+
+Naslednja dva zgleda bosta zadevo še bolj razjasnila. V prvem zgledu
+definiramo nov ukaz z imenom \ci{xvec}. Ta ukaz nam pride prav vsakič ko je potrebno 
+izpisati vektor $x_1,\ldots,x_n$. Namesto z \verb|$x_1,\ldots,x_n$| lahko sedaj
+to naredimo z \verb|$\xvec$|.
+
+\begin{example}
+\newcommand{\xvec}{x_1,\ldots,x_n}
+Vektor $\xvec$ \ldots
+\end{example}
+
+Naslednji zgled prikazuje, kako definiramo ukaz, ki potrebuje en argument. 
+Denimo, da v tekstu poleg $x_1,\ldots,x_n$ večkrat potrebujemo tudi 
+$y_1,\ldots,y_n$. Namesto definicije \verb|\yvec| definiramo splošni ukaz 
+z enim argumentom. Značka \verb|#1| se zamenja z argumentom, ki ga podamo v zavitih oklepajih.
+Če definiramo ukaz z več kot enim argumentom, potem je naslednji označen z \verb|#2| in tako
+naprej.
+
+\begin{example}
+% v preambuli: 
+\newcommand{\lvec}[1]
+ {#1_1,\ldots,#1_n}
+% v telesu dokumenta: 
+Skalarni produkt vektorjev
+$\lvec{x}$ in $\lvec{y}$ je 
+\ldots
+\end{example}
+
+\LaTeX{} ne dovoli da definiramo nov ukaz, ki bi povozil že obstoječega. Če to na vsak način želimo
+narediti, imamo na voljo ukaz \ci{renewcommand}.
+Način uporabe je povsem enak kot pri ukazu \verb|\newcommand|.
+
+V nekaterih primerih pride v poštev tudi ukaz \ci{providecommand}.
+Deluje podobno kot \ci{newcommand}, toda če ukaz že obstaja, potem \LaTeXe{} tiho ignorira ukaz z definicijo 
+in ohrani stari ukaz.
+
+Tu se splača še enkrat spomniti, kako je s presledki za \LaTeX{} ukazi. Če se ne spomnite več, poglejte
+na stran \pageref{whitespace}.
+
+
+\subsection{Nova okolja}
+Podobno kot ukaz \verb|\newcommand|, obstaja tudi ukaz, s katerim lahko definiramo 
+nova okolja. Ukaz \ci{newenvironment} ima naslednjo obliko:
+
+\begin{lscommand}
+\ci{newenvironment}\verb|{|%
+       \emph{ime}\verb|}[|\emph{num}\verb|]{|%
+       \emph{preden}\verb|}{|\emph{potem}\verb|}|
+\end{lscommand}
+
+Podobno kot pri ukazu \verb|\newcommand|, lahko \ci{newenvironment} uporabljamo  z neobveznim argumentom
+ali pa brez njega. To, kar navedemo v argumentu
+\emph{preden}, se izvede pred procesiranjem teksta v okolju, vsebina \emph{potem} pa se procesira takrat,
+ko srečamo ukaz \verb|\end{|\emph{ime}\verb|}|.
+
+Spodnji primer prikazuje uporabo ukaza \ci{newenvironment}. 
+\begin{example}
+\newenvironment{kralj}
+ {\rule{1ex}{1ex}%
+      \hspace{\stretch{1}}}
+ {\hspace{\stretch{1}}%
+      \rule{1ex}{1ex}}
+
+\begin{kralj} 
+Moji skromni podložniki \ldots
+\end{kralj}
+\end{example}
+
+Argument \emph{num} ima podoben pomen kot pri ukazu \verb|\newcommand|. 
+\LaTeX{} poskrbi za to, da ne moremo definirati okolja, ki že obstaja. Če želimo spremeniti
+kakšno že obstoječe okolje, uporabimo ukaz \ci{renewenvironment}, ki ima enak način uporabe kot 
+ukaz \ci{newenvironment}.
+
+Ukazi, uporabljeni v zgornjem primeru, bodo razloženi v nadaljevanju.
+Za ukaz \ci{rule} poglejte stran \pageref{sec:rule}, za \ci{stretch} stran \pageref{cmd:stretch},
+več informacij o \ci{hspace} pa dobite na strani \pageref{sec:hspace}.
+
+\subsection{Presledki na začetku in po koncu okolja}
+
+Ko kreiramo novo okolje, se nam lahko zgodi, da se na začetku ali na koncu brez 
+kakšnega vidnega vzroka pojavijo
+nezaželeni presledki. Denimo, da želimo definirati okolje za naslov, 
+ki ne bo zamaknjen, prav tako pa ne bo zamaknjen prvi odstavek za 
+naslovom. Ukaz \ci{ignorespaces} na začetku definicije okolja povzroči,
+da se ignorirajo vsi morebitni presledki za ukazom 
+\verb|\begin{|\emph{okolje}\verb|}|. Še bolj
+zapleteno je poskrbeti za dogajanje po koncu bloka, saj na koncu okolja pride
+do posebne obdelave. Z ukazom 
+\ci{ignorespacesafterend} lahko \LaTeX{}u naročimo, naj za ustreznim
+\verb|\end{|\emph{okolje}\verb|}| ukazom, ko bo posebne obdelave konec, sproži še ukaz 
+\ci{ignorespaces}.
+
+\begin{example}
+\newenvironment{enostavno}%
+ {\noindent}%
+ {\par\noindent}
+
+\begin{enostavno}
+Pozor na presledek\\na levi strani.
+\end{enostavno}
+Enako\\tukaj.
+\end{example}
+
+\begin{example}
+\newenvironment{pravilno}%
+ {\noindent\ignorespaces}%
+ {\par\noindent%
+   \ignorespacesafterend}
+
+\begin{pravilno}
+Ni presledka\\na levi strani.
+\end{pravilno}
+Enako\\tukaj.
+\end{example}
+
+\subsection{Poganjanje \LaTeX{a} iz ukazne vrstice}
+
+Če delate na operacijskem sistemu Unix oz.~podobnem, lahko za prevajanje
+\LaTeX{} projektov uporabljate make datoteke. V tem primeru zna biti za
+vas zanimivo, da lahko z uporabo dodatnih parametrov pri klicu prevajalnika
+iz istega dokumenta dobite različne različice. Npr.~če v dokument dodamo
+naslednjo strukturo:
+
+\begin{verbatim}
+\usepackage{ifthen}
+\ifthenelse{\equal{\crnobelo}{true}}{
+  % "črno bel" način; naredi nekaj..
+}{
+  % "barvni" način; naredi nekaj drugega..
+}
+\end{verbatim}
+
+lahko potem dokument prevajamo iz ukazne vrstice z:
+\begin{verbatim}
+latex '\newcommand{\crnobelo}{true}\input{test.tex}'
+\end{verbatim}
+
+Na ta način se najprej definira ukaz \verb|\blackandwhite|, potem pa 
+se prevede še izbrana datoteka in v njej se prevedejo deli dokumenta v
+črno belem načinu. Če bi namesto tega uporabili 
+\begin{verbatim}
+latex '\newcommand{\crnobelo}{false}\input{test.tex}'
+\end{verbatim}
+bi dobili barvno verzijo dokumenta.
+
+\subsection{Lastni paketi}
+
+Če definiramo veliko novih okolij in ukazov, potem bo preambula dokumenta 
+postala kar dolga. V takem primeru je dobro narediti  nov 
+\LaTeX{}ov paket, ki vsebuje vse definicije novih okolij in ukazov. 
+V dokumentu potem uporabimo ukaz \ci{usepackage}, da naložimo paket in
+s tem v dokumentu omogočimo nove ukaze in okolja.
+\begin{figure}[!htbp]
+\begin{lined}{\textwidth}
+\begin{verbatim}
+% Demo Package by Tobias Oetiker and Bor Plestenjak
+\ProvidesPackage{demopack}
+\newcommand{\xvec}[1] {x_1,\ldots,x_n}
+\newcommand{\lvec}[1] {#1_1,\ldots,#1_n}
+\newenvironment{kralj}
+  {\rule{1ex}{1ex}   \hspace{\stretch{1}}}
+  {\hspace{\stretch{1}}  \rule{1ex}{1ex}}
+\end{verbatim}
+\end{lined}
+\caption{Zgled paketa.} \label{package}
+\end{figure}
+
+Pisanje paketa v glavnem pomeni kopiranje vsebine preambule v ločeno datoteko 
+s končnico \texttt{.sty}. Poleg tega je še poseben ukaz 
+\begin{lscommand}
+\ci{ProvidesPackage}\verb|{|\emph{package name}\verb|}|
+\end{lscommand}
+\noindent ki ga je potrebno uporabiti povsem na začetku datoteke s paketom. 
+Ukaz \verb|\ProvidesPackage| sporoči \LaTeX{}u ime paketa in javi resno 
+napako v primeru, ko želimo paket naložiti dvakrat. Slika~\ref{package}
+prikazuje majhen paket z ukazi, ki smo jih definirali v prejšnjih zgledih.
+
+
+\section{Pisave in velikosti črk}
+
+\subsection{Ukazi za spreminjanje pisave}
+\index{pisava}\index{velikost pisave} \LaTeX{} izbere pisavo in velikost črk glede na 
+logično strukturo dokumenta (razdelki, opombe, \ldots). V določenih primerih pa 
+bi radi ročno spremenili pisavo in velikosti črk. To lahko naredimo z ukazi, 
+navedenimi v tabelah~\ref{fonts} in~\ref{sizes}. Dejanska velikost vsake pisave
+je oblikovalski problem in je odvisna od razreda dokumenta in uporabljenih opcij.
+Tabela~\ref{tab:pointsizes} prikazuje absolutno velikost črk pri uporabljenih navedenih ukazih 
+v standardnih razredih dokumentov.
+
+\begin{example}
+{\small The small and 
+\textbf{bold} Romans ruled}
+{\Large all of great big 
+\textit{Italy}.}
+\end{example}
+
+Pomembna lastnost \LaTeXe{} je, da so vsi atributi pisave neodvisni. To pomen, da lahko 
+vključimo ukaze za spreminjanje velikosti ali tipa pisave, pa se bodo še vedno ohranili
+atributi za krepko ali poševno pisavo, ki smo jih vključili prej.
+
+V \emph{matematičnem načinu} lahko uporabljamo ukaze za spreminjanje pisave tako, da 
+gremo začasno ven iz \emph{matematičnega načina} in vnesemo normalen tekst. Če želimo pri
+stavljenje formul uporabljati drugačno pisavo, potem za to obstajajo posebno ukazi. Našteti so
+v tabeli~\ref{mathfonts}.
+
+\begin{table}[!bp]
+\caption{Pisave.} \label{fonts}
+\begin{lined}{12cm}
+%
+% Alan suggested not to tell about the other form of the command
+% eg \verb|\sffamily| or \verb|\bfseries|. This seems a good thing to me.
+%
+\begin{tabular}{@{}rl@{\qquad}rl@{}}
+\ci{textrm}\verb|{...}|        &      \textrm{\wi{pokončna pisava}}&
+\ci{textsf}\verb|{...}|        &      \textsf{\wi{gladka pisava}}\\
+\ci{texttt}\verb|{...}|        &      \texttt{pisalni stroj}\\[6pt]
+\ci{textmd}\verb|{...}|        &      \textmd{srednja pisava}&
+\ci{textbf}\verb|{...}|        &      \textbf{\wi{krepka pisava}}\\[6pt]
+\ci{textup}\verb|{...}|        &       \textup{\wi{pokončna pisava}}&
+\ci{textit}\verb|{...}|        &       \textit{\wi{kurzivna pisava}}\\
+\ci{textsl}\verb|{...}|        &       \textsl{\wi{nagnjena pisava}}&
+\ci{textsc}\verb|{...}|        &       \textsc{\wi{velike male črke}}\\[6pt]
+\ci{emph}\verb|{...}|          &            \emph{poudarjena pisava} &
+\ci{textnormal}\verb|{...}|    &    \textnormal{običajna pisava} font
+\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+
+\begin{table}[!bp]
+\index{velikost črk}
+\caption{Velikosti črk.} \label{sizes}
+\begin{lined}{12cm}
+\begin{tabular}{@{}ll}
+\ci{tiny}      & \tiny        drobna pisava \\
+\ci{scriptsize}   & \scriptsize  velikost indeksov\\
+\ci{footnotesize} & \footnotesize  velikost opomb pod črto \\
+\ci{small}        &  \small            majhna pisava \\
+\ci{normalsize}   &  \normalsize  normalna velikost\\
+\ci{large}        &  \large       veliki znaki
+\end{tabular}%
+\qquad\begin{tabular}{ll@{}}
+\ci{Large}        &  \Large       veliki znaki \\[5pt]
+\ci{LARGE}        &  \LARGE       zelo veliki znaki \\[5pt]
+\ci{huge}         &  \huge        ogromni znaki \\[5pt]
+\ci{Huge}         &  \Huge        največji znaki
+\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+\begin{table}[!tbp]
+\caption{Absolutna velikost pisave v standardnih razredih.}\label{tab:pointsizes}
+\label{tab:sizes}
+\begin{lined}{12cm}
+\begin{tabular}{lrrr}
+\multicolumn{1}{c}{size} &
+\multicolumn{1}{c}{10pt (privzeto) } &
+           \multicolumn{1}{c}{11pt opcija}  &
+           \multicolumn{1}{c}{12pt opcija}\\
+\verb|\tiny|       & 5pt  & 6pt & 6pt\\
+\verb|\scriptsize| & 7pt  & 8pt & 8pt\\
+\verb|\footnotesize| & 8pt & 9pt & 10pt \\
+\verb|\small|        & 9pt & 10pt & 11pt \\
+\verb|\normalsize| & 10pt & 11pt & 12pt \\
+\verb|\large|      & 12pt & 12pt & 14pt \\
+\verb|\Large|      & 14pt & 14pt & 17pt \\
+\verb|\LARGE|      & 17pt & 17pt & 20pt\\
+\verb|\huge|       & 20pt & 20pt & 25pt\\
+\verb|\Huge|       & 25pt & 25pt & 25pt\\
+\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+
+\begin{table}[!bp]
+\caption{Matematične pisave.} \label{mathfonts}
+\begin{lined}{\textwidth}
+\begin{tabular}{@{}lll@{}}
+\textit{Ukaz}&\textit{Zgled}&    \textit{Rezultat}\\[6pt]
+\ci{mathcal}\verb|{...}|&    \verb|$\mathcal{B}=c$|&     $\mathcal{B}=c$\\
+\ci{mathrm}\verb|{...}|&     \verb|$\mathrm{K}_2$|&      $\mathrm{K}_2$\\
+\ci{mathbf}\verb|{...}|&     \verb|$\sum x=\mathbf{v}$|& $\sum x=\mathbf{v}$\\
+\ci{mathsf}\verb|{...}|&     \verb|$\mathsf{G\times R}$|&        $\mathsf{G\times R}$\\
+\ci{mathtt}\verb|{...}|&     \verb|$\mathtt{L}(b,c)$|&   $\mathtt{L}(b,c)$\\
+\ci{mathnormal}\verb|{...}|& \verb|$\mathnormal{R_{19}}\neq R_{19}$|&
+$\mathnormal{R_{19}}\neq R_{19}$\\
+\ci{mathit}\verb|{...}|&     \verb|$\mathit{ffi}\neq ffi$|& $\mathit{ffi}\neq ffi$
+\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+V povezavi z ukazi za spreminjanje velikosti črk imajo velik pomen
+\wi{zaviti oklepaji}. Z njimi gradimo \emph{skupine}.  Skupine
+omejujejo območje delovanja \LaTeX{}ovega ukaza.\index{združevanje}
+
+\begin{example}
+He likes {\LARGE large and 
+{\small small} letters}. 
+\end{example}
+ 
+Ukazi za spreminjanje velikosti pisave spremenijo tudi razmike med vrsticami,
+toda le, če se odstavek konča znotraj območja delovanja ukaza za velikost pisave. 
+Desni zaviti oklepaj \verb|}| zato ne sme nastopati prezgodaj v tekstu. Primerjajte položaj ukaza
+\ci{par}{} v naslednjih dveh primerih. \footnote{\texttt{\bs{}par}
+je ekvivalentno prazni vrstici}
+
+
+\begin{example}
+{\Large Don't read this! It is not
+true. You can believe me!\par}
+\end{example}
+
+\begin{example}
+{\Large This is not true either.
+But remember I am a liar.}\par
+\end{example}
+
+Če želimo, da ukaz za spremenjeno velikost pisave deluje za celotni odstavek 
+ali celo za večji kos teksta, potem je priporočljivo uporabljati okolja 
+za spreminjanje velikosti pisave.
+\begin{example}
+\begin{Large} 
+This is not true.
+But then again, what is these
+days \ldots
+\end{Large}
+\end{example}
+\noindent To nas lahko reši pred štetjem velikega števila zavitih oklepajev.
+
+
+\subsection{Nevarnost na vidiku}
+
+Kot smo omenili že na začetku tega poglavja, je nevarno 
+razmetati eksplicitne ukaze za spreminjanje oblike pisave vsepovsod po tekstu,
+saj je to v nasprotju z osnovno idejo \LaTeX{}a, ki pravi, da je potrebno ločiti oznake za logični in vizualni 
+del dokumenta. To pomeni, da če uporabljamo isti ukaz za spreminjanje pisave na več mestih z namenom, 
+da poudarimo določen podatek, potem je bolje za to definirati nov ukaz preko
+\verb|\newcommand| in tako logično povezati vrsto podatka, ki ga poudarjamo 
+s spreminjanjem pisave.
+
+\begin{example}
+\newcommand{\oops}[1]{\textbf{#1}}
+Do not \oops{enter} this room,
+it's occupied by a \oops{machine}
+of unknown origin and purpose.
+\end{example}
+
+Ta pristop ima to prednost, da če se kdaj kasneje odločimo, da bomo za nevarnost uporabili 
+drugačno pisavo kot pa \verb|\textbf|, potem to spremenimo na enem mestu. Sicer bi morali 
+v celotnem dokumentu poiskati vse pojavitve ukaza \verb|\textbf|, potem pa bi se morali pri vsakem posamezno 
+še odločiti, ali je ukaz \verb|\textbf| uporabljen zaradi nevarnosti in moramo pisavo zato zamenjati ali pa 
+ukaz \verb|\textbf| pomeni kaj drugega in ga pustimo pri miru.
+
+\subsection{Nasvet}
+
+Za konec našega izleta v deželo pisav in velikosti črk še kratek nasvet:\nopagebreak
+
+\begin{quote}
+  \underline{\textbf{Pomnite\Huge!}} \textit{Čim}
+  \textsf{V\textbf{\LARGE E} \texttt{Č}} pisav \Huge uporabljate
+  \footnotesize \textbf{v} vašem \small \texttt{dokumentu},
+  \large \textit{tem} \normalsize lažje \textsc{berljiv} in
+  \textsl{\textsf{lepši} pos\large t\Large a\LARGE n\huge e}.
+\end{quote}
+
+\section{Presledki}
+ 
+\subsection{Razmik med vrsticami}
+
+\index{razmik med vrsticami} Če želimo uporabljati v dokumentu večje razmike 
+med vrsticami, 
+potem lahko to spremenimo z ukazom
+\begin{lscommand}
+\ci{linespread}\verb|{|\emph{factor}\verb|}|
+\end{lscommand}
+\noindent v preambuli dokumenta.
+Vrednost \verb|\linespread{1.3}| ustreza ">ena in polovičnemu"<,
+vrednost \verb|\linespread{1.6}| pa ">dvojnemu"< razmiku med vrsticami. Normalno
+vrstice niso razmaknjene, zato je privzeta vrednost~1.\index{dvojni razmik med vrsticami}
+ 
+Bodite pozorni na to, da je rezultat, ki ga dobimo z uporabo ukaza
+\ci{linespread} dokaj drastičen in ni primeren za objavljena dela.
+Če imate dober razlog za spreminjanje privzetih razmikov med vrsticami,
+zato raje uporabljajte ukaz:
+\begin{lscommand}
+\verb|\setlength{\baselineskip}{1.5\baselineskip}|
+\end{lscommand}
+
+\begin{example}
+{\setlength{\baselineskip}%
+           {1.5\baselineskip}
+This paragraph is typeset with
+the baseline skip set to 1.5 of
+what it was before. Note the par
+command at the end of the
+paragraph.\par}
+
+This paragraph has a clear
+purpose, it shows that after the
+curly brace has been closed,
+everything is back to normal.
+\end{example}
+
+\subsection{Oblikovanje odstavka}\label{parsp}
+
+V \LaTeX{}u imamo dva parametra, ki vplivata na obliko odstavka.
+Z vključitvijo definicije kot npr.
+\begin{code}
+\ci{setlength}\verb|{|\ci{parindent}\verb|}{0pt}| \\
+\verb|\setlength{|\ci{parskip}\verb|}{1ex plus 0.5ex minus 0.2ex}|
+\end{code}
+v preambulo dokumenta lahko spremenimo obliko odstavkov. Prvi ukaz nastavi
+zamik prve vrstice v odstavku na 0 (brez zamika), drugi ukaz pa nastavi navpični razmik med
+odstavki. \index{razmik med odstavki}\index{zamik odstavka}
+
+Vrednosti navedeni za \texttt{plus} in \texttt{minus} povesta \TeX{}u, 
+za koliko lahko maksimalno skrči oziroma razširi predpisani razmik med odstavkoma,
+da se bodo odstavki lepo poravnali na stran.
+
+V Evropi so odstavki pogosto ločeni z določenim razmikom, začetne vrstice pa niso zamaknjene.
+Toda pazite, saj to vpliva tudi na kazalo. Vrstice v kazalu so sedaj ločene z večjimi razmiki kot sicer.
+Da se izognemo temu, je bolje dva zgornja ukaza iz preambule prestaviti na neko mesto za 
+\verb|\tableofcontents| ali pa jih sploh ne uporabljati, saj večina knjig uporablja začetni zamik in ne 
+navpični razmik za ločevanje odstavkov.
+
+Če želimo zamakniti odstavek, ki ni zamaknjen, to naredimo z ukazom
+\begin{lscommand}
+\ci{indent}
+\end{lscommand}
+\noindent na samem začetku odstavka.\footnote{Če želite zamakniti prvi odstavek v vsakem razdelku, potem 
+uporabite paket \pai{indentfirst} iz svežnja `tools'.} To bo očitno imelo učinek le v primeru,
+ko vrednost \verb|\parindent| ni nastavljena na $0$.
+
+Če želimo nezamaknjen odstavek, potem uporabimo 
+\begin{lscommand}
+\ci{noindent}
+\end{lscommand}
+\noindent kot prvi ukaz v odstavku. To pride v poštev, kadar začnemo besedilo kar s tekstom in 
+ne z ukazom za definiranje poglavja, razdelka, ipd.
+
+\subsection{Vodoravni razmiki in zapolnjevalci}
+
+\label{sec:hspace}
+\LaTeX{} avtomatično določi presledek med besedami in stavki. Če želimo dodati
+vodoravni razmik, uporabimo ukaz \index{vodoravni!presledek}
+\begin{lscommand}
+\ci{hspace}\verb|{|\emph{dolžina}\verb|}|
+\end{lscommand}
+
+Če naj se ta presledek obdrži tudi v primeru, ko pade na začetek ali na konec vrstice,
+uporabimo \verb|\hspace*| namesto \verb|\hspace|. Argument
+\emph{dolžina} je v enostavni obliki enak številu in merski enoti. Najpomembnejše 
+merske enote so naštete v  tabeli~\ref{units}. 
+\index{merska enota}\index{dolžina}
+
+\begin{example}
+Ta\hspace{1.5cm}razmik ima 
+dolžino 1.5 cm.
+\end{example}
+\suppressfloats
+\begin{table}[tbp]
+\caption{\TeX{} Merske enote.} \label{units}\index{merske enote}
+\begin{lined}{9.5cm} 
+\begin{tabular}{@{}ll@{}}
+\texttt{mm} &  milimeter $\approx 1/25$~inch \quad \demowidth{1mm} \\
+\texttt{cm} & centimeter = 10~mm  \quad \demowidth{1cm}                     \\
+\texttt{in} & palec (inč) $=$ 25.4~mm \quad \demowidth{1in}\\
+\texttt{pt} & točka (pika) $\approx 1/72$~inča $\approx \frac{1}{3}$~mm  \quad\demowidth{1pt}\\
+\texttt{em} & približna širina `M' v trenutni pisavi \quad \demowidth{1em}\\
+\texttt{ex} & približna višina `x' v trenutni pisavi \quad \demowidth{1ex}
+\end{tabular}
+
+\bigskip
+\end{lined}
+\end{table}
+
+\label{cmd:stretch} 
+Ukaz
+\begin{lscommand}
+\ci{stretch}\verb|{|\emph{n}\verb|}|
+\end{lscommand} 
+\noindent naredi poseben raztegljiv presledek. Razteza se dokler ne zapolni ves
+preostali prostor na vrstici. Če uporabimo dva ukaza 
+\verb|\hspace{\stretch{|\emph{n}\verb|}}| v isti vrstici, potem se bosta razširila glede na faktor širjenja.
+
+\begin{example}
+x\hspace{\stretch{1}}
+x\hspace{\stretch{3}}x
+\end{example}
+
+Ko uporabljamo vodoravne presledke med tekstom, je smiselno velikost 
+presledkov relativno prilagoditi velikosti izbrane pisave. To lahko
+dosežemo z merskima enotama \texttt{em} in
+\texttt{ex}:
+
+\begin{example}
+{\Large{}velik\hspace{1em}y}\\
+{\tiny{}drobni\hspace{1em}y}
+\end{example}
+
+Ukaz 
+\begin{lscommand}
+\ci{hfill}
+\end{lscommand}
+\noindent je okrajšava za \verb|\hspace{\fill}|. Tu je \verb|\fill| posebna raztegljiva  dolžina, ki se lahko od 0
+raztegne do maksimalne možne širine. Ukaza
+\begin{lscommand}
+\ci{dotfill}\quad in\quad \ci{hrulefill}
+\end{lscommand} 
+\noindent delujeta tako kot \verb|\hfill|, le da vmesni prostor zapolnita s pikami oziroma z vodoravno črto.
+
+\begin{example}
+Začetek \dotfill\ Konec\\
+Levo\ \hrulefill\ Sredina\ 
+  \hrulefill\ Desno\\
+X\ \hfill\hfill Malo na desno 
+  \ \hfill\ X
+\end{example}
+
+\subsection{Navpični presledki}
+
+Razmik med odstavki, razdelki, podrazdelki, \ldots\ je v \LaTeX{}u avtomatično določen.
+Kadar je potrebno, lahko dodatni navpični razmik \emph{med dvema odstavkoma} vstavimo z ukazom:
+\begin{lscommand}
+\ci{vspace}\verb|{|\emph{length}\verb|}|
+\end{lscommand}
+
+Ta ukaz naj bi bil normalno uporabljen med dvema praznima vrsticama.
+Če želimo zadržati prostor na vrhu ali na dnu strani, potem lahko uporabljamo
+ukaz \verb|\vspace*| namesto \verb|\vspace|.
+\index{navpični presledek}
+
+Ukaz \verb|\stretch| v povezavi z ukazom \verb|\pagebreak| lahko uporabimo za to, 
+da tekst vstavimo na zadnjo vrstico strani ali pa da tekst navpično postavimo na 
+sredo strani.
+\begin{code}
+\begin{verbatim}
+Nekaj teksta \ldots
+
+\vspace{\stretch{1}}
+To gre na zadnjo vrstico strani.\pagebreak
+\end{verbatim}
+\end{code}
+
+Dodatni razmik med dvema vrsticama v \emph{istem} odstavku je 
+določen z ukazom
+\begin{lscommand}
+\ci{\bs}\verb|[|\emph{dolžina}\verb|]|
+\end{lscommand}
+
+Z ukazom \ci{bigskip} in \ci{smallskip} lahko naredimo navpične razmike že vnaprej definiranih velikosti in nam
+tako ni potrebno skrbeti za točna števila.
+
+
+\section{Oblika strani}
+
+\begin{figure}[!hp]
+\begin{center}
+\makeatletter\@mylayout\makeatother
+\end{center}
+\vspace*{1.8cm}
+\caption{Parametri oblike strani.}
+\label{fig:layout}
+\cih{footskip}
+\cih{headheight}
+\cih{headsep}
+\cih{marginparpush}
+\cih{marginparsep}
+\cih{marginparwidth}
+\cih{oddsidemargin}
+\cih{paperheight}
+\cih{paperwidth}
+\cih{textheight}
+\cih{textwidth}
+\cih{topmargin}
+\end{figure}
+\index{oblika strani}
+\LaTeXe{} nam omogoča da v ukazu \verb|\documentclass| podamo \wi{velikost strani}. 
+Velikost \wii{robovi}{robov} za tekst se potem določi avtomatično.
+V nekaterih primerih lahko nismo zadovoljni s privzetimi vrednostmi in te vrednosti se 
+seveda da ročno spremeniti.
+%no idea why this is needed here ...
+\thispagestyle{fancyplain}
+Slika~\ref{fig:layout} prikazuje vse parametre, ki se jih da spremeniti.
+Narejena je bila s paketom \pai{layout} iz svežnja ´tools'%
+\footnote{\texttt{CTAN:/tex-archive/macros/latex/required/tools}}.
+
+\textbf{POČAKAJTE!} \ldots preden začnete razmišljati v stilu 
+">Naredimo to ozko stran malce  širšo"<, si vzemite nekaj sekund za razmislek. 
+Kakor velja za večino stvari v \LaTeX{}u, je tudi tu dober razlog za to, da je oblika 
+strani takšna kot je 
+
+Seveda, če jo primerjamo s stranjo, narejeno s programom MS Word, zgleda grozno ozka. 
+Toda poglejte v vašo priljubljeno knjigo\footnote{Tu mislim na pravo natisnjeno knjigo, ki jo je izdala priznana založba.} 
+in preštejte število znakov v povprečni vrstici teksta. Opazili boste, da v vrstici ni več kot 
+66 znakov. Isto ponovite na vaši \LaTeX{}ovi strani. Opazili boste, da je tudi tu okrog 66 znakov
+na stran.  Izkušnje kažejo, da branje postane težje takoj, ko vrstica vsebuje
+več znakov. To je zaradi tega, ker je oči težko premikati od konca ene vrstice 
+na začetek naslednje. To je med drugim tudi en izmed razlogov, da je besedilo
+v časopisu v več stolpcih.
+
+Če torej povečate širino telesa s tekstom, mislite tudi na to, 
+da s tem otežujete življenje vašim bralcem. Naj bo sedaj konec opozoril 
+in si poglejmo, kako lahko vseeno spremenimo obliko strani.
+ 
+Za spreminjanje parametrov ima \LaTeX{} na voljo dva ukaza. Ponavadi jih uporabljamo v 
+preambuli dokumenta.
+
+Prvi ukaz določi fiksno vrednost izbranemu parametru:
+\begin{lscommand}
+\ci{setlength}\verb|{|\emph{parameter}\verb|}{|\emph{dolžina}\verb|}|
+\end{lscommand}
+
+Drugi ukaz doda dolžino izbranemu parametru: 
+\begin{lscommand}
+\ci{addtolength}\verb|{|\emph{parameter}\verb|}{|\emph{dožina}\verb|}|
+\end{lscommand} 
+
+Drugi ukaz je bolj praktičen od \ci{setlength}, saj 
+lahko obliko spreminjamo relativno glede na obstoječo obliko.
+Če želimo širino teksta povečati za en centimeter, v preambulo dodamo
+naslednje ukaze:
+\begin{code}
+\verb|\addtolength{\hoffset}{-0.5cm}|\\
+\verb|\addtolength{\textwidth}{1cm}|
+\end{code}
+
+Tu se mogoče splača pogledati paket \pai{calc}, ki nam omogoča
+da v argumentih ukaza \ci{setlength} in drugih, kjer vnašamo numerične vrednosti, uporabljamo aritmetične operacije.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\section{Še več zabave z dolžinami}
+
+Kadarkoli se da, se izogibam uporabi absolutnih dolžin v 
+\LaTeX{}ovih dokumentih. Raje uporabljam za osnovne mere širino ali višino
+elementov na strani. Za širino slike je to npr.~\verb|\textwidth|, če želimo, da slika zapolni celo stran.
+
+Naslednji trije ukazi določajo širino, višino in globino tekstovnega niza.
+
+\begin{lscommand}
+\ci{settoheight}\verb|{|\emph{lscommand}\verb|}{|\emph{tekst}\verb|}|\\
+\ci{settodepth}\verb|{|\emph{lscommand}\verb|}{|\emph{tekst}\verb|}|\\
+\ci{settowidth}\verb|{|\emph{lscommand}\verb|}{|\emph{tekst}\verb|}|
+\end{lscommand}
+
+\noindent Naslednji zgled prikazuje možno uporabo teh ukazov.
+
+\begin{example}
+\flushleft
+\newenvironment{vardesc}[1]{%
+  \settowidth{\parindent}{#1:\ }
+  \makebox[0pt][r]{#1:\ }}{}
+
+\begin{displaymath}
+a^2+b^2=c^2
+\end{displaymath}
+
+\begin{vardesc}{Where}$a$, 
+$b$ -- are adjunct to the right 
+angle of a right-angled triangle.  
+
+$c$ -- is the hypotenuse of 
+the triangle and feels lonely.
+
+$d$ -- finally does not show up 
+here at all. Isn't that puzzling?
+\end{vardesc}
+\end{example}
+
+\section{Škatle}
+\LaTeX{} sestavlja svoje strani z zlaganjem škatel. Kot prvo je vsaka črka
+majhna škatla, ta škatla pa se zloži z ostalimi črkami v škatlo za besedo. Beseda se 
+zloži z ostalimi besedami, toda tokrat s posebnim vmesnim vezivom,
+ki je raztegljiv, kar omogoča, da se vrsta besed tako skrči oziroma raztegne, da zapolnjuje
+eno vrstico na strani.
+
+Priznam, da je to zelo poenostavljen pogled na to, kar se v resnici dogaja,
+toda bistvo je v tem, da \TeX{} res deluje s škatlami in vmesnim vezivom.
+Škatle so lahko ne samo črke, pač pa lahko v škatlo vstavimo praktično karkoli, 
+vključno z drugimi škatlami. Vsako škatlo potem \LaTeX{} obravnava tako, kot da gre
+za posamezno črko.
+
+V prejšnjih poglavjih smo se že srečali s škatlami, le omenjali jih nismo eksplicitno. 
+Tako npr.~okolje \ei{tabular} in ukaz \ci{includegraphics} naredita škatlo. To pomeni, da lahko
+zlahka dve tabeli ali sliki postavimo drugo zraven druge. Poskrbeti moramo le za to,
+da njuna kombinacija ni širša od širine teksta.
+
+Poljuben odstavek lahko vložimo v škatlo ali z ukazom
+  \begin{lscommand}  \ci{parbox}\verb|[|\emph{položaj}\verb|]{|\emph{širina}\verb|}{|\emph{tekst}\verb|}|
+  \end{lscommand}
+ali pa v okolju
+  \begin{lscommand} \verb|\begin{|\ei{minipage}\verb|}[|\emph{položaj}\verb|]{|\emph{širina}\verb|}| tekst
+  \verb|\end{|\ei{minipage}\verb|}|
+\end{lscommand}
+Vrednost parametra \texttt{položaj} je ena izmed črk 
+\texttt{c, t} ali \texttt{b} ki pove, kako se škatla navpično poravna glede na osnovnico besedila v 
+tekoči vrstici. Pri tem \texttt{t} pomeni poravnavo zgornjih robov, \texttt{c} sredinsko poravnavo in 
+$\texttt{b}$ poravnana spodnja robova. Z argumentom 
+\texttt{širina} podamo širino škatle. Glavna razlika med 
+\ei{minipage} in \ei{parbox} je, da znotraj \ei{parbox} ne moremo uporabljati vseh ukazov in okolij,
+medtem ko je v okolju \ei{minipage} možno skoraj vse.
+
+Medtem, ko \ci{parbox} vstavi celoten odstavek tako, da prelamlja vrstice, 
+obstaja tudi razred ukazov za škatle, ki delujejo le na vodoravno poravnanih objektih.
+Enega že poznamo. To je ukaz \ci{mbox}, ki vrsto škatel sestavi v eno, ukaz pa 
+ponavadi uporabljamo zato, da preprečimo \LaTeX{}u, da bi prelomil vrstico med dvema besedama. 
+Ker lahko škatle vstavljamo v nove škatle, nam ti ukazi za vodoravno 
+sestavljanje škatel omogočajo zelo veliko možnosti.
+
+V ukazu
+\begin{lscommand}
+\ci{makebox}\verb|[|\emph{širina}\verb|][|\emph{položaj}\verb|]{|\emph{tekst}\verb|}|
+\end{lscommand}
+argument \emph{širina} definira širino škatle, kot je vidna od zunaj.\footnote{To pomeni, da je škatla lahko
+  manjša kot pa je širina objektov, ki jo sestavljajo. Širino lahko postavimo celo na 0pt, s čimer dosežemo,
+  da se tekst izpiše, a nima nobenega vpliva na sosednje škatle.} Poleg numeričnih vrednosti za dolžino lahko
+  v argumentu \emph{širina} uporabljamo tudi ukaze \ci{width}, \ci{height}, \ci{depth} in
+  \ci{totalheight}. Njihove vrednosti so odvisne od dimenzij stavljenega besedila v parametru \emph{tekst}. 
+  Parameter \emph{položaj} ima 
+za vrednost eno črko: \textbf{c} pomeni sredinsko poravnavo, \textbf{l} levo poravnavo,
+  \textbf{r} desno poravnavo in \textbf{s} obojestransko poravnavo teksta znotraj škatle.
+
+Ukaz \ci{framebox} deluje tako kot \ci{makebox}, le da dodatno nariše še okvir okrog teksta.
+
+Naslednji zgledi prikazujejo, kaj vse se da narediti z ukazoma 
+\ci{makebox} in \ci{framebox}.
+
+\begin{example}
+\makebox[\textwidth]{%
+    s r e d i n s k o}\par
+\makebox[\textwidth][s]{%
+    o b o j e s t r a n s k o}\par
+\framebox[1.1\width]{Sedaj sem 
+    pa uokvirjen!} \par
+\framebox[0.8\width][r]{Smola, 
+    jaz sem pa preširok!} \par
+\framebox[1cm][l]{Nič hudega,
+    tudi jaz sem} 
+Kdor prebere to ni osel!
+\end{example}
+
+Sedaj poznamo vodoravne škatle in naslednji korak je, da se lotimo navpičnih škatel.\footnote{Popoln
+nadzor lahko dobimo le s hkratno vodoravno in navpično kontrolo \ldots}
+Tudi tu ni težav za \LaTeX{}. Z ukazom
+
+\begin{lscommand}
+\ci{raisebox}\verb|{|\emph{dvig}\verb|}[|\emph{globina}\verb|][|\emph{višina}\verb|]{|\emph{tekst}\verb|}|
+\end{lscommand}
+
+\noindent lahko določimo navpične lastnosti škatle. V prvih treh parametrih lahko uporabljamo tudi 
+\ci{width}, \ci{height}, \ci{depth} in \ci{totalheight}, da velikost določimo glede na 
+velikost teksta v argumentu \emph{tekst}.
+
+\begin{example}
+\raisebox{0pt}[0pt][0pt]{\Large%
+\textbf{Aaaa\raisebox{-0.3ex}{a}%
+\raisebox{-0.7ex}{aa}%
+\raisebox{-1.2ex}{r}%
+\raisebox{-2.2ex}{g}%
+\raisebox{-4.5ex}{h}}}
+se je drl, toda tudi naslednji v 
+vrsti ni opazil, da se mu je 
+dogodilo nekaj groznega.
+\end{example}
+
+
+\section{Poljubne črte}
+\label{sec:rule}
+
+Nekaj strani nazaj ste mogoče opazili ukaz
+\begin{lscommand}
+\ci{rule}\verb|[|\emph{dvig}\verb|]{|\emph{dolžina}\verb|}{|\emph{višina}\verb|}|
+\end{lscommand}
+ki nariše črno črto z dano \emph{dolžino} in debelino \emph{višina} v višini
+\emph{dvig} nad osnovnico tekoče vrstice. Parameter \emph{dvig} je lahko
+tudi negativen.
+
+\newpage
+\begin{example}
+\rule{3mm}{.1pt}%
+\rule[-1mm]{5mm}{1cm}%
+\rule{3mm}{.1pt}%
+\rule[1mm]{1cm}{5mm}%
+\rule{3mm}{.1pt}
+\end{example}
+
+\noindent Ta ukaz uporabljamo za risanje navpičnih in vodoravnih črt. 
+Črta na naslovnici je bila tako npr. narejena z ukazom \ci{rule}.
+
+Poseben primer črte je takšna, ki nima širine, a ima določeno višino. V 
+tiskarstvu se to imenuje \wi{prečnik}. Uporabimo ga za to, da poskrbimo,
+da za določeni objekt na strani podamo minimalno višino. 
+Uporabljamo ga lahko tudi v okolju \texttt{tabular}, s čimer poskrbimo,
+da imajo vse vrstice določeno minimalno višino.
+
+\begin{example}
+\begin{tabular}{|c|}
+\hline
+\rule{1pt}{4ex}S črto \ldots\\
+\hline
+\rule{0pt}{4ex}Z nevidnim 
+prečnikom \ldots \\
+\hline
+\end{tabular}
+\end{example}
+
+\bigskip
+{\flushright Konec.\par}
+
+%
+
+% Local Variables:
+% TeX-master: "lshort2e"
+% mode: latex
+% mode: flyspell
+% End:

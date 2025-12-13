@@ -1,0 +1,229 @@
+% $Id: xfakebold-doc.tex 1125 2019-12-29 21:34:19Z herbert $
+\listfiles
+\documentclass[english]{article}
+\usepackage{dejavu-otf}
+\usepackage{xfp}
+\ExplSyntaxOn
+\let\PI\c_pi_fp
+\ExplSyntaxOff
+\usepackage{xfakebold}
+\usepackage{graphicx}
+%\pdfcompresslevel=0
+\usepackage{babel}
+\usepackage[a4paper,tmargin=1cm,bmargin=1.5cm,includeheadfoot]{geometry}
+\usepackage{listings}
+\title{\texttt{xfakebold}, v. 0.06\\ using bold characters with\\ \texttt{pdflatex}, \texttt{lualatex} or \texttt{xelatex}}
+\author{Herbert Voß}
+
+\lstset{basicstyle=\ttfamily\small,language={[LaTeX]TeX},frame=lrtb}
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\begin{abstract}
+The package fakes a vector font with outline characters by the text render of PDF.
+It writes directly into the pdf output with \verb|\pdfliteral| (pdflatex ) or \verb|\pdfextension| \verb|literal| 
+(lualatex) or \verb|\special| (xelatex). The package defines two macros which can be used in text and in math mode. However, for the text
+mode one should use the bold version of the text font which should be available in most cases. This is different to the
+math mode where only some free math fonts provide a bold version.
+\end{abstract}
+
+\vfill
+\small Thanks to: Will Robertson; Yusuke Terada;
+%\meaning\setBold
+
+%\meaning\unsetBold
+
+\newpage
+
+\section{How does it work?}
+PDF knows different text render modes for outline fonts.
+
+\ifxetex\else% Only for the test run with xelatex
+
+\def\OFF{\pdfextension literal direct { 0 Tr 0 w }\relax}
+\def\Verb|#1|{\texttt{\{#1\}}}
+
+\makebox[3cm][l]{Mode 0 \Verb| 0 Tr 0 w |} \tabular{l}\pdfextension literal direct { 0 Tr 0 w }\scalebox{10}{OTTO} OTTO\OFF\endtabular
+
+\makebox[3cm][l]{Mode 1 \Verb| 1 Tr 0 w |} \tabular{l}\pdfextension literal direct { 1 Tr 0 w }\scalebox{10}{OTTO} OTTO\OFF\endtabular
+
+\makebox[3cm][l]{Mode 1 \Verb| 1 Tr 0.3 w |} \tabular{l}\pdfextension literal direct { 1 Tr 0.3 w }\scalebox{10}{OTTO} OTTO\OFF\endtabular
+
+\makebox[3cm][l]{Mode 2 \Verb| 2 Tr 0 w |} \tabular{l}\pdfextension literal direct { 2 Tr 0 w }\scalebox{10}{OTTO} OTTO\OFF\endtabular
+
+\makebox[3cm][l]{Mode 2 \Verb| 2 Tr 0.3 w |} \tabular{l}\pdfextension literal direct { 2 Tr 0.3 w }\scalebox{10}{OTTO} OTTO\OFF\endtabular
+\fi
+
+In mode 0 the character is filled but without drawing its outline which can be seen when printing in mode 1, where
+the linewidth of the outline is the smallest one which the system allows. Setting the linewidth to 0.3\,bp, which is
+nearly the same as 0.3\,pt, the linewidth of the outline increases. In mode 2 the character is printed with filling \emph{and}
+drawing the outline, which is mode 0 and 1 together. The reason why the character is bold by default.  Increasing the linewidth 
+makes it more bold.
+
+
+\section{Optional package argument}
+The only package option is \verb|bold| which is preset by 0.3, which is the linewidth of
+the outlines of the characters.
+
+\begin{lstlisting}
+\usepackage[bold=0.6]{xfakebold}
+\end{lstlisting}
+
+makes the characters more bold.
+
+\section{The macros}
+
+\begin{lstlisting}
+\setBold[<optional value>]
+\unsetBold
+\end{lstlisting}
+
+Without using the optional argument the default setting is used.
+
+
+
+
+\section{The example code}
+
+The following examples use the value for $\pi$, defined in \LaTeX3 as \verb|\c_pi_fp|. To get rid of
+the L3-syntax we define a new variable:
+
+\begin{lstlisting}
+\ExplSyntaxOn
+\let\PI\c_pi_fp
+\ExplSyntaxOff
+\end{lstlisting}
+
+\subsection{Default setting}
+\begin{lstlisting}
+\documentclass{article}
+\usepackage{xfakebold}
+\begin{document}
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+
+\setBold\noindent
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+
+\unsetBold\noindent
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+\end{document}
+\end{lstlisting}
+
+\noindent
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+
+\setBold\noindent
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+
+\unsetBold\noindent
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+
+
+\section{Loading the package with  another value}
+
+\begin{lstlisting}
+\documentclass{article}
+\usepackage[bold=1]{xfakebold}
+\begin{document}
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+
+\setBold\noindent
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+
+\unsetBold\noindent
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+\end{document}
+\end{lstlisting}
+
+\noindent
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+
+\ifxetex\special{pdf:literal direct 2 Tr 1 w }%
+\else\pdfextension literal direct { 2 Tr 1 w }\relax\fi
+\noindent 
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+
+\ifxetex\special{pdf:literal direct 0 Tr 0 w }%
+\else\pdfextension literal direct { 0 Tr 0 w }\relax\fi
+\noindent
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+
+\section{Using the optional argument of the macro}
+
+\begin{lstlisting}
+\documentclass{article}
+\usepackage{xfakebold}
+\begin{document}
+\setBold[0.01]\noindent
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+
+\setBold[0.2]\noindent
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+
+\setBold[0.6]\noindent
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+\unsetBold
+
+\setBold\noindent% Using the deafult value
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+\unsetBold
+\end{document}
+\end{lstlisting}
+
+\setBold[0.01]\noindent
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+
+\setBold[0.2]\noindent
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+
+\setBold[0.6]\noindent
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+\unsetBold
+
+\setBold\noindent% Using the deafult value
+An example: 
+$\pi^{\pi}=\fpeval{\PI^\PI}$ and
+$\displaystyle\int\limits_1^{\infty}\frac1{x^2}\symup dx=1$
+\unsetBold
+\end{document}

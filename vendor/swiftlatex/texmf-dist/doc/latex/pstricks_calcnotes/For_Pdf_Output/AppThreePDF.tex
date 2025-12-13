@@ -1,0 +1,510 @@
+\documentclass[11pt,a4paper,oneside]{article}
+\usepackage{multirow}
+\usepackage{longtable}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{url}
+\usepackage{cmtt}
+\usepackage[dvips]{geometry}
+\usepackage{pstricks}
+\usepackage{graphicx}
+\usepackage{graphics}
+\usepackage{pst-plot}
+\usepackage{pst-node}
+\usepackage{multido}
+\usepackage{pst-xkey}
+\usepackage{pst-func}
+\usepackage{pstricks-add}
+\usepackage[pdftex,colorlinks,linktocpage]{hyperref}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\hantt{\^e}\def\accentcircflx{\hskip-.3em\raisebox{0.32ex}{\'{}}}
+\DeclareRobustCommand{\cs}[1]{\textmtt{\char`\\#1}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcount\Fa\newcount\Fct\newcount\tempA
+\def\Factor{\ifnum\Fa=1\relax\else\advance\Fa by -1\multiply\Fct by \Fa\Factor\fi}
+\def\FACTORIAL#1{\Fa=#1 \ifnum\Fa=0 \Fct=1\relax\else\Fct=\Fa \Factor\fi\global\tempA=\Fct}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcount\BINOM
+\newcount\temp
+\newcount\tmp
+\def\BINOMIAL#1#2{%
+\temp=#1\advance\temp by -#2
+\FACTORIAL{#1}
+\tmp=\tempA
+\FACTORIAL{\temp}
+\temp=\tempA
+\divide\tmp by \temp
+\FACTORIAL{#2}
+\temp=\tempA
+\divide\tmp by \temp\global\BINOM=\tmp}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\xch{\catcode`\p=12 \catcode`\t=12}\def\ych{\catcode`\p=11 \catcode`\t=11}
+\xch \def\dec#1pt{#1}\ych \def\decimal#1{\expandafter\dec \the#1}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newdimen\Xa\newdimen\Yb\newcount\kc
+\newdimen\BSTemp
+\def\xmult#1{\ifnum\kc<#1\advance\kc by 1\Yb=\decimal\Xa\Yb\xmult{#1}\else\relax\fi}
+\def\BERNSTEIN#1#2#3{\Xa=#3pt\kc=0\Yb=1pt\xmult{#1}\kc=0\Xa=-\Xa\advance\Xa by 1pt\xmult{#2}
+\BINOMIAL{5}{#1}\global\BSTemp=\BINOM\Yb}
+
+\newdimen\Xrf
+\newdimen\Yrf
+\newdimen\XoneBST\newdimen\YoneBST
+\newdimen\XtwoBST\newdimen\YtwoBST
+\newdimen\XBST\newdimen\YBST
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\XoneBC#1{%
+\BERNSTEIN{2}{3}{#1}
+\Xrf=1.5pt
+\XoneBST=\decimal\BSTemp\Xrf
+\BERNSTEIN{3}{2}{#1}
+\Xrf=3pt
+\advance\XoneBST by \decimal\BSTemp\Xrf
+\BERNSTEIN{4}{1}{#1}
+\Xrf=5pt
+\advance\XoneBST by \decimal\BSTemp\Xrf
+\BERNSTEIN{5}{0}{#1}
+\Xrf=5pt
+\advance\XoneBST by \decimal\BSTemp\Xrf
+\global\XBST=\XoneBST}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\XtwoBC#1{%
+\BERNSTEIN{0}{5}{#1}
+\Xrf=5pt
+\XtwoBST=\decimal\BSTemp\Xrf
+\BERNSTEIN{1}{4}{#1}
+\Xrf=5pt
+\advance\XtwoBST by \decimal\BSTemp\Xrf
+\BERNSTEIN{2}{3}{#1}
+\Xrf=3.5pt
+\advance\XtwoBST by \decimal\BSTemp\Xrf
+\BERNSTEIN{3}{2}{#1}
+\Xrf=2pt
+\advance\XtwoBST by \decimal\BSTemp\Xrf
+\global\XBST=\XtwoBST}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\YoneBC#1#2#3{%
+\BERNSTEIN{1}{4}{#1}
+\Yrf=1.5pt
+\YoneBST=\decimal\BSTemp\Yrf
+\BERNSTEIN{2}{3}{#1}
+\Yrf=1pt
+\Yrf=#2\Yrf
+\advance\YoneBST by \decimal\BSTemp\Yrf
+\BERNSTEIN{3}{2}{#1}
+\Yrf=2pt
+\Yrf=#3\Yrf
+\advance\YoneBST by \decimal\BSTemp\Yrf
+\BERNSTEIN{4}{1}{#1}
+\Yrf=1.5pt
+\advance\YoneBST by \decimal\BSTemp\Yrf
+\global\YBST=\YoneBST}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\YtwoBC#1#2#3{%
+\BERNSTEIN{1}{4}{#1}
+\Yrf=-1.5pt
+\YtwoBST=\decimal\BSTemp\Yrf
+\BERNSTEIN{2}{3}{#1}
+\Yrf=-1pt
+\Yrf=#2\Yrf
+\advance\YtwoBST by \decimal\BSTemp\Yrf
+\BERNSTEIN{3}{2}{#1}
+\Yrf=-2pt
+\Yrf=#3\Yrf
+\advance\YtwoBST by \decimal\BSTemp\Yrf
+\BERNSTEIN{4}{1}{#1}
+\Yrf=-1.5pt
+\advance\YtwoBST by \decimal\BSTemp\Yrf
+\global\YBST=\YtwoBST}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\XoneFive{15*t^2*(1-t)^3+30*t^3*(1-t)^2+25*t^4*(1-t)+5*t^5}
+\def\YoneFive#1#2{7.5*t*(1-t)^4+(#1)*10*t^2*(1-t)^3+(#2)*20*t^3*(1-t)^2+7.5*t^4*(1-t)}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\XtwoFive{5*(1-t)^5+25*t*(1-t)^4+35*t^2*(1-t)^3+20*t^3*(1-t)^2}
+\def\YtwoFive#1#2{(-7.5)*t*(1-t)^4+(#1)*(-10)*t^2*(1-t)^3+(#2)*(-20)*t^3*(1-t)^2+(-7.5)*t^4*(1-t)}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\NetDrawOne#1#2#3{%
+\newdimen\Xsize
+\newdimen\Ysize
+\newdimen\tempx
+\newdimen\tempy
+\Xsize=7pt \divide\Xsize by #1
+\Ysize=6pt \divide\Ysize by #1
+\parametricplot[algebraic,fillstyle=solid,fillcolor=yellow!85,plotpoints=200,linewidth=0.5pt]{0}{1}
+{\XoneFive|\YoneFive{#2}{#3}}
+\multido{\nz=0.00+0.005}{200}{\XoneBC{\nz}\YoneBC{\nz}{#2}{#3}
+\multido{\nx=-1.00+\decimal\Xsize}{#1}
+{\tempx=\nx pt\multido{\ny=-3.00+\decimal\Ysize}{#1}
+{\tempy=\ny pt\ifdim\YBST<\tempy\relax\else\advance\tempy by \Ysize
+ \ifdim\YBST>\tempy\relax\else
+ \ifdim\XBST<\tempx\relax\else\advance\tempx by \Xsize
+ \ifdim\XBST>\tempx\relax\else\pspolygon[fillstyle=solid,fillcolor=blue!70,linecolor=black,linewidth=0.2pt]
+ (\nx,\ny)(\decimal\tempx,\ny)(\decimal\tempx,\decimal\tempy)(\nx,\decimal\tempy)(\nx,\ny)\fi\fi\fi\fi}
+}}
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\NetDrawTwo#1#2#3{%
+\newdimen\Xsize
+\newdimen\Ysize
+\newdimen\tempx
+\newdimen\tempy
+\Xsize=7pt \divide\Xsize by #1
+\Ysize=6pt \divide\Ysize by #1
+\parametricplot[algebraic,fillstyle=solid,fillcolor=yellow!85,plotpoints=200,linewidth=0.5pt]{0}{1}
+{\XtwoFive|\YtwoFive{#2}{#3}}
+\multido{\nz=0.00+0.005}{200}{\XtwoBC{\nz}\YtwoBC{\nz}{#2}{#3}
+\multido{\nx=-1.00+\decimal\Xsize}{#1}
+{\tempx=\nx pt\multido{\ny=-3.00+\decimal\Ysize}{#1}
+{\tempy=\ny pt\ifdim\YBST<\tempy\relax\else\advance\tempy by \Ysize
+ \ifdim\YBST>\tempy\relax\else
+ \ifdim\XBST<\tempx\relax\else\advance\tempx by \Xsize
+ \ifdim\XBST>\tempx\relax\else\pspolygon[fillstyle=solid,fillcolor=blue!70,linecolor=black,linewidth=0.2pt]
+ (\nx,\ny)(\decimal\tempx,\ny)(\decimal\tempx,\decimal\tempy)(\nx,\decimal\tempy)(\nx,\ny)\fi\fi\fi\fi}
+}}
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagestyle{headings}
+\topmargin=-0.6cm
+\textwidth=16.7cm
+\textheight=23cm
+\headheight=2.5ex
+\headsep=0.6cm
+\oddsidemargin=.cm
+\evensidemargin=-.4cm
+\parskip=0.7ex plus0.5ex minus 0.5ex
+\baselineskip=17pt plus2pt minus2pt
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\catcode`\@=11
+\gdef\@seccntformat#1{\csname the#1\endcsname.\hskip.6em}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\gdef\acknw{\section*{%
+{\acknwname}\markright{\protect\textsl{\acknwname}}}%
+\addcontentsline{toc}{section}{\acknwname}}
+\gdef\acknwname{Acknowledgment}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\renewcommand\sectionmark[1]{\markright{\thesection. #1}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{Drawing partitions of a simply connected plane domain}
+\author{Le Phuong Quan\\
+\small{(Cantho University)}\\
+\small{\texttt{lpquan@ctu.edu.vn}}}
+\begin{document}
+\maketitle
+
+This drawing procedure takes shape from the macros \verb+\psline+, \verb+\pspolygon+, \verb+\multido+
+and  \verb+\parametricplot+ in PSTricks\footnote{\footnotesize PSTricks is the original work of Timothy Van Zandt (email address: \texttt{tvz@econ.insead.fr}).
+It is currently edited by Herbert Vo\ss\ (\texttt{hvoss@tug.org}).}. The \TeX\ arithmetic gives the pointwise parametrization of curves.
+\section{How to make a boundary using B\'{e}zier curves}
+We can make the closed boundary of a plane domain by joining B\'{e}zier curves. This can produce various boundaries. We consider here
+two B\'{e}zier curves of degree $5$ whose vector functions are
+$$\mathbf{r}_a(t)=\sum_{i=0}^5\binom{5}{i}t^i(1-t)^{5-i}\mathbf{a}_i,\quad \mathbf{r}_b(t)=\sum_{i=0}^5\binom{5}{i}t^i(1-t)^{5-i}\mathbf{b}_i,$$
+where $\mathbf{a}_i$ and $\mathbf{b}_i$ are the position vectors of control points $M_i$, $N_i$ of the two curves, respectively, $i=0,\ldots,5$.
+Here we choose:
+$M_0=(0,0)$, $M_1=(0,1.5)$, $M_2=(1.5,1)$, $M_3=(3,2)$, $M_4=(5,1.5)$, $M_5=(5,0)$, and
+$N_0=(5,0)$, $N_1=(5,-1.5)$, $N_2=(3.5,-1)$, $N_3=(2,-2)$, $N_4=(0,-1.5)$, $N_5=(0,0)$. The two curves and
+their control points are shown in Figure \ref{BZ-1} and the picture in it gives us an obvious explanation of how to combine two B\'{e}zier curves to make a closed and smooth boundary.
+\begin{figure}[htbp]
+\centering\includegraphics[width=7cm]{BZ1}
+\caption{A B\'{e}zier-spline boundary.}\label{BZ-1}
+\end{figure}
+To change the shape of the boundary, we take one couple of multipliers for the second coordinates of $M_2$, $M_3$ and another one for those of $N_2$, $N_3$. To
+draw the curves $\mathbf{r}_a(t)$ and $\mathbf{r}_b(t)$ we need their parametrization $(X_a(t),Y_a(t))$ and $(X_b(t),Y_b(t))$, $t\in[0,1]$. From
+their control points and the given couple of multipliers $\alpha_M,\beta_M$, we derive
+\begin{align*}
+X_a(t)&=15t^2(1-t)^3+30t^3(1-t)^2+25t^4(1-t)+5t^5,\\
+Y_a(t)&=7.5t(1-t)^4+10\alpha_M t^2(1-t)^3+20\beta_M t^3(1-t)^2+7.5t^4(1-t).
+\end{align*}
+Similarly, we have
+\begin{align*}
+X_b(t)&=5(1-t)^5+25t(1-t)^4+35t^2(1-t)^3+20t^3(1-t)^2,\\
+Y_b(t)&=-7.5t(1-t)^4-10\alpha_N t^2(1-t)^3-20\beta_N t^3(1-t)^2-7.5t^4(1-t),
+\end{align*}
+where $\alpha_N$, $\beta_N$ are multipliers. Then, these curves will be depicted by the macro \verb+\parametricplot+
+with the corresponding declarations in the \texttt{algebraic} form:
+\begin{verbatim}
+\def\XoneFive{15*t^2*(1-t)^3+30*t^3*(1-t)^2+25*t^4*(1-t)+5*t^5}
+\def\YoneFive#1#2%
+{7.5*t*(1-t)^4+(#1)*10*t^2*(1-t)^3+(#2)*20*t^3*(1-t)^2+7.5*t^4*(1-t)}
+\def\XtwoFive{5*(1-t)^5+25*t*(1-t)^4+35*t^2*(1-t)^3+20*t^3*(1-t)^2}
+\def\YtwoFive#1#2%
+{(-7.5)*t*(1-t)^4+(#1)*(-10)*t^2*(1-t)^3+(#2)*(-20)*t^3*(1-t)^2+(-7.5)*t^4*(1-t)}
+\end{verbatim}
+where \verb+#1+, \verb+#2+ stand for $\alpha_M$ and $\beta_M$ in the definition of \verb+\YoneFive+ and
+for $\alpha_N$ and $\beta_N$ in that of \verb+\YtwoFive+, respectively.
+In Figure \ref{BZ-2}, the boundaries are drawn by using together the commands
+\begin{verbatim}
+\parametricplot[algebraic,plotpoints=200,linewidth=0.5pt]{0}{1}
+{\XoneFive|\YoneFive{alphaM}{betaM}}
+\parametricplot[algebraic,plotpoints=200,linewidth=0.5pt]{0}{1}
+{\XtwoFive|\YtwoFive{alphaN}{betaN}}
+\end{verbatim}
+where, \verb+alphaM+, \verb+betaM+, \verb+alphaN+ and \verb+betaN+ are chosen values of $\alpha_M$, $\beta_M$,
+$\alpha_N$ and $\beta_N$, respectively.
+\begin{figure}[htbp]
+\centering\includegraphics[width=4.5cm]{BZ2}
+\hskip0.5cm\includegraphics[width=4.5cm]{BZ3}
+\hskip0.5cm\includegraphics[width=4.5cm]{BZ4}
+\caption{From left to right, corresponding to the couple of values: $\alpha_M=-0.5$, $\beta_M=2.1$, $\alpha_N=2.4$, $\beta_N=-0.4$;
+$\alpha_M=1.1$, $\beta_M=1.4$, $\alpha_N=1.2$, $\beta_N=1.5$; $\alpha_M=1.7$, $\beta_M=0.2$, $\alpha_N=0.1$, $\beta_N=1.8$}\label{BZ-2}
+\end{figure}
+\section{How to draw a partition of a plane domain}
+To draw a partition of a plane domain whose boundary is made by the way that has just been described, we need the two
+procedures \verb+\NetDrawOne+ and \verb+\NetDrawTwo+, corresponding to $\mathbf{r}_a(t)$ and $\mathbf{r}_b(t)$. Their calling sequences take three arguments in order: one for $c$ (the number of cells) and
+the others for $\alpha_M$ and $\beta_M$ or $\alpha_N$ and $\beta_N$.
+Both of \verb+\NetDrawOne+ and \verb+\NetDrawTwo+ are used here to find cells in a given grid that have points in common with
+$\mathbf{r}_a(t)$ and $\mathbf{r}_b(t)$, and to color those cells. To obtain the definition of these procedures, we first state the
+problem that we are considering here.
+
+A grid of rectangular cells will be put on a rectangle $R$ containing a domain $D$ whose boundary consist of $\mathbf{r}_a(t)$ and $\mathbf{r}_b(t)$, including
+the given values of $c$, $\alpha_M$, $\beta_M$, $\alpha_N$ and $\beta_N$. Then, the steps for drawing a partition of $D$ can be listed as follows:
+\begin{itemize}
+\item Coloring cells that have points in common with the boundary of $D$.
+This is the result of calling \textmtt{\mtt\\NetDrawOne\{$c$\}\{$\alpha_M$\}\{$\beta_M$\}} and \textmtt{\mtt\\NetDrawTwo\{$c$\}\{$\alpha_N$\}\{$\beta_N$\}} together.
+\item Drawing the grid on $R$, which has been chosen as $R=\{(x,y)\colon -1\le x\le 6,\,-3\le y\le 3\}$.
+\item Drawing the two curves $\mathbf{r}_a(t)$ and $\mathbf{r}_b(t)$.
+\end{itemize}
+
+In practice, a partition of $D$ can be given by a calling sequence that has the following structure inside the \verb+\begin{pspicture}+ \ldots \verb+\end{pspicture}+
+environment:
+\begin{center}\begin{tabular}{l|l}\hline
+\textbf{Commands}&\textbf{Result}\\ \hline
+\textmtt{\mtt\\NetDrawOne\{$c$\}\{$\alpha_M$\}\{$\beta_M$\}}\textmtt{\mtt\\NetDrawTwo\{$c$\}\{$\alpha_N$\}\{$\beta_N$\}}&Coloring cells\\ \hline
+\textmtt{\mtt\\multido\{\mtt\\nx=-1.00+\mtt\\decimal\mtt\\Xsize\}\{$c+1$\}}\\
+\textmtt{\mtt\\psline[linewidth=0.2pt](\mtt\\nx,-3)(\mtt\\nx,3)}\\
+\textmtt{\mtt\\multido\{\mtt\\ny=-3.00+\mtt\\decimal\mtt\\Ysize\}\{$c+1$\}}\\
+\textmtt{\mtt\\psline[linewidth=0.2pt](-1,\mtt\\ny)(6,\mtt\\ny)}&Drawing the grid on $R$ \\ \hline
+\textmtt{\mtt\\parametricplot[algebraic,plotpoints=200,linecolor=white,}\\
+\textmtt{linewidth=0.5pt]\{0\}\{1\}\{\mtt\\XoneBFive|\mtt\\YoneBFive\{$\alpha_M$\}\{$\beta_M$\}\}}\\
+\textmtt{\mtt\\parametricplot[algebraic,plotpoints=200,linecolor=white,}\\
+\textmtt{linewidth=0.5pt]\{0\}\{1\}\{\mtt\\XtwoFive|\mtt\\YtwoFive\{$\alpha_N$\}\{$\beta_N$\}\}}&Drawing $\mathbf{r}_a(t)$, $\mathbf{r}_b(t)$\\ \hline
+\end{tabular}
+\end{center}
+
+In the following, beside the definitions of \verb+\XoneFive+, \verb+\YoneFive+, \verb+\XtwoFive+ and \verb+\YtwoFive+,
+we list all the remaining macros by their control sequences only and the results derived from running them. They form the whole drawing package, and of course they are also put in the preamble or in
+a single \TeX\ file to be loaded when running the package.
+\begin{itemize}
+\item \verb+\def\xch+: Setting \verb+\catcode'\p=12+, \verb+\catcode'\t=12+.
+\item \verb+\def\ych+: Setting \verb+\catcode'\p=11+, \verb+\catcode'\t=11+.
+\item \verb+\def\decimal#1+: Getting the numeric value of \verb+#1+ without unit.
+\item \verb+\def\FACTORIAL#1+: The factorial function. Ex: $\textmtt{\mtt\\FACTORIAL\{3\}}=6$.
+\item \verb+\def\BINOMIAL#1#2+: Binomial coefficients. Ex: $\textmtt{\mtt\\BINOMIAL\{5\}\{2\}}=10$.
+\item \verb+\def\BERNSTEIN#1#2#3+: Bernstein's functions. Ex: $\textmtt{\mtt\\BERNSTEIN\{3\}\{2\}\{t\}}=\displaystyle\binom{5}{3}t^3(1-t)^2$.
+\item \verb+\def\XoneBC#1+, \verb+\def\XtwoBC#1+: The values of $X_a(t)$, $X_b(t)$. Ex: $\textmtt{\mtt\\XoneBC\{0.5\}}=X_a(0.5)$.
+\item \verb+\def\YoneBC#1#2#3+, \verb+\def\YtwoBC#1#2#3+:
+The value of $Y_a(t)$ with given values of $\alpha_M$, $\beta_M$, and the value of $Y_b(t)$ with given values of $\alpha_N$, $\beta_N$.
+Ex: $\textmtt{\mtt\\YoneBC\{0.5\}\{1.8\}\{1.2\}}=Y_a(0.5)$, with $\alpha_M=1.8$, $\beta_M=1.2$.
+\end{itemize}
+
+We recall here the main idea for this drawing procedure. We have already the expressions of $\mathbf{r}_a(t)$ and $\mathbf{r}_b(t)$ to draw
+these B\'{ezier} curves by the macro \verb+\parametricplot+. But, we need to have in hand their points' coordinates to determine
+cells of a grid containing points in common with these curves. Fortunately, we may use the \TeX\ arithmetic
+to design expressions of $X_a(t)$, $Y_a(t)$, $X_b(t)$ and $Y_b(t)$, hence we can evaluate their values at each given $t\in[0,1]$.
+For instance, the macro \verb+\def\XoneBC#1+ is destined for evaluating the value of $X_a(t)$, and since it is a linear combination of Bernstein's functions,
+we need binomial coefficients. We do not take directly numeric values of those coefficients, and we have had the macro \verb+\def\BINOMIAL#1#2+ do that instead.
+It might be possible to use this macro in other problems later.
+In Appendix \ref{appendixA}, we list the replacement texts of the above macros and all the local and global variables they need.
+
+From the listed macros, \verb+\NetDrawOne+ may now have its definition as
+\begin{verbatim}
+==================================================================================
+\def\NetDrawOne#1#2#3{%
+\newdimen\Xsize
+\newdimen\Ysize
+\newdimen\tempx
+\newdimen\tempy
+\Xsize=7pt \divide\Xsize by #1
+\Ysize=6pt \divide\Ysize by #1
+\parametricplot[algebraic,fillstyle=solid,fillcolor=yellow!80,plotpoints=200,
+linewidth=0.5pt]{0}{1}{\XoneFive|\YoneFive{#2}{#3}}
+\multido{\nz=0.00+0.005}{200}{\XoneBC{\nz}\YoneBC{\nz}{#2}{#3}
+\multido{\nx=-1.00+\decimal\Xsize}{#1}
+{\tempx=\nx pt\multido{\ny=-3.00+\decimal\Ysize}{#1}
+{\tempy=\ny pt
+     \ifdim\YBST<\tempy\relax\else\advance\tempy by \Ysize
+      \ifdim\YBST>\tempy\relax\else
+       \ifdim\XBST<\tempx\relax\else\advance\tempx by \Xsize
+        \ifdim\XBST>\tempx\relax\else\pspolygon[fillstyle=solid,fillcolor=blue!70,
+linecolor=black,linewidth=0.2pt](\nx,\ny)(\decimal\tempx,\ny)
+(\decimal\tempx,\decimal\tempy)(\nx,\decimal\tempy)(\nx,\ny)\relax\fi\fi\fi\fi}}}}
+==================================================================================
+\end{verbatim}
+To obtain the definition of \verb+\NetDrawTwo+, we just replace by \verb+\XtwoFive+,
+\verb+\Ytwofive+, \verb+\XtwoBC+ and \verb+\YtwoBC+ for \verb+\XoneFive+,
+\verb+\YoneFive+, \verb+\XoneBC+ and \verb+\YoneBC+ in that of \verb+\NetDrawaOne+, respectively.
+
+Because of its inevitable shortcoming, \TeX\ often gives approximate results of calculations on dimensions.
+In the following table, let us see a slight difference between results obtained from the same expression (by declaration of
+operations) in Maple and in the \TeX\ arithmetic:
+\begin{table}[htbp]
+\centering\begin{tabular}{c||c|c|c|c|c}
+$t$&$0.12$&$0.33$&$0.54$&$0.74$&$0.97$\\ \hline
+\textmtt{\mtt\\XoneBC\{$t$\}}&$\XoneBC{0.12}\decimal\XBST$&$\XoneBC{0.33}\decimal\XBST$&$\XoneBC{0.54}\decimal\XBST$&$\XoneBC{0.74}\decimal\XBST$&$\XoneBC{0.97}\decimal\XBST$\\ \hline
+Maple&$0.19203$&$1.1935$&$2.6328$&$4.02479$&$4.98266$
+\end{tabular}
+\end{table}
+
+Actually, calculations in determining if a point of the two curves belongs a cell almost give the desired result.
+\begin{figure}[htbp]
+\centering\includegraphics[width=5cm]{BZ5}
+\caption{A typical cell.}\label{BZ-3}
+\end{figure}
+
+Before taking some examples, we give an explanation about what the main algorithm in the procedure \verb+\NetDrawOne+ (or \verb+\NetDrawTwo+) is. Let us take an approximate sequence of points
+for the curve $\mathbf{r}_a(t)$, say $P_i(\textmtt{\mtt\\XoneBC\{$t_i$\}},\textmtt{\mtt\\YoneBC\{$t_i$\}\{$\alpha_M$\}\{$\beta_M$\}})$, $i=1,\ldots,200$. Then, each $P_i$ is examined whether to be in a cell that has the reference point $C=(x,y)$ by the instruction that: do nothing if
+$P_i$ is
+
+\begin{figure}[htbp]
+\centering\includegraphics[width=6cm]{BZ6}\hskip1cm\includegraphics[width=6cm]{BZ7}
+\caption{From left to right: $c=25$ and $c=45$.}\label{BZ-4}
+\end{figure}
+
+\begin{itemize}
+\item below $d_3$, or
+\item above $d_4$, or
+\item on the left side of $d_1$, or
+\item on the right side of $d_2$;
+\end{itemize}
+otherwise, color the cell. This algorithm can be expressed in the form of
+\begin{center}
+\begin{tabular}{llll}
+\multicolumn{4}{l}{\textmtt{\mtt\\ifdim\mtt\\YBST<$y$ \mtt\\relax\mtt\\else\mtt\\advance $y$ by ysize}}\\
+&\multicolumn{3}{l}{\textmtt{\mtt\\ifdim\mtt\\YBST>$y$ \mtt\\relax\mtt\\else}}\\
+&&\multicolumn{2}{l}{\textmtt{\mtt\\ifdim\mtt\\XBST<$x$ \mtt\\relax\mtt\\else\mtt\\advance $x$ by xsize}}\\
+&&&\textmtt{\mtt\\ifdim\mtt\\XBST>$x$ \mtt\\relax\mtt\\else\mtt\\pspolygon[fillstyle=solid,$\ldots$]}
+\end{tabular}
+\end{center}
+where \verb+\XBST+ and \verb+\YBST+ hold the values of \textmtt{\mtt\\XoneBC\{$t_i$\}} and \textmtt{\mtt\\YoneBC\{$t_i$\}\{$\alpha_M$\}\{$\beta_M$\}}, respectively.
+This structure is almost the same as that in the procedure \verb+\NetDrawOne+ (or \verb+\NetDrawTwo+), but the variables here are declared according to the gloss in
+Figure \ref{BZ-3}.
+
+Finally, let us take two examples where we just give values of $c$ for the caption of figures. In Figure \ref{BZ-4}, we take the
+same couples $\alpha_M=1.7$, $\beta_M=0.2$, $\alpha_N=0.1$ and $\beta_N=1.8$ for its two pictures. In Figure \ref{BZ-5}, we take the
+same couples $\alpha_M=-0.5$, $\beta_M=2.1$, $\alpha_N=2.4$ and $\beta_N=-0.4$ for its three pictures.
+\begin{figure}[htbp]
+\centering\includegraphics[width=5cm]{BZ8}\hskip0.5cm\includegraphics[width=5cm]{BZ9}\hskip0.5cm\includegraphics[width=5cm]{BZ10}
+\caption{From left to right: $c=25$, $c=45$ and $c=63$.}\label{BZ-5}
+\end{figure}
+\appendix
+\section{Appendix: detailed definitions}\label{appendixA}
+The following is the list of all the detailed definitions needed for the procedure, except those of \verb+\XoneFive+, \verb+\YoneFive+, \verb+\XtwoFive+, \verb+\YtwoFive+,
+\verb+\NetDrawOne+ and \verb+\NetDrawTwo+.
+
+\begin{verbatim}
+----------------------------------------------------------------------------------
+\def\xch{\catcode`\p=12 \catcode`\t=12}
+\def\ych{\catcode`\p=11 \catcode`\t=11}\xch
+\def\dec#1pt{#1}\ych
+\def\decimal#1{\expandafter\dec \the#1}
+\newcount\Fa\newcount\Fct\newcount\tempA
+
+\def\Factor{\ifnum\Fa=1\relax\else\advance\Fa by -1\multiply\Fct by \Fa\Factor\fi}
+\def\FACTORIAL#1{\Fa=#1 \ifnum\Fa=0 \Fct=1\relax\else\Fct=\Fa
+\Factor\fi\global\tempA=\Fct}
+----------------------------------------------------------------------------------
+\newcount\BINOM
+\newcount\temp
+\newcount\tmp
+
+\def\BINOMIAL#1#2{%
+\temp=#1\advance\temp by -#2
+\FACTORIAL{#1}
+\tmp=\tempA
+\FACTORIAL{\temp}
+\temp=\tempA
+\divide\tmp by \temp
+\FACTORIAL{#2}
+\temp=\tempA
+\divide\tmp by \temp\global\BINOM=\tmp}
+----------------------------------------------------------------------------------
+\newdimen\Xa\newdimen\Yb\newcount\kc
+\newdimen\BSTemp
+
+\def\xmult#1{\ifnum\kc<#1\advance\kc by 1\Yb=\decimal\Xa\Yb\xmult{#1}
+\else\relax\fi}
+\def\BERNSTEIN#1#2#3{\Xa=#3pt\kc=0\Yb=1pt\xmult{#1}\kc=0\Xa=-\Xa\advance\Xa
+by 1pt\xmult{#2}\BINOMIAL{5}{#1}\global\BSTemp=\BINOM\Yb}
+----------------------------------------------------------------------------------
+\newdimen\Xrf
+\newdimen\Yrf
+\newdimen\XoneBST\newdimen\YoneBST
+\newdimen\XtwoBST\newdimen\YtwoBST
+\newdimen\XBST\newdimen\YBST
+
+\def\XoneBC#1{%
+\BERNSTEIN{2}{3}{#1}
+\Xrf=1.5pt
+\XoneBST=\decimal\BSTemp\Xrf
+\BERNSTEIN{3}{2}{#1}
+\Xrf=3pt
+\advance\XoneBST by \decimal\BSTemp\Xrf
+\BERNSTEIN{4}{1}{#1}
+\Xrf=5pt
+\advance\XoneBST by \decimal\BSTemp\Xrf
+\BERNSTEIN{5}{0}{#1}
+\Xrf=5pt
+\advance\XoneBST by \decimal\BSTemp\Xrf
+\global\XBST=\XoneBST}
+----------------------------------------------------------------------------------
+\def\XtwoBC#1{%
+\BERNSTEIN{0}{5}{#1}
+\Xrf=5pt
+\XtwoBST=\decimal\BSTemp\Xrf
+\BERNSTEIN{1}{4}{#1}
+\Xrf=5pt
+\advance\XtwoBST by \decimal\BSTemp\Xrf
+\BERNSTEIN{2}{3}{#1}
+\Xrf=3.5pt
+\advance\XtwoBST by \decimal\BSTemp\Xrf
+\BERNSTEIN{3}{2}{#1}
+\Xrf=2pt
+\advance\XtwoBST by \decimal\BSTemp\Xrf
+\global\XBST=\XtwoBST}
+----------------------------------------------------------------------------------
+\def\YoneBC#1#2#3{%
+\BERNSTEIN{1}{4}{#1}
+\Yrf=1.5pt
+\YoneBST=\decimal\BSTemp\Yrf
+\BERNSTEIN{2}{3}{#1}
+\Yrf=1pt
+\Yrf=#2\Yrf
+\advance\YoneBST by \decimal\BSTemp\Yrf
+\BERNSTEIN{3}{2}{#1}
+\Yrf=2pt
+\Yrf=#3\Yrf
+\advance\YoneBST by \decimal\BSTemp\Yrf
+\BERNSTEIN{4}{1}{#1}
+\Yrf=1.5pt
+\advance\YoneBST by \decimal\BSTemp\Yrf
+\global\YBST=\YoneBST}
+----------------------------------------------------------------------------------
+\def\YtwoBC#1#2#3{%
+\BERNSTEIN{1}{4}{#1}
+\Yrf=-1.5pt
+\YtwoBST=\decimal\BSTemp\Yrf
+\BERNSTEIN{2}{3}{#1}
+\Yrf=-1pt
+\Yrf=#2\Yrf
+\advance\YtwoBST by \decimal\BSTemp\Yrf
+\BERNSTEIN{3}{2}{#1}
+\Yrf=-2pt
+\Yrf=#3\Yrf
+\advance\YtwoBST by \decimal\BSTemp\Yrf
+\BERNSTEIN{4}{1}{#1}
+\Yrf=-1.5pt
+\advance\YtwoBST by \decimal\BSTemp\Yrf
+\global\YBST=\YtwoBST}
+----------------------------------------------------------------------------------
+\end{verbatim}
+
+\begin{thebibliography}{10}
+\bibitem{one} Dominique Rodriguez, Michael Sharpe \&\ Herbert Vo\ss. \textsl{\texttt{pstricks-add}: Additional Macros for PSTricks\/}.
+Version 3.60,
+\url{http://ctan.org/tex-archive/graphics/pstricks/contrib}, 2013
+\bibitem{two}Eitan M. Gurari. \textsl{Writing With \TeX \/}, McGraw-Hill, Inc., 1994, ISBN 0-07-025207-6
+\bibitem{three} Helmut Kopka \&\ Patrick W. Daly. \textsl{Guide to \LaTeX \/}.
+Addison-Wesley, Fourth Edition, 2004, ISBN 0321173856
+\bibitem{four} Timothy Van Zandt. \textsl{User's Guide\/}. Version 1.5,\\
+\url{http://ctan.org/tex-archive/graphics/pstricks/base}, 2007
+\end{thebibliography}
+\end{document}

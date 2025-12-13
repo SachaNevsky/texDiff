@@ -1,0 +1,342 @@
+\documentclass[11pt]{article}
+\listfiles
+\usepackage{graphicx}
+\usepackage[parfill]{parskip}
+%\parindent=0pt
+%\parskip=1ex plus 5pt
+\usepackage[oldstyle]{savoy}
+\usepackage[onlymath,minionint,mathlf]{MinionPro}% to use mnsymbol with minion italic
+\usepackage[scaled=.9,sf]{myriad}
+\usepackage[scaled=.78]{luximono}%requires T1+textcomp
+\newcommand{\textlf}[1]{{\usefont{LY1}{5sbx}{m}{n}\selectfont #1}}% to get Savoy lf
+\usepackage[T1]{fontenc}
+\usepackage{textcomp} % to get the right copyright, etc.
+\makeatletter
+\def\textat{\protect\makeatletter\texttt{@}\protect\makeatother}
+\def\verbatim@font{\small\normalfont\ttfamily}
+\newcommand\ON{%
+  \gdef\lst@alloverstyle##1{%from listings, required by showexpl
+    \fboxrule=0pt
+    \fboxsep=0pt
+%    \fcolorbox{DarkBlue}{DarkBlue}{\textcolor{white}{\bfseries\strut##1}}%
+    \fcolorbox{HotPink!50}{HotPink!50}{\textcolor{black}{\strut##1}}%
+}}
+\newcommand\OFF{%
+  \xdef\lst@alloverstyle##1{##1}%
+}
+\makeatother
+\hyphenation{Post-Script}
+\newcommand\CMD[1]{{\texttt{\textbackslash#1}}}
+\newlength{\lstenvsep}
+\setlength{\lstenvsep}{\partopsep}
+\addtolength{\lstenvsep}{\topsep}
+%\usepackage{listings}
+\usepackage{showexpl}
+\lstset{preset=\RaggedRight,  basicstyle=\ttfamily\small, commentstyle=\color{red},
+ explpreset={morecomment=[l]{\%},frame=single,rframe=,escapechar=`,numbers=none, aboveskip=11pt plus 4pt minus 5pt,postbreak=\space,breaklines, stringstyle=\ttfamily, backgroundcolor=\color{yellow!10}}}
+\lstdefinestyle{syntax}{backgroundcolor=\color{blue!20}, numbers=none, xleftmargin=0pt,xrightmargin=0pt,aboveskip=12pt plus 4pt minus 3pt, belowskip=4pt plus 4pt minus 2pt, frame=single}
+%\DefineShortVerb{\_}
+\lstset{escapechar=`}
+%\usepackage[dvipsnames,svgnames]{pstricks}
+%\usepackage{pst-nodeExtras,pst-layout}
+\usepackage{ragged2e,xspace,hyperref}
+\begin{document}
+%\showthe\medskipamount
+\begin{center}{\Large {\tt pst-layout}\\[12pt]
+\large Michael Sharpe\\[10pt]
+msharpe at ucsd.edu}
+\end{center}
+\section{Quick overview}
+This package uses {\tt pstricks} and related packages for a single purpose:  to ease the design of  quasi-tabular documents of a specified size. For a couple of examples, consider (a) a  business card; (b) a form, assumed to be available as an {\tt eps} graphic, that must be filled out by overprinting it with \LaTeX\ text. A much more complex example that was constructed using this package is shown at\\
+\url{http://cseweb.ucsd.edu/~gill/MissingGeoSite/index.html}.\\
+ In essence, you specify the canvas size and the units, you define a number of locations on the canvas to serve as alignment guides, and then enter arrays of parameters that govern the positions and appearances of dots, lines, frames, fragments of text and pictures. 
+After entering these arrays of data, type, for example
+\begin{verbatim}
+\psset{unit=1in,picwidth=4in,picheight=6in}
+\begin{pslayout}
+<optional: other graphics commands>
+\end{pslayout}
+\end{verbatim}
+then run {\tt LaTeX+dvips+ps2pdf} to view the result. Because the data arrays are not erased after the canvas is drawn, it is not intended as an environment for creation of more than a single canvas, though with care, that is possible. Units may be specified separately by setting {\tt xunit} and {\tt yunit} instead of {\tt unit}.
+
+A few packages are required. 
+\begin{description}
+\item[\tt pst-node] A recent version is essential.
+\item[\tt pst-layout] This package.
+\item[\tt arrayjobx] This is almost the same as the {\tt arrayjob} package that is part of \TeX\ Live, but with the name \verb|\array| altered in three places (lines 108, 148, 164)  so as not to conflict with the usage of \verb|\array| in \LaTeX\ and related parts of {\tt amsmath}, or with \verb|\Array| in {\tt pdftricks}. This command is normally only used internally, so there is little reason not to use {\tt arrayjobx} in place of {\tt arrayjob}.
+\end{description}
+
+\section{Coordinates and Node Expressions}
+The origin is the southwest corner of the canvas so the x axis runs along the bottom edge and the y axis along the left edge. Two macros---\verb|\xmax| and \verb|\ymax| are defined within the {\tt pslayout} environment, so that, for example, the top right corner may be referred to as \verb|(\xmax,\ymax)|. Positions of points may be specified in any form acceptable to \verb|\SpecialCoor|, or as a node expression, by which is meant an expression like
+\begin{verbatim}
+.25(1cm,3)+.333(2;90)-1.2([nodesep=.5cm]Q)
+\end{verbatim}
+which specifies a linear combination of points (the items enclosed in parentheses) specified in any manner acceptable to \verb|\SpecialCoor|. The parenthesized items themselves cannot themselves be node expressions, as those are not acceptable to \verb|\SpecialCoor|. As a reminder, \verb|\SpecialCoor| understands the following forms:
+\begin{description}
+\item[Cartesian] Eg, 
+{\tt (3,4), (3pt,2)}.
+\item[Polar] Eg, {\tt (2;90), (1cm;45)}.
+\item[Mixed] Eg, {\tt (2;90 | 3,4), (P | Q)}---x coordinate from first point, y coordinate from second---very useful form in {\tt pslayout}.
+\item[Node] Eg, {\tt (P)}, where {\tt P} is a previously defined node.
+\item[Node relative] Eg, {\tt ([nodesep=2pt,offset=1cm]P)}---{\tt 2pt} to the right and {\tt 1cm} up from {\tt P}.
+\item[Node segment relative] Eg, \verb+([nodesep=1,offset=2pt]{P}Q+. Relative to directed line segment from {\tt Q} toward {\tt P}, 1 unit from {\tt Q} and {\tt 2pt} to left (normal to {\tt QP}.)
+\item[Postscript] {\tt (! <PostScript code>)} Code must leave two items on the stack, interpreted as x and y coordinates. Eg, {\tt (! 90 sin 90 cos)} gives same result as (1,0).
+\end{description}
+
+ Note that coordinates with an unspecified unit take the appropriate unit, so {\tt (1cm,3)} means the point {\tt 1cm} to the right and 3 {\tt yunit} from the origin. 
+
+\subsection{Predefined points}
+Some points on the canvas are already named---the corners and midpoints are named {\tt PSPbl} (bottom left), {\tt PSPtl}, {\tt PSPtr}, {\tt PSPbr}, {\tt PSPbl}, {\tt PSPbc}, {\tt PSPtc}, {\tt PSPcl}, {\tt PSPcr}, {\tt PSPcc}, whose meanings should be clear. Three of these have alternative names---{\tt R0=PSPtl}, {\tt C-1=PSPbr},  and {\tt C-2=PSPbc}. These names are special and should not normally be redefined, though you may if you are obstinate. If the choice seems odd, think of {\tt R0} as the row above the first row of the canvas, {\tt C-1} as the last column, and {\tt C-2} as half way across. Names of the form {\tt R<natural number>} and {\tt C<natural number>} are reserved for special use. They should be defined by you as alignment points along the y axis and x axis respectively. Then {\tt pslayout} constructs all possible pairs like {\tt R15C2} (think of it as row 15, column 2) to serve as named positions. Do NOT use either {\tt R} or {\tt C} alone as the name of a point. Note that {\tt R0C-1} will be the same as {\tt PSTtr} and  {\tt R0C-2} will be the same as {\tt PSTtc}.
+
+
+\section{An example file}
+\begin{verbatim}
+%&latex
+\documentclass[dvips,10pt]{article}
+\usepackage[dvipsnames]{pstricks}
+\usepackage{pst-layout}
+\pagestyle{empty}
+\setlength\parindent{0pt}
+\begin{document}
+% Remember that C-1, C-2, R0 are predefined---do not change
+\NumPoints=2 % ignore higher indices
+\PointName(1)={TR}\PointPos(1)={PSPtr}
+\PointName(2)={R1}\PointPos(2)={(R0)-(0,.25)}
+\def\MaxR{1}\def\MaxC{0}
+\NumFrames=1
+\FrameStart(1)={0,0}\FrameEnd(1)={PSPtr}
+\NumFragments=1 %
+\Frag(1)={Some text}\FragRefPt(1)={B}%Baseline, center
+\FragPos(1)={R1C-2}
+\psset{unit=1in,picwidth=3in,picheight=2in}
+\begin{pslayout}
+\end{pslayout}
+\end{document}
+\end{verbatim}
+Between \verb|\begin{document}| and \verb|\begin{pslayout}| one enters the data specifications.
+\begin{description}
+\item[NumPoints] The entry \verb|\NumPoints=2| directs the program to look for points with index from 1 to 2. Non-existent entries are ignored. 
+\item[Point...] The next two lines define the points with indices 1 and 2. The first line says, in effect, let {\tt TR} be an alternative name for {\tt PSPtr}. The second says to define {\tt R1} to be .25(in) below {\tt R0}, on the y axis.
+\item[MaxR, MaxC] The following line instructs the program to create names of the for {\tt R<i>C<j>} for {\tt i<=1}, {\tt j<=0}.
+\item[NumFragments] The entry \verb|\NumFrags=1| says to read  \verb|\Frag...| entries with index 1.
+\item[NumFrames] The entry \verb|\NumFrames=1| says to read  \verb|\Frame...| entries with index 1.
+\item[Frame(1)] The items \verb|\FrameStart(1)| and \verb|\FrameEnd(1)| define opposite corners of a rectangular frame.
+\item[psset] The \verb|\psset{}| line defines the settings to be used in constructing the canvas. 
+\item[pslayout] The command \verb|\begin{pslayout}| initiates processing the arrays of data and inserts them one by one onto the canvas, Following that, the the graphics commands between \verb|\begin{pslayout}| and \verb|\end{pslayout}|are performed, overprinting all that went before. (There are none in this example.) The red items in the following picture were added but are not shown in the example code.\end{description}
+\begin{figure}[htbp] %  figure placement: here, top, bottom, or page
+   \centering
+   \includegraphics{example1} 
+   \caption{Output (including dots and labels)}
+   \label{fig:example1}
+\end{figure}
+The remaining sections describe in detail how to enter graphics, points, frames, lines, dots and text fragments. (That is the order in which they are processed.)
+\section {Graphics}
+External graphics must be in {\tt .eps} format. The files should if possible be at natural size so that line widths and text sizes match those of other elements. The Graphics section may have the following items.
+\begin{verbatim}
+\NumGraphics=<maximum index>% obligatory
+\Graphic(1)={<filename>}% omit the .eps
+\GraphicPos(1)={<position>}% may be any form, even node expression
+\GraphicOpts(1)={<list of options>}% eg, width=2in
+\GraphicRefPt(1)={<reference pt>}% eg, bl, b
+\end{verbatim}
+If \verb|\Graphic(1)| is defined and non-empty, \verb|\GraphicPos(i)| must be specified. If \verb|\GraphicOpts()| and \verb|\GraphicRefPt()| are empty, the effect is to place the graphic using the {\tt graphicx} version of \verb|\includegraphics|, so that its center is at \verb|\GraphicPos()|. If  \verb|\GraphicOpts()| is not empty, its contents are passed along as options to \verb|\includegraphics|. If \verb|\GraphicRefPt()| is not empty, its contents are used to specify the reference point of the graphic---the point which is to be translated to \verb|\GraphicPos()|. Typical values are {\tt bl} (bottom left), {\tt b} (bottom center).
+\section{Points} 
+
+The Points section of the data may have the following elements.
+\begin{verbatim}
+\NumPoints=<maximum index>% obligatory
+\PointName(1)={<your choice>}
+\PointPos(1)={<position>}% may be any form, even node expression
+\PointSeries(1)={<min>;<max>}% first, last indices
+\PointInc(1)={<increment between points in series>}
+\end{verbatim}
+If \verb|\PointName(i)| is defined and non-empty, \verb|\PointPos(i)| must be specified. The result is to create a node of specified name at the specified location. If \verb|\PointSeries(i)| is defined, then \verb|\PointInc(i)| must be defined. here is the meaning, by example.
+\begin{verbatim}
+\PointName(4)={P}
+\PointPos(4)={1,2}
+\PointSeries(4)={5;8}
+\PointInc(4)={.1in,.2cm}
+\end{verbatim}
+The result is that nodes named {\tt P5...P8} are defined, with {\tt P5} set to (1,2). Then the remaining nodes are set at increments of (.1in,.2cm), so that {\tt P8} is at (1,2)+(.3in,.6cm).
+
+While \verb|\PointPos()| may be specified as a node expression, \verb|\PointInc()| may not---it may however use any form understood by \verb|\SpecialCoor|.
+
+\section{Frames}
+The Frames section of the data may have the following elements.
+\begin{verbatim}
+\NumFrames=<maximum index>% obligatory
+\FrameStart(1)={<position>}% one corner
+\FrameEnd(1)={<position>}% opposite corner
+\FrameDelta(1)={<position>}% can specify width,height instead
+\FrameOpts(1)={<list of options>}%eg, linewidth, linecolor
+\FrameSolid(1)={<non-empty value for solid frame>}
+\end{verbatim}
+If \verb|\FrameEnd(i)| is defined and non-empty, \verb|\FrameDelta(i)| is ignored, otherwise the latter must be specified. The value of \verb|\FrameSolid| determines whether the frame is solid not. If \verb|\FrameSolid(i)| is non-empty (\verb|{1}|, say) the result will be a solid frame with color given by {\tt linecolor}, otherwise there is an outer rectangular frame in {\tt linecolor}, and the interior is filled in {\tt fillcolor} using {\tt fillstyle}. For example.
+\begin{verbatim}
+\FrameStart(4)={2,3}
+\FrameDelta(4)={1cm,2}
+\FrameOpts(4)={fillstyle=solid,fillcolor=yellow}
+\end{verbatim}
+results in a black frame around a solid yellow interior. (By default, {\tt fillstyle} {\tt =none,fillcolor=white}.)
+\section{Lines}
+The Lines section of the data may have the following elements.
+\begin{verbatim}
+\NumLines=<maximum index>% obligatory
+\LStart(1)={<position>}% initial point
+\LEnd(1)={<position>}% other end
+\LDelta(1)={<position>}% can specify increment instead
+\LOpts(1)={<list of options>}%eg, linewidth, linecolor
+\LArrow(1)={<arrow specification>}
+\end{verbatim}
+If \verb|\LEnd(i)| is defined and non-empty, \verb|\LDelta(i)| is ignored, otherwise the latter must be specified. The value of \verb|\LArrow| determines the arrows, if any. The default here is \verb|{-}|, an ordinary line with no arrows. Other common options are \verb|{->}|, \verb|{<->}|. The value of the option {\tt arrowscale} (default value 1) affects the size of the arrowhead.) All of \verb|\LStart()|, \verb|\LEnd()|, \verb|\LDelta()| may be specified as node expressions.  For example.
+\begin{verbatim}
+\LStart(4)={2,3}
+\LDelta(4)={1cm,2}
+\LOpts(4)={linewidth=.5pt,linecolor=red}
+\LArrow(4)={->}
+\end{verbatim}
+results in a red line from (2,3) to (2,3)+(1cm,2) with an arrowhead at the latter.
+\section{Dots}
+The Dots section of the data may have the following elements.
+\begin{verbatim}
+\NumDots=<maximum index>% obligatory
+\DotPos(1)={<position>}% position
+\DotOpts(1)={<list of options>}%eg, linecolor, dotstyle, dotsize
+\end{verbatim}
+The position may be specified by a a node expression. The options available for a dot are many. By default, {\tt dotstyle=*}, which makes a solid circular dot. Other common choices are {\tt dotstyle=o} and {\tt dotstyle=Bo}, both of which produce circular dots, the latter a little bolder. With the default values of {\tt linecolor} and {\tt fillcolor}, you get a black edge with white fill. The size depends on {\tt dotscale} and {\tt dotsize}. See the {\tt pstricks} documentation.
+\section{Fragments}
+The Fragments section of the data may have the following elements.
+\begin{verbatim}
+\NumFragments=<maximum index>% obligatory
+\Frag(1)={<text fragment>}
+\FragPos(1)={<position>}% where to position it
+\FragRefPt(1)={<one of B, c, t, r, b, tr, tl, br, bl, Bl, Br, etc>}
+%\FragRefPt can also be polar offset from \FragPos
+\FragRotation(1)={<rotation angle>}% eg 90
+\FragBlankBG(1)={<non-empty value blanks background>}
+\end{verbatim}
+The position \verb|\FragPos()| may be specified by a node expression. \verb|\Frag()| specifies the text that is printed. (It may be a \verb|\parbox| or other \LaTeX\ construct.) The fragment is rotated through \verb|\FragRotation()|, if specified. There are two different placement regimes, depending on the form of \verb|\FragRefPt()|. If omitted (in which case it defaults to {\tt c}) or it one of the string values listed above, then that reference point is translated to \verb|\FragPos()|. On the other hand, if \verb|\FragRefPt()| contains the {\tt ;} character, it is assumed to specify a polar offset from \verb|\FragPos()|. For example, \verb|\FragRefPt(3)={8pt;30}| specifies a polar offset of {\tt 8pt} at an angle of 30 degrees. (The form \verb|{;30}| uses the value of {\tt labelsep} for the radius, which by default is {\tt 5pt}.) These behaviors correspond to those of the {\tt pstricks}  \verb|\rput| and \verb|\uput| macros respectively.
+
+If \verb|\Frag(i)| is specified, then \verb|\FragPos(i)| is obligatory. The other items are optional, but the default value of \verb|\FragRefPt(i)| is not usually appropriate in the {\tt layout} context. Most commonly, you will wish to align text fragments by baseline, centered  \verb|{B}| or by baseline, left \verb|{Bl}|. Columns of numbers may require \verb|{Br}|.
+\section{Type}
+Dots, Frames and Lines have another feature not yet mentioned---an optional {\tt Type}. There are arrays \verb|\DotType()|, \verb|\FrameType()| and \verb|\LType()| which behave the same way in each case, so we discuss only \verb|\DotType()|. 
+
+Suppose you have several different types of Dots you wish to use in your design, with different parameters. Instead of entering these parameters each time in \verb|\DotOpts()|, you define a number of types incorporating those parameters. Let's suppose we want to use two different Dots that don't use just the default settings. We define two types, say {\tt A} and {\tt B}. In the document preamble, define them with, say,
+\begin{verbatim}
+\newpsobject{psdotA}{psdot}{dotstyle=Bo,dotsize=5pt}
+\newpsobject{psdotB}{psdot}{dotstyle=o,dotsize=2pt}
+\end{verbatim}
+Then, if \verb|\DotType(i)={A}|, the Dot will use the first set of parameters. You may of course make changes and changes to those new defaults in \verb|\DotOpts(i)|. 
+
+There is one further complication in using \verb|\LType|. In order to prepare for a new Type {\tt A}, you need to add two line to the preamble of your document, like
+\begin{verbatim}
+\newpsobject{pslineA}{psline}{linecolor=red,arrows=->}
+\newpsobject{psrlineA}{psrline}{linecolor=red,arrows=->}
+\end{verbatim}
+because {\tt layout} may use the macro \verb|\psrline| from {\tt pst-node} instead of \verb|\psline|.
+\section{Other issues}
+From the user's point of view, the {\tt pslayout} environment works as follows.
+\begin{itemize}
+\item If there is a macro by the name \verb|\AtLayoutStart|, insert its contents so that it applies to the entire layout. Eg,
+\begin{verbatim}
+\def\AtLayoutStart{\small \psset{Linewidth=.6pt,arrowscale=1.5}}
+\end{verbatim}
+\item If {\tt showfullcanvas} was specified by, eg, 
+\begin{verbatim}
+\psset{unit=1in,picwidth=3.5in,picheight=2in,showfullcanvas}
+\end{verbatim}
+then an invisible off-white frame is drawn around the canvas so that if white space is trimmed from the resulting graphic, no part of the canvas will be trimmed.
+\item All nodes defined by \verb|\PointName()| are constructed.
+\item All external graphic files listed in \verb|\Graphic()| are placed. 
+\item If there is a macro by the name \verb|\FrameSettings|, and if \verb|\NumFrames>0|, its code is inserted here. Most commonly, this will be a \verb|\psset{}| to control the appearance of all frames. It could be any {\tt pstricks} command, if you needed to have an object appear before frames were drawn. The code is grouped so that it applies only within the Frames section.
+\item All frames defined by \verb|\Frame...()| are constructed.
+\item If there is a macro by the name \verb|\LineSettings|, and if \verb|\NumLines>0|, its code is inserted here. Most commonly, this will be a \verb|\psset{}| to control the appearance of all lines. It could be any {\tt pstricks} command, if you needed to have an object appear before lines were drawn. The code is grouped so that it applies only within the Lines section.
+\item All lines defined by \verb|\L...()| are drawn.
+\item If there is a macro by the name \verb|\DotSettings|, and if \verb|\NumDots>0|, its code is inserted here. Most commonly, this will be a \verb|\psset{}| to control the appearance of all dots. It could be any {\tt pstricks} command, if you needed to have an object appear before dots were drawn. The code is grouped so that it applies only within the Dots section.
+\item All dots defined by \verb|\Dot...()| are drawn.
+\item If there is a macro by the name \verb|\FragSettings|, and if \verb|\NumFragments>0|, its code is inserted here. Most commonly, this will be a \verb|\psset{}| to control the appearance of all fragments. It could be any {\tt pstricks} command, if you need to have an object appear after dots are rendered but before fragments are drawn. The code is grouped so that it applies only within the Fragments section.
+\item All fragments defined by \verb|\Frag...()| are drawn.
+\item All {\tt pstricks} commands between \verb|\begin{pslayout}| and \verb|\end{pslayout}| are carried out. This the where you place items that must be on the top layer. In particular, the command \verb|\showRC|
+will show the defined {\tt R} and {\tt C} nodes and their combinations using green lines, as a temporary guide in your design. 
+\item The pair 
+\begin{verbatim}
+\begin{pslayout*}
+\end{pslayout*}
+\end{verbatim}
+behaves the same way as the {\tt pslayout} environment, but clips all material to the boundary of the canvas.
+\end{itemize}
+\section{Drawing at a fixed location on the paper}
+In \LaTeX, this is handled most easily using the \textsf{geometry} package. See the last example below. You may use to print on custom-sized paper, placing the canvas as you wish by specifying the appropriate margin parameters and {\tt nohead} to \textsf{geometry} so that the rectangle that remains is exactly the size of your canvas. Remember then to set \verb|\parindent=0pt|. 
+\section{Examples}
+The following would make an {\tt eps} graphic the size of a standard business card.
+\begin{verbatim}
+%&latex
+%process with latex+dvips+ps2eps(+epstopdf)
+\documentclass[dvips,10pt]{article}
+\usepackage[dvipsnames]{pstricks}
+\usepackage{pst-layout}
+\usepackage{mathptmx}
+\font\lfA=ptmr at 9.5pt %
+\font\lfB=ptmr at 9pt %
+\font\lfC=ptmr at 8.5pt %
+\font\lfD=ptmr at 7.5pt %
+% With 10pt as \normalsize, \small is 9pt
+%\scriptsize is 7pt. The above provide more choices
+\pagestyle{empty}
+\setlength\parindent{0pt}
+\begin{document}
+% Remember that C-1, C-2, R0 are predefined---do not change
+\def\AtLayoutStart{\scriptsize }
+\NumPoints=5 % ignore higher indices
+\PointName(1)={TR}\PointPos(1)={PSPtr}
+% The next lines define nodes R1..R7 to specify rows
+\PointName(2)={R}\PointPos(2)={0,1.03}%
+\PointInc(2)={0,-.138in}\PointSeries(2)={1;7}
+\PointName(3)={C0}\PointPos(3)={.19,0}%start column for name etc
+\PointName(4)={C1}\PointPos(4)={3.31,0}%end column for name etc
+\PointName(5)={C2}\PointPos(5)={2.22,0}%start column for email etc
+\def\MaxR{8}\def\MaxC{2}
+\NumGraphics=1
+\Graphic(1)={mygraphic}%requires mygraphic.eps
+\GraphicPos(1)={.453,1.49}
+\GraphicRefPt(1)={c}
+\GraphicOpts(1)={width=43pt,height=44pt}
+\NumFragments=9 %
+\Frag(1)={\normalsize YOUR OWN NAME}\FragRefPt(1)={B}%Baseline, center
+\FragPos(1)={R1C-2}
+\Frag(2)={\lfB Your Position}\FragPos(2)={R2C-2}\FragRefPt(2)={B}
+\Frag(3)={\lfB Your Department}\FragPos(3)={R3C-2}\FragRefPt(3)={B}
+\Frag(4)={YOUR INSTITUTION}\FragPos(4)={R6C0}\FragRefPt(4)={Bl}
+\Frag(5)={\lfD Your Address}\FragPos(5)={R7C0}\FragRefPt(5)={Bl}
+\Frag(6)={\lfD Phone:} \FragPos(6)={R6C2}\FragRefPt(6)={Bl}
+\Frag(7)={\lfD email:}\FragPos(7)={R7C2}\FragRefPt(7)={Bl}
+\Frag(8)={\lfD Your phone}\FragPos(8)={R6C1}\FragRefPt(8)={Br}
+\Frag(9)={\lfD Your email}\FragPos(9)={R7C1}\FragRefPt(9)={Br}
+\psset{unit=1in,picwidth=3.5in,picheight=2in,showfullcanvas}
+\begin{pslayout}
+\end{pslayout}
+\end{document}
+\end{verbatim}
+Once this graphic is created and saved in {\tt.eps} format, say as {\tt mycard.eps}, you may print out ten cards per page using the following.
+
+\begin{verbatim}
+%&latex
+%latex+dvips+epstopdf
+\documentclass[dvips,10pt]{article}
+\usepackage{graphicx}
+\usepackage{pstricks-add}
+\usepackage[vmargin=.5in,hmargin=.75in,nohead]{geometry}
+\usepackage{mathptmx}
+\pagestyle{empty}
+\setlength\parindent{0pt}
+\begin{document}
+\psset{xunit=3.5in,yunit=2in}
+\begin{pspicture}(2,5)
+\multido{\iA=0+1}{5}{%
+\multido{\iB=0+1}{2}{\rput[bl](\iB,\iA){\includegraphics{mycard}}}}
+\end{pspicture}
+\end{document}
+\end{verbatim}
+
+
+\end{document}

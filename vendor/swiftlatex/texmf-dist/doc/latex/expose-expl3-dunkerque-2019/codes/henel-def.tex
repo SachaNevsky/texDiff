@@ -1,0 +1,66 @@
+% Time-stamp: <2019-08-07 10:59:31 administrateur>
+% Création : 2019-05-20T11:51:49+0200
+\ExplSyntaxOn 
+
+\cs_new:Nn \__yh_ecrire_nombre:n { \(\np{\int_to_arabic:n{ #1 }}\) }
+
+\cs_new:Nn \yh_impair_est_premier:nT {
+  \bool_set_true:N \yh_continue_bool
+  \bool_set_true:N \yh_est_premier_bool
+  \int_set:Nn \l_tmpa_int {1}
+  % FIN INITIALISATION
+  \bool_do_while:Nn \yh_continue_bool { % BOUCLE `TANTQUE'
+    % INCRÉMENTATION 
+    \int_add:Nn \l_tmpa_int { 2 }
+    \bool_if:nTF {
+    % TEST de divisibilité
+      \int_compare_p:nNn { \int_mod:nn {#1} { \l_tmpa_int } } = { 0 }
+    } { % SI VRAI
+      \bool_set_false:N \yh_continue_bool
+      \bool_gset_false:N \yh_est_premier_bool
+    } { % SI FAUX
+      \int_compare:nNnT { \l_tmpa_int * \l_tmpa_int } > { #1 } 
+      { \bool_set_false:N \yh_continue_bool }
+    } } % FIN DU SI ET FIN DE LA BOUCLE
+  \bool_if:nT {\yh_est_premier_bool} {#2} }
+
+\cs_new:Nn \yh_ecrire_separateur:n { } 
+
+\cs_new:Nn \yh_ecrire_si_premier:n {
+  \yh_impair_est_premier:nT { #1 }
+  { \yh_ecrire_separateur:n { #1 }
+    \__yh_ecrire_nombre:n { #1 } } }
+
+\NewDocumentCommand { \ListePremiers } { m } {
+  \group_begin:
+  % INITIALISATION
+  \int_new:N \l_compteur_int
+  \int_new:N \l_nombre_requis
+  \int_set:Nn \l_compteur_int { 2 }
+  \int_set:Nn \l_nombre_requis { #1 }
+  \cs_set:Nn \yh_ecrire_separateur:n {
+    \int_compare:nNnTF { ##1 } < { \l_nombre_requis - 1} {,~} {~et~} }
+  % LES DEUX PREMIERS NOMBRES PREMIERS NE SONT PAS CALCULÉS 
+  \__yh_ecrire_nombre:n {2}
+  \yh_ecrire_separateur:n {1}
+  \__yh_ecrire_nombre:n {3} 
+  % PRÉPARATION DE LA BOUCLE, \l_tmpb_int EST LE CANDIDAT À TESTER
+  \int_set:Nn \l_tmpb_int { 3 }
+  % BOUCLE `TANT QUE'
+  \int_while_do:nNnn { \l_compteur_int } < { \l_nombre_requis } {
+    \int_add:Nn \l_tmpb_int { 2 }
+    \yh_impair_est_premier:nT { \l_tmpb_int }
+    { \yh_ecrire_separateur:n { \l_compteur_int }
+      \__yh_ecrire_nombre:n{ \l_tmpb_int }
+      \int_incr:N \l_compteur_int } }
+  % ON FAIT LE MÉNAGE AVANT DE SORTIR
+  \cs_undefine:N  \l_compteur_int
+  \cs_undefine:N  \l_nombre_requis
+  \group_end: }
+
+\ExplSyntaxOff
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
