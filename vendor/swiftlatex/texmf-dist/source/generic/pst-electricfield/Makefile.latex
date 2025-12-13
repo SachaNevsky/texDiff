@@ -1,0 +1,99 @@
+# $Id: Makefile.latex 351 2010-06-18 05:47:11Z herbert $
+
+# `Makefile' for `pst-electricfield-doc.pdf', hv/RN 2010/06/12
+
+.SUFFIXES : .tex .ltx .dvi .ps .pdf .eps .pro 
+
+PACKAGE = pst-electricfield
+MAIN = $(PACKAGE)-doc
+
+LANGUAGES = DE FR EN
+
+ifneq ($(LANGUAGES),)
+  DOC_SOURCES = $(addprefix $(PACKAGE)-doc,$(LANGUAGES))
+else
+  DOC_SOURCES = $(MAIN)
+endif
+
+DOC_SOURCES := $(addsuffix .tex, $(DOC_SOURCES))
+DOCS = $(DOC_SOURCES:.tex=.pdf)
+
+TDS = ~/PSTricks/PSTricks-TDS
+
+LATEX = latex
+
+DVIPS = dvips
+
+PS2PDF = GS_OPTIONS=-dAutoRotatePages=/None ps2pdf
+
+ARCHNAME = $(PACKAGE)-$(shell date +%Y%m%d)
+
+PRO = $(PACKAGE).pro
+
+ARCHFILES = $(PACKAGE).sty $(PACKAGE).tex $(PACKAGE).pro $(DOC_SOURCES) \
+  README Changes Makefile
+
+all : $(DOCS) clean 
+
+%.pdf : %.ps
+	$(PS2PDF) $< $@
+
+%.ps : %.dvi
+	$(DVIPS) -o $@ $<
+
+%.dvi : %.tex
+	$(LATEX) $<
+#	$(LATEX) $<
+#	if ! test -f $(basename $<).glo ; then touch $(basename $<).glo; fi
+#	if ! test -f $(basename $<).idx ; then touch $(basename $<).idx; fi
+#	makeindex -s gglo.ist -t $(basename $<).glg -o $(basename $<).gls $(basename $<).glo
+	makeindex -s pst-doc.ist -t $(basename $<).ilg -o $(basename $<).ind \
+	  $(basename $<).idx
+	bibtex $(basename $<)
+	$(LATEX) $<
+	$(LATEX) $<
+
+clean :
+	$(RM) $(foreach i,$(DOC_SOURCES:.tex=),$(addprefix $i, \
+          .log .aux .glg .glo .gls .ilg .idx .ind .tmp .toc .out .blg .bbl))
+
+veryclean : clean
+	$(RM) $(foreach i,$(DOC_SOURCES:.tex=),$(addprefix $i, \
+          .pdf .bbl .blg))
+
+arch :
+	zip $(ARCHNAME).zip $(ARCHFILES)
+
+ifneq ($(strip $(PRO)),)
+installPRO : 
+	@echo "Installiere PRO-Dateien ($(PRO))..."
+	cp -u Changes        $(TDS)/dvips/$(PACKAGE)/
+	cp -u $(PACKAGE).pro $(TDS)/dvips/$(PACKAGE)/
+	cp -u $(PACKAGE).pro ~/Links/dvips-local/
+else
+installPRO : 
+	@:
+endif
+
+tds : installPRO
+	@echo "Installiere TeX-Zeug..."
+	cp -u Changes     $(TDS)/doc/generic/$(PACKAGE)/
+	cp -u README      $(TDS)/doc/generic/$(PACKAGE)/
+	cp -u *.pdf $(TDS)/doc/generic/$(PACKAGE)/
+#
+	cp -u Changes        $(TDS)/tex/latex/$(PACKAGE)/
+	cp -u $(PACKAGE).sty $(TDS)/tex/latex/$(PACKAGE)/
+#
+	cp -u Changes        $(TDS)/tex/generic/$(PACKAGE)/
+	cp -u $(PACKAGE).tex $(TDS)/tex/generic/$(PACKAGE)/
+#
+	cp -u Changes     $(TDS)/source/$(PACKAGE)/
+	cp -u $(MAIN)*.tex $(TDS)/source/$(PACKAGE)/
+	cp -u $(MAIN).bib $(TDS)/source/$(PACKAGE)/
+	cp -u Makefile    $(TDS)/source/$(PACKAGE)/
+
+debug :
+	@echo $(DOC_SOURCES)
+	@echo $(DOCS)
+
+# EOF

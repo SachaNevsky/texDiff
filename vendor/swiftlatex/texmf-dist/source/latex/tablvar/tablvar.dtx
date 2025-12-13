@@ -1,0 +1,1828 @@
+% \iffalse meta-comment
+%
+% Copyright (C) 2018-2019 by Antoine Missier <antoine.missier@ac-toulouse.fr>
+%
+% This file may be distributed and/or modified under the conditions of
+% the LaTeX Project Public License, either version 1.3 of this license
+% or (at your option) any later version.  The latest version of this
+% license is in:
+%
+%   http://www.latex-project.org/lppl.txt
+%
+% and version 1.3 or later is part of all distributions of LaTeX version
+% 2005/12/01 or later.
+% To get the index compile with
+% makeindex -s gind.ist -o tablvar.ind tablvar.idx
+% \fi
+%
+% \iffalse
+%<*driver>
+\ProvidesFile{tablvar.dtx}
+%</driver>
+%<*package> 
+\NeedsTeXFormat{LaTeX2e}[2005/12/01]
+\ProvidesPackage{tablvar}   
+    [2019/07/01 v1.2 .dtx tablvar file]
+%</package>
+%<*driver>
+\documentclass{ltxdoc}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{tablvar}
+\usepackage[Symbol]{upgreek}
+\renewcommand\pi{\uppi}
+\newcommand*\dfrac[2]{{\displaystyle\frac{#1}{#2}}}
+\DisableCrossrefs         
+%\CodelineIndex
+%\RecordChanges
+\usepackage{hyperref}
+\hypersetup{%
+    colorlinks, 
+    linkcolor=blue,
+    pdftitle={tablvar}, 
+    pdfsubject={LaTeX package}, 
+    pdfauthor={Antoine Missier}
+}
+\newcommand\tikz{{\fontfamily{cmr}Ti{\em k}Z}}
+\begin{document}
+  \DocInput{tablvar.dtx}
+  %\PrintChanges
+  %\PrintIndex
+\end{document}
+%</driver>
+% \fi
+%
+% \CheckSum{2825}
+%
+% \CharacterTable
+%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%   Digits        \0\1\2\3\4\5\6\7\8\9
+%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%   Dollar        \$     Percent       \%     Ampersand     \&
+%   Acute accent  \'     Left paren    \(     Right paren   \)
+%   Asterisk      \*     Plus          \+     Comma         \,
+%   Minus         \-     Point         \.     Solidus       \/
+%   Colon         \:     Semicolon     \;     Less than     \<
+%   Equals        \=     Greater than  \>     Question mark \?
+%   Commercial at \@     Left bracket  \[     Backslash     \\
+%   Right bracket \]     Circumflex    \^     Underscore    \_
+%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%   Right brace   \}     Tilde         \~}
+%
+% \changes{v0.1}{05/01/2014}{Version initiale personnelle}
+% \changes{v0.2}{11/11/2014}{Ajout de l'option tikz}
+% \changes{v0.3}{07/12/2014}{Ajout de l'environnement tablvar*}
+% \changes{v1.0}{11/11/2018}{Première version publiée, création de fichiers dtx et ins}
+% \changes{v1.0}{11/11/2018}{nouvelle marcro bblim, 
+% changements dans les macros barre et Zih}
+% \changes{v1.1}{12/04/2019}{Reprise README.md, tvloop -> varloop}
+% \changes{v1.2}{05/05/2019}{Modifications mineures dans la documentation}
+% \changes{v1.2}{02/06/2019}{Augmentation du facteur arraystretch par défaut de 1.2 à 1.4}
+%
+% \GetFileInfo{tablvar.sty}
+% 
+% \title{L'extension \textsf{tablvar}\thanks{Ce document
+%     correspond à \textsf{tablvar}~\fileversion, dernière modification le 01/07/2019.}}
+% \author{Antoine Missier \\ \texttt{antoine.missier@ac-toulouse.fr}}
+% \date{1\ier\ juillet 2019}
+% \maketitle
+% \tableofcontents
+%
+% \section{Introduction}
+%
+% Cette extension permet de construire des tableaux de variation (et de signes)
+% de manière simple et intuitive.
+% Bien que plusieurs autres extensions soient déjà dédiées à cette tâche
+% \footnote{Mentionnons \textsf{tabvar} de Daniel Flipo et 
+% \textsf{variations} de Christian Obrecht ou, plus complexes, 
+% \textsf{tablor} de Guillaume Connan et \textsf{tkz-tab} de Alain Matthes.}, 
+% nous avons voulu produire des tableaux de manière automatisée, 
+% y compris pour des tableaux complexes,  
+% mais avec de nombreuses possibilités de réglages et d'ajustements personnels
+% et une haute qualité graphique, en particulier pour le dessin des flèches,
+% en exploitant les fonctionnalités des extensions graphiques PSTricks 
+% (plus exactement \textsf{pst-node}) ou \tikz\ pour 
+% définir un \emph{graphe} de \emph{nœuds} reliés par des flèches,
+% venant se \og superposer \fg{} au tableau lui-même.
+%
+% Le parti pris ici est d'utiliser la même syntaxe que les environnements 
+% |array| (ou |tabular|) en laissant à \LaTeX\ le soin de faire 
+% la composition du tableau et à l'extension graphique
+% (PSTricks ou \tikz) celui
+% de réaliser le dessin des flèches, automatisé et sans intervention de l'utilisateur.
+% On a simplement besoin de préciser, à l'intérieur d'une commande |\variations|,
+% ce qui est en haut et ce qui est en bas.
+%
+% L'extension possède deux options utilisées pour le tracé automatique des flèches : 
+% |pstricks| (par défaut) ou |tikz| (|\usepackage[tikz]{tablvar}|).
+% Pour l'option |pstricks|, il faut compiler avec \texttt{LaTeX + dvips + ps2pdf} ; 
+% pour l'option |tikz|, il faut compiler DEUX fois avec \texttt{pdfLaTeX} 
+% (la première fois les flèches ne sont pas correctement dessinées).
+% Si on veut compiler avec l'option |pstricks| après avoir compilé avec |tikz|, 
+% il faut supprimer le fichier |.aux|, sinon la compilation plante.
+%
+% Cette documentation donne une galerie d'exemples et décrit les commandes 
+% fournies.
+%
+% \section{Utilisation}
+%
+% \subsection{Tableaux de variations simples}
+%
+% Un tableau de variation (ou de signes) se définit par un environnement |tablvar|
+% qui \emph{doit être en mode mathématiques} (comme |array|).
+%
+% Voici un premier tableau tout simple avec les commandes 
+% \DescribeMacro{\haut} \DescribeMacro{\bas} \DescribeMacro{\mil}
+% de positionnement naïves |\haut|, |\bas| et |\mil| (milieu).
+% 
+%\[ 
+%\begin{tablvar}{4}
+%    \hline
+%    x & -5 && -1 && 2 && 3 && 5 \\
+%    \hline
+%    f'(x) & & + & 0 & - & 0 & + & 0 & - & \\
+%    \hline
+%    \variations{ \mil{f(x)} & \bas{0} && \haut{2} && \bas{1} && 
+%        \haut{4} && \bas{-3} }
+%    \hline
+%\end{tablvar}
+%\]
+% \begin{verbatim}
+%\[
+%\begin{tablvar}{4}
+%    \hline
+%    x & -5 && -1 && 2 && 3 && 5 \\
+%    \hline
+%    f'(x) & & + & 0 & - & 0 & + & 0 & - & \\
+%    \hline
+%    \variations{ \mil{f(x)} & \bas{0} && \haut{2} && \bas{1} && 
+%        \haut{4} && \bas{-3} }
+%    \hline
+%\end{tablvar}
+%\]
+% \end{verbatim}
+%
+% \vspace{-3ex}
+% \DescribeEnv{tablvar}
+% L'argument obligatoire de l'environnement |tablvar| correspond au nombre 
+% d'intervalles du tableau c'est-à-dire aussi au nombre de flèches (ici 4).
+% Les délimiteurs |&| correspondent aux changements de colonnes 
+% comme pour l'environnement |array|.
+% Outre la 1ère colonne de légendes, il y a deux types de colonnes :
+% des colonnes de \emph{valeurs}, de largeur variable en fonction de leur contenu et centrées,
+% et des colonnes \emph{intervalles} de largeur fixe (|2.5em| par défaut).
+%
+% \DescribeEnv{tablvar\oarg{largeur}}
+% L'environnement |tablvar| possède un paramètre optionnel pour modifier la
+% largeur des colonnes intervalles.
+% Voici un exemple avec un seul intervalle utilisant l'argument optionnel |4em|
+% pour allonger la largeur de l'intervalle qui sinon apparaîtrait très étroit.
+%
+% \noindent
+% \begin{minipage}[t]{8cm}
+% \begin{verbatim}
+%\[
+%\begin{tablvar}[4em]{1}
+%    \hline
+%    x & -5 && +\infty \\
+%    \hline
+%    \variations{\mil{f(x)} & \haut{2} && 
+%        \bas{-1} }
+%    \hline
+%\end{tablvar}
+%\]
+% \end{verbatim}
+% \end{minipage}
+% \begin{minipage}[t]{4.7cm}
+%\[
+%\begin{tablvar}[4em]{1}
+%    \hline
+%    x & -5 && +\infty \\
+%    \hline
+%    \variations{\mil{f(x)} & \haut{2} && \bas{-1}}
+%    \hline
+%\end{tablvar}
+%\]
+% \end{minipage}
+%
+% \DescribeMacro{\pos}
+% Les commandes |\haut| et |\bas| ne sont en fait que des alias d'une commande
+% plus générale qui est \cmd{\pos}\oarg{opt}\marg{ligne}\marg{valeur}. Celle-ci place
+% la \meta{valeur} sur la \meta{ligne} indiquée en créant un nœud pour les flèches.
+% La ligne des $x$ et les lignes contenant dérivée
+% ou tableau de signe ont pour indice 0.
+% La partie variations contient par défaut 3 lignes numérotées 1, 2, 3
+% \emph{du haut vers le bas} (dans le sens de l'écriture 
+% et de la construction du tableau). 
+% Le paramètre optionnel \meta{opt} 
+% \footnote{Ce paramètre optionnel n'est pas implémenté et est sans effet pour l'option |tikz|.}
+% permet d'ajuster le positionnement des flèches : 
+% |c| (centered, par défaut), |b| (bottom) ou |t| (top).
+% Comparer le positionnement des flèches dans les deux exemples suivants. 
+%
+% \DescribeMacro{\variations}
+% C'est la commande |\variations| qui, une fois les nœuds définis,
+% construit ensuite automatiquement les flèches.
+%
+% La commande |\mil|, utilisée pour la première colonne contenant $f(x)$,
+% \DescribeMacro{\pos*} 
+% est un alias reposant sur la commande plus générale \cmd{\pos*}\marg{ligne}\marg{valeur}
+% qui se comporte comme |\pos| mais ne crée pas de nœud pour les flèches.\\
+% \enlargethispage{1ex}
+% \begin{minipage}[t]{7.4cm}
+% \begin{verbatim}
+%\begin{tablvar}{2}
+%    \hline
+%    x & 0 & & \frac12 & & 1 \\
+%    \hline
+%    f'(x) & & + & 0 & - & \\
+%    \hline
+%    \variations{\mil{f(x)} & \bas{2} &&
+%        \haut{f(\frac12)} && \bas{0}
+%    }
+%    \hline
+%\end{tablvar}
+% \end{verbatim}
+% \end{minipage}
+% \begin{minipage}[t]{5.2cm}
+%\[ 
+%\begin{tablvar}{2}
+%    \hline
+%    x & 0 & & \frac12 & & 1 \\
+%    \hline
+%    f'(x) & & + & 0 & - & \\
+%    \hline
+%    \variations{\mil{f(x)} & \bas{2} &&
+%        \haut{f(\frac12)} && \bas{0}
+%    }
+%    \hline
+%\end{tablvar}
+%\]
+% \end{minipage}
+% \\
+% Le même tableau avec les commandes |\pos| 
+% et |\pos*| et l'option |t| pour le max.\\[-1ex]
+% \begin{minipage}[t]{7.4cm}
+% \begin{verbatim}
+%\begin{tablvar}{2}
+%    \hline
+%    x & 0 & & \frac12 & & 1 \\
+%    \hline
+%    f'(x) & & + & 0 & - & \\
+%    \hline
+%    \variations{\pos*{2}{f(x)} & \pos{3}{2} &
+%        &\pos[t]{1}{f(\frac12)} && \pos{3}{0}
+%    }
+%    \hline
+%\end{tablvar}
+% \end{verbatim}
+% \end{minipage}
+% \begin{minipage}[t]{5.2cm}
+%\[
+%\begin{tablvar}{2}
+%    \hline
+%    x & 0 & & \frac12 & & 1 \\
+%    \hline
+%    f'(x) & & + & 0 & - & \\
+%    \hline
+%    \variations{\pos*{2}{f(x)} & \pos{3}{2} &
+%        &\pos[t]{1}{f(\frac12)} && \pos{3}{0}
+%    }
+%    \hline
+%\end{tablvar}
+%\]
+% \end{minipage}
+%
+% \DescribeMacro{\fleche}
+% On peut modifier l'aspect des flèches en redéfinissant la macro |\fleche|
+% grâce aux nombreuses options offertes par PSTricks ou \tikz. 
+% Cette redéfinition sera locale si on la place dans l'environnement math du tableau.
+% Ci-dessous des flèches plus fines, plus proches des nœuds et dont la pointe est
+% plus effilée (codé ici pour pstricks uniquement).
+%\[
+%\ifthenelse{\boolean{tikz}}{}{
+%     \renewcommand{\fleche}{\ncline[linewidth=0.3pt,arrowsize=2pt 3,
+%            arrowinset=0.5,nodesep=1.5pt]{->}}
+%    }
+%\begin{tablvar}{4}
+%    \hline
+%    x & -5 && 0 && 2 && 3 && 5 \\
+%    \hline
+%    \variations{ \pos*{2}{f(x)} & \pos{3}{-4} && \pos{2}{1} && \pos{2}{1} 
+%        && \pos{1}{4} && \pos{3}{0}
+%    }
+%    \hline
+%\end{tablvar}
+%\]
+% Pour placer des nœuds de flèche au milieu, on doit utiliser |\pos{2}| et non |\mil|.
+% \begin{verbatim}
+%\[
+% \renewcommand{\fleche}{\ncline[linewidth=0.3pt,arrowsize=2pt 3,
+%    arrowinset=0.5,nodesep=1.5pt]{->}}
+%\begin{tablvar}{4}
+%    \hline
+%    x & -5 && 0 && 2 && 3 && 5 \\
+%    \hline
+%    \variations{ \pos*{2}{f(x)} & \pos{3}{-4} && \pos{2}{1} && \pos{2}{1} 
+%        && \pos{1}{4} && \pos{3}{0}
+%    }
+%    \hline
+%\end{tablvar}
+%\]
+% \end{verbatim}
+%
+% \subsection{Tableaux de signes avec barres de séparation}
+%
+% \DescribeMacro{\barre}
+% La macro |\barre|, présentée dans l'exemple ci-dessous, sert de séparateur 
+% de colonne dans les tableaux de signe. Elle est bien sûr 
+% facultative de même que la partie variations.
+% Ici $f(x)=-4x^3+3x^2+18x-3$ et $f'(x)=6(x+1)(-2x+3)$.
+%\[
+%\begin{tablvar}{3}
+%    \hline
+%    x & -\infty && \makebox[2.5em]{$-1$} && 
+%        \makebox[2.5em]{$\frac{3}{2}$} && +\infty \\
+%    \hline
+%    x+1 & & - & \barre[0] & + & \barre & + & \\
+%    \hline
+%    -2x+3 & & + & \barre & + & \barre[0] & - & \\
+%    \hline
+%    \mbox{Signe de }f'(x) & & - & \barre[0] & + & \barre[0] & - & \\
+%    \hline
+%    \variations{ \mil{\mbox{Variations de }f} & \haut{+\infty} &&
+%        \bas{-14} && \haut{\frac{69}{4}} && \bas{-\infty}
+%    }
+%    \hline
+%\end{tablvar}
+%\]
+% Les bornes des intervalles ont été placées
+% dans des |\makebox|\oarg{largeur}|{$ $}|,
+% sur la ligne des $x$, pour que les colonnes 
+% soient plus équilibrées (ceci est affaire de goût).
+% \begin{verbatim}
+%\begin{tablvar}{3}
+%    \hline
+%    x & -\infty && \makebox[2.5em]{$-1$} && 
+%        \makebox[2.5em]{$\frac{3}{2}$} && +\infty \\
+%    \hline
+%    x+1 & & - & \barre[0] & + & \barre & + & \\
+%    \hline
+%    -2x+3 & & + & \barre & + & \barre[0] & - & \\
+%    \hline
+%    \mbox{Signe de }f'(x) & & - & \barre[0] & + & \barre[0] & - & \\
+%    \hline
+%    \variations{ \mil{\mbox{Variations de }f} & \haut{+\infty} &&
+%        \bas{-14} && \haut{\frac{69}{4}} && \bas{-\infty}
+%    }
+%    \hline
+%\end{tablvar}
+%\end{verbatim}
+%
+% \subsection{Doubles barres et discontinuités}
+%
+% Une double barre s'obtient avec la commande |\bb|. \DescribeMacro{\bb}
+% Pour ne pas tracer de flèche entre deux nœuds (en particulier pour éviter
+% de traverser une double barre), on place la
+% commande |\discont| entre les deux. \DescribeMacro{\discont}
+%\[
+%\begin{tablvar}{2}
+%    \hline
+%    x & -\infty && 0 && +\infty \\
+%    \hline
+%    -\frac{1}{x} & & + & \bb & - & \\
+%    \hline
+%    \variations{ \mil{\dfrac{1}{x^2}} & \bas{0} && \haut{+\infty} \bb
+%        \discont \haut{+\infty} && \bas{0}
+%    }
+%    \hline
+%\end{tablvar}
+%\]
+% La commande |\dfrac| provient de l'extension \textsf{amsmath} ou peut être redéfinie
+% par |\newcommand*\dfrac[2]{{\displaystyle\frac{#1}{#2}}}|.
+%
+% \smallskip
+% \begin{verbatim}
+%\begin{tablvar}{2}
+%    \hline
+%    x & -\infty && 0 && +\infty \\
+%    \hline
+%    -\frac{1}{x} & & + & \bb & - & \\
+%    \hline
+%    \variations{ \mil{\dfrac{1}{x^2}} & \bas{0} && \haut{+\infty} \bb
+%        \discont \haut{+\infty} && \bas{0}
+%    }
+%    \hline
+%\end{tablvar}
+% \end{verbatim}
+%
+% \vspace{-1ex}
+% La syntaxe ci-dessus pose problème lorsque les limites à gauche et à droite 
+% d'une valeur interdite se trouvent sur des lignes différentes,
+% ou que leur contenu n'a pas la même largeur, 
+% car alors la double barre ne serait plus au centre de sa colonne
+% et se trouverait décalée d'une ligne à l'autre.
+%
+% Une première solution est d'interrompre la double barre pour placer
+% les limites qui resteront alors centrées au milieu de la colonne (mais il faut aimer).
+%\[
+%\begin{tablvar}[3em]{4}
+%    \hline
+%    x & -\infty && -1 && 0 && 1 && +\infty \\
+%    \hline
+%    \variations{\mil{\dfrac{1}{1-x^2}} & \haut{0} &&
+%        \bas{-\infty}\mil{\bb}\discont\haut{+\infty} && \bas{1} &&
+%        \haut{+\infty}\mil{\bb}\discont\bas{-\infty} && \haut{0}
+%    }
+%    \hline
+%\end{tablvar}
+%\]
+% \begin{verbatim}
+%\begin{tablvar}[3em]{4}
+%    \hline
+%    x & -\infty && -1 && 0 && 1 && +\infty \\
+%    \hline
+%    \variations{\mil{\dfrac{1}{1-x^2}} & \haut{0} &&
+%        \bas{-\infty}\mil{\bb}\discont\haut{+\infty} && \bas{1} &&
+%        \haut{+\infty}\mil{\bb}\discont\bas{-\infty} && \haut{0}
+%    }
+%    \hline
+%\end{tablvar}
+% \end{verbatim}
+%
+% \DescribeMacro{\bblim} 
+% La commande |\bblim| résout le problème en gardant, sur chaque ligne, la double barre
+% centrée dans sa colonne, avec des limites à gauche et à droite quelconques
+% et quelles que soient les lignes où celles-ci sont positionnées.
+% Elle prend 4 paramètres qui sont respectivement \meta{ligne} et \meta{limite}
+% à gauche puis à droite de la double barre.
+% Elle trace la double barre, place les limites et gère la discontinuité.
+%\[
+%\begin{tablvar}[2em]{4}
+%    \hline
+%    x & -\infty && -1 && 0 && 1 && +\infty \\
+%    \hline
+%    \variations{\mil{\dfrac{1}{1-x^2}} & \haut{0} &&
+%        \bblim{3}{-\infty}{1}{+\infty} && \bas{1} &&
+%        \bblim{1}{+\infty}{3}{-\infty} && \haut{0}
+%    }
+%    \hline
+%\end{tablvar}
+%\]
+% \begin{verbatim}
+%\begin{tablvar}[2em]{4}
+%    \hline
+%    x & -\infty && -1 && 0 && 1 && +\infty \\
+%    \hline
+%    \variations{\mil{\dfrac{1}{1-x^2}} & \haut{0} &&
+%        \bblim{3}{-\infty}{1}{+\infty} && \bas{1} &&
+%        \bblim{1}{+\infty}{3}{-\infty} && \haut{0}
+%    }
+%    \hline
+%\end{tablvar}
+% \end{verbatim}
+%
+% Un autre exemple avec des limites de largeur assez différentes (placées ici sur la même ligne).
+%\[
+%\begin{tablvar}{3}
+%    \hline
+%    x & 0 &  & \frac{\pi}{6} & & \frac{\pi}{2} & & \pi \\
+%    \hline
+%    f'(x) & & + & 0 & \hspace{1em} - & \bb & \hspace{-1em} - & \\
+%    \hline
+%    \variations{\mil{f(x)} & \pos[b]{3}{f(0)} && \pos[t]{1}{f(\frac{\pi}{6})} 
+%        && \bblim{3}{-\infty}{3}{0} & & \pos[t]{1}{f(\pi)}
+%    }
+%    \hline
+%\end{tablvar}
+%\]
+% La colonne de valeurs du $\frac{\pi}{2}$ étant très large, 
+% la position des signes \og $-$ \fg{}
+% a été légèrement décalée avec la commande \LaTeX\ |\hspace| qui produit 
+% un espacement horizontal positif ou négatif.
+% \begin{verbatim}
+%\begin{tablvar}{3}
+%    \hline
+%    x & 0 &  & \frac{\pi}{6} & & \frac{\pi}{2} & & \pi \\
+%    \hline
+%    f'(x) & & + & 0 & \hspace{1em} - & \bb & \hspace{-1em} - & \\
+%    \hline
+%    \variations{\mil{f(x)} & \pos{3}{f(0)} && \pos[t]{1}{f(\frac{\pi}{6})}     
+%        && \bblim{3}{-\infty}{3}{0} & & \pos[t]{1}{f(\pi)}
+%    }
+%    \hline
+%\end{tablvar}
+% \end{verbatim}
+%
+% L'environnement |tablvar*| \DescribeEnv{tablvar*}
+% sert à gérer correctement le positionnement 
+% des doubles barres lorsqu'elles se trouvent aux extrémités.
+% La différence avec |tablvar| est que les colonnes
+% de valeurs des extrémités ne sont plus centrées mais alignées à gauche pour
+% le 1ère et à droite pour la dernière.
+%
+%\[
+%\begin{tablvar*}{2}
+%    \hline
+%    x & 0 && 1 && +\infty \\
+%    \hline
+%    \variations{ \mil{\ln x -x} & \bb \pos{3}{-\infty} && \pos{1}{-1} && 
+%        \pos{3}{-\infty} }
+%    \hline
+%\end{tablvar*}
+%\qquad
+%\begin{tablvar*}{2}
+%    \hline
+%    x & 0 && 1 && +\infty \\
+%    \hline
+%    \variations{ \mil{\ln x -x} & \pos*{1}{\bb} \pos*{2}{\bb}
+%        \pos{3}{-\infty} && \pos{1}{-1} && \pos{3}{-\infty} }
+%    \hline
+%\end{tablvar*}
+%\]
+% On observera l'utilisation de |\pos*| dans le second tableau,
+% pour tracer une double barre, sauf sur la ligne 3 où on place $-\infty$.
+% \begin{verbatim}
+%\begin{tablvar*}{2}
+%    \hline
+%    x & 0 && 1 && +\infty \\
+%    \hline
+%    \variations{ \mil{\ln x -x} & \bb \pos{3}{-\infty} && \pos{1}{-1} && 
+%        \pos{3}{-\infty} }
+%    \hline
+%\end{tablvar*}
+%
+%\begin{tablvar*}{2}
+%    \hline
+%    x & 0 && 1 && +\infty \\
+%    \hline
+%    \variations{ \mil{\ln x -x} & \pos*{1}{\bb} \pos*{2}{\bb}
+%        \pos{3}{-\infty} && \pos{1}{-1} && \pos{3}{-\infty} }
+%    \hline
+%\end{tablvar*}
+% \end{verbatim}
+%
+% Si par contre, à l'autre extrémité du tableau, les valeurs ont des largeurs
+% assez différentes, leur alignement non centré peut être corrigé en utilisant
+%  |\hspace|. Ci-dessous, de l'espace a été ajouté à droite du 1.\\
+% \begin{minipage}[t]{7.7cm}
+% \begin{verbatim}
+%\begin{tablvar*}[3em]{1}
+%    \hline
+%    x & 0 && +\infty \\
+%    \hline
+%    \variations{ \mil{1-\dfrac{1}{x}} & \bb 
+%        \bas{-\infty} && \haut{1\hspace{0.5em}}
+%    }
+%    \hline
+%\end{tablvar*}
+% \end{verbatim}
+% \end{minipage}
+% \begin{minipage}[t]{5cm}
+%\[
+%\begin{tablvar*}[3em]{1}
+%    \hline
+%    x & 0 && +\infty \\
+%    \hline
+%    \variations{ \mil{1-\dfrac{1}{x}} & \bb 
+%        \bas{-\infty} && \haut{1\hspace{0.5em}}
+%    }
+%    \hline
+%\end{tablvar*}
+%\]
+% \end{minipage}
+%
+% \DescribeMacro{\tablvarinit}
+% Enfin, pour personnaliser totalement la définition des colonnes,
+% on peut revenir à l'environnement |array| plutôt que d'utiliser |tablvar|
+% (il faut dans ce cas appeler |\tablvarinit| juste avant |\begin{array}|).
+% Ce qui est essentiel dans cette extension est la macro |\variations|
+% avec les commandes de positionnement
+% et non l'environnement |tablvar| qui n'est qu'un |array| dans lequel
+% on a fixé les définitions de colonnes (et initialisé des variables).
+%
+% \subsection{Valeurs remarquables}
+%
+% Nous appellerons \emph{valeur remarquable}, un valeur supplémentaire
+% que l'on place dans un tableau de variation et qui ne correspond
+% pas à un extremum.
+% \medskip
+%
+% \DescribeMacro{\vr}
+% Une première approche est de laisser les flèches de variations passer à travers
+% ces valeurs remarquables.
+% Pour chaque valeur remarquable, on place une commande |\vr| sur la ligne
+% des $x$ et une commande |\vr| dans la partie variations. Les valeurs remarquables
+% seront automatiquement reliées par des pointillés 
+% (tracés réalisés dans la commande |\variations|).
+%
+% Voici un exemple avec le logarithme népérien où la valeur remarquable
+% est placée dans la colonne intervalle.\\
+% \begin{minipage}[t]{7.7cm}
+% \begin{verbatim}
+%\begin{tablvar*}[5em]{1}
+%    \hline
+%    x & 0 & \vr{1} & +\infty \\
+%    \hline
+%    \variations{ \mil{\ln x} & 
+%        \bb \pos{3}{-\infty} & 
+%        \vr{0} & \pos{1}{+\infty} }
+%    \hline
+%\end{tablvar*}
+% \end{verbatim}
+% \end{minipage}
+% \begin{minipage}[t]{5cm}
+%\[
+%\begin{tablvar*}[5em]{1}
+%    \hline
+%    x & 0 & \vr{1} & +\infty \\
+%    \hline
+%    \variations{ \mil{\ln x} & 
+%        \bb \pos{3}{-\infty} & 
+%        \vr{0} & \pos{1}{+\infty} }
+%    \hline
+%\end{tablvar*}
+%\]
+% \end{minipage}
+%
+% Un autre exemple avec deux valeurs remarquables, placées cette fois 
+% dans des colonnes valeurs.
+%\[ 
+%\renewcommand{\tablvarstretch}{1.2}
+%\begin{tablvar}[1.5em]{3}
+%    \hline
+%    x & -\infty && \vr{0} && \vr{1} && +\infty \\
+%    \hline
+%    \variations[4]{ \pos*{2}{\vdecal{-1.5ex}{\exp x}} & \pos{4}{0} && 
+%        \vr[3]{1} && \vr{\mathrm{e}} && \pos{1}{+\infty}
+%    }
+%    \hline
+%\end{tablvar}
+%\]
+% \begin{verbatim}
+%\renewcommand{\tablvarstretch}{1.2}
+%\begin{tablvar}[1.5em]{3}
+%    \hline
+%    x & -\infty && \vr{0} && \vr{1} && +\infty \\
+%    \hline
+%    \variations[4]{ \pos*{2}{\vdecal{-1.5ex}{\exp x}} & \pos{4}{0} && 
+%        \vr[3]{1} && \vr{\mathrm{e}} && \pos{1}{+\infty}
+%    }
+%    \hline
+%\end{tablvar}
+% \end{verbatim}
+% \vspace{-2ex}
+% \DescribeMacro{\variations\oarg{nblignes}}
+% Ci-dessus, la partie variations a été composée sur 4 lignes grâce au paramètre
+% optionnel de la commande |\variations|. Les lignes sont alors numérotées
+% de 1 (haut) à 4 (bas).\\
+% \DescribeMacro{\vr\oarg{ligne}}
+% La commande |\vr| possède elle aussi un argument optionnel
+% qui est la ligne sur laquelle placer la valeur remarquable,
+% lorsqu'il s'agit de la partie variations (2 par défaut).\\
+% \DescribeMacro{\tablvarstretch}
+% À cause des 4 lignes de variations, la hauteur de lignes du tableau 
+% a été réduite en modifiant le facteur
+% |\tablvarstretch| (fixé à 1.4 par défaut), modification locale 
+% car placée à l'intérieur de l'environnement math
+% \footnote{On peut utiliser ce paramètre pour agrandir la hauteur des lignes
+% mais l'effet sera global pour tout le tableau. Si l'on souhaite agrandir
+% spécifiquement une ligne on peut utiliser la commande \texttt{\bslash vstrut}
+% de l'extension \textsf{spacingtricks}. Malheureusement un ajustement automatique
+% comme proposé dans l'extension \textsf{arraycols} ne fonctionne pas,
+% à cause des doubles barres.}.\\
+% \DescribeMacro{\vdecal}
+% Enfin  la légende $\exp x$ a été placée en ligne 2 mais 
+% décalée vers le bas, pour qu'elle se trouve centrée verticalement
+% sachant qu'il y a 4 lignes de variations.
+% Ceci s'obtient grâce à la commande |\vdecal| dont la syntaxe est
+% \cmd{\vdecal}\marg{decal}\marg{contenu} où la valeur du décalage
+% peut être positive (vers le haut) ou négative (vers le bas).
+%
+% \medskip
+% On peut préférer que les flèches de variations s'interrompent sur
+% les valeurs remarquables qui sont alors des nœuds.
+% Voici un tableau qui présente simultanément les deux manières de traiter 
+% les valeurs remarquables.
+% La taille des flèches s'ajuste automatiquement.
+% Bien entendu, on peut aussi ne pas tracer les pointillés mais placer
+% quand même une valeur remarquable sur la flèche avec |\mil{0}|.
+%\[
+%\begin{tablvar*}{4}
+%    \hline
+%    x & 0 && \vr{\alpha_1} && \frac{\pi}{6} && \alpha_2 && \frac{\pi}{2}\\
+%    \hline
+%    f'(x) && + && + & 0 & - && - & \bb \\
+%    \hline
+%    \variations{\mil{f(x)} & \pos[b]{3}{f(0)} && \vr{0} &&
+%        \pos[t]{1}{f(\frac{\pi}{6})} && \pos{2}{0} &&\pos[b]{3}{-\infty}\bb
+%    }
+%    \hline
+%\end{tablvar*}
+%\]
+% Si on choisit l'option |[t]| pour le max en ligne 1,
+% il est alors nécessaire de choisir l'option |[b]| en ligne 3 pour conserver
+% un positionnement correct du 0 sur la flèche.
+% \begin{verbatim}
+%\begin{tablvar*}{4}
+%    \hline
+%    x & 0 && \vr{\alpha_1} && \frac{\pi}{6} && \alpha_2 && \frac{\pi}{2}\\
+%    \hline
+%    f'(x) && + && + & 0 & - && - & \bb \\
+%    \hline
+%    \variations{\mil{f(x)} & \pos[b]{3}{f(0)} && \vr{0} &&
+%        \pos[t]{1}{f(\frac{\pi}{6})} && \pos{2}{0} &&\pos[b]{3}{-\infty}\bb
+%    }
+%    \hline
+%\end{tablvar*}
+% \end{verbatim}
+%
+% La commande |\vr| peut également servir à représenter des discontinuités 
+% particulières, voir l'exemple ci-dessous avec la fonction définie par
+%\[ 
+%f(x)=\left\{
+%\begin{array}{@{}cl}
+%    \frac{\sin x}{x} &\mbox{si } x \neq 0 \\[1ex]
+%    0 &\mbox{si } x= 0
+%\end{array}
+%\right. .
+%\]
+% \begin{minipage}[t]{7.5cm}
+% \begin{verbatim}
+%\begin{tablvar}{2}
+%    \hline
+%    x & -\pi && \vr{0} && \pi \\
+%    \hline
+%    \variations{\mil{f(x)} & \bas{0} && 
+%        \haut{ 1 \hspace{0.2em} } \discont
+%        \vr[3]{0} \haut{ \hspace{0.2em} 1 }
+%        && \bas{0}
+%    }
+%    \hline
+%\end{tablvar}
+% \end{verbatim}
+% \end{minipage}
+% \begin{minipage}[t]{5cm}
+%\[
+%\begin{tablvar}{2}
+%    \hline
+%    x & -\pi && \vr{0} && \pi \\
+%    \hline
+%    \variations{\mil{f(x)} & \bas{0} && 
+%        \haut{ 1 \hspace{0.2em} } \discont
+%        \vr[3]{0} \haut{ \hspace{0.2em} 1 }
+%        && \bas{0}
+%    }
+%    \hline
+%\end{tablvar}
+%\]
+% \end{minipage}
+%
+% \medskip
+% Voici un dernier exemple, traité de deux manières différentes,
+% avec des valeurs remarquables dans deux tableaux conjoints. 
+% Avec des nœuds c'est assez simple. 
+%\[
+%\begin{tablvar}{4}
+%    \hline
+%    x & 0 && \frac{\pi}{2} && \pi && \frac{3\pi}{2} && 2\pi \\
+%    \hline
+%    \variations{ \mil{\cos x} & \haut{1} && \pos{2}{0} && \bas{-1} && 
+%        \pos{2}{0} && \haut{1} }
+%    \hline
+%    \variations{ \mil{\sin x} & \bas{0} && \haut{1} && \pos{2}{0} && 
+%        \bas{-1} && \haut{0} }
+%    \hline
+%\end{tablvar}
+%\]
+% \begin{verbatim}
+%\begin{tablvar}{4}
+%    \hline
+%    x & 0 && \frac{\pi}{2} && \pi && \frac{3\pi}{2} && 2\pi \\
+%    \hline
+%    \variations{ \mil{\cos x} & \haut{1} && \pos{2}{0} && \bas{-1} &&
+%        \pos{2}{0} && \haut{1} }
+%    \hline
+%    \variations{ \mil{\sin x} & \bas{0} && \haut{1} && \pos{2}{0} &&
+%        \bas{-1} && \haut{0} }
+%    \hline
+% \end{verbatim}
+%
+% \vspace{-2ex}
+% \DescribeMacro{\noeud} \DescribeMacro{\vrconnect}
+% Par contre, pour traiter ici les valeurs remarquables avec des pointillés, 
+% la commande |\vr| ne permet pas connecter les valeurs sur $x$ avec celles du sinus dans
+% le 2\ieme\ tableau, mais on peut le faire \og à la main\fg{} 
+% en appelant les macros |\noeud| et |\vrconnect|.
+%
+%\[
+%\begin{tablvar}{4}
+%    \hline
+%    x & 0 && \noeud{X1}{\frac{\pi}{2}} && \noeud{X2}{\pi} &&
+%        \noeud{X3}{\frac{3\pi}{2}} && 2\pi \\
+%    \hline
+%    \variations{ \mil{\cos x} & \haut{1} && \mil{0} && \bas{-1} && 
+%        \mil{0} && \haut{1} }
+%    \hline
+%    \variations{ \mil{\sin x} & \bas{0} && \haut{\noeud{Y1}{1}} && 
+%        \mil{\noeud{Y2}{0}} && \bas{\noeud{Y3}{-1}} && \haut{0} }
+%    \hline
+%\end{tablvar}
+%\vrconnect{X1}{Y1}
+%\vrconnect{X2}{Y2}
+%\vrconnect{X3}{Y3}
+%\]
+% \begin{verbatim}
+%\begin{tablvar}{4}
+%    \hline
+%    x & 0 && \noeud{X1}{\frac{\pi}{2}} && \noeud{X2}{\pi} &&
+%        \noeud{X3}{\frac{3\pi}{2}} && 2\pi \\
+%    \hline
+%    \variations{ \mil{\cos x} & \haut{1} && \mil{0} && \bas{-1} && 
+%        \mil{0} && \haut{1} }
+%    \hline
+%    \variations{ \mil{\sin x} & \bas{0} && \haut{\noeud{Y1}{1}} && 
+%        \mil{\noeud{Y2}{0}} && \bas{\noeud{Y3}{-1}} && \haut{0} }
+%    \hline
+%\end{tablvar}
+%\vrconnect{X1}{Y1}
+%\vrconnect{X2}{Y2}
+%\vrconnect{X3}{Y3}
+% \end{verbatim}
+%
+% \subsection{Zones interdites}
+%
+% Nous abordons pour finir le tracé de zones interdites où la fonction
+% n'est pas définie. On peut dessiner ces zones interdites en couleur ou en hachures.
+%
+% \medskip
+% Pour une zone interdite en couleur, on place la commande |\ZIc|
+% \DescribeMacro{\ZIc}
+% dans les intervalles que l'on veut colorer (signes ou variations).
+% Un exemple avec la fonction $f$ définie par $f(x)=\frac{1}{\sqrt{x^2-1}}$.
+% La zone grisée arrive toujours au contact des doubles barres. 
+%\[
+%\begin{tablvar}[4em]{3}
+%    \hline
+%    x & -\infty && \zbox{-1} && \zbox{1} && +\infty \\
+%    \hline
+%    -\frac{x}{\strut\sqrt{x^2-1}^3} && \hspace{-1.5em} + & \bb & \ZIc & 
+%        \bb & \hspace{1.5em} - & \\
+%    \hline
+%    \variations{\mil{\dfrac{1}{\sqrt{x^2-1}}} & \bas{0} && 
+%        \zbox[r]{\haut{+\infty}} \bb & \ZIc & 
+%        \bb \zbox[l]{\haut{+\infty}} && \bas{0}
+%    }
+%    \hline
+%\end{tablvar}
+%\]
+% \DescribeMacro{\zbox}
+% Plusieurs \og interventions\fg{} manuelles sont nécessaires.
+% D'abord sur la ligne des $x$, il faut permettre aux bornes
+% de déborder sur la colonne de la zone interdite.
+% Pour cela on les place dans une |\zbox|.
+% La commande \cmd{\zbox}\oarg{pos}\marg{contenu} 
+% affiche son contenu mais considère la largeur comme nulle.
+% Le 1\ier\ paramètre (optionnel) est le positionnement dans la boite : 
+% |c| (par défaut), |l| (left) ou |r| (right).
+% Ici |zbox| est aussi nécessaire pour annuler la largeur des
+% boites contenant les $+\infty$ sinon la double barre ne serait
+% plus au centre de sa colonne, en ligne 1, ce qui produirait
+% un décalage avec les autres lignes.\\
+% La deuxième ligne avec la racine cubique a été agrandie grâce à la commande \LaTeX\ |\strut|.
+% Enfin, les signes ont été décalés avec |\hspace|, pour améliorer
+% leur centrage par rapport aux flèches.
+% \begin{verbatim}
+%\begin{tablvar}[4em]{3}
+%    \hline
+%    x & -\infty && \zbox{-1} && \zbox{1} && +\infty \\
+%    \hline
+%    -\frac{x}{\strut\sqrt{x^2-1}^3} && \hspace{-1.5em} + & \bb & \ZIc &
+%        \bb & \hspace{1.5em} - & \\
+%    \hline
+%    \variations{\mil{\dfrac{1}{\sqrt{x^2-1}}} & \bas{0} && 
+%        \zbox[r]{\haut{+\infty}} \bb & \ZIc & 
+%        \bb \zbox[l]{\haut{+\infty}} && \bas{0}
+%    }
+%    \hline
+%\end{tablvar}
+% \end{verbatim}
+%
+% Un autre exemple avec $f(x)=\sqrt{2x^2-1}$ où
+% les doubles barres n'apparaissent que sur la dérivée.
+%\[
+%\begin{tablvar}[3em]{3}
+%    \hline
+%    x & -\infty && \zbox{-\frac{\sqrt{2}}{2}} &&
+%        \zbox{\frac{\sqrt{2}}{2}} && +\infty \\
+%    \hline
+%    \frac{2x}{\sqrt{2x^2-1}} && - & \bb & \ZIc & \bb & + & \\
+%    \hline
+%    \variations{\mil{\sqrt{2x^2-1}} & \haut{+\infty} && \zbox[r]{\bas{0}}
+%        & \ZIc & \zbox[l]{\bas{0}} && \haut{+\infty}
+%    }
+%    \hline
+%\end{tablvar}
+%\]
+% \begin{verbatim}
+%\begin{tablvar}[3em]{3}
+%    \hline
+%    x & -\infty && \zbox{-\frac{\sqrt{2}}{2}} &&
+%        \zbox{\frac{\sqrt{2}}{2}} && +\infty \\
+%    \hline
+%    \frac{2x}{\sqrt{2x^2-1}} && - & \bb & \ZIc & \bb & + & \\
+%    \hline
+%    \variations{\mil{\sqrt{2x^2-1}} & \haut{+\infty} && \zbox[r]{\bas{0}}
+%        & \ZIc & \zbox[l]{\bas{0}} && \haut{+\infty}
+%    }
+%    \hline
+%\end{tablvar}
+% \end{verbatim}
+%
+% \DescribeMacro{\ZIh}%
+% Voyons à présent la réalisation de tableaux avec zones interdites hachurées.
+% On place la commande |\ZIh| dans les intervalles que l'on veut hachurer.
+%\[
+%\begin{tablvar}{3}
+%    \hline
+%    x & -\infty & & \zbox{-\frac{\sqrt{2}}{2}}& &
+%    \zbox{\frac{\sqrt{2}}{2}} & & +\infty \\
+%    \hline
+%    f'(x) & & - & \bb & \ZIh & \bb & + & \\
+%    \hline
+%    \variations{\mil{f(x)} & \haut{+\infty} && \bas{0} &
+%        \ZIh & \bas{0} && \haut{+\infty}
+%    }
+%    \hline
+%\end{tablvar}
+%\]
+% Pour les mêmes raisons que précédemment, les |\zbox| sont toujours 
+% nécessaires sur la ligne des $x$, mais plus pour les 0.
+% \begin{verbatim}
+%\begin{tablvar}{3}
+%    \hline
+%    x & -\infty && \zbox{-\frac{\sqrt{2}}{2}} &&
+%        \zbox{\frac{\sqrt{2}}{2}} & & +\infty \\
+%    \hline
+%    f'(x) && - & \bb & \ZIh & \bb & + & \\
+%    \hline
+%    \variations{\mil{f(x)} & \haut{+\infty} && \bas{0} &
+%        \ZIh & \bas{0} && \haut{+\infty} }
+%    \hline
+%\end{tablvar}
+% \end{verbatim}
+%
+% \DescribeMacro{\ZIh\oarg{hauteur}}
+% Les hachures s'ajustent automatiquement lorsque toutes les lignes 
+% ont une hauteur standard.
+% Si par contre des lignes sont plus hautes à cause de leur contenu,
+% on doit ajouter de la hauteur avec \cmd{\ZIh}\oarg{hauteur} (réglage manuel).
+%\[
+%\begin{tablvar}[3.5em]{3}
+%    \hline
+%    x & -\infty & &\zbox{-1} &&\zbox{1} & & +\infty \\
+%    \hline  
+%    f'(x) && \hspace{-1em} + & \bb & \ZIh & \bb & \hspace{1em} - & \\
+%    \hline
+%    \variations{ \mil{\sqrt{\dfrac{x-1}{x+1}}}
+%        & \bas{1} && \zbox[r]{\haut{+\infty}} \bb & \ZIh[2ex]
+%        & \zbox{\bas{0}} \barre  && \haut{1}
+%    }
+%    \hline
+%\end{tablvar}
+%\]
+% On remarquera ici l'utilisation de |\barre| dans la partie variations qui
+% oblige à placer le 0 dans une |\zbox| sans quoi la barre serait décalée après le 0.
+% \begin{verbatim}
+%\begin{tablvar}[3.5em]{3}
+%    \hline
+%    x & -\infty & &\zbox{-1} && \zbox{1} && +\infty \\
+%    \hline  
+%    f'(x) && \hspace{-1em} + & \bb & \ZIh & \bb & \hspace{1em} - & \\
+%    \hline
+%    \variations{ \mil{\sqrt{\dfrac{x-1}{x+1}}}
+%        & \bas{1} && \zbox[r]{\haut{+\infty}} \bb & \ZIh[2ex]
+%        & \zbox{\bas{0}} \barre  && \haut{1}
+%    }
+%    \hline
+%\end{tablvar}
+% \end{verbatim}
+%
+% Voici un exemple avec deux zones interdites. On considère la fonction $f$ telle que
+% $f(x)= \sqrt{(x^2-1)(x^2-4)}$.
+%{ \footnotesize
+%\[ 
+%\begin{tablvar}{6}
+%    \hline
+%    x & -\infty && \zbox{-2} && \zbox{-1} && 0 && \zbox{1} && \zbox{2} 
+%        && +\infty \\
+%    \hline
+%    2x & &-& \barre & \ZIh &\barre &-& \barre[0] &+& \barre && \barre &+&\\
+%    \hline
+%    2x^2-5 & &+& \barre & \ZIh & \barre &-& \barre &-& \barre &&
+%        \barre &+& \\
+%    \hline
+%    f'(x) & &-& \bb & \ZIh & \bb &+& \barre[0] &-& \bb && \bb &+& \\
+%    \hline
+%    \variations{\mil{f(x)} & \haut{+\infty} && \zbox{\bas{0}} \barre
+%        & \ZIh[0.4ex] & \zbox{\bas{0}} \barre && \haut{2} && \zbox{\bas{0}}
+%        \barre & \ZIh[0.4ex] & \zbox{\bas{0}} \barre && \haut{+\infty}
+%    }
+%    \hline
+%\end{tablvar}
+%\]
+%}
+% La commande |\ZIh| \emph{ne doit pas être placée deux fois dans une même ligne de signe}
+% car, sauf sur la dernière ligne des variations où elle trace les hachures, 
+% son effet est simplement de cumuler la hauteur de la ligne.
+% Et comme toutes les lignes de signes ont le même numéro 0, la commande |\ZIh|,
+% dans la partie signes, ne sait pas sur quelle ligne elle se trouve
+% et cumule la hauteur de ligne à chaque appel.
+% \begin{verbatim}
+%\begin{tablvar}{6}
+%    \hline
+%    x & -\infty && \zbox{-2} && \zbox{-1} && 0 && \zbox{1} && \zbox{2} 
+%        && +\infty \\
+%    \hline
+%    2x & &-& \barre & \ZIh &\barre &-& \barre[0] &+& \barre && \barre &+&\\
+%    \hline
+%    2x^2-5 & &+& \barre & \ZIh & \barre &-& \barre &-& \barre &&
+%        \barre &+& \\
+%    \hline
+%    f'(x) & &-& \bb & \ZIh & \bb &+& \barre[0] &-& \bb && \bb &+& \\
+%    \hline
+%    \variations{\mil{f(x)} & \haut{+\infty} && \zbox{\bas{0}} \barre
+%        & \ZIh[0.4ex] & \zbox{\bas{0}} \barre && \haut{2} && \zbox{\bas{0}}
+%        \barre & \ZIh[0.4ex] & \zbox{\bas{0}} \barre && \haut{+\infty}
+%    }
+%    \hline
+%\end{tablvar}
+% \end{verbatim}
+%
+% \DescribeMacro{\ZIh*}
+% Lorsqu'on ne fait qu'un tableau de signes (sans variations), 
+% il faut utiliser la commande |\ZIh*| pour déclencher le tracé des hachures.
+% Celle-ci doit être placée sur la dernière ligne de chaque bloc de hachures.
+% Sur les lignes précédentes, le |\ZIh| peut être placé n'importe où
+%  (une seule fois par ligne).
+%
+%{ \footnotesize
+%\[ 
+%\begin{tablvar}{6}
+%    \hline
+%    x & -\infty && \zbox{-2} && \zbox{-1} && 0 && \zbox{1}  && \zbox{2} 
+%        && +\infty \\
+%    \hline
+%    2x & &-& \barre && \barre  &-& \barre[0] &+& \barre &&
+%        \barre{} &+& \ZIh \\
+%    \hline
+%    2x^2-5 & &+& \barre & & \barre &-& \barre &-& \barre &&
+%        \barre{} &+& \ZIh \\
+%    \hline
+%    f'(x) & &-& \bb & \ZIh* & \bb &+& \barre[0] &-& \bb & \ZIh* & \bb &+&\\
+%    \hline
+%\end{tablvar}
+%\]
+%}
+% \begin{verbatim}
+%\begin{tablvar}{6}
+%    \hline
+%    x & -\infty && \zbox{-2} && \zbox{-1} && 0 && \zbox{1}  && \zbox{2} 
+%        && +\infty \\
+%    \hline
+%    2x & &-& \barre & & \barre  &-& \barre[0] &+& \barre &&
+%        \barre{} &+& \ZIh \\
+%    \hline
+%    2x^2-5 & &+& \barre & & \barre &-& \barre &-& \barre &&
+%        \barre{} &+& \ZIh \\
+%    \hline
+%    f'(x) & &-& \bb & \ZIh* & \bb &+& \barre[0] &-& \bb & \ZIh* & \bb &+&\\
+%    \hline
+%\end{tablvar}
+% \end{verbatim}
+%
+% Si on veut tracer des rectangles de hachures sur des lignes non contiguës,
+% il faut un appel à |\ZIh*| pour chaque rectangle.
+%\[
+%\begin{tablvar}{4} 
+%    \hline 
+%    x & -\infty && \zbox{-1}\phantom{0} && \zbox[l]{1}\phantom{0} && 2 && 
+%        +\infty \\
+%    \hline
+%    \sqrt{x^2-1} && + & \barre[0] & \ZIh* & \barre[0] & + & \barre & + &\\
+%    \hline
+%    x-2 && - & \barre & - & \barre & - & \barre[0] & + & \\
+%    \hline
+%    (x-2)\sqrt{x^2-1} && - & \barre[0] & \ZIinit\ZIh* & \barre[0] & - & 
+%        \barre[0] & + & \\
+%    \hline
+%\end{tablvar}
+%\]
+% \smallskip
+% \begin{verbatim}
+%\begin{tablvar}{4}
+%    \hline
+%    x & -\infty && \zbox{-1}\phantom{0} && \zbox[l]{1}\phantom{0} && 2 && 
+%        +\infty \\
+%    \hline
+%    \sqrt{x^2-1} && + & \barre[0] & \ZIh* & \barre[0] & + & \barre & + &\\
+%    \hline
+%    x-2 && - & \barre & - & \barre & - & \barre[0] & + & \\
+%    \hline
+%    (x-2)\sqrt{x^2-1} && - & \barre[0] & \ZIinit\ZIh* & \barre[0] & - & 
+%        \barre[0] & + & \\
+%    \hline
+%\end{tablvar}
+% \end{verbatim}
+% \vspace{-3ex}
+% Ci-dessus, la commande \LaTeX\ |\phantom{0}| sur la ligne des $x$ permet de créer une
+% boite fantôme de la largeur du 0, pour éviter que la largeur de la colonne
+% valeur ne soit complètement nulle produisant un chevauchement inélégant
+% des 0 sur les hachures.\\
+% \DescribeMacro{\ZIinit}
+% L'appel à |\ZIinit| sur la dernière ligne permet de ne pas
+% conserver la hauteur cumulée lors du précédent appel à |\ZIh*|
+% (en fait inutile ici car la 1ère zone hachurée ne fait qu'une seule ligne de haut).
+%
+% \medskip
+% \DescribeMacro{\hachure}
+% On ne peut pas dessiner des zones interdites hachurées
+% sur plusieurs colonnes contiguës avec |\ZIh|,
+% mais on peut alors utiliser la primitive graphique |\hachure| 
+% pour définir manuellement le rectangle à hachurer.
+%
+%{ \footnotesize
+%\[
+%\begin{tablvar}{8}
+%    \hline
+%    x & -\infty && \zbox{-2} && \zbox{-\sqrt{\frac{5}{2}}} && \zbox{-1} 
+%        && 0 && 1 && \zbox{\sqrt{\frac{5}{2}}} && 2 && +\infty \\
+%    \hline
+%    2x & &-& \barre &-& \barre &-& \barre &-& \barre[0] &+&
+%        \barre &+& \barre &+& \barre &+& \\
+%    \hline
+%    2x^2-5 & &+& \barre &+& \barre[0] &-& \barre &-& \barre &-&
+%        \barre &-& \barre[0] &+& \barre &+& \\
+%    \hline
+%    f'(x) & &-& \bb & & \hachure{-4em,-12.8ex}{4em,2.6ex} & & \bb &+&
+%        \barre[0] &-& \bb & &  & & \bb & + & \\
+%    \hline
+%    \variations{\mil{f(x)} & \haut{+\infty} && \bas{0} \discont &&  &&
+%        \bas{0} && \haut{2} && \bas{0} \discont &&
+%        \pos*{3}{\hachure{-4em,14.3ex}{4em,-1.2ex}} && \bas{0} && 
+%        \haut{+\infty}
+%    }
+%    \hline
+%\end{tablvar}
+%\]
+%}
+% Si l'on ne dispose pas de ligne de signe pour placer la commande |\hachure|,
+% on peut la placer sur la ligne des $x$ ou dans la partie variations mais
+% il faut alors mettre celle-ci dans un |\pos*| sinon elle sera répétée pour chaque
+% ligne des variations.
+% \begin{verbatim}
+%\begin{tablvar}{8}
+%    \hline
+%    x & -\infty && \zbox{-2} && \zbox{-\sqrt{\frac{5}{2}}} && \zbox{-1} 
+%        && 0 && 1 && \zbox{\sqrt{\frac{5}{2}}} && 2 && +\infty \\
+%    \hline
+%    2x & &-& \barre &-& \barre &-& \barre &-& \barre[0] &+&
+%        \barre &+& \barre &+& \barre &+& \\
+%    \hline
+%    2x^2-5 & &+& \barre &+& \barre[0] &-& \barre &-& \barre &-&
+%        \barre &-& \barre[0] &+& \barre &+& \\
+%    \hline
+%    f'(x) & &-& \bb & &\hachure{-4em,-12.8ex}{4em,2.6ex} & & \bb &+&
+%        \barre[0] &-& \bb & &  & & \bb & + & \\
+%    \hline
+%    \variations{\mil{f(x)} & \haut{+\infty} && \bas{0} \discont &&  &&
+%        \bas{0} && \haut{2} && \bas{0} \discont &&
+%        \pos*{3}{\hachure{-4em,14.3ex}{4em,-1.2ex}} && \bas{0} && 
+%        \haut{+\infty}
+%    }
+%    \hline
+%\end{tablvar}
+% \end{verbatim}
+%
+% \pagebreak
+% \section{Le code}
+%
+% \subsection{Extensions requises et options}
+%
+%    \begin{macrocode}
+\RequirePackage{array}
+\RequirePackage{ifthen}
+\RequirePackage{multido}
+\RequirePackage{colortbl} % pour \ZIc
+
+\newboolean{tikz}
+\DeclareOption{tikz}{\setboolean{tikz}{true}}
+\DeclareOption{pstricks}{\setboolean{tikz}{false}} % valeur par défaut
+\ProcessOptions \relax
+
+\ifthenelse{\boolean{tikz}}{
+    \RequirePackage{tikz}
+    \usetikzlibrary{patterns}
+    \newlength{\tikznode@below}
+    }{
+    \RequirePackage{pst-node}
+}
+%    \end{macrocode}
+
+% \subsection{Les paramètres généraux}
+%
+% Dans cette section sont présentés tous les paramètres
+% que l'on peut redéfinir pour modifier l'aspect des tableaux,
+% mais qui n'ont en principe pas besoin d'être touchés.
+%
+% \begin{macro}{\intervalwidth}
+% Définit la largeur par défaut des colonnes \og intervalles \fg,
+% valeur prédéfinie à 2.5~em.
+%    \begin{macrocode}
+\newlength{\intervalwidth}
+\setlength{\intervalwidth}{2.5em} % largeur des "intervalles"
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{\bordercolsep}
+% Définit la largeur de l'espace extérieur des première et dernière colonnes de valeurs.
+% Sa valeur par défaut a été réduite par rapport à la longueur \LaTeX\ standard 
+%|\arraycolsep| afin que les valeurs des extrémités (souvent des $\infty$) 
+% soient plus proches des lignes verticales de début et de fin.
+%    \begin{macrocode}
+\newlength{\bordercolsep} % largeur de l'espace inter-colonne
+\setlength{\bordercolsep}{2pt}
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{\innercolsep}
+% Définit la largeur entre les colonnes valeurs et les colonnes intervalles du tableau.
+% Cette largeur a été ajustée pour que les zones interdites grisées avec |\cellcolor| 
+% arrivent au contact de la double barre. 
+%    \begin{macrocode}
+\newlength{\innercolsep}
+\setlength{\innercolsep}{4pt}
+%    \end{macrocode}
+% \end{macro}
+
+%\begin{macro}{maxdiscount}
+% La gestion de discontinuités permettant de ne pas relier les flèches l'une à l'autre
+% se fait grâce à la commande |\discont|.
+% Le compteur |maxdiscont| est fixé à 3 par défaut ; il faut l'augmenter si l'on veut
+% produire un tableau de variation avec plus de 3 discontinuités.
+%    \begin{macrocode}
+\newcounter{maxdiscont}
+\setcounter{maxdiscont}{3} % nb max de discontinuités
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{\tablvarstretch}
+% Permet de régler la valeur relative de l'espacement vertical
+% des lignes du tableau. La valeur par défaut est 1.4 (1 correspondant 
+% à la valeur standard d'un environnement |array|).
+% Placée dans un environnement math, elle sera locale à cet environnement.
+%    \begin{macrocode}
+\newcommand{\tablvarstretch}{1.4}
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{\tvbarrewidth}
+% Définit l'épaisseur des barres de séparation verticales coupant les 0 
+% d'un tableau de signe : 0.5~pt par défaut.
+%    \begin{macrocode}
+\newlength{\tvbarrewidth}
+\setlength{\tvbarrewidth}{0.5pt}
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{tvbarrecolor}
+% Définit la couleur des mêmes barres de séparation verticales.
+%    \begin{macrocode}
+\definecolor{tvbarrecolor}{gray}{0.7}
+%    \end{macrocode}
+% \end{macro}
+
+% \subsection{Les commandes graphiques PSTricks/\tikz}
+%
+% Nous présentons ici les commandes graphiques permettant le dessin 
+% des flèches,
+% les pointillés des valeurs remarquables, les hachures des zones interdites.
+% Celles-ci sont définies différemment s'il s'agit de l'option |tikz| ou |pstricks|
+% (plus précisément liées à l'extension \textsf{pst-node}).
+%
+% \begin{macro}{\fleche}
+% La commande \cmd{\fleche}\marg{noeud1}\marg{noeud2} possède deux paramètres
+% qui sont les noms des nœuds à relier. 
+% La création des nœuds est obtenue avec la commande |\noeud| appelée par |\pos| 
+% et le tracé des flèches réalisé automatiquement par la commande |\variations|.
+% Pour modifier l'aspect des flèches on peut redéfinir la commande.
+%    \begin{macrocode}
+\newcommand*{\fleche}[2]{
+    \ifthenelse{\boolean{tikz}}{
+        \tikz[remember picture,overlay]{\draw[->,>=stealth,
+            line width=0.6pt] (#1) -- (#2);}
+    }{
+        \ncline[arrowsize=2pt 2,arrowinset=0.4,nodesep=3pt,
+            linewidth=0.6pt]{->}{#1}{#2}
+    }
+}
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{\vrconnect}
+% La commande \cmd{\vrconnect}\marg{noeud1}\marg{noeud2}
+% relie les nœuds définis par |\vr| (valeurs remarquables)
+% et le tracé est réalisé automatiquement par la commande |\variations|.
+% Par défaut : lignes en pointillés d'épaisseur 1\,pt.
+%    \begin{macrocode}
+\newcommand*{\vrconnect}[2]{
+    \ifthenelse{\boolean{tikz}}{
+        \tikz[remember picture,overlay]{\draw[dotted,line width=1pt] 
+            (#1) -- (#2);}
+    }{
+        \ncline[nodesep=5pt,linestyle=dotted,linewidth=1pt]{-}{#1}{#2}
+    }
+}
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{\noeud}
+% \cmd{\noeud}\oarg{pos}\marg{noeud}\marg{valeur}
+% définit les nœuds des flèches et valeurs remarquables ; 
+% le 1\ier\ paramètre optionnel correspond à l'option |t| (top), 
+% |b| (bottom) ou |c| (centered, par défaut) permettant d'ajuster
+% la manière dont la flèche arrive sur le nœud (sans effet pour |tikz|) ;
+% le 2\ieme\ paramètre est le nom du nœud (qui est donné automatiquement 
+% par les commandes de positionnement) ;
+% le 3\ieme\ paramètre est la valeur affichée dans le tableau.
+%    \begin{macrocode}
+\newcommand*{\noeud}[3][c]{
+    \ifthenelse{\boolean{tikz}}{
+        \tikz[remember picture,baseline]{
+            \node[anchor=base,inner sep=0,outer sep=4] (#2) {$#3$};
+        } % l'option de placement (#1) n'est pas implémentée pour tikz
+    }{
+        \rnode[#1]{#2}{#3}
+    }
+}
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{\hachure}
+% Définition des hachures pour les zones interdites.
+% La macro prend deux arguments qui sont des paires de longueurs,
+% par exemple |\hachure{-3em,12ex}{3em,-1ex}|,
+% représentant les extrémités du rectangle à hachurer
+% par rapport à la position courante où la macro est appelée. 
+%    \begin{macrocode}
+\newcommand*{\hachure}[2]{
+    \ifthenelse{\boolean{tikz}}{
+        \tikz[remember picture,overlay]{\fill[pattern=north east lines] 
+            (#1) rectangle (#2);}
+    }{
+        \psframe[linestyle=none,fillstyle=vlines,hatchwidth=0.2pt,
+            hatchsep=3pt](#1)(#2)
+    }
+}
+%    \end{macrocode}
+% \end{macro}
+
+% \subsection{Longueurs et compteurs internes}
+%
+%   \begin{macrocode}
+\newcounter{ligne} % numéro de ligne
+\newcounter{noeud} % numéro du nœud
+\newcounter{numvr} % numéro de la valeur remarquable
+\newcounter{numdiscont} % numéro de la discontinuité
+%    \end{macrocode}
+%
+% Un compteur est créé pour chaque discontinuité : |discont1|, |discont2|, etc.
+% Le compteur |discont|\meta{i} contient le numéro du nœud précédant 
+% la i-ème discontinuité.
+% La flèche partant de ce nœud ne sera pas tracée.
+% Il faut un compteur de plus que le nombre de discontinuités.
+%    \begin{macrocode}
+\AtBeginDocument{% car maxdiscont a pu être modifié dans le préambule
+    \stepcounter{maxdiscont}
+    % il faut un compteur de plus que le nb de discontinuités
+    \multido{\I=1+1}{\themaxdiscont}{\newcounter{discont\I}}
+}
+%    \end{macrocode}
+
+% Longueurs et compteurs pour la commande |\ZIh|.
+%    \begin{macrocode}
+\newlength{\ZIheight}
+\newlength{\ZIdepth}
+\newlength{\ZIwidth}
+\newcounter{ZI} % numéro de la ZI
+\newcounter{ZIstar} % numéro de ZI pour la commande \ZI*
+\newcounter{ZIvarlignes} % dernière ligne des variations
+%    \end{macrocode}
+
+% \bigskip
+% \subsection{Les environnements \texttt{tablvar} et \texttt{tablvar*}}
+%
+% Grâce à l'extension \textsf{array} nous pouvons définir un nouveau type de colonnes 
+% pour les intervalles : |i|.
+%    \begin{macrocode}
+\newcolumntype{i}[1]{>{\centering\arraybackslash $}p{#1}<{$}}
+    % nouveau type de colonne i pour les intervalles
+%    \end{macrocode}
+
+% \begin{macro}{\tablvarinit}
+% \changes{v1.1}{13/04/2019}{ajouté \bslash extrarowheight}
+% Cette commande d'initialisation des compteurs est appelée
+% au début de chaque environnement |tablvar| ou |tablvar*|.
+% Les redéfinitions de |\extrarowheight| et |\arraystretch| seront locales 
+% dans l'environnement |tablvar|.
+%    \begin{macrocode}
+\newcommand{\tablvarinit}{
+    \setlength{\extrarowheight}{0pt} % paramètre de l'extension array
+    \renewcommand{\arraystretch}{\tablvarstretch} 
+    \setcounter{ligne}{0}
+    \setcounter{numvr}{0}
+}
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{\ZIinit}
+% Initialisation des longueurs et compteurs pour la commande |\ZIh|.
+% Prend un argument (optionnel) qui est la largeur des colonnes intervalles
+% (car il faut la sauvegarder dans |\ZIwidth|)
+% et qui est passé automatiquement par |tablvar|.
+%    \begin{macrocode}
+\newcommand*{\ZIinit}[1][\intervalwidth]{
+    \setlength{\ZIheight}{0pt}
+    \setlength{\ZIdepth}{0pt}
+    \setlength{\ZIwidth}{#1}
+    \setcounter{ZI}{0}
+    \setcounter{ZIstar}{0}
+    \setcounter{ZIvarlignes}{3} 
+    % doit être non nul pour \ZIh si tableau de signe seul
+}
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{environment}{tablvar}
+% L'environnement |tablvar| : |\begin{tablvar}|\oarg{width}\marg{nbintervals}.
+% Le 1\ier\ paramètre (optionnel) permet de régler la largeur des colonnes 
+% intervalles (définie par |\intervalwidth|
+% par défaut), le 2\ieme\ paramètre (obligatoire) est le nombre d'intervalles.
+% Cet environnement n'est rien d'autre qu'un |array| dans lequel on a réglé
+% les options de colonages.
+% Les colonnes de valeurs sont de type |c| et les colonnes d'intervalles de type |i|
+% \footnote{L'utilisation d'un type de colonne permettant un ajustement automatique
+% de la hauteur tel que fourni par l'extension \textsf{cellspace} de Josselin Noirel
+% ne fonctionne pas ici : les double-barres ne sont pas correctement dessinées.}.
+%    \begin{macrocode}
+\newenvironment{tablvar}[2][\intervalwidth]{
+    \tablvarinit
+    \ZIinit[#1]
+    \begin{array}{%
+        |c|@{\hspace{\bordercolsep}}%
+        *{#2}{c@{\hspace{\innercolsep}}%
+            i{#1}@{\hspace{\innercolsep}}%
+        }%
+        c@{\hspace{\bordercolsep}}|%
+    }    
+}{\end{array}}
+%    \end{macrocode}
+% \end{environment}
+
+% \begin{environment}{tablvar*}
+% L'environnement |tablvar*| est une variante de |tablvar| (même syntaxe)
+% où la première et la dernière colonnes de valeurs sont alignées respectivement
+% à gauche (|l|) et à droite (|r|).
+% Ceci est utile lorsqu'il y a une double barre à l'une des extrémités.
+%    \begin{macrocode}
+\newcounter{nb@intervals}
+\newenvironment{tablvar*}[2][\intervalwidth]{
+    % environnement tablvar* , type l et r pour les extrémités
+    \tablvarinit
+    \ZIinit[#1]
+    \setcounter{nb@intervals}{#2}
+    \addtocounter{nb@intervals}{-1}
+    \begin{array}{%
+        |c|@{\hspace{\bordercolsep}}%
+        l@{\hspace{\innercolsep}}%
+        i{#1}@{\hspace{\innercolsep}}%
+        *{\value{nb@intervals}}{
+            c@{\hspace{\innercolsep}}%
+            i{#1}@{\hspace{\innercolsep}}%
+        }%
+        r@{\hspace{\bordercolsep}}|%
+    }
+}{\end{array}}
+%    \end{macrocode}
+% \end{environment}
+
+% \subsection{La commande \texttt{\textbackslash variations}}
+%
+% C'est ici qu'est la magie !
+% 
+% \begin{macro}{\varloop}
+% \changes{v1.1}{12/04/2019}{tvloop -> varloop}
+% La commande \cmd{\varloop}\marg{iter}\marg{code} répète \meta{code} (\meta{iter}$- 1$) fois
+% (car la dernière ligne de variations doit subir un traitement particulier).
+% Nous avons créé une variante de |\multido| (du package \textsf{multido}) car
+% |\multido|, |\Multido| ou |\whiledo| plantent sur |\\| ou |\@arraycr|
+% et la commande |\variations| a besoin d'utiliser une boucle dans un tableau.
+% |\varloop| n'est autre qu'un |\ifthenelse| récursif.
+%    \begin{macrocode}
+\newcounter{loop@counter}    
+\newcommand{\varloop}[2]{%
+    \setcounter{loop@counter}{#1}
+    \addtocounter{loop@counter}{-1}% on boucle 1 fois de moins que #1
+    \ifthenelse{\value{loop@counter}=0}{}{%
+        #2 \varloop{\value{loop@counter}}{#2}%
+    }
+}
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{\variations}
+% \cmd{\variations}\oarg{nblignes}\marg{code} où \meta{nblignes} est le nombre
+% de lignes pour les variations (3 par défaut) ;
+% \meta{code} contient les séparateurs de colonnes et la composition des variations 
+% grâce aux commandes de positionnement.\\
+% Le principe est que l'on parcourt 3 fois (par défaut) le contenu de |\variations| ;
+% à chaque itération, le compteur |ligne| est incrémenté, 
+% le compteur |noeud| est remis à 0 puis incrémenté à chaque commande |\pos|,
+% mais le contenu de |\pos| n'est affiché et le nœud n'est effectivement créé 
+% que si la valeur du compteur |ligne| correspond à l'argument de ligne de |\pos|.\\
+% Les flèches et pointillés sont dessinés à la fin, quand tous les nœuds sont créés,
+% mais il faut les tracer avant le |\\| final, sinon la compilation plante !?
+%    \begin{macrocode}
+\newcommand*{\variations}[2][3]{% #1=nblignes (3 par défaut)
+    % (ré)initialisation des compteurs
+    \setcounter{ligne}{0} % nécessaire pour 2 parties variations
+    \setcounter{numdiscont}{0}
+    \multido{\I=1+1}{\themaxdiscont}{\setcounter{discont\I}{0}}
+    \setcounter{ZIvarlignes}{#1} % nécessaire pour \ZIh
+    % boucle : on exécute le code #2 un nb de fois égal à (#1)-1
+    \varloop{#1}{%
+        \setcounter{noeud}{0}\setcounter{numvr}{0}\setcounter{ZI}{0}
+        % à chaque boucle on réinitialise certains compteurs
+        \stepcounter{ligne} % le numéro de ligne est incrémenté
+        #2 % les nœuds sont fabriqués par le code #2 (avec \pos et \vr)
+        \\ % retour ligne
+        }
+    % dernière itération -> flèches tracées AVANT \\ sinon bug !?
+    \setcounter{noeud}{0}\setcounter{numvr}{0}\setcounter{ZI}{0}
+    \stepcounter{ligne} #2    
+    % tracé des flèches 
+    \addtocounter{noeud}{-1} % 1 flèche de moins que le nb de nœuds
+    \setcounter{numdiscont}{1}
+    \multido{\Ix=1+1,\Iy=2+1}{\thenoeud}{
+        \ifthenelse{\value{discont\thenumdiscont}=\Ix}{
+            % on saute les discontinuités
+            \stepcounter{numdiscont}}{
+            % sinon on trace la flèche N1->N2 puis N2->N3, etc.
+            \fleche{N\Ix}{N\Iy} 
+        }
+    }
+    % tracé des pointillés pour les valeurs remarquables
+    \multido{\Ix=1+1}{\thenumvr}{\vrconnect{X\Ix}{Y\Ix}}    
+    \\ % dernier retour ligne du tableau
+}
+%    \end{macrocode}
+% \end{macro}
+
+% \subsection{Les commandes de positionnement}
+%
+% \begin{macro}{\pos}
+% \cmd{\pos}\oarg{opt}\marg{ligne}\marg{valeur} 
+% sert à positionner les valeurs dans la partie variations.
+% \meta{ligne} désigne la ligne où il faut placer \meta{valeur} et produire le nœud
+% (numéroté avec le compteur |noeud| et défini en appelant la commande |\noeud|).
+% Les lignes de variations sont numérotées \emph{du haut vers le bas} 
+% (et les lignes de signes portent toutes le numéro 0).
+% Le 1\ier\ argument optionnel, |c| (centered, par défaut), |t| (top) ou |b| (bottom),
+% est utilisé pour le positionnement des flèches.\\
+% \DescribeMacro{\pos*}
+% Dans la version étoilée, \cmd{\pos*}\marg{ligne}\marg{valeur}, la différence 
+% est qu'aucun nœud n'est créé. Ceci est utile en particulier pour la colonne de base, 
+% contenant les légendes.
+%    \begin{macrocode}
+\newcommand*{\@pos}[3][c]{
+    \stepcounter{noeud}
+    \ifthenelse{\theligne=#2}{
+        \noeud[#1]{N\thenoeud}{#3}
+    }{} % si ligne != #2, on ne fait rien
+}
+\newcommand*{\@@pos}[2]{\ifthenelse{\theligne=#1}{#2}{}}
+\newcommand*{\pos}{\@ifstar{\@@pos}{\@pos}}
+%    \end{macrocode}
+% \end{macro}
+
+% Voici quelques alias utiles qui peuvent être utilisés 
+% à la place des commandes |\pos| et |\pos*|.
+% \begin{macro}{\haut}
+% \cmd{\haut}\marg{valeur} =  \cmd{\pos}|{1}|\marg{valeur}.
+%    \begin{macrocode}
+\newcommand*{\haut}{\pos{1}}
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{\bas}
+% \cmd{\bas}\marg{valeur} =  \cmd{\pos}|{3}|\marg{valeur}.
+%    \begin{macrocode}
+\newcommand*{\bas}{\pos{3}}
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{\mil}
+% \cmd{\mil}\marg{valeur} =  \cmd{\pos*}|{2}|\marg{valeur}.
+%    \begin{macrocode}
+\newcommand*{\mil}{\pos*{2}}
+%    \end{macrocode}
+% \end{macro}
+
+% Voici enfin deux macros qui permettent si besoin d'ajuster le positionnement
+% (en plus des commandes \LaTeX\ |\hspace| ou |\makebox|).
+% \begin{macro}{\zbox}
+% Place son contenu dans une boite de largeur nulle : affiche le contenu
+% mais considère que l'espace occupé est nul pour le calcul des largeurs de colonne.
+% Sa syntaxe est :
+% |\zbox|\oarg{pos}\marg{contenu} où \meta{opt} = |c| (par défaut), |l| (left) ou |r| (right).
+%    \begin{macrocode}
+\newcommand*{\zbox}[2][c]{\makebox[0pt][#1]{$#2$}}
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{\vdecal}
+% Décalage vertical : \cmd{\vdecal}\marg{decal}\marg{contenu}, 
+% le 1\ier\ paramètre est le décalage 
+% (positif = vers le haut ou négatif = vers le bas), le second est le contenu à placer.
+%    \begin{macrocode}
+\newcommand*{\vdecal}[2]{\smash{\raisebox{#1}{$#2$}}}
+%    \end{macrocode}
+% |\smash| a pour effet d'annuler la hauteur de la boite afin de ne pas agrandir
+% la ligne courante.
+% \end{macro}
+
+% \subsection{Barres, discontinuités et valeurs remarquables}
+%
+% \begin{macro}{\bb}
+% La macro |\bb|, qui produit une double barre,
+% provient de l'extension \textsf{variations} de Christian Obrecht
+% |\def\bb{\vrule\kern1pt\vrule}|.
+% Nous avons ajouté 1\,pt d'espace avant et après, afin d'éviter le contact
+% entre la double barre et les limites à gauche ou à droite.
+%    \begin{macrocode}
+\newcommand*{\bb}{\kern1pt\vrule\kern1pt\vrule\kern1pt}
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{\barre}
+% La macro |\barre| permet de tracer une barre verticale
+% pour marquer les séparations de colonne dans un tableau de signe, en passant
+% à travers les 0. 
+% Son aspect est contrôlé par les paramètres |\tvbarrewidth| et |\tvbarrecolor|.
+% Sa syntaxe est :
+% |\barre|\oarg{valeur} où, en général, on met 0 comme argument optionnel.
+%    \begin{macrocode}
+\newcommand*{\barre}[1][]{\makebox[0pt]{$#1$}
+    \color{tvbarrecolor}
+    \vrule width \tvbarrewidth
+}
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{\discont}
+% Associe un numéro de nœud à un compteur de discontinuité
+% (chaque discontinuité a son propre compteur).
+% La flèche entre le nœud précédent |\discont| (enregistré dans le compteur)
+% et le nœud suivant ne sera pas tracée.
+%    \begin{macrocode}
+\newcommand*{\discont}{
+    \ifthenelse{\theligne=1}{ 
+        % on ne compte les discontinuités qu'une seule fois, sur ligne 1
+        \stepcounter{numdiscont}
+        \setcounter{discont\thenumdiscont}{\thenoeud}
+        }{}
+    }
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{\bblim}
+% Sert à positionner correctement des limites à gauche et à droite 
+% d'une double barre en conservant le centrage de la double barre.
+% Cette macro trace la double barre, place les limites et appelle |\discont|.
+% Le principe est que lorsqu'on place la plus large des deux valeurs 
+% d'un côté de la double barre, on place une boite fantôme de même largeur 
+% de l'autre côté ; quant à la plus étroite des deux valeurs, 
+% elle est placée dans une |\zbox| qui annule sa largeur.
+% Sa syntaxe est : \\
+% |\bblim|\marg{ligne gauche}\marg{limite gauche}\marg{ligne droite}\marg{limite droite}
+%    \begin{macrocode}
+\newsavebox{\@tvlbox}
+\newsavebox{\@tvrbox}
+\newcommand*{\bblim}[4]{
+    \sbox{\@tvlbox}{$#2$}
+    \sbox{\@tvrbox}{$#4$}
+    \ifdim \wd\@tvlbox > \wd\@tvrbox
+        \pos{#1}{#2} \bb\discont
+        \zbox[l]{\pos{#3}{#4}} \pos*{#1}{\phantom{#2}}
+    \else
+        \pos*{#3}{\phantom{#4}} \zbox[r]{\pos{#1}{#2}}
+        \bb\discont \pos{#3}{#4}
+    \fi
+}
+%    \end{macrocode}
+% \end{macro}
+
+% \begin{macro}{\vr}
+% La commande |\vr| fabrique un nœud pour chaque valeur remarquable.
+% Les nœuds sont désignés par X1, X2, \ldots\ sur la ligne des $x$
+% et Y1, Y2, \ldots\ sur les lignes de variations.
+% Sa syntaxe est : \cmd{\vr}\oarg{ligne}\marg{valeur}.
+% Le paramètre optionnel \meta{ligne} vaut 2 par défaut pour Y, 
+% et n'est pas pris en compte pour X (ligne 0),
+% le second paramètre est la valeur à afficher.
+% Les nœuds seront ensuite reliés par la commande |\vrconnect| 
+% (appelée par |\variations|) en fonction de leur numéro.
+%    \begin{macrocode}
+\newcommand*{\vr}[2][2]{% ligne 2 par défaut sauf sur ligne 0
+    \stepcounter{numvr}
+    \ifthenelse{\theligne=0}{
+        \noeud{X\thenumvr}{#2}
+        }{
+        \ifthenelse{\theligne=#1}{
+            \noeud{Y\thenumvr}{#2}
+        }{}
+    }
+}
+%    \end{macrocode}
+% \end{macro}
+
+% \subsection{Zones interdites}
+%
+% \begin{macro}{\ZIc}
+% Commande sans argument qui produit une zone interdite colorée.
+% À placer dans les intervalles voulus. La densité de gris ou la couleur 
+% peuvent être modifiées en redéfinissant la macro.
+%    \begin{macrocode}
+\newcommand{\ZIc}{\discont \cellcolor[gray]{0.7}}
+%    \end{macrocode}
+% \end{macro}
+
+% La macro |\ZIh| \DescribeMacro{\ZIh} sert à produire une zone interdite hachurée.
+% Le tracé des hachures n'est déclenché 
+% que sur la dernière ligne des variations, les appels à |\ZIh| sur les lignes
+% précédentes ne font que cumuler hauteur (|\ht|) et profondeur (|\dp|) de la ligne.
+% Dans une ligne de signe, il ne faut qu'\emph{un seul appel} à |\ZIh|, 
+% qui peut être placé n'importe où. 
+% En effet, pour les lignes d'indice 0, la macro ne sait pas
+% s'il y a eu un changement de ligne, donc elle cumule systématiquement la hauteur
+% à chaque appel.
+% Par contre, dans la partie variations, les |\ZIh| doivent être placés 
+% autant de fois que nécessaire, dans les intervalles voulus.\\
+% La macro possède un paramètre optionnel |\ZIh|\oarg{hauteur}
+% qui est un supplément de hauteur global,
+% permettant de faire un ajustement fin si des lignes ont été agrandies 
+% à cause de leur contenu (grandes fractions par exemple).\\
+% Limitation : fonctionne moins bien avec \tikz\ (sensible à la taille de police).
+%
+% La macro |ZIh*| \DescribeMacro{\ZIh*} 
+% (appelée par |\ZIh| sur la dernière ligne des variations) 
+% déclenche le tracé d'un rectangle de hachures en appelant la commande |\hachure|.
+% Elle utilise les dimensions précédemment enregistrées dans les variables de dimension
+% (par |\ZIh|). Dans un tableau de signes sans partie variations 
+% elle doit être placée sur la dernière ligne à la place de |\ZIh|
+% (pour les lignes précédentes). Elle possède le même argument optionnel \oarg{hauteur}.
+%    \begin{macrocode}
+\newcommand*{\@ZI}[1][0pt]{%
+    \discont
+    \ifthenelse{\theligne=\value{ZIvarlignes}}{\@@ZI[#1]}{%
+        \ifthenelse{\theligne=0 \or \theZI=0}{%
+            % on ne doit cumuler la hauteur qu'une fois par ligne
+            % => une seule occurrence de la macro sur une ligne 0
+            \global\advance\ZIheight by \ht\@arstrutbox
+            \global\advance\ZIheight by \dp\@arstrutbox
+        }{}
+    }
+    \stepcounter{ZI} % RAZ par \variations à chaque ligne
+}
+
+\newcommand*{\@@ZI}[1][0pt]{% \discont inutile ici
+    \ifthenelse{\theZIstar=0}{% cumul des longueurs 1 seule fois
+        \global\advance\ZIheight by \ht\@arstrutbox
+        \global\advance\ZIheight by #1
+        \global\advance\ZIdepth by \dp\@arstrutbox
+        \global\advance\ZIwidth by \innercolsep
+        \global\advance\ZIwidth by \innercolsep
+        \global\advance\ZIwidth by 2pt % espace autour doubles barres
+    }{}
+    \hachure{-0.5\ZIwidth,-\ZIdepth}{0.5\ZIwidth,\ZIheight}
+    \stepcounter{ZIstar}
+}
+
+\newcommand*{\ZIh}{\@ifstar{\@@ZI}{\@ZI}}
+%    \end{macrocode}
+
+% \Finale
+\endinput

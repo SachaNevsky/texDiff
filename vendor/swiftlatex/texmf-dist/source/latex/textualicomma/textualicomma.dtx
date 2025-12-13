@@ -1,0 +1,168 @@
+%\iffalse
+%<*package>
+%% \CharacterTable
+%%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%%   Digits        \0\1\2\3\4\5\6\7\8\9
+%%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%%   Dollar        \$     Percent       \%     Ampersand     \&
+%%   Acute accent  \'     Left paren    \(     Right paren   \)
+%%   Asterisk      \*     Plus          \"     Comma         \,
+%%   Minus         \-     Point         \.     Solidus       \/
+%%   Colon         \:     Semicolon     \;     Less than     \<
+%%   Equals        \=     Greater than  \>     Question mark \?
+%%   Commercial at \@     Left bracket  \[     Backslash     \\
+%%   Right bracket \]     Circumflex    \^     Underscore    \_
+%%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%%   Right brace   \}     Tilde         \~}
+%</package>
+%\fi
+% \iffalse
+% Doc-Source file to use with LaTeX2e
+% Copyright (C) 2017-18 Sebastian Friedl
+%
+% This work is subject to the LaTeX Project Public License, Version 1.3c or -- at
+% your option -- any later version of this license.
+% The work consists of the files textualicomma.dtx, textualicomma.ins,
+% textualicomma-doc.dtx and the derived file textualicomma.sty
+%
+% This work has the LPPL maintenance status 'maintained'.
+% Current maintainer of the work is Sebastian Friedl.
+% \fi
+%
+%
+%
+% \changes{1.0}{2017/12/03}{Initial release}
+% \changes{1.1}{2018/08/23}{Take care of dependencies and requirements}
+%
+%
+% \subsubsection*{Initialization}
+%    \begin{macrocode}
+\ProvidesPackage{textualicomma}%
+    [2018/08/23 v1.1 Use textual comma characters as decimal separators]
+\NeedsTeXFormat{LaTeX2e}
+%    \end{macrocode}
+%
+%
+%
+% \bigskip
+% \subsubsection*{Load dependencies and check requirements}
+% Load the \sty{amstext} package to enable escaping to horizontal mode:
+%    \begin{macrocode}
+\RequirePackage{amstext}
+%    \end{macrocode}
+%
+% Check whether "\rmfamily", "\sffamily" and "\ttfamily" are available:
+%    \begin{macrocode}
+\AtBeginDocument{%
+    \ifx\rmfamily\@undefined%
+        \PackageError{textualicomma}%
+            {\noexpand\rmfamily is undefined. textualicomma doesn't work}%
+            {textualicomma requires the \noexpand\rmfamily command to be
+             defined; otherwise, this package won't work properly}%
+        \PackageWarning{textualicomma}{Emergency stop}%
+        \stop%
+    \fi%
+    \ifx\sffamily\@undefined%
+        \PackageError{textualicomma}%
+            {\noexpand\sffamily is undefined. textualicomma doesn't work}%
+            {textualicomma requires the \noexpand\sffamily command to be
+             defined; otherwise, this package won't work properly}%
+        \PackageWarning{textualicomma}{Emergency stop}%
+        \stop%
+    \fi%
+    \ifx\ttfamily\@undefined%
+        \PackageError{textualicomma}%
+            {\noexpand\ttfamily is undefined. textualicomma doesn't work}%
+            {textualicomma requires the \noexpand\ttfamily command to be
+             defined; otherwise, this package won't work properly}%
+        \PackageWarning{textualicomma}{Emergency stop}%
+        \stop%
+    \fi%
+}
+%    \end{macrocode}
+%
+%
+%
+% \subsubsection*{Package options}
+% Provide a \opt{sffamily} option for using the sans serif font:
+%    \begin{macrocode}
+\newif\if@txticmma@sffamily
+\@txticmma@sffamilyfalse
+\DeclareOption{sffamily}{\@txticmma@sffamilytrue}
+%    \end{macrocode}
+%
+% Provide a \opt{ttfamily} option for using the typewriter font:
+%    \begin{macrocode}
+\newif\if@txticmma@ttfamily
+\@txticmma@ttfamilyfalse
+\DeclareOption{ttfamily}{\@txticmma@ttfamilytrue}
+%    \end{macrocode}
+%
+% Process all options passed to \sty{textualicomma}:
+%    \begin{macrocode}
+\ProcessOptions
+%    \end{macrocode}
+%
+%
+%
+% \subsubsection*{Configuration}
+% Use the roman text font family by default:
+%    \begin{macrocode}
+\def\txticmma@ffamily{\rmfamily}
+%    \end{macrocode}
+%
+% If one of the \opt{sffamily} or \opt{ttfamily} options has been used, changes are applied:
+%    \begin{macrocode}
+\if@txticmma@sffamily\def\txticmma@ffamily{\sffamily}\fi
+\if@txticmma@ttfamily\def\txticmma@ffamily{\ttfamily}\fi
+%    \end{macrocode}
+%
+% \begin{macro}{\textualicommafont}
+% Provide a command for switching the font family inside the document:
+%    \begin{macrocode}
+\def\textualicommafont#1{\def\txticmma@ffamily{#1}}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+%
+% \subsubsection*{Defining the \enquote{textual intelligent comma}}
+% At the very beginning, provide access to the textual comma character.
+% Also, define a math character referring to the comma contained in the math font,
+% to be used in enumerations:
+%    \begin{macrocode}
+\AtBeginDocument{%
+  \def\m@thtextcomma{\text{\txticmma@ffamily,}}
+  \mathchardef\mathcomma\mathcode`\,%
+  \mathcode`\,="8000 %
+}
+%    \end{macrocode}
+%
+% Make the comma character active and map it to the \enquote*{smart comma}:
+%    \begin{macrocode}
+{\catcode`,=\active
+  \gdef,{\futurelet\@let@token\sm@rtcomma}
+}
+%    \end{macrocode}
+%
+% Last but not least, define the \enquote*{smart comma} \dots
+%    \begin{macrocode}
+\def\sm@rtcomma{%
+  \ifx\@let@token\@sptoken\m@thtextcomma\protect\,\else
+  \ifx\@let@token\space \else
+    \m@thtextcomma\fi\fi}
+%    \end{macrocode}
+%
+% \dots\ and allow changing the period's font:
+%    \begin{macrocode}
+\DeclareMathSymbol{.}{\mathalpha}{operators}{`.}
+%    \end{macrocode}
+%
+%
+%
+% \subsubsection*{Famous last words}
+% That's enough code. "\endinput".
+%    \begin{macrocode}
+\endinput
+%    \end{macrocode}

@@ -1,0 +1,274 @@
+%
+% cfhead.tex
+%
+%% Cyrillic font container with T2 encoding beta-support
+%
+% This file is future part of lxfonts package
+% Version 3.5 // Patchlevel=1
+% (c) O.Lapko
+%
+% This package is freeware product under conditions similar to
+% those of D. E. Knuth specified for the Computer Modern family of fonts.
+% In particular, only the authors are entitled to modify this file
+% (and all this package as well) and to save it under the same name.
+%
+% Content:
+%
+% TeX file which sets necessary definitions for font creation
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%"Translation" of versioncheck macro from METAFONT
+%
+\newcount\lhmajver\newcount\lhminver
+\newcount\tempe\newcount\tempf
+\lhmajver3 \lhminver5 %3,5
+\def\lhvercheck(#1,#2){\tempe#1\tempf#2
+ \ifnum\tempe>\lhmajver\message{LH (TEX4MF) font warning: Obsolete head file}
+ \else
+    \ifnum\tempe<\lhmajver\message{LH (TEX4MF) font warning: File from old release found}
+    \else % \tempe=\lhmajver: OK
+       \ifnum\tempf>\lhminver \message{LH (TEX4MF) font warning: Obsolete head file}
+       \else
+          \ifnum\tempf<\lhminver \message{LH (TEX4MF) font warning: File from old release found}
+          \else % \tempf=\lhminver: LH version is OK
+          \fi
+       \fi
+    \fi
+ \fi
+}
+
+\def\today{\ifcase\month\or
+    January\or Februar\or March\or April\or May\or June\or
+    July\or August\or September\or October\or November\or December\fi,
+    \number\day, \number\year}
+\def\today{\number\year/\number\day/\number\month}
+
+%
+% DEFAULTS:
+%
+
+% MISC:
+%
+% Definition for writes
+\def\|{\space\space\space}
+\newlinechar=`\^^J
+
+% The sign which is used for skipping letters in current encoding
+% default: asterisk
+\def\nolettercode{*}
+
+% User temporary TeX output directory;
+% default: subdirectory wrk
+\def\wrkdir{wrk/lh_temp/}
+
+
+%\new...
+% from cfsdtedt.tex
+\newtoks\Htok
+\newtoks\Workbase
+\newtoks\Basis
+\newtoks\Table
+\newcount\myc
+% from cod-edt.tex
+\newcount\tablecount
+\newcount\codecount
+\newcount\currtable
+\newif\ifupper\upperfalse
+\newif\ifaccent\accentfalse
+\newif\ifchardef\chardeffalse
+% from likermac.tex
+\catcode`\@=11
+\newif\if@letter
+\newif\if@lig
+\newif\if@kern
+\newif\if@colon
+\newif\if@wriout
+\catcode`\@=12
+
+% FONT SETTINGS AND DEFAULTS:
+% (should be changed in ##-xx.tex files for created font family)
+%
+\def\fonttwoletters{lh}  % Two first font letters (and font encoding);
+                         % Russian CP866nav (new alternative with Ukrainian
+                         % and Byelorussian letters)
+
+\def\virtualtwoletters{} % Two first letters of virtual font (if exist);
+                         % default: absent
+
+\newif\ifwncoding        % Washington encoding? (for ligs & kerns file);
+\wncodingfalse           % default: No
+
+\def\codebase{enc-t2}    % Encoding data file; default: enc-iso.tex
+
+\def\fontfile{\fntallcm} % Font headers data;
+\def\fntallcm{fntallcm}  % default: fntallcm.tex (all CM text font(header)s)
+\def\fntallec{fntallec}  % additional:  fntallec.tex (all EC text font(header)s)
+
+
+\def\onefont #1#2{%
+    \def\FontsToBeGenerated{
+        \tablevalues                    ( #2 )
+        \makefont \fonttwoletters #1    ( #2 )()}
+}
+
+\def\defamily{}          % Text for ??begin;
+                         % font headers include only "input fikparm;"
+                         % and fontspecific macros;
+                         % default: LH/LL T2*/X2 WN -- run without ??begin file
+\def\ifont{}             % First letters for LaTeX and SliTeX fonts;
+                         % default: absent
+\newif\ifcodehats        % Lettercode output;
+ \codehatstrue           % default: \codehatstrue
+                         %   \def\<lettercode>{^^<hexadecimal number>}
+                         % (for any 7-bit encoding:
+                         %   \codehatsfalse \def\<lettercode>{\char"<HEX>})
+\newif\ifchartest        % test for correct lettercodes both in enc-t2.tex
+ \chartestfalse          % and likergrp.tex not used during font creation
+\newcount\chartestcount  % special count for list of checked letters
+
+%
+% SYSTEM SETTINGS AND DEFAULTS
+% (these settings are used for *ALL* fonts
+% should be changed in setter.tex file)
+%
+\newif\ifMakeFileHeads   % Create font file headers?
+ \MakeFileHeadsfalse     % default: No
+
+\newif\ifSliTeX          % Create font file headers for SliTeX?
+ \SliTeXfalse            % default: No
+
+\newif\ifConcrete        % Create concrete font file headers
+ \Concretefalse          % default: No
+
+\newif\ifCMBright        % Create CM Bright font file headers
+ \CMBrightfalse          % default: No
+
+\newif\ifMakeDvi         % Create DVI file ?
+ \MakeDvifalse           % default: No
+
+\newif\ifMakeFontEnc     % Create encoding files ?
+ \MakeFontEncfalse       % default: No
+
+\newif\ifBabel           % Create encoding files like LaTeX2e XXXdef.enc ?
+ \Babeltrue              % default: Yes
+
+\newif\ifBeresta         % (Babelfalse) Create encoding files for BERESTA.TEX ?
+ \Berestafalse           % default: No
+
+% MFJOB SETTINGS
+%
+\newif\ifdoMFJob         % Create MFJob file?
+ \doMFJobtrue            % default: Yes
+\newif \ifTFMonly        % Create tfm-files only?
+ \TFMonlyfalse           % default: No
+\newif \ifjobviiibit     % MFJob 8-bit fonts?
+ \jobviiibittrue         % default: Yes
+\newif \ifjobvirtual     % MFJob virtual fonts for 8-bit ones?
+ \jobvirtualfalse        % default: No
+\newif \ifMFJobhead      % MFJob all fonts together?
+ \MFJobheadtrue          % default: No
+
+% MFJob-file definitions
+\def\defaultmode{m}%!!!  % don't change this setting!
+\def\fmtbase{plain}
+\def\mfjobscaling{s0}
+\def\jobmodedef{m}
+\def\mfcommand{}
+
+% BATCH FILE SETTINGS
+%
+\newif\ifdoBatch         % Create batch file?
+\doBatchfalse            % default: No
+\def\modedef{}           % e.g.  \def\modedef{\string\mode:=ljfour;}
+
+%
+%  The Batch file entries   ( #1 contains the fontname )
+%   should be of the following form:
+%    \def\BatchOutput{\BatchLine{...}%
+%                          ...
+%                     \BatchLine{...}}
+%  preset value, change \BatchOutput if you like ....
+%
+\def\BatchOutput#1{
+%   \BatchLine{$ MF "\string\mode=localfont; input #1"}
+    \BatchLine{MF "\string\mode=localfont; input #1"}
+}
+
+%
+% FILE NAMING CONVENTIONS:
+%
+\def\encfontname            {\wrkdir\Nencfontname}
+\def\Nencfontname           {\fonttwoletters codes.mf}
+
+\def\codefilename           {\wrkdir\Ncodefilename}
+\def\Ncodefilename          {\ifBabel l\fonttwoletters def.enc\else
+                             \ifBeresta\fonttwoletters codes.tex\else
+                             \fonttwoletters rusdef.tex \fi\fi}
+
+\def\testfontname           {\wrkdir\Ntestfontname}
+\def\Ntestfontname          {\fonttwoletters  ftest.mf}
+
+\def\rusdefname             {\wrkdir\jobname.ulc}
+\def\chardefname            {\wrkdir\jobname.chr}
+
+\def\fontname               {\wrkdir\Nfontname}
+\def\Nfontname              {\ifx\ifont\undefined\else\ifont\fi
+                             \fonttwoletters\fontnamebody\fontsizename.mf}
+
+\def\virtualfontname        {\wrkdir\Nvirtualfontname}
+\def\Nvirtualfontname       {\virtualtwoletters begin.mf}
+
+\def\beginfontname          {\wrkdir\Nbeginfontname}
+\def\Nbeginfontname         {\fonttwoletters begin.mf}
+
+\def\ligfile                {\wrkdir\Nligfile}
+\def\Nligfile               {\fonttwoletters liker.mf}
+
+\def\BatchFileName          {\wrkdir\NBatchFileName}
+\def\NBatchFileName         {\ifx\jifont\undefined\else\jifont\fi
+                             \fonttwoletters batch.bat}
+
+\def\MFJobFileName          {\wrkdir\NMFJobFileName}
+\def\NMFJobFileName         {\ifx\jifont\undefined\else\jifont\fi
+                             \fonttwoletters job.mfj}
+
+% \new...
+\newwrite \encfontoutput    % coding file for METAFONT
+\newwrite \codeoutput       % coding file for russianb/lhrusdef
+
+\newwrite \testfontoutput   % test file for METAFONT
+
+\newwrite \chardefoutput    % \chardef file
+\newwrite \rusdefoutput     % uccode/lccode/mathcode file
+
+\newwrite \fontoutput       % font head file
+\newwrite \beginfontoutput  % beginfont file
+
+\newwrite \ligoutput        % ligs&kerns file
+
+\newwrite \mfjoboutput      % MFJob file for running mf heads
+\newwrite \batchoutput      % batch file for running mf heads
+
+\newread\resetter
+\def\usesetter{%
+\openin\resetter=setter
+\ifeof\resetter
+ \message{^^J*** You may reset defaults for font generation %
+    for your TeX system!^^J%
+ \| Please write them to file setter.tex^^J%
+% ^^JPress *Enter* to continue
+}
+% \read-1 to\trick      %trick!
+% \let\trick\undefined
+\else\message{^^J*** setter.tex:^^J%
+ \| OK, I'll set your new settings!^^J%
+% ^^JPress *Enter* to continue
+}
+% \read-1 to\trick      %trick!
+% \let\trick\undefined
+ \input setter
+\fi
+}
+\endinput
+%end-of-file

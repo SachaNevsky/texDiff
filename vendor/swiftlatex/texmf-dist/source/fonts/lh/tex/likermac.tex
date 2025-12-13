@@ -1,0 +1,127 @@
+%
+% likermac.tex
+%
+%% Cyrillic font container with T2 encoding beta-support
+%
+% This file is future part of lxfonts package
+% Version 3.5 // Patchlevel=0
+% (c) O.Lapko
+%
+% This package is freeware product under conditions similar to
+% those of D. E. Knuth specified for the Computer Modern family of fonts.
+% In particular, only the authors are entitled to modify this file
+% (and all this package as well) and to save it under the same name.
+%
+% Content:
+%
+% TeX style file of ligs & kerns creation
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\lhvercheck(3,5)
+
+\catcode`\@=11
+\catcode`\#=12 \catcode`\$=6 %\catcode`\_=11
+
+%%% from LaTeX
+\long\def\@ifundefined$1$2$3{\expandafter\ifx\csname
+  $1\endcsname\relax$2\else$3\fi}
+%%%
+
+\def\@wrilig{\immediate\write\ligoutput}
+
+\def\lkgroup$1$2{\expandafter\def\csname LiK@r $1\endcsname{$2}}
+\def\<$1>{\csname LiK@r $1\endcsname
+        \@ifundefined{LiK@r$1}{}{\errmessage{group $1 undefined}}
+        }
+
+\def\@letteri  $1{\@ifundefined{MF$1}{\ifchartest\ifx\phanfont\undefined
+        \errmessage{letter $1 undefined}\fi\else\relax\fi}{\@lettertrue}%
+     }
+\def\@letterii $1{\@ifundefined{MF$1}{\relax}{\@colonfalse}%
+     }
+
+\def\@letteriii$1{\@ifundefined{MF$1}{\relax}%
+      {\if@colon\@wrilig{\.\|\|\| CYR_.$1}\@colonfalse% first letter
+       \else    \@wrilig{\.\|\|\|,CYR_.$1}\fi}% next letter
+     }
+
+\def\@kerni    $1{\@ifundefined{MF$1}{\ifchartest\ifx\phanfont\undefined
+        \errmessage{letter $1 undefined}\fi\else\relax\fi}{\if@letter\@ligtrue\fi}%
+     }
+
+\def\@kerniii  $1{\@ifundefined{MF$1}{\relax}%
+      {\if@colon\@wrilig{\.\|\|\|\|\|\| CYR_.$1}\@colonfalse% first letter
+       \else    \@wrilig{\.\|\|\|\|\|\|,CYR_.$1}\fi}% next letter
+     }
+
+\def\@kerniv   $1{%
+       \if@colon\@wrilig{\.\|\|\|\|\|\| $1}\@colonfalse% first letter
+        \else   \@wrilig{\.\|\|\|\|\|\|,$1}\fi% next letter
+     }
+
+\long\def\beginligtable$1\endligtable{%
+   \@letterfalse\@ligfalse\@wrioutfalse
+% FIRST RUN :
+% full check of existance of letters and ligs&kerns
+  \def\labeligchar$$1$$2{\@ifundefined{MF$$1}{\relax}%
+        {\@lettertrue\@ligtrue}}%
+  \def\labelchar$$1{\def\($$$$1){\@letteri{$$$$1}}%
+        $$1}
+  \def\setcern[$$1]$$2{\def\($$$$1){\@kerni{$$$$1}}%
+        $$2}
+  \def\setkern[$$1]$$2{}% nothing to check
+  \def\WL$$1{}%
+  $1 % run text for ligtable first time
+% SECOND RUN :
+  \if@letter % any ligtable letter defined
+   \if@lig   % any kern for letters defined
+    \@wriouttrue
+%%
+    \def\labeligchar$$1$$2{\@ifundefined{MF$$1}{\relax}% repeat check of letter
+        {\@wrilig{\.\|labelchar ( CYR_.$$1 );\ifwncoding ^^J\.\|\|\|$$2 \fi}}} % writing
+%%
+    \def\labelchar$$1{\begingroup\@colontrue
+        \def\($$$$1){\@letterii{$$$$1}}% repeat check of letters in lettergroup
+        \def\WL$$$$1{}
+        $$1
+        \if@colon\relax
+        \else\@colontrue % THIRD : writing
+           \def\($$$$1){\@letteriii{$$$$1}}
+           \def\WL$$$$1{\@wrilig{\.\|\|$$$$1}}
+%
+           \@wrilig{\.\|labelchar (} $$1 \@wrilig{\.\| );}
+        \fi\endgroup}
+%%
+    \def\setcern[$$1]$$2{\begingroup\@colontrue
+        \def\($$$$1){\@letterii{$$$$1}}% repeat check of letters in lettergroup
+        \def\WL$$$$1{}
+        $$2
+        \if@colon\relax
+        \else\@colontrue % THIRD : writing
+           \def\($$$$1){\@kerniii{$$$$1}}
+           \def\WL$$$$1{\@wrilig{\.\|\|\|\|\|$$$$1}}
+%
+           \@wrilig{\.\|\|\|\|setkern [$$1] (} $$2 \@wrilig{\.\|\|\|\| );}
+        \fi\endgroup}
+%%
+    \def\setkern[$$1]$$2{\begingroup\@colontrue
+        \def\($$$$1){\@kerniv{$$$$1}}
+        \def\WL$$$$1{\@wrilig{\.\|\|\|\|\|$$$$1}}
+%
+        \@wrilig{\.\|\|\|\|setkern [$$1] (} $$2 \@wrilig{\.\|\|\|\| );}
+        \endgroup}
+%%%
+   \def\WL$$1{\@wrilig{\.\|$$1}}
+   \@wrilig{^^J\.beginligtable}%
+% RUN
+   $1 % run text for ligtable output
+   \@wrilig{\. endligtable;^^J}%
+%
+ \fi\fi
+ }
+
+\def\wl$1{\@wrilig{\.$1}}
+\let\.\empty
+%
+% end of likermac.tex

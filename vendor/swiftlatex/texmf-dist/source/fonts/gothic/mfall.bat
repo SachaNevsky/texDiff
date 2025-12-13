@@ -1,0 +1,12 @@
+mf \mode=lowres;mag=1.0;input suet14
+gftopk suet14.gf c:\tex\fonts\pk\300\suet14.pk
+mf \mode=lowres;mag=1.44;input suet14
+gftopk suet14.gf c:\tex\fonts\pk\432\suet14.pk
+mf \mode=lowres;mag=2.488;input suet14
+gftopk suet14.gf c:\tex\fonts\pk\746\suet14.pk
+mf \mode=lowres;mag=1.0;input schwell
+gftopk schwell.gf c:\tex\fonts\pk\300\schwell.pk
+mf \mode=lowres;mag=1.44;input schwell
+gftopk schwell.gf c:\tex\fonts\pk\432\schwell.pk
+mf \mode=lowres;mag=2.488;input schwell
+gftopk schwell.gf c:\tex\fonts\pk\746\schwell.pk

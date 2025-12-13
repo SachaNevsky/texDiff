@@ -1,0 +1,800 @@
+% \iffalse meta-comment
+%<=*COPYRIGHT>
+%% Copyright (C) 2012-2019 by Martin Scharrer <martin@scharrer-online.de>
+%% --------------------------------------------------------------------
+%% This work may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either version 1.3
+%% of this license or (at your option) any later version.
+%% The latest version of this license is in
+%%   http://www.latex-project.org/lppl.txt
+%% and version 1.3 or later is part of all distributions of LaTeX
+%% version 2005/12/01 or later.
+%%
+%% This work has the LPPL maintenance status `maintained'.
+%%
+%% The Current Maintainer of this work is Martin Scharrer.
+%%
+%% This work consists of the files newverbs.dtx and newverbs.ins
+%% and the derived file newverbs.sty.
+%<=/COPYRIGHT>
+% \fi
+%
+% \iffalse
+%<*driver>
+\ProvidesFile{newverbs.dtx}[%
+%<=*DATE>
+    2019/09/09
+%<=/DATE>
+%<=*VERSION>
+    v1.4
+%<=/VERSION>
+    newverbs DTX file]
+\documentclass{ydoc}
+\GetFileInfo{newverbs.dtx}
+\usepackage{newverbs}[\filedate]
+
+%\EnableCrossrefs
+%\CodelineIndex
+%\RecordChanges
+\begin{document}
+  \DocInput{newverbs.dtx}
+  %\PrintChanges
+  %\PrintIndex
+\end{document}
+%</driver>
+% \fi
+%
+% \CheckSum{458}
+%
+% \CharacterTable
+%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%   Digits        \0\1\2\3\4\5\6\7\8\9
+%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%   Dollar        \$     Percent       \%     Ampersand     \&
+%   Acute accent  \'     Left paren    \(     Right paren   \)
+%   Asterisk      \*     Plus          \+     Comma         \,
+%   Minus         \-     Point         \.     Solidus       \/
+%   Colon         \:     Semicolon     \;     Less than     \<
+%   Equals        \=     Greater than  \>     Question mark \?
+%   Commercial at \@     Left bracket  \[     Backslash     \\
+%   Right bracket \]     Circumflex    \^     Underscore    \_
+%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%   Right brace   \}     Tilde         \~}
+%
+%
+% \changes{v1.0}{2010/04/05}{Initial version}
+% \changes{v1.1}{2010/04/13}{Added usage of 'csquotes' macros if loaded.}
+% \changes{v1.2}{2011/02/16}{Added support for 'tabularx' environments.}
+% \changes{v1.2a}{2011/03/19}{Removed spurious spaces.}
+% \changes{v1.3}{2011/07/24}{Added macros to collect verbatim arguments.}
+% \changes{v1.4}{2019/09/09}{Added several suggested changes.}
+%
+% \DoNotIndex{\newcommand,\newenvironment,\providecommand}
+%
+% \GetFileInfo{newverbs.dtx}
+% \author{Martin Scharrer}
+% \email{martin@scharrer-online.de}
+% \maketitle
+%
+% \begin{abstract}
+% This package allows the definition of \cs{verb} variants which add \TeX\ code before and after the verbatim text.
+% When used together with the \pkg{shortvrb} package it allows the definition of short verbatim characters which use this variants
+% instead of the normal \cs{verb}.
+% \end{abstract}
+%
+% \section{Usage}
+%
+% \subsection{Defining new variants of \cs{verb}}
+%
+% \DescribeMacro\newverbcommand     {<\textbackslash macro>}{<code before>}{<code after>}
+% \DescribeMacro\renewverbcommand   {<\textbackslash macro>}{<code before>}{<code after>}
+% \DescribeMacro\provideverbcommand {<\textbackslash macro>}{<code before>}{<code after>}
+% This macros allow the definition of \cs{verb} variants. The verbatim content is processed using \cs{verb}, but the
+% variants can add \TeX\ code before and after it.
+% The three definition macros use |\newcommand*|, |\renewcommand*| and |\providecommand*| internally to define \meta{macro}, respectively.
+% Afterwards \meta{macro} can be used like \cs{verb}. The star version of \meta{macro} will use \cs{verb}|*|.
+%
+% See the implementation of \cs{qverb} in section~\ref{sec:impl} for an example.
+%
+%
+% \subsection{Provided \cs{verb} variants}
+%
+% Two \cs{verb} variants are provided (i.e. with \cs{provideverbcommand}) by default.
+%
+% \DescribeMacro\qverb<char><verbatim material><char>
+% This macro adds quote characters around the verbatim material.
+% Two macros are used to insert the quotes: \cs{qverbbeginquote} (``) and \cs{qverbendquote} ('').
+% They can be redefined by the user if required. If the \pkg{csquotes} package was loaded beforehand
+% the above macros use its macros \cs{openautoquote} and \cs{closeautoquote} to take advantage of the language
+% dependent quotation marks. See the manual of \pkg{csquotes} for more details.
+%
+% Using \Macro\qverb<char><verbatim material><char> is equal to \\
+% \Macro\qverbbeginquote\AlsoMacro\verb<char><verbatim material><char>\AlsoMacro\qverbendquote, or\\
+% \MacroArgs'`'\AlsoMacro\verb<char><verbatim material><char>''
+% when the default definition of the quote macros is used.
+%
+% \DescribeMacro\fverb<char><verbatim material><char>
+% This macro adds a frame (|\fbox{}|) around the verbatim text (|\fverb+$&^_%$+| $\to$ \fverb+$&^_$+).
+% A \TeX\ box is used to store the content first, then the box is framed.
+% The user can define similar command using the following code:\\
+% {\ttfamily
+% \hspace*{2.5em}|\newverbcommand{\myverb}{\begin{lrbox}{\verbbox}}|\\
+% \hspace*{10em}|{\end{lrbox}\mycommand{\usebox{\verbbox}}}|}\\
+% The temporary box \cs{verbbox} is only provided inside a |\...verbcommand|.
+%
+% \subsection{Using \cs{verb} variants with short verbatim character}
+%
+% \DescribeMacro\MakeSpecialShortVerb {<\textbackslash macro>}{\textbackslash\meta{char}}
+% \DescribeMacro\MakeSpecialShortVerb*{<\textbackslash macro>}{\textbackslash\meta{char}}
+% This package also defines a special version of the \cs{MakeShortVerb} macro from the \pkg{shortvrb} package.
+% The orignal command \Macro\MakeShortVerb*{\textbackslash\meta{char}} changes the meaning of \meta{char} so that
+% \MacroArgs<char><verbatim material><char>\ is a shorter alternative to
+% \Macro\verb*<char><verbatim material><char>.
+%
+% The new macro \Macro\MakeSpecialShortVerb*{\textbackslash\meta{verb variant}}{\textbackslash\meta{char}} does the same, but
+% instead of \Macro\verb*\relax\relax\ it uses a \MacroArgs'\'<verb variant>*\relax which needs to be defined using \cs{newverbcommand}.
+% The package \pkg{shortvrb} must be installed in order to make this macro work. It is loaded automatically by \pkg{newverbs}.
+%
+% The special meaning of \meta{char} can be removed using \pkg{shortvrb}'s \cs{DeleteShortVerb}, i.e.\ the same way as for
+% characters defined with the normal \cs{MakeShortVerb}.
+% If a character was already made a short verbatim character it must be ``deleted'' before it can be redefined by \cs{MakeShortVerb} or
+% \cs{MakeSpecialShortVerb}.
+%
+% \bigskip\noindent\textbf{Examples:}\\
+% |\MakeSpecialShortVerb{\qverb}{\"}| will make `|"|' a short, quoting verbatim character: |"$^&$"| $\to$ "$^&$".\\
+% |\DeleteShortVerb{\"}\MakeSpecialShortVerb{\fverb}{\"}| will change it definition to use \cs{fverb}: \fverb+$^&$+.
+%
+%
+% \DescribeMacro\collectverb{<code>}<char><verbatim material><char>
+% \DescribeMacro\collectverb*{<code>}<char><verbatim material><char>
+% \DescribeMacro\collectverb{<code>}{<verbatim material>}
+% \DescribeMacro\collectverb*{<code>}{<verbatim material>}
+% This macro is supposed to be used with its \marg{code} argument at the end of user or package macro which want to typeset verbatim material.
+% It will collect everything between the following \meta{char} and its next occurrence as verbatim material.
+% An exception is if the following \meta{char} is `|{|', then `|}|' is taken as the end \meta{char} to simulate a normal argument to increase user friendliness.
+% Afterwards \meta{code} is expanded with \marg{verbatim material} direct behind it. The macro ensures proper font settings to typeset the verbatim material.
+% For this, a group is opened before the material is collected and closed directly after the given code is processed. ^^A \MacroArgs<code>{<verbatim material>}\AlsoMacro\endgroup.
+% Therefore all changes done by the \meta{code} are local and the material should be typeset directly.
+% (In special cases when the group is disruptive, \meta{code} can be a macro which reads both the verbatim material and the \Macro\endgroup as two arguments.
+% However, then special care must be taken to use the correct font and some of the special characters may be active but have lost their definition.)
+% The starred version will make spaces appear as `\collectverb*{}: :' instead of displaying them as normal spaces.
+%
+%
+% \DescribeMacro\Collectverb{<code>}<char><verbatim material><char>
+% \DescribeMacro\Collectverb*{<code>}<char><verbatim material><char>
+% \DescribeMacro\Collectverb{<code>}{<verbatim material>}
+% \DescribeMacro\Collectverb*{<code>}{<verbatim material>}
+% This macro is supposed to be used with its \marg{code} argument at the end of user or package macro which want to collect plain verbatim material suitable to be
+% written in auxiliary files or log messages.
+% It will collect everything between the following \meta{char} and its next occurrence as verbatim material without adjusting the font or defining any characters in a special way (besides being verbatim).
+% The starred version will make spaces appear as `\Collectverb*{}: :' when typeset but still be written to auxiliary files as normal spaces.
+% An exception is if the following \meta{char} is `|{|', then `|}|' is taken as the end \meta{char} to simulate a normal argument to increase user friendliness.
+% Afterwards \meta{code} is expanded with \marg{verbatim material} direct behind it. This macro does not add any group around the code.
+% Should the material be typeset after all a proper font (e.g.\ \Macro\ttfamily or \Macro\newverbsfont) must be enabled manually.
+%
+%
+%
+% \DescribeMacro\collectverbenv{<code>}
+% \DescribeMacro\collectverbenv*{<code>}
+% This macro is supposed to be used with its \marg{code} argument at the end of the begin-code of an user or package environment definition.
+% It then collects the content of the environment as verbatim material and feeds it as an argument to the provided \meta{code} like \Macro\collectverb does
+% (see there for further details which also apply here).
+% This has the following limitations:
+% When used the \Macro\begin of the environment must end with a line break, i.e.\ the source line must not include any other material afterwards.
+% If the environment is defined with arguments, which is supported, the line break must be after the arguments.
+% The \Macro\end of the macro must be at the beginning of an own source code line.
+% If this conditions are not met incorrect results or an error may occur. Currently trailing material on the \Macro\begin line is simply ignored, but this
+% behaviour might change in future versions.
+%
+% The starred version will make the spaces inside the environment appear as `\collectverb*{}: :'.
+%
+% \noindent Example usage:\\
+% \leavevmode\noindent\bgroup\footnotesize
+% |\newenvironment{myenv}{\maybesomeothercode\collectverbenv{\mycmd}}{\someendcode}| \\
+%
+%
+% \DescribeMacro\Collectverbenv{<code>}
+% \DescribeMacro\Collectverbenv*{<code>}
+% This macro works like \Macro\collectverbenv but collects the environment content as plain verbatim material suitable to be
+% written in auxiliary files or log messages.
+% After collecting the environment the \meta{code} is expanded with \marg{verbatim material} direct behind it. This macro does not add any group around the code.
+% Should the material be typeset after all a proper font (e.g.\ \Macro\ttfamily or \Macro\newverbsfont) must be enabled manually.
+%
+% The starred version will make spaces appear as `\Collectverb*{}: :' when typeset but still be written to auxiliary files as normal spaces.
+%
+%
+% \DescribeMacro\newverbsfont
+% Macro which activates the font used by the \pkg{newverbs} package for the verbatim text.
+% This macro can be used manually if verbatim material collected with \Macro\Collectverb or \Macro\Collectverbenv should be typeset afterall.
+%
+% \DescribeMacro\verbdef<\textbackslash macro><char><verbatim material><char>
+% \DescribeMacro\verbdef*<\textbackslash macro><char><verbatim material><char>
+% \DescribeMacro\verbdef<\textbackslash macro>{<verbatim material>}
+% \DescribeMacro\verbdef*<\textbackslash macro>{<verbatim material>}
+% This macro defines the \meta{\textbackslash macro} as a robust macro which typesets the \meta{verbatim material} in the usual verbatim font.
+% For this the material is placed in a brace group with \Macro\newverbsfont. If a different font is wanted, this macro can be redefined locally.
+%
+% If the \meta{\textbackslash macro} existed before it will be overwritten silently. If an error should be raced instead use
+% \Macro\newcommand{\textbackslash macro}{} just before the \Macro\verbdef.
+%
+% Note that this macro is also provided by the \pkg{verbdef} package. If that package is loaded as well it definition of this macro is used,
+% independent on the order of loading the two packages.
+%
+%
+% \DescribeMacro\Verbdef<\textbackslash macro><char><verbatim material><char>
+% \DescribeMacro\Verbdef*<\textbackslash macro><char><verbatim material><char>
+% \DescribeMacro\Verbdef<\textbackslash macro>{<verbatim material>}
+% \DescribeMacro\Verbdef*<\textbackslash macro>{<verbatim material>}
+% This macro uses \Macro\Collectverb internally to define \meta{\textbackslash macro} as the plain \meta{verbatim material}.
+% This can be used to define macros for special characters, so these can be used in error or warning messages or be written into auxiliary files.
+%
+% If the \meta{\textbackslash macro} existed before it will be overwritten silently. If an error should be raced instead use
+% \Macro\newcommand{\textbackslash macro}{} just before the \Macro\Verbdef.
+%
+% Note that for maximum flexibility the such defined macros are not defined as robust macros. Therefore using them inside sectioning commands they should
+% be protected using \Macro\protect to avoid syntax issues in the |.aux| file due to verbatim characters.
+%
+%
+% \section{Compatibility with other verbatim packages}
+% The compatibility with other verbatim packages is not tested yet. This package relies on the normal internal definition of \cs{verb}
+% and \cs{MakeShortVerb}. Any package which changes these might break this package.
+% Users which encounter incompatibilities should not hesitate to contact the package author (with details!).
+%
+% Since v1.2 from 2011/02/16 the new verbatim macros and their short versions can be used inside \env{tabularx} environments.
+% This package patches an internal macro of \pkg{tabularx} to achieve this compatibility.
+%
+% \StopEventually{}
+% \section{Implementation}
+%
+% \iffalse
+%<*newverbs.sty>
+% \fi
+%    \begin{macrocode}
+%<!COPYRIGHT>
+\ProvidesPackage{newverbs}[%
+%<!DATE>
+%<!VERSION>
+%<*DRIVER>
+    2099/01/01 develop
+%</DRIVER>
+    Define new 'verb' commands and short verb. characters]
+%    \end{macrocode}
+%
+% \subsection{Verb Definition Commands}
+%
+% \begin{macro}{\newverbcommand}
+% \begin{macro}{\renewverbcommand}
+% \begin{macro}{\provideverbcommand}
+% This macro calls the real macro with the to be used definition macro.
+%    \begin{macrocode}
+\newcommand*\newverbcommand{\new@verbcommand\newcommand}
+\newcommand*\renewverbcommand{\new@verbcommand\renewcommand}
+\newcommand*\provideverbcommand{\new@verbcommand\providecommand}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\new@verbcommand}[2]{underlying definition macro}{macro to be defined}
+% Checks for optional argument and calls \cs{new@@verbcommand} accordingly.
+%    \begin{macrocode}
+\def\new@verbcommand#1#2{%
+  \@ifnextchar[%
+    {\new@@verbcommand{#1}{#2}}%
+    {\new@@verbcommand{#1}{#2}[\verb]}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\new@verbcommand}[5]{underlying definition macro}{verb macro to be used}{macro to define}{code before}{code after}
+% The trailing code is inserted by patching \cs{verb@egroup} which is called by \cs{verb}
+% after the verbatim content.
+%    \begin{macrocode}
+\let\newverbs@end\@empty
+\def\new@@verbcommand#1#2[#3]#4#5{%
+  #1*#2{%
+    \bgroup
+    \newverbcommand@settings
+    \ifx\newverbs@end\@empty
+    \expandafter\def\expandafter\verb@egroup\expandafter{\verb@egroup\newverbs@end}%
+    \fi
+    \begingroup\def\@tempa{#5}%
+    \expandafter\expandafter\expandafter\endgroup
+    \expandafter\expandafter\expandafter\def
+    \expandafter\expandafter\expandafter\newverbs@end
+    \expandafter\expandafter\expandafter{\expandafter\@tempa\newverbs@end\egroup}%
+    \def\newverbs@txend{#5\egroup}%
+    \verbatim@font\let\verbatim@font\relax
+    #4#3%
+  }%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\newverbs@tabularxsupport}
+% Enables support for the new verbatim macros inside \env{tabularx} environments.
+% This environment defines its own almost-verbatim form of |\verb|%^^A|
+% which lacks the end-macro we patch above. The following code inserts such
+% an end-macro.
+%    \begin{macrocode}
+\def\newverbs@tabularxsupport{%
+    \begingroup
+    \def\origa@TX@vb##1{\def\@tempa####1##1{\toks@{####1}\edef\@tempa{\the\toks@}%
+        \expandafter\TX@v\meaning\@tempa\\ \\\ifnum0=`{\fi}}\@tempa!}
+    \def\origb@TX@vb##1{\def\@tempa####1##1{\toks@{####1}\edef\@tempa{\the\toks@}%
+        \expandafter\TX@v\meaning\@tempa\\\\\ifnum0=`{\fi}}\@tempa!}%
+    \ifcase0%
+        \ifx\TX@vb\origa@TX@vb 1\else
+        \ifx\TX@vb\origb@TX@vb 1\fi\fi
+    \relax
+        \endgroup
+        \PackageWarning{newverbs}{Couldn't patch 'TX@vb' macro of the 'tabularx' package. Definition unknown.}%
+    \else
+        \endgroup
+        \PackageInfo{newverbs}{Patching 'TX@vb' macro of the 'tabularx' package.}%
+        \def\TX@vb##1{\def\@tempa####1##1{\toks@{####1}\edef\@tempa{\the\toks@}%
+            \expandafter\TX@v\meaning\@tempa\\\\\ifnum0=`{\fi}\newverbs@txend}\@tempa!}%
+    \fi
+    \let\newverbs@tabularxsupport\relax
+}
+%    \end{macrocode}
+% The end-macro is initially empty and is set for every call of a new verb macro.
+%    \begin{macrocode}
+\def\newverbs@txend{}
+%    \end{macrocode}
+% The support is activated either now or at the begin of the document if the \pkg{tabularx} is loaded.
+%    \begin{macrocode}
+\@ifpackageloaded{tabularx}{%
+    \newverbs@tabularxsupport
+}{%
+    \AtBeginDocument{\@ifpackageloaded{tabularx}{\newverbs@tabularxsupport}{}}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\newverbcommand@settings}
+% Some settings required for all new \cs{verb}-like commands.
+% The original end group macro from \cs{verb} is saved away.
+% Also the `temp box a' is provided with a user friendly name.
+%    \begin{macrocode}
+\def\newverbcommand@settings{%
+  \let\verb@orig@egroup\verb@egroup
+  \let\verbbox\@tempboxa
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{Provided New Verb Commands}\label{sec:impl}
+%
+% \begin{macro}{\qverb}
+% Quoting version of \cs{verb}. Places a quote character before and after the verbatim content: "verb".
+%    \begin{macrocode}
+\provideverbcommand{\qverb}{\qverbbeginquote}{\qverbendquote}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\qverbbeginquote}
+% \begin{macro}{\qverbendquote}
+% This macros insert the actual quotes. They can be redefined by the user to contain the required quotes.
+% If available the quoting macros of \pkg{csquotes} are used.
+% \changes{v1.1}{2010/04/13}{Added usage of 'csquotes' macros if loaded.}
+%    \begin{macrocode}
+\@ifundefined{openinnerquote}{%
+  \def\qverbbeginquote{``}%
+  \def\qverbendquote{''}%
+}{%
+  \def\qverbbeginquote{\openautoquote}%
+  \def\qverbendquote{\closeautoquote}%
+}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\fverb}
+% A framed version of \cs{verb}. Stores the verbatim content first into a box. Then the box content is framed.
+%    \begin{macrocode}
+\newverbcommand{\fverb}
+  {\setbox\verbbox\hbox\bgroup\color@setgroup}
+  {\color@endgroup\egroup\fbox{\box\verbbox}}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \subsection{Make Special Short Verbatim Characters}
+%
+%    \begin{macrocode}
+\RequirePackage{shortvrb}
+%    \end{macrocode}
+%
+% \begin{macro}{\MakeShortVerb}
+%    \begin{macrocode}
+\def\MakeShortVerb{%
+  \@ifstar
+    {\newverbs@MakeShortVerb*}%
+    {\newverbs@MakeShortVerb{}}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\newverbs@MakeShortVerb}[1]{star or empty}
+%    \begin{macrocode}
+\def\newverbs@MakeShortVerb#1{%
+  \@ifnextchar[%
+    {\newverbs@@MakeShortVerb{#1}}%
+    {\@MakeSpecialShortVerb{#1}{\verb}}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\newverbs@@MakeShortVerb}[2]{star or empty}{verbatim macro}
+%    \begin{macrocode}
+\def\newverbs@@MakeShortVerb#1[#2]{%
+  \@MakeSpecialShortVerb{#1}{#2}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@MakeSpecialShortVerb}[3]{star or empty}{verbatim macro}{escaped short verbatim character}
+% Uses the definition of \cs{MakeShortVerb} from \pkg{shortvrb} except with \cs{verb} replaced with the first argument.
+% The last argument is then read by \cs{@MakeShortVerb}.
+%    \begin{macrocode}
+\def\@MakeSpecialShortVerb#1#2#3{%
+  %\expandafter\ifx\csname cc\string#3\endcsname\relax
+  %\else
+  %  \DeleteShortVerb{#3}%
+  %\fi
+  \def\@shortvrbdef{#2#1}%
+  \@MakeShortVerb{#3}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\MakeSpecialShortVerb}
+% Checks for the starred version and calls \cs{@MakeSpecialShortVerb} appropriately. The star needs to be added again
+% as \cs{@ifstar} removes it.
+%    \begin{macrocode}
+\newcommand*\MakeSpecialShortVerb{%
+  \@ifstar
+    {\@MakeSpecialShortVerb{*}}%
+    {\@MakeSpecialShortVerb{}}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%% \subsection{Collect verbatim argument}
+%
+% \begin{macro}{\collectverb}
+% Collects verbatim text which can be typeset.
+% Checks for an existing star.
+%    \begin{macrocode}
+\newcommand*\collectverb{%
+    \begingroup
+    \verbatim@font
+    \@ifstar
+        \@scollectverb
+        \@collectverb
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\@collectverb}[1]{<code>}
+% Changes catcodes and ensures that spaces are displayed normally.
+%    \begin{macrocode}
+\def\@collectverb#1{%
+    \verb@eol@error
+    \let\do\@makeother
+    \dospecials
+    \@vobeyspaces
+    \frenchspacing
+    \@noligs
+    \@@collectverb{#1}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\@scollectverb}[1]{<code>}
+% Changes catcodes.
+%    \begin{macrocode}
+\def\@scollectverb#1{%
+    \verb@eol@error
+    \let\do\@makeother
+    \dospecials
+    \@noligs
+    \@@collectverb{#1}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\@@collectverb}[2]{<code>}{<char>}
+% Defines \Macro\@@@collectverb to read everything to the next occurrence of \meta{char}
+% and feed it to the given \meta{code}.
+%    \begin{macrocode}
+\def\@@collectverb#1#2{%
+    \ifnum`#2=`\{%
+        \catcode`\}\active
+    \else
+        \catcode`#2\active
+    \fi
+    \begingroup
+    \ifnum`#2=`\{%
+        \lccode`\~`\}%
+    \else
+        \lccode`\~`#2%
+    \fi
+    \lowercase{\endgroup
+        \def\@@@collectverb##1~}{#1{##1}\endgroup}%
+    \@@@collectverb
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\collectverbenv}
+% Collects verbatim text which can be typeset.
+% Checks for an existing star.
+%    \begin{macrocode}
+\newcommand*\collectverbenv{%
+    \begingroup
+    \verbatim@font
+    \@ifstar
+        \@scollectverbenv
+        \@collectverbenv
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\@collectverbenv}[1]{<code>}
+% Changes catcodes and ensures that spaces are displayed normally.
+%    \begin{macrocode}
+\def\@collectverbenv#1{%
+    \newverb@catcodes
+    \@vobeyspaces
+    \frenchspacing
+    \@noligs
+    \expandafter\@@collectverbenv\expandafter{\@currenvir}{#1}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\@scollectverbenv}[1]{<code>}
+% Changes catcodes.
+%    \begin{macrocode}
+\def\@scollectverbenv#1{%
+    \newverb@catcodes
+    \@noligs
+    \expandafter\@@collectverbenv\expandafter{\@currenvir}{#1}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\@@collectverbenv}[2]{<envname>}{<code>}
+%    \begin{macrocode}
+\begingroup
+\catcode`\|=0
+\catcode`\(=1
+\catcode`\)=2
+\@makeother\{
+\@makeother\}
+\@makeother\\
+|catcode`|^^M=|active%
+|gdef|@@collectverbenv#1#2(%
+    |long|def|@@@collectverb##1^^M##2^^M\end{#1}(#2(##2)|endgroup|end(#1))%
+    |@@@collectverb%
+)%
+|endgroup%
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\Collectverb}
+% Collects argument as plain verbatim and feeds it to the given code.
+% The text is suitable to be printed to auxiliary files.
+%    \begin{macrocode}
+\newcommand*\Collectverb{%
+    \begingroup
+    \@ifstar
+        \@sCollectverb
+        \@Collectverb
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\@Collectverb}[1]{<code to be executed afterwards>}
+%    \begin{macrocode}
+\def\@Collectverb#1{%
+    \verb@eol@error
+    \let\do\@makeother
+    \dospecials
+    \obeyspaces
+    \@@Collectverb{#1}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\@sCollectverb}[1]{<code to be executed afterwards>}
+%    \begin{macrocode}
+\def\@sCollectverb#1{%
+    \verb@eol@error
+    \let\do\@makeother
+    \dospecials
+    \@@Collectverb{#1}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\@@Collectverb}[2]{<code to be executed afterwards>}{<delimiter character>}
+%    \begin{macrocode}
+\def\@@Collectverb#1#2{%
+    \ifnum`#2=`\{%
+        \catcode`\}\active
+    \else
+        \catcode`#2\active
+    \fi
+    \begingroup
+    \ifnum`#2=`\{%
+        \lccode`\~`\}%
+    \else
+        \lccode`\~`#2%
+    \fi
+    \lowercase{\endgroup
+        \def\@@@Collectverb##1~}{\endgroup#1{##1}}%
+    \@@@Collectverb
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\Collectverbenv}
+% Collects environment content as plain verbatim and feeds it to the given code.
+% The text is suitable to be printed to auxiliary files.
+%    \begin{macrocode}
+\newcommand*\Collectverbenv{%
+    \begingroup
+    \@ifstar
+        \@sCollectverbenv
+        \@Collectverbenv
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\@Collectverbenv}[1]{<code to be executed afterwards>}
+%    \begin{macrocode}
+\def\@Collectverbenv#1{%
+    \newverb@catcodes
+    \obeyspaces
+    \expandafter\@@Collectverbenv\expandafter{\@currenvir}{#1}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\newverb@catcodes}
+%    \begin{macrocode}
+\begingroup
+\catcode`\^^I=\active
+\gdef\newverb@catcodes{%
+    \let\do\@makeother
+    \dospecials
+    \obeylines
+    \endlinechar=13
+    \catcode`\^^I=\active
+    \def^^I{\newverb@tab}%
+}
+\gdef^^I{\newverb@tab}%
+\endgroup
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\newverb@tab}
+%    \begin{macrocode}
+\edef\newverb@tab{\space}%\space\space\space}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\@sCollectverbenv}[1]{<code to be executed afterwards>}
+%    \begin{macrocode}
+\def\@sCollectverbenv#1{%
+    \newverb@catcodes
+    \expandafter\@@Collectverbenv\expandafter{\@currenvir}{#1}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\@@Collectverbenv}
+%    \begin{macrocode}
+\begingroup
+\catcode`\|=0
+\catcode`\(=1
+\catcode`\)=2
+\@makeother\{
+\@makeother\}
+\@makeother\\
+|catcode`|^^M=|active%
+|gdef|@@Collectverbenv#1#2(%
+    |long|def|@@@Collectverb##1^^M##2^^M\end{#1}(|endgroup#2(##2)|end(#1))%
+    |@@@Collectverb%
+)%
+|gdef|misj(|def^^M(^^J))%
+%|gdef|misj(|def^^M##1(|ifx##1|endmarker|else|noexpand^^M|expandafter##1|fi))%
+|endgroup%
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\newverbsfont}
+%    \begin{macrocode}
+\newcommand\newverbsfont{%
+    \verbatim@font
+    \frenchspacing
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\Verbdef}
+%    \begin{macrocode}
+\newcommand*\Verbdef{%
+    \@ifstar
+        {\@Verbdef*}%
+        {\@Verbdef{}}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\@Verbdef}[2]{<star or empty>}{<macro to be defined>}
+%    \begin{macrocode}
+\def\@Verbdef#1#2{%
+    \Collectverb#1{\def#2}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\verbdef}
+% Provides an own definition of \Macro\verbdef which is also defined by the \pkg{verbdef} package.
+%    \begin{macrocode}
+\providecommand*\verbdef{%
+    \@ifstar
+        {\newverbs@verbdef*}%
+        {\newverbs@verbdef{}}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\@Verbdef}[2]{<star or empty>}{<macro to be defined>}
+%    \begin{macrocode}
+\def\newverbs@verbdef#1#2{%
+    \Collectverb#1{\newverbs@@verbdef{#2}}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\@Verbdef}[2]{<star or empty>}{<macro to be defined>}
+%    \begin{macrocode}
+\def\newverbs@@verbdef#1#2{%
+    \DeclareRobustCommand{#1}{{\newverbsfont#2}}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \iffalse
+%</newverbs.sty>
+% \fi
+%
+% \Finale
+\endinput

@@ -1,0 +1,1440 @@
+% \iffalse meta-comment
+% vim: tw=80 spl=en
+%
+%% File: cellprops.dtx (C) Copyright 2016-2019 RIVAUD Julien
+%%
+%% It may be distributed and/or modified under the conditions of the
+%% General Public License (GPL), either version 3 of this
+%% license or (at your option) any later version.
+%
+%<*driver|package>
+% The version of expl3 required is tested as early as possible, as
+% some really old versions do not define \ProvidesExplPackage.
+\NeedsTeXFormat{LaTeX2e}[1995/12/01]
+\RequirePackage{expl3}[2018/06/19]
+\def\ExplFileName{cellprops}
+\def\ExplFileDescription{CSS-like cell and table properties}
+\def\ExplFileDate{2019/09/29}
+\def\ExplFileVersion{1.6}
+%</driver|package>
+%<*driver>
+\documentclass[full]{l3doc}
+\usepackage[english]{babel}
+\usepackage{longtable}
+\usepackage{cellprops}
+\begin{document}
+  \DocInput{\jobname.dtx}
+\end{document}
+%</driver>
+% \fi
+%
+% \title{^^A
+%   The \textsf{\ExplFileName} package\\ \ExplFileDescription^^A
+%   \thanks{This file describes v\ExplFileVersion,
+%     last revised \ExplFileDate.}^^A
+% }
+%
+% \author{^^A
+%  Julien ``\_FrnchFrgg\_'' \textsc{Rivaud}\thanks
+%    {^^A
+%      E-mail:
+%        \href{mailto:frnchfrgg@free.fr}
+%             {frnchfrgg@free.fr}^^A
+%    }^^A
+% }
+%
+% \date{Released \ExplFileDate}
+%
+% \maketitle
+%
+% \begin{documentation}
+%
+%
+%
+% \section{\pkg{\ExplFileName} documentation}
+%
+% This package reworks the internals of \env{tabular}, \env{array}, and similar
+% constructs, and adds a \cs{cellprops} command accepting CSS-like selectors and
+% properties. It implements the "border-collapse: separate" CSS model.
+%
+% It depends on \pkg{mdwtab}, \pkg{xcolor} and of course \pkg{expl3} and
+% \pkg{xparse}.
+%
+% \pkg{cellprops} default settings mimick the LaTeX layout, that is left and
+% right padding equal to "\tabcolsep" or "\arraycolsep", zero top and bottom
+% padding, but minimum height and depth corresponding to the table strut box.
+%
+% I recommend to add globally:
+%\begin{verbatim}
+%\cellprops{ td { padding: 1ex; min-height: 0pt; min-depth: 0pt; } }
+%\end{verbatim}
+% so that you get better-looking tables by default.
+%
+% \subsection{Examples}
+%
+% To produce:
+% \[
+%   \cellprops{
+%       td {
+%           padding: 1ex;
+%           min-height: 0pt;
+%           min-depth: 0pt;
+%           border-style: none solid solid none;
+%           text-align: center;
+%       }
+%       table {
+%           background-color: black!5!white;
+%       }
+%       tr:nth-child(even) {
+%           background-color: black!15!white;
+%       }
+%       td:nth-child(even) {
+%           background-color: yellow!20!white
+%       }
+%       tr:nth-child(even) td:nth-child(even) {
+%           background-color: yellow!50!white;
+%       }
+%       tr:first-child td {
+%           border-top-style: solid;
+%       }
+%       td:first-child {
+%           border-left-style: solid;
+%           math-mode: text;
+%           text-align: left;
+%       }
+%   }
+%   \begin{array}{nnnp{5em}}
+%       This is text & A_2 & A_3 & A_4 \\
+%       B1 & This is maths & B_3 & \\
+%       C1 &  C_2  &  X  & Y \\
+%       D1 &  D_2  &  DX & v \\
+%       &  F  &  \int_a^b f(t) dt & v \\
+%   \end{array}
+% \]
+% you can use:
+%\begin{verbatim}
+% \[
+%   \cellprops{
+%       td {
+%           padding: 1ex;
+%           min-height: 0pt;
+%           min-depth: 0pt;
+%           border-style: none solid solid none;
+%           text-align: center;
+%       }
+%       table {
+%           background-color: black!5!white;
+%       }
+%       tr:nth-child(even) {
+%           background-color: black!15!white;
+%       }
+%       td:nth-child(even) {
+%           background-color: yellow!20!white
+%       }
+%       tr:nth-child(even) td:nth-child(even) {
+%           background-color: yellow!50!white;
+%       }
+%       tr:first-child td {
+%           border-top-style: solid;
+%       }
+%       td:first-child {
+%           border-left-style: solid;
+%           math-mode: text;
+%           text-align: left;
+%       }
+%   }
+%   \begin{array}{nnnn}
+%       This is text & A_2 & A_3 & A_4 \\
+%       B1 & This is maths & B_3 & \\
+%       C1 &  C_2  &  X  & Y \\
+%       D1 &  D_2  &  DX & v \\
+%       E &  F  &  \int_a^b f(t) dt & v \\
+%   \end{array}
+% \]
+%\end{verbatim}
+%
+% You can also use the \env{longtable} environment:
+%
+%\begingroup
+%
+%\cellprops{
+%   td { border: thin solid black; }
+%   tr:nth-child(4n) td:first-child,
+%   tr:nth-child(4n+1) td:nth-child(2),
+%   tr:nth-child(4n+2) td:nth-child(3),
+%   tr:nth-child(4n+3) td:nth-child(4) {
+%       border: thick solid red;
+%   }
+%}
+%\begin{longtable}{nnnn}
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%\end{longtable}
+%
+%\endgroup
+%
+% This table has been produced by:
+%\begin{verbatim}
+%\cellprops{
+%   td { border: thin solid black; }
+%   tr:nth-child(4n) td:first-child,
+%   tr:nth-child(4n+1) td:nth-child(2),
+%   tr:nth-child(4n+2) td:nth-child(3),
+%   tr:nth-child(4n+3) td:nth-child(4) {
+%       border: thick solid red;
+%   }
+%}
+%\begin{longtable}{nnnn}
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%   ...
+%   aaaaa & baaaa & caaaaa & dbbbb \\
+%\end{longtable}
+%\end{verbatim}
+%
+% \subsection{Usage guide}
+%
+% \def\OR{\string| }
+%
+% \def\bracket#1{\<#1>:}
+% \def\<#1>{{\normalfont<\textsl{#1}>}}
+% \begin{description}[format=\bracket,
+%                   wide,leftmargin=9em,labelwidth=!,labelsep=0pt,
+%                   ]
+%    \item[usage] "'\cellprops{'" [ \<selectors> "'{'" \<properties> "'}'" ]* "'}'"
+%    \item[selectors] \<selector> ["," \<selectors> ]
+%    \item[selector] [\<environment> "' '"] \<element1>
+%    \item[element1]
+%           "'table'" \OR
+%           "'tr'"[\<pseudo-class>] ["' '" \<element2>] \OR
+%           \<element2>
+%    \item[element2] "'td'"[\<pseudo-class>] ["' '" \<parbox>] \OR \<parbox>
+%    \item[parbox] "'p'"
+%    \item[pseudo-class] "':nth-child('"\<nth>"')"
+%    \item[nth] \<number> \OR "'odd'" \OR "'even'" \OR \<number>"'n+'"\<number>
+%    \item[properties] [ \<property> "';'" ]*
+%    \item[property]
+%       "'padding: '" ( \<dimension> ) \{1,4\} \OR \\
+%       "'padding-top: '" \<dimension> \OR \\
+%       "'padding-right: '" \<dimension> \OR \\
+%       "'padding-bottom: '" \<dimension> \OR \\
+%       "'padding-left: '" \<dimension> \OR \\
+%       "'min-height: '" \<dimension> \OR \\
+%       "'min-depth: '" \<dimension> \OR \\
+%       "'min-width: '" \<dimension> \OR \\
+%       "'text-align: '" ( "'left'" \OR "'right'" \OR "'center'" ) \OR \\
+%       "'math-mode: '" ( "'text'" \OR "'math'" \OR "'auto'" ) \OR \\
+%       "'color: '" \<color> \OR \\
+%       "'background-color: '" ( \<color> \OR "'transparent'" ) \OR \\
+%       "'border: '" [ \<bd-width> ] [ \<bd-style> ] [ \<color> ] \OR \\
+%       "'border-top: '" [ \<bd-width> ] [ \<bd-style> ] [ \<color> ] \OR \\
+%       "'border-right: '" [ \<bd-width> ] [ \<bd-style> ] [ \<color> ] \OR \\
+%       "'border-bottom: '" [ \<bd-width> ] [ \<bd-style> ] [ \<color> ] \OR \\
+%       "'border-left: '" [ \<bd-width> ] [ \<bd-style> ] [ \<color> ] \OR \\
+%       "'border-width: '" ( \<bd-width> ) \{1,4\} \OR \\
+%       "'border-top-width: '" \<bd-width> ) \OR \\
+%       "'border-right-width: '" \<bd-width> ) \OR \\
+%       "'border-bottom-width: '" \<bd-width> ) \OR \\
+%       "'border-left-width: '" \<bd-width> ) \OR \\
+%       "'border-style: '" ( \<bd-style> ) \{1,4\} \OR \\
+%       "'border-top-style: '" \<bd-style> ) \OR \\
+%       "'border-right-style: '" \<bd-style> ) \OR \\
+%       "'border-bottom-style: '" \<bd-style> ) \OR \\
+%       "'border-left-style: '" \<bd-style> ) \OR \\
+%       "'border-color: '" ( \<color> ) \{1,4\} \OR \\
+%       "'border-top-color: '" \<color> ) \OR \\
+%       "'border-right-color: '" \<color> ) \OR \\
+%       "'border-bottom-color: '" \<color> ) \OR \\
+%       "'border-left-color: '" \<color> )
+%    \item[color] "'inherit'" \OR \<xcolor-expression> \OR \\
+%       "'rgb('"\<red-0-255>"','"\<green-0-255>"','"\<blue-0-255>"')'" \OR \\
+%       "'hsl('"\<hue-0-360>"','"\<sat-0-1>"','"\<lum-0-1>"')'"
+% \end{description}
+%
+% Most of these properties are straight-forward. You should check a
+% CSS documentation to get more information. A very good source is the Mozilla
+% Developer Network.
+%
+% Here are the supported column types:
+% \begin{itemize}
+%    \item "n": The most basic cell type, hbox, honoring all properties.
+%    \item "l", "c" and "r": Same as "n" but with forced "text-align".
+%    \item "Ml", "Mc" and "Mr": Same as column "l", "c" and "r" but enforces
+%        "math-mode: math". The net effect is that "Mc" will create a centered
+%        column whose contents are in non-display math mode.
+%    \item "T"\<align>: Same as "M"\<align> but enforces "math-mode: text".
+%    \item "p{"\<width>"}", "m"\<width> and "b"\<width>: parbox cell with the
+%        corresponding vertical alignment (\cs{vtop}, \cs{vcenter} or \cs{vbox}).
+%    \item "*{"\<count>"}{"\<coltypes>"}": same as in \pkg{array} or
+%        \pkg{mdwtab}.
+%    \item ">{"\<prefix>"}" and "<{"\<suffix>"}":
+%        same as in \pkg{array} or \pkg{mdwtab}.
+%    \item You can try to use constructs of \pkg{array} or \pkg{mdwtab}, but they
+%        might alter the function of \pkg{cellprops}. Most should be fine though.
+% \end{itemize}
+% The intended usage is to use "n"-type columns and set the properties with CSS,
+% but \LaTeX-like columns in the preamble are often less verbose.
+%
+% Details for some properties:
+%
+% \begin{itemize}
+%    \item "math-mode: auto" means that the cell will be in math mode in
+%        environments \env{array}, \env{matrix}, \dots, and in text mode in
+%        environments like \env{tabular}, \dots
+%    \item "background-color" is only painted on the cell, and "transparent"
+%        actually means "inherit" except that if all values encountered are
+%        "inherit"/"transparent" no background is painted at all. That means that
+%        (currently) you cannot paint a row in some color and rely on
+%        transparency to have it bleed through a cell background.
+%    \item There are no columns in the CSS object model so you have to use
+%        "td:nth-child()" to select a column. Currently, cells spanning several
+%        columns actually increase the child count by the number of column they
+%        span, so that nth-child can still be used to select columns.
+%        This is not consistent with the CSS specification.
+%    \item Any ":nth-child("$A$"n+"$B$")" or ":nth-child("$A$"n)"
+%       or ":nth-child("$B$")" is supported, with arbitrary $A$~and~$B$. The
+%       performance will slowly degrade the more different~$A$ are active
+%       (but if in a \TeX\ group, they will become inactive again when leaving
+%       the group). \emph{A big difference} with the CSS specification is that
+%       currently $n$ is not enforced non-negative. In particular
+%       ":nth-child(2n+8)" \emph{will} match for the second element. This also
+%       prevents tricks like ":nth-child(-n+3)". I am investigating how to
+%       handle those without slowing down the general case.
+% \end{itemize}
+%
+% \subsection{Compatibility}
+%
+% This package has been tested compatible with \pkg{diagbox}, \pkg{spreadtab},
+% \pkg{collcell}. Compatibility with \pkg{longtable} has been specifically taken
+% care of, provided \pkg{cellprops} is loaded afterwards. Table packages that
+% only introduce new column types should be loaded after \pkg{mdwtab}, so either
+% you load \pkg{mdwtab} manually and load your package in between \pkg{mdwtab}
+% and \pkg{cellprops}, or you load your package after \pkg{cellprops} (provided
+% it doesn't overwrite the machinery).
+%
+% \subsection{TODO}
+%
+% Add a test suite with compatibility tests. Improve
+% the documentation, and test more \LaTeX\ table constructs and preamble column
+% types. Enforce $n\ge0$ in ":nth-child" selectors to match the CSS
+% specification.
+%
+% \end{documentation}
+%
+% \begin{implementation}
+%
+% \section{\pkg{\ExplFileName} implementation}
+%
+%    \begin{macrocode}
+%<*package>
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+%<@@=cellprops>
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+\ProvidesExplPackage
+  {\ExplFileName}{\ExplFileDate}{\ExplFileVersion}{\ExplFileDescription}
+
+\RequirePackage{xparse}
+\RequirePackage{xcolor}
+\RequirePackage{etoolbox}
+%    \end{macrocode}
+%
+% \subsection{Loading and fixing \pkg{mdwtab}}
+%
+%   There is a bug in the command \cs{colpop} of \pkg{mdwtab}: instead of just
+%   popping one name in the stack of column sets currently used, it empties it
+%   completely because one \cs{expandafter} is missing. This is proof that not
+%   many package authors really use this API as recommended by Mark
+%   \textsc{Wooding}\ldots We thus load \pkg{mdwtab} and fix \cs{colpop}.
+%
+%    \begin{macrocode}
+\RequirePackage{mdwtab}
+\cs_set_nopar:Npn \tab@pop #1 { \tl_set:Nx #1 { \tl_tail:N #1 } }
+%    \end{macrocode}
+%
+% \subsection{Parsing CSS properties}
+%
+%   Properties are parsed once at setting time, by expandable parsers that leave
+%   definitions in the input stream. All these resulting definitions are saved
+%   in a token list that will be expanded when we need the values. The goal is
+%   to have multiple token lists for multiple contexts, yet not to do the full
+%   parsing dance once per cell.
+%
+%   \begin{variable}{\l_@@_property_value_<name>_tl}
+%   \begin{macro}{\@@_generic_setter:nnn}
+%   \begin{macro}{\@@_get_property:n}
+%   \begin{macro}{\@@_get_property:nN}
+%   We first define a generic setter which just uses
+%   \cs{l_@@_property_value_<name>_tl} to store the value of the property. We
+%   define getters, one that leaves the value in the stream, and one saving the
+%   value in a token list.
+%
+%    \begin{macrocode}
+\cs_new:Nn \@@_generic_setter:nnn {
+    \exp_not:N \tl_set:Nn
+    \exp_not:c { l_@@_property_value_#2_tl }
+    {#1 {#3}}
+}
+
+\cs_set_nopar:Nn \@@_get_property:n {
+    \tl_use:c { l_@@_property_value_#1_tl }
+}
+
+\cs_new_protected_nopar:Nn \@@_get_property:nN {
+    \tl_if_exist:cTF { l_@@_property_value_#1_tl } {
+        \tl_set_eq:Nc #2 { l_@@_property_value_#1_tl }
+    }{
+        \tl_clear:N #2
+    }
+}
+%    \end{macrocode}
+%
+%   \end{macro}
+%   \end{macro}
+%   \end{macro}
+%   \end{variable}
+%
+%   \begin{macro}{\@@_property_type_<name>:nn}
+%   \begin{macro}{\@@_define_properties:nn}
+%   The control sequence \cs{_@@_property_type_<name>:nn} holds the setter for
+%   the property \meta{name}. It can be set by the following helper:
+%
+%    \begin{macrocode}
+\cs_new_protected:Nn \@@_define_properties:nn {
+    \clist_map_inline:nn {#2} {
+        \cs_set:cpn { _@@_property_type_##1:nn } {#1}
+    }
+}
+%    \end{macrocode}
+%
+%   \end{macro}
+%   \end{macro}
+%
+%   \begin{macro}{\@@_use_setter:nn}
+%   Sometimes we need to use a setter right away rather than save its action
+%   somewhere. The following helper does that with an x-expansion.
+%
+%    \begin{macrocode}
+\cs_new:Nn \@@_delegate_setter:nn {
+    \use:c {_@@_property_type_#1:nn} {#1} {#2}
+}
+\cs_new_protected:Nn \@@_use_setter:nn {
+    \use:x {
+        \@@_delegate_setter:nn {#1} {#2}
+    }
+}
+%    \end{macrocode}
+%
+%   \end{macro}
+%
+%    \begin{macrocode}
+\cs_new_protected:Nn \@@_parse_properties:Nn {
+    \tl_clear:N #1
+    \seq_set_split:Nnn \l_tmpa_seq {;} {#2}
+    \seq_map_inline:Nn \l_tmpa_seq {
+        \tl_if_empty:nF {##1} {
+            \exp_args:NNV \seq_set_split:Nnn \l_tmpb_seq \c_colon_str {##1}
+            \int_compare:nNnTF {\seq_count:N \l_tmpb_seq} = { 2 } {
+                \seq_get_left:NN \l_tmpb_seq \l_tmpa_tl
+                \exp_args:NNV \str_set:Nn \l_tmpa_str \l_tmpa_tl
+                \seq_get_right:NN \l_tmpb_seq \l_tmpa_tl
+                \cs_if_exist:cTF { _@@_property_type_\l_tmpa_str :nn } {
+                    \tl_put_right:Nx #1 {
+                        \exp_args:NVV \@@_delegate_setter:nn
+                            \l_tmpa_str \l_tmpa_tl
+                    }
+                }{
+                % TODO: ERROR-no property with that name
+                }
+            }{
+            % TODO: ERROR-too many : or none at all
+            }
+        }
+    }
+}
+
+\cs_new:Nn \@@_fourval_setter:nnnnnn {
+    \@@_fourval_setter_aux:w
+        {#1}{#2}{#3}{#4}#6~{\q_no_value}~{\q_no_value}~{\q_no_value}~\q_stop
+}
+\cs_new:Npn \@@_fourval_setter_aux:w #1#2#3#4#5~#6~#7~#8~#9\q_stop {
+    \@@_delegate_setter:nn {#1} {#5}
+    \quark_if_no_value:nTF {#6} {
+        \@@_delegate_setter:nn {#2} {#5}
+        \@@_delegate_setter:nn {#4} {#5}
+    }{
+        \@@_delegate_setter:nn {#2} {#6}
+        \quark_if_no_value:nTF {#8} {
+            \@@_delegate_setter:nn {#4} {#6}
+        }{
+            \@@_delegate_setter:nn {#4} {#8}
+        }
+    }
+    \quark_if_no_value:nTF {#7} {
+        \@@_delegate_setter:nn {#3} {#5}
+    }{
+        \@@_delegate_setter:nn {#3} {#7}
+    }
+}
+
+\cs_new_protected:Nn \@@_define_fourval_properties:nnnnnn {
+    \@@_define_properties:nn {#1} { #3, #4, #5, #6 }
+    \@@_define_properties:nn {
+        \@@_fourval_setter:nnnnnn {#3}{#4}{#5}{#6}
+    }{
+        #2
+    }
+}
+
+\tl_const:Nn \c_@@_inherit_color_tl { \q_nil }
+
+\cs_new_nopar:Nn \@@_color_setter:nn {
+    \str_if_eq:nnTF {#2} {inherit} {
+        \@@_generic_setter:nnn \exp_not:n {#1} {\c_@@_inherit_color_tl}
+    }{
+        \str_case_e:nnF { \str_range:nnn {#2} {1} {4} } {
+            {rgb(} {
+                \@@_generic_setter:nnn \use:n {#1} {
+                    \exp_not:n {\color[RGB]} {\str_range:nnn {#2} {5} {-2}}
+                }}
+            {hsl(} {
+                \@@_generic_setter:nnn \use:n {#1} {
+                    \exp_not:n {\color[Hsb]} {\str_range:nnn {#2} {5} {-2}}
+                }}
+        }{
+            \@@_generic_setter:nnn \exp_not:n {#1} {
+                \color{#2}
+            }
+        }
+    }
+}
+\cs_new_nopar:Nn \@@_bgcolor_setter:nn {
+    \str_if_eq:nnTF {#2} {transparent} {
+        \@@_color_setter:nn {#1} {inherit}
+    }{
+        \@@_color_setter:nn {#1} {#2}
+    }
+}
+
+\cs_new_nopar:Nn \@@_linewidth_setter:nn {
+    \str_case:nnF {#2} {
+        {thin}   { \@@_generic_setter:nnn \exp_not:n {#1} { \fboxrule} }
+        {medium} { \@@_generic_setter:nnn \exp_not:n {#1} { 2\fboxrule} }
+        {thick}  { \@@_generic_setter:nnn \exp_not:n {#1} { 3\fboxrule} }
+    }{
+        \@@_generic_setter:nnn \exp_not:n {#1} {#2}
+    }
+}
+
+\cs_new_nopar:Nn \@@_border_setter:nn {
+    \@@_border_setter_aux:nw
+        {#1}#2~{\q_no_value}~{\q_no_value}~\q_stop
+}
+\cs_new:Npn \@@_border_setter_aux:nw #1#2~#3~#4~#5\q_stop {
+    \quark_if_no_value:nTF {#4} {
+        \@@_border_setter_isstyle:nTF {#2} {
+            \@@_delegate_setter:nn {#1-width} {thin}
+            \@@_delegate_setter:nn {#1-style} {#2}
+            \quark_if_no_value:nTF {#3} {
+                \@@_delegate_setter:nn {#1-color} {inherit}
+            }{
+                \@@_delegate_setter:nn {#1-color} {#3}
+            }
+        }{
+            \quark_if_no_value:nTF {#3} {
+                %% TODO: Error, one no-style value, ambiguous
+            }{
+                \@@_border_setter_isstyle:nTF {#3} {
+                    \@@_delegate_setter:nn {#1-width} {#2}
+                    \@@_delegate_setter:nn {#1-style} {#3}
+                    \@@_delegate_setter:nn {#1-color} {inherit}
+                }{
+                    \@@_delegate_setter:nn {#1-width} {#2}
+                    \@@_delegate_setter:nn {#1-style} {none}
+                    \@@_delegate_setter:nn {#1-color} {#3}
+                }
+            }
+        }
+    }{
+        \@@_delegate_setter:nn {#1-width} {#2}
+        \@@_delegate_setter:nn {#1-style} {#3}
+        \@@_delegate_setter:nn {#1-color} {#4}
+    }
+}
+\cs_new:Npn \@@_border_setter_isstyle:nTF #1 {
+    \str_case:nnTF {#1} {
+        {none}{} {hidden}{} {dotted}{} {dashed}{} {solid}{}
+        {double}{} {groove}{} {ridge}{} {inset}{} {outset}{}
+    }
+}
+
+\@@_define_properties:nn {
+    \@@_generic_setter:nnn \exp_not:n
+}{
+    min-height,
+    min-depth,
+    min-width,
+}
+
+\@@_define_fourval_properties:nnnnnn
+    { \@@_generic_setter:nnn \exp_not:n }
+    {padding}
+    {padding-top}{padding-right}{padding-bottom}{padding-left}
+
+\@@_define_properties:nn {
+    \@@_generic_setter:nnn \tl_to_str:n
+}{
+    text-align,
+    math-mode,
+}
+
+\@@_define_properties:nn {
+    \@@_color_setter:nn
+}{
+    color,
+}
+
+\@@_define_properties:nn {
+    \@@_bgcolor_setter:nn
+}{
+    background-color,
+}
+
+\@@_define_fourval_properties:nnnnnn
+    { \@@_linewidth_setter:nn }
+    {border-width}
+    {border-top-width}{border-right-width}
+    {border-bottom-width}{border-left-width}
+
+\@@_define_fourval_properties:nnnnnn
+    { \@@_generic_setter:nnn \tl_to_str:n }
+    {border-style}
+    {border-top-style}{border-right-style}
+    {border-bottom-style}{border-left-style}
+
+\@@_define_fourval_properties:nnnnnn
+    { \@@_color_setter:nn }
+    {border-color}
+    {border-top-color}{border-right-color}
+    {border-bottom-color}{border-left-color}
+
+\@@_define_properties:nn {
+    \@@_border_setter:nn
+}{
+    border, border-top, border-right, border-bottom, border-left
+}
+
+\NewDocumentCommand \cellprops { m } {
+    \@@_parse_css:n {#1}
+}
+
+\cs_new_protected:Nn \@@_parse_css:n {
+    \@@_parse_css:w #1 \q_mark {\q_nil} \q_stop
+}
+
+\tl_new:N \l_@@_parse_tmp_tl
+\NewDocumentCommand \@@_parse_css:w { lmu{\q_stop} } {
+    \quark_if_nil:nF {#2} {
+        \@@_parse_properties:Nn \l_@@_parse_tmp_tl {#2}
+        \clist_map_inline:nn {#1} {
+            \@@_parse_css_addprops:nV {##1} \l_@@_parse_tmp_tl
+        }
+        \@@_parse_css:w #3 \q_stop
+    }
+}
+
+
+\seq_new:N \l_@@_parse_selector_seq
+\tl_new:N \l_@@_parse_desc_tl
+
+\str_const:Nn \c_@@_parse_nthchild_str { :nth-child( }
+\prop_new:N \c_@@_parse_replace_prop
+\prop_put:Nnn \c_@@_parse_replace_prop { :first-child } { :nth-child(1) }
+
+\cs_new_protected:Nn \@@_parse_selector:Nn {
+    \str_set:Nx \l_tmpa_str {#2}
+%    \end{macrocode}
+%
+%   Replace some aliases with their meaning:
+%
+%    \begin{macrocode}
+    \prop_map_inline:Nn \c_@@_parse_replace_prop {
+        \use:x {
+            \exp_not:n { \tl_replace_all:Nnn \l_tmpa_str }
+            { \tl_to_str:n { ##1 } } { \tl_to_str:n { ##2 } }
+        }
+    }
+%    \end{macrocode}
+%
+%   Replace all spaces by \cs{q_stop} to defeat the space removal feature of
+%   \cs{seq_set_split:Nnn}.
+%
+%    \begin{macrocode}
+    \tl_replace_all:Nnn \l_tmpa_str {~} {\q_stop}
+    \exp_args:NNVV
+        \seq_set_split:Nnn \l_tmpa_seq \c_@@_parse_nthchild_str \l_tmpa_str
+    \seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
+%    \end{macrocode}
+%
+%   And replace them back.
+%
+%    \begin{macrocode}
+    \tl_replace_all:Nnn \l_tmpa_tl {\q_stop} {~}
+    \seq_clear:N \l_@@_parse_selector_seq
+    \seq_put_right:NV \l_@@_parse_selector_seq \l_tmpa_tl
+    \seq_map_inline:Nn \l_tmpa_seq {
+        \tl_set:Nn \l_tmpa_tl { ##1 }
+%    \end{macrocode}
+%
+%   And replace them back again.
+%
+%    \begin{macrocode}
+        \tl_replace_all:Nnn \l_tmpa_tl {\q_stop} {~}
+%    \end{macrocode}
+%
+%   Now replace the first closing parenthesis by \cs{q_stop}\cs{prg_do_nothing:}
+%   to use \cs{q_stop} as a delimiter for \cs{seq_set_split:Nnn} and thus split
+%   at most once. Note that here the space trimming feature is desired for the
+%   left part, but not just at the right of the parenthesis, so
+%   \cs{prg_do_nothing:} will act as a guard and will be removed afterwards.
+%
+%    \begin{macrocode}
+        \tl_replace_once:Nnn \l_tmpa_tl { ) } { \q_stop\prg_do_nothing: }
+        \seq_set_split:NnV \l_tmpa_seq { \q_stop } \l_tmpa_tl
+        \seq_pop_right:NN \l_tmpa_seq \l_@@_parse_desc_tl
+        \tl_replace_once:Nnn \l_@@_parse_desc_tl { \prg_do_nothing: } {}
+        \seq_get_left:NNT \l_tmpa_seq \l_tmpa_tl {
+            \exp_args:NNV \@@_parse_nth:Nn \l_tmpa_tl \l_tmpa_tl
+            \tl_put_left:Nn \l_@@_parse_desc_tl { ) }
+            \tl_put_left:NV \l_@@_parse_desc_tl \l_tmpa_tl
+        }
+        \seq_put_right:NV \l_@@_parse_selector_seq \l_@@_parse_desc_tl
+    }
+    \tl_set:Nx #1 {
+        \exp_args:NNV \seq_use:Nn
+            \l_@@_parse_selector_seq \c_@@_parse_nthchild_str
+    }
+}
+
+\str_const:Nn \c_@@_parse_n_str {n}
+\seq_new:N \l_@@_used_nth_factors_seq
+\cs_new_protected:Nn \@@_parse_nth:Nn {
+    \str_case:nnF {#2} {
+        {even} { \str_set:Nn \l_tmpa_str {2n} }
+        {odd}  { \str_set:Nn \l_tmpa_str {2n+1} }
+    }{
+        \str_set:Nn \l_tmpa_str {#2}
+    }
+    \exp_args:NNVV
+        \seq_set_split:Nnn \l_tmpa_seq \c_@@_parse_n_str \l_tmpa_str
+    \seq_pop_right:NN \l_tmpa_seq \l_tmpa_tl
+    \int_set:Nn \l_tmpb_int { 0\l_tmpa_tl }
+    \seq_get_left:NNTF \l_tmpa_seq \l_tmpa_tl {
+        \int_set:Nn \l_tmpa_int { 0\l_tmpa_tl }
+    }{
+        \int_zero:N \l_tmpa_int
+    }
+    \int_compare:nNnTF \l_tmpa_int = { 0 } {
+        \tl_set:Nx #1 { \int_use:N \l_tmpb_int }
+    }{
+        \int_set:Nn \l_tmpb_int { \int_mod:nn {\l_tmpb_int} {\l_tmpa_int} }
+        \tl_set:Nx #1 {
+            \int_use:N \l_tmpa_int \exp_not:V \c_@@_parse_n_str
+            + \int_use:N \l_tmpb_int }
+        \seq_put_right:Nx
+            \l_@@_used_nth_factors_seq { \int_use:N \l_tmpa_int }
+    }
+}
+
+\cs_new_protected:Npn \@@_parse_css_addprops:nV #1 #2 {
+    \@@_parse_selector:Nn \l_tmpa_tl {#1}
+    \tl_set:Nx \l_tmpa_tl { l_@@_property_group_\l_tmpa_tl _tl }
+    \tl_if_exist:cF { \l_tmpa_tl } { \tl_clear:c { \l_tmpa_tl } }
+    \tl_put_right:cV { \l_tmpa_tl } #2
+}
+
+\cs_set_protected:Nn \@@_recall_properties:n {
+    \tl_if_exist:cT { l_@@_property_group_#1_tl } {
+        \tl_use:c { l_@@_property_group_#1_tl }
+    }
+    \clist_map_inline:nn { \@currenvir } {
+        \tl_if_exist:cT { l_@@_property_group_##1~#1_tl } {
+            \tl_use:c { l_@@_property_group_##1~#1_tl }
+        }
+    }
+}
+
+\dim_new:N \l_@@_colsep_dim
+\dim_new:N \l_@@_strut_ht_dim
+\dim_new:N \l_@@_strut_dp_dim
+
+\ExplSyntaxOff
+\cellprops{
+    td {
+        padding: 0pt \csname l_@@_colsep_dim\endcsname;
+        min-height: \csname l_@@_strut_ht_dim\endcsname;
+        min-depth: \csname l_@@_strut_dp_dim\endcsname;
+        min-width: 0pt;
+        text-align: left;
+        math-mode: auto;
+        color: inherit;
+        background-color: transparent;
+        border: thin none inherit;
+    }
+    tr {
+        color: inherit;
+        background-color: transparent;
+    }
+    table {
+        padding: 0pt; % No change at load time
+        color: inherit;
+        background-color: transparent;
+    }
+}
+\ExplSyntaxOn
+
+\int_new:N \g_@@_row_int
+\int_new:N \g_@@_col_int
+\bool_new:N \g_@@_inrow_bool
+\bool_gset_false:N \g_@@_inrow_bool
+
+\box_new:N \l_@@_cell_box
+\skip_new:N \l_@@_left_skip
+\skip_new:N \l_@@_right_skip
+\dim_new:N \g_@@_ht_dim
+\dim_new:N \g_@@_dp_dim
+\tl_new:N \g_@@_borders_tl
+
+\tl_new:N \l_@@_restore_tl
+
+\dim_new:N \l_@@_tablepadding_top_dim
+\dim_new:N \l_@@_tablepadding_bottom_dim
+\tl_new:N  \l_@@_color_tl
+\tl_new:N  \l_@@_bgcolor_tl
+
+% To count rows and columns
+\cs_new_protected:Nn \@@_array_init: {
+    \tl_set:Nx \l_@@_restore_tl {
+        \bool_if:NTF \g_@@_inrow_bool {
+            \exp_not:n {\bool_gset_true:N \g_@@_inrow_bool}
+        }{
+            \exp_not:n {\bool_gset_false:N \g_@@_inrow_bool}
+        }
+        \exp_not:n { \int_gset:Nn \g_@@_row_int }
+            { \int_use:N \g_@@_row_int }
+        \exp_not:n { \int_gset:Nn \g_@@_col_int }
+            { \int_use:N \g_@@_col_int }
+        \exp_not:n { \dim_gset:Nn \g_@@_ht_dim }
+            { \dim_use:N \g_@@_ht_dim }
+        \exp_not:n { \dim_gset:Nn \g_@@_dp_dim }
+            { \dim_use:N \g_@@_dp_dim }
+        \exp_not:n { \tl_gset:Nn \g_@@_borders_tl }
+            { \exp_not:V \g_@@_borders_tl }
+    }
+    \int_gzero:N \g_@@_row_int
+    \bool_gset_false:N \g_@@_inrow_bool
+    \tl_gclear:N \g_@@_borders_tl
+    \cs_set_eq:NN \@@_orig_tab@readpreamble:n \tab@readpreamble
+    \cs_set_eq:NN \tab@readpreamble \@@_readpreamble:n
+%    \end{macrocode}
+%
+% Zero \cs{col@sep} but remember its value for the default padding.
+%
+%    \begin{macrocode}
+    \dim_set_eq:NN \l_@@_colsep_dim \col@sep
+    \dim_zero:N \col@sep
+%    \end{macrocode}
+%
+% Also ignore \cs{*extrasep} dimensions that are not part of cellprop
+% interface and should be replaced by CSS equivalents.
+%
+%    \begin{macrocode}
+    \dim_zero:N \tab@extrasep
+    \group_begin:
+        \@@_recall_properties:n {table}
+        \dim_gset:Nn \g_tmpa_dim { \@@_get_property:n {padding-top} }
+        \dim_gset:Nn \g_tmpb_dim { \@@_get_property:n {padding-bottom} }
+        \@@_update_colors:
+        \tl_gset_eq:NN \g_tmpa_tl \l_@@_color_tl
+        \tl_gset_eq:NN \g_tmpb_tl \l_@@_bgcolor_tl
+    \group_end:
+    \dim_set_eq:NN \l_@@_tablepadding_top_dim \g_tmpa_dim
+    \dim_set_eq:NN \l_@@_tablepadding_bottom_dim \g_tmpb_dim
+    \tl_set_eq:NN \l_@@_color_tl \g_tmpa_tl
+    \tl_set_eq:NN \l_@@_bgcolor_tl \g_tmpb_tl
+    \@@_recall_properties:n {tr}
+    \dim_set:Nn \l_@@_strut_ht_dim { \box_ht:N \@arstrutbox }
+    \dim_set:Nn \l_@@_strut_dp_dim { \box_dp:N \@arstrutbox }
+    \box_clear:N \@arstrutbox
+}
+
+\cs_set_nopar:Nn \@@_array_startcontent: {
+    \hlx{s[\l_@@_tablepadding_top_dim]}
+}
+
+\cs_set_protected_nopar:Nn \@@_readpreamble:n {
+    \cs_set_eq:NN \tab@readpreamble \@@_orig_tab@readpreamble:n
+    \tl_put_left:Nn \tab@multicol {\@@_startrow:}
+    \tl_put_left:Nn \tab@tabtext {\int_gincr:N \g_@@_col_int}
+    \tab@readpreamble{#1}
+    \exp_args:Nx \tab@preamble
+        { \exp_not:N\@@_startrow: \the\tab@preamble \exp_not:N\@@_endrow: }
+}
+%    \end{macrocode}
+%
+% The color inheritance is handled with \cs{l_@@_inherit_color_tl},
+% \cs{l_@@_color_tl} and \cs{l_@@_bgcolor_tl}. The role of
+% \cs{@@_update_color:Nn} is to set the inherit fallback to the already
+% existing value of \verb|#1| then set \verb|#1| to the CSS value, which can be
+% the inherit variable.
+%
+%    \begin{macrocode}
+\cs_new_protected_nopar:Nn \@@_update_color:Nn {
+    \@@_get_property:nN {#2} \l_tmpa_tl
+    \exp_args:NV \tl_if_eq:NNF \l_tmpa_tl \c_@@_inherit_color_tl {
+        \tl_set_eq:NN #1 \l_tmpa_tl
+    }
+}
+
+\cs_new_protected_nopar:Nn \@@_update_colors: {
+    \@@_update_color:Nn \l_@@_color_tl {color}
+    \@@_update_color:Nn \l_@@_bgcolor_tl {background-color}
+}
+%    \end{macrocode}
+%
+% Patch the \cs{@array}, \cs{LT@array}, \cs{@mkpream}, \cs{endarray} and
+% \cs{endlongtable} commands, so that we can properly setup our line and column
+% counting system. This is the most brittle part of \pkg{cellprops}, and subject
+% to compatibility problems with other packages that patch those (\pkg{hyperref}
+% in particular).
+%
+%    \begin{macrocode}
+\AtEndPreamble{%
+\cs_set_eq:NN \@@_orig_array:w \@array
+\cs_set_protected_nopar:Npn \@array[#1]#2 {
+    \@@_array_init:
+    \@@_orig_array:w [#1]{#2}
+    \@@_array_startcontent:
+}
+
+\cs_set_eq:NN \@@_orig_LTmkpream:n \@mkpream
+\cs_set_protected_nopar:Npn \@mkpream#1 {
+    \group_end:
+    \@@_array_init:
+    \group_begin:
+    \@@_orig_LTmkpream:n {#1}
+}
+
+\cs_set_eq:NN \@@_orig_LTarray:w \LT@array
+\cs_set_protected_nopar:Npn \LT@array [#1]#2 {
+    \@@_orig_LTarray:w [#1]{#2}
+    \@@_array_startcontent:
+}
+
+\cs_new_nopar:Nn \@@_end_array:n {
+    \tl_if_empty:NF \g_@@_borders_tl { \\ }
+    \crcr
+    \hlx{s[\l_@@_tablepadding_bottom_dim]}
+    #1
+    \tl_use:N \l_@@_restore_tl
+}
+
+\cs_set_eq:NN \@@_orig_endarray: \endarray
+\cs_set_nopar:Npn \endarray {
+    \@@_end_array:n { \@@_orig_endarray: }
+}
+\cs_set_eq:NN \endtabular \endarray
+\cs_set_eq:cN {endtabular*} \endarray
+
+\cs_set_eq:NN \@@_orig_endLT: \endlongtable
+\cs_set_nopar:Npn \endlongtable {
+    \@@_end_array:n { \@@_orig_endLT: }
+}
+
+\cs_new_protected_nopar:Nn \@@_startrow: {
+    \bool_if:NF \g_@@_inrow_bool {
+        \bool_gset_true:N \g_@@_inrow_bool
+        \int_gincr:N \g_@@_row_int
+        \int_gset_eq:NN \g_@@_col_int \c_one_int
+        \dim_gzero:N \g_@@_ht_dim
+        \dim_gzero:N \g_@@_dp_dim
+    }
+}
+
+\cs_new_protected_nopar:Nn \@@_endrow: {
+    \bool_if:NT \g_@@_inrow_bool {
+        \bool_gset_false:N \g_@@_inrow_bool
+    }
+}
+
+\cs_new_protected_nopar:Nn \@@_cr:n {
+    \@@_endrow:
+    \tl_if_empty:NF \g_@@_borders_tl {
+        \cr
+        \noalign{\nobreak}
+        \tl_use:N \g_@@_borders_tl
+        \tl_gclear:N \g_@@_borders_tl
+    }
+    \cr
+    \@@_fix_valign_end:n {#1}
+    \use_none:n
+}
+
+\cs_set_protected_nopar:Npn \tab@tabcr #1#2 { \@@_cr:n {#2} }
+\cs_set_protected_nopar:Npn \@xargarraycr #1 { \@@_cr:n {#1} }
+\cs_set_protected_nopar:Npn \@yargarraycr #1 { \@@_cr:n {#1} }
+\tl_if_exist:NT \LT@echunk {
+    \tl_put_left:Nn \LT@echunk {
+        \tl_if_empty:NF \g_@@_borders_tl { \\ }
+    }
+}
+
+\cs_set_eq:NN \@@_orig_multicolumn:w \multicolumn
+\cs_set:Npn \multicolumn#1#2#3 {
+    \@@_orig_multicolumn:w {#1}{#2}{
+        #3
+        \int_gadd:Nn \g_@@_col_int {#1}
+    }
+}
+
+}
+
+\cs_new_nopar:Nn \@@_fix_valign_end:n {
+    \noalign{
+        \dim_set:Nn \l_tmpa_dim {#1}
+        \skip_vertical:n {\l_tmpa_dim}
+        \exp_args:NV \tl_if_eq:nnTF \tab@hlstate {b} {
+            \dim_gadd:Nn \tab@endheight { \g_@@_dp_dim + \l_tmpa_dim }
+        }{
+            \int_compare:nNnT \g_@@_row_int = \c_one_int {
+                \dim_gadd:Nn \tab@endheight { \g_@@_ht_dim }
+            }
+        }
+    }
+}
+%    \end{macrocode}
+%
+% Reset \cs{firsthline} and \cs{lasthline} to \cs{hline} because the version
+% from \pkg{array} which might be loaded already will mess up the spacing and is
+% unneeded anyway.
+%
+%    \begin{macrocode}
+\cs_set_eq:NN \firsthline \hline
+\cs_set_eq:NN \lasthline \hline
+
+\colpush{tabular}
+
+\coldef n{\tabcoltype{
+    \@@_begincell:n{}
+}{
+    \@@_endcell:
+}}
+\coldef l{\tabcoltype{
+    \@@_begincell:n
+        {\@@_use_setter:nn {text-align} {left}}
+}{
+    \@@_endcell:
+}}
+\coldef c{\tabcoltype{
+    \@@_begincell:n
+        {\@@_use_setter:nn {text-align} {center}}
+}{
+    \@@_endcell:
+}}
+\coldef r{\tabcoltype{
+    \@@_begincell:n
+        {\@@_use_setter:nn {text-align} {right}}
+}{
+    \@@_endcell:
+}}
+\coldef M#1{\@@_MTcol:nn {math}{#1}}
+\coldef T#1{\@@_MTcol:nn {text}{#1}}
+\cs_new_protected_nopar:Nn \@@_MTcol:nn {
+    % TODO: error if align not l, c, or r
+    \exp_args:Nx \tabcoltype {
+        \exp_not:N \@@_begincell:n {
+            \exp_not:n {\@@_use_setter:nn {math-mode} {#1} }
+            \exp_not:n {\@@_use_setter:nn {text-align}} {
+                \str_case:nn {#2} {
+                    {l} {left}
+                    {c} {center}
+                    {r} {right}
+                }
+            }
+        }
+    }{
+        \@@_endcell:
+    }
+}
+
+\coldef p#1{\tabcoltype{
+    \@@_begin_par_cell:nn \vtop {#1}
+}{
+    \@@_end_par_cell:n {}
+}}
+\coldef m#1{\tabcoltype{
+    \@@_begin_par_cell:nn {\c_math_toggle_token\vcenter} {#1}
+}{
+    \@@_end_par_cell:n{\c_math_toggle_token}
+}}
+\coldef b#1{\tabcoltype{
+    \@@_begin_par_cell:nn \vbox {#1}
+}{
+    \@@_end_par_cell:n {}
+}}
+
+
+\colpop
+%    \end{macrocode}
+%
+% Handle various \verb|:nth-child()| forms.
+%
+%    \begin{macrocode}
+\cs_new_protected_nopar:Nn \@@_seq_nthchild:Nn {
+    \seq_clear:N #1
+    \seq_map_inline:Nn \l_@@_used_nth_factors_seq {
+        \seq_put_right:Nx #1 {
+            ##1 n + \int_eval:n{\int_mod:nn{#2}{##1}}
+        }
+    }
+    \seq_put_right:Nx #1 { \int_eval:n{#2} }
+}
+
+\cs_new_protected_nopar:Nn \@@_begincell:n {
+    \@@_begin_raw_cell:n {
+        #1
+        \hbox_set:Nw \l_@@_cell_box
+        \str_case_e:nnF {\@@_get_property:n {math-mode}} {
+            { text } { \tab@btext }
+            { math } { \tab@bmaths }
+        }{% any other treated as |auto|
+            \tab@bgroup
+        }
+    }
+}
+
+\cs_new_protected_nopar:Nn \@@_endcell: {
+    \str_case_e:nnF {\@@_get_property:n {math-mode}} {
+        { text } { \tab@etext }
+        { math } { \tab@emaths }
+    }{% any other treated as |auto|
+        \tab@egroup
+    }
+    \hbox_set_end:
+    \@@_end_raw_cell:
+}
+
+\cs_new_protected_nopar:Nn \@@_begin_par_cell:nn {
+    \savenotes
+    \@@_begin_raw_cell:n{
+        \hbox_set:Nw \l_@@_cell_box
+        #1
+        \bgroup
+        \hsize#2\relax
+        \@arrayparboxrestore
+        \global\@minipagetrue
+        \everypar{
+            \global\@minipagefalse
+            \everypar{}
+        }
+        \@@_seq_nthchild:Nn \l_tmpa_seq { \g_@@_row_int }
+        \@@_seq_nthchild:Nn \l_tmpb_seq { \g_@@_col_int }
+        \@@_recall_properties:n {td~p}
+        \seq_map_inline:Nn \l_tmpa_seq {
+            \@@_recall_properties:n {tr:nth-child(##1)~p}
+        }
+        \seq_map_inline:Nn \l_tmpb_seq {
+            \@@_recall_properties:n {td:nth-child(##1)~p}
+        }
+        \@@_recall_properties:n {tr~td~p}
+        \seq_map_inline:Nn \l_tmpa_seq {
+            \@@_recall_properties:n {tr:nth-child(##1)~td~p}
+        }
+        \seq_map_inline:Nn \l_tmpa_seq {
+            \seq_map_inline:Nn \l_tmpb_seq {
+                \@@_recall_properties:n {tr:nth-child(##1)~
+                                         td:nth-child(####1)~p}
+            }
+        }
+    }
+}
+\cs_new_protected_nopar:Nn \@@_end_par_cell:n {
+    \ifhmode\@maybe@unskip\par\fi
+    \unskip
+    \egroup
+    #1
+    \hbox_set_end:
+    \@@_end_raw_cell:
+    \spewnotes
+}
+
+\cs_new_protected_nopar:Nn \@@_begin_raw_cell:n {
+    \group_begin:
+    \@@_seq_nthchild:Nn \l_tmpa_seq { \g_@@_row_int }
+    \@@_seq_nthchild:Nn \l_tmpb_seq { \g_@@_col_int }
+    \seq_map_inline:Nn \l_tmpa_seq {
+        \@@_recall_properties:n {tr:nth-child(##1)}
+    }
+    \@@_update_colors:
+    \@@_recall_properties:n {td}
+    \@@_recall_properties:n {tr~td}
+    \seq_map_inline:Nn \l_tmpb_seq {
+        \@@_recall_properties:n {td:nth-child(##1)}
+    }
+    \seq_map_inline:Nn \l_tmpa_seq {
+        \@@_recall_properties:n {tr:nth-child(##1)~td}
+    }
+    \seq_map_inline:Nn \l_tmpa_seq {
+        \seq_map_inline:Nn \l_tmpb_seq {
+            \@@_recall_properties:n {tr:nth-child(##1)~
+                                     td:nth-child(####1)}
+        }
+    }
+    \@@_update_colors:
+    % Additional init code
+    #1
+    % Install the cell color
+    \@@_update_colors:
+    \tl_use:N \l_@@_color_tl
+}
+
+\cs_new_protected_nopar:Nn \@@_make_solid_hborder:nnn {
+    \group_begin:
+        \hbox_set_to_wd:Nnn \l_tmpa_box {1pt} {
+            \hss
+            \hbox:n {
+                #3 % install color
+                \vrule height~\dim_eval:n{#1+#2}
+                    ~depth~-\dim_eval:n{#2}
+                    ~width~3pt
+            }
+            \hss
+        }
+        \box_set_ht:Nn \l_tmpa_box { \c_zero_dim }
+        \box_set_dp:Nn \l_tmpa_box { \c_zero_dim }
+        \kern 1pt
+        \box_use:N \l_tmpa_box
+        \xleaders
+            \box_use:N \l_tmpa_box
+            \skip_horizontal:n {-4pt~plus~1fil}
+        \box_use:N \l_tmpa_box
+        \kern 1pt
+        \skip_horizontal:n {0pt~plus~-1fil}
+    \group_end:
+}
+\cs_new_protected_nopar:Nn \@@_make_solid_vborder:nnn {
+    \group_begin:
+        \hbox_set_to_wd:Nnn \l_tmpa_box {0pt} {
+            \hbox:n {
+                #3 % install color
+                \vrule height~\dim_eval:n{#2}~width~\dim_eval:n{#1}
+            }
+            \hss
+        }
+        \box_set_ht:Nn \l_tmpa_box { \c_zero_dim }
+        \box_set_dp:Nn \l_tmpa_box { \c_zero_dim }
+        \box_use:N \l_tmpa_box
+    \group_end:
+}
+\clist_map_inline:nn {
+    dotted, dashed, solid, double,
+    groove, ridge, inset, outset
+}{
+    \cs_set_eq:cN {@@_make_#1_hborder:nnn} \@@_make_solid_hborder:nnn
+    \cs_set_eq:cN {@@_make_#1_vborder:nnn} \@@_make_solid_vborder:nnn
+}
+
+\dim_new:N \l_@@_border_width_dim
+\str_new:N \l_@@_border_style_str
+\tl_new:N \l_@@_border_color_tl
+\cs_new_protected_nopar:Nn \@@_get_border_info:n {
+    \dim_set:Nn \l_@@_border_width_dim {\@@_get_property:n {border-#1-width}}
+    \@@_get_property:nN {border-#1-style} \l_tmpa_tl
+    \exp_args:NNV \str_set:Nn \l_@@_border_style_str \l_tmpa_tl
+    \tl_clear:N \l_@@_border_color_tl
+    \cs_if_exist:cTF {@@_make_\l_@@_border_style_str _hborder:nnn} {
+        \@@_update_color:Nn \l_@@_border_color_tl {border-#1-color}
+    }{
+        \dim_zero:N \l_@@_border_width_dim
+    }
+}
+
+\cs_new_protected_nopar:Npn \@@_make_hborder:nnnn #1 {
+    \use:c { @@_make_#1_hborder:nnn }
+}
+\cs_new_protected_nopar:Npn \@@_make_vborder:nnnn #1 {
+    \use:c { @@_make_#1_vborder:nnn }
+}
+
+\cs_new_protected_nopar:Nn \@@_end_raw_cell: {
+    % Here \l_@@_cell_box must contain the contents of the cell
+    %
+    % Prepare the borders token list
+    \int_compare:nNnT \g_@@_col_int = 1 {
+        \tl_gclear:N \g_@@_borders_tl
+    }
+    \tl_gput_right:Nx \g_@@_borders_tl {
+        \tl_if_empty:NF \g_@@_borders_tl { \exp_not:n {&} }
+        \exp_not:n { \omit \kern \c_zero_dim }
+    }
+    % Handle padding-top, min-height and border-top
+    \@@_get_border_info:n {top}
+    \box_set_ht:Nn \l_@@_cell_box {
+        \dim_max:nn
+            {\box_ht:N \l_@@_cell_box}
+            {\@@_get_property:n {min-height}}
+        + (\@@_get_property:n {padding-top})
+        + \l_@@_border_width_dim
+    }
+    \dim_compare:nNnT \l_@@_border_width_dim > \c_zero_dim {
+        \tl_gput_right:Nx \g_@@_borders_tl {
+            \exp_not:N \@@_make_hborder:nnnn
+                { \exp_not:V \l_@@_border_style_str }
+                { \dim_use:N \l_@@_border_width_dim }
+                {
+                    \exp_not:n { \g_@@_dp_dim + \g_@@_ht_dim - }
+                    \dim_use:N \l_@@_border_width_dim
+                }
+                { \exp_not:V \l_@@_border_color_tl }
+        }
+    }
+    % Handle padding-bottom, min-depth and border-bottom
+    \@@_get_border_info:n {bottom}
+    \box_set_dp:Nn \l_@@_cell_box {
+        \dim_max:nn
+            {\box_dp:N \l_@@_cell_box}
+            {\@@_get_property:n {min-depth}}
+        + (\@@_get_property:n {padding-bottom})
+        + \l_@@_border_width_dim
+    }
+    \dim_compare:nNnT \l_@@_border_width_dim > \c_zero_dim {
+        \tl_gput_right:Nx \g_@@_borders_tl {
+            \exp_not:N \@@_make_hborder:nnnn
+                { \exp_not:V \l_@@_border_style_str }
+                { \dim_use:N \l_@@_border_width_dim }
+                { \exp_not:n { 0pt } }
+                { \exp_not:V \l_@@_border_color_tl }
+        }
+    }
+    % To fix vertical alignment later
+    \dim_gset:Nn \g_@@_ht_dim {
+        \dim_max:nn
+            {\g_@@_ht_dim}
+            {\box_ht:N \l_@@_cell_box}
+    }
+    \dim_gset:Nn \g_@@_dp_dim {
+        \dim_max:nn
+            {\g_@@_dp_dim}
+            {\box_dp:N \l_@@_cell_box}
+    }
+    % Handle padding-left and border-left
+    \@@_get_border_info:n {left}
+    \skip_set:Nn \l_@@_left_skip
+        {\@@_get_property:n {padding-left} + \l_@@_border_width_dim}
+    \dim_compare:nNnT \l_@@_border_width_dim > \c_zero_dim {
+        \tl_gput_right:Nx \g_@@_borders_tl {
+            \exp_not:N \@@_make_vborder:nnnn
+                { \exp_not:V \l_@@_border_style_str }
+                { \dim_use:N \l_@@_border_width_dim }
+                { \exp_not:n { \g_@@_dp_dim + \g_@@_ht_dim } }
+                { \exp_not:V \l_@@_border_color_tl }
+        }
+    }
+    \tl_gput_right:Nx \g_@@_borders_tl {
+        \exp_not:n {
+            \skip_horizontal:n {0pt~plus~1fil}
+            \kern \c_zero_dim
+        }
+    }
+    \@@_get_border_info:n {right}
+    \skip_set:Nn \l_@@_right_skip
+        {\@@_get_property:n {padding-right} + \l_@@_border_width_dim}
+    \dim_compare:nNnT \l_@@_border_width_dim > \c_zero_dim {
+        \tl_gput_right:Nx \g_@@_borders_tl {
+            \exp_not:N \skip_horizontal:n
+                { - \dim_use:N \l_@@_border_width_dim }
+            \exp_not:N \@@_make_vborder:nnnn
+                { \exp_not:V \l_@@_border_style_str }
+                { \dim_use:N \l_@@_border_width_dim }
+                { \exp_not:n { \g_@@_dp_dim + \g_@@_ht_dim } }
+                { \exp_not:V \l_@@_border_color_tl }
+            \exp_not:N \skip_horizontal:n
+                { \dim_use:N \l_@@_border_width_dim }
+            \exp_not:n { \kern \c_zero_dim }
+        }
+    }
+    % Handle hpadding and halign
+    \skip_set:Nn \l_tmpa_skip {
+        \dim_max:nn
+            {0pt}
+            { (\@@_get_property:n {min-width})
+                - \box_wd:N \l_@@_cell_box }
+    }
+    \skip_add:Nn \l_tmpa_skip {
+        1sp plus 1fil
+    }
+    \str_case_e:nnF {\@@_get_property:n {text-align}} {
+        { right } {
+            \skip_add:Nn \l_@@_left_skip { \l_tmpa_skip }
+        }
+        { center } {
+            \skip_add:Nn \l_@@_left_skip { \l_tmpa_skip / 2 }
+            \skip_add:Nn \l_@@_right_skip { \l_tmpa_skip / 2 }
+        }
+    }{% any other treated as |left|
+        \skip_add:Nn \l_@@_right_skip { \l_tmpa_skip }
+    }
+    \kern\c_zero_dim
+    \tl_if_empty:NF \l_@@_bgcolor_tl {
+        \group_begin:
+        % Paint a background with leaders
+        \tl_use:N \l_@@_bgcolor_tl % install the color
+        \skip_set:Nn \l_tmpa_skip {
+            \l_@@_left_skip
+            + \box_wd:N \l_@@_cell_box
+            + \l_@@_right_skip
+        }
+        \leaders
+            \vrule
+            \skip_horizontal:N \l_tmpa_skip
+        \skip_horizontal:n {-\l_tmpa_skip}
+        \group_end:
+    }
+    \skip_horizontal:N \l_@@_left_skip
+    \box_use_drop:N \l_@@_cell_box
+    \skip_horizontal:N \l_@@_right_skip
+    \kern\c_zero_dim
+    \group_end:
+}
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+%</package>
+%    \end{macrocode}
+%
+% \end{implementation}

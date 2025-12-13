@@ -1,0 +1,430 @@
+% \iffalse meta-comment
+%
+% File: grabbox.dtx Copyright (C) 2018-2019 Jonathan P. Spratte
+%
+% It may be distributed and/or modified under the conditions of the LaTeX
+% Project Public License (LPPL), either version 1.3c of this license or (at your
+% option) any later version.  The latest version of this license is in the file
+%
+%   https://www.latex-project.org/lppl.txt
+%
+% ------------------------------------------------------------------------------
+%
+%<*driver>
+\def\nameofplainTeX{plain}
+\ifx\fmtname\nameofplainTeX\else
+  \expandafter\begingroup
+\fi
+\input l3docstrip.tex
+\askforoverwritefalse
+\preamble
+
+--------------------------------------------------------------
+grabbox -- utilities to get an argument as a box
+E-mail: jspratte@yahoo.de
+Released under the LaTeX Project Public License v1.3c or later
+See http://www.latex-project.org/lppl.txt
+--------------------------------------------------------------
+
+Copyright (C) 2018-2019 Jonathan P. Spratte
+
+This  work may be  distributed and/or  modified under  the conditions  of the
+LaTeX Project Public License (LPPL),  either version 1.3c  of this license or
+(at your option) any later version.  The latest version of this license is in
+the file:
+
+  http://www.latex-project.org/lppl.txt
+
+This work is "maintained" (as per LPPL maintenance status) by
+  Jonathan P. Spratte.
+
+This work consists of the file  grabbox.dtx
+and the derived files           grabbox.pdf and
+                                grabbox.sty.
+
+\endpreamble
+% stop docstrip adding \endinput
+\postamble
+\endpostamble
+\generate{\file{grabbox.sty}{\from{grabbox.dtx}{pkg}}}
+\ifx\fmtname\nameofplainTeX
+  \expandafter\endbatchfile
+\else
+  \expandafter\endgroup
+\fi
+%</driver>
+%
+%<*driver>
+\ProvidesFile{grabbox.dtx}
+  [%
+    \csname grabbox@date\endcsname\space
+    utilities to get an argument as a box%
+  ]
+\expandafter\def\csname @classoptionslist\endcsname{}
+\RequirePackage[british]{babel}
+\documentclass{l3doc}
+\usepackage{duckuments}
+\usepackage{microtype}
+\usepackage{grabbox}
+\renewcommand*{\thefootnote}{\fnsymbol{footnote}}
+\let\metaOrig\meta
+\renewcommand\meta[1]
+  {%
+    \texttt{\metaOrig{#1}}%
+  }
+\begin{document}
+  \DocInput{grabbox.dtx}
+\end{document}
+%</driver>
+%<*pkg>
+\newcommand*\grabbox@date{2019-05-08}
+\newcommand*\grabbox@version{1.4}
+\ProvidesPackage{grabbox}
+  [%
+    \grabbox@date\space v\grabbox@version\space utilities to get an argument as
+    a box%
+  ]
+%</pkg>
+% \fi
+%
+% \begin{center}
+%   \LARGE The \pkg{grabbox} package\\[\bigskipamount]
+%   \large
+%   \setcounter{footnote}{1}%
+%   Jonathan P. Spratte\footnotemark\\[\medskipamount]
+%   Version \csname grabbox@version\endcsname\\[\smallskipamount]
+%   Released \csname grabbox@date\endcsname
+% \end{center}
+% \footnotetext{E-mail: jspratte@yahoo.de}
+%
+% \tableofcontents
+%
+% \begin{documentation}
+%
+% \section{Introduction}
+%
+% Sometimes I happen to write macros and environments which don't care for the
+% exact contents of an argument but only for that contents' typeset
+% representation and its dimensions. In that case I personally dislike the fact
+% that those arguments couldn't contain verbatim material if coded straight
+% forward for macros. For environments this is quite easy to create thanks to
+% \env{lrbox}, for macros this approach unfortunately doesn't work without the
+% enduser's cooperation. Thus the macros distributed hereby came into existence.
+%
+% This package provides \cs{grabbox} to grab an argument inside of a box. The
+% used mechanism allows category code changes in that argument as long as it is
+% used in a place allowing category code changes (so not inside of another
+% argument).
+%
+% It is written as a docstrip file: executing |latex grabbox.dtx| generates the
+% \file{grabbox.sty} file and typesets this documentation; execute
+% |tex grabbox.dtx| to only generate \file{grabbox.sty}.
+%
+% \section{Acknowledgement}
+%
+% I want to thank Enrico Gregorio for helping me develop first versions of the
+% used mechanisms for the second iteration of my \pkg{ducksay} package. If he
+% hadn't helped me back then, I wouldn't have considered the used method
+% further -- because the user interface would've been too clumsy and require
+% strange markup like |\foo arg}| -- and therefore this package wouldn't have
+% been created.
+%
+% Additionally I want to thank David Carlisle for helping me making \cs{grabbox}
+% respect surrounding text colours.
+% 
+% \section{The macro}
+%
+% \begin{function}{\grabbox}
+%   \begin{syntax}
+%     \cs{grabbox}\meta{*}\oarg{inject pre pre}\ignorespaces^^A
+%       \marg{box register}\oarg{inject pre}\marg{box type}\ignorespaces^^A
+%       \oarg{inject post}\marg{afterwards}
+%   \end{syntax}
+%   grabs the next braced argument and stores it inside of the box \meta{box
+%   register}. The box is of \meta{box type}, which should be one of \cs{hbox}
+%   or \cs{vbox} or \cs{vtop}. The contents of the box except for
+%   \meta{inject pre pre} and \meta{inject post} will be contained in an
+%   additional level of grouping to ensure colour safety (similar to \LaTeX's
+%   \cs{sbox}). \meta{inject pre pre} will be injected at the beginning of the
+%   box before this additional group is opened, \meta{inject pre} will be
+%   injected at the beginning of the box and can affect its contents,
+%   \meta{inject post} will be injected at the end of the box but can't be
+%   affected by stuff inside of \meta{inject pre} or added content unless they
+%   are using global definitions -- \meta{inject pre pre} however can affect the
+%   contents of \meta{inject post}.
+%   Unless the \meta{*} is given leading and trailing spaces will be stripped
+%   from the box. After the box is read in \meta{afterwards} will be inserted.
+%   The complete contents of the box will be something like:
+%   \begin{center}
+%     \csname verbatim@font\endcsname
+%     \meta{inject pre pre}^^A
+%     \{\cs{set@color}\meta{inject pre}\meta{argument}\}^^A
+%     \meta{inject post}
+%   \end{center}
+% \end{function}
+%
+%   \smallskip
+%   All assignments are made local. Currently it is not safe to nest macros
+%   which use \cs{grabbox}. It should become safe if your macros use
+%   \cs{grabbox} inside of a group, so the inner \cs{grabbox} doesn't affect the
+%   outer one.
+%
+%   \cs{grabbox} uses \cs{afterassignment} and \cs{aftergroup} to do its magic.
+%   The former should be safe where it is used, the latter is used inside of the
+%   boxed argument before any contents are inserted.
+%
+%   Since \cs{grabbox} works by setting a boxregister using \cs{setbox} (and a
+%   bunch of temporary macros), it is of course not expandable and defined
+%   \cs{protected}.
+%
+% \begin{function}{\@grabbox}
+%   \begin{syntax}
+%     \cs{@grabbox}\meta{*}\marg{inject pre pre}\ignorespaces^^A
+%       \marg{box register}\marg{inject pre}\marg{box type}\ignorespaces^^A
+%       \marg{inject post}\marg{afterwards}
+%   \end{syntax}
+%   This is a variant of \cs{grabbox} that should be faster because it doesn't
+%   parse for optional arguments. Instead every argument is mandatory except for
+%   the star, just leave the arguments empty if you'd otherwise not use the
+%   corresponding optional argument in \cs{grabbox}.
+% \end{function}
+%
+% \section{Useless Example!}
+%
+% First we need to reserve us a box register for this example:
+% \begin{verbatim}
+% \newsavebox\ourbox
+% \end{verbatim}
+% Next we define a macro which takes some arguments and uses \cs{grabbox}:
+% \begin{verbatim}
+% \newcommand\examplecmd[2]
+%   {%
+%     \begingroup
+%     \grabbox\ourbox[\itshape]\hbox[ \sffamily is]{\examplecmdOut{#1}{#2}}
+%   }
+% \end{verbatim}
+% And we need our helper macro which is executed after \cs{grabbox}:
+% \begin{verbatim}
+% \newcommand\examplecmdOut[3]
+%   {%
+%     \begin{tabular}[t]{@{}ll@{}}
+%       Arg1: & #1\\
+%       Arg2: & #2\\
+%       Box:  & \unhbox\ourbox\\
+%       Arg3: & #3
+%     \end{tabular}%
+%     \endgroup
+%   }
+% \end{verbatim}
+%
+% The result is a macro that takes two ordinary arguments, after those a
+% box in horizontal mode and finally another ordinary argument. If we use this
+% macro we get the following:
+% \begin{center}
+% \newsavebox\ourbox
+% \newcommand\examplecmd[2]
+%   {%
+%     \begingroup
+%     \grabbox\ourbox[\itshape]\hbox[ \sffamily is]{\examplecmdOut{#1}{#2}}
+%   }%
+% \newcommand\examplecmdOut[3]
+%   {%
+%     \begin{tabular}[t]{@{}ll@{}}
+%       Arg1: & #1\\
+%       Arg2: & #2\\
+%       Box:  & \unhbox\ourbox\\
+%       Arg3: & #3
+%     \end{tabular}%
+%     \endgroup
+%   }%
+% \examplecmd{Hi,}{my}{\verb|\name|}{Steve!}
+% \end{center}
+% One can see that \verb|\sffamily is| in \meta{inject post} is not affected by
+% the |\itshape| in \meta{inject pre}. The used code to generate that table was:
+%
+% \begin{verbatim}
+% \examplecmd{Hi,}{my}{\verb|\name|}{Steve!}
+% \end{verbatim}
+%
+% \section{Useful Example?}
+%
+% This example provides a macro which typesets its mandatory argument in a block
+% of a definable number of lines, it is meant for a single paragraph.
+%
+% \begin{verbatim}
+% % Getting a box register:
+% \newsavebox\RectangleBox
+% % Defining the main macro:
+% \newcommand\Rectangle[1][4]
+%   {%
+%     \begingroup
+%     \grabbox\RectangleBox\hbox
+%       {%
+%         % Since we don't want to read more arguments after the box,
+%         % we don't need a second macro and can put the output routine
+%         % here.
+%         \begin{minipage}{\dimexpr\wd\RectangleBox/#1\relax}
+%           \parfillskip0pt
+%           \unhbox\RectangleBox
+%         \end{minipage}%
+%         \endgroup
+%       }%
+%   }
+% \end{verbatim}
+%
+% As you can see, this macro uses \cs{grabbox} in a group delimited by
+% \cs{begingroup} and \cs{endgroup} -- like the useless example. It should
+% therefore be safe to nest it inside other macros using \cs{grabbox}.
+%
+% Finally a usage example of our new macro (with the \pkg{duckuments} package
+% loaded):
+%
+% \begin{verbatim}
+% \begin{center}
+%   \Rectangle[9]{\blindduck}
+% \end{center}
+% \end{verbatim}
+% Results in:
+% \begin{center}
+% \newsavebox\RectangleBox
+% \newcommand\Rectangle[1][4]
+%   {%
+%     \begingroup
+%     \grabbox\RectangleBox\hbox
+%       {%
+%         \begin{minipage}{\dimexpr\wd\RectangleBox/#1\relax}
+%           \parfillskip0pt
+%           \unhbox\RectangleBox
+%         \end{minipage}%
+%         \endgroup
+%       }%
+%   }
+%   \Rectangle[9]{\blindduck}
+% \end{center}
+%
+% \end{documentation}
+%
+% \begin{implementation}
+%
+% \section{Implementation}
+%
+%    \begin{macrocode}
+%<*pkg>
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+\@ifdefinable{\if@grabbox@spaces@}{\newif\if@grabbox@spaces@}
+\@ifdefinable{\grabbox@def}
+  {\long\def\grabbox@def#1#2#{\grabbox@def@a{}#1{#2}}}
+\@ifdefinable{\grabbox@ldef}
+  {\long\def\grabbox@ldef#1#2#{\grabbox@def@a\long#1{#2}}}
+\@ifdefinable{\grabbox@def@a}
+  {%
+    \protected\long\def\grabbox@def@a#1#2#3#4%
+      {\@ifdefinable#2{\protected#1\def#2#3{#4}}}%
+  }
+\newcommand\grabbox@def@step[4]
+  {%
+    \grabbox@def#1##1{\def#2{##1}\grabbox@opt#3#4}%
+  }
+\grabbox@def\grabbox@opt#1#2%
+  {%
+    \@ifnextchar[
+      {\grabbox@opt@get#1#2}
+      {\def#1{}#2}%
+  }
+\grabbox@ldef\grabbox@opt@get#1#2[#3]%
+  {%
+    \def#1{#3}#2%
+  }
+\grabbox@def\grabbox@set@color
+  {%
+    \@ifundefined{set@color}{}
+      {\global\let\grabbox@set@color\set@color\grabbox@set@color}%
+  }
+\AtBeginDocument
+  {%
+    \@ifundefined{set@color}
+      {\gdef\grabbox@set@color{}}
+      {\global\let\grabbox@set@color\set@color}%
+  }%
+\newcommand*\grabbox@unskip@space
+  {%
+    \ifhmode\unskip\fi
+  }
+\grabbox@def\grabbox
+  {%
+    \@ifstar
+      {\@grabbox@spaces@true\grabbox@a}
+      {\@grabbox@spaces@false\grabbox@a}%
+  }
+\grabbox@def\grabbox@a
+  {%
+    \grabbox@opt\grabbox@into@prepre\grabbox@b
+  }
+\grabbox@def@step\grabbox@b\grabbox@name\grabbox@into@pre\grabbox@c
+\grabbox@def@step\grabbox@c\grabbox@type\grabbox@into@post\grabbox@d
+\grabbox@ldef\grabbox@d#1%
+  {%
+    \def\grabbox@final{#1}%
+    \afterassignment\grabbox@intermediate
+    \setbox\grabbox@name\grabbox@type
+  }
+\grabbox@def\@grabbox
+  {%
+    \@ifstar
+      {\@grabbox@spaces@true\@grabbox@a}
+      {\@grabbox@spaces@false\@grabbox@a}%
+  }
+\grabbox@ldef\@grabbox@a#1#2#3#4#5%
+  {%
+    \def\grabbox@into@prepre{#1}%
+    \def\grabbox@name       {#2}%
+    \def\grabbox@into@pre   {#3}%
+    \def\grabbox@type       {#4}%
+    \def\grabbox@into@post  {#5}%
+    \grabbox@d
+  }
+\grabbox@def\grabbox@intermediate
+  {%
+    \grabbox@into@prepre
+    \bgroup
+    \if@grabbox@spaces@
+    \else
+      \aftergroup\grabbox@unskip@space
+    \fi
+    \grabbox@set@color
+    \aftergroup\grabbox@after
+    \grabbox@into@pre
+    \if@grabbox@spaces@
+    \else
+      \ignorespaces
+    \fi
+  }
+\newcommand*\grabbox@after@aux@b[1]
+  {%
+    \grabbox@after@aux@a
+  }
+\grabbox@def\grabbox@after@aux@a
+  {%
+    \@ifnextchar\reset@color
+      {\reset@color\grabbox@after@aux@b}
+      {\egroup\grabbox@final}%
+  }
+\grabbox@def\grabbox@after
+  {%
+    \grabbox@into@post
+    \endgraf
+    \grabbox@after@aux@a
+  }
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+\endinput
+%    \end{macrocode}
+%
+% \end{implementation}
+%
+%    \begin{macrocode}
+%</pkg>
+%    \end{macrocode}

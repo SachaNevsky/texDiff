@@ -1,0 +1,234 @@
+%\iffalse
+%<*package>
+%% \CharacterTable
+%%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%%   Digits        \0\1\2\3\4\5\6\7\8\9
+%%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%%   Dollar        \$     Percent       \%     Ampersand     \&
+%%   Acute accent  \'     Left paren    \(     Right paren   \)
+%%   Asterisk      \*     Plus          \+     Comma         \,
+%%   Minus         \-     Point         \.     Solidus       \/
+%%   Colon         \:     Semicolon     \;     Less than     \<
+%%   Equals        \=     Greater than  \>     Question mark \?
+%%   Commercial at \@     Left bracket  \[     Backslash     \\
+%%   Right bracket \]     Circumflex    \^     Underscore    \_
+%%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%%   Right brace   \}     Tilde         \~}
+%</package>
+%\fi
+%\iffalse
+%  Doc-Source file to use with LaTeX2e
+%  Copyright (C) 2018 Sebastian Friedl
+%
+%  This work is subject to the LaTeX Project Public License, Version 1.3c or -- at
+%  your option -- any later version of this license.
+%  This work consists of the files pdfpc-movie.dtx, pdfpc-movie.ins, pdfpc-movie-doc.dtx
+%  and the derived file pdfpc-movie.sty.
+%
+%  This work has the LPPL maintenance status 'maintained'.
+%  Current maintainer of the work is Sebastian Friedl.
+%
+%  -------------------------------------------------------------------------------------------
+%
+%  Provides a \pdfpcmovie command for hyperlinking movies in a way compatible to the
+%  PDF Presenter Console.
+%
+%  -------------------------------------------------------------------------------------------
+%
+%  Please report bugs and other problems as well as suggestions for improvements
+%  to my email address (sfr682k@t-online.de).
+%
+%  -------------------------------------------------------------------------------------------
+%\fi
+%
+%
+%
+% Identify the package and force \LaTeXe:
+%    \begin{macrocode}
+\ProvidesPackage{pdfpc-movie}%
+    [2018/07/21 v1.0 pdfpc compatible hyperlinking of movies]
+\NeedsTeXFormat{LaTeX2e}
+%    \end{macrocode}
+%
+% Require additional packages needed by \sty{pdfpc-movie}:
+%    \begin{macrocode}
+\RequirePackage{etoolbox}
+\AtEndPreamble{\RequirePackage{hyperref}}
+\RequirePackage{pgfkeys}
+%    \end{macrocode}
+%
+%
+% \subsubsection*{Variables and options}
+% Define some internal boolean variables required to assemble the URL parameters:
+%    \begin{macrocode}
+\newif\if@pdfpcmovie@autostart
+\newif\if@pdfpcmovie@loop
+\newif\if@pdfpcmovie@noprogress
+%    \end{macrocode}
+%
+% Define a counter for storing the number of non-processed options:
+%    \begin{macrocode}
+\newcount\pdfpcmovie@remopts
+%    \end{macrocode}
+%
+% Define a box and some dimensions to override the poster material's size:
+%    \begin{macrocode}
+\newbox\pdfpcmovie@posterbox
+\newdimen\pdfpcmovie@posterwd
+\newdimen\pdfpcmovie@posterht
+\newdimen\pdfpcmovie@posterdp
+%    \end{macrocode}
+%
+% Define the keys available as optional arguments of the "\pdfpcmovie" command.
+% Each key requiring additional URL parameters advances "\pdfpcmovie@remopts" by "1":
+%    \begin{macrocode}
+\pgfkeys{%
+    /pdfpc-movie/width/.cd, .value required,
+        .code={\pdfpcmovie@posterwd=#1\relax},
+    /pdfpc-movie/height/.cd, .value required,
+        .code={\pdfpcmovie@posterht=#1\relax},
+    /pdfpc-movie/depth/.cd, .value required,
+        .code={\pdfpcmovie@posterdp=#1\relax},
+    /pdfpc-movie/autostart/.cd, .value forbidden,
+        .code={%
+            \@pdfpcmovie@autostarttrue
+            \advance\pdfpcmovie@remopts 1\relax},
+    /pdfpc-movie/loop/.cd, .value forbidden,
+        .code={%
+            \@pdfpcmovie@looptrue
+            \advance\pdfpcmovie@remopts 1\relax},
+    /pdfpc-movie/noprogress/.cd, .value forbidden,
+        .code={%
+            \@pdfpcmovie@noprogresstrue
+            \advance\pdfpcmovie@remopts 1\relax},
+    /pdfpc-movie/start/.cd, .value required,
+        .code={%
+            \def\pdfpcmovie@start{#1}
+            \advance\pdfpcmovie@remopts 1\relax},
+    /pdfpc-movie/stop/.cd, .value required,
+        .code={%
+            \def\pdfpcmovie@stop{#1}
+            \advance\pdfpcmovie@remopts 1\relax},
+}
+%    \end{macrocode}
+%
+%
+%
+% \subsubsection*{The \texttt{\textbackslash pdfpcmovie} macro}
+% \begin{macro}{\pdfpcmovie}
+% First, "\def" is used to ensure that there is a "\pdfpcmovie" command to (re-)define:
+%    \begin{macrocode}
+\def\pdfpcmovie{}
+\renewcommand{\pdfpcmovie}[3][]{%
+%    \end{macrocode}
+%
+% Leave vertical mode to ensure correct placement of the movie box
+% if "\pdfpcmovie" is used at the beginning of a paragraph:
+%    \begin{macrocode}
+    \leavevmode%
+%    \end{macrocode}
+%
+% Check whether the requested movie file is present. Emit a warning if it's not:
+%    \begin{macrocode}
+    \IfFileExists{\@currdir #3}{}{\PackageWarning{pdfpc-movie}{%
+            The movie file "#3" could not be found in the current
+            directory, where it must reside for viewing.}%
+    }%
+%    \end{macrocode}
+%
+%
+% Create a box with the poster content and determine its size:
+%    \begin{macrocode}
+    \setbox\pdfpcmovie@posterbox=\hbox{#2}%
+%    \end{macrocode}
+%
+% Reset all variables to their default values. \\
+% After that, the optional argument containing all options gets processed:
+%    \begin{macrocode}
+    \@pdfpcmovie@autostartfalse%
+    \@pdfpcmovie@loopfalse%
+    \@pdfpcmovie@noprogressfalse%
+    \let\pdfpcmovie@start\@empty%
+    \let\pdfpcmovie@stop\@empty%
+    \pdfpcmovie@posterwd=\wd\pdfpcmovie@posterbox%
+    \pdfpcmovie@posterht=\ht\pdfpcmovie@posterbox%
+    \pdfpcmovie@posterdp=\dp\pdfpcmovie@posterbox%
+    %
+    \pdfpcmovie@remopts=0%
+    \pgfkeys{/pdfpc-movie/.cd, #1}%
+%    \end{macrocode}
+%
+% All hyperlink arguments appended to the file name are stored in the "\pdfpcmovie@params" variable.
+% For every specified option, the respective hyperlink code is appended. \\
+% If there are non-processed arguments remaining, an "&" separator is appended:
+%    \begin{macrocode}
+    \ifnum\pdfpcmovie@remopts>0\def\pdfpcmovie@params{?}%
+    \else\def\pdfpcmovie@params{}%
+    \fi%
+    %
+    \if@pdfpcmovie@autostart%
+        \edef\pdfpcmovie@params{\pdfpcmovie@params autostart}%
+        \advance\pdfpcmovie@remopts -1\relax%
+        \ifnum\pdfpcmovie@remopts>0%
+            \edef\pdfpcmovie@params{\pdfpcmovie@params\&}%
+        \fi%
+    \fi%
+    %
+    \if@pdfpcmovie@loop%
+        \edef\pdfpcmovie@params{\pdfpcmovie@params loop}%
+        \advance\pdfpcmovie@remopts -1\relax%
+        \ifnum\pdfpcmovie@remopts>0%
+            \edef\pdfpcmovie@params{\pdfpcmovie@params\&}%
+        \fi%
+    \fi%
+    %
+    \if@pdfpcmovie@noprogress%
+        \edef\pdfpcmovie@params{\pdfpcmovie@params noprogress}%
+        \advance\pdfpcmovie@remopts -1\relax%
+        \ifnum\pdfpcmovie@remopts>0%
+            \edef\pdfpcmovie@params{\pdfpcmovie@params\&}%
+        \fi%
+    \fi%
+    %
+    \ifx\pdfpcmovie@start\@empty\else%
+        \edef\pdfpcmovie@params{\pdfpcmovie@params start=\pdfpcmovie@start}%
+        \advance\pdfpcmovie@remopts -1\relax%
+        \ifnum\pdfpcmovie@remopts>0%
+            \edef\pdfpcmovie@params{\pdfpcmovie@params\&}%
+        \fi%
+    \fi%
+    %
+    \ifx\pdfpcmovie@stop\@empty\else%
+        \edef\pdfpcmovie@params{\pdfpcmovie@params stop=\pdfpcmovie@stop}%
+        \advance\pdfpcmovie@remopts -1\relax%
+        \ifnum\pdfpcmovie@remopts>0%
+            \edef\pdfpcmovie@params{\pdfpcmovie@params\&}%
+        \fi%
+    \fi%
+    %
+    %
+    %
+%    \end{macrocode}
+%
+% Set the size of the poster material box \dots
+%    \begin{macrocode}
+    \wd\pdfpcmovie@posterbox=\pdfpcmovie@posterwd%
+    \ht\pdfpcmovie@posterbox=\pdfpcmovie@posterht%
+    \dp\pdfpcmovie@posterbox=\pdfpcmovie@posterdp%
+%    \end{macrocode}
+%
+% \dots\ and -- last but not least -- create the hyperlink:
+%    \begin{macrocode}
+    \href{run:#3\pdfpcmovie@params}{\box\pdfpcmovie@posterbox}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+%
+% \subsubsection*{Famous last words}
+% Enough code for this package. "\endinput".
+%    \begin{macrocode}
+\endinput
+%    \end{macrocode}

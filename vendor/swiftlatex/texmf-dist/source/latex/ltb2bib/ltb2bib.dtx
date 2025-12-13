@@ -1,0 +1,359 @@
+% \iffalse meta-comment
+%
+% Copyright (C) 2017 by Laurent Bartholdi <laurent.bartholdi@gmail.com>
+% ---------------------------------------------------------------------------
+% This work may be distributed and/or modified under the
+% conditions of the LaTeX Project Public License, either version 1.3
+% of this license or (at your option) any later version.
+% The latest version of this license is in
+%   http://www.latex-project.org/lppl.txt
+% and version 1.3 or later is part of all distributions of LaTeX
+% version 2005/12/01 or later.
+%
+% This work has the LPPL maintenance status `maintained'.
+%
+% The Current Maintainer of this work is Laurent Bartholdi.
+%
+% This work consists of the files ltb2bib.dtx and ltb2bib.ins
+% and the derived filebase ltb2bib.sty.
+%
+% \fi
+%
+% \iffalse
+%<*driver>
+\ProvidesFile{ltb2bib.dtx}
+%</driver>
+%<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+%<package>\ProvidesPackage{ltb2bib}
+%<*package>
+    [2017/04/03 0.01 First release in the wild]
+%</package>
+%
+%<*driver>
+\documentclass{ltxdoc}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+\begin{document}
+  \DocInput{ltb2bib.dtx}
+  \PrintChanges
+  \PrintIndex
+\end{document}
+%</driver>
+% \fi
+%
+% \CheckSum{452}
+%
+% \CharacterTable
+%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%   Digits        \0\1\2\3\4\5\6\7\8\9
+%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%   Dollar        \$     Percent       \%     Ampersand     \&
+%   Acute accent  \'     Left paren    \(     Right paren   \)
+%   Asterisk      \*     Plus          \+     Comma         \,
+%   Minus         \-     Point         \.     Solidus       \/
+%   Colon         \:     Semicolon     \;     Less than     \<
+%   Equals        \=     Greater than  \>     Question mark \?
+%   Commercial at \@     Left bracket  \[     Backslash     \\
+%   Right bracket \]     Circumflex    \^     Underscore    \_
+%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%   Right brace   \}     Tilde         \~}
+%
+%
+% \changes{0.01}{2017/04/03}{Converted to DTX file}
+%
+% \DoNotIndex{\def,\newwrite,\newskip,\newenvironment,\gdef,\immediate,\let}
+%
+% \providecommand*{\url}{\texttt}
+% \GetFileInfo{ltb2bib.dtx}
+% \title{The \textsf{ltb2bib} package}
+% \author{Laurent Bartholdi \\ \url{laurent.bartholdi@gmail.com}}
+% \date{\fileversion~from \filedate}
+%
+% \maketitle
+%
+% \section{Introduction}
+%
+% The \textsf{amsrefs} package is a wonderful, pure-\LaTeX\
+% implementation of bibliographical databases. In a format close to
+% Bib\TeX's, one writes entries in database files (say
+% \verb+ltbsource.ltb+); \LaTeX\ extracts from these files the entries
+% required for the document (say \verb+myarticle.tex+), writes them to
+% myarticle.bbl and incorporates them in the document's bibliography
+% section. The file \verb+myarticle.bbl+ can be sent to the publisher
+% along with \verb+myarticle.tex+, or can be directly incorporated
+% into it.
+%
+% It happens, sometimes, that one needs the bibliographical entries in
+% Bib\TeX\ format:
+% \begin{itemize}
+% \item Some publishers (Taylor \& Francis, for example) refuse
+% to process \textsf{amsrefs} files, and require the authors to manually
+% retype them;
+% \item \textsf{amsrefs} cannot sort entries, so it may be useful to
+% convert a \textsf{amsrefs} database to Bib\TeX\ format to feed them to
+% bibliography management software;
+% \item \textsf{emacs}'s Ref\TeX\ mode, for example, requires the database
+% in Bib\TeX\ format.
+% \end{itemize}
+%
+% For these purposes, I have written this short \LaTeX\ package that
+% converts an \textsf{amsrefs} bibliography file to Bib\TeX.
+%
+% Note that the inverse operation, namely producing a \textsf{amsrefs}
+% bibliographical database out of a Bib\TeX\ one, is implemented by
+% the \verb+amsxport+ option of \textsf{amsrefs}.
+%
+% \section{Usage}
+%
+% The only command supplied by this package is \verb+\writebib+. It is
+% typically used in a driver-document \verb+doltb2bib.tex+ such as
+% the following:
+% \begin{verbatim}
+% \documentclass{article}
+% \usepackage{ltb2bib}
+% \begin{document}
+% \writebib{ltbsource}{bibdest}
+% \end{document}
+% \end{verbatim}
+% which, when invoked with `\verb+latex doltb2bib+', produces from
+% \verb+ltbsource.ltb+ the file \verb+bibdest.bib+.
+%
+% \DescribeMacro{\writebib}
+%
+% This command takes two arguments: an input and an output
+% filename. If the input filename is given without extension, then the
+% actual filename may have the extension \verb+.ltb+; and similarly
+% the output will be written to a file with the \verb+.bib+ extension
+% added.
+%
+% This command reads all \verb+\bib+ entries from the input file, and
+% writes corresponding Bib\TeX\ entries to the output file. It produces no
+% output.
+%
+% \StopEventually{}
+%
+% \section{Implementation}
+%
+% \iffalse
+%<*package>
+% \fi
+%
+%    \begin{macrocode}
+\ProvidesPackage{ltb2bib}[2017/04/03 v0.01]
+\@ifundefined{thebibliography}{\newenvironment{thebibliography}{}{}}{}
+\@ifundefined{footnotesize}{\let\footnotesize\relax}{}
+\RequirePackage{amsrefs}
+\RequirePackage{xpatch}
+\newwrite\@bibfile
+%    \end{macrocode}
+% make a copy of protected@iwrite, and patch it to add \verb+\immediate+
+%    \begin{macrocode}
+\let\protected@iwrite\protected@write
+\xpatchcmd{\protected@iwrite}{\write}{\immediate\write}{}{}
+\def\bib@write#1{\protected@iwrite\@bibfile{\let~\relax\def\ndash{--}}{#1}}
+\gdef\space{ }
+\gdef\spsp{\space\space}
+%    \end{macrocode}
+%
+% treat the multiple entries to be coalesced, with \verb+\name+ prepended to names
+% \begin{macro}{\@author}
+%    \begin{macrocode}
+\def\@author#1{\toks0={}\toks1={}%
+  \def\name##1{\toks0=\expandafter{\the\toks0\the\toks1{##1}}\toks1={\spsp and }}%
+  #1
+  \bib@write{\spsp author={\the\toks0},}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\@editor}
+%    \begin{macrocode}
+\def\@editor#1{\toks0={}\toks1={}%
+  \def\name##1{\toks0=\expandafter{\the\toks0\the\toks1{##1}}\toks1={\spsp and }}%
+  #1
+  \bib@write{\spsp editor={\the\toks0},}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\@translator}
+%    \begin{macrocode}
+\def\@translator#1{\toks0={}\toks1={}%
+  \def\name##1{\toks0=\expandafter{\the\toks0\the\toks1{##1}}\toks1={\spsp and }}%
+  #1
+  \bib@write{\spsp translator={\the\toks0},}%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% Keys which may appear multiply, but which we don't coalesce
+%    \begin{macrocode}
+\def\@contribution#1{\bib@write{\spsp contribution=\@charlb#1\@charrb,}}
+\def\@isbn#1{\def\fld@elt##1{\bib@write{\spsp isbn=\@charlb##1\@charrb,}}#1}
+\def\@issn#1{\def\fld@elt##1{\bib@write{\spsp issn=\@charlb##1\@charrb,}}#1}
+\def\@review#1{\def\MR##1{\let\MR\relax\bib@write{\spsp review={\MR{##1}},}}#1}
+\def\@partial#1{\bib@write{\spsp partial=\@charlb#1\@charrb,}}
+%    \end{macrocode}
+%
+% Keys which translate directly to simple keys
+%    \begin{macrocode}
+\def\@accessdate#1{\bib@write{\spsp accessdate=\@charlb#1\@charrb,}}
+\def\@address#1{\bib@write{\spsp address=\@charlb#1\@charrb,}}
+\def\@book#1{\bib@write{\spsp book=\@charlb#1\@charrb,}}
+\def\@booktitle#1{\bib@write{\spsp booktitle=\@charlb#1\@charrb,}}
+\def\@conference#1{\bib@write{\spsp conference=\@charlb#1\@charrb,}}
+\def\@copula#1{\bib@write{\spsp copula=\@charlb#1\@charrb,}}
+\def\@date#1{\bib@write{\spsp year=\@charlb#1\@charrb,}}
+\def\@doi#1{\bib@write{\spsp doi=\@charlb#1\@charrb,}}
+\def\@edition#1{\bib@write{\spsp edition=\@charlb#1\@charrb,}}
+\def\@eprint#1{\bib@write{\spsp eprint=\@charlb#1\@charrb,}}
+\def\@fulljournal#1{\bib@write{\spsp fulljournal=\@charlb#1\@charrb,}}
+\def\@hyphenation#1{\bib@write{\spsp hyphenation=\@charlb#1\@charrb,}}
+\def\@institution#1{\bib@write{\spsp institution=\@charlb#1\@charrb,}}
+\def\@journal#1{\bib@write{\spsp journal=\@charlb#1\@charrb,}}
+\def\@label#1{\bib@write{\spsp label=\@charlb#1\@charrb,}}
+\def\@language#1{\bib@write{\spsp language=\@charlb#1\@charrb,}}
+\def\@name#1{\bib@write{\spsp name=\@charlb#1\@charrb,}}
+\def\@note#1{\bib@write{\spsp note=\@charlb#1\@charrb,}}
+\def\@number#1{\bib@write{\spsp number=\@charlb#1\@charrb,}}
+\def\@organization#1{\bib@write{\spsp organization=\@charlb#1\@charrb,}}
+\def\@pages#1{\bib@write{\spsp pages=\@charlb#1\@charrb,}}
+\def\@part#1{\bib@write{\spsp part=\@charlb#1\@charrb,}}
+\def\@place#1{\bib@write{\spsp place=\@charlb#1\@charrb,}}
+\def\@publisher#1{\bib@write{\spsp publisher=\@charlb#1\@charrb,}}
+\def\@reprint#1{\bib@write{\spsp reprint=\@charlb#1\@charrb,}}
+\def\@school#1{\bib@write{\spsp school=\@charlb#1\@charrb,}}
+\def\@series#1{\bib@write{\spsp series=\@charlb#1\@charrb,}}
+\def\@setup#1{\bib@write{\spsp setup=\@charlb#1\@charrb,}}
+\def\@status#1{\bib@write{\spsp status=\@charlb#1\@charrb,}}
+\def\@subtitle#1{\bib@write{\spsp subtitle=\@charlb#1\@charrb,}}
+\def\@title#1{\bib@write{\spsp title=\@charlb#1\@charrb,}}
+\def\@translation#1{\bib@write{\spsp translation=\@charlb#1\@charrb,}}
+\def\@type#1{\bib@write{\spsp type=\@charlb#1\@charrb,}}
+\def\@url#1{\bib@write{\spsp url=\@charlb#1\@charrb,}}
+\def\@volume#1{\bib@write{\spsp volume=\@charlb#1\@charrb,}}
+\def\@xref#1{\bib@write{\spsp xref=\@charlb#1\@charrb,}}
+\def\@year#1{\bib@write{\spsp year=\@charlb#1\@charrb,}}
+%    \end{macrocode}
+%
+% We create a bib specification to output the data in Bib\TeX\ format,
+% rather than as a formatted bibliography.
+% \begin{macro}{\make@bibspec}
+%    \begin{macrocode}
+\def\make@bibspec#1#2{\BibSpec{#1}{%
+    +{}{\bib@write{@#2\@charlb\current@citekey,}}{transition}
+    +{}{\@author}        {author}
+    +{}{\@editor}        {editor}
+    +{}{\@translator}    {translator}
+    +{}{\@contribution}  {contribution}
+    +{}{\@isbn}          {isbn}
+    +{}{\@issn}          {issn}
+    +{}{\@review}        {review}
+    +{}{\@partial}       {partial}
+    +{}{\@accessdate}    {accessdate}
+    +{}{\@address}       {address}
+    +{}{\@book}          {book}
+    +{}{\@booktitle}     {booktitle}
+    +{}{\@conference}    {conference}
+    +{}{\@copula}        {copula}
+    +{}{\@date}          {date}
+    +{}{\@doi}           {doi}
+    +{}{\@edition}       {edition}
+    +{}{\@eprint}        {eprint}
+    +{}{\@fulljournal}   {fulljournal}
+    +{}{\@hyphenation}   {hyphenation}
+    +{}{\@institution}   {institution}
+    +{}{\@journal}       {journal}
+    +{}{\@label}         {label}
+    +{}{\@language}      {language}
+    +{}{\@name}          {name}
+    +{}{\@note}          {note}
+    +{}{\@number}        {number}
+    +{}{\@organization}  {organization}
+    +{}{\@pages}         {pages}
+    +{}{\@part}          {part}
+    +{}{\@place}         {place}
+    +{}{\@publisher}     {publisher}
+    +{}{\@reprint}       {reprint}
+    +{}{\@school}        {school}
+    +{}{\@series}        {series}
+    +{}{\@setup}         {setup}
+    +{}{\@status}        {status}
+    +{}{\@subtitle}      {subtitle}
+    +{}{\@title}         {title}
+    +{}{\@translation}   {translation}
+    +{}{\@type}          {type}
+    +{}{\@url}           {url}
+    +{}{\@volume}        {volume}
+    +{}{\@xref}          {xref}
+    +{}{\@year}          {year}
+  +{}{\bib@write{\@charrb^^J}}{transition}
+}}
+%    \end{macrocode}
+% \end{macro}
+%
+% amsrefs treats bib entries as items in an enumeration. We'll just make
+% sure nothing is produced in the output, and set the paragraph skips between
+% items to be 0.
+%    \begin{macrocode}
+\newskip\ltb@baselineskip
+\newskip\ltb@parskip
+%    \end{macrocode}
+%
+% The main command: just run \verb+bibselect+ on the input file, after
+% having set up the desired bibspec.
+% \begin{macro}{\writebib}
+%    \begin{macrocode}
+\newcommand\writebib[2]{%
+  \immediate\openout\@bibfile=#2.bib
+  \bib@write{\@percentchar\space Converted bibliography from #1[.ltb] to #2.bib}%
+  \typeout{Writing bibliography to #2.bib...}%
+  \make@bibspec{article}{Article}%
+  \make@bibspec{partial}{InCollection}%
+  \make@bibspec{contribution}{InCollection}%
+  \make@bibspec{book}{Book}%
+  \make@bibspec{collection.article}{InCollection}%
+  \make@bibspec{conference}{Conference}%
+  \make@bibspec{innerbook}{InBook}%
+  \make@bibspec{report}{TechReport}%
+  \make@bibspec{thesis}{PhdThesis}%
+  \make@bibspec{webpage}{Misc}%
+%    \end{macrocode}
+% Set paragraph separation to 0, so that all \verb+\item+s produced by
+% \textsf{amsrefs} appear superimposed in the output:
+%    \begin{macrocode}
+  \ltb@parskip=\parskip
+  \ltb@baselineskip=\baselineskip
+  \let\ltb@item=\item
+  \parskip=0pt
+  \baselineskip=0pt
+  \let\item=\relax
+%    \end{macrocode}
+% \verb+\fld@elt+ is defined to be ``?'' by
+% \textsf{amsrefs}. Sometimes this character gets shipped out; we
+% simply remove it by redefining \verb+\fld@elt+.
+%    \begin{macrocode}
+  \let\fld@elt=\relax
+  \bibselect*{#1}%
+  \bib@write{\@percentchar\space End of #2.bib}%
+  \immediate\closeout\@bibfile
+  \parskip=\ltb@parskip
+  \baselineskip=\ltb@baselineskip
+  \let\item=\ltb@item
+}
+%    \end{macrocode}
+% \end{macro}
+%
+
+%
+% \iffalse
+%</package>
+% \fi
+%
+% \Finale
+\endinput

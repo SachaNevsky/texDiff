@@ -1,0 +1,319 @@
+%
+% cfstdedt.tex
+%
+%% Cyrillic font container with T2 encoding beta-support
+%
+% This file is future part of lxfonts package
+% Version 3.5 // Patchlevel=0
+% (c) O.Lapko
+%
+% This package is freeware product under conditions similar to
+% those of D. E. Knuth specified for the Computer Modern family of fonts.
+% In particular, only the authors are entitled to modify this file
+% (and all this package as well) and to save it under the same name.
+%
+% Content:
+%
+% TeX file for generation of head files for necessary fonts
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\lhvercheck(3,5)
+
+\ifMakeFileHeads\let\next\relax\else
+ \ifdoMFJob\let\next\relax\else
+  \ifdoBatch\let\next\relax\else
+   \let\next\endinput
+  \fi
+ \fi
+\fi\next
+
+\ifx\FontsToBeGenerated\undefined
+ \long\def\FontsToBeGenerated{\input\fontfile}\fi
+\ifjobviiibit%\relax
+\else
+ \ifjobvirtual%\relax
+ \else\doMFJobfalse
+\fi\fi
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% please  n o  changes from here, thanks !
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%
+% (Avoiding inspecting the macros (sigh!)
+%
+%   Norbert Schwarz, Dezember 1990
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\magnification\magstep1
+\overfullrule=0pt
+%\tracingonline1
+%\tracingcommands=1
+%\tracingmacros=1
+% some token handling
+\let\EA\expandafter
+\def\JoinToks#1=(#2+#3){#1=\EA\EA\EA{\EA\the\EA#2\the#3}}
+\def\UpToHere{\relax}
+\def\IgnoreRest#1#2\UpToHere{#1}
+\def\IgnoreFirst#1#2\relax\UpToHere{#2}
+\def\First#1{\EA\IgnoreRest\the#1{}\UpToHere}
+\def\FirstOf#1{\EA\EA\EA{\EA\IgnoreRest\the#1{}\UpToHere}}
+\def\MoveFirst(#1to#2){#2\FirstOf#1}
+\def\Rest#1{\EA\IgnoreFirst\the#1\relax\UpToHere}
+\def\RestOf#1{\EA\EA\EA{\EA\IgnoreFirst\the#1\relax\UpToHere}}
+\def\MoveRest(#1to#2){#2=\RestOf{#1}}
+% borrowed from p. 132 in N.Schwarz, Introduction to TeX (some advertising ..)
+
+\ifdoMFJob
+ \ifMFJobhead
+  \immediate\openout\mfjoboutput=\MFJobFileName
+  \MakeHeadFileDefinition\mfjoboutput{\NMFJobFileName}
+ \fi
+\fi
+
+\ifdoBatch
+ \def\BatchLine#1{\immediate\write\batchoutput{#1}}
+ \immediate\openout\batchoutput=\BatchFileName
+ % \MakeHeadFileDefinition\batchoutput{\NBatchFileName}
+\fi
+
+\def\empty{}
+\def\minus{-}
+\def\blank{ }
+
+\def\storetoks#1{\toks0={#1}\JoinToks\Table=(\Table+\toks0)}
+\Table={}
+%
+\def\singlefont#1 {%
+        \def\fontsize{#1}%\message{<#1>}%
+        \ifx\fontsize\minus\let\next\relax
+        \else
+           \ifx\fontsize\empty\let\next\singlefont
+           \else
+              \ifx\fontsize\blank\let\next\singlefont
+              \else
+                   \let\next\dofont
+        \fi\fi\fi
+        \next}
+
+\def\doentry{\MoveFirst(\Workbase to\Htok)%
+             \Workbase=\RestOf\Workbase
+             \edef\doou{\the\Htok}%
+             \ifx\doou\fontsize
+                 \def\dooU{\storetoks{\hfill $\bullet$\hfill&}}%
+                 \let\weiter\dooU
+             \else
+                 \def\weiter{\storetoks{~\hfill&}\doentry}%
+             \fi\weiter}
+
+\def\singletablevalue#1 {%
+        \def\fontsize{#1}%
+        \ifx\fontsize\blank\let\next\singletablevalue
+        \else
+                \ifx\minus\fontsize\let\next\relax
+                \else\let\next\dotablevalue\fi
+        \fi
+        \next}
+
+\def\dotablevalue{\edef\dooo{\Htok={{\fontsize}}}%
+        \dooo
+        \EA\storetoks\EA{\fontsize&}%
+        \JoinToks\Basis=(\Basis+\Htok)\singletablevalue}
+
+\def\tablevalues(#1){\storetoks{\bf Fonts &}\singletablevalue#1 -
+        \storetoks{\cr}}
+
+\def\makefont #1 (#2)(#3){\JoinToks\Workbase=(\Basis+\Basis)%
+        \myc=0\immediate\write16{}%
+        \let\tempa\fonttwoletters\def\fonttwoletters{}
+        \let\tempb\ifont\def\ifont{}
+        \edef\fontnamebody{#1}%
+        \let\fonttwoletters\tempa\let\ifont\tempb
+        \edef\fontspecific{#3}%
+        \def\dostoretoks{\storetoks{#1 &}}\dostoretoks
+         \singlefont #2 - \storetoks{\cr}}
+
+\def~{\ifdim\dimen0>0pt
+        \message{\number\dimen0}%
+        \global\advance\dimen0 by -5.25pt
+        \message{ }\fi}
+
+\def\extraspaces{\setbox0=\hbox{\tt\fontname}%
+\dimen0=78.75pt
+\advance\dimen0 by -\wd0\relax
+        \advance\myc by 1
+        \ifnum \myc=5
+        \immediate\write16{}%
+        \myc=0 \fi}
+
+\def\dofonttest#1[#2]#3\nothing{%
+\def\fontsize{#2}%
+\ifx\fontsize\empty
+    \def\fontsizename{#1}%
+    \def\fontsize{#1}%
+\else
+    \def\fontsize{#1}%
+    \def\fontsizename{#2}%
+\fi}
+\def\dofont{\doentry\expandafter\dofonttest\fontsize[]\nothing\Dofont}
+
+
+{\catcode`\%=11 \catcode`\|=14
+\gdef\Dofontbegin{|
+ \ifx\modedef\empty
+  \ifx\defamily\empty
+  \else
+   \immediate\openout \beginfontoutput = \beginfontname|
+   \MakeHeadFileDefinition\beginfontoutput{\Nbeginfontname}
+   \immediate\write\beginfontoutput{\defamily}
+   \immediate\closeout \beginfontoutput|
+  \fi
+ \else
+  \ifx\defamily\empty
+  \else
+   \immediate\openout \beginfontoutput = \beginfontname|
+   \MakeHeadFileDefinition\beginfontoutput{\Nbeginfontname}
+   \immediate\write\beginfontoutput{\modedef^^J\defamily}
+   \immediate\closeout \beginfontoutput|
+  \fi
+ \fi
+ \ifx\virtualtwoletters\empty
+ \else
+  \immediate\openout \beginfontoutput = \virtualfontname|
+  \MakeHeadFileDefinition\beginfontoutput{\Nvirtualfontname}
+  \immediate\write\beginfontoutput{|
+       param_base:="\fonttwoletters"
+       & (substring(fonteq,length(jobname)) of jobname);^^J|
+       vfcoding:=true;}
+  \immediate\closeout \beginfontoutput|
+ \fi
+}
+\gdef\Dofont{|
+ \edef\dowrite{|
+  \ifMakeFileHeads
+   \immediate\openout \fontoutput = \fontname|
+   \MakeHeadFileDefinition\fontoutput{\Nfontname}
+   \immediate\write\fontoutput{\ifx\fontspecific\empty\else
+     \fontspecific^^J\fi
+     input fikparm;}|
+   \immediate\closeout \fontoutput|
+  \fi
+  \ifdoMFJob
+   \immediate\write\mfjoboutput  {|
+     \|\|\ifMakeFileHeads\ifx\ifont\indefined\else\ifont\fi
+           \fonttwoletters\fi\fontnamebody\fontsizename}
+  \fi
+  \ifdoBatch
+   \BatchOutput                  {\Nfontname}
+  \fi
+  \message{\ifx\ifont\indefined\else\ifont\fi
+           \fonttwoletters\fontnamebody\fontsizename\blank}|
+}\dowrite\singlefont}|
+\ifdoMFJob
+ \catcode`\(=1 \catcode`\)=2 \catcode`\{=12 \catcode`\}=12
+ \gdef\MFJobHead#1#2#3#4(
+  \immediate\write\mfjoboutput    (|
+   \ifMFJobhead
+    \ifjobviiibit
+     \ifx\jobmodedef\defaultmode  |\relax
+     \else                        def m=[#3]; % the name of output mode^^J|
+     \fi
+                                   def s=[#2]; % the mags of font generation^^J|
+                                   \|\|\|\|\|% you can change it to line as: "def s=[s0];"^^J|
+                                   input [modes];^^J|
+    \fi
+   \fi
+                                   {^^J|
+                                   \|base=#1;^^J|
+   \ifTFMonly                      \|mags=s; mode=laserjet[300];^^J|
+   \else                           \|mags=s; m;^^J|
+   \fi
+   \ifMakeFileHeads                \|fonts=^^J|
+   \else                           \|name=[\ifx\ifont\empty\fonttwoletters\fi @f];^^J|
+                                   \|size=1; % sorry, that's trick^^J|
+    \ifx#4\empty                   \|command=[|
+     \ifTFMonly                      boolean TFMonly; TFMonly=true;
+     \fi
+                                     input fikparm;];^^J|
+    \else                           \|command=[#4];^^J|
+    \fi
+                                   \|fonts =^^J|
+   \fi
+                                   \|%--------------)
+ )
+|
+ \gdef\MFJobFoot(
+  \immediate\write\mfjoboutput    (\|%--------------^^J|
+                                   \|;^^J
+                                   \ifTFMonly
+                                     \|output=tfm[\string$target>tfm\string\@f];^^J
+                                   \fi
+                                   })
+ ) \catcode`\{=1 \catcode`\}=2
+\fi
+}
+%
+\immediate\write16{generated mf-files:}
+\immediate\write16{-------------------}
+\nopagenumbers
+
+\def\minimumbox#1{\setbox0=\hbox{#1}%
+        \ifdim\wd0>15pt \box0\else \hbox to 15pt{\hfil
+        \box0\hfil}\fi}
+\storetoks{\hrule
+\medskip
+\centerline{Overview LH Cyrillic family font set}
+\medskip
+\hrule
+\bigskip
+\noindent The following table describes the generated {$\ast$.mf} files which
+are needed for the setup of the current font set.
+\bigskip
+\bigskip
+$$\vbox\bgroup\nointerlineskip\halign\bgroup#\hfil\quad&&\strut
+        \quad\minimumbox{#}\cr
+\noalign{\medskip}}
+
+
+\Dofontbegin
+\ifdoMFJob
+  \ifjobviiibit
+   \MFJobHead{\fmtbase}{\mfjobscaling}{\jobmodedef}{\mfcommand}
+  \fi
+\fi
+%
+\begingroup
+ \ifjobviiibit\else\doMFJobfalse\fi
+ \FontsToBeGenerated
+\endgroup
+%
+\ifdoMFJob
+ \ifjobviiibit
+  \MFJobFoot
+ \fi
+ \ifjobvirtual
+ \begingroup
+  \def\temptwo{lh}
+  \ifx\fonttwoletters\temptwo\def\virtualtwoletters{ll}\fi
+  \ifx\virtualtwoletters\empty
+  \else
+   \ifjobviiibit\jobviiibitfalse\else\jobviiibittrue\fi
+   \let\fonttwoletters\virtualtwoletters
+   \MFJobHead{\fmtbase}{\mfjobscaling}{\jobmodedef}{\mfcommand}
+   \FontsToBeGenerated
+   \MFJobFoot
+  \fi
+ \endgroup
+ \fi
+\fi
+\storetoks{\egroup\egroup$$}
+
+\ifMakeDvi
+ \the\Table
+\fi
+
+\endinput

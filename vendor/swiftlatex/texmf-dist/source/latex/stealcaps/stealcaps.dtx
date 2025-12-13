@@ -1,0 +1,183 @@
+% \iffalse meta-comment
+%
+% Copyright (C) 2018 by Ruben Giannotti 
+% <ruben dot giannotti at gmx dot net>
+% -------------------------------------------------------
+% 
+% This work may be distributed and/or modified under the
+% conditions of the LaTeX Project Public License, either
+% version 1.3c of this license or (at your option) any
+% later version. The latest version of this license is in
+%   http://www.latex-project.org/lppl.txt
+% and version 1.3 or later is part of all distributions
+% of LaTeX version 2005/12/01 or later.
+%
+% This work has the LPPL maintenance status `maintained'.
+% 
+% The Current Maintainer of this work is Ruben Giannotti.
+%
+% This work consists of the files
+%   stealcaps.dtx 
+%   stealcaps.ins
+% and the derived file stealcaps.sty.
+%
+% \fi
+%
+% \iffalse
+%<*driver>
+\ProvidesFile{stealcaps.dtx}
+%</driver>
+%<package>\NeedsTeXFormat{LaTeX2e}
+%<package>\ProvidesPackage{stealcaps}
+%<*package>
+  [2018/01/21 v1.0 Steal small capitals (RG)]
+%</package>
+%
+%<*driver>
+\documentclass{ltxdoc}
+\usepackage{amssymb,parskip}
+\providecommand*\pkg{\textsf}
+\providecommand*\option{\textit}
+\providecommand*\url{\texttt}
+\providecommand*\email{\texttt}
+\providecommand*\important{$\blacktriangleright$\space Important note:\space}
+\EnableCrossrefs
+\CodelineIndex
+\begin{document}
+  \DocInput{stealcaps.dtx}
+\end{document}
+%</driver>
+% \fi
+%
+% \CheckSum{43}
+%
+% \CharacterTable
+%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%   Digits        \0\1\2\3\4\5\6\7\8\9
+%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%   Dollar        \$     Percent       \%     Ampersand     \&
+%   Acute accent  \'     Left paren    \(     Right paren   \)
+%   Asterisk      \*     Plus          \+     Comma         \,
+%   Minus         \-     Point         \.     Solidus       \/
+%   Colon         \:     Semicolon     \;     Less than     \<
+%   Equals        \=     Greater than  \>     Question mark \?
+%   Commercial at \@     Left bracket  \[     Backslash     \\
+%   Right bracket \]     Circumflex    \^     Underscore    \_
+%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%   Right brace   \}     Tilde         \~}
+%
+%
+% \changes{v1.0}{2018/01/21}{Initial version}
+%
+% \GetFileInfo{stealcaps.dtx}
+%
+% \DoNotIndex{\newcommand,\newenvironment,\!,\@empty,\@gobble,\@gobbletwo}
+% \DoNotIndex{\@ifpackageloaded,\@ifpackagewith,\@ifundefined,\@namedef}
+% \DoNotIndex{\@nil,\@onlypreamble,\@tempa,\@tempb,\@tempswafalse,\def}
+% \DoNotIndex{\@tempswatrue,\^,\-,\active,\begingroup,\catcode,\@car,\@cdr}
+% \DoNotIndex{\edef,\else,\endgroup,\endinput,\expandafter,\fi,\if}
+% \DoNotIndex{\if@tempswa,\ifcase,\ifnum,\ifx,\lccode,\let,\lowercase}
+% \DoNotIndex{\MessageBreak,\next,\number,\numexpr,\or,\PackageError}
+% \DoNotIndex{\PackageWarning,\PackageWarningNoLine,\strip@prefix,\@@end}
+% \DoNotIndex{\relax,\space,\string,\DeclareOption,\ProcessOptions}
+% \DoNotIndex{\meaning,\ifdefined,\csname,\chardef,\endcsname,\protect}
+% \DoNotIndex{\input,\RequirePackage,\global,\ifcsname,\makeatother}
+% \DoNotIndex{\@makeother,\the,\toks@}
+%
+% \title{The \pkg{stealcaps} package\thanks{This document
+%   corresponds to \pkg{stealcaps}~\fileversion, dated \filedate.}}
+% \author{Ruben Giannotti\thanks{\email{ruben dot giannotti at gmx dot net}}}
+%
+% \maketitle
+%
+% This little package is mainly meant to be used
+% when there is a (TrueType or OpenType) font
+% that does not provide real small capitals.
+% Some tend to use uppercased letters
+% as a workaround -- it is a bad workaround!
+% In fact, I consider it better practice
+% to borrow, or steal the small capitals from another font.
+% And this is exactly what the package does.
+% This might also be useful in the rare case
+% that someone does not like the present
+% small capitals, and wants to change them,
+% or likes those from another font better.
+%
+% However, to achieve the borrowing one does only need to load the package
+% and specify the name of the target font via the \option{from} option:
+%
+% |\usepackage|[\option{from}=\(\langle\)\textit{font name}\(\rangle\)]\{stealcaps\}
+%
+% It works with both pdf\LaTeX and its successors Xe\LaTeX{} and Lua\LaTeX.
+% In the first case you have to make sure the font name is NFSS compliant.
+% Otherwise, it has to be \pkg{fontspec} compliant.
+%
+% \StopEventually{}
+%
+% The implementation is rather simple and straightforward.
+%
+% As usual, we start by loading what is required:
+%
+%    \begin{macrocode}
+\RequirePackage{pgfopts}
+\RequirePackage{iftex}
+%    \end{macrocode}
+%
+% We have to load \pkg{fontspec} in case Xe\LaTeX or Lua\LaTeX,
+% hence not pdf\LaTeX is in use, to make sure the |\fontspec| command,
+% used by this package, is guarantied to be defined.
+%
+%    \begin{macrocode}
+\ifPDFTeX\else
+  \RequirePackage{fontspec}
+\fi
+%    \end{macrocode}
+%
+% Then we set up the only package option
+% and commence its processing.
+%
+%    \begin{macrocode}
+\pgfkeys{
+  /stc/.cd,
+  from/.store in=\font@wildcard@stc
+}
+\ProcessPgfOptions{/stc}
+%    \end{macrocode}
+%
+% To distinguish between the operating engines
+% there are two macros to select the replacement font
+% (one for \pkg{fontspec} powered ones
+% and one for good old pdf\LaTeX),
+% which then are |\let| to |\font@stc|
+% according to the engine in use.
+%
+%    \begin{macrocode}
+\def\font@xe@or@lua@stc{\fontspec}
+\def\font@pdf@stc{\fontfamily}
+\def\selectfont@or@relax@stc{\relax}
+\ifPDFTeX
+  \let\font@stc\font@pdf@stc
+  \let\selectfont@or@relax@stc\selectfont
+\else
+  \let\font@stc\font@xe@or@lua@stc
+\fi
+%    \end{macrocode}
+%
+% At last, we load the replacement font
+% employing |\font@stc| inside a group
+% and substitute the small captials fonts.
+%
+%    \begin{macrocode}
+\begingroup
+  \font@stc\font@wildcard@stc\selectfont@or@relax@stc
+  \DeclareFontShape{\f@encoding}{\rmdefault}{m}{sc}{%
+    <-> ssub * \f@family/m/sc
+  }{}
+  \DeclareFontShape{\f@encoding}{\rmdefault}{bx}{sc}{%
+    <-> ssub * \f@family/bx/sc
+  }{}
+\endgroup
+%    \end{macrocode}
+%\Finale
+\endinput

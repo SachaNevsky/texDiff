@@ -1,0 +1,1767 @@
+% \iffalse meta-comment
+%
+% elzcards.dtx
+% Copyright 2019 Emilio Augusto Lazo Zaia <emiliolazozaia@gmail.com>
+%
+% This work may be distributed and/or modified under the
+% conditions of the LaTeX Project Public License, either
+% version 1.3c of this license or (at your option) any later
+% version. This version of this license is in
+%   http://www.latex-project.org/lppl/lppl-1-3c.{html|txt|tex|pdf}
+% and the latest version of this license is in
+%   http://www.latex-project.org/lppl.txt
+% and version 1.3c or later is part of all distributions of
+% LaTeX version 2008/05/04 or later.
+%
+% This work has the LPPL maintenance status `maintained'.
+%
+% The Current Maintainer of this work is Emilio Augusto Lazo Zaia.
+%
+% This work consists of the files README and elzcards.dtx with
+% its derived files elzcards.ins, elzcards.sty and
+% elzcards-examples.tex.
+%
+%<*internalbatchfile>
+\def\nameofplainTeX{plain}
+\ifx\fmtname\nameofplainTeX
+\else
+  \expandafter\begingroup
+\fi
+%</internalbatchfile>
+%<*batchfile>
+\input docstrip.tex
+\preamble
+
+Copyright 2019 Emilio Augusto Lazo Zaia <emiliolazozaia@gmail.com>
+
+This work may be distributed and/or modified under the
+conditions of the LaTeX Project Public License, either
+version 1.3c of this license or (at your option) any later
+version. This version of this license is in
+ http://www.latex-project.org/lppl/lppl-1-3c.{html|txt|tex|pdf}
+and the latest version of this license is in
+ http://www.latex-project.org/lppl.txt
+and version 1.3c or later is part of all distributions of
+LaTeX version 2008/05/04 or later.
+
+This work has the LPPL maintenance status `maintained'.
+
+The Current Maintainer of this work is Emilio Augusto Lazo Zaia.
+
+This work consists of the files README and elzcards.dtx with
+its derived files elzcards.ins, elzcards.sty and
+elzcards-examples.tex.
+
+\endpreamble
+\keepsilent
+\askforoverwritefalse
+\obeyspaces
+\Msg{************************************************************}
+\Msg{************************* \jobname *************************}
+\Msg{************************************************************}
+\generate{\file{\jobname.sty}{\from{\jobname.dtx}{package}}}
+\Msg{\jobname.sty written.}
+\Msg{}
+\immediate\write18{makeindex -s gind.ist -o \jobname.ind \jobname.idx}
+\immediate\write18{makeindex -s gglo.ist -o \jobname.gls \jobname.glo}
+\Msg{}
+\Msg{Change history and index updated.}
+\postamble
+\endpostamble
+%</batchfile>
+%<*internalbatchfile>
+\generate{\file{\jobname.ins}{\from{\jobname.dtx}{batchfile}}}
+\Msg{\jobname.ins written.}
+%</internalbatchfile>
+%<*batchfile>
+\generate{\file{\jobname-examples.tex}{\from{\jobname.dtx}{ejemplo}}}
+\Msg{\jobname-examples.tex written.}
+\Msg{************************************************************}
+\Msg{To produce the documentation, compile \jobname.dtx file with}
+\Msg{ pdflatex \jobname.dtx}
+\Msg{If write18 is not enabled, type}
+\Msg{ makeindex -s gind.ist -o \jobname.ind \jobname.idx}
+\Msg{ makeindex -s gglo.ist -o \jobname.gls \jobname.glo}
+\Msg{to update index and changelog respectively.}
+\Msg{In either case, compile again.}
+\Msg{************************************************************}
+\Msg{}
+%</batchfile>
+%<batchfile>\endbatchfile
+%<*internalbatchfile>
+\ifx\fmtname\nameofplainTeX
+  \expandafter\endbatchfile
+\else
+  \expandafter\endgroup
+\fi
+%</internalbatchfile>
+%
+%<*driver>
+\documentclass{ltxdoc}
+\usepackage[letterpaper,vmargin={2.5cm,2cm},hmargin={3cm,2cm}]{geometry}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[spanish,english]{babel}
+\usepackage{ifluatex,ifxetex,paralist,calc,array,xpatch,paracol,xparse,pdflscape}
+\usepackage{elzcards}
+
+% Necesario ejecutar \newif de esta forma:
+\csname newif\expandafter\endcsname\csname ifmotorunicode\endcsname
+
+\ifxetex
+ \motorunicodetrue
+\else
+ \ifluatex \motorunicodetrue \fi
+\fi
+
+\ifmotorunicode
+ \usepackage{fontspec}
+ \setmainfont[Ligatures=TeX,Mapping=TeX]{Linux Libertine O}
+\else
+ \usepackage[T1]{fontenc}
+ \usepackage[utf8]{inputenc}
+\fi
+
+\overfullrule2cm
+\marginparthreshold{0}
+\NewDocumentCommand{\eng}{s +m}{\IfBooleanT{#1}{\iniciotrad}\selectlanguage{english}#2\switchcolumn[1]}
+\NewDocumentCommand{\esp}{s +m}{\selectlanguage{spanish}#2\switchcolumn[0]*\IfBooleanT{#1}{\fintrad}}
+\newcommand{\iniciotrad}{\begin{paracol}{2}}
+\newcommand{\fintrad}{\end{paracol}}
+
+\NewDocumentCommand{\Default}{s m}{{\noindent \slshape \color{Red}\IfBooleanTF{#1}{Predeterminado: }{Default: }#2}}
+\NewDocumentCommand{\Keyval}{s m}{{\noindent \slshape \color{Green}\IfBooleanTF{#1}{Opción keyval: }{Keyval option: }#2}}
+
+\footnotelayout{m}
+\makeatletter
+% \newbox\mybox
+% \def\pcol@makenormalcol{%
+%   \ifvoid\footins 
+%   \else
+% \global\setbox\mybox\box\footins
+%    \fi
+% \setbox\@outputbox\box\@holdpg
+%   \let\@elt\relax
+%   \xdef\@freelist{\@freelist\@midlist}%
+%   \global\let\@midlist\@empty
+%   \@combinefloats}
+
+ % Redefinimos el comando del encabezado del índice:
+ \def\index@prologue{%
+  \section*{\glosname}%
+  \markboth{\glosname}{\glosname}}%
+
+ % Adaptamos un poco la lista de cambios:
+ \def\changes@#1#2#3{%
+  \protected@edef\@tempa{%
+   \noexpand\glossary{%
+    {\bfseries #1 --- #2}%
+    \ifx\saved@macroname\@empty
+     \relax\actualchar
+    \else
+     \saved@indexname
+     \actualchar
+     \string\verb\quotechar*%
+     \verbatimchar\saved@macroname
+     \verbatimchar
+    \fi
+    \levelchar #3}}%
+  \@tempa\endgroup\@esphack}
+
+ \def\@wrglossary#1{%
+  \protected@write\@glossaryfile{}%
+  {\string\glossaryentry{#1}{1}}%
+  \endgroup\@esphack}%
+
+ \patchcmd{\glossary@prologue}{Change History}{\changesname}{}{}
+ \patchcmd{\changes@}{:}{}{}{}
+\makeatother
+
+\def\changesname{Change History / Lista de cambios en las versiones}
+\def\glosname{Index / Índice}
+
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+
+\setlength{\parskip}{5pt}
+
+\begin{document}
+ \renewcommand{\contentsname}{Contents / Tabla de contenido}
+ \DocInput{\jobname.dtx}
+\end{document}
+%</driver>
+% \fi
+%
+% \CheckSum{1574}
+%
+% \CharacterTable
+%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%   Digits        \0\1\2\3\4\5\6\7\8\9
+%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%   Dollar        \$     Percent       \%     Ampersand     \&
+%   Acute accent  \'     Left paren    \(     Right paren   \)
+%   Asterisk      \*     Plus          \+     Comma         \,
+%   Minus         \-     Point         \.     Solidus       \/
+%   Colon         \:     Semicolon     \;     Less than     \<
+%   Equals        \=     Greater than  \>     Question mark \?
+%   Commercial at \@     Left bracket  \[     Backslash     \\
+%   Right bracket \]     Circumflex    \^     Underscore    \_
+%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%   Right brace   \}     Tilde         \~}
+%
+% \changes{v1.00}{2015/03/05}{00. First release as a class. / \newline Primera versión como una clase.}
+% \changes{v1.20}{2015/04/26}{01. Changes in \texttt{.dtx} header and spaces on embedded \texttt{.ins} file. Now it should compile with pdf\TeX{} to produce only package files. / \newline Cambios en el encabezado \texttt{.dtx} y espacios en el \texttt{.ins} embebido. Ya debe compilar con pdf\TeX{} para producir solamente los archivos del paquete.}
+% \changes{v1.20}{2015/04/26}{02. It isn't a class anymore. Now it is a package./ \newline Ya no es más una clase. Ahora es un paquete.}
+% \changes{v1.20}{2015/04/26}{03. Supports adjustable gaps between cards. / \newline Soporta espaciado ajustable entre las tarjetas.}
+% \changes{v1.20}{2015/04/26}{04. Added commands to control default values of optional arguments of \cs{MakeXY} commands. / \newline Agregados comandos para controlar los valores predeterminados de los argumentos opcionales de los comandos \cs{MakeXY}.}
+% \changes{v1.20}{2015/04/26}{05. \cs{unitlength} is handled transparently. / \newline \cs{unitlength} es manejado transparentemente.}
+% \changes{v1.20}{2015/04/26}{06. Added {\ttfamily keyval} package to allow parameters on \cs{MakeXY} invocations. / \newline Agregado el paquete {\ttfamily keyval} para permitir parámetros en la llamada a \cs{MakeXY}.}
+% \changes{v1.20}{2015/04/26}{07. Added \cs{BusinessCard} command instead of defining the card's design with \cs{MakeBC}. / \newline Agregado el comando \cs{BusinessCard} en lugar de definir el diseño de la tarjeta con \cs{MakeBC}.}
+% \changes{v1.20}{2015/04/26}{08. Added optional stars on \cs{MakeXY} commands to allow not clearing the cards from memory to be possible processing the same set of cards again. / \newline Agregados los opcionales asteriscos en los comandos \cs{MakeXY} para permitir no borrar las tarjetas de la memoria para que sea posible procesar el mismo conjunto de tarjetas de nuevo.}
+% \changes{v1.20}{2015/04/26}{09. Added informational output to \texttt{.log} about what is being processed. / \newline Agregada la salida informativa al \texttt{.log} sobre qué está siendo procesado.}
+% \changes{v1.20}{2015/04/26}{10. Added macros to change default crop behavior. / \newline Agregadas macros para cambiar el comportamiento predeterminado para el cortado del papel.}
+% \changes{v1.23}{2017/07/10}{11. Added an option to not printing cutting marks. / \newline Agregada una opción para no imprimir marcas de corte.}
+% \changes{v1.23}{2017/07/10}{12. Removed \cs{BCgap}, \cs{ICgap} and \cs{FCgap} in favor of \cs{CardGap} to handle all default gaps. / \newline Quitada \cs{BCgap}, \cs{ICgap} y \cs{FCgap} en favor de \cs{CardGap} para manejar todos los espaciados predeterminados.}
+% \changes{v1.23}{2017/07/10}{13. Added support for colors on cropping marks. / \newline Agregado el soporte para colores en las marcas de corte.}
+% \changes{v1.23}{2017/07/10}{14. Added support for printing only exterior segments as cropping marks. / \newline Agregado el soporte para para imprimir sólo segmentos exteriores como marcas de corte.}
+% \changes{v1.23}{2017/07/10}{15. Renamed macro \cs{CrossSegment} to \cs{SegmentLength}. / \newline Renombrada la macro \cs{CrossSegment} a \cs{SegmentLength}.}
+% \changes{v1.60}{2019/08/16}{16. Now pages are always centered horizontally. / \newline Ahora las páginas están siempre centradas horizontalmente.}
+% \changes{v1.60}{2019/08/16}{17. Added {\ttfamily rows} and {\ttfamily columns} as {\ttfamily keyval} options to force the number of cards per page. / \newline Agregadas {\ttfamily rows} y {\ttfamily columns} como opciones {\ttfamily keyval} para forzar el número de tarjetas por página.}
+% \changes{v1.60}{2019/08/16}{18. Added options to automatically separate cards: \cs{AutoGapInner}, \cs{AutoGapTotal}, \cs{NoAutoGap} to set default gap behavior, and {\ttfamily autogap inner, autogap total, no autogap} as {\ttfamily keyval} options. / \newline Agregadas opciones para separaciones automáticas: \cs{AutoGapInner}, \cs{AutoGapTotal}, \cs{NoAutoGap} para fijar el comportamiento predeterminado del espaciado, y {\ttfamily autogap inner, autogap total, no autogap} como opciones {\ttfamily keyval}.}
+% \changes{v1.60}{2019/08/16}{19. Changed the order index/flash cards are written. Now starts on upper left corner instead of on bottom left corner. / \newline Cambiado el orden como las fichas/flash son escritas. Ahora empieza en la esquina superior izquierda en lugar de en la esquina inferior izquierda.}
+% \changes{v1.60}{2019/08/16}{20. Bilingual documentation. / \newline Documentación bilingüe.}
+% \changes{v1.60}{2019/08/16}{21. Added {\ttfamily order} and {\ttfamily transverse} {\ttfamily keyval} options. Also \cs{Transverse} and \cs{NoTransverse} macros for index/flash cards to change cards' disposition on the pages. {\slshape Thanks to Howard Bussey for his feature suggestion about transverse ordering, giving place to add also the arbitrary ordering option!!} / \newline Agregadas {\ttfamily order} y {\ttfamily transverse} como opciones {\ttfamily keyval}. También las macros \cs{Transverse} y \cs{NoTransverse} para las fichas/flash para cambiar la disposición de las tarjetas en las páginas. {\slshape Gracias a Howard Bussey por su sugerencia de la función del orden transverso, dando lugar a agregar también una opción para el ordenamiento arbitrario!!}}
+%
+% \GetFileInfo{\jobname.sty}
+%
+% \DoNotIndex{
+% \\,
+% \addtocounter,
+% \advance,
+% \arabic,
+% \AtBeginDocument,
+% \@auxout,
+% \begin,
+% \c@elzc@ElementosOrden,
+% \circle,
+% \cleardoublepage,
+% \clearpage,
+% \color,
+% \cs,
+% \csname,
+% \def,
+% \define@key,
+% \documentclass,
+% \edef,
+% \else,
+% \elzc@SeparaX,
+% \elzc@SeparaY,
+% \elzc@TarjXdim,
+% \elzc@TarjYdim,
+% \elzc@TempLen,
+% \elzc@TempUnitLength,
+% \elzc@ColorMarcas,
+% \elzc@DefArista,
+% \elzc@DefAutoSep,
+% \elzc@DefColorMarcas,
+% \elzc@DefFichaXdim,
+% \elzc@DefFichaYdim,
+% \elzc@DefLinea,
+% \elzc@DefMarcasCorte,
+% \elzc@DefPunto,
+% \elzc@DefSeparaX,
+% \elzc@DefSeparaY,
+% \elzc@DefTPXdim,
+% \elzc@DefTPYdim,
+% \elzc@DefTrasverso,
+% \elzc@aux@autosep@interno,
+% \elzc@aux@autosep@ninguno,
+% \elzc@aux@autosep@total,
+% \elzc@aux@cruces,
+% \elzc@aux@elementosorden,
+% \elzc@aux@fichatransversa,
+% \elzc@aux@segmentos,
+% \elzc@aux@puntos,
+% \elzc@aux@lineas,
+% \elzc@aux@sinmarcas,
+% \elzc@Orden,
+% \@elzc@actualconreversofalse,
+% \@elzc@actualconreversotrue,
+% \@elzc@autosepfalse,
+% \@elzc@autosepinternofalse,
+% \@elzc@autosepinternotrue,
+% \@elzc@autoseptotalfalse,
+% \@elzc@autoseptotaltrue,
+% \@elzc@autoseptrue,
+% \@elzc@fichaconreversofalse,
+% \@elzc@fichaconreversotrue,
+% \@elzc@fichasfalse,
+% \@elzc@fichastrue,
+% \@elzc@calculaordenfalse,
+% \@elzc@calculaordentrue,
+% \@elzc@crucesfalse,
+% \@elzc@crucestrue,
+% \@elzc@columnasfilasfalse,
+% \@elzc@columnasfilastrue,
+% \@elzc@iniciofalse,
+% \@elzc@iniciotrue,
+% \@elzc@lineasfalse,
+% \@elzc@lineastrue,
+% \@elzc@ordentransversofalse,
+% \@elzc@ordentransversotrue,
+% \@elzc@ordenfalse,
+% \@elzc@ordentrue,
+% \@elzc@puntosfalse,
+% \@elzc@puntostrue,
+% \@elzc@segmentosfalse,
+% \@elzc@segmentostrue,
+% \@elzc@sinmarcasfalse,
+% \@elzc@sinmarcastrue,
+% \@elzc@procesareversofalse,
+% \@elzc@procesareversotrue,
+% \@elzc@tarjetaconreversofalse,
+% \@elzc@tarjetaconreversotrue,
+% \@elzc@TarjetaAnverso,
+% \@elzc@TarjetaReverso,
+% \end,
+% \endcsname,
+% \expandafter,
+% \ExplSyntaxOff,
+% \ExplSyntaxOn,
+% \fi,
+% \hfill,
+% \hspace,
+% \if@elzc@autosep,
+% \if@elzc@autosepinterno,
+% \if@elzc@autoseptotal,
+% \if@elzc@columnasfilas,
+% \if@elzc@actualconreverso,
+% \if@elzc@fichaconreverso,
+% \if@elzc@calculaorden,
+% \if@elzc@cruces,
+% \if@elzc@fichas,
+% \if@elzc@inicio,
+% \if@elzc@lineas,
+% \if@elzc@orden,
+% \if@elzc@ordentransverso,
+% \if@elzc@puntos,
+% \if@elzc@segmentos,
+% \if@elzc@sinmarcas,
+% \if@elzc@procesareverso,
+% \if@elzc@tarjetaconreverso,
+% \@ifpackageloaded,
+% \int,
+% \global,
+% \InputIfFileExists,
+% \ifnum,
+% \IfBooleanF,
+% \IfBooleanTF,
+% \IfValueT,
+% \IfValueTF,
+% \ifx,
+% \immediate,
+% \input,
+% \jobname,
+% \LARGE,
+% \l,
+% \let,
+% \line,
+% \linethickness,
+% \loop,
+% \makebox,
+% \@mparswitchtrue,
+% \message,
+% \mycenter,
+% \NeedsTeXFormat,
+% \newcommand,
+% \newcounter,
+% \NewDocumentCommand,
+% \newif,
+% \newlength,
+% \nwarrow,
+% \PackageError,
+% \PackageWarning,
+% \pagestyle,
+% \parbox,
+% \parindent,
+% \ProvidesPackage,
+% \put,
+% \relax,
+% \repeat,
+% \RequirePackage,
+% \romannumeral,
+% \searrow,
+% \seq,
+% \setcounter,
+% \setkeys,
+% \setlength,
+% \stop,
+% \string,
+% \textheight,
+% \textwidth,
+% \the,
+% \thispagestyle,
+% \tl,
+% \@twosidetrue,
+% \undefined,
+% \unitlength,
+% \usepackage,
+% \value,
+% \vfill,
+% \vspace,
+% \@wholewidth,
+% \write}
+%
+% \title{\stepcounter{footnote}The \textsf{\jobname}\thanks{%
+%  This document corresponds to \textsf{\jobname}~\fileversion, dated \filedate.}~package \\
+%  El paquete \textsf{\jobname}\thanks{%
+%  Este documento corresponde a \textsf{\jobname}~\fileversion, de fecha \filedate.}}
+% \author{Emilio Augusto Lazo Zaia\\ \texttt{<emiliolazozaia at/en gmail dot/punto com>}}
+% \date{{\selectlanguage{english}\today} / {\selectlanguage{spanish}\today}}
+%
+% \maketitle
+% {\parskip2.7pt\tableofcontents}
+%
+%
+% \section{Introduction / Introducción}
+%
+% \eng*{|elzcards| is a \LaTeX{} package meant to be an easy and flexible way to typeset business cards, index cards and flash cards, with -optional- back side. You should take care only on setting the paper size, margins and the design of your cards\footnote{No predefined design is given; you must compose your cards.}. Everything else is done by |elzcards|.}
+% \esp{|elzcards| es un paquete de \LaTeX{} hecho para ser una forma fácil y flexible de componer tarjetas de presentación, fichas y tarjetas “flash” (tarjetas de aprendizaje), con posibilidad de un -opcional- reverso. Usted debe ocuparse solamente de fijar el tamaño del papel, los márgenes y del diseño de las tarjetas\footnote{No hay diseños predefinidos de tarjeta alguna; usted debe componer sus tarjetas.}}
+%
+% \eng{It uses the printable area of the paper to print the cards, so it relies on \cs{textwidth} and \cs{textheight} macros (not on \cs{paperwidth} and \cs{paperheight}) to calculate how many cards fits on a page.}
+% \esp{Él usa el área imprimible del papel para escribir las tarjetas, es decir que se basa en las macros \cs{textwidth} y \cs{textheight} (no en \cs{paperwidth} y \cs{paperheight}) para calcular cuántas tarjetas caben en una página.}
+%
+% \eng{You should typeset your cards with the macro provided for the case, depending on the type of card, followed by another macro to write them on the paper. Macros used to manage business cards are not the same as for index/flash cards because they are not the same thing. Business cards are all equal and they are repeated many times in a page. Index/flash cards are all different. The macro to typeset a business card takes its argument (your card) and stores it on a box, on the other hand, the macro to typeset an index/flash cards adds its argument (your card) to a stack of cards it manages. You can execute it many times as index/flash cards you have and all them will be stored internally to be processed when you have finished adding them.}
+% \esp{Usted debe componer la tarjeta con la macro provista para el caso, dependiendo del tipo de tarjeta, seguido de otra macro para escribir las tarjetas en el papel. Las macros que se usan para las tarjetas de presentación no son las mismas que las fichas y tarjetas “flash” porque no son lo mismo. Las tarjetas de presentación son todas iguales y se repiden muchas veces en una página. Las fichas y tarjetas “flash” son todas diferentes. La macro para componer una tarjeta de presentación toma su argumento (la tarjeta) y la guarda en una caja, por otra parte, la macro para componer una ficha/flash agrega su argumento (la tarjeta) a una pila de tarjetas que ella maneja. Usted puede ejecutar la macro tantas veces como fichas/flash tenga y todas ellas serán almacenadas internamente para ser procesadas cuando haya terminado de agregarlas todas.}
+%
+% \eng{Index cards and flash cards are in essence the same; the package provides macros for ‘both’ cases but they behave the same.}
+% \esp{Las fichas y las tarjetas “flash” son en esencia lo mismo; el paquete provee de macros para “ambos” casos pero se comportan de la misma manera.}
+%
+% \eng{In the same document you can typeset many different sets of cards. You can combine business cards with index/flash cards in the order you want; also using different sizes of cards, different gap options, designs, cropping options, and even changing the paper geometry.}
+% \esp*{En el mismo document usted puede componer diferentes conjuntos de tarjetas. Usted puede combinar tarjetas de presentación con fichas/flash en el orden que quiera; también usando diferentes tamaños de tarjetas, diferentes opciones de espaciado, diseños, marcas de corte e inclusive cambiando la geometría del papel.}
+%
+%
+% \newpage
+% \section{Usage / Uso}
+%
+% \eng*{Please load your class (i.e. |article|) and load the package {\itshape (it doesn't has options)}.}
+% \esp*{Por favor cargue su clase (i.e. |article|) y cargue el paquete {\itshape (el paquete no tiene opciones)}.}
+%
+% \begin{center}
+%  \color{RoyalBlue}|\documentclass{article}|
+%  \par
+%  \color{RoyalBlue}|\usepackage{elzcards}|
+% \end{center}
+%
+% \eng*{We'll recommend you add the |geometry| package and setting the margins according to
+%
+% \hspace*{2em}\parbox{.4\textwidth}{\begin{enumerate}[\bfseries 1.]
+%  \item the desired size of your cards,
+%  \item the paper you'll use to print them,
+%  \item the printable area of your printer.
+% \end{enumerate}}}
+% \esp{Le recomendamos agregar el paquete |geometry| y fijar los márgenes de acuerdo a
+%
+% \hspace*{2em}\parbox{.4\textwidth}{\begin{enumerate}[\bfseries 1.]
+%  \item el tamaño deseado de sus tarjetas,
+%  \item el papel que usará para imprimirlas,
+%  \item el área imprimible de la imrepsora.
+% \end{enumerate}}}
+%
+% \eng{For example, for the default business card size (3.5 inches x 2 inches) in A4 paper, you might use:}
+% \esp*{Por ejemplo, para el tamaño predeterminado de las tarjetas de presentación (3,5 pulgadas x 2 pulgadas) en una hoja A4, usted podría hacer así:}
+%
+% \begin{center}
+%  \color{RoyalBlue}|\usepackage[a4paper,landscape,vmargin={.25in,.25in},hmargin={.25in,.25in}]{geometry}|
+% \end{center}
+%
+% \eng*{After preamble, you have four main macros to produce the cards you want. These macros are:
+% \begin{itemize}
+%  \item \cs{BusinessCard} and \cs{IndexCard}\footnote{The package provides the alias \cs{FlashCard} for your convenience when writing flash cards but it is the same as \cs{IndexCard}.} to typeset business cards and index/flash cards. These macros writes nothing on paper. Only stores cards to be processed later.
+%  \item \cs{MakeBC} and \cs{MakeIC}\footnote{Also the package provides the alias \cs{MakeFC}.} to write them on paper.
+% \end{itemize}}
+% \esp{Después del preámbulo, usted tiene cuatro macros principales para producir las tarjetas que quiere. Esas macros son:
+% \begin{itemize}
+%  \item \cs{BusinessCard} y \cs{IndexCard}\footnote{El paquete provee el alias \cs{FlashCard} para su conveniencia cuando está haciendo tarjetas de aprendizaje pero es el mismo comando que usar \cs{IndexCard}.} para componer tarjetas de presentación y fichas/flash. Esas macros no escriben material alguno en el papel. Solamente guardan las tarjetas que van a ser procesadas luego.
+%  \item \cs{MakeBC} y \cs{MakeIC}\footnote{También el paquete provee del alias \cs{MakeFC}.} para imprimirlas en el papel.
+% \end{itemize}}
+%
+% \eng{The package prints cropping marks to guide the cutting; these cutting marks can be crosses inside the printed area, segments outside the printed area, dots on cards' vertices, or continuous lines. You can change the length of that segments, thickness of lines, size of dots and colors of all these cutting marks. {\itshape Cards on back side will have no cutting marks, they aren't needed.}}
+% \esp{El paquete imprime marcas de corte para guiar el proceso de cortado; esas marcas pueden ser cruces dentro del área impresa, segmentos fuera del área impresaa, puntos en los vértices de las tarjetas, o líneas continuas. Usted puede cambiar la longitud de los segmentos, el grosor de las lineas, el tamaño de los puntos y el color de todas esas marcas de corte. {\itshape El reverso de las tarjetas no tendrán marcas de corte, no las necesita.}}
+%
+% \eng{If only one card has back side, the whole document behaves like a twosided document, i.e. swapping horizontal margins and having interleaved blank pages when a set of cards has only front side; this is the behavior of \LaTeX's |twoside| option but you don't have to specify it by hand when loading your class with \cs{documentclass} even when having cards with back side, but you must compile your document twice to let the |twoside| option being added automatically by |elzcards|.}
+% \esp*{Si solamente una tarjeta tiene reverso, todo el documento se comporta como un documento con reverso, i.e. intercambiando los márgenes horizontales e intercalando una página en blanco cuando un conjunto de tarjetas tiene solamente lado anverso; este es el comportamiento de la opción |twoside| de \LaTeX{} pero usted no tiene que especificarla a mano cuando carga la clase con \cs{documentclass} ni siquiera cuando tiene tarjetas con reverso, pero debe compilar el documento una segunda vez para permitir que la opción |twoside| sea agregada automáticamente por |elzcards|.}
+%
+%
+% \subsection{Typesetting the cards / Escribiendo las tarjetas}
+%
+% \eng*{You typeset your cards using macros described in this subsection; your cards will be stored internally to be processed later by invoking the appropriate macro, described in the following subsection.}
+% \esp*{Usted hace la composición tipográfica de sus tarjetas usando las macros descritas en esta subsección; sus tarjetas serán guardadas internamente para ser procesadas luego al invocar la macro apropiada, descrita en la siguiente subsección.}
+%
+% \begin{center}
+%  \DescribeMacro{\BusinessCard}{\color{RoyalBlue}|\BusinessCard|\marg{front side / anverso}\oarg{back side / reverso}}
+% \end{center}
+%
+% \eng*{To produce a business card, you should issue the macro \cs{BusinessCard}. What you write as the first argument (with braces) will be the card's front face design, and its second -optional- argument (with square brackets) is the card's back side. Everything you put inside {\ttfamily \{ \}} and -optionally- inside {\ttfamily [ ]} will be stored in a box and nothing will be printed on the page until you issue a macro to process the cards and write them to the page (see the following subsection).}
+% \esp*{Para producir una tarjeta de presentación usted debe ejecutar la macro \cs{BusinessCard}. Lo que escriba en el primer argumento (en llaves) será el diseño de la parte delantera, y el -opcional- segundo argumento (en corchetes) es el diseño del reverso de la tarjeta. Todo lo que coloque dentro de {\ttfamily \{ \}} y -opcionalmente- dentro de {\ttfamily [ ]} será guardado en una caja y no será escrito nada en el papel hasta que usted ejecute la macro para procesar las tarjetas y escribirlas en la hoja (véase la siguiente subsección).}
+%
+% \begin{center}
+%  \DescribeMacro{\IndexCard}{\color{RoyalBlue}|\IndexCard|\marg{front side / anverso}\oarg{back side / reverso}}
+%
+%  \DescribeMacro{\FlashCard}{\color{RoyalBlue}|\FlashCard|\marg{front side / anverso}\oarg{back side / reverso}}
+% \end{center}
+%
+% \eng*{To compose index/flash cards you have to invoke \cs{IndexCard}\footnote{Or \cs{FlashCard}, which is the same command.}. This command has the same syntax of \cs{BusinessCard} but it manages a stack of index/flash cards. You have to invoke it many times as cards you have to add all them into the stack. You can add the number of cards you want by executing \cs{IndexCard} or \cs{FlashCard} many times {\bfseries no matter how many pages are needed to print all them}. All cards will be stored and won't be processed until you invoke the macro intended to process them, described on the next subsection.}
+% \esp*{Para hacer los diseños de fichas/flash usted debe ejecutar \cs{IndexCard}\footnote{O \cs{FlashCard}, que es el mismo comando.}. Este comando tiene la misma sintaxis que \cs{BusinessCard}, pero maneja una pila de fichas/flash. Usted debe invocarlo tantas veces como fichas/flash quiera agregar en la pila. Usted puede agregar el número de tarjetas que quiera ejecutando \cs{IndexCard} o \cs{FlashCard} muchas veces {\bfseries sin importar cuántas páginas serán necesarias para imprimirlas todas}. Todas esas tarjetas serán guardadas y no serán procesadas hasta que ejecute el comando destinado para procesarlas, descrito en la siguiente subsección.}
+%
+% \begin{center}
+%  \DescribeMacro{\CurrentIC}{\color{RoyalBlue}|\CurrentIC|}
+%  \DescribeMacro{\CurrentFC}{\color{RoyalBlue}|\CurrentFC|}
+%  \DescribeMacro{\TotalIC}{\color{RoyalBlue}|\TotalIC|}
+%  \DescribeMacro{\TotalFC}{\color{RoyalBlue}|\TotalFC|}
+% \end{center}
+%
+% \eng*{With \cs{CurrentIC} and \cs{TotalIC}\footnote{Or their \texttt{FC} versions, which are the same.} you can access the counters associated with index/flash cards. When used {\bfseries inside a card}, the macro \cs{CurrentIC} prints the number of the current index/flash card, and \cs{TotalIC} prints the total of cards stored in the stack. For example, you can add something like
+%
+% {\noindent\hfill \color{RoyalBlue}|Card: |\cs{CurrentIC}\{\}| of |\cs{TotalIC}\hfill}
+%
+% \noindent somewhere on the content of your card if you are making some type of numbered cards.}
+% \esp*{Con \cs{CurrentIC} y \cs{TotalIC}\footnote{O sus versiones \texttt{FC}, que son lo mismo.} usted puede acceder a los contadores asociados con las fichas/flash. Cuando usa \cs{CurrentIC} {\bfseries dentro de una tarjeta}, escribirá el número de la ficha/flash actual, y \cs{TotalIC} escribe el número total de tarjetas guardadas en la pila. Por ejempo, usted puede agregar algo como
+%
+% {\noindent\hfill \color{RoyalBlue}|Tarjeta: |\cs{CurrentIC}\{\}| de |\cs{TotalIC}\hfill}
+%
+% \noindent en cualquier parte del contenido de la tarjeta si está haciendo algún tipo de tarjetas numeradas.}
+%
+%
+% \subsection{Writing cards on paper / Escribiendo las tarjetas en el papel}
+%
+% \eng*{At this point nothing has been written on paper yet. The macros described on past subsection {\bfseries only stores the cards to be written}; to write them on paper you should issue \cs{MakeBC} for business cards or \cs{MakeIC}\footnote{Or \cs{MakeFC}, which is also an alias for convenience.} for index/flash cards.}
+% \esp*{Aquí todavía nada ha sido escrito en el papel. Las macros descritas en la subsección anterior {\bfseries solamente guardan las tarjetas a ser escritas}; para escribirlas en el papel usted debe ejecutar \cs{MakeBC} para las tarjetas de presentación o \cs{MakeIC}\footnote{O \cs{MakeFC}, que es otro alias para conveniencia.} para las fichas/flash.}
+%
+% \begin{center}
+%  \DescribeMacro{\MakeBC}{\color{RoyalBlue}|\MakeBC[*]|\oarg{keyval options / opciones keyval}}
+%
+%  \DescribeMacro{\MakeIC}{\color{RoyalBlue}|\MakeIC[*]|\oarg{keyval options / opciones keyval}}
+%
+%  \DescribeMacro{\MakeFC}{\color{RoyalBlue}|\MakeFC[*]|\oarg{keyval options / opciones keyval}}
+% \end{center}
+%
+% \eng*{They have an optional star and a |keyval| list of options in square brackets. These |keyval| argument is intented to change sizes, gaps between cards, and cutting options overriding defaults only on the \cs{MakeXY} execution where options are applied to, naturally. Everything you won't specify will be taken from its default value, so nothing is mandatory.}
+% \esp{Tienen un asterisco opcional y una lista de opciones |keyval| entre corchetes. Ese argumento |keyval| está pensado para cambiar tamaños, separaciones entre las tarjetas y las opciones de corte imponiéndose por encima de los valores predeterminados solamente en la macro \cs{MakeXY} donde estas opciones fueron escritas, obviamente. Todo lo que no especifique será tomado de su valor predeterminado, de forma que nada es obligatorio especificarlo.}
+%
+% \eng{The star means that the \cs{MakeXY} command won't clear the cards after processing them. Normally, when you execute any of these \cs{MakeXY} commands, all cards processed are purged from memory and you must add them again to process them a second time. If you issue a \cs{MakeXY} command with a star |*| (e.g. \cs{MakeIC*}), you'll be able issue again the \cs{MakeIC} command because the cards weren't removed from memory. Otherwise, without |*| all cards and boxes are cleared to accept new set of cards added with \cs{Businesscard} or \cs{IndexCard}.}
+%
+% \esp*{El asterisco significa que los comandos \cs{MakeXY} no eliminarán las tarjetas después de ser procesadas. Normalmente, cuando ejecuta cualquiera de los comandos \cs{MakeXY}, todas las tarjetas procesadas son purgadas de la memoria y usted deberá agregarlas otra vez si quiere procesarlas una segunda vez. Si usted ejecuta un comando \cs{MakeXY} con un asterisco |*| (e.g. \cs{MakeIC*}), podrá ejecutar otra vez el comando \cs{MakeXY} porque las tarjetas no fueron quitadas de la memoria. De lo contrario, sin~|*| todas las tarjetas y cajas son borradas para aceptar nuevos conjuntos de tarjetas agregados con \cs{BusinessCard} o \cs{IndexCard}.}
+%
+%
+% \subsection{Overriding all defaults / Cambiando todo lo predeterminado}
+%
+% \eng*{As we pointed before, \cs{MakeXY} macros accepts a |keyval| list of comma-separated options. These options are intended to supersede some default behavior only on the \cs{MakeXY} command where they are added. However, all defaults might be superseded with a set of macros to apply on all \cs{MakeXY} executions onwards.}
+% \esp{Como señalamos previamente, las macros \cs{MakeXY} aceptan una lista de opciones |keyval|, separadas por comas. Esas opciones están hechas para reemplazar algún comportamiento predeterminado, solamente en la invocación del comando \cs{MakeXY} donde se agregaron. Sin embargo, todo lo predeterminado podría ser reemplazado con un conjunto de macros que aplicarán en todas las invocaciones de \cs{MakeXY} en adelante.}
+%
+% \eng{Almost every |keyval| option have its corresponding macro to change the default for the rest of the document. Everything will be described on this subsection.}
+% \esp{Casi todas las opciones |keyval| tienen su macro correspondiente para cambiar lo predeterminado para el resto del documento. Todo será descrito en esta subsección.}
+%
+% \eng{Right below you will have a subsection for each aspect, its corresponding |keyval| option, the default value coded on |elzcards.sty| and the macro that might be issued to change the default value.}
+% \esp{Justamente debajo usted tendrá una subsección para cada aspecto, su opción |keyval| correspondiente, el valor predeterminado codificado en |elzcards.sty| y la macro que podría ser invocada para cambiar dicho valor por omisión.}
+%
+% \eng{\bfseries All sizes and gaps are lengths in the \LaTeX{} sense.}
+% \esp*{\bfseries Todos los tamaños y espaciados son dimensiones en el sentido de \LaTeX.} 
+%
+%
+% \subsubsection{Cards reordering / Reordenamiento de las tarjetas}
+%
+% \eng*{
+%  \Keyval{|order=|} \\
+%  \Default{(none, i.e. in sequence)}}
+% \esp{
+%  \Keyval*{|order=|} \\
+%  \Default*{(ninguno, i.e. en secuencia)}}
+%
+% \eng{With this |keyval| option you can alter the disposition of the cards on paper, valid only on index/flash cards because they are all different. By default, the ordering is from top left edge to bottom right edge, running from left to right until the page was full. Specifying |order=| you are able to change that order. This would be useful when printing on folds and need to cut and stack thousands of pages to avoid the need to compaginate them later.}
+% \esp{Con esta opción |keyval| usted puede alterar la disposición de las tarjetas en el papel, válido solamente en fichas/flash porque son todas diferentes. Predeterminadamente, el ordenamiento es desde la esquina superior izquierda a la esquina inferior derecha, cambiando de izquierda a derecha hasta que la página se llene. Especificando |order=| usted tiene la posibilidad de cambiar ese orden. Esto podría ser util al imprimir en folios necesitando cortar y apilar cientos de hojas para evitar la necesidad de compaginarlas después.}
+%
+% \eng{If you want to change the cards ordering you should give a set or cards with |order=| option. This set of cards must be at least all cards on the first page, i.e. a ‘cycle’, but also it can spans on multiple pages or even on the whole cards\footnote{only on this \cs{MakeIC} execution and not on subsequent ones, obviously.}.}
+% \esp{Si usted quiere cambiar el ordenamiento de las tarjetas debe dar por lo menos un conjunto de tarjetas con la opción |order=|. Este conjunto de tarjetas deberá ser por lo menos todas las tarjetas de la primera página, i.e. un “ciclo”, pero también puede abarcar múltiples páginas o inclusive todas las tarjetas\footnote{solamente en esta ejecución de \cs{MakeIC} y no en las siguientes, obviamente.}.}
+%
+% \eng{For example, having 12 cards in a 3x2 grid (2 pages of 6 cards per page), you can alter the disposition with:}
+% \esp*{Por ejemplo, teniendo 12 tarjetas en una cuadrícula de 3x2 (2 páginas de 6 tarjetas cada página), usted puede alterar la disposición con:}
+%
+% {\noindent\hfill \color{RoyalBlue}|order=1 5 3 6 2 4|\hfill}
+%
+% \eng*{\noindent this way, the first page will have the cards ordered as |1,5,3,6,2,4|; it implies that the second page will print cards |7,11,9,12,8,10|. Note that the pattern in the reordering option contains all first six cards (the first page) but in other disposition; it must be something like this in the sense that you must specify at least all cards on the first page to construct a reordering pattern for the next pages. As pointed before, the reordering pattern can span to more than one page. For example:}
+% \esp*{\noindent de esta manera, la primera página tendrá las tarjetas ordenadas como |1,5,3,6,2,4|; esto implica que la segunda página tendrá las tarjetas |7,11,9,12,8,10|. Note que el patrón en la opción de reordenamiento contiene todas las primeras seis tarjetas (la primera página) pero en otra disposición; tiene que ser algo por el estilo en el sentido de que usted debe especificar por lo menos todas las tarjetas de la primera página para construir un patrón de reordenamiento para las siguientes páginas. Como mencionamos anteriormente, el patrón de reordenamiento puede abarcar mas de una página. Por ejemplo:}
+%
+% {\noindent\hfill \color{RoyalBlue}|order=12 11 10 9 8 7 6 5 4 3 2 1|\hfill}
+%
+% \eng*{\noindent will reorder all 12 cards in descending order starting on 12 and ending on 1.}
+% \esp{\noindent reordenará las 12 tarjetas en orden descendente empezando en la 12 y terminando en la 1.}
+%
+% \eng{\slshape This |keyval| option does not have its corresponding macro to change the default behavior because it would have no sense to change the default ordering pattern. This behavior can be changed only via this |keyval| option.}
+% \esp*{\slshape Esta opción |keyval| no tiene su correspondiente macro para cambiar el comportamiento predeterminado porque no tendría sentido cambiar el patrón de ordenamiento predeterminado. Este comportamiento puede ser cambiado solamente via opción |keyval|.}
+%
+%
+% \subsubsection{Transverse cards' reordering / Reordenamiento transverso de las tarjetas}
+%
+% \begin{center}
+%  \DescribeMacro{\Transverse}{\color{RoyalBlue}|\Transverse|}
+% \end{center}
+%
+% \eng*{
+%  \Keyval{|transverse|} \\
+%  \Default{disabled}}
+% \esp{
+%  \Keyval*{|transverse|} \\
+%  \Default*{deshabilitado}}
+%
+% \eng{Transverse ordering on index/flash cards means that cards will be printed not in a sequence on the same page but instead on a sequence on the same logical position on the matrix, spanned across all pages. A sequence of cards is distributed across all sheets of paper from the first page to the last one, returning to the first page to continue the sequence on the next logical position on the matrix. The first logical position (e.g. top left corner) has the sequence from the card $1$ ending on card $n$, the next logical position has the sequence starting on $n+1$ until $2n$, and so on, where $n$ is the number of pages required to print all them.}
+%
+% \esp{El ordenamiento transverso de las fichas/flash significa que las tarjetas serán impresas no en una secuencia en la misma página sino en una secuencia en la misma posición lógica en la matrix extendiéndose a través de todas las páginas. Una secuencia de tarjetas es distribuída a través de todas las páginas desde la primera página hasta la última, regresando a la primera página para continuar la secuencia en la siguiente posición lógica de la matrix. La primera posición lógica (e.g. la esquina superior izquierda) tiene la secuencia desde la tarjeta $1$ hasta la tarjeta $n$, la siguiente posición lógica tiene la secuencia que empieza en $n+1$ hasta $2n$, y así, donde $n$ es el número de páginas requeridas para imprimirlas todas.}
+%
+% \eng{For example, having a set of 20 cards printed in a 4x4 matrix (in total 5 pages), using |transverse| is exactly the same as using:}
+% \esp*{Por ejemplo, teniendo un conjunto de 20 tarjetas impresas en una matrix 4x4 (en total 5 páginas), usar |transverse| es exactamente lo mismo que usar:}
+%
+% {\noindent\hfill \color{RoyalBlue}|order=1 6 11 16 2 7 12 17 3 8 13 18 4 9 14 19 5 10 15 20|\hfill}
+%
+% \eng*{\noindent but without needing to provide this ‘transverse’ ordering pattern with |order=|that will change on every card addition/substraction.}
+% \esp{\noindent pero sin la necesidad de proveer este patrón de ordenamiento “transverso” con |order=| que cambiará con cada adición/sustracción de tarjetas.}
+%
+% \eng{This option is only valid on index/flash cards and this feature can be defaulted with the macro associated with this behavior.}
+% \esp*{Esta opción es válida solamente en fichas/flash y esta carcaterística puede ser predeterminada con la macro asociada a este comportamiento.}
+%
+%
+% \subsubsection{Standard linear ordering / Orden lineal estándar}
+%
+% \begin{center}
+%  \DescribeMacro{\NoTransverse}{\color{RoyalBlue}|\NoTransverse|}
+% \end{center}
+%
+% \eng*{
+%  \Keyval{|no transverse|} \\
+%  \Default{enabled}}
+% \esp{
+%  \Keyval*{|no transverse|} \\
+%  \Default*{habilitado}}
+%
+% \eng{You can restore to the standard linear and not transverse ordering if you had selected the transverse ordering default with \cs{Transverse} before in the document.}
+% \esp*{Usted puede regresar al ordenamiento estándar lineal y no transverso si seleccionó el ordenamiento transversal predeterminado con \cs{Transverse} previamente en el documento.}
+%
+%
+% \subsubsection{Number of rows and columns per page / Número de filas y columnas por página}
+%
+% \eng*{
+%  \Keyval{|rows=| and |columns=|} \\
+%  \Default{(maximum that fits on the page)}}
+% \esp{
+%  \Keyval*{|rows=| y |columns=|} \\
+%  \Default*{(el máximo que quepa en la página)}}
+%
+% \eng{By default, |elzcards| calculates how many rows and columns fits on a page considering the card's dimensions and intercard gaps. It prints all cards in a maximal grid. With |rows=| and |columns=| you can force the number rows or columns you want on a page as long as they are less than the maximum calculated by |elzcards|, naturally.}
+% \esp{Predeterminadamente, |elzcards| calcula cuántas filas y columnas caben en una página considerando las dimensiones de las tarjetas y el espaciado entre las tarjetas. Él imprime todas las tarjetas en una cuadrícula maximal. Con |rows=| y |columns=| usted puede forzar el número de filas o columnas que quiera en una página siempre y cuando sean menos que el máximo calculado por |elzcards|, obviamente.}
+%
+% \eng{\slshape This |keyval| option does not have its corresponding macro to change the default behavior because it would have no sense to change the default number of rows or columns globally for different type of cards with different sizes. This behavior can be changed only via these |keyval| options.}
+% \esp*{\slshape Esta opción |keyval| no tiene su correspondiente macro para cambiar el comportamiento predeterminado porque no tendría sentido cambiar el número predeterminado de filas o columnas globalmente para diferentes tipos de tarjetas de diferentes tamaños. Este comportamiento puede ser cambiado solamente via estas opciones |keyval|.}
+%
+% 
+% \subsubsection{Card dimensions / Dimensiones de las tarjetas}
+%
+% \begin{center}
+%  \DescribeMacro{\BCdim}
+%  \DescribeMacro{\ICdim}
+%  \DescribeMacro{\FCdim}
+% {\color{RoyalBlue}|\BCdim|\marg{h-size / h-tamaño}\marg{v-size / v-tamaño}}
+%
+% {\color{RoyalBlue}|\ICdim|\marg{h-size / h-tamaño}\marg{v-size / v-tamaño}}
+% \end{center}
+%
+% \eng*{
+%  \Keyval{|hsize=| and |vsize=|} \\
+%  \Default{\\ |hsize=3.5in| and |vsize=2in| for business cards \\ |hsize=5in| and |vsize=3in| for index/flash cards}}
+% \esp{
+%  \Keyval*{|hsize=| y |vsize=|} \\
+%  \Default*{\\ |hsize=3.5in| y |vsize=2in| para tarj. de presentación \\ |hsize=5in| y |vsize=3in| para fichas/flash.}}
+%
+% \eng{You must set the size of the card you are composing (if the default size doesn't fit your needs); business cards has a predefined size and index/flash has another one.}
+% \esp{Usted deberá establecer el tamaño de las tarjetas que está componiendo (si el predeterminado no se ajusta a sus necesidades); las tarjetas de presentación tienen un tamaño predeterminado y las fichas/flash tienen otro.}
+%
+% \eng{With these |keyval| options, you can alter the size of your card in the current \cs{MakeXY} execution.}
+%
+% \esp{Con estas opciones |keyval|, usted puede alterar el tamaño de su tarjeta en la invocación actual de \cs{MakeXY}.}
+%
+% \eng{These command \cs{**dim} takes two mandatory arguments, the new default horizontal and the new default vertical size of the referred card.}
+% \esp*{Estos comandos \cs{**dim} toman dos argumentos obligatorios, el nuevo tamaño horizontal y el nuevo tamaño vertical predeterminado para la tarjeta referida.}
+%
+%
+% \subsubsection{Intercard gaps / Separaciones entre las tarjetas}
+%
+% \begin{center}
+%  \DescribeMacro{\CardGap}{\color{RoyalBlue}|\CardGap|\marg{h-gap / h-sep}\marg{v-gap / v-sep}}
+% \end{center}
+%
+% \eng*{
+%  \Keyval{|hgap=| and |vgap=|} \\
+%  \Default{|hgap=0pt| and |vgap=0pt|}}
+% \esp{
+%  \Keyval*{|hgap=| y |vgap=|} \\
+%  \Default*{|hgap=0pt| y |vgap=0pt|}}
+%
+% \eng{To add some horizontal gap use |hgap|, and |vgap| for vertical gap.}
+%
+% \esp{Para añadir separación horizontal use |hgap|, y |vgap| para separación vertical.}
+%
+% \eng{With \cs{CardGap} you can set the default gap between cards. {\itshape If you specify only one parameter, this will be taken as the gap in both axis.}}
+% \esp*{Con \cs{CardGap} podrá cambiar la separación predeterminada entre las tarjetas. {\itshape Si especifica un solo parámetro, este será tomado como la separación en ambos ejes.}}
+%
+%
+% \subsubsection{Inner auto gap / Separación interna automática}
+%
+% \begin{center}
+%  \DescribeMacro{\AutoGapInner}{\color{RoyalBlue}|\AutoGapInner|}
+% \end{center}
+%
+% \eng*{
+%  \Keyval{|autogap inner|} \\
+%  \Default{disabled}}
+% \esp{
+%  \Keyval*{|autogap inner|} \\
+%  \Default*{deshabilitado}}
+%
+% \eng{By default, all cards are placed together and centered on the printable area.}
+%
+% \esp{Predeterminadamente, todas las tarjetas se colocan juntas y centradas en el área imprimible.}
+%
+% \eng{With inner autogap, all gaps are calculated automatically based upon the remaining space after being determined the number of rows and columns will be printed in the page.}
+% \esp*{Con separación interna automática, todas las separaciones son calculadas automáticamente con base en el espacio restante que queda luego de haber determinado el número de filas y columnas que serán impresas en la página.}
+%
+%
+% \subsubsection{Inner+outer auto gap / Separación interna+externa automática}
+%
+% \begin{center}
+%  \DescribeMacro{\AutoGapTotal}{\color{RoyalBlue}|\AutoGapTotal|}
+% \end{center}
+%
+% \eng*{
+%  \Keyval{|autogap total|} \\
+%  \Default{disabled}}
+% \esp{
+%  \Keyval*{|autogap total|} \\
+%  \Default{deshabilitado}}
+%
+% \eng{Using total automatic gap, not only internal gaps but also all borders are taken into account, so all the remaining space will de distributed equally across all internal gaps and external margins. The best when using this option is setting the paper without margins at all, and all the grid will be equally spaced including top, bottom, left and right margins.}
+%
+% \esp*{Con separación total automática, no solamente las separaciones internas sino también los bordes son tomados en cuenta, de manera que todo el espacio restante será distribuído equitativamente entre todas las separaciones internas y márgenes externos. Lo mejor al usar esta opción es establecer una hoja sin márgenes en lo absoluto, y toda la cuadrícula de tarjetas será espaciada igualitariamente incluyendo los márgenes superior, inferior, izquierdo y derecho.}
+%
+%
+% \subsubsection{Without auto gap/ Sin separación automática}
+%
+% \begin{center}
+%  \DescribeMacro{\NoAutoGap}{\color{RoyalBlue}|\NoAutoGap|}
+% \end{center}
+%
+% \eng*{
+%  \Keyval{|no autogap|} \\
+%  \Default{enabled}}
+% \esp{
+%  \Keyval*{|no autogap|} \\
+%  \Default*{habilitado}}
+%
+% \eng{You can restore to no autogap behavior if you had selected either \cs{AutoGapTotal} or \cs{AutoGapInner} options before in the document to change the default auto gap behavior.}
+%
+% \esp*{Usted puede regresar al comportamiento de no introducir separaciones automáticas si previamente usó la macro \cs{AutoGapTotal} o \cs{AutoGapInner} en el documento para cambiar el comportamiento predeterminado de las separaciones automáticas.}
+%
+%
+% \subsubsection{Crop crosses / Cruces para corte}
+%
+% \begin{center}
+%  \DescribeMacro{\CropCrosses}{\color{RoyalBlue}|\CropCrosses|}
+% \end{center}
+%
+% \eng*{
+%  \Keyval{|crosses|} \\
+%  \Default{enabled}}
+% \esp{
+%  \Keyval*{|crosses|} \\
+%  \Default*{habilitado}}
+%
+% \eng{Draws crosses as cutting marks. That's the default, but you can revert to this behavior if you did change the default cropping mark before. Those crosses really are segments on the outer cards and crosses on inner cards.}
+%
+% \esp*{Dibuja cruces como marcas de corte. Esto es lo predeterminado pero usted puede revertir a este comportamiento si previamente cambió la marca de corte predeterminada. Esas cruces son realmente segmentos en las tarjetas externas y cruces en las tarjetas internas.}
+%
+%
+% \subsubsection{Crop segments / Segmentos para corte}
+%
+% \begin{center}
+%  \DescribeMacro{\CropSegments}{\color{RoyalBlue}|\CropSegments|}
+% \end{center}
+%
+% \eng*{
+%  \Keyval{|segments|} \\
+%  \Default{|disabled|}}
+% \esp{
+%  \Keyval*{|segments|} \\
+%  \Default{deshabilitado}}
+%
+% \eng{Draws segments as crop marks. Unlike the crosses, there are no cutting marks printed on the internal part of paper, everything is printed on borders outside the printed area.}
+%
+% \esp*{Dibuja segmentos como marcas de corte. A diferencia de las cruces, no hay marcas de corte impresas en la parte interna del papel, todo está impreso en los bordes, fuera del área imprimible.}
+%
+%
+% \subsubsection{Crop lines / Líneas para corte}
+%
+% \begin{center}
+%  \DescribeMacro{\CropLines}{\color{RoyalBlue}|\CropLines|}
+% \end{center}
+%
+% \eng*{
+%  \Keyval{|lines|} \\
+%  \Default{disabled}}
+% \esp{
+%  \Keyval*{|lines|} \\
+%  \Default*{deshabilitado}}
+%
+% \eng{With this option the crop option is drawing lines on all card contours, like a grid. This might be useful also if you want the line as the border of the card, part of the design itself of the card, drawing them thicker and they will be not only cutting guides but frames outlining the cards.}
+%
+% \esp*{Con esta opción, la opción de corte es dibujar líneas como contornos entre todas las tarjetas, como una cuadrícula. Esto pudiera ser util también si usted quisiera la línea como un contorno de la tarjeta, parte del diseño mismo de la tarjeta, dibujándolas más gruesas y serán no solamente guias de corte sino marcos en los contornos de las tarjetas.}
+%
+%
+% \subsubsection{Crop dots / Puntos para corte}
+%
+% \begin{center}
+%  \DescribeMacro{\CropDots}{\color{RoyalBlue}|\CropDots|}
+% \end{center}
+%
+% \eng*{
+%  \Keyval{|dots|} \\
+%  \Default{disabled}}
+% \esp{
+%  \Keyval*{|dots|} \\
+%  \Default*{deshabilitado}}
+%
+% \eng{\noindent Print dots at all cards vertices.}
+%
+% \esp*{\noindent Imprime puntos en todos los vértices de las tarjetas.}
+%
+%
+% \subsubsection{Without cropping marks / Sin marcas para el corte}
+%
+% \begin{center}
+%  \DescribeMacro{\NoCropMarks}{\color{RoyalBlue}|\NoCropMarks|}
+% \end{center}
+%
+% \eng*{
+%  \Keyval{|no marks|} \\
+%  \Default{disabled}}
+% \esp{
+%  \Keyval*{|no marks|} \\
+%  \Default*{deshabilitado}}
+%
+% \eng{\noindent Set no cutting marks at all.}
+%
+% \esp*{\noindent Establece no usar marca alguna de corte.}
+%
+%
+% \subsubsection{Cropping's segment length / Longitud del segmento de corte}
+%
+% \begin{center}
+%  \DescribeMacro{\SegmentLength}{\color{RoyalBlue}|\SegmentLength|\marg{segment length / longitud del segmento}}
+% \end{center}
+%
+% \eng*{
+%  \Keyval{|segment length=|} \\
+%  \Default{|segment length=1mm|}}
+% \esp{
+%  \Keyval*{|segment length=|} \\
+%  \Default*{|segment length=1mm|}}
+%
+% \eng{This macro can be used to change the segment length. Applies when using crosses or external segments as cutting guides.}
+%
+% \esp*{Esta macro puede ser usada para cambiar la longitud del segmento. Aplica cuando se usan cruces o segmentos externos como guias de corte.}
+%
+%
+% \subsubsection{Cropping's line thickness / Grosor de la línea de corte}
+%
+% \begin{center}
+%  \DescribeMacro{\LineThickness}{\color{RoyalBlue}|\LineThickness|\marg{line thickness / grosor de la línea}}
+% \end{center}
+%
+% \eng*{
+%  \Keyval{|line thickness=|} \\
+%  \Default{|line thickness=0.1mm|}}
+% \esp{
+%  \Keyval*{|line thickness=|} \\
+%  \Default*{|line thickness=0.1mm|}}
+%
+% \eng{This is used to change the thickness of the lines used for cutting the paper. Applies when using lines, crosses or segments as cutting guides.}
+%
+% \esp*{Esto se usado para cambiar el grosor de la línea usada para cortar el papel. Aplica cuando se usan lineas, cruces o segmentos como guias de corte.}
+%
+%
+% \subsubsection{Cropping's dot size / Tamaño del punto de corte}
+%
+% \begin{center}
+%  \DescribeMacro{\DotSize}{\color{RoyalBlue}|\DotSize|\marg{dot size / tamaño del punto}}
+% \end{center}
+%
+% \eng*{
+%  \Keyval{|dot size=|} \\
+%  \Default{|dot size=1mm|}}
+% \esp{
+%  \Keyval*{|dot size=|} \\
+%  \Default*{|dot size=1mm|}}
+%
+% \eng{With this, you can alter the diameter of the dots printed on cards vertices as a cutting guide.}
+%
+% \esp*{Con esto usted puede alterar el diámetro del punto impreso en los vértices de las tarjetas como guias de corte.}
+%
+%
+% \subsubsection{Crop color / Color para el corte}
+%
+% \begin{center}
+%  \DescribeMacro{\CropColor}{\color{RoyalBlue}|\CropColor|\marg{color definition / definición del color}}
+% \end{center}
+%
+% \eng*{
+%  \Keyval{|crop color=|} \\
+%  \Default{|crop color=red!90!black| \\ (which means 90\% red and 10\% black.)}}
+% \esp{
+%  \Keyval*{|crop color=|} \\
+%  \Default*{|crop color=red!90!black| \\ (lo que significa 90\% de rojo y 10\% de negro.)}}
+%
+% \eng{You can change the color used for cropping marks; the argument is the color name in the syntax of the |xcolor| package, that is loaded by |elzcards| without options if you don't load it on preamble with options of your preference.}
+%
+% \esp*{Usted puede cambiar el color de las marcas de corte; el argumento es el nombre del color en la sintaxis de |xcolor|, que es agregado por |elzcards| sin opciones si usted no lo carga en el preámbulo con las opciones de su preferencia.}
+%
+%
+% \section{Sample output of a business card / Ejemplo de una tarjeta de presentación}
+%
+% \eng*{In the next page you'll see the first set of business cards of the all-in-one included example whose code is the following\footnote{Realize that we did define our own macro \cs{mycenter} to ease all card adding repetitive process on this example and on all |.tex| examples.}:}
+% \esp*{En la siguiente página usted podrá ver el primer conjunto de tarjetas de presentación del ejemplo todo-en-uno incluído, cuyo código es el siguiente\footnote{Dese cuenta de que nosotros definimos nuestra propia macro \cs{mycenter} para facilitar todo el proceso repetitivo de agregar las tarjetas en este ejemplo y en todos los ejemplos en el |.tex|.}:}
+%
+% \noindent \begin{verbatim}
+% \documentclass{article}
+% \usepackage{elzcards,geometry}
+% \geometry{vmargin={0mm,0mm},hmargin={0mm,0mm}}
+% \newcommand{\mycenter}[1]{\vspace*{2pt}\hspace*{2pt}$\nwarrow$ top left corner\vfill
+%  \begin{center}\LARGE#1\end{center}%
+%  \vfill\hfill bottom right corner $\searrow$\hspace*{2pt}\vspace*{2pt}}
+% \begin{document}
+% \BusinessCard{\mycenter{Business card \\ only front side \\ default options}}
+% \MakeBC
+% \end{document}
+% \end{verbatim}
+%
+% \savegeometry{tempgeo}
+% \newgeometry{vmargin={0mm,0mm},hmargin={0mm,0mm}}
+% \newcommand{\mycenter}[1]{%
+%  \vspace*{2pt}\hspace*{2pt}$\nwarrow$ top left corner\vfill
+%  \begin{center}\LARGE#1\end{center}%
+%  \vfill\hfill bottom right corner $\searrow$\hspace*{2pt}\vspace*{2pt}}
+% \BusinessCard{\mycenter{Business card \\ only front side \\ default options}}
+% \MakeBC
+% \newpage
+% \loadgeometry{tempgeo}
+%
+%
+% \section{Code of the all-in-one example included / Código del ejemplo todo-en-uno incluido}
+%
+% The following example is included as |elzcards-examples.tex|.
+%
+% \StopEventually{\clearpage\PrintIndex\PrintChanges}
+%
+%    \begin{macrocode}
+%<*ejemplo>
+\documentclass{article}
+\usepackage{elzcards}
+\usepackage[landscape,letterpaper,vmargin={0mm,0mm},hmargin={0mm,0mm}]{geometry}
+
+\newcommand{\mycenter}[1]{%
+ \vspace*{2pt}\hspace*{2pt}$\nwarrow$ top left corner\vfill
+ \begin{center}\LARGE#1\end{center}%
+ \vfill\hfill bottom right corner $\searrow$\hspace*{2pt}\vspace*{2pt}}
+
+\begin{document}
+ %% Writing business cards with different options:
+ \BusinessCard{\mycenter{Business card \\ only front side \\ default options}}
+ \MakeBC
+
+ \BusinessCard{\mycenter{Business card \\ front side \\ vertical shaped \\
+  with thicker and longer external segments}}%
+  [\mycenter{Business card \\ back side \\ vertical shaped}]
+ \MakeBC[segments, hsize=2in, vsize=3.5in, line thickness=1pt, segment length=0.5cm]
+
+ \BusinessCard{\mycenter{Business card \\ only front side \\ with dots}}
+ %% Using \MakeBC* to avoid clearing the card from memory:
+ \MakeBC*[dots]
+
+ %% We can issue \MakeBC again because we've used \MakeBC* before:
+ \MakeBC[dots]
+
+ \BusinessCard{\mycenter{Business card \\ only front side \\ with big dots and gaps}}
+ \MakeBC[dots, dot size=4pt, hgap=1.666cm, vgap=0.666cm]
+
+ \BusinessCard{\mycenter{Business card \\ only front side \\ with green lines}}
+ \MakeBC[crop color=green, lines]
+
+ \BusinessCard{\mycenter{Business card \\ only front side \\ with thicker lines}}
+ \MakeBC[lines, line thickness=2pt]
+
+ \BusinessCard{\mycenter{Business card \\ only front side \\ without cropping marks}}
+ \MakeBC[no marks]
+
+ \BusinessCard{\mycenter{Business card \\ front side \\ other size \\ with gaps}}%
+  [\mycenter{Business card \\ back side \\ other size \\ with gaps}]
+ %% We can specify the size also with \BCdim command; this will change the default onwards:
+ \BCdim{74mm}{52mm}
+ \MakeBC[hgap=1.666cm, vgap=0.666cm]
+
+ \BusinessCard{\mycenter{Business card \\ only front side \\ other size \\ auto gap inner}}%
+ \MakeBC[autogap inner]
+
+ %% Autogap total best works if all paper margins are set to zero, so all gaps will be equal.
+ \BusinessCard{\mycenter{Business card \\ only front side \\ other size \\ auto gap total}}%
+ \MakeBC[autogap total]
+
+ %% Writing index/flash cards:
+ \IndexCard{\mycenter{Index/flash card \CurrentIC{} of \TotalIC \\ front side}}%
+  [\mycenter{Index/flash card \CurrentIC{} of \TotalIC \\ back side}]
+ %% Note that not all cards has back side.
+ \IndexCard{\mycenter{Index/flash card \CurrentIC{} of \TotalIC \\ only front side}}
+ \IndexCard{\mycenter{Index/flash card \CurrentIC{} of \TotalIC \\ only front side}}
+ \IndexCard{\mycenter{Index/flash card \CurrentIC{} of \TotalIC \\ front side}}%
+  [\mycenter{Index/flash card \CurrentIC{} of \TotalIC \\ back side}]
+ \IndexCard{\mycenter{Index/flash card \CurrentIC{} of \TotalIC \\ only front side}}
+ \IndexCard{\mycenter{Index/flash card \CurrentIC{} of \TotalIC \\ only front side}}
+ \IndexCard{\mycenter{Index/flash card \CurrentIC{} of \TotalIC \\ only front side}}
+ \IndexCard{\mycenter{Index/flash card \CurrentIC{} of \TotalIC \\ only front side}}
+ %% Now \MakeIC* instead of \MakeIC,
+ %% so we can process the same set of cards again with \MakeIC or \MakeIC*.
+ \MakeIC*
+
+ %% We redefine some default parameters instead of giving options to \MakeIC:
+ \CardGap{0.5cm}{0.5cm}
+ \SegmentLength{10pt}
+ \LineThickness{1pt}
+ \CropColor{orange}
+ \CropSegments
+ %% \MakeIC* again because we did use \MakeIC* before and the cards weren't cleared:
+ %% Now restricting the grid to 3 rows and 3 columns even if 4x4 might fit on the page 
+ \MakeIC*[hsize=2.25in, vsize=1.5in, rows=3, columns=3]
+
+ %% We redefine again some default parameters:
+ \CardGap{0pt}{0pt}
+ \ICdim{4in}{2in}
+ \DotSize{1mm}
+ \CropDots
+ %% Also we can change some other defaults with
+ %% \CropCrosses, \CropLines, \NoCropMarks and \CropColor.
+ %% \AutoGapInner, \AutoGapTotal, \NoAutoGap, \Transverse, \NoTransverse.
+ %% \MakeFC is an alias to \MakeIC:
+ \MakeFC*[hgap=0pt, vgap=0pt]
+ %%
+ %% Different order:
+ \MakeIC*[order=1 5 4 8 6 3 7 2]
+ %%
+ %% Adding four more cards to show the transverse option: 
+ \IndexCard{\mycenter{Index/flash card \CurrentIC{} of \TotalIC \\ only front side}}
+ \IndexCard{\mycenter{Index/flash card \CurrentIC{} of \TotalIC \\ only front side}}
+ \IndexCard{\mycenter{Index/flash card \CurrentIC{} of \TotalIC \\ only front side}}
+ \IndexCard{\mycenter{Index/flash card \CurrentIC{} of \TotalIC \\ only front side}}
+ \MakeIC[rows=2, columns=2, transverse]
+\end{document}
+%</ejemplo>
+%    \end{macrocode}
+%
+%
+% \section{Implementation / Implementación}
+%
+%    \begin{macrocode}
+%<*package>
+\NeedsTeXFormat{LaTeX2e}[1995/12/01]
+\ProvidesPackage{elzcards}[2019/08/16 v1.60 ELZ cards]
+
+\RequirePackage{calc}
+\RequirePackage{xparse}
+\RequirePackage{keyval}
+
+\AtBeginDocument{\@ifpackageloaded{xcolor}{}{\RequirePackage{xcolor}}}
+
+\newcommand{\PKGERROR}[1]{\PackageError{elzcards}{** #1. **}{}}
+\newcommand{\PKGWARNING}[1]{\PackageWarning{elzcards}{** #1. **}{}}
+
+\newif\if@elzc@cruces
+\newif\if@elzc@segmentos
+\newif\if@elzc@puntos
+\newif\if@elzc@lineas
+\newif\if@elzc@sinmarcas
+\newif\if@elzc@autosep
+\newif\if@elzc@autosepinterno
+\newif\if@elzc@autoseptotal
+\newif\if@elzc@columnasfilas
+\newif\if@elzc@fichas
+\newif\if@elzc@inicio
+\newif\if@elzc@orden
+\newif\if@elzc@calculaorden
+\newif\if@elzc@ordentransverso
+\newif\if@elzc@tarjetaconreverso
+\newif\if@elzc@fichaconreverso
+\newif\if@elzc@actualconreverso
+\newif\if@elzc@procesareverso
+
+\newlength{\elzc@TarjXdim}
+\newlength{\elzc@TarjYdim}
+\newlength{\elzc@SeparaX}
+\newlength{\elzc@SeparaY}
+\newlength{\elzc@TempLen}
+\newlength{\elzc@TempUnitLength}
+\newlength{\elzc@DefTPXdim}
+\newlength{\elzc@DefTPYdim}
+\newlength{\elzc@DefFichaXdim}
+\newlength{\elzc@DefFichaYdim}
+\newlength{\elzc@DefSeparaX}
+\newlength{\elzc@DefSeparaY}
+\newlength{\elzc@DefArista}
+\newlength{\elzc@DefPunto}
+\newlength{\elzc@DefLinea}
+
+\newcounter{elzc@TarjXdim}
+\newcounter{elzc@TarjYdim}
+\newcounter{elzc@PapelX}
+\newcounter{elzc@PapelY}
+\newcounter{elzc@MatrizXo}
+\newcounter{elzc@MatrizYo}
+\newcounter{elzc@NumX}
+\newcounter{elzc@NumY}
+\newcounter{elzc@NumXY}
+\newcounter{elzc@NumForzadoX}
+\newcounter{elzc@NumForzadoY}
+\newcounter{elzc@ContX}
+\newcounter{elzc@ContY}
+\newcounter{elzc@PosX}
+\newcounter{elzc@PosY}
+\newcounter{elzc@PosMarcaX}
+\newcounter{elzc@PosMarcaY}
+\newcounter{elzc@SeparaX}
+\newcounter{elzc@SeparaY}
+\newcounter{elzc@Punto}
+\newcounter{elzc@Arista}
+\newcounter{elzc@Fichas}
+\newcounter{elzc@FichasEnOrden}
+\newcounter{elzc@FichaActual}
+\newcounter{elzc@FichaActualOrdenada}
+\newcounter{elzc@ElementosOrden}
+\newcounter{elzc@OrdenCiclo}
+\newcounter{elzc@OrdenResto}
+\newcounter{elzc@OrdenCicloDos}
+\newcounter{elzc@TempNumX}
+\newcounter{elzc@TempNumY}
+\newcounter{elzc@Temp}
+\newcounter{elzc@TempDos}
+
+\def\elzc@aux@cruces{%
+ \@elzc@crucestrue\@elzc@segmentostrue\@elzc@puntosfalse\@elzc@lineasfalse\@elzc@sinmarcasfalse}
+\def\elzc@aux@segmentos{%
+ \@elzc@crucesfalse\@elzc@segmentostrue\@elzc@puntosfalse\@elzc@lineasfalse\@elzc@sinmarcasfalse}
+\def\elzc@aux@puntos{%
+ \@elzc@crucesfalse\@elzc@segmentosfalse\@elzc@puntostrue\@elzc@lineasfalse\@elzc@sinmarcasfalse}
+\def\elzc@aux@lineas{%
+ \@elzc@crucesfalse\@elzc@segmentosfalse\@elzc@puntosfalse\@elzc@lineastrue\@elzc@sinmarcasfalse}
+\def\elzc@aux@sinmarcas{%
+ \@elzc@crucesfalse\@elzc@segmentosfalse\@elzc@puntosfalse\@elzc@lineasfalse\@elzc@sinmarcastrue}
+
+\def\elzc@aux@autosep@interno{%
+ \@elzc@autoseptrue\@elzc@autosepinternotrue\@elzc@autoseptotalfalse}
+\def\elzc@aux@autosep@total{%
+ \@elzc@autoseptrue\@elzc@autosepinternofalse\@elzc@autoseptotaltrue}
+\def\elzc@aux@autosep@ninguno{%
+ \@elzc@autosepfalse\@elzc@autosepinternofalse\@elzc@autoseptotalfalse}
+
+\ExplSyntaxOn
+ \cs_new:Npn \elzc@aux@elementosorden{
+  \seq_set_split:NnV \l_tmpa_seq {~} {\elzc@Orden}
+  \int_set:Nn \c@elzc@ElementosOrden {(\seq_count:N \l_tmpa_seq) -2}}
+
+ \cs_new:Npn \elzc@aux@fichatransversa #1#2{
+  \seq_set_split:NnV \l_tmpa_seq {~} {\elzc@Orden}
+  \tl_set:Nx \l_tmpa_tl {\seq_item:Nn \l_tmpa_seq {#1+1}}
+  \int_set:cn {c@#2} \l_tmpa_tl}
+\ExplSyntaxOff
+
+\define@key{ELZc}{hsize}{\setlength{\elzc@TarjXdim}{#1}}
+\define@key{ELZc}{vsize}{\setlength{\elzc@TarjYdim}{#1}}
+\define@key{ELZc}{columns}{\@elzc@columnasfilastrue\setcounter{elzc@NumForzadoX}{#1}}
+\define@key{ELZc}{rows}{\@elzc@columnasfilastrue\setcounter{elzc@NumForzadoY}{#1}}
+\define@key{ELZc}{hgap}{\elzc@aux@autosep@ninguno\setlength{\elzc@SeparaX}{#1}}
+\define@key{ELZc}{vgap}{\elzc@aux@autosep@ninguno\setlength{\elzc@SeparaY}{#1}}
+\define@key{ELZc}{autogap inner}[true]{\elzc@aux@autosep@interno}
+\define@key{ELZc}{autogap total}[true]{\elzc@aux@autosep@total}
+\define@key{ELZc}{no autogap}[true]{\elzc@aux@autosep@ninguno}
+\define@key{ELZc}{segment length}{
+ \setlength{\elzc@TempLen}{#1}\setcounter{elzc@Arista}{\elzc@TempLen}}
+\define@key{ELZc}{dot size}{\setlength{\elzc@TempLen}{#1}\setcounter{elzc@Punto}{\elzc@TempLen}}
+\define@key{ELZc}{line thickness}{\linethickness{#1}}
+\define@key{ELZc}{crosses}[true]{\elzc@aux@cruces}
+\define@key{ELZc}{segments}[true]{\elzc@aux@segmentos}
+\define@key{ELZc}{dots}[true]{\elzc@aux@puntos}
+\define@key{ELZc}{lines}[true]{\elzc@aux@lineas}
+\define@key{ELZc}{no marks}[true]{\elzc@aux@sinmarcas}
+\define@key{ELZc}{crop color}{\def\elzc@ColorMarcas{#1}}
+\define@key{ELZc}{order}{
+ \if@elzc@ordentransverso
+  \PKGWARNING{Transverse ordering not available when order pattern is given}
+  \@elzc@ordentransversofalse
+ \fi
+ \@elzc@ordentrue\@elzc@calculaordentrue\def\elzc@Orden{ #1 }\elzc@aux@elementosorden}
+\define@key{ELZc}{transverse}[true]{
+ \if@elzc@orden
+  \PKGWARNING{Transverse ordering not available when order pattern is given}
+ \else
+  \@elzc@ordentransversotrue\@elzc@calculaordentrue
+ \fi}
+\define@key{ELZc}{no transverse}[true]{
+ \@elzc@ordentransversofalse
+ \if@elzc@orden\else\@elzc@calculaordenfalse\fi}
+
+\NewDocumentCommand{\CurrentIC}{s}{%
+  \IfBooleanTF{#1}{\arabic{elzc@FichaActual}}{\arabic{elzc@FichaActualOrdenada}}}
+\let\CurrentFC\CurrentIC
+
+\newcommand*{\TotalIC}{\arabic{elzc@Fichas}}
+\let\TotalFC\TotalIC
+
+\newcommand*{\BCdim}[2]{\setlength{\elzc@DefTPXdim}{#1}\setlength{\elzc@DefTPYdim}{#2}}
+\newcommand*{\ICdim}[2]{\setlength{\elzc@DefFichaXdim}{#1}\setlength{\elzc@DefFichaYdim}{#2}}
+\let\FCdim\ICdim
+
+\NewDocumentCommand{\CardGap}{m g}{%
+ \def\elzc@DefAutoSep{\elzc@aux@autosep@ninguno}%
+ \setlength{\elzc@DefSeparaX}{#1}%
+ \IfValueTF{#2}{\setlength{\elzc@DefSeparaY}{#2}}{\setlength{\elzc@DefSeparaY}{#1}}}
+
+\newcommand*{\SegmentLength}[1]{\setlength{\elzc@DefArista}{#1}}
+\newcommand*{\DotSize}[1]{\setlength{\elzc@DefPunto}{#1}}
+\newcommand*{\LineThickness}[1]{\setlength{\elzc@DefLinea}{#1}}
+
+\newcommand*{\CropCrosses}{\def\elzc@DefMarcasCorte{\elzc@aux@cruces}}
+\newcommand*{\CropSegments}{\def\elzc@DefMarcasCorte{\elzc@aux@segmentos}}
+\newcommand*{\CropDots}{\def\elzc@DefMarcasCorte{\elzc@aux@puntos}}
+\newcommand*{\CropLines}{\def\elzc@DefMarcasCorte{\elzc@aux@lineas}}
+\newcommand*{\CropColor}[1]{\def\elzc@DefColorMarcas{#1}}
+\newcommand*{\NoCropMarks}{\def\elzc@DefMarcasCorte{\elzc@aux@sinmarcas}}
+
+\newcommand*{\AutoGapInner}{\def\elzc@DefAutoSep{\elzc@aux@autosep@interno}}
+\newcommand*{\AutoGapTotal}{\def\elzc@DefAutoSep{\elzc@aux@autosep@total}}
+\newcommand*{\NoAutoGap}{\def\elzc@DefAutoSep{\elzc@aux@autosep@ninguno}}
+
+\newcommand*{\Transverse}{%
+ \def\elzc@DefTrasverso{\@elzc@ordentransversotrue\@elzc@calculaordentrue}}
+\newcommand*{\NoTransverse}{%
+ \def\elzc@DefTrasverso{\@elzc@ordentransversofalse\@elzc@calculaordenfalse}}
+
+\NewDocumentCommand{\MakeBC}{s o}{%
+ \ifx\undefined\@elzc@TarjetaAnverso
+  \PKGERROR{There are no business cards defined}%
+ \else
+  \@elzc@fichasfalse
+  \if@elzc@tarjetaconreverso\@elzc@actualconreversotrue\else\@elzc@actualconreversofalse\fi
+  \elzc@Predeterminados
+  \IfValueT{#2}{\setkeys{ELZc}{#2}}%
+  \elzc@CicloCompleto
+  \IfBooleanF{#1}{\elzc@TodoCero}%
+ \fi}
+
+\NewDocumentCommand{\MakeIC}{s o}{%
+ \ifnum \value{elzc@Fichas} = 0%
+  \PKGERROR{There are no index/flash cards in the stack}%
+ \else
+  \@elzc@fichastrue
+  \if@elzc@fichaconreverso\@elzc@actualconreversotrue\else\@elzc@actualconreversofalse\fi
+  \elzc@Predeterminados*
+  \IfValueT{#2}{\setkeys{ELZc}{#2}}%
+  \elzc@CicloCompleto
+  \IfBooleanF{#1}{\elzc@TodoCero*}%
+ \fi}
+\let\MakeFC\MakeIC
+
+\NewDocumentCommand{\BusinessCard}{+m +o}{%
+ \ifx\undefined\@elzc@TarjetaAnverso
+  \def\@elzc@TarjetaAnverso{#1}%
+  \IfValueTF{#2}{%
+   \@elzc@tarjetaconreversotrue
+   \def\@elzc@TarjetaReverso{#2}%
+   \immediate\write\@auxout{\string\@twosidetrue\string\@mparswitchtrue}}
+  {\def\@elzc@TarjetaReverso{}}%
+ \else
+  \PackageError{elzcards}{There are business cards already defined}{}%
+ \fi}
+
+\NewDocumentCommand{\IndexCard}{+m +o}{%
+ \addtocounter{elzc@Fichas}{1}%
+ \expandafter\def\csname @elzc@FichaAnverso\romannumeral\value{elzc@Fichas}\endcsname{#1}%
+ \IfValueTF{#2}{%
+  \@elzc@fichaconreversotrue
+  \expandafter\def\csname @elzc@FichaReverso\romannumeral\value{elzc@Fichas}\endcsname{#2}%
+  \immediate\write\@auxout{\string\@twosidetrue\string\@mparswitchtrue}}
+ {\expandafter\def\csname @elzc@FichaReverso\romannumeral\value{elzc@Fichas}\endcsname{}}}
+\let\FlashCard\IndexCard
+
+\NewDocumentCommand{\elzc@TodoCero}{s}{%
+ \IfBooleanTF{#1}{%
+  \setcounter{elzc@Fichas}{0}%
+  \setcounter{elzc@FichasEnOrden}{0}%
+  \@elzc@fichaconreversofalse}
+ {\let\@elzc@TarjetaAnverso\undefined
+  \let\@elzc@TarjetaReverso\undefined
+  \@elzc@tarjetaconreversofalse}}
+
+\NewDocumentCommand{\elzc@Predeterminados}{s}{%
+ \elzc@DefAutoSep
+ \elzc@DefMarcasCorte
+ \let\elzc@ColorMarcas\elzc@DefColorMarcas
+ \linethickness{\elzc@DefLinea}%
+ \setlength{\elzc@SeparaX}{\elzc@DefSeparaX}%
+ \setlength{\elzc@SeparaY}{\elzc@DefSeparaY}%
+ \setlength{\elzc@TempLen}{\elzc@DefArista}\setcounter{elzc@Arista}{\elzc@TempLen}%
+ \setlength{\elzc@TempLen}{\elzc@DefPunto}\setcounter{elzc@Punto}{\elzc@TempLen}%
+ \IfBooleanTF{#1}
+  {\elzc@DefTrasverso
+   \setlength{\elzc@TarjXdim}{\elzc@DefFichaXdim}\setlength{\elzc@TarjYdim}{\elzc@DefFichaYdim}}%
+  {\setlength{\elzc@TarjXdim}{\elzc@DefTPXdim}\setlength{\elzc@TarjYdim}{\elzc@DefTPYdim}}}
+
+\newcommand*{\elzc@CalculaMatriz}{%
+ \loop \ifnum\value{elzc@TempNumX} < \value{elzc@PapelX}%
+ \advance\value{elzc@TempNumX} by \value{elzc@TarjXdim}{%
+  \addtocounter{elzc@NumX}{1}%
+  \addtocounter{elzc@TempNumX}{\value{elzc@SeparaX}}}%
+ \repeat
+ \loop \ifnum\value{elzc@TempNumY} < \value{elzc@PapelY}%
+ \advance\value{elzc@TempNumY} by \value{elzc@TarjYdim}{%
+  \addtocounter{elzc@NumY}{1}%
+  \addtocounter{elzc@TempNumY}{\value{elzc@SeparaY}}}%
+ \repeat
+ \addtocounter{elzc@TempNumX}{-\value{elzc@SeparaX}}%
+ \addtocounter{elzc@TempNumY}{-\value{elzc@SeparaY}}%
+ \ifnum\value{elzc@TempNumX} > \value{elzc@PapelX}%
+  \addtocounter{elzc@TempNumX}{-\value{elzc@TarjXdim}}%
+  \addtocounter{elzc@NumX}{-1}%
+ \fi
+ \ifnum\value{elzc@TempNumY} > \value{elzc@PapelY}%
+  \addtocounter{elzc@TempNumY}{-\value{elzc@TarjYdim}}%
+  \addtocounter{elzc@NumY}{-1}%
+ \fi
+ \ifnum\value{elzc@NumX} = 0
+  \PKGERROR{No space to print at least one card. Check dimensions}\stop
+ \fi
+ \ifnum\value{elzc@NumY} = 0
+  \PKGERROR{No space to print at least one card. Check dimensions}\stop
+ \fi}
+
+\newcommand*{\elzc@ColumnasFilas}{%
+ \ifnum\value{elzc@NumForzadoX} > \value{elzc@NumX}%
+  \PKGWARNING{No space to print \arabic{elzc@NumForzadoX} columns;
+   printing \arabic{elzc@NumX} columns instead}%
+  \setcounter{elzc@NumForzadoX}{0}%
+ \else
+  \ifnum\value{elzc@NumForzadoX} > 0
+   \addtocounter{elzc@TempNumX}{-\value{elzc@NumX} * \value{elzc@TarjXdim}
+    + \value{elzc@NumForzadoX} * \value{elzc@TarjXdim}}%
+   \setcounter{elzc@NumX}{\arabic{elzc@NumForzadoX}}%
+  \fi
+ \fi
+ \ifnum\value{elzc@NumForzadoY} > \value{elzc@NumY}%
+  \PKGWARNING{No space to print \arabic{elzc@NumForzadoY} rows;
+   printing \arabic{elzc@NumY} rows instead}%
+  \setcounter{elzc@NumForzadoY}{0}%
+ \else
+  \ifnum\value{elzc@NumForzadoY} > 0
+   \addtocounter{elzc@TempNumY}{-\value{elzc@NumY} * \value{elzc@TarjYdim}
+    + \value{elzc@NumForzadoY} * \value{elzc@TarjYdim}}%
+   \setcounter{elzc@NumY}{\arabic{elzc@NumForzadoY}}%
+  \fi
+ \fi}
+
+\newcommand*{\elzc@Cuadricula}{%
+ \setlength{\elzc@TempUnitLength}{\unitlength}%
+ \setlength{\unitlength}{1sp}%
+ \setlength{\parindent}{0pt}%
+ \thispagestyle{empty}%
+ \elzc@Informacion
+ \setcounter{elzc@MatrizXo}{
+  (\value{elzc@PapelX} - \value{elzc@NumX} * (\value{elzc@TarjXdim} + \value{elzc@SeparaX})
+  + \value{elzc@SeparaX}) / 2}%
+ \setcounter{elzc@MatrizYo}
+  {(\value{elzc@PapelY} - \value{elzc@NumY} * (\value{elzc@TarjYdim} + \value{elzc@SeparaY})
+  + \value{elzc@SeparaY}) / 2}%
+ \begin{picture}
+  (\value{elzc@PapelX}, \value{elzc@PapelY})
+  (-\value{elzc@MatrizXo}, -\value{elzc@MatrizYo})%
+  \loop \ifnum\value{elzc@ContY} < \value{elzc@NumY}\advance\value{elzc@ContY} by 1{%
+   \loop \ifnum\value{elzc@ContX} < \value{elzc@NumX}\advance\value{elzc@ContX} by 1{%
+    \if@elzc@procesareverso
+     \setcounter{elzc@PosX}{(\value{elzc@NumX} - \value{elzc@ContX} - 1) * \value{elzc@TarjXdim}
+      + (\value{elzc@NumX} - \value{elzc@ContX} - 1) * \value{elzc@SeparaX}}%
+    \else
+     \setcounter{elzc@PosX}{\value{elzc@ContX} * (\value{elzc@TarjXdim} + \value{elzc@SeparaX})}%
+    \fi
+    \setcounter{elzc@PosY}{\value{elzc@PapelY} -
+     (\value{elzc@ContY} * (\value{elzc@TarjYdim} + \value{elzc@SeparaY}))
+     - \value{elzc@TarjYdim} - 2 * \value{elzc@MatrizYo}}%
+    \ifnum \value{elzc@ContX} < \value{elzc@NumX}%
+     \ifnum \value{elzc@ContY} < \value{elzc@NumY}%
+      \put(\value{elzc@PosX}, \value{elzc@PosY}){%
+       \makebox(\value{elzc@TarjXdim}, \value{elzc@TarjYdim}){%
+        \setlength{\unitlength}{\elzc@TempUnitLength}%
+        \parbox[t][\elzc@TarjYdim]{\elzc@TarjXdim}{%
+         \if@elzc@fichas
+          \ifnum\value{elzc@FichaActual} < \value{elzc@FichasEnOrden}%
+           \addtocounter{elzc@FichaActual}{1}%
+           \if@elzc@calculaorden
+            \elzc@CalculaOrden
+           \else
+            \setcounter{elzc@FichaActualOrdenada}{\value{elzc@FichaActual}}%
+           \fi
+           \if@elzc@procesareverso
+            \expandafter
+             \csname @elzc@FichaReverso\romannumeral\value{elzc@FichaActualOrdenada}\endcsname
+           \else
+            \expandafter
+             \csname @elzc@FichaAnverso\romannumeral\value{elzc@FichaActualOrdenada}\endcsname
+           \fi
+          \fi
+         \else
+          \if@elzc@procesareverso\@elzc@TarjetaReverso\else\@elzc@TarjetaAnverso\fi
+         \fi}}}%
+     \fi
+    \fi
+    \if@elzc@procesareverso\else\elzc@CalculaMarcas\fi
+   }\repeat
+  }\repeat
+ \end{picture}\global\@elzc@iniciofalse}
+
+\newcommand*{\elzc@Inicializa}{%
+ \setcounter{elzc@NumX}{0}%
+ \setcounter{elzc@NumY}{0}%
+ \setcounter{elzc@TempNumX}{0}%
+ \setcounter{elzc@TempNumY}{0}%
+ \if@elzc@inicio
+  \setcounter{elzc@PapelX}{\textwidth}%
+  \setcounter{elzc@PapelY}{\textheight}%
+  \setcounter{elzc@TarjXdim}{\elzc@TarjXdim}%
+  \setcounter{elzc@TarjYdim}{\elzc@TarjYdim}%
+ \fi
+ \if@elzc@autosep
+  \setlength{\elzc@SeparaX}{0pt}\setlength{\elzc@SeparaY}{0pt}%
+ \fi
+ \setcounter{elzc@SeparaX}{\elzc@SeparaX}%
+ \setcounter{elzc@SeparaY}{\elzc@SeparaY}%
+ \elzc@CalculaMatriz
+ \if@elzc@columnasfilas\elzc@ColumnasFilas\fi
+ \if@elzc@autosep
+  \if@elzc@autoseptotal
+   \setcounter{elzc@SeparaX}{
+    (\value{elzc@PapelX} - \value{elzc@TempNumX}) / (\value{elzc@NumX} + 1)}%
+   \setcounter{elzc@SeparaY}{
+    (\value{elzc@PapelY} - \value{elzc@TempNumY}) / (\value{elzc@NumY} + 1)}%
+  \else
+   \ifnum\value{elzc@NumX} > 1
+    \setcounter{elzc@SeparaX}{
+     (\value{elzc@PapelX} - \value{elzc@TempNumX}) / (\value{elzc@NumX} - 1)}%
+   \fi
+   \ifnum\value{elzc@NumY} > 1
+    \setcounter{elzc@SeparaY}{
+     (\value{elzc@PapelY} - \value{elzc@TempNumY}) / (\value{elzc@NumY} - 1)}%
+   \fi
+  \fi
+  \setlength{\elzc@SeparaX}{\value{elzc@SeparaX}sp}%
+  \setlength{\elzc@SeparaY}{\value{elzc@SeparaY}sp}%
+ \fi
+ \setcounter{elzc@NumXY}{\value{elzc@NumX} * \value{elzc@NumY}}%
+ \if@elzc@orden
+  \setcounter{elzc@FichasEnOrden}
+   {\value{elzc@Fichas} / \value{elzc@ElementosOrden} * \value{elzc@ElementosOrden}}
+  \ifnum\value{elzc@FichasEnOrden} < \value{elzc@Fichas}%
+   \addtocounter{elzc@FichasEnOrden}{\value{elzc@ElementosOrden}}%
+  \fi
+ \else
+  \setcounter{elzc@FichasEnOrden}{\value{elzc@Fichas} / \value{elzc@NumXY} * \value{elzc@NumXY}}%
+  \ifnum\value{elzc@FichasEnOrden} < \value{elzc@Fichas}%
+   \addtocounter{elzc@FichasEnOrden}{\value{elzc@NumXY}}%
+  \fi
+ \fi
+ \setcounter{elzc@ContX}{-1}%
+ \setcounter{elzc@ContY}{-1}%
+ \if@elzc@inicio
+  \if@elzc@ordentransverso
+   \elzc@CalculaOrdenTrasverso
+  \else
+   \if@elzc@orden\elzc@VerificaOrden\fi
+  \fi
+ \fi}
+
+\newcommand*{\elzc@CicloCompleto}{%
+ \@elzc@iniciotrue
+ \elzc@Inicializa
+ \if@elzc@fichas
+  \loop\ifnum\value{elzc@FichaActual} < \value{elzc@FichasEnOrden}%
+  {\elzc@CicloPagina}\repeat
+  \setcounter{elzc@FichaActual}{0}%
+  \@elzc@ordenfalse
+  \@elzc@ordentransversofalse
+  \@elzc@calculaordenfalse
+ \else
+  \elzc@CicloPagina
+ \fi
+ \@elzc@columnasfilasfalse
+ \setcounter{elzc@NumForzadoX}{0}%
+ \setcounter{elzc@NumForzadoY}{0}%
+ \clearpage}
+
+\newcommand*{\elzc@CicloPagina}{%
+ {\pagestyle{empty}\cleardoublepage}%
+ \elzc@Cuadricula
+ \if@elzc@actualconreverso
+  \@elzc@procesareversotrue
+  \if@elzc@fichas\addtocounter{elzc@FichaActual}{-\value{elzc@NumXY}}\fi
+  \clearpage
+  \elzc@Cuadricula
+  \@elzc@procesareversofalse
+ \fi}
+
+\newcommand*{\elzc@CalculaOrdenTrasverso}{%
+ \setcounter{elzc@OrdenCiclo}{0}%
+ \setcounter{elzc@OrdenCicloDos}{0}%
+ \if@elzc@fichas
+  \def\elzc@Orden{ }%
+  \setcounter{elzc@Temp}{\value{elzc@Fichas} / \value{elzc@NumXY}}%
+  \setcounter{elzc@TempDos}{\value{elzc@Temp} * \value{elzc@NumXY}}%
+  \ifnum\value{elzc@TempDos} = \value{elzc@Fichas}%
+  \else
+   \addtocounter{elzc@Temp}{1}%
+  \fi
+  \loop \ifnum\value{elzc@OrdenCiclo} < \value{elzc@Temp}%
+  \advance \value{elzc@OrdenCiclo} by 1{%
+   \setcounter{elzc@TempDos}{\value{elzc@OrdenCiclo}}%
+   \addtocounter{elzc@TempDos}{-\value{elzc@Temp}}%
+   \loop \ifnum\value{elzc@OrdenCicloDos} < \value{elzc@NumXY}%
+   \advance \value{elzc@OrdenCicloDos} by 1{%
+    \addtocounter{elzc@TempDos}{\value{elzc@Temp}}%
+    \global\edef\elzc@Orden{\elzc@Orden \arabic{elzc@TempDos} }%
+   }\repeat
+  }\repeat
+  \elzc@aux@elementosorden
+ \else
+  \PKGWARNING{Transverse ordering not available on business cards}%
+  \global\@elzc@ordentransversofalse
+  \global\@elzc@calculaordenfalse
+ \fi}
+
+\newcommand*{\elzc@ErrorEnPatronOrden}{%
+ \PKGWARNING{Ordering pattern incorrectly given. Ignoring it}%
+ \global\@elzc@ordenfalse
+ \global\@elzc@calculaordenfalse}
+
+\newcommand*{\elzc@VerificaOrden}{%
+ \if@elzc@fichas
+  \setcounter{elzc@Temp}{\value{elzc@ElementosOrden} - \value{elzc@ElementosOrden} /
+   \value{elzc@NumXY} * \value{elzc@NumXY}}%
+  \ifnum\value{elzc@Temp} = 0
+  \else
+   \ifnum\value{elzc@Temp} = \value{elzc@Fichas}%
+    \else
+     \ifnum\value{elzc@ElementosOrden} = \value{elzc@Fichas}%
+     \else
+      \elzc@ErrorEnPatronOrden
+     \fi
+    \fi
+  \fi
+  \if@elzc@orden
+   \setcounter{elzc@OrdenCiclo}{0}%
+   \loop \ifnum\value{elzc@OrdenCiclo} < \value{elzc@ElementosOrden}%
+   \advance \value{elzc@OrdenCiclo} by 1{%
+    \setcounter{elzc@OrdenCicloDos}{0}%
+    \loop \ifnum\value{elzc@OrdenCicloDos} < \value{elzc@ElementosOrden}%
+    \advance \value{elzc@OrdenCicloDos} by 1{%
+     \elzc@aux@fichatransversa{\value{elzc@OrdenCicloDos}}{elzc@Temp}%
+     \ifnum\value{elzc@OrdenCiclo} = \value{elzc@Temp}%
+      \setcounter{elzc@OrdenCicloDos}{\value{elzc@ElementosOrden}}%
+     \else
+      \ifnum\value{elzc@OrdenCicloDos} = \value{elzc@ElementosOrden}%
+       \elzc@ErrorEnPatronOrden
+       \setcounter{elzc@OrdenCiclo}{\value{elzc@ElementosOrden}}%
+      \fi
+     \fi
+    }\repeat
+   }\repeat
+  \fi
+ \else
+  \PKGWARNING{Ordering pattern not available on business cards}%
+  \global\@elzc@ordenfalse
+  \global\@elzc@calculaordenfalse
+ \fi}
+
+\newcommand*{\elzc@CalculaOrden}{%
+ \setcounter{elzc@OrdenCiclo}{\value{elzc@FichaActual} / \value{elzc@ElementosOrden}}%
+ \setcounter{elzc@OrdenResto}{\value{elzc@FichaActual} - \value{elzc@FichaActual} /
+  \value{elzc@ElementosOrden} * \value{elzc@ElementosOrden}}%
+ \ifnum\value{elzc@OrdenResto} = 0
+  \addtocounter{elzc@OrdenCiclo}{-1}%
+  \setcounter{elzc@OrdenResto}{\value{elzc@ElementosOrden}}%
+ \fi
+ \elzc@aux@fichatransversa{\value{elzc@OrdenResto}}{elzc@FichaActualOrdenada}%
+ \addtocounter{elzc@FichaActualOrdenada}{\value{elzc@OrdenCiclo} * \value{elzc@ElementosOrden}}}
+
+\newcommand*{\elzc@CalculaMarcas}{%
+ \setcounter{elzc@PosMarcaX}{\value{elzc@PosX}}%
+ \setcounter{elzc@PosMarcaY}{\value{elzc@PosY} + \value{elzc@TarjYdim}}%
+ \ifnum \value{elzc@ContX} = \value{elzc@NumX}%
+ \else
+  \ifnum \value{elzc@ContY} = \value{elzc@NumY}%
+  \else
+   \elzc@DibujaMarcas{\value{elzc@PosMarcaX}}{\value{elzc@PosMarcaY}}%
+  \fi
+ \fi
+ \addtocounter{elzc@PosMarcaX}{-\value{elzc@SeparaX}}%
+ \ifnum \value{elzc@ContX} = 0
+ \else
+  \ifnum \value{elzc@ContY} = \value{elzc@NumY}%
+  \else
+   \elzc@DibujaMarcas{\value{elzc@PosMarcaX}}{\value{elzc@PosMarcaY}}%
+  \fi
+ \fi
+ \addtocounter{elzc@PosMarcaY}{\value{elzc@SeparaY}}%
+ \ifnum \value{elzc@ContX} = 0
+ \else
+  \ifnum \value{elzc@ContY} = 0
+  \else
+   \elzc@DibujaMarcas{\value{elzc@PosMarcaX}}{\value{elzc@PosMarcaY}}%
+  \fi
+ \fi
+ \addtocounter{elzc@PosMarcaX}{\value{elzc@SeparaX}}%
+ \ifnum \value{elzc@ContY} = 0
+ \else
+  \ifnum \value{elzc@ContX} = \value{elzc@NumX}%
+  \else
+   \elzc@DibujaMarcas{\value{elzc@PosMarcaX}}{\value{elzc@PosMarcaY}}%
+  \fi
+ \fi}
+
+\newcommand*{\elzc@DibujaMarcas}[2]{%
+ \ifnum \value{elzc@ContX} = 0
+  \if@elzc@segmentos\put(#1,#2){\color{\elzc@ColorMarcas}\line(-1,0){\value{elzc@Arista}}}\fi
+  \if@elzc@puntos\put(#1,#2){\color{\elzc@ColorMarcas}\circle*{\value{elzc@Punto}}}\fi
+ \else
+  \ifnum \value{elzc@ContX} = \value{elzc@NumX}%
+   \if@elzc@segmentos\put(#1,#2){\color{\elzc@ColorMarcas}\line(2,0){\value{elzc@Arista}}}\fi
+   \if@elzc@puntos\put(#1,#2){\color{\elzc@ColorMarcas}\circle*{\value{elzc@Punto}}}\fi
+  \else
+   \if@elzc@cruces
+    \put(#1,#2){\color{\elzc@ColorMarcas}\line(-1,0){\value{elzc@Arista}}}%
+    \put(#1,#2){\color{\elzc@ColorMarcas}\line(2,0){\value{elzc@Arista}}}%
+   \fi
+   \if@elzc@puntos\put(#1,#2){\color{\elzc@ColorMarcas}\circle*{\value{elzc@Punto}}}\fi
+   \if@elzc@lineas
+    \put(#1,#2){\color{\elzc@ColorMarcas}\line(-1,0){\value{elzc@TarjXdim}}}%
+    \put(#1,#2){\color{\elzc@ColorMarcas}\line(2,0){\value{elzc@TarjXdim}}}%
+   \fi
+  \fi
+ \fi
+ \ifnum \value{elzc@ContY} = 0
+  \if@elzc@segmentos\put(#1,#2){\color{\elzc@ColorMarcas}\line(0,0){\value{elzc@Arista}}}\fi
+  \if@elzc@puntos\put(#1,#2){\color{\elzc@ColorMarcas}\circle*{\value{elzc@Punto}}}\fi
+ \else
+  \ifnum \value{elzc@ContY} = \value{elzc@NumY}%
+   \if@elzc@segmentos\put(#1,#2){\color{\elzc@ColorMarcas}\line(0,-1){\value{elzc@Arista}}}\fi
+   \if@elzc@puntos\put(#1,#2){\color{\elzc@ColorMarcas}\circle*{\value{elzc@Punto}}}\fi
+  \else
+   \if@elzc@cruces
+    \put(#1,#2){\color{\elzc@ColorMarcas}\line(0,0){\value{elzc@Arista}}}%
+    \put(#1,#2){\color{\elzc@ColorMarcas}\line(0,-1){\value{elzc@Arista}}}%
+   \fi
+   \if@elzc@puntos\put(#1,#2){\color{\elzc@ColorMarcas}\circle*{\value{elzc@Punto}}}\fi
+   \if@elzc@lineas
+    \put(#1,#2){\color{\elzc@ColorMarcas}\line(0,0){\value{elzc@TarjYdim}}}%
+    \put(#1,#2){\color{\elzc@ColorMarcas}\line(0,-1){\value{elzc@TarjYdim}}}%
+   \fi
+  \fi
+ \fi}
+
+\newcommand*{\elzc@Informacion}{%
+ \message{^^JProcessing}%
+ \if@elzc@fichas\message{index/flash cards,}\else\message{business cards,}\fi
+ \if@elzc@procesareverso
+  \message{back side,^^J}%
+ \else
+  \if@elzc@actualconreverso\else\message{only}\fi
+  \message{front side,^^J}%
+ \fi
+ \if@elzc@fichas
+  \setcounter{elzc@Temp}{\value{elzc@NumXY} + \value{elzc@FichaActual}}%
+  \addtocounter{elzc@FichaActual}{1}%
+  \message{ current=\arabic{elzc@FichaActual}-\arabic{elzc@Temp}}%
+  \message{of \arabic{elzc@FichasEnOrden},}%
+  \message{total cards=\arabic{elzc@Fichas},}%
+  \if@elzc@calculaorden
+   \if@elzc@ordentransverso \message{transverse order,}\fi
+   \if@elzc@orden \message{reordered,}\fi
+  \fi
+  \addtocounter{elzc@FichaActual}{-1}%
+  \message{^^J}%
+ \fi
+ \message{ per page:
+  \ifnum\value{elzc@NumForzadoX} > 0
+   forced
+  \else
+   \ifnum\value{elzc@NumForzadoY} > 0
+    forced
+   \fi
+  \fi
+  \arabic{elzc@NumXY} (\arabic{elzc@NumX}x\arabic{elzc@NumY}),}%
+ \message{hsize=\the\elzc@TarjXdim, vsize=\the\elzc@TarjYdim,^^J}%
+ \message{ hgap=\the\elzc@SeparaX, vgap=\the\elzc@SeparaY,
+  \if@elzc@autosep
+   \if@elzc@autosepinterno auto gap inner,\fi
+   \if@elzc@autoseptotal auto gap total,\fi
+  \else no auto gap,
+  \fi^^J}%
+ \if@elzc@cruces
+  \message{ with crosses,}%
+  \setlength{\elzc@TempLen}{\value{elzc@Arista}sp}%
+  \message{segment length=\the\elzc@TempLen, line thickness=\the\@wholewidth.^^J}%
+ \else
+  \if@elzc@segmentos
+   \message{ with segments,}%
+   \setlength{\elzc@TempLen}{\value{elzc@Arista}sp}%
+   \message{segment length=\the\elzc@TempLen, line thickness=\the\@wholewidth.^^J}%
+  \fi
+ \fi
+ \if@elzc@puntos
+  \message{ with dots,}%
+  \setlength{\elzc@TempLen}{\value{elzc@Punto}sp}%
+  \message{dot size=\the\elzc@TempLen.^^J}%
+ \fi
+ \if@elzc@lineas
+  \message{ with lines, line thickness=\the\@wholewidth.^^J}%
+ \fi
+ \if@elzc@sinmarcas
+  \message{ without cropping marks.^^J}%
+ \fi}
+
+\setlength{\elzc@DefTPXdim}{3.5in}
+\setlength{\elzc@DefTPYdim}{2in}
+\setlength{\elzc@DefFichaXdim}{5in}
+\setlength{\elzc@DefFichaYdim}{3in}
+\setlength{\elzc@DefSeparaX}{0cm}
+\setlength{\elzc@DefSeparaY}{0cm}
+\setlength{\elzc@DefArista}{1mm}
+\setlength{\elzc@DefPunto}{1pt}
+\setlength{\elzc@DefLinea}{0.1mm}
+\CropColor{red!90!black}
+\CropCrosses
+\NoAutoGap
+\NoTransverse
+
+\InputIfFileExists{\jobname.aux}{}\relax
+
+%</package>
+%    \end{macrocode}
+% \Finale

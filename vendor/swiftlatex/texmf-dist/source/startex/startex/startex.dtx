@@ -1,0 +1,2734 @@
+\def \CodeVersion {1.04}
+\def \CodeDate    {11th March 1999}
+%
+% \iffalse ^^A Comment out driver code, so LaTeX can read this file as it is.
+%
+%<*driver>
+\documentclass{ltxdoc}
+\usepackage{varioref,amssymbols}
+\EnableCrossrefs         
+\RecordChanges
+\CodelineIndex
+\renewcommand{\levelchar}{?}
+
+\title{The \starTeX{} source code}
+\author{Dag Langmyhr\\ Department of Informatics\\
+  University of Oslo\\[3mm]
+  \textsf{dag@ifi.uio.no}}%
+\date{Version \CodeVersion, \CodeDate}
+
+\newcommand{\hex}[1]{\texttt{``#1}}
+\newcommand{\stcs}[1]{\texttt{<#1>}}
+\newcommand{\stenv}[1]{\stcs{#1}\dots\hspace{0.1pt}\stcs{/#1}}
+\newcommand{\ParX}{\texttt{\textit{x}}}
+\newcommand{\ps}{\textsc{Post\-Script}}
+\newcommand{\starTeX}{Star\TeX}
+\newcommand{\xx}{\textit{x}}
+
+\newfont{\StdECR}{ecrm1000}
+\newfont{\CompECR}{tcrm1000}
+
+\begin{document}
+\maketitle
+
+\DoNotIndex{\#,\$,\&,\\,\{,\},\^,\_,\~}
+\DoNotIndex{\active,\advance,\alpha}
+\DoNotIndex{\begingroup,\beta,\bgroup}
+\DoNotIndex{\catcode,\Cdef,\chi,\csname}
+\DoNotIndex{\day,\def,\Delta,\delta,\Df,\dots,\dump}
+\DoNotIndex{\edef,\egroup,\endcsname,\endgraf,\endgroup,\epsilon,\eta}
+\DoNotIndex{\Gamma,\gamma,\gdef,\global}
+\DoNotIndex{\halign,\hangafter,\hangindent,\hbadness,\hbox,\hfil,\hfuzz}
+\DoNotIndex{\hoffset,\hrule,\hsize}
+\DoNotIndex{\iota,\input,\inputlineno}
+\DoNotIndex{\kappa,\kern}
+\DoNotIndex{\Lambda,\lambda,\language,\LaTeX,\leavevmode,\leftskip,\let,\llap}
+\DoNotIndex{\magstep,\magstephalf,\mathcode,\message,\month,\mu}
+\DoNotIndex{\newbox,\newcount,\newdimen,\newif,\newlinechar,\newread}
+\DoNotIndex{\newskip,\newwrite,\next,\Next,\noalign,\nu}
+\DoNotIndex{\obeylines,\obeyspaces,\offinterlineskip,\Omega,\omega}
+\DoNotIndex{\openin,\openout,\over}
+\DoNotIndex{\pageno,\par,\parindent,\parskip,\penalty,\Phi,\phi,\pm,\Pr}
+\DoNotIndex{\Pi,\pi,\Psi,\psi}
+\DoNotIndex{\raggedright,\Re,\relax,\rightskip,\rho,\rlap}
+\DoNotIndex{\setbox,\Sigma,\sigma,\space,\string,\strut,\supereject}
+\DoNotIndex{\tau,\TeX,\the,\Theta,\theta,\time,\times,\TmpA,\TmpB,\tolerance}
+\DoNotIndex{\topinsert}
+\DoNotIndex{\tracingcommands,\tracingmacros,\tracingoutput,\tracingrestores}
+\DoNotIndex{\uccode,\unskip,\Uparrow,\Updownarrow,\uppercase,\Upsilon,\upsilon}
+\DoNotIndex{\varepsilon,\varphi,\varpi,\varrho,\varsigma,\vartheta}
+\DoNotIndex{\vbox,\vdots,\vfill,\voffset,\vrule,\vsize,\vskip}
+\DoNotIndex{\wd}
+\DoNotIndex{\Xi,\xi}
+\DoNotIndex{\year}
+\DoNotIndex{\zeta}
+
+\DeleteShortVerb{\|}\MakeShortVerb{\"}
+\DocInput{startex.dtx}
+\end{document}
+%</driver>
+%
+% \fi
+% 
+% \CheckSum{2563}
+%% \CharacterTable
+%%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%%   Digits        \0\1\2\3\4\5\6\7\8\9
+%%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%%   Dollar        \$     Percent       \%     Ampersand     \&
+%%   Acute accent  \'     Left paren    \(     Right paren   \)
+%%   Asterisk      \*     Plus          \+     Comma         \,
+%%   Minus         \-     Point         \.     Solidus       \/
+%%   Colon         \:     Semicolon     \;     Less than     \<
+%%   Equals        \=     Greater than  \>     Question mark \?
+%%   Commercial at \@     Left bracket  \[     Backslash     \\
+%%   Right bracket \]     Circumflex    \^     Underscore    \_
+%%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%%   Right brace   \}     Tilde         \~}
+%
+% \tableofcontents
+%
+% \RecordChanges
+% \StopEventually{\PrintIndex\PrintChanges}
+%
+% \section{The \starTeX{} format}
+%    \begin{macrocode}
+%<*code>
+%    \end{macrocode}
+% This file contains the documented source code of \starTeX{}, a
+% simplified and more robust \TeX{} format intended for students
+% writing their first report or essay. For more information on
+% \starTeX{}, see the other files accompanying this.
+% 
+% The main guidelines for this implementation are:
+% \begin{itemize}
+% \item \starTeX{} is implemented on top of plain \TeX{}.
+%
+% \item All names defined in the \starTeX{} implementation contain
+%   at least one uppercase letter, like \cs{Cdef} or \cs{NewEnvir}. 
+%   This makes it easier to distinguish
+%   them from \TeX's internal names and the names defined in plain
+%   \TeX{}, nearly all of which consist of lowercase letters only.
+%
+% \item Most \TeX{} macro packages tend to use a rather terse
+% programming style, like
+% \begin{quote}
+% \verb*:\advance\var\@ne:
+% \end{quote}
+% This improves processing speed and reduces storage, but make the
+% code more difficult to read. Since this is a package which aims to
+% be easily understandable and adaptable, I will use a more verbose style:
+% \begin{quote}
+% \verb*:\advance \var by 1:
+% \end{quote}
+% \end{itemize}
+% To avoid possible confusion, \starTeX{} commands will be called
+% \emph{commands} in this document, while \TeX{} commands will be
+% called \emph{macros}.
+%
+% \subsection{States}
+% \begin{macro}{\State}
+% To avoid improper nesting, such as use of \stcs{psfig} within a
+% \stcs{table}, we introduce a global state variable. Its values are
+% given in table~\ref{tab:states}.
+% \begin{table}
+%   \begin{center}
+%     \begin{tabular}{|c|l|}
+%       \hline
+%       \textbf{Value}& \textbf{State}\\
+%       \hline\hline
+%       \texttt{x}& Ordinary body text\\
+%       \texttt{p}& Inside a \stcs{psfig} caption\\
+%       \texttt{t}& Inside a \stcs{table} caption\\
+%       \texttt{r}& Inside a \stcs{table} row\\
+%       \hline
+%     \end{tabular}
+%   \end{center}
+%   \caption{The possible values of \cs{State}}\label{tab:states}
+% \end{table}
+% The initial state is body text:
+%    \begin{macrocode}
+\let \State = x
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{Command handling}
+% \begin{macro}{\Command}
+% \starTeX{} uses the syntax \stcs{\xx} for its commands rather than
+% the usual \cs{\xx}. This is easily implemented by making "<" an
+% active character calling the macro \cs{Command}. The command name is
+% the text between the "<" and a subsequent ">". 
+%
+% \cs{Command} first checks whether the command immediately
+% follows a "<define>" in which case it is being defined;
+% \cs{DefineCmd} handles that. Otherwise, \cs{Command} converts the
+% command name into lowercase and 
+% checks whether it has been defined. If so, it is called;
+% otherwise an error message is produced and the command is ignored.
+%    \begin{macrocode}
+\def \Command #1>{\ifDefining
+    \def \Next {\lowercase{\DefineCmd{#1}}}%
+  \else
+    \lowercase{\expandafter\ifx \csname >#1\endcsname}\relax
+      \Error{Unknown command <#1> ignored.}{}%
+      \let \Next = \relax
+    \else
+      \def \Next {\lowercase{\csname >#1\endcsname}}%
+    \fi
+  \fi \Next }
+%    \end{macrocode}
+% \end{macro}
+% The "<" character must be bound to \cs{Command}:
+%    \begin{macrocode}
+{\catcode `\< = \active  \global\let < = \Command }
+%    \end{macrocode}
+%
+% \subsubsection{Internal form of command names}
+% All \starTeX{} commands are represented by a \TeX{} macro whose name
+% is constructed by \cs{csname}. To avoid confusion with predefined
+% \TeX{} macros, an initial ">"\footnote{The character \texttt{>} was
+% chosen as it cannot possibly occur in a command name.}
+% is inserted; for example, the name of \stcs{h1} is
+% represented by "\csname >h1\endcsname".
+%
+% \begin{macro}{\Cdef}
+% To simplify the declaration of \starTeX{} commands, the macro
+% \cs{Cdef} is defined. It takes two parameters: "#1" is the command name
+% (with no uppercase letters and no angle brackets), and
+% "#2" is the command definition. 
+%    \begin{macrocode}
+\def \Cdef #1#2{\expandafter\gdef \csname >#1\endcsname{#2}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\Ccall}
+% In case we need to call \starTeX{} commands from \TeX{} code, a
+% \cs{Ccall} macro is introduced.
+%    \begin{macrocode}
+\def \Ccall #1{\csname >#1\endcsname}
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{User-defined commands}
+% \begin{macro}{<define>}
+% \begin{macro}{\ifDefining}
+% The implementation of \stcs{define} is a little sneaky; it just sets
+% a flag \cs{ifDefining}. When the following command name is
+% found, the \cs{Command} routine checks the state of the flag and
+% calls \cs{DefineCmd} when the flag is raised.\footnote{This means that
+%   the user can insert text between the \stcs{define} and the command
+%   name, and this will be typeset as normal text. There is a
+%   slight chance that this might confuse some users, but I prefer this
+%   solution to using much more complicated code.}
+%    \begin{macrocode}
+\newif \ifDefining
+\Cdef {define}{\Definingtrue}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\DefineCmd}
+% The command \cs{DefineCmd} is used to define a new user command;
+% "#1" is the new command name (already translated into lowercase) and
+% "#2" is the definition.
+% The main job of \cs{DefineCmd} is to check whether the definition is
+% legal. There are two reasons why it may not be legal:
+% \begin{itemize}
+% \item The definition may be nested, as in
+% \begin{quote}
+%   "<define><comm-1>...<define><comm-2>..."
+% \end{quote}
+%   This is checked using a counter \cs{CallLevel} which is
+%   incremented whenever a user-defined command is called, and
+%   decremented on return; see the definition of \cs{Call} and
+%   \cs{Return} below.
+%
+% \item The command may already be defined.
+% \end{itemize}
+% If the definition is legal, \cs{FetchDef} is called to perform the
+% actual defining.
+%    \begin{macrocode}
+\def \DefineCmd #1{\Definingfalse
+  \ifnum \CallLevel>0
+    \Error{Nested definitions are not allowed;}%
+      {the definition of <#1> is ignored.}\let \Next = \relax
+  \else
+    \expandafter\ifx \csname>#1\endcsname\relax
+      \def \Next {\begingroup \catcode`\^^M = 12 \FetchDef{#1}}%
+    \else
+      \Error{Command <#1> already defined;}{this definition ignored.}%
+      \def \Next {\begingroup \catcode`\^^M = 12 \IgnoreDef{#1}}%
+    \fi
+  \fi \Next }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\FetchDef}
+% \cs{FetchDef} defines the macro by using everything up to the
+% end-of-line mark as the definition. This implies modifying the
+% \cs{catcode} of the end-of-line character ("^^M"). Also note
+% that calls on \cs{Call} and \cs{Return} are inserted into the
+% definition. 
+%    \begin{macrocode}
+\begingroup \catcode`\^^M = 12
+  \gdef \FetchDef #1#2^^M{\expandafter%
+    \gdef\csname>#1\endcsname {\Call #2\Return }\endgroup }%
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\IgnoreDef}
+% I also define \cs{IgnoreDef} which is quite similar to
+% \cs{FetchDef}, but no command is 
+% defined. It is used to ignore the rest of the line in case
+% the user tries an illegal definition.
+%    \begin{macrocode}
+  \gdef \IgnoreDef #1#2^^M{\endgroup }%
+\endgroup
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\CallLevel}
+% Finally, we must declare the user command level counter
+% \cs{CallLevel}: 
+%    \begin{macrocode}
+\newcount \CallLevel
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\Call}
+% \begin{macro}{\Return}
+% We must also define the two commands used for incrementing and
+% decrementing the counter:
+%    \begin{macrocode}
+\def \Call   {\global\advance \CallLevel by  1 }
+\def \Return {\global\advance \CallLevel by -1 }
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \subsubsection{Catcode modifications}
+% \starTeX{} uses only one special character: "<", which must be
+% active. All the other special characters of \TeX{} and \LaTeX{} are
+% assigned suitable \cs{catcode}s turning them into ordinary
+% characters.
+%
+% \begin{macro}{\SpecialCatCodes}
+% \cs{SpecialCatCodes} sets the \cs{catcode}s to the \starTeX{}
+% values: 
+%    \begin{macrocode}
+\def \SpecialCatCodes {%
+  \catcode `\\ = 12  \catcode `\{ = 12  \catcode `\} = 12
+  \catcode `\$ = 12  \catcode `\& = 12  \catcode `\# = 12
+  \catcode `\^ = 12  \catcode `\_ = 12  \catcode `\~ = 12
+  \catcode `\% = 12  \catcode `\< = \active }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\StandardCatCodes}
+% \cs{StandardCatCodes} restores the \cs{catcode}s to their normal
+% values. This is necessary when reading for instance style files.
+%    \begin{macrocode}
+\def \StandardCatCodes {%
+  \catcode `\\ = 0  \catcode `\{ = 1  \catcode `\} = 2
+  \catcode `\$ = 3  \catcode `\& = 4  \catcode `\# = 6
+  \catcode `\^ = 7  \catcode `\_ = 8  \catcode `\~ = \active
+  \catcode `\% = 14 \catcode `\< = 12 }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Environments}
+% A \starTeX{} environment is a piece of text enclosed in a
+% \stcs{\xx}\dots\stcs{/\xx} pair. 
+%
+% \begin{macro}{\NewEnvir}
+% \cs{NewEnvir} is used to start a new environment. It has three
+% parameters: "#1" is the name of the environment, "#2" is
+% the \TeX{} commands used to start the new environment (usually just
+% a \cs{begingroup}), and "#3" is
+% the \TeX{} commands used to terminate the environment (usually just
+% a \cs{endgroup}). 
+%
+% \begin{macro}{\PrevEnv}
+% \begin{macro}{\PrevEnvLine}
+% \begin{macro}{\CurEnv}
+% \begin{macro}{\CurEnvExit}
+% \begin{macro}{\CurEnvLine}
+% \cs{NewEnvir} saves information about the current environment's name
+% (in \cs{CurEnv}), the line on which it starts (in \cs{CurEnvLine}) and
+% which command is used to exit it (in \cs{CurEnvExit}). It also keeps
+% tracks of the outer environment's name (in \cs{PrevEnv}) and start line
+% (in \cs{PrevEnvLine}) for better error reporting and error recovery.
+%    \begin{macrocode}
+\def \NewEnvir #1#2#3{#2\relax
+  \let \PrevEnv = \CurEnv  \PrevEnvLine = \CurEnvLine
+  \def \CurEnv {#1}\def \CurEnvExit {#3}\CurEnvLine = \inputlineno }
+%    \end{macrocode}
+% We need default definitions of \cs{CurEnv} and \cs{CurEnvExit}: 
+%    \begin{macrocode}
+\def \CurEnv {}\def \CurEnvExit {\relax}
+%    \end{macrocode}
+% We also need to declare the two line counters:
+%    \begin{macrocode}
+\newcount \CurEnvLine  \newcount \PrevEnvLine
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% 
+% \begin{macro}{\EndEnvir}
+% \cs{EndEnvir} is used to terminate an environment. It check that the
+% correct environment is terminated, and tries to correct user
+% mistakes. It checks for the following situations:
+% \begin{itemize}
+% \item If the name of the environment to be terminated is the same as
+% that of the current environment, everything is OK, and we can safely
+% leave the current environment.
+%
+% \item If the name of the terminated environment is not the name of
+% the current one, but matches the name of the outer environment,
+% we assume that the user has forgotten a \stcs{/\xx} command.
+% An error message is given, and both the current environment and the
+% outer one are terminated.
+%
+% \item If the name of the terminated environment matches neither the
+% current nor the outer environment, we assume that the user has just
+% misspelled the command. The best thing we can do in this case is to
+% give an error message and ignore the command. If the user had
+% intended to terminate the current environment, we get erroneous
+% processing of the following text, but the situation will normalize
+% when the outer environment is terminated. 
+% \end{itemize}
+%    \begin{macrocode}
+\def \EndEnvir #1{%
+  \ifTextEqual{#1}{\CurEnv}\let \Next = \CurEnvExit
+  \else \EnvirError{#1}\fi
+  \Next }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\EnvirError}
+% \cs{EnvirError} is an auxiliary command giving a proper error
+% message and placing---in \cs{Next}---the best command to recover
+% from the error.
+%    \begin{macrocode}
+\def \EnvirError #1{\ifTextEqual{#1}{\PrevEnv}%
+    \Error{<\CurEnv> on line \the\CurEnvLine\space terminated by
+      </#1>.}{An extra </\CurEnv> has been inserted.}%
+    \def \Next {\CurEnvExit \CurEnvExit }%
+  \else
+    \Error{<\CurEnv> on line \the\CurEnvLine\space terminated by 
+      </#1>.}{The </#1> will be ignored.}%
+    \let \Next = \relax
+  \fi }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{Document styles}
+% \begin{macro}{<style>}
+% The command \stcs{style} is called to read a document style. It
+% calls \cs{ReadStyle} to do the actual work.
+%    \begin{macrocode}
+\Cdef {style}{\IfNextChar{[}{\ReadStyle}%
+  {\Error{No style name given;}{the syntax is: <style>[style name].}}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\ReadStyle}
+% \begin{macro}{\StyleLine}
+% \cs{ReadStyle} reads the style file (with extension
+% \texttt{.stx}) using the standard \TeX{} \cs{catcode}s. Afterwards, the
+% \stcs{style} command is redefined, since \stcs{style} should be
+% called once only. Also, the current line number is saved (in
+% \cs{StyleLine}) in case it is needed later in an error message.
+%    \begin{macrocode}
+\def \ReadStyle [#1]{\IfFileExists{#1.stx}%
+    {\edef \StyleLine {\the\inputlineno}%
+     \Cdef {style}{\Error{Command <style> already used on line 
+                     \StyleLine;}{this use of <style> is ignored.}}%
+     \StandardCatCodes \input #1.stx
+     \SpecialCatCodes }%
+    {\Error{Style file `#1.stx' could not be found;}%
+           {style definition ignored.}}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \subsection{Fonts}
+% \starTeX{} allows the user a limited amount of font selection:
+% \begin{itemize}
+% \item use of \textbf{bold text} using \stcs{b}\dots\stcs{/b},
+% 
+% \item use of \textit{italic text} using \stcs{i}\dots\stcs{/i}, and
+%
+% \item use of \texttt{typewriter text} using \stcs{tt}\dots\stcs{/tt}.
+% \end{itemize}
+% All other font changes, including font size changes, are done by the
+% document style.
+%
+% Since the font change commands mentioned above may be combined,
+% \starTeX{} uses an internal font naming scheme in which a font name
+% consists of five parts, as shown in table\vref{tab:fontname}. For
+% example, the font ``Standard bold roman italic normal-size'' is
+% represented internally as "F-RSBIN".
+%
+% \begin{table}
+%   \begin{center}
+%     \begin{tabular}{|l|l|l|l|l|}
+%       \hline
+%       \textbf{Kind}& \textbf{Alternate}& \textbf{Bold}& 
+%	  \textbf{Italic}& \textbf{Size}\\
+%       \hline\hline
+%       "R" (Roman)& "S" (Standard)& "M" (Medium)& "U" (Upright)&
+%         "X" (Extra large)\\
+%       "T" (Teletype)& "A" (Alternate)& "B" (Bold)& "I" (Italic)&
+%         "L" (Large)\\ 
+%       &&&& "N" (Normal)\\
+%       &&&& "S" (Small)\\
+%       \hline
+%     \end{tabular}
+%   \end{center}
+%   \caption{The five parts of the internal \starTeX{} text font name}
+%   \label{tab:fontname}
+% \end{table}
+%
+% \begin{table}
+%   \begin{center}
+%     \begin{tabular}{|l|l|l|}
+%       \hline
+%       \textbf{Size}& \textbf{Position}& \textbf{Family}\\
+%       \hline\hline
+%       "X" (Extra large)& "N" (Normal)& "0" (Roman math)\\
+%       "L" (Large)& "S" (Script)& "1" (Italic math)\\
+%       "N" (Normal)& "X" (Scriptscript)& "2" (Math symbols)\\
+%       "S" (Small)& & "3" (Large math symbols)\\
+%       & & "4" (Bold math)\\
+%       & & "5" (Extended italic math)\\
+%       & & "6" (AMS symbols B)\\
+%       \hline
+%     \end{tabular}
+%   \end{center}
+%   \caption{The three parts of the internal \starTeX{} math font
+%   name}\label{tab:mathfont}
+% \end{table}
+%
+% \subsubsection{Font definitions}
+% \begin{macro}{\FontDef}
+% The macro \cs{FontDef} is used to define a \starTeX{} font pair. To be
+% more precise, it defines which \TeX{} font specifications to use for
+% each internal \starTeX{} font name. "#1" gives the font kind, "#2"
+% the boldness, "#3" whether the font is italic or not, and "#4" the font
+% size. Two fonts are defined for each
+% internal \starTeX{} name: the standard Cork encoded font (in "#5")
+% and the additional companion font (in "#6"). 
+%    \begin{macrocode}
+\def \FontDef #1#2#3#4#5#6{%
+  \expandafter\def \csname F-#1S#2#3#4\endcsname {#5}%
+  \expandafter\def \csname F-#1A#2#3#4\endcsname {#6}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\MathFontDef}
+% Similarly, \cs{MathFontDef} is used to define a math font. "#1" is
+% the size, "#2" is the family, and "#3"--"#5" are the three fonts to
+% be used as math text font, script font and scriptscript font.
+%    \begin{macrocode}
+\def \MathFontDef #1#2#3#4#5{%
+  \expandafter\def \csname M-#1N#2\endcsname {#3}%
+  \expandafter\def \csname M-#1S#2\endcsname {#4}%
+  \expandafter\def \csname M-#1X#2\endcsname {#5}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Predefined fonts}
+% The following fonts are predefined, which means that they are the
+% fonts the user will get unless the document style dictates
+% otherwise.
+% 
+% The fonts used are the so-called \emph{EC fonts}.
+% Since there are no bold typewriter characters in this set,
+% ordinary typewriter characters are used instead.
+%
+% Also defined are various size dependant values:
+% \begin{description}
+% \item[\cs{LineSkip}\ParX{}] line skip, and 
+%
+% \item[\cs{CodeSkip}\ParX{}] line skip in code listings.
+% \end{description}
+%
+% \paragraph{Normal size fonts}
+% An 11 point (actually 10.95 pt) font is the standard text font.
+% \changes{1.02}{1998/01/12}{Changed from `dc' to `ec' fonts.}
+%    \begin{macrocode}
+\def \XIpt { at 10.95pt}
+\FontDef{R}{M}{U}{N}{ecrm1095}{tcrm1095}  
+\FontDef{R}{M}{I}{N}{ecti1095}{tcti1095}
+\FontDef{R}{B}{U}{N}{ecbx1095}{tcbx1095}
+\FontDef{R}{B}{I}{N}{ecbi1095}{tcbi1095}
+\FontDef{T}{M}{U}{N}{ectt1095}{tctt1095}
+\FontDef{T}{M}{I}{N}{ecit1095}{tcit1095}
+\FontDef{T}{B}{U}{N}{ectt1095}{tctt1095}
+\FontDef{T}{B}{I}{N}{ecit1095}{tcit1095}
+\MathFontDef{N}{0}{cmr10\XIpt}{cmr8}{cmr6}
+\MathFontDef{N}{1}{cmmi10\XIpt}{cmmi8}{cmmi6}
+\MathFontDef{N}{2}{cmsy10\XIpt}{cmsy8}{cmsy6}
+\MathFontDef{N}{3}{cmex10\XIpt}{cmex10\XIpt}{cmex10\XIpt}
+\MathFontDef{N}{4}{cmbx10\XIpt}{cmbx8}{cmbx6}
+\MathFontDef{N}{5}{ecti1095}{ecti0800}{ecti0600}
+\MathFontDef{N}{6}{msbm10\XIpt}{msbm8}{msbm6}
+\def \LineSkipN {12pt}  \def \CodeSkipN {11pt plus 0.0pt minus 0.1pt}
+%    \end{macrocode}
+%
+% \paragraph{Large fonts}
+% The slightly larger characters are 14.4 pt.
+%    \begin{macrocode}
+\def \XIVpt { at 14.4pt}
+\FontDef{R}{M}{U}{L}{ecrm1440}{tcrm1440}  
+\FontDef{R}{M}{I}{L}{ecti1440}{tcti1440}
+\FontDef{R}{B}{U}{L}{ecbx1440}{tcbx1440}
+\FontDef{R}{B}{I}{L}{ecbi1440}{tcbi1440}
+\FontDef{T}{M}{U}{L}{ectt1440}{tctt1440}
+\FontDef{T}{M}{I}{L}{ecit1440}{tcit1440}
+\FontDef{T}{B}{U}{L}{ectt1440}{tctt1440}
+\FontDef{T}{B}{I}{L}{ecit1440}{tcit1440}
+\MathFontDef{L}{0}{cmr12\XIVpt}{cmr10}{cmr8}
+\MathFontDef{L}{1}{cmmi12\XIVpt}{cmmi10}{cmmi8}
+\MathFontDef{L}{2}{cmsy10\XIVpt}{cmsy10}{cmsy8}
+\MathFontDef{L}{3}{cmex10\XIVpt}{cmex10\XIVpt}{cmex10\XIVpt}
+\MathFontDef{L}{4}{cmbx12\XIVpt}{cmbx10}{cmbx8}
+\MathFontDef{L}{5}{ecti1440}{ecti1000}{ecti0800}
+\MathFontDef{L}{6}{msbm10\XIVpt}{msbm10}{msbm8}
+\def \LineSkipL {15pt}
+%    \end{macrocode}
+%
+% \paragraph{The extra large fonts}
+% The largest fonts are 17.28~pt.
+%    \begin{macrocode}
+\def \XVIIpt { at 17.28pt}
+\FontDef{R}{M}{U}{X}{ecrm1728}{tcrm1728}  
+\FontDef{R}{M}{I}{X}{ecti1728}{tcti1728}
+\FontDef{R}{B}{U}{X}{ecbx1728}{tcbx1728}
+\FontDef{R}{B}{I}{X}{ecbi1728}{tcbi1728}
+\FontDef{T}{M}{U}{X}{ectt1728}{tctt1728}
+\FontDef{T}{M}{I}{X}{ecit1728}{tcit1728}
+\FontDef{T}{B}{U}{X}{ectt1728}{tctt1728}
+\FontDef{T}{B}{I}{X}{ecit1728}{tcit1728}
+\MathFontDef{X}{0}{cmr17}{cmr12\XIVpt}{cmr9}
+\MathFontDef{X}{1}{cmmi12\XVIIpt}{cmmi12}{cmmi9}
+\MathFontDef{X}{2}{cmsy10\XVIIpt}{cmsy10 at 12pt}{cmsy9}
+\MathFontDef{X}{3}{cmex10\XVIIpt}{cmex10\XVIIpt}{cmex10\XVIIpt}
+\MathFontDef{X}{4}{cmbx12\XVIIpt}{cmbx12}{cmbx9}
+\MathFontDef{X}{5}{ecti1728}{ecti1200}{ecti0900}
+\MathFontDef{X}{6}{msbm10\XVIIpt}{msbm10 at 12pt}{msbm9}
+\def \LineSkipX {17pt}
+%    \end{macrocode}
+%
+% \paragraph{Small fonts}
+% A smaller font for footnotes and other special text is 10~pt.
+%    \begin{macrocode}
+\FontDef{R}{M}{U}{S}{ecrm1000}{tcrm1000}  
+\FontDef{R}{M}{I}{S}{ecti1000}{tcti1000}
+\FontDef{R}{B}{U}{S}{ecbx1000}{tcbx1000}
+\FontDef{R}{B}{I}{S}{ecbi1000}{tcbi1000}
+\FontDef{T}{M}{U}{S}{ectt1000}{tctt1000}
+\FontDef{T}{M}{I}{S}{ecit1000}{tcit1000}
+\FontDef{T}{B}{U}{S}{ectt1000}{tctt1000}
+\FontDef{T}{B}{I}{S}{ecit1000}{tcit1000}
+\MathFontDef{S}{0}{cmr10}{cmr7}{cmr5}
+\MathFontDef{S}{1}{cmmi10}{cmmi7}{cmmi5}
+\MathFontDef{S}{2}{cmsy10}{cmsy7}{cmsy5}
+\MathFontDef{S}{3}{cmex10}{cmex10}{cmex10}
+\MathFontDef{S}{4}{cmbx10}{cmbx7}{cmbx5}
+\MathFontDef{S}{5}{ecti1000}{ecti0700}{ecti0500}
+\MathFontDef{S}{6}{msbm10}{msbm7}{msbm5}
+\def \LineSkipS {11pt}
+%    \end{macrocode}
+%
+% \subsubsection{Font selection}
+% \begin{macro}{\FontAlt}
+% \begin{macro}{\FontBold}
+% \begin{macro}{\FontItal}
+% \begin{macro}{\FontKind}
+% \begin{macro}{\FontSize}
+% Selecting a \starTeX{} font is a two-step procedure:
+% \begin{enumerate}
+% \item Define \cs{FontKind}, \cs{FontAlt}, \cs{FontBold},
+%   \cs{FontItal} and 
+%   \cs{FontSize} to contain the correct letters, as shown in
+%   table\vref{tab:fontname}. 
+%
+% \item Call \cs{SelectFont}.
+% \end{enumerate}
+% (The reason for this procedure is to avoid loading unused fonts.) 
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\SelectFont}
+% As mentioned, "\SelectFont" selects a font according to the
+% specifications given.
+%    \begin{macrocode}
+\def \SelectFont {%
+  \edef \ThisFont {F-\FontKind\FontAlt\FontBold\FontItal\FontSize}%
+  \font \CurFont = \csname\ThisFont\endcsname \CurFont }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\ResetFont}
+% \cs{ResetFont} provides standard settings for the various \starTeX{}
+% font parameters.
+%    \begin{macrocode}
+\def \ResetFont {%
+  \def \FontKind{R}\def \FontAlt{S}\def \FontBold{M}%
+  \def \FontItal{U}\def \FontSize{N}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\CheckItCorr}
+% \cs{CheckItCorr} is called after every group of italic text. Unless
+% the following character is a low character like `\texttt{.}' or
+% `\texttt{,}', an italic correction command \cs{/} is inserted.
+%    \begin{macrocode}
+\def \CheckItCorr {%
+  \IfNextCharTwo{.}{,}{}{\/}}
+%    \end{macrocode}
+% \end{macro}
+% 
+% \subsubsection{Font size selection}
+% \begin{macro}{\SetSize}
+% \cs{SetSize} is used to set various parameters connected with a size
+% change. It also contains a call on \cs{SelectFont}.
+%    \begin{macrocode}
+\def \SetSize #1{\def \FontSize{#1}\SelectFont
+  \baselineskip = \csname LineSkip#1\endcsname
+  \ParIndent = \StdParIndent }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{\starTeX{} commands for font changes}
+% \begin{macro}{<b>}
+% \begin{macro}{</b>}
+% \begin{macro}{<i>}
+% \begin{macro}{</i>}
+% \begin{macro}{<tt>}
+% \begin{macro}{</tt>}
+% The following commands are used to indicate bold, italic, or
+% typewriter text. 
+%    \begin{macrocode}
+\Cdef {b}{\NewEnvir{b}{\begingroup}{\endgroup}%
+  \def\FontBold{B}\SelectFont}
+\Cdef {/b}{\EndEnvir{b}}
+\Cdef {i}{\NewEnvir{i}{\begingroup}{\endgroup\CheckItCorr}%
+  \def\FontItal{I}\SelectFont}
+\Cdef {/i}{\EndEnvir{i}}
+\Cdef {tt}{\NewEnvir{tt}{\begingroup}{\endgroup}%
+  \def\FontKind{T}\SelectFont}
+\Cdef {/tt}{\EndEnvir{tt}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+
+% \subsection{Body text}
+% A \starTeX{} file is enclosed in a \stenv{body} environment. The main
+% reason for this is to be able to detect the end of the document and
+% terminate properly.\footnote{An \cs{everyeof}
+% command---had it existed---would have made the \stenv{body} environment
+% superfluous, thus removing yet another possible error source. 
+% ($\varepsilon$-\TeX\cite{etex} does provide such a primitive, but
+% I have chosen not to apply it as use of $\varepsilon$-\TeX{} is not
+% yet very widespread.)} It is also used to print an introductory
+% message.
+%
+% \begin{macro}{<body>}
+% \stcs{body} just redefines itself to produce an error message if
+% used a second time; this is to ensure that it is only used once.
+%    \begin{macrocode}
+\Cdef {body}{\NewEnvir{body}{\begingroup}{\endgroup}%
+  \message{^^JThis is StarTeX, version \CodeVersion^^J}%
+  \global\everypar = {\NewPar }%
+  \xdef \BodyLine {\the\inputlineno}%
+  \Cdef {body}{\Error{Command <body> already used on line \BodyLine;}%
+    {this use of <body> was ignored.}}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\BodyError}
+% If the user has forgotten the \stenv{body} environment, the first
+% text paragraph will trigger the \cs{BodyError} macro.
+%    \begin{macrocode}
+\def \BodyError {\message{^^JThis is StarTeX, version \CodeVersion^^J}%
+  \Error{A <body>...</body> environment should surround
+    the whole document.}{A missing <body> was inserted.}%
+  \global\everypar = {\NewPar }}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{</body>}
+% \stcs{/body} is used to terminate the document. This involves two things:
+% \begin{enumerate}
+% \item the current page must be terminated, and
+%
+% \item the \texttt{.aux} file must be check to determine whether any
+%   references have changed.
+%   The \texttt{.aux} file must be checked if both
+%   \begin{itemize}
+%   \item an \texttt{.aux} file has been read (\cs{ifAuxRead} is true),
+%     and 
+%
+%   \item a new \texttt{.aux} file has been created (\cs{ifAuxOpen} is
+%     true). 
+%   \end{itemize}
+%   If we already know that a rerun is necessary (because \cs{ifRerun}
+%   is true), there is no need to check the \texttt{.aux} file.
+% \end{enumerate}
+%    \begin{macrocode}
+\Cdef {/body}{\EndEnvir{body}\endgraf\vfill\supereject
+  \let \Next = \CheckAux
+  \ifRerun \let \Next = \relax \fi
+  \ifAuxRead \else \let \Next = \relax \fi
+  \ifAuxOpen \else \let \Next = \relax \fi
+  \Next
+%    \end{macrocode}
+% Give a warning if rerunning \starTeX{} is necessary.
+%    \begin{macrocode}
+  \ifRerun \Warning{Cross-references are not correct;}%
+    {please run StarTeX again.}\fi
+%    \end{macrocode}
+% And now, we can finally terminate the run.
+%    \begin{macrocode}
+  \end}
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Paragraph breaking}
+% \begin{macro}{<p>}
+% The \starTeX{} command \stcs{p} is used to separate paragraphs:
+%    \begin{macrocode}
+\Cdef {p}{\endgraf}
+%    \end{macrocode}
+% \end{macro}
+% Blank lines are just ignored:
+%    \begin{macrocode}
+\def \par {}
+%    \end{macrocode}
+% \starTeX{} uses parameters which allow rather sloppy paragraph
+% setting: 
+%    \begin{macrocode}
+\pretolerance = 2500 \tolerance = 9999  \hbadness = 10000
+\emergencystretch = 3cm
+%    \end{macrocode}
+% The reasons for this are:
+% \begin{itemize}
+% \item If a good set of breaks is possible, \TeX{} will still choose
+%   that. 
+%
+% \item If no good breaks are possible, it is better to have a sloppily
+%   set paragraph than problem lines sticking into the margin. The
+%   potential users of \starTeX{} tend to just ignore messages about
+%   overfull boxes.
+% \end{itemize}
+% Note, however, that \cs{hfuzz} has not been increased, as such a
+% change is immediately visible and gives a poor impression.
+%
+% \subsubsection{Paragraph indentation}
+% The paragraph handling mechanism must be able to let some paragraphs
+% be indented and others not; for instance, the first paragraph
+% following a title should not be indented, while the subsequent
+% ones should be.
+%
+% In \starTeX{} this is solved by disabling the original
+% \cs{parindent} and instead insert a call on \cs{NewPar} at
+% the start of every paragraph. However, \cs{everypar} is initialized
+% to \cs{BodyError} to detect a missing \stenv{body} environment; the
+% \stcs{body} command will set \cs{everypar} correctly.
+%    \begin{macrocode}
+\parindent = 0pt \everypar = {\BodyError }
+%    \end{macrocode}
+% \begin{macro}{\NewPar}
+% This \cs{NewPar} inserts an indentation \cs{ParIndent} wide if
+% \cs{ifIndent} is true.\footnote{We cannot use the standard
+% \cs{parindent} to this, as that is inserted when the
+% paragraph is started, in other words before \cs{NewPar} is
+% called.} It also sets \cs{ifIndent} to true, ensuring the
+% indentation of subsequent paragraphs. \cs{NewPar} sets \cs{parskip}
+% to its standard current value \cs{CurParSkip}.
+%    \begin{macrocode}
+\def \NewPar {\ifIndent \kern \ParIndent \fi  \Indenttrue 
+  \global\parskip = \CurParSkip }
+%    \end{macrocode}
+% \end{macro}
+% (In some environments, like \stenv{list}, no paragraphs are
+% indented. By setting \cs{ParIndent} to 0~pt, the whole paragraph
+% indentation mechanism is disabled.)
+%
+% \begin{macro}{\ParIndent}
+% \begin{macro}{\ifIndent}
+% \begin{macro}{\StdParIndent}
+% We must declare \cs{ParIndent} and \cs{ifIndent}, and also
+% \cs{StdParIndent} which holds the value to which \cs{ParIndent} is
+% set when it is not 0:
+%    \begin{macrocode}
+\newskip \ParIndent  \def \StdParIndent {1em}
+\newif \ifIndent
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+%
+% \subsubsection{Paragraph separation}
+% Sometimes it is necessary to omit the paragraph
+% separation (the vertical space inserted between every paragraph),
+% for instance after having inserted some special vertical space. This
+% is done by setting \cs{parskip} to 0~pt. The following paragraph
+% will reset this to \cs{CurParSkip} so that subsequent paragraphs
+% will have the standard separation; see the definition of \cs{NewPar}
+% above. 
+%
+% \begin{macro}{\CurParSkip}
+% \cs{CurParSkip} must be defined:
+%    \begin{macrocode}
+\newskip \CurParSkip
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\AddVspace}
+% Several insertions of vertical space (with \cs{vskip}) should not
+% just accumulate; this will lead to excessive vertical spacing.
+% Instead, \cs{AddVspace} should be used; it inserts the maximum of
+% the last space (if any) and the current one, and it also sets
+% \cs{parskip} to 0~pt so that the automatic paragraph separation will
+% not interfere.
+%    \begin{macrocode}
+\def \AddVspace #1{\ifvmode \else \endgraf \fi
+  \skip1 = #1\relax
+  \ifdim \lastskip < \skip1 \relax
+    \ifdim \lastskip > 0pt \vskip -\lastskip \fi
+    \vskip \skip1
+  \fi \parskip = 0pt \relax }
+%    \end{macrocode}
+% \end{macro}
+% 
+% \subsubsection{The document head}
+% This section implements the various commands used at the start of
+% the document.
+%
+% \begin{macro}{<title>}
+% \begin{macro}{</title>}
+% \stenv{title} is used to set the document title. It is centered, and
+% uses the biggest fonts available.
+%    \begin{macrocode}
+\Cdef {title}{\AddVspace{30pt plus 10pt}
+  \NewEnvir{title}{\begingroup}{\endgraf\endgroup}
+  \leftskip = 2cm plus 1fill  \rightskip = \leftskip
+  \ParIndent = 0pt  \CurParSkip = 0pt  
+  \ResetFont \SetSize{X}}
+\Cdef {/title}{\EndEnvir{title}%
+  \AddVspace{20pt plus 4pt}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \begin{macro}{<author>}
+% \begin{macro}{</author>}
+% \stenv{author} is used for the author's name. It is set like
+% \stenv{title}, but uses a smaller font.
+%    \begin{macrocode}
+\Cdef {author}{\AddVspace{10pt plus 3pt}
+  \NewEnvir{author}{\begingroup}{\endgraf\endgroup}
+  \leftskip = 2cm plus 1fill  \rightskip = \leftskip
+  \ParIndent = 0pt  \CurParSkip = 0pt
+  \ResetFont \SetSize{L}}
+\Cdef {/author}{\EndEnvir{author}%
+  \AddVspace{20pt plus 4pt}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \begin{macro}{<info>}
+% \begin{macro}{</info>}
+% \stenv{info} is used for additional information, like the date. It
+% is centered, but uses the normal text font.
+%    \begin{macrocode}
+\Cdef {info}{\AddVspace{10pt plus 3pt}
+  \NewEnvir{info}{\begingroup}{\endgraf\endgroup}
+  \leftskip = 2cm plus 1fill  \rightskip = \leftskip
+  \ParIndent = 0pt  \CurParSkip = 0pt
+  \ResetFont \SetSize{N}}
+\Cdef {/info}{\EndEnvir{info}%
+  \AddVspace{20pt plus 4pt}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \begin{macro}{<abstract>}
+% \begin{macro}{</abstract>}
+% \stenv{abstract} is used for the short abstract usually given with
+% each document. It is set with indented margins, and the type is
+% smaller than the text type. The word `Abstract' is set in boldface.
+%    \begin{macrocode}
+\Cdef {abstract}{\AddVspace{10pt plus 3pt}
+  \NewEnvir{abstract}{\begingroup}{\endgraf\endgroup}
+  \ResetFont \def \FontBold{B} \SetSize{S}  \CurParSkip = 0pt  
+  \leftskip = 2cm  \rightskip = \leftskip  \Indentfalse
+  \centerline{\AbstractName}
+  \ResetFont \SetSize{S}\Indentfalse }
+\Cdef {/abstract}{\EndEnvir{abstract}%
+  \AddVspace{10pt plus 2pt}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \subsubsection{Sectioning commands}
+% To keep track of the section numbers, we need four counters:
+%    \begin{macrocode}
+\newcount \SectI    \newcount \SectII
+\newcount \SectIII  \newcount \SectIV
+%    \end{macrocode}
+% \begin{macro}{\Heading}
+% Since most of the work of a sectioning command is the same
+% irrespective of its level, the common code has been place in
+% \cs{Heading} which has four parameters: "#1" is the vertical space
+% before the section, "#2" is the font size (\texttt{N}, \texttt{L} or
+% \texttt{X}), "#3" tells whether to use bold type or not (\texttt{B}
+% or \texttt{M}), and "#4" is the \TeX{} command to produce the
+% section number. 
+%    \begin{macrocode}
+\def \Heading #1#2#3#4{\AddVspace{#1}
+  \def \FontBold {#3} \SetSize{#2}
+  \setbox0 = \hbox{#4\kern 0.5\baselineskip}
+  \hangindent = \wd0  \hangafter = 1  \raggedright
+  \ParIndent = 0pt  \CurParSkip = 0pt  \leavevmode  \box0 }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{<h1>}
+% \stcs{H1} must update the counters and add vertical space. The rest
+% of the work is done by \cs{Heading}.
+%    \begin{macrocode}
+\Cdef {h1}{\endgraf
+  \global\advance \SectI by 1 
+  \global\SectII = 0  \global\SectIII = 0  \global\SectIV = 0
+  \edef \CurDef {\SectIim}
+  \NewEnvir{h1}{\begingroup}{\endgroup}
+  \Heading{24pt plus 12pt minus 3pt}{X}{B}{\SectIim}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{</h1>}
+% \stcs{/H1} terminates the heading. It adds some vertical space
+% (protcted with a top \cs{penalty} so that a page break will never
+% occur) and sets \cs{Indentfalse} to prevent indentation of the
+% following line.
+%    \begin{macrocode}
+\Cdef {/h1}{\endgraf
+  \nobreak\vskip 6pt plus 1.5pt
+  \EndEnvir{h1}  \Indentfalse }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{<h2>}
+% \begin{macro}{</h2>}
+% \stcs{H2} and \stcs{/h2} work more or less like \stcs{h1} and
+% \stcs{/h1}: 
+%    \begin{macrocode}
+\Cdef {h2}{\endgraf
+  \global\advance \SectII by 1
+  \global\SectIII = 0  \global\SectIV = 0
+  \edef \CurDef {\SectIIim}
+  \NewEnvir{h2}{\begingroup}{\endgroup}
+  \Heading{14pt plus 7pt minus 2pt}{L}{B}{\SectIIim}}
+\Cdef {/h2}{\endgraf
+  \nobreak\vskip 4pt plus 1pt
+  \EndEnvir{h2}\Indentfalse }
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \begin{macro}{<h3>}
+% \begin{macro}{</h3>}
+% \stcs{H3} and \stcs{/h3} work more or less like the two preceding
+% ones: 
+%    \begin{macrocode}
+\Cdef {h3}{\endgraf
+  \global\advance \SectIII by 1  \global\SectIV = 0
+  \edef \CurDef {\SectIIIim}
+  \NewEnvir{h3}{\begingroup}{\endgroup}
+  \Heading{10pt plus 5pt minus 1pt}{N}{B}{\SectIIIim}}
+\Cdef {/h3}{\endgraf
+  \nobreak\vskip 2pt plus 1pt
+  \EndEnvir{h3}\Indentfalse }
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \begin{macro}{<h4>}
+% \begin{macro}{</h4>}
+% \stcs{H4} and \stcs{/h4} are slightly different from the previous
+% ones in that they use a run-in title (the text continues on the same
+% line as the title): 
+%    \begin{macrocode}
+\Cdef {h4}{\AddVspace{8pt plus 4pt minus 1pt}
+  \global\advance \SectIV by 1
+  \edef \CurDef {\SectIVim}
+  \NewEnvir{h4}{\begingroup}{\endgroup}
+  \def \FontBold{B}\SelectFont \Indentfalse \SectIVim }
+\Cdef {/h4}{\kern 0.5\baselineskip
+  \EndEnvir{h4}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \subsubsection{Lists}
+% \begin{macro}{<list>}
+% \begin{macro}{</list>}
+% The \stenv{list} environment increases the left margin and sets the
+% item counter to 0; everything
+% else is handled by the various kinds of \cs{item}.
+%    \begin{macrocode}
+\Cdef {list}{\AddVspace{\ListSkip}
+  \NewEnvir{list}{\begingroup}{\endgroup}
+  \advance \leftskip by \ListIndent
+  \Indentfalse  \CurParSkip = \ListSkip  \ParIndent = 0pt
+  \ItemCount = 0 }
+\Cdef {/list}{\endgraf
+  \EndEnvir{list}  \Indentfalse }
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{<item>}
+% \stcs{item} inserts a bulleted item.
+%    \begin{macrocode}
+\Cdef {item}{\endgraf  \Indentfalse
+  \leavevmode\llap{\BulletItemFormat}\ignorespaces }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{<numitem>}
+% \stcs{numitem} gives a numbered item.
+%    \begin{macrocode}
+\Cdef {numitem}{\endgraf
+  \advance \ItemCount by 1  \edef \CurDef {\the\ItemCount}
+  \Indentfalse
+  \leavevmode\llap{\NumItemFormat{\ItemCount}}\ignorespaces }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\ItemCount}
+% The item counter \cs{ItemCount} must also be declared:
+%    \begin{macrocode}
+\newcount \ItemCount
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{<textitem>}
+% \begin{macro}{</textitem>}
+% The \stenv{textitem} environment starts another item with a bold
+% text. 
+%    \begin{macrocode}
+\Cdef {textitem}{\endgraf
+  \NewEnvir{textitem}{\begingroup}{\endgroup}
+  \def \FontBold {B}\SelectFont \leavevmode \kern -\ListIndent
+  \ignorespaces }
+\Cdef {/textitem}{\unskip
+  \EndEnvir{textitem}%
+  \hskip 1em  \ignorespaces }
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \subsubsection{Displays}
+% \begin{macro}{<display>}
+% \begin{macro}{</display>}
+% A \stenv{display} environment is implemented by increasing both
+% margins. 
+%    \begin{macrocode}
+\Cdef {display}{\AddVspace{\DisplayPreSkip}
+  \NewEnvir{display}{\begingroup}{\endgroup}%
+  \advance \leftskip  by \DisplayIndent
+  \advance \rightskip by \DisplayIndent
+  \CurParSkip = \DisplayParSkip \ParIndent = 0pt \relax }
+\Cdef {/display}{\AddVspace{\DisplayPostSkip}
+  \EndEnvir{display}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \subsubsection{Code}
+% Handling code like computer programs is quite easy. It involves
+% \begin{itemize}
+% \item changing "<"'s \cs{catcode} into that of an ordinary
+% character,
+%
+% \item making space and end-of-lines into active characters with a
+% suitable definition, and
+%
+% \item selecting a fixed-width font and a suitable leading.
+% \end{itemize}
+% It is necessary to remember whether the code followed a "<p>".
+% If so, some vertical space will be added before and after the code.
+%    \begin{macrocode}
+\newif \ifCodePar
+%    \end{macrocode}
+% \begin{macro}{\CodeSetup}
+% All the initialization is handled by the \cs{CodeSetup} macro:
+%    \begin{macrocode}
+\def \CodeSetup {\ifvmode \CodePartrue \AddVspace{\DisplayPreSkip}
+    \else \CodeParfalse \fi
+  \def\FontKind{T}\SelectFont
+  \baselineskip = \CodeSkipN  \CurParSkip = 0pt  \ParIndent = 0pt
+  \catcode`\< = 12  \frenchspacing   \obeylines  \obeyspaces }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\obeylines}
+% Plain \TeX's definition of \cs{obeylines} must be redefined since
+% \cs{par} has been changed:
+%    \begin{macrocode}
+\begingroup
+  \catcode`\^^M = \active %
+  \gdef\obeylines{\catcode`\^^M=\active \def^^M{\endgraf\leavevmode}}%
+\endgroup
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\obeyspaces}
+% The appearance of a space when \cs{obeyspaces} is
+% in effect must also be modified. By inserting a \cs{leavevmode}, we
+% will not lose spaces at the beginning of a line.
+%    \begin{macrocode}
+\begingroup
+  \obeyspaces\gdef {\leavevmode\space}%
+\endgroup
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\CodeFinish}
+% After the code, \cs{CodeFinish} is called to terminate the mode.
+% It adds the needed vertical space.
+%    \begin{macrocode}
+\def \CodeFinish {\ifCodePar 
+    \def \Next {\endgraf  \vskip -\baselineskip  \vskip \DisplayPostSkip
+      \global\Indentfalse }%
+  \else
+    \let \Next = \relax 
+  \fi \Next }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{<code>}
+% Time has come to write the user interface. The \stenv{code}
+% environment reads the code as parameter to the command \cs{ReadCode}.
+%    \begin{macrocode}
+\Cdef {code}{\NewEnvir{code}{\begingroup}{\endgroup}%
+  \CodeSetup \ReadCode }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\ReadCode}
+% \begin{macro}{</code>}
+% \cs{ReadCode} just inserts the code (which is parameter "#1")
+% and terminates the environment.
+%    \begin{macrocode}
+\begingroup
+  \catcode `\< = 12
+  \gdef \ReadCode #1</code>{#1\CodeFinish\EndEnvir{code}}%
+\endgroup
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \begin{macro}{<codefile>}
+% \stcs{codefile} checks for correct syntax. If the file name is given
+% properly, \cs{ReadCodeFile} is called to perform the actual reading.
+%    \begin{macrocode}
+\Cdef {codefile}{\IfNextChar{[}%
+    {\ReadCodeFile}%
+    {\Error{No code file name given;}%
+      {the syntax is <codefile>[file name].}}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\ReadCodeFile}
+% \cs{ReadCodeFile} just reads the specified file
+%    \begin{macrocode}
+\def \ReadCodeFile [#1]{\endgraf \begingroup 
+  \CodeSetup 
+  \IfFileExists{#1}{\input #1}%
+    {\Error{Code file `#1' cound not be found.}{}}
+  \CodeFinish \endgroup }
+%    \end{macrocode}
+% \end{macro}
+% 
+% \subsubsection{Footnotes}
+% \begin{macro}{<footnote>}
+% \begin{macro}{</footnote>}
+% Implementing footnotes is easy, as the mechanism is ready in plain
+% \TeX\@. 
+%    \begin{macrocode}
+\Cdef {footnote}{\NewEnvir{footnote}%
+    {\global\advance \FootnoteCnt by 1
+    \footnote{\FootnoteIm{\FootnoteCnt}}\bgroup
+      \edef \CurDef {\the\FootnoteCnt}}%
+    {\egroup}%
+  \ResetFont \SetSize{S}}
+\Cdef {/footnote}{\EndEnvir{footnote}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \begin{macro}{\FootnoteCnt}
+% We must remember to declare the footnote counter:
+%    \begin{macrocode}
+\newcount \FootnoteCnt
+%    \end{macrocode}
+% \end{macro}
+% 
+% \subsubsection{Page headers and footers}
+% By default, \starTeX{} has the same headers and footer as \TeX\@.
+% The footer must, however, be redefined so that it always uses the
+% same font as the body text.
+%    \begin{macrocode}
+\footline = {\ResetFont\SelectFont \hfil \folio \hfil}
+%    \end{macrocode}
+%
+% \subsection{Customization}
+% This section contains definitions that are likely to be changed in
+% local adaptions.
+%
+% \subsubsection{Sizes}
+% \begin{macro}{\DisplayIndent}
+% \begin{macro}{\DisplayParSkip}
+% \begin{macro}{\DisplayPostSkip}
+% \begin{macro}{\DisplayPreskip}
+% The following four sizes determine the appearance of displays. 
+%    \begin{macrocode}
+\def \DisplayIndent    {\ListIndent}
+\def \DisplayParSkip   {\ListParSkip}
+\def \DisplayPostSkip  {5pt plus 2pt minus 1pt\relax}
+\def \DisplayPreSkip   {5pt plus 2pt minus 1pt\relax}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\ListIndent}
+% \begin{macro}{\ListParSkip}
+% \begin{macro}{\ListSkip}
+% The next three are used when setting lists.
+%    \begin{macrocode}
+\def \ListIndent       {25pt\relax}
+\def \ListParSkip      {\ListSkip}
+\def \ListSkip         {10pt plus 2pt minus 1pt\relax}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% 
+% \subsubsection{Formats}
+% \begin{macro}{\SectIim}
+% \begin{macro}{\SectIIim}
+% \begin{macro}{\SectIIIim}
+% \begin{macro}{\SectIVim}
+% \cs{SetcIim}, \cs{SectIIim}, \cs{SectIIIim} and \cs{SectIVim} define
+% what the section number at various levels should look
+% like.
+%    \begin{macrocode}
+\def \SectIim {\the\SectI}
+\def \SectIIim {\SectIim.\the\SectII}
+\def \SectIIIim {\SectIIim.\the\SectIII}
+\def \SectIVim {\SectIIIim.\the\SectIV}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\FootnoteIm}
+% \cs{FootnoteIm} defines the appearance of the footnote mark; "#1" is
+% the footnote number.
+%    \begin{macrocode}
+\def \FootnoteIm #1{$^{\the #1}$}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\FigIm}
+% \begin{macro}{\TabIm}
+% \cs{FigIm} and \cs{TabIm} define the appearance of the figure and
+% table counters, respectively.
+%    \begin{macrocode}
+\def \FigIm {\the\FigCnt}
+\def \TabIm {\the\TabCnt}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\BulletItemFormat}
+% \begin{macro}{\NumItemFormat}
+% The two commands \cs{BulletItemFormat} and \cs{NumItemFormat} define
+% the appearance of the marks used by \stcs{item} and \stcs{numitem},
+% respectively. 
+%    \begin{macrocode}
+\def \BulletItemFormat {$\bullet$\kern 6pt\relax}
+\def \NumItemFormat  #1{\the#1.\kern 4pt\relax}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \subsubsection{Character set}
+% This version of \starTeX{} uses \textsc{iso}~8859-1 as its standard
+% character set. (Users of other character sets will have to modify
+% this.) 
+%
+% \begin{macro}{\E}
+% \cs{E} is used to redefine the encoding of a character; this is
+% done by making the character active. "#1" is the character's number,
+% and "#2" is the \TeX{} code to which it is to be defined.
+% The implementation of \cs{E} uses the standard technique of
+% defining a \cs{uccode} and then calling \cs{uppercase} to
+% insert the correct character where it is defined.)
+%    \begin{macrocode}
+\def \E #1#2{\catcode#1 = \active 
+  \begingroup \uccode`\~ = #1\uppercase{\endgroup \def ~{#2}}}
+%    \end{macrocode}
+% \end{macro}
+% There are five different kinds of reencoding:
+% \begin{itemize}
+% \item Some characters are reencoded to a different character in the
+%   same font using the \cs{char} primitive; examples are
+%   161~({\StdECR \symbol{189}}) and 163~({\StdECR \symbol{191}}).
+% \end{itemize}
+%    \begin{macrocode}
+\E{161}{\char189 } \E{163}{\char191 } \E{167}{\char159 }
+\E{171}{\char19 }  \E{184}{\char11 }  \E{187}{\char20 }
+\E{191}{\char190 } \E{223}{\char255 } \E{255}{\char184 }
+%    \end{macrocode}
+%
+% \begin{macro}{\CC}
+% \begin{itemize}
+% \item Other characters can be found in the \emph{Companion font},
+%   known to \starTeX{} as the Alternate font. The macro \cs{CC} is
+%   used for this; its parameter "#1" is the character's position in the
+%   companion font. Examples are 162~({\CompECR \symbol{162}}) and
+%   164~({\CompECR \symbol{164}}).
+% \end{itemize}
+%    \begin{macrocode}
+\def \CC #1{{\def\FontAlt{A}\SelectFont \char#1}}
+\E{162}{\CC{162}} \E{164}{\CC{164}} \E{165}{\CC{165}}
+\E{166}{\CC{166}} \E{168}{\CC{168}} \E{169}{\CC{169}}
+\E{170}{\CC{170}} \E{172}{\CC{172}} \E{174}{\CC{174}}
+\E{175}{\CC{175}} \E{176}{\CC{176}} \E{180}{\CC{180}}
+\E{182}{\CC{182}} \E{186}{\CC{186}} 
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\MC}
+% \begin{itemize}
+% \item A few characters are math characters, like 185~({\CompECR
+%   \symbol{185}}) and 246~({\CompECR \symbol{246}}). They are defined using
+%   the macro \cs{MC} which has two parameters: "#1" is the character's
+%   position in the companion font to be used in text mode, and
+%   "#2" is some \TeX{} code to be used in math mode.
+% \end{itemize}
+%    \begin{macrocode}
+\def \MC #1#2{\ifmmode #2 \else \CC{#1}\fi }
+\E{177}{\MC{177}{\pm}}       \E{178}{\MC{178}{^2{}}} 
+\E{179}{\MC{179}{^3{}}}      \E{181}{\MC{181}{\mu}}
+\E{183}{\MC{183}{\cdot}}     \E{185}{\MC{185}{^1{}}}
+\E{188}{\MC{188}{{1\over4}}} \E{189}{\MC{189}{{1\over2}}}
+\E{190}{\MC{190}{{3\over4}}} \E{215}{\MC{214}{\times}}
+\E{247}{\MC{246}{\div}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{itemize}
+% \item Character 160 is a ``non-break space'' which is treated just
+%   like a \textasciitilde{} in \TeX.
+% \end{itemize}
+%    \begin{macrocode}
+\E{160}{\nobreak\ }
+%    \end{macrocode}
+%
+% \begin{itemize}
+% \item Character 173 is a ``soft hyphen'' which is treated like "\-"
+%   in \TeX.
+% \end{itemize}
+%    \begin{macrocode}
+\E{173}{\-}
+%    \end{macrocode}
+%
+% \subsubsection{Language-specific definitions}
+% \begin{macro}{\Abstractname}
+% \begin{macro}{\Figurename}
+% \begin{macro}{\Tablename}
+% These three names vary from one language to another.
+%    \begin{macrocode}
+\def \AbstractName {Abstract}
+\def \FigureName   {Figure}
+\def \TableName    {Table}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \begin{macro}{\TimeSep}
+% Not all languages use a ``\texttt{:}'' to separate the hours,
+% minutes, and seconds.
+%    \begin{macrocode}
+\def \TimeSep      {:}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{<today>}
+% \begin{macro}{\Month}
+% \begin{macro}{\Th}
+% The \stcs{today} command should be redefined for each language.
+% To simplify the code, two auxiliary macros are defined: \cs{Month}
+% gives the name of the month, and \cs{Th} gives the correct suffix
+% for the day of the month.
+%    \begin{macrocode}
+\Cdef {today}{\the\day\Th{\day} \Month\space\the\year}
+\def \Month {\ifcase \month \or January\or February\or March\or
+  April\or May\or June\or July\or August\or September\or
+  October\or November\or December\fi }
+\def \Th #1{%
+  \ifnum #1=1 st\else\ifnum #1=21 st\else\ifnum #1=31 st\else
+  \ifnum #1=2 nd\else\ifnum #1=22 nd\else
+  \ifnum #1=3 rd\else\ifnum #1=23 rd\else th\fi\fi\fi\fi\fi\fi\fi }
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \begin{macro}{<now>}
+% The \stcs{now} command will quite probably remain unchanged for most
+% languages (except for the \cs{TimeSep}; see above), but is given
+% here just the same. 
+%    \begin{macrocode}
+\Cdef {now}{\Minutes = \time  \Hours = \Minutes
+  \divide \Hours by 60  \Htemp = \Hours  \multiply \Htemp by -60
+  \advance \Minutes by \Htemp
+  \the\Hours \TimeSep \ifnum \Minutes > 9 \else 0\fi \the\Minutes }
+%    \end{macrocode}
+% The three counters used by \stcs{now} must be defined.
+%    \begin{macrocode}
+\newcount \Minutes  \newcount \Hours  \newcount \Htemp
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{Math mode}
+% A few modifications to the \TeX{} math mode are necessary.
+% 
+% The "<" character must be active also in math mode.
+%    \begin{macrocode}
+\mathcode`< = "8000
+%    \end{macrocode}
+% \begin{macro}{<math>}
+% \begin{macro}{</math>}
+% The inline math mode "$"\dots"$" is called \stenv{math} in \starTeX.
+%    \begin{macrocode}
+\Cdef {math}{\MathFonts \NewEnvir{math}{$}{$}}
+\Cdef {/math}{\EndEnvir{math}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \begin{macro}{<displaymath>}
+% \begin{macro}{</displaymath>}
+% The display math environment "$$"\dots"$$" is also available in
+% \starTeX{} using the notation \stenv{displaymath}. 
+%    \begin{macrocode}
+\Cdef {displaymath}{\endgraf \MathFonts \NewEnvir{displaymath}{$$}{$$}}
+\Cdef {/displaymath}{\EndEnvir{displaymath}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \subsubsection{Math fonts}
+% \begin{macro}{\MSetFont}
+% The \cs{MSetFont} macro is used to simplify the definition of math
+% fonts. It takes two parameters: "#1" is the math font element being
+% defined (i.e., \cs{textfont0}), and "#2" is the font name.
+%    \begin{macrocode}
+\def \MSetFont #1#2{\font \NewMFont = \csname #2\endcsname
+  #1 = \NewMFont }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\MathFonts}
+% The \cs{MathFonts} macro is called whenever math mode is entered. It
+% will define all the required math fonts. To avoid unnecessary work,
+% new fonts will only be assigned if the font size has changed since
+% the last time.
+%    \begin{macrocode}
+\def \MathFonts {\if \FontSize \LastMathSize \else
+    \MSetFont{\textfont0}{M-\FontSize N0}%
+    \MSetFont{\scriptfont0}{M-\FontSize S0}%
+    \MSetFont{\scriptscriptfont0}{M-\FontSize X0}%
+    \MSetFont{\textfont1}{M-\FontSize N1}%
+    \MSetFont{\scriptfont1}{M-\FontSize S1}%
+    \MSetFont{\scriptscriptfont1}{M-\FontSize X1}%
+    \MSetFont{\textfont2}{M-\FontSize N2}%
+    \MSetFont{\scriptfont2}{M-\FontSize S2}%
+    \MSetFont{\scriptscriptfont2}{M-\FontSize X2}%
+    \MSetFont{\textfont3}{M-\FontSize N3}%
+    \MSetFont{\scriptfont3}{M-\FontSize S3}%
+    \MSetFont{\scriptscriptfont3}{M-\FontSize X3}%
+    \MSetFont{\textfont4}{M-\FontSize N4}%
+    \MSetFont{\scriptfont4}{M-\FontSize S4}%
+    \MSetFont{\scriptscriptfont4}{M-\FontSize X4}%
+    \MSetFont{\textfont5}{M-\FontSize N5}%
+    \MSetFont{\scriptfont5}{M-\FontSize S5}%
+    \MSetFont{\scriptscriptfont5}{M-\FontSize X5}%
+    \MSetFont{\textfont6}{M-\FontSize N6}%
+    \MSetFont{\scriptfont6}{M-\FontSize S6}%
+    \MSetFont{\scriptscriptfont6}{M-\FontSize X6}%
+    \let \LastMathSize = \FontSize
+  \fi }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\LastMathSize}
+% \cs{LastMathSize} contains the last math size used. It
+% must be initialized to an unused value so that the math fonts are
+% always loaded the first time math mode is entered.
+%    \begin{macrocode}
+\def \LastMathSize {?}
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Letters}
+% The standard 26 letters are already defined, but we must define the
+% others, like `\'e' and `\AA'. These are taken from the \textsc{ecti}
+% font (number~5 in \starTeX). 
+%    \begin{macrocode}
+\def \Df #1{\mathcode"#1 = "05#1 \relax }
+\Df{C0}\Df{C1}\Df{C2}\Df{C3}\Df{C4}\Df{C5}\Df{C6}\Df{C7}
+\Df{C8}\Df{C9}\Df{CA}\Df{CB}\Df{CC}\Df{CD}\Df{CE}\Df{CF}
+\Df{D0}\Df{D1}\Df{D2}\Df{D3}\Df{D4}\Df{D5}\Df{D6}
+\Df{D8}\Df{D9}\Df{DA}\Df{DB}\Df{DC}\Df{DD}\Df{DE}\Df{DF}
+\Df{E0}\Df{E1}\Df{E2}\Df{E3}\Df{E4}\Df{E5}\Df{E6}\Df{E7}
+\Df{E8}\Df{E9}\Df{EA}\Df{EB}\Df{EC}\Df{ED}\Df{EE}\Df{EF}
+\Df{F0}\Df{F1}\Df{F2}\Df{F3}\Df{F4}\Df{F5}\Df{F6}
+\Df{F8}\Df{F9}\Df{FA}\Df{FB}\Df{FC}\Df{FD}\Df{FE}\Df{FF}
+%    \end{macrocode}
+%
+% \subsubsection{Bold letters}
+% \begin{macro}{<bolda>}
+% \begin{macro}{<bolducA>}
+% The bold letters \stcs{bolda}\dots\stcs{boldz} and
+% \stcs{bolducA}\dots\stcs{bolducZ} are intended for use i math mode.
+% They are found on the \textsc{cmbx} font (number~4 in \starTeX).
+% \changes{1.04}{1999/03/10}{Added \stcs{bolda}, \stcs{bolducA}, and
+%   related commands.}
+%    \begin{macrocode}
+\def \Df #1#2#3{\Cdef{bold#1}{\MSy{\mathchar"04#2}}%
+  \Cdef{bolduc#1}{\MSy{\mathchar"04#3}}}
+\Df{a}{61}{41}\Df{b}{62}{42}\Df{c}{63}{43}\Df{d}{64}{44}
+\Df{e}{65}{45}\Df{f}{66}{46}\Df{g}{67}{47}\Df{h}{68}{48}
+\Df{i}{69}{49}\Df{j}{6A}{4A}\Df{k}{6B}{4B}\Df{l}{6C}{4C}
+\Df{m}{6D}{4D}\Df{n}{6E}{4E}\Df{o}{6F}{4F}\Df{p}{70}{50}
+\Df{q}{71}{51}\Df{r}{72}{52}\Df{s}{73}{53}\Df{t}{74}{54}
+\Df{u}{75}{55}\Df{v}{76}{56}\Df{w}{77}{57}\Df{x}{78}{58}
+\Df{y}{79}{59}\Df{z}{7A}{5A}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \subsubsection{Operators}
+% \begin{macro}{\MSy}
+% \cs{MSy} is used to insert a mathematical symbol. It will expand to
+% "#1", and insert a math mode environment ("$"\dots"$") if required.
+%    \begin{macrocode}
+\def \MSy #1{\ifmmode #1\else $#1$\fi }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\MOp}
+% \cs{MOp} is also used to insert the mathematical symbol "#2", but
+% gives an error message if not in a math environment. Parameter "#1"
+% is the \starTeX{} command name, which is used in the error message.
+%    \begin{macrocode}
+\def \MOp #1#2{\ifmmode \def \MNext {#2}\else
+  \Error{Command <#1> is only allowed in math mode;}%
+    {command ignored.}\let \MNext = \relax \fi 
+  \MNext }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\Mdef}
+% \cs{Mdef} is used to define a \starTeX{} mathematical symbol
+% command whenever the \starTeX{} command is
+% identical to the name of the 
+% corresponding \TeX{} macro; parameter "#1" is the name of both.
+%    \begin{macrocode}
+\def \Mdef #1{\Cdef{#1}{\MSy{\csname #1\endcsname}}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\Odef}
+% \cs{Odef} is similar to \cs{Mdef} but is for definitions based on
+% \cs{MOp} rather than \cs{MSy}.
+%    \begin{macrocode}
+\def \Odef #1{\Cdef{#1}{\MOp{#1}{\csname #1\endcsname}}}
+%    \end{macrocode}
+% \end{macro}
+% These commands are now used to define all the standard unary and
+% binary operators. 
+%    \begin{macrocode}
+\Mdef{amalg} \Mdef{bigcirc} \Mdef{bigtriangleup} 
+\Mdef{bigtriangledown} \Mdef{bullet} \Mdef{cap} \Mdef{circ}
+\Mdef{cup} \Mdef{dagger} \Mdef{ddagger} \Mdef{diamond} \Mdef{mp}
+\Mdef{odot} \Mdef{ominus} \Mdef{oplus} \Mdef{oslash} \Mdef{otimes}
+\Mdef{setminus} \Mdef{sqcap} \Mdef{sqcup} \Mdef{star}
+\Mdef{triangleleft} \Mdef{triangleright} \Mdef{uplus} \Mdef{vee}
+\Mdef{wedge} \Mdef{wr}
+%    \end{macrocode}
+%
+% \subsubsection{Relations}
+% These are the various relations available.
+% \changes{1.01}{1996/11/29}{Added forgotten operator \stcs{propto}.}
+%    \begin{macrocode}
+\Mdef{approx} \Mdef{asymp} \Mdef{bowtie} \Mdef{cong} \Mdef{doteq}
+\Mdef{dashv} \Mdef{equiv} \Mdef{frown} \Mdef{geq} \Mdef{gg} \Mdef{in}
+\Mdef{leq} \Mdef{ll} \Mdef{mid} \Mdef{models} \Mdef{neq} \Mdef{ni}
+\Mdef{notin} \Mdef{parallel} \Mdef{perp} \Mdef{prec} \Mdef{preceq} 
+\Mdef{propto} \Mdef{sim} \Mdef{simeq} \Mdef{smile} \Mdef{sqsubseteq} 
+\Mdef{sqsupseteq} \Mdef{subset} \Mdef{subseteq} \Mdef{supset} 
+\Mdef{supseteq} \Mdef{succ} \Mdef{succeq} \Mdef{vdash}
+%    \end{macrocode}
+% \begin{macro}{<gt>}
+% \begin{macro}{<lt>}
+% The two symbols \stcs{gt} and \stcs{lt} must be defined; the former
+% is not really necessary, but is included for symmetry reasons. Note
+% also that the definition of \stcs{lt} is slightly tricky since "<"
+% is an active symbol in math mode.
+%    \begin{macrocode}
+ \Cdef{gt}{>}
+ \Cdef{lt}{\ifmmode \mathchar"313C \else <\fi}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% 
+% \subsubsection{Delimitiers}
+% In addition to (), [], $\{\}$ and $\vert$, the following delimiters
+% are defined: 
+%    \begin{macrocode}
+\Mdef{langle} \Mdef{lceil} \Mdef{lfloor} \Mdef{rangle} 
+\Mdef{rceil} \Mdef{rfloor}
+%    \end{macrocode}
+%
+% \subsubsection{Arrows}
+% All the standard arrows are included.
+%    \begin{macrocode}
+\Mdef{leftarrow} \Mdef{rightarrow} \Mdef{leftrightarrow}
+\Mdef{longleftarrow} \Mdef{longrightarrow} \Mdef{longleftrightarrow}
+\Mdef{uparrow} \Mdef{downarrow}
+\Mdef{updownarrow} \Mdef{nearrow} \Mdef{nwarrow} \Mdef{searrow}
+\Mdef{swarrow} \Mdef{mapsto} \Mdef{longmapsto} \Mdef{hookleftarrow}
+\Mdef{hookrightarrow} \Mdef{leftharpoonup} \Mdef{rightharpoonup}
+\Mdef{leftharpoondown} \Mdef{rightharpoondown} \Mdef{rightleftharpoons}
+%    \end{macrocode}
+% In \TeX, some arrows use uppercase letters to indicate double
+% arrows. I use the prefix "double" instead.
+%    \begin{macrocode}
+\Cdef{doubleleftarrow}{\MSy{\Leftarrow}}
+\Cdef{doublerightarrow}{\MSy{\Rightarrow}}
+\Cdef{doubleleftrightarrow}{\MSy{\Leftrightarrow}}
+\Cdef{doublelongleftarrow}{\MSy{\Longleftarrow}}
+\Cdef{doublelongrightarrow}{\MSy{\Longrightarrow}}
+\Cdef{doublelongleftrightarrow}{\MSy{\Longleftrightarrow}}
+\Cdef{doubleuparrow}{\MSy{\Uparrow}}
+\Cdef{doubledownarrow}{\MSy{\Downarrow}}
+\Cdef{doubleupdownarrow}{\MSy{\Updownarrow}}
+%    \end{macrocode}
+%
+% \subsubsection{Big symbols}
+% These are the big symbols.
+%    \begin{macrocode}
+\Odef{bigcap} \Odef{bigcup} \Odef{bigodot} \Odef{bigoplus}
+\Odef{bigotimes} \Odef{bigsqcup} \Odef{biguplus} \Odef{bigvee}
+\Odef{bigwedge} \Odef{int} \Odef{oint} \Odef{prod} \Odef{sum}
+%    \end{macrocode}
+% 
+% \subsubsection{Function names}
+% Some names are defined as commands to ensure that they will be
+% printed in the correct font.
+% \changes{1.01}{1996/11/29}{Name of \cs{sup} operator changed to
+% \stcs{sup-op} because of name clash with the \stcs{sup} command used
+% for indices. (Detected by Marco Paggi,
+% \textsf{aampaggi@input.lognet.it}.)} 
+%    \begin{macrocode}
+\Mdef{arccos} \Mdef{arcsin} \Mdef{arctan} \Mdef{arg} \Mdef{cos}
+\Mdef{cosh} \Mdef{cot} \Mdef{coth} \Mdef{csc} \Mdef{deg} \Mdef{det}
+\Mdef{dim} \Mdef{exp} \Mdef{gcd} \Mdef{hom} \Mdef{inf} \Mdef{ker}
+\Mdef{lg} \Mdef{lim} \Mdef{liminf} \Mdef{limsup} \Mdef{ln}
+\Mdef{log} \Mdef{max} \Mdef{min} \Mdef{sec} \Mdef{sin} \Mdef{sinh}
+\Cdef{sup-op}{\MSy{\sup}} \Mdef{tan} \Mdef{tanh}
+%    \end{macrocode}
+% \stcs{pr} must be given a special definition as its name in plain \TeX{}
+% has an uppercase letter.
+%    \begin{macrocode}
+\Cdef{pr}{\MSy{\Pr}}
+%    \end{macrocode}
+%
+% \subsubsection{Greek letters}
+% The lowercase Greek letters can be found just using the plain \TeX{}
+% name.
+%    \begin{macrocode}
+\Mdef{alpha} \Mdef{beta} \Mdef{gamma} \Mdef{delta} \Mdef{epsilon}
+\Mdef{varepsilon} \Mdef{zeta} \Mdef{eta} \Mdef{theta} \Mdef{vartheta}
+\Mdef{iota} \Mdef{kappa} \Mdef{lambda} \Mdef{mu} \Mdef{nu} \Mdef{xi}
+\Cdef {omicron}{\MSy{o}} \Mdef{pi} \Mdef{varpi} \Mdef{rho} \Mdef{varrho}
+\Mdef{sigma} \Mdef{varsigma} \Mdef{tau} \Mdef{upsilon} \Mdef{phi}
+\Mdef{varphi} \Mdef{chi} \Mdef{psi} \Mdef{omega}
+%    \end{macrocode}
+% The uppercase Greek letters can be found in the \textsc{cmr}
+% font, which is font no 0 in \starTeX.
+% Those that also exist in the Latin alphabet, can be found in their
+% normal position, while the special Greek letters are placed at the
+% beginning of the font table.
+%    \begin{macrocode}
+\def \Df #1#2{\Cdef{#1}{\MSy{\mathchar"#2}}}
+\Df{ucalpha}{0041} \Df{ucbeta}{0042}    \Df{ucgamma}{0000}
+\Df{ucdelta}{0001} \Df{ucepsilon}{0045} \Df{uczeta}{005A}
+\Df{uceta}{0048}   \Df{uctheta}{0002}   \Df{uciota}{0049}
+\Df{uckappa}{004B} \Df{uclambda}{0003}  \Df{ucmu}{004D}
+\Df{ucnu}{004E}    \Df{ucxi}{0004}      \Df{ucomicron}{004F}
+\Df{ucpi}{0005}    \Df{ucrho}{0050}     \Df{ucsigma}{0006}
+\Df{uctau}{0054}   \Df{ucupsilon}{0007} \Df{ucphi}{0008}
+\Df{ucchi}{0058}   \Df{ucpsi}{0009}     \Df{ucomega}{000a}
+%    \end{macrocode}
+%
+% \subsubsection{Blackboard set letters}
+% The socalled ``blackboard bold'' letters $\Bbb{C}$, $\Bbb{N}$,
+% $\Bbb{R}$ and $\Bbb{Z}$ are used to denote the standard sets.
+% \changes{1.03}{1998/04/30}{Added the various set names. (Suggested
+% by Christian Sommerfeldt \O{}ien, \textsf{christso@ifi.uio.no}.)}
+%    \begin{macrocode}
+\def \Df #1#2{\Cdef{#1}{\MSy{\mathchar"06#2}}}
+\Df{cset}{43} \Df{nset}{4E} \Df{rset}{52} \Df{zset}{5A}
+%    \end{macrocode}
+%
+% \subsubsection{Calligraphic letters}
+% \begin{macro}{cala}
+% The calligraphic letters can be found in font~2.
+% \changes{1.04}{1999/03/10}{Fixed a bug in the \stcs{calA} and
+%   related commands.}
+%    \begin{macrocode}
+\def \Df #1#2{\Cdef{cal#1}{\MSy{\mathchar"02#2}}}
+\Df{a}{41} \Df{b}{42} \Df{c}{43} \Df{d}{44} \Df{e}{45}
+\Df{f}{46} \Df{g}{47} \Df{h}{48} \Df{i}{49} \Df{j}{4A}
+\Df{k}{4B} \Df{l}{4C} \Df{m}{4D} \Df{n}{4E} \Df{o}{4F}
+\Df{p}{50} \Df{q}{51} \Df{r}{52} \Df{s}{53} \Df{t}{54}
+\Df{u}{55} \Df{v}{56} \Df{w}{57} \Df{x}{58} \Df{y}{59}
+\Df{z}{5A}
+%    \end{macrocode}
+% \end{macro}
+% 
+% \subsubsection{Other symbols}
+% A few symbols are left.
+%    \begin{macrocode}
+\Mdef{aleph} \Mdef{angle} \Mdef{bot} \Mdef{ell} \Mdef{emptyset}
+\Mdef{exists} \Mdef{forall} \Mdef{hbar} \Mdef{nabla} \Mdef{neg}
+\Odef{not} \Mdef{partial} \Mdef{surd} \Mdef{top} \Mdef{wp}
+\Cdef{infinity}{\MSy{\infty}} \Cdef{im}{\MSy{\Im}} \Cdef{re}{\MSy{\Re}}
+\Cdef{,}{{,}} 
+\Cdef{:}{\MSy{\vdots}} 
+\Cdef{:::}{\MSy{\cdots}}
+%    \end{macrocode}
+% \begin{macro}{<...>}
+% The definition of \stcs{...} has a minute space to allow \starTeX{}
+% to split the line.
+%    \begin{macrocode}
+\Cdef{...}{\MSy{\ldots}\hskip 0.001pt \relax }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Subscripts and superscripts}
+% \begin{macro}{<sub>}
+% \begin{macro}{</sub>}
+% \begin{macro}{<sup>}
+% \begin{macro}{</sup>}
+% The sub- and superscripts in equations are accessible through
+% \stenv{sub} and \stenv{sup}.
+%    \begin{macrocode}
+\Cdef {sub}{\MOp{sub}{\NewEnvir{sub}{_\bgroup}{\egroup}}}
+\Cdef {/sub}{\MOp{/sub}{\EndEnvir{sub}}}
+\Cdef {sup}{\MOp{sup}{\NewEnvir{sup}{^\bgroup}{\egroup}}}
+\Cdef {/sup}{\MOp{/sup}{\EndEnvir{sup}}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+%
+% \subsubsection{Fractions}
+% \begin{macro}{<frac>}
+% \begin{macro}{<over>}
+% \begin{macro}{</frac>}
+% Fractions are set with in a
+% \stcs{frac}\dots\stcs{over}\dots\stcs{/frac} environment.
+%    \begin{macrocode}
+\Cdef {frac}{\MOp{frac}{\NewEnvir{frac}{\bgroup}{\egroup}%
+    \NOver = 0\relax}}
+\Cdef {over}{\MOp{over}{\FracOver}}
+\Cdef {/frac}{\MOp{/frac}{\ifnum \NOver = 0
+    \Error{No <over> in the <frac>...<over>...</frac> environment.}{}\fi
+    \EndEnvir{frac}}}
+\def \FracOver {\ifTextEqual{\CurEnv}{frac}%
+    \ifnum \NOver = 0 \over
+    \else \Error{Only one <over> may occur in each <frac>...</frac>
+        environment.}{}%
+    \fi  \advance \NOver by 1
+  \else \Error{<over> only allowed in a 
+    <frac>...<over>...</frac> environment.}{}%
+  \fi }
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% To check for legal use of \stcs{over}, a counter named \cs{NOver} is
+% used.
+%    \begin{macrocode}
+\newcount \NOver
+%    \end{macrocode}
+%
+% \subsubsection{Roots}
+% \begin{macro}{<sqrt>}
+% \begin{macro}{</sqrt>}
+% The \stenv{sqrt} environment is just an interface to the \cs{sqrt}
+% macro in plain \TeX.
+%    \begin{macrocode}
+\Cdef {sqrt}{\MOp{sqrt}{\NewEnvir{sqrt}{\sqrt\bgroup}{\egroup}}}
+\Cdef {/sqrt}{\MOp{/sqrt}{\EndEnvir{sqrt}}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \subsection{PostScript figures}
+% \begin{macro}{<psfig>}
+% \begin{macro}{</psfig>}
+% \starTeX{} allows the inclusion of \ps{} figures through the
+% \stenv{psfig} environment. It checks if the command is allowed in the
+% current state, and, if it is, \cs{PSfig} is called; if not,
+% \cs{PSfigError} is called instead.
+%    \begin{macrocode}
+\Cdef {psfig}{\if \State x \let \Next = \PSfig \else 
+  \let \Next = \PSfigError \fi
+  \Next }
+\Cdef {/psfig}{\AddVspace{6pt plus 1pt}
+  \ifx \PSfile \relax \else 
+    \centerline{\epsfbox{\PSfile}}%
+    \AddVspace{10pt plus 2pt minus 1pt}
+  \fi
+  \EndEnvir{psfig}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% The actual inclusion of the \ps{} file in handled by \cs{epsfbox}
+% from the file \texttt{epsf.tex} which is provided with the
+% \textsc{dvips} program.
+%    \begin{macrocode}
+\input epsf.tex
+%    \end{macrocode}
+% \begin{macro}{\PSfig}
+% \cs{PSfig} checks whether the user has remembered to provide the
+% file name; if so, \cs{PSfetch} is called to check the \ps{} file.
+%    \begin{macrocode}
+\def \PSfig{\NewEnvir{psfig}{\topinsert}{\endinsert}
+  \let \PSfile = \relax \let \State = p
+  \IfNextChar{[}%
+    {\PSfetch}%
+    {\Error{No file name for PostScript figure;}%
+      {the syntax is: <psfig>[file name]caption text</psfig>.}%
+     \PScaption}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\PSfigError}
+% \cs{PSfigError} gives an error message and starts a dummy
+% environment. 
+%    \begin{macrocode}
+\def \PSfigError {\endgraf
+  \Error{Calls on <psfig> not allowed inside <psfig> or <table>;}%
+     {the command was ignored.}%
+  \NewEnvir{psfig}{\begingroup}{\endgroup}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\PSfetch}
+% \cs{PSfetch} checks that the \ps{} exists, and notes its name in
+% \cs{PSfile}. 
+%    \begin{macrocode}
+\def \PSfetch [#1]{\IfFileExists{#1}%
+    {\gdef \PSfile {#1}}%
+    {\Error{PostScript file `#1' could not be found.}{}}%
+    \PScaption }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\epsfsize}
+% \cs{epsfsize} is used by \cs{epsfbox} to scale the \ps{} figure.
+% We want figures to fill either 80\% of the text width or 40\% of the
+% text height. This is done by comparing
+% $\frac{0.8\mbox{\cs{hsize}}}{\mathtt{\#1}}$ and
+% $\frac{0.4\mbox{\cs{vsize}}}{\mathtt{\#2}}$, where "#1" and "#2"
+% are the horizontal and vertical original sizes of the the figure.
+%    \begin{macrocode}
+\def \epsfsize #1#2{0pt \dimen1 = 0.8\hsize  \dimen2 = 0.4\vsize
+  \floatdiv{\dimen2}{#1}{#2}%
+  \ifdim \dimen1 < \divres \epsfxsize = 0.8\hsize
+  \else \epsfysize = 0.4\vsize \fi }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\PScaption}
+% The formatting of the caption is done by \cs{PScaption}:
+%    \begin{macrocode}
+\def \PScaption {\global\advance \FigCnt by 1
+  \edef \CurDef {\the\FigCnt}
+  \leftskip = 0.1\hsize  \rightskip = \leftskip
+  \ResetFont \SetSize{S}\Indentfalse
+  \FigureName~\FigIm: \ignorespaces }
+%    \end{macrocode}
+% \end{macro}
+% \cs{PScaption} needs a counter to count the figures:
+%    \begin{macrocode}
+\newcount \FigCnt
+%    \end{macrocode}
+%
+% \subsection{Tables}
+% \begin{macro}{<table>}
+% \begin{macro}{</table>}
+% Tables are created with the \stenv{table} environment. It checks whether
+% the command is allowed in the current state and calls
+% \cs{Table} if it is; otherwise it calls \cs{TableError}.
+%    \begin{macrocode}
+\Cdef {table}{\if \State x\let \Next = \Table \else
+  \let \Next = \TableError \fi
+  \Next }
+\Cdef {/table}{\EndEnvir{table}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% The table is temporarily placed in a box so that it may be centered
+% when output.
+%    \begin{macrocode}
+\newbox \TableBox
+%    \end{macrocode}
+% \begin{macro}{\Table}
+% \cs{Table} starts the table environment.
+%    \begin{macrocode}
+\def \Table{\topinsert
+  \NewEnvir{table}{\TableCaption}{\LastRow\endinsert}%
+  \let \State = t}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\TableCaption}
+% The formatting of the table caption is done by \cs{TableCaption}:
+%    \begin{macrocode}
+\def \TableCaption {\global\advance \TabCnt by 1
+  \edef \CurDef {\the\TabCnt}
+  \leftskip = 0.1\hsize  \rightskip = \leftskip
+  \ResetFont \SetSize{S}\Indentfalse
+  \TableName~\TabIm: \ignorespaces }
+%    \end{macrocode}
+% \end{macro}
+% \cs{TableCaption} needs a counter to count the tables:
+%    \begin{macrocode}
+\newcount \TabCnt
+%    \end{macrocode}
+% \begin{macro}{\TableError}
+% \cs{TableError} gives an error message and starts a dummy
+% environment. 
+%    \begin{macrocode}
+\def \TableError {\endgraf
+  \Error{Calls on <table> not allowed inside <psfig>
+    or <table>;}{the command was ignored.}%
+  \NewEnvir{table}{\begingroup}{\endgroup}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Table rows}
+% \begin{macro}{<row>}
+% \begin{macro}{\Row}
+% The command \stcs{row} is the interface to \cs{Row} which is used to
+% start another table row. Its actions depend on the current state.
+%    \begin{macrocode}
+\Cdef {row}{\Row}
+\def \Row {\if \State t\FirstRow\NewRow \else
+   \if \State r\EndRow\NewRow   \else
+   \Error{The <row> command is only allowed inside a
+     <table>.}{The command was ignored.}\fi\fi }
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \begin{macro}{\FirstRow}
+% \cs{FirstRow} is called prior to the first table row.
+%    \begin{macrocode}
+\def \FirstRow {\endgraf \ResetFont \SelectFont \let \State = r%
+  \setbox\TableBox = \hbox\bgroup \vbox\bgroup \offinterlineskip 
+    \halign\bgroup \vrule ##\strut&& 
+      \kern 6pt \hfil ##\unskip \hfil \kern 6pt \vrule \cr
+      \noalign{\hrule}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\NewRow}
+% \cs{NewRow} is used to start another table row.
+%    \begin{macrocode}
+\def \NewRow {&}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\EndRow}
+% The command \cs{EndRow} is used to terminate the current table row.
+%    \begin{macrocode}
+\def \EndRow {\cr \noalign{\hrule}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\LastRow}
+% The command \cs{LastRow} is used to terminate the last table row.
+%    \begin{macrocode}
+\def \LastRow {\if \State r\EndRow\PrintTable\fi}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\PrintTable}
+% \cs{PrintTable} is the final command used when processing a table.
+% It terminates the table structure and outputs it.
+%    \begin{macrocode}
+\def \PrintTable {\egroup\egroup\egroup
+  \AddVspace{6pt plus 2pt minus 1pt}
+  \centerline{\box\TableBox}%
+  \AddVspace{10pt plus 4pt minus 2pt}} 
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Table columns}
+% \begin{macro}{<col>}
+% \stcs{col} is used to start another table column.
+%    \begin{macrocode}
+\Cdef {col}{\if \State r&\else
+  \Error{The <col> command is only allowed after a <row>
+    inside a <table>.}{The command was ignored.}\fi}
+%    \end{macrocode}
+% \end{macro}
+% 
+% \subsection{Cross-references}
+% This section describes the various commands used for
+% cross-referencing.
+%
+% The basic idea is the same as the one used in \LaTeX: an extra file (with
+% extension \texttt{.aux}) contains all the labels defined in the
+% document. There are two reasons for this:
+% \begin{itemize}
+% \item Using a separate file makes it possible to have forward
+%   references. 
+% \item When processing a document, the page number of each label is
+%   not known until the page is actually written to the \textsc{dvi}
+%   file. The \cs{write} command is, consequently, delayed until that stage
+%   of the processing, so using a file will always give us the
+%   correct page number.
+% \end{itemize}
+% \begin{macro}{\ifAuxOpen}
+% The \texttt{.aux} file is only created when there are \stcs{label}
+% commands in the document. The first \stcs{label} creates the file,
+% and the flag \cs{ifAuxOpen} indicates whether this has been done.
+%    \begin{macrocode}
+\newif \ifAuxOpen
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Defining labels}
+% \begin{macro}{<label>}
+% \stcs{label} is used to define another cross-reference label. The
+% value of the label is the current value of \cs{CurDef} which is set
+% by \stcs{h1}, \stcs{table}, etc.
+%
+% \stcs{label} first checks the syntax, and then alters the
+% \cs{catcode} of "<" in case there are  any "<"s in the label.
+% Finally, it calls \cs{NewLabel} to perform the actual definition.
+%    \begin{macrocode}
+\Cdef {label}{\IfNextChar{[}%
+    {\begingroup \catcode`\< = 12 \NewLabel}%
+    {\Error{No label given;}%
+      {the syntax is <label>[your label].}}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\NewLabel}
+% \cs{NewLabel} first reads the old ".aux" file (unless it has already
+% been read) and opens a new ".aux" file (unless that has been done).
+%    \begin{macrocode}
+\def \NewLabel [#1]{\endgroup
+  \ifAuxRead \else \ReadAuxFile \fi
+  \ifAuxOpen \else 
+    \immediate\openout \NewAuxFile = \jobname.aux
+    \global\AuxOpentrue \fi
+%    \end{macrocode}
+% Then, it checks whether the label has been previously defined, and
+% prints an error message if it has been. Otherwise, it notes the
+% definition and writes the necessary data to the ".aux"
+% file.\footnote{Note the trick of redefining \cs{the} so that
+%   \cs{pageno} is not expanded until the page is completed. This was
+%   found in \cite[Exercise~21.10]{texbook}.}
+%    \begin{macrocode}
+  \expandafter\ifx \csname L]#1\endcsname \relax
+    \expandafter\edef \csname L]#1\endcsname{\the\inputlineno}%
+    {\let \the = 0\relax
+      \edef \WriteCurDef {\write \NewAuxFile 
+        {\string\LabelDef 
+          ]#1]\the\pageno]\CurDef E-o-LabelDef\string\relax}}%
+      \WriteCurDef }%
+  \else
+    \Error{Label `#1' already defined on line \csname L]#1\endcsname;}%
+      {this definition is ignored.}%
+  \fi }
+%    \end{macrocode}
+% \end{macro}
+% Note that when a label \emph{\texttt{xxx}} is defined, a macro named
+% \cs{L]\emph{xxx}} is defined, and its definition is the line number.
+% This is used to give a better error message in case there are
+% multiple definitions of that label.
+%
+% The new ".aux" file must be declared.
+%    \begin{macrocode}
+\newwrite \NewAuxFile
+%    \end{macrocode}
+% We must also define an initial value for \cs{CurDef} in case the
+% user calls \stcs{label} prior to the first \stcs{h\emph{x}}.
+%    \begin{macrocode}
+\edef \CurDef {0}
+%    \end{macrocode}
+%
+% \subsubsection{Reading the cross-reference label file}
+% When the user first references a label (using a \stcs{ref} command),
+% the \texttt{.aux} file is read to find all the labels that were
+% defined during the previous run. Each label will be represented by
+% to macros:
+% \begin{description}
+% \item[\texttt{R]\emph{xxx}}] gives the reference, i.e.~``2.1'' if
+%   the label was defined in Section~2.1 of the document.
+% \item[\texttt{P]\emph{xxx}}] gives the page number where the label
+%   was placed.
+% \end{description}
+% \begin{macro}{\ReadAuxFile}
+% \cs{ReadAuxFile} reads the ".aux" file produced by the previous run.
+% It  redefines the \cs{catcode} of "<" in case that characters occurs
+% in a label.
+%    \begin{macrocode}
+\def \ReadAuxFile {\IfFileExists{\jobname.aux}%
+    {\begingroup
+       \def \LabelDef {\begingroup
+          \catcode `\\ = 12\relax \FetchLabel }%
+       \catcode `\< = 12 \catcode `\\ = 0\relax
+       \input \jobname.aux
+       \global\AuxReadtrue
+     \endgroup }%
+    {\global\Reruntrue}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\LabelDef}
+% A \starTeX{} ".aux" file consists of a sequence of calls on
+% \cs{LabelDef}. \cs{LabelDef} just alters the \cs{catcode} of "\" (in
+% case there are "\"s in the label), and calls \cs{FetchLabel} to do
+% the actual definition.
+%    \begin{macrocode}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\FetchLabel}
+% \cs{FetchLabel} has three parameters.
+% The label is parameter "#1"; it is enclosed by a set
+% of "]"s.\footnote{We can be certain that no \texttt{]} occurs in the
+% label.} Parameter "#2" is the referenced page number; it is also
+% terminated by a "]". The label reference is parameter "#3"; it is
+% terminated by the text ``\texttt{E-o-LabelDef}''.
+%    \begin{macrocode}
+\def \FetchLabel ]#1]#2]#3E-o-LabelDef{%
+    \expandafter\gdef \csname R]#1\endcsname {#3}%
+    \expandafter\gdef \csname P]#1\endcsname {#2}%
+  \endgroup }
+%    \end{macrocode}
+% \end{macro}
+% The flag \cs{ifAuxRead} tells whether the ".aux" file from the
+% previous run has been read.
+%    \begin{macrocode}
+\newif \ifAuxRead
+%    \end{macrocode}
+% The flag \cs{ifRerun} is set whenever it is detected that a new
+% label has been defined or the definition of a label has been
+% modified. This implies that it is necessary to run \starTeX{}
+% again.\footnote{It would be nice to be able to 
+% do this automatically, but that is not possible with the present
+% \TeX.} 
+%    \begin{macrocode}
+\newif \ifRerun
+%    \end{macrocode}
+% 
+% \subsubsection{Checking the \texttt{.aux} file}
+% \begin{macro}{\CheckAux}
+% At the end of each run, the \texttt{.aux} file is checked by
+% \cs{CheckAux} to see if
+% any label were modified during the run. If so, the flag \cs{ifRerun}
+% is set.
+%    \begin{macrocode}
+\def \CheckAux {\immediate\closeout \NewAuxFile
+  \begingroup
+    \def \LabelDef {\begingroup
+        \catcode `\\ = 12 \relax  \CheckLabel }%
+    \catcode `\< = 12  \catcode `\\ = 0\relax
+    \input \jobname.aux
+  \endgroup }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\CheckLabel}
+% \cs{CheckLabel} does the actual checking by comparing the new
+% definition with the old one.
+%    \begin{macrocode}
+\def \CheckLabel ]#1]#2]#3E-o-LabelDef{%
+  \ifTextEqual{#2++#3}%
+    {\csname P]#1\endcsname++\csname R]#1\endcsname}%
+  \else
+    \global\Reruntrue
+  \fi \endgroup }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Referencing labels}
+% \begin{macro}{<ref>}
+% \stcs{ref} is used to reference a label. It checks the syntax, and
+% calls \cs{GiveRef} to produce the actual reference.
+%    \begin{macrocode}
+\Cdef {ref}{\IfNextChar{[}%
+  {\begingroup \catcode `\< = 12 \relax \GiveRef }%
+  {\Error{No label referenced;}{the syntax is <ref>[your label].}}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\GiveRef}
+% \cs{GiveRef} checks whether the reference has been defined, and, if
+% it is defined, typesets the reference in the format specified by
+% \cs{RefFormat}. 
+%    \begin{macrocode}
+\def \GiveRef [#1]{\ifAuxRead \else \ReadAuxFile \fi
+  \expandafter\ifx \csname R]#1\endcsname \relax
+    [label #1]%
+    \Error{Label `#1' not defined.}{}\global\Reruntrue
+  \else 
+    \RefFormat{\csname R]#1\endcsname}{\csname P]#1\endcsname}%
+  \fi \endgroup }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\RefFormat}
+% The macro \cs{RefFormat} gives the appearance of the reference. The
+% default is a number followed by ``on page
+% \emph{x}'' unless the reference is to the same page.\footnote{The
+%   page test used will not always give the correct result; if the
+%   reference is very near the top or the bottom of a page,
+%   \cs{pageno} will sometimes be 1 off. This is not a serious problem,
+%   as the referenced object in that case will be very close to the
+%   reference.
+%
+%   This problem was solved in the \texttt{varioref}\cite{varioref} package in
+%   \LaTeX, but the solution is somewhat complicated,
+%   so I have chosen to stick with the simple solution even if it is
+%   not optimal.} 
+%    \begin{macrocode}
+\def \RefFormat #1#2{#1\ifTextEqual{#2}{\the\pageno}\else 
+    \space on page~#2\fi }
+%    \end{macrocode}
+% \end{macro}
+% 
+% \subsection{Miscellaneous other commands}
+%
+% \subsubsection{Symbols and logos}
+% \begin{macro}{<>}
+% \begin{macro}{<->}
+% \begin{macro}{<-->}
+% \begin{macro}{<--->}
+% \begin{macro}{<``>}
+% \begin{macro}{<''>}
+% \begin{macro}{<tex>}
+% \begin{macro}{<latex>}
+% \begin{macro}{<startex>}
+% Here is the definition of some symbols that the user needs for
+% quality typesetting.
+%    \begin{macrocode}
+{\catcode`\~ = 12 \Cdef {~}{\nobreak\ }}
+\Cdef {}{\null}
+\Cdef {-}{\-} \Cdef {--}{--} \Cdef {---}{---}
+\Cdef {``}{``} \Cdef {''}{''}
+\Cdef {tex}{\TeX} \Cdef {latex}{La\TeX} \Cdef {startex}{Star\TeX}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+%
+% \subsubsection{Error handling}
+% \begin{macro}{\Error}
+% This macro gives an error message with one or two lines of text.
+% (The second line is omitted if it is empty.)
+%    \begin{macrocode}
+\def \Error #1#2{%
+  \message{^^J** StarTeX error detected on line \the\inputlineno:^^J}%
+  \message{\space\space\space #1^^J}%
+  \ifTextEqual{#2}{}\else \message{\space\space\space #2^^J}\fi}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\Warning}
+% This macro gives a warning with one or two lines of text.
+% (The second line is omitted if it is empty.)
+%    \begin{macrocode}
+\def \Warning #1#2{%
+  \message{^^J** StarTeX warning:^^J}%
+  \message{\space\space\space #1^^J}%
+  \ifTextEqual{#2}{}\else \message{\space\space\space #2^^J}\fi}
+%    \end{macrocode}
+% \end{macro}
+% We need to modify the \cs{newlinechar} in order to produce a line
+% feed when we want it. The \textsc{lf} character (\textsc{ascii} code
+% 10 = \texttt{\symbol{94}\symbol{94}J}) seems a good choice.
+%    \begin{macrocode}
+\newlinechar = `^^J
+%    \end{macrocode}
+%
+% \subsubsection{Comments}
+% \begin{macro}{<comment>}
+% \begin{macro}{</comment>}
+% The environment \stenv{comment} is defined to make it possible for
+% the user to add comments to his or her \starTeX{} code. It uses
+% \cs{SkipComment} to fetch the comment text.
+%    \begin{macrocode}
+\Cdef {comment}{\NewEnvir{comment}{\begingroup}{\endgroup}%
+  \catcode `\< = 12 \SkipComment }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\SkipComment}
+% \cs{SkipComment} works just like \cs{ReadCode} for a \stenv{code}
+% environment, except that the code is simply ignored.
+%    \begin{macrocode}
+{\catcode `\< = 12
+  \gdef \SkipComment #1</comment>{\EndEnvir{comment}}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \subsubsection{Text handling}
+% There is very little text handling in \starTeX, but a few
+% macros are necessary.
+% 
+% \begin{macro}{\ifTextEqual}
+% The macro \cs{ifTextEqual}\footnote{The name \cs{ifTextEqual} starts
+% with a lowercase \cs{if}- to show its relationship to the various
+% \cs{if}\dots{} macros of primitive \TeX\@. \cs{ifTextEqual} is
+% used just like these, which means that it must have a corresponding
+% \cs{fi}. It may also have an \cs{else} part. Note, however, that
+% calls on \cs{ifTextEqual} may not occur inside other \cs{if}s.}
+% tests if the two texts "#1" and "#2" are equal. 
+% This is achieved by letting the \TeX{} primitive \cs{ifx} do the
+% job.  
+%    \begin{macrocode}
+\def \ifTextEqual #1#2{\edef \TmpA {#1}\edef \TmpB {#2}%
+  \ifx \TmpA\TmpB }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\IfNextChar}
+% Sometimes we need to check the next input character, for instance to
+% see if it is a "[". The macro \cs{IfNextChar} expands into "#2" if
+% the next input character is "#1"; otherwise it expands into "#3". 
+%
+% The \TeX{} primitive \cs{futurelet} is used to implement
+% \cs{IfNextChar}; it was designed just for this.
+% Note that the call on \cs{IfNextChar} must be at the very end of the
+% macro in which it occurs.
+%    \begin{macrocode}
+\def \IfNextChar #1#2#3{\def \TestChar {#1}%
+  \def \AltA {#2}\def \AltB {#3}%
+  \futurelet \NextChar \TestNextChar }
+\def \TestNextChar {%
+  \if \NextChar \TestChar \let\Next=\AltA \else \let\Next=\AltB \fi
+  \Next }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\IfNextCharTwo}
+% A similar macro testing whether the following character is one of
+% two possible alternatives, is also necessary. It takes four
+% parameters: "#1" and "#2" are the two characters to check for, and
+% the result of \cs{IfNextCharTwo} is "#3" if the next character is
+% either of the two alternatives, or else "#4".
+%    \begin{macrocode}
+\def \IfNextCharTwo #1#2#3#4{\def \TestChar {#1}\def \TestCharX {#2}%
+  \def \AltA {#3}\def \AltB {#4}%
+  \futurelet \NextChar \TestNextCharTwo }
+\def \TestNextCharTwo {%
+  \if \NextChar \TestChar  \let \Next = \AltA \else 
+  \if \NextChar \TestCharX \let \Next = \AltA \else
+    \let \Next = \AltB 
+  \fi \fi
+  \Next }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Numerical operations}
+% \begin{macro}{\floatdiv}
+% \TeX{} has no floating-point division, so a routine like
+% \cs{floatdiv} is necessary. It computes
+% $\frac{\mbox{\texttt{\scriptsize  \#1}}\times
+% \mbox{\texttt{\scriptsize  \#2}}} 
+% {\mbox{\texttt{\scriptsize  \#3}}}$ and places the result in
+% \cs{divres}.\footnote{The algorithm used is taken from the code in
+% \texttt{epsf.tex}.} All parameters must be \cs{dimen} registers.
+%    \begin{macrocode}
+\def \floatdiv #1#2#3{\divtemp = #1\divide \divtemp by #3%
+  \divres = #2\multiply \divres by \divtemp
+  \multiply \divtemp by #3%
+  \divrem = #1\advance \divrem by -\divtemp
+  \divtemp = #2%
+  \loop
+    \multiply \divrem by 2  \divide \divtemp by 2
+  \ifnum \divtemp > 0
+    \ifnum \divrem < #3\else
+      \advance \divrem by -#3\advance \divres by \divtemp
+    \fi
+  \repeat }
+%    \end{macrocode}
+% \end{macro}
+% The necessary registers must be declared:
+%    \begin{macrocode}
+\newdimen \divrem   \newdimen \divres   \newdimen \divtemp
+%    \end{macrocode}
+% 
+% \subsubsection{File operations}
+% \begin{macro}{\ifFileExists}
+% To provide better error messages, \starTeX{} tests whether a file
+% exists before any attempt is made to read it. \cs{ifFileExists}
+% first checks if file "#1" exists;\footnote{This checking is done by
+% using \cs{ifeof} which means that empty files will be regarded as
+% non-existant; this should not really be a problem.} if it does, the
+% file is closed and "#2" is executed, otherwise "#3" is executed. 
+%    \begin{macrocode}
+\def \IfFileExists #1#2#3{\openin\TestFile = #1
+  \ifeof\TestFile \def \Next {#3}\else
+  \closein\TestFile \def \Next {#2}\fi
+  \Next }
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\TestFile}
+% We must also define the input file we use for testing.
+%    \begin{macrocode}
+\newread \TestFile
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Format creation}
+% \begin{macro}{<make-new-format>}
+% \stcs{make-new-format} is used by the system to make a new format; it
+% is not intended to be called by the user.
+%    \begin{macrocode}
+\Cdef {make-new-format}{\dump}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{<trace-on>}
+% \begin{macro}{<trace-off>}
+% \stcs{trace-on} is used during debugging to trace the
+% expansion of commands, and \stcs{trace-off} turns this tracing off. 
+% Using tracing requires insight into both the inner
+% mechanisms of \starTeX{} as well as \TeX{} itself.
+%    \begin{macrocode}
+\Cdef {trace-on}{\tracingcommands = 1 \tracingmacros = 1
+  \tracingrestores = 1 \tracingoutput = 1 \relax }
+\Cdef {trace-off}{\tracingcommands = 0 \tracingmacros = 0
+  \tracingrestores = 0 \tracingoutput = 0 \relax }
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \subsection{Final initialization}
+% In the final initialization, we need to load the hyphenation
+% patterns defined at this site:
+%    \begin{macrocode}
+\input startex.lan
+%    \end{macrocode}
+% We select the default text font:
+%    \begin{macrocode}
+\ResetFont \SetSize{N}
+%    \end{macrocode}
+% Our very last initialization is to modify the \cs{catcode}s:
+%    \begin{macrocode}
+\endinput \SpecialCatCodes
+%</code>
+%    \end{macrocode}
+%
+% \section{Language definitions}
+% This section describes the file "startex.lan" that defines which
+% hyphenation patterns are known to \starTeX\@. It should be adapted
+% to the needs of each local installation.
+%    \begin{macrocode}
+%<*languages>
+%    \end{macrocode}
+%
+% \begin{macro}{\DefLang}
+% The macro \cs{DefLang} is used to defined a new language. It has
+% three parameters: "#1" is the internal number of the language, "#2"
+% is the internal name of the language, and "#3" is the name of the
+% file from which to read hyphenation patterns for the language. 
+%    \begin{macrocode}
+\def \DefLang #1#2#3{\expandafter\def \csname L-#2\endcsname {#1}%
+  \language = #1 \input #3}%
+%    \end{macrocode}
+% \end{macro}
+% Only one language (Norwegian) is predefined here, as this file will
+% have to be adapted to local needs anyhow.
+%    \begin{macrocode}
+\DefLang{1}{norsk}{nohyph2.tex}%
+%    \end{macrocode}
+% \texttt{american} (American English)
+% has already been defined as language~0 by plain \TeX.
+%    \begin{macrocode}
+\expandafter\def \csname L-american\endcsname {0}%
+%    \end{macrocode}
+% We want American English as our default:
+%    \begin{macrocode}
+\language = 0
+%</languages>
+%    \end{macrocode}
+%
+% \section{Sample document styles}
+% Included are also four document styles:
+% \begin{description}
+% \item[article] is used for ordinary articles. As this
+%   is the default definition of \starTeX, this style is empty. 
+%
+% \item[a4-article] is just an adaption of \emph{article} to fit
+% A4~paper. 
+%
+% \item[ifi-article] is the style used for articles at Ifi
+% (``Institutt for informatikk'', the Department of Informatics at the
+% Univeristy of Oslo). It uses Concorde as the main text font,
+% Palatino for its math, and A4 paper. (If you want to use this style,
+% you must have access to a Concorde font; the Palatino Math is
+% available at \textsc{ctan}.)
+%
+% \item[ifi-artikkel] is \emph{ifi-article} adapted to Norwegian text.
+% \end{description}
+% Each style file contains the necessary redefinitions. 
+%
+% \subsection{Paper size}
+% Every style except \emph{article} uses A4 paper. The margins are set
+% to 2.5~cm.
+%    \begin{macrocode}
+%<*a4-article|ifi-article|ifi-artikkel>
+\hoffset = -1in  \advance \hoffset by 2.5cm  \hsize = 16cm
+\voffset = -1in  \advance \voffset by 2.5cm  \vsize = 24.7cm
+%</a4-article|ifi-article|ifi-artikkel>
+%    \end{macrocode}
+% \subsection{Language adaption}
+% The \emph{ifi-artikkel} is for text in Norwegian. We must select the
+% correct language and adjust \cs{lefthyphenmin} and
+% \cs{righthyphenmin}. 
+%    \begin{macrocode}
+%<*ifi-artikkel>
+\language = \csname L-norsk\endcsname
+\lefthyphenmin = 1 \righthyphenmin = 2
+%    \end{macrocode}
+% \begin{macro}{\AbstractName}
+% \begin{macro}{\FigureName}
+% \begin{macro}{\TableName}
+% \begin{macro}{\TimeSep}
+% Some names must also be redefined.
+%    \begin{macrocode}
+\def \AbstractName {Sammendrag}%
+\def \FigureName   {Figur}%
+\def \TableName    {Tabell}%
+\def \TimeSep      {.}%
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \begin{macro}{\RefFormat}
+% The format for references must be translated into Norwegian.
+%    \begin{macrocode}
+\def \RefFormat #1#2{#1\ifTextEqual{#2}{\the\pageno}\else
+  \space p\aa{} side~#2\fi }%
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{<today>}
+% \begin{macro}{\Month}
+% Finally, the date command \stcs{today} must be redefined.
+% \begin{macrocode}
+\Cdef {today}{\the\day.\space \Month\space \the\year }%
+\def \Month {\ifcase \month \or januar\or februar\or mars\or
+  april\or mai\or juni\or juli\or august\or september\or
+  oktober\or november\or desember\fi }%
+%</ifi-artikkel>
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% 
+% \subsection{Text font}
+% The two \emph{ifi-} styles use Concorde\footnote{In the Karl Berry
+% font name scheme \cite{fontname}, Concorde is known as \emph{poc-}.} as
+% the main body text 
+% font; it is the official font of the University of Oslo. Since
+% Concorde is a wider font than \textsc{ecr}, and because it has a
+% larger x-height, a smaller font size is used. The EC 
+% Companion font is kept for the special symbols. 
+%    \begin{macrocode}
+%<*ifi-article|ifi-artikkel>
+\FontDef{R}{M}{U}{N}{pocr8t at 9.8pt}{tcrm1095}%
+\FontDef{R}{M}{I}{N}{pocri8t at 9.8pt}{tcti1095}%
+\FontDef{R}{B}{U}{N}{pocb8t at 9.8pt}{tcbx1095}%
+\FontDef{R}{B}{I}{N}{pocbi8t at 9.8pt}{tcbi1095}%
+\FontDef{T}{M}{U}{N}{pcrr8t at 9.8pt}{tctt1095}%
+\FontDef{T}{M}{I}{N}{pcrro8t at 9.8pt}{tcit1095}%
+\FontDef{T}{B}{U}{N}{pcrb8t at 9.8pt}{tctt1095}%
+\FontDef{T}{B}{I}{N}{pcrbo8t at 9.8pt}{tcit1095}%
+\FontDef{R}{M}{U}{L}{pocr8t at 12.9pt}{tcrm1440}%
+\FontDef{R}{M}{I}{L}{pocri8t at 12.9pt}{tcti1440}%
+\FontDef{R}{B}{U}{L}{pocb8t at 12.9pt}{tcbx1440}%
+\FontDef{R}{B}{I}{L}{pocbi8t at 12.9pt}{tcbi1440}%
+\FontDef{T}{M}{U}{L}{pcrr8t at 12.9pt}{tctt1440}%
+\FontDef{T}{M}{I}{L}{pcrro8t at 12.9pt}{tcit1440}%
+\FontDef{T}{B}{U}{L}{pcrb8t at 12.9pt}{tctt1440}%
+\FontDef{T}{B}{I}{L}{pcrbo8t at 12.9pt}{tcit1440}%
+\FontDef{R}{M}{U}{X}{pocr8t at 15.5pt}{tcrm1728}%
+\FontDef{R}{M}{I}{X}{pocri8t at 15.5pt}{tcti1728}%
+\FontDef{R}{B}{U}{X}{pocb8t at 15.5pt}{tcbx1728}%
+\FontDef{R}{B}{I}{X}{pocbi8t at 15.5pt}{tcbi1728}%
+\FontDef{T}{M}{U}{X}{pcrr8t at 15.5pt}{tctt1728}%
+\FontDef{T}{M}{I}{X}{pcrro8t at 15.5pt}{tcit1728}%
+\FontDef{T}{B}{U}{X}{pcrb8t at 15.5pt}{tctt1728}%
+\FontDef{T}{B}{I}{X}{pcrro8t at 15.5pt}{tcit1728}%
+\FontDef{R}{M}{U}{S}{pocr8t at 8.9pt}{tcrm1000}%
+\FontDef{R}{M}{I}{S}{pocri8t at 8.9pt}{tcti1000}%
+\FontDef{R}{B}{U}{S}{pocb8t at 8.9pt}{tcbx1000}%
+\FontDef{R}{B}{I}{S}{pocbi8t at 8.9pt}{tcbi1000}%
+\FontDef{T}{M}{U}{S}{pcrr8t at 8.9pt}{tctt1000}%
+\FontDef{T}{M}{I}{S}{pcrro8t at 8.9pt}{tcit1000}%
+\FontDef{T}{B}{U}{S}{pcrb8t at 8.9pt}{tctt1000}%
+\FontDef{T}{B}{I}{S}{pcrbo8t at 8.9pt}{tcit1000}%
+%    \end{macrocode}
+% The ``Math Palatino'' font is used for math.
+% \changes{1.04}{1999/02/25}{Changed math font to ``Palatino Math''
+%   for the Ifi document styles.}
+%    \begin{macrocode}
+\def \XIIpt  { at 12pt}
+\def \Xpt    { at 10pt}
+\def \IXpt   { at 9pt}
+\def \VIIIpt { at 8pt}
+\def \VIIpt  { at 7pt}
+\def \VIpt   { at 6pt}
+\def \Vpt    { at 5pt}
+\MathFontDef{N}{0}{zppler7t\XIpt}{zppler7t\VIIIpt}{zppler7t\VIpt}
+\MathFontDef{N}{1}{zppler7m\XIpt}{zppler7m\VIIIpt}{zppler7m\VIpt}
+\MathFontDef{N}{2}{zppler7y\XIpt}{zppler7y\VIIIpt}{zppler7y\VIpt}
+\MathFontDef{N}{3}{zppler7v\XIpt}{zppler7v\XIpt}{zppler7v\XIpt}
+\MathFontDef{N}{4}{zppleb7t\XIpt}{zppleb7t\VIIIpt}{zppleb7t\VIpt}
+\MathFontDef{N}{5}{pplri8t\XIpt}{pplri8t\VIIIpt}{pplri8t\VIpt}
+\MathFontDef{L}{0}{zppler7t\XIVpt}{zppler7t\Xpt}{zppler7t\VIIIpt}
+\MathFontDef{L}{1}{zppler7m\XIVpt}{zppler7m\Xpt}{zppler7m\VIIIpt}
+\MathFontDef{L}{2}{zppler7y\XIVpt}{zppler7y\Xpt}{zppler7y\VIIIpt}
+\MathFontDef{L}{3}{zppler7v\XIVpt}{zppler7v\XIVpt}{zppler7v\XIVpt}
+\MathFontDef{L}{4}{zppleb7t\XIVpt}{zppleb7t\Xpt}{zppleb7t\VIIIpt}
+\MathFontDef{L}{5}{pplri8t\XIVpt}{pplri8t\Xpt}{pplri8t\VIIIpt}
+\MathFontDef{X}{0}{zppler7t\XVIIpt}{zppler7t\XIIpt}{zppler7t\IXpt}
+\MathFontDef{X}{1}{zppler7m\XVIIpt}{zppler7m\XIIpt}{zppler7m\IXpt}
+\MathFontDef{X}{2}{zppler7y\XVIIpt}{zppler7y\XIIpt}{zppler7y\IXpt}
+\MathFontDef{X}{3}{zppler7v\XVIIpt}{zppler7v\XVIIpt}{zppler7v\XVIIpt}
+\MathFontDef{X}{4}{zppleb7t\XVIIpt}{zppleb7t\XIIpt}{zppleb7t\IXpt}
+\MathFontDef{X}{5}{pplri8t\XVIIpt}{pplri8t\XIIpt}{pplri8t\IXpt}
+\MathFontDef{S}{0}{zppler7t\Xpt}{zppler7t\VIIpt}{zppler7t\Vpt}
+\MathFontDef{S}{1}{zppler7m\Xpt}{zppler7m\VIIpt}{zppler7m\Vpt}
+\MathFontDef{S}{2}{zppler7y\Xpt}{zppler7y\VIIpt}{zppler7y\Vpt}
+\MathFontDef{S}{3}{zppler7v\Xpt}{zppler7v\Xpt}{zppler7v\Xpt}
+\MathFontDef{S}{4}{zppleb7t\Xpt}{zppleb7t\VIIpt}{zppleb7t\Vpt}
+\MathFontDef{S}{5}{pplri8t\Xpt}{pplri8t\VIIpt}{pplri8t\Vpt}
+%    \end{macrocode}
+% We must select the newly selected standard font.
+%    \begin{macrocode}
+\SelectFont
+%</ifi-article|ifi-artikkel>
+%    \end{macrocode}
+%
+% \bibliography{startex}
+% \bibliographystyle{plain}
+%
+% \clearpage 
+% \Finale
+\endinput

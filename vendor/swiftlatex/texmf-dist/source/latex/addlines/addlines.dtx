@@ -1,0 +1,293 @@
+% \iffalse 
+%<*internal>
+\begingroup
+\input docstrip.tex
+\keepsilent\nopreamble\nopostamble\askforoverwritefalse
+\generate{\file{dtx-style.sty}{\from{\jobname.dtx}{dtx-style}}}
+\endgroup
+\documentclass{ltxdoc}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+\usepackage{dtx-style}
+\begin{document}
+  \DocInput{addlines.dtx}
+\end{document}
+%</internal>
+% \fi
+%
+% \GetFileInfo{\jobname.sty}
+% \CheckSum{0}
+% \makeatletter
+%
+% \title{The \pkg{\jobname} package}
+% \author{Will Robertson\\ \url{http://github.com/wspr/will2e}}
+% \date{\filedate \qquad \fileversion}
+%
+% \maketitle
+%
+% \noindent
+% This is a small package that defines a user command for adding lines
+% to the current (and facing page, if appropriate) as a wrapper around the
+% \LaTeX\ command \cmd\enlargethispage.
+% This is intended to be used in the final typesetting
+% process of a manuscript for running pages long or short in order to
+% fit their material better (starting a paragraph on the next page,
+% for example).
+%
+% \DescribeMacro{\addlines}
+% The \cmd\addlines\ command adds enough vertical space to
+% the current text block to fit in one more line of text. An optional
+% argument specifies the number of lines to add; negative numbers
+% \emph{remove} space, and fractional numbers are fine, too. For
+% example:
+% \begin{center}
+% \begin{tabular}{l>{\itshape\small}l}
+%  |\addlines| & adds one line to the current page height\\
+%  |\addlines[2]| & adds two lines to the current page\\
+%  |\addlines[-0.5]| & subtracts half a line from the current page height
+% \end{tabular}
+% \end{center}
+% This command should be placed somewhere near the middle of the page
+% that it is intending to affect, and not be placed in the middle of
+% a paragraph or similar.
+%
+% \DescribeMacro{\addlines*}
+% A starred form of the command (\eg, \verb|\addlines*[2]|) performs
+% the same function as above without any checking and only on the current page.
+% In two-column mode this command adds lines only to the current \emph{column}.
+%
+% \DescribeMacro{\squeezepage}
+% When needing to break troublesome material on a page, it's sometimes necessary
+% to add to the amount of space added by \cmd\addlines, and additionally to ask \LaTeX\
+% to squeeze the paage up (using shrinkability of the vertical boxes).
+% When used without an optional argument \cmd\squeezepage\ doesn't add any additional
+% space but does try to squeeze the page.
+% \cmd\squeezepage\oarg{lines} adds extra space before doing so.
+%
+% \DescribeMacro{\removelines}
+% For syntactic sugar, \cmd{\addline} is a synonym for \cmd\addlines,
+% and \cmd{\removeline\textcolor{gray}(s\textcolor{gray})} is the opposite of \cmd\addlines.
+%
+% For a double-sided document 
+% (\eg, if the class option |[twoside]| is in
+% effect) extra height must be added to \emph{both pages} on a spread
+% for things to look good. If \cmd\addlines\ is called on an even page
+% (\ie, a \emph{verso} or left-side page) it adds the same space to its
+% facing page. Conversely, on an odd page (\ie, a \emph{recto} or right-side
+% page) an error is produced, but the space is still added.
+%
+% For a two-column document the situation is rather more complex --- the \cmd\addlines\
+% call must be located within the first column, and for a twosided twocolumn layout
+% it must be the first column of the even page. The package attempts to
+% enforce this, calling similar errors if \cmd\addlines\ is found in the wrong
+% location in the source.
+%
+% These errors can be suppressed by loading \pkg{addlines} with the |[draft]|
+% package option. The option that indicates that errors should
+% be shown is |[final]|; this is activated by default but could be overridden with a |[draft]| 
+% class option.
+%
+% \subsection*{Notes}
+% This command is a wrapper around the more basic command
+% \cmd\enlargethispage\ (for \cmd\addlines) and \verb|\enlargethispage*| (for \cmd\squeezepage).
+% It uses the \pkg{changepage} package to check if
+% the command is called on an even page, and the \pkg{afterpage}
+% package to add material to a facing odd page if necessary.
+%
+% The \pkg{changepage} mechanism for detecting page number oddness may
+% require more than a single \LaTeX\ compilation to stabilise, so
+% false positives may occur. If \pkg{memoir} is used, its
+% \cmd\strictpagechecktrue\ command is executed.
+%
+% \pkg{afterpage} may conflict poorly with
+% other packages that modify \LaTeX's output routine (\ie, the
+% algorithm used to chunk the document into discrete pages).
+%
+% \subsection*{Change history}
+% \begin{description}
+% \item[0.1] Initial version implementing the basic commands.
+% \item[0.2] Switched from \pkg{chngpage} to \pkg{changepage} and added package options |[draft]| and |[final]|.
+% \item[0.2a] Remove \verb|\usepackage{etex}| for better compatibility with \LaTeX\ 2015.
+% \item[0.3] Added \verb|\addlines*|, \verb|\squeezepage|, and two-column support.
+% \end{description}
+% 
+%
+% \StopEventually{}
+%
+% \clearpage
+% \part{\pkg{\jobname} implementation}
+%\iffalse
+%<*package>
+%\fi
+%
+%
+%    \begin{macrocode}
+\ProvidesPackage{addlines}
+  [2018/12/05 v0.3 Add/remove lines from a page]
+%    \end{macrocode}
+%
+% Packages:
+%    \begin{macrocode}
+\RequirePackage{afterpage,changepage}
+%    \end{macrocode}
+%
+% Option:
+%    \begin{macrocode}
+\newif\if@addlines@checkpage@
+\DeclareOption{final}{\@addlines@checkpage@true}
+\DeclareOption{draft}{\@addlines@checkpage@false}
+\ExecuteOptions{final}
+\ProcessOptions
+%    \end{macrocode}
+%
+% \begin{macro}{\addlines}
+% \oarg{Number of lines to add to the text height}
+%    \begin{macrocode}
+\newcommand\addlines{\@ifstar\addlines@a\addlines@b}
+\newcommand\addlines@a[1][1]{\addlines@here{#1}}
+\newcommand\addlines@b[1][1]{\addlines@do{#1}}
+\newcommand\addlines@here[1]{\enlargethispage{#1\baselineskip}}
+\newcommand\addlines@do[1]{%
+  \if@twocolumn
+    \addlines@twocol{#1}%  
+  \else
+    \addlines@onecol{#1}%
+  \fi
+}
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+\newcommand\addlines@onecol[1]{%
+  \addlines@here{#1}%
+  \if@twoside
+    \checkoddpage
+    \ifoddpage
+      \addlines@error{page}
+    \else
+      \afterpage{\addlines@here{#1}}%
+    \fi
+  \fi}
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+\newcommand\addlines@twocol[1]{%
+  \enlargethispage{#1\baselineskip}%
+  \if@firstcolumn
+    \afterpage{\enlargethispage{#1\baselineskip}}%
+  \else
+    \addlines@error{column}%
+  \fi
+  \if@twoside
+    \checkoddpage
+    \ifoddpage
+      \addlines@error{page}%
+    \else
+      \afterpage{\afterpage{\addlines@here{#1}}}%
+      \afterpage{\afterpage{\afterpage{\addlines@here{#1}}}}%
+    \fi
+  \fi}
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+\newcommand\addlines@error[1]{%
+  \if@addlines@checkpage@
+    \PackageError{addlines}
+      {\MessageBreak You're adding lines to the wrong #1}
+      {Extra lines need to be added to all columns and both sides of a doublepage spread.^^J
+       This error might clear up after a recompile, though.}%
+  \fi
+}
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+\let\addline\addlines
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\removelines}
+% \oarg{Number of lines to remove from the text height}
+% Works with negative numbers through the miracles of $\varepsilon$-\TeX.
+%    \begin{macrocode}
+\newcommand\removelines{\@ifstar\removelines@a\removelines@b}
+\newcommand\removelines@a[1][1]{\addlines@here{\numexpr -1*(#1) \relax}}
+\newcommand\removelines@b[1][1]{\addlines@do{\numexpr -1*(#1) \relax}}
+\let\removeline\removelines
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\squeezepage}
+% \oarg{Number of lines to add to the text height}
+%    \begin{macrocode}
+\newcommand\squeezepage[1][0]{\enlargethispage*{#1\baselineskip}}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% Finally, we don't want sloppy page number checking:
+%    \begin{macrocode}
+\strictpagechecktrue
+%    \end{macrocode}
+%
+%\iffalse
+%</package>
+%\fi
+%
+%
+%\iffalse
+%<*dtx-style>
+%    \begin{macrocode}
+\ProvidesPackage{dtx-style}
+
+\errorcontextlines=999
+
+\def\@dotsep{1000}
+\setcounter{tocdepth}{2}
+\setlength\columnseprule{0.1pt}
+\renewcommand\tableofcontents{\relax
+  \begin{multicols}{2}[\section*{\contentsname}]\small
+    \@starttoc{toc}\relax
+  \end{multicols}}
+
+\setcounter{IndexColumns}{2}
+\renewenvironment{theglossary}
+  {\small\list{}{}
+     \item\relax
+     \glossary@prologue\GlossaryParms 
+     \let\item\@idxitem \ignorespaces 
+     \def\pfill{\hspace*{\fill}}}
+  {\endlist}
+
+\usepackage{xcolor}
+\usepackage{array,booktabs,calc,enumitem,fancyvrb,ifthen,refstyle,varioref,titlesec,url}
+\usepackage{addlines}
+
+\usepackage[sc,osf]{mathpazo}
+
+\linespread{1.069}      % A bit more space between lines
+\frenchspacing         % Remove extra space after punctuation
+\setlength\parindent{2em}
+\definecolor{niceblue}{rgb}{0.2,0.4,0.8}
+\def\theCodelineNo{\textcolor{niceblue}{\sffamily\tiny\arabic{CodelineNo}}}
+
+\newcommand*\pkg[1]{\textsf{#1}}
+\let\latin\textit
+\def\eg{\latin{e.g.}}
+\def\Eg{\latin{E.g.}}
+\def\ie{\latin{i.e.}}
+\def\etc{\@ifnextchar.{\latin{etc}}{\latin{etc.}\@}}
+\def\CTAN{\textsc{ctan}}
+
+\def\codeline{\par\hspace{\parindent}}% two \indents in total
+%    \end{macrocode}
+%</dtx-style>
+%\fi
+% \typeout{*************************************************************}
+% \typeout{*}
+% \typeout{* To finish the installation you have to move the following}
+% \typeout{* file into a directory searched by XeTeX:}
+% \typeout{*}
+% \typeout{* \space\space\space addlines.sty}
+% \typeout{*}
+% \typeout{*************************************************************}
+\endinput

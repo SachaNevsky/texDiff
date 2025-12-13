@@ -1,0 +1,782 @@
+%\iffalse
+% makeindex -s gglo.ist -o xbmks.gls xbmks.glo
+% makeindex -s gind.ist -o xbmks.ind xbmks.idx
+%<*copyright>
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% xbmks.sty package,                                    %%
+%% Copyright (C) 2016--2018                              %%
+%%   dpstory@uakron.edu                                  %%
+%%                                                       %%
+%% This program can redistributed and/or modified under  %%
+%% the terms of the LaTeX Project Public License         %%
+%% Distributed from CTAN archives in directory           %%
+%% macros/latex/base/lppl.txt; either version 1.2 of the %%
+%% License, or (at your option) any later version.       %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%</copyright>
+%<package>\NeedsTeXFormat{LaTeX2e}[1997/12/01]
+%<package>\ProvidesPackage{xbmks}
+%<package> [2020/01/16 v2.0.3 xbmks: Cross-document bookmarks (dps)]
+%<*driver>
+\documentclass{ltxdoc}
+\usepackage{xcolor}
+\usepackage[colorlinks,hyperindex=false,bookmarksopen]{hyperref}
+\usepackage{fancyvrb,array,calc}
+\usepackage{xbmks}
+\xbmksetup{colors={int=red},styles={intbf}}
+%\pdfstringdefDisableCommands{\let\\\textbackslash}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+\bgroup\ttfamily
+\gdef\brpr#1{\char123\relax#1\char125\relax}\egroup
+\let\darg\brpr
+\let\env\texttt
+\let\opt\texttt
+\let\pkg\textsf
+\let\app\textsf
+\def\visispace{\symbol{32}}
+%\def\hardspace{{\fontfamily{cmtt}\selectfont\symbol{32}}}
+\def\ameta#1{\ensuremath{\langle\textit{\texttt{#1}}\rangle}}
+\def\meta#1{\textsl{\texttt{#1}}}
+\def\SUB#1{\ensuremath{{}_{\mbox{\scriptsize\ttfamily#1}}}}
+\def\cs#1{\texttt{\bslash#1}}
+\DeclareRobustCommand{\tmspace}[3]{%
+  \ifmmode\mskip#1#2\else\kern#1#3\fi\relax}
+\renewcommand{\,}{\tmspace+\thinmuskip{.1667em}}
+\let\thinspace\,
+\renewcommand{\!}{\tmspace-\thinmuskip{.1667em}}
+\let\negthinspace\!
+\renewcommand{\:}{\tmspace+\medmuskip{.2222em}}
+\let\medspace\:
+\newcommand{\negmedspace}{\tmspace-\medmuskip{.2222em}}
+\renewcommand{\;}{\tmspace+\thickmuskip{.2777em}}
+\let\thickspace\;
+\newcommand{\negthickspace}{\tmspace-\thickmuskip{.2777em}}
+\makeatletter
+\renewcommand{\paragraph}
+  {\@startsection{paragraph}{4}{0pt}{6pt}{-3pt}
+  {\normalfont\normalsize\bfseries}}
+\renewenvironment{quote}[1][]
+ {\def\@rgi{#1}\ifx\@rgi\@empty
+  \let\rghtm\@empty\else\def\rghtm{\rightmargin\leftmargin}\fi
+  \list{}{\rghtm} %{\rightmargin\leftmargin}%
+  \item\relax}
+ {\endlist}
+\makeatother
+\InputIfFileExists{aebdocfmt.def}{\PackageInfo{xbmks}{Inputting aebdocfmt.def}}
+  {\def\IndexOpt{\DescribeMacro}\def\IndexKey{\DescribeMacro}\let\setupFullwidth\relax
+   \PackageInfo{xbmks}{aebdocfmt.def cannot be found}}
+\begin{document}
+\def\CMD#1{\textbackslash#1}
+  \GetFileInfo{xbmks.sty}
+  \title{\textsf{xbmks}: Cross-document bookmarks}
+  \author{D. P. Story\\
+    Email: \texttt{dpstory@acrotex.net}}
+  \date{processed \today}
+  \maketitle
+  \tableofcontents
+  \let\Email\texttt
+  \DocInput{xbmks.dtx}
+\IfFileExists{\jobname.ind}{\newpage\setupFullwidth\par\PrintIndex}{\paragraph*{Index} The index goes here.\\Execute
+    \texttt{makeindex -s gind.ist -o xbmks.ind xbmks.idx}\\on the command line and recompile
+    \texttt{xbmks.dtx}.}
+\IfFileExists{\jobname.gls}{\PrintChanges}{\paragraph*{Change History} The list of changes goes here.\\Execute
+    \texttt{makeindex -s gglo.ist -o xbmks.gls xbmks.glo}\\on the command line and recompile
+    \texttt{xbmks.dtx}.}
+\end{document}
+%</driver>
+% \fi
+% \MakeShortVerb{|}
+%
+% \InputIfFileExists{aebdonotindex.def}{\PackageInfo{web}{Inputting aebdonotindex.def}}
+%    {\PackageInfo{web}{cannot find aebdonotindex.def}}
+%
+%    \begin{macrocode}
+% Begin package
+%<*package>
+\RequirePackage{xkeyval}
+\RequirePackage{ifpdf}[2006/02/20]
+\RequirePackage{ifxetex}[2006/08/21]
+%    \end{macrocode}
+%
+%\section{Description}
+% More than a couple decades ago (counting back from 2018), I wrote two mathematics tutorials: \textsl{\href{http://www.math.uakron.edu/~dpstory/e-calculus.html}{eCalculus}} and
+% \textsl{\href{http://www.math.uakron.edu/~dpstory/mpt_home.html}{Algebra Review in Ten Lessons}}. The tutorials consisted of a number of lessons, each in a separate PDF.
+% The bookmarks of each lessons contained the table of contents for the whole tutorial. A student, in theory, could then
+% jump from one lesson to another by selecting an entry of interest from the bookmarks. In the intervening years I have not seen
+% a {\LaTeX} package for merging the table of contents of a set of PDFs and merge them in this each member of the
+% set. This package attempts to do just that.
+%
+% \section{Drivers and options}
+% We support the drivers \app{dvips} (and \app{dvipsone}), \app{pdflatex}, \app{lualatex}, and \app{xelatex}; these
+% options are then named \opt{dvipsone}, \opt{dvips}, \opt{pdftex}, \opt{luatex}, and \opt{xetex}.
+% \changes{v1.1}{2018/06/13}{Fixed misspelling of drive command for pdfmark case}
+%    \begin{macrocode}
+\def\xbmk@driver{xbmks-pdfmark.def}
+\DeclareOptionX{dvipsone}{\def\xbmk@driver{xbmks-pdfmark.def}}
+\DeclareOptionX{dvips}{\def\xbmk@driver{xbmks-pdfmark.def}}
+\DeclareOptionX{pdftex}{\def\xbmk@driver{xbmks-pdftex.def}}
+\DeclareOptionX{luatex}{\def\xbmk@driver{xbmks-pdftex.def}}
+\DeclareOptionX{xetex}{\def\xbmk@driver{xbmks-xetex.def}}
+%    \end{macrocode}
+%    \section{Process the options}
+%    \changes{v2.0.3}{2020/01/16}{Modification to conform to the new \string\texttt{web.cfg} format}
+%    \begin{macrocode}
+\let\bWebCustomize\endinput
+\let\eWebCustomize\relax
+\ifpdf\ExecuteOptionsX{pdftex}\else
+\ifxetex\ExecuteOptionsX{xetex}\else
+  \let\ExecuteOptions@SAVE\ExecuteOptions
+  \let\ExecuteOptions\ExecuteOptionsX
+  \InputIfFileExists{web.cfg}{}
+  {\@ifundefined{l@tex@@@@driver}{\ExecuteOptionsX{dvips}}
+      {\ExecuteOptionsX{dvipsone}}}%
+  \let\ExecuteOptions\ExecuteOptions@SAVE
+\fi\fi
+\ProcessOptionsX
+%    \end{macrocode}
+% \section{Requirements}
+% The minimal requirement is \pkg{hyperref} and its built-in bookmark system. It is important to note that
+% the \pkg{bookmark} package is not supported.
+%    \begin{macrocode}
+\RequirePackage{hyperref}
+%    \end{macrocode}
+%    \begin{macro}{\xbmksetup}
+%    Set the cross-document options:
+% \changes{v1.1}{2018/06/13}{Allow an empty value of docbundle, its value is set to \string\cs{jobname}}%
+%\begin{quote}\ttfamily\obeylines
+%\string\xbmksetup\darg{%
+%\qquad docbundle=\darg{\ameta{doc\SUB1},\ameta{doc\SUB2},...,\ameta{doc\SUB{n}}},
+%\qquad colors=\darg{int=\ameta{color},ext=\ameta{color}},
+%\qquad styles=\darg{intbf,extbf,intit,extit}
+%}
+%\end{quote}
+%This command must appear in one and only one of the document bundle, perhaps one
+%of the documents you are calling the `main file'. It writes
+%the key-values to the file \texttt{xbmks.cfg} which is then read back in by the other
+%members of the document bundle, as specified by the \texttt{dobundle} key. The base names
+%of the document bundle must match the name given to it by \cs{jobname}, exact spelling, case
+%sensitive.
+%
+%\paragraph*{Key-values for \cs{xbmksetup}.} The keys belonging to the \texttt{xbmksetup} family:
+%\IndexOpt{docbundle}\texttt{docbundle}, \IndexOpt{colors}\texttt{colors}, and \IndexOpt{styles}\texttt{styles}.
+%    \begin{macrocode}
+\define@key{xbmksetup}{docbundle}[]{\def\x@bmks@docs{#1}}
+\let\x@bmks@docs\@empty
+\define@key{xbmksetup}{colors}[]{\def\x@bmks@colors{#1}}
+\let\x@bmks@colors\@empty
+\define@key{xbmksetup}{styles}[]{\def\x@bmks@styles{#1}}
+\let\x@bmks@styles\@empty
+%    \end{macrocode}
+%\subparagraph*{Values for the key \texttt{colors}.} The value recognized are
+%\begin{quote}\ttfamily
+%  colors=\darg{int=\ameta{color},ext=\ameta{color}}
+%\end{quote}
+%If the value of \texttt{int} or \texttt{ext} is empty, then the PDF viewer's default
+%colors are using (black).
+%    \begin{macrocode}
+\define@key{xbmk@colors}{int}[]{%
+  \HyColor@BookmarkColor{#1}{\xbmks@intC}{xbmks}{int}%
+  \ifx\xbmks@intC\@empty\else
+  \edef\xbmks@intC{/C[\xbmks@intC]}\fi
+}
+\let\xbmks@intC\@empty
+\define@key{xbmk@colors}{ext}[]{%
+  \HyColor@BookmarkColor{#1}{\xbmks@extC}{xbmks}{ext}%
+  \ifx\xbmks@extC\@empty\else
+  \edef\xbmks@extC{/C[\xbmks@extC]}\fi
+}
+\let\xbmks@extC\@empty
+\let\xbmks@Yes=y \let\xbmks@No=n
+%    \end{macrocode}
+%\subparagraph*{Values for the key \texttt{colors}.} The value recognized are
+%\begin{quote}\ttfamily
+%  styles=\darg{intbf,intit,extbf,extit}
+%\end{quote}
+%These are valueless keys (Boolean keys, actually).  \texttt{intbf} means the interior document bookmarks
+%are set in bold while \texttt{intbf,intit} creates bold and italic font.
+%    \begin{macrocode}
+\define@boolkey{xbmk@styles}{intbf}[true]{}
+\define@boolkey{xbmk@styles}{extbf}[true]{}
+\define@boolkey{xbmk@styles}{intit}[true]{}
+\define@boolkey{xbmk@styles}{extit}[true]{}
+%    \end{macrocode}
+%    We evaluate the values of \cs{xbmksetup} by getting the values of
+%    the \texttt{xbmksetup} family.
+%    \begin{macrocode}
+\newcommand{\xbmksetup}[1]{\setkeys{xbmksetup}{docbundle,#1}%
+%    \end{macrocode}
+%    \changes{v2.0.2}{2018/07/04}{Added an empty docbundle argument. This solves a problem
+%    that the bookmarks not appearing after an even number of compiles.}
+%    \begin{macrocode}
+  \ifx\x@bmks@docs\@empty
+%    \end{macrocode}
+%     If there is no \texttt{docbundle} is specified, we use \cs{jobname} as its
+%     value.
+%    \begin{macrocode}
+    \PackageInfo{xbmks}{The docbundle key of \string\xbmksetup\space
+    is empty,\MessageBreak
+    I will give it a value of `\jobname',\MessageBreak
+    in hopes this is your intention}%
+    \gdef\xbmk@cnt{1}%
+    \def\xbmks@next{\write@xbmks@cfg{docbundle={\jobname},#1}}\else
+    \def\xbmks@next{\write@xbmks@cfg{#1}}\fi\xbmks@next
+}
+%    \end{macrocode}
+%    We write the key-values of \cs{xbmksetup} to the hard drive in the file
+%    \texttt{xbmks.cfg}, this is \cs{xbmksetupi\darg{\ameta{KVPairs}}}. \cs{xbmksetupi}
+%    is defined below, it is the command that actually does the heavy lifting in
+%    processing the key-values.
+%    \begin{macrocode}
+\def\write@xbmks@cfg#1{%
+  \newwrite\xbmks@setup \immediate\openout \xbmks@setup xbmks.cfg
+  \set@display@protect
+  \immediate\write\xbmks@setup{\protect\xbmksetupi{#1}}%
+  \set@typeset@protect
+  \immediate\closeout\xbmks@setup
+}
+%    \end{macrocode}
+%    \cs{xbmksetupi} is an internal command that sets the key-values across all files in the \texttt{docbundle}.
+%    \begin{macrocode}
+\newcommand{\xbmksetupi}[1]{%
+  \setkeys{xbmksetup}{#1}%
+  \edef\x{\noexpand\x@docbundle{\x@bmks@docs}}\x
+  \edef\x{\noexpand
+    \setkeys{xbmk@colors}{\x@bmks@colors}}\x
+  \edef\x{\noexpand
+    \setkeys{xbmk@styles}{\x@bmks@styles}}\x
+  \let\xbmk@intF\@empty
+  \ifKV@xbmk@styles@intit
+    \ifKV@xbmk@styles@intbf
+      \def\xbmk@intF{/F 3}\else
+      \def\xbmk@intF{/F 1}\fi
+  \else
+    \ifKV@xbmk@styles@intbf
+      \def\xbmk@intF{/F 2}\fi
+  \fi
+  \let\xbmk@extF\@empty
+  \ifKV@xbmk@styles@extit
+    \ifKV@xbmk@styles@extbf
+      \def\xbmk@extF{/F 3}\else
+      \def\xbmk@extF{/F 1}\fi
+  \else
+    \ifKV@xbmk@styles@extbf
+      \def\xbmk@extF{/F 2}\fi
+  \fi
+}
+%    \end{macrocode}
+%    \end{macro}
+%    \begin{macro}{\x@docbundle}
+%    is a comma-delimited list of document base names:
+%\begin{quote}\ttfamily\obeylines
+%\string\x@docbundle\darg{\ameta{doc\SUB1},\ameta{doc\SUB2},...,\ameta{doc\SUB{n}}}
+%\end{quote}
+%This command is called internally by \cs{xbmksetupi}.
+%    \begin{macrocode}
+\def\xbmkcsarg#1#2{\expandafter#1\csname#2\endcsname}
+\xdef\xbmk@cnt{0}
+\newcommand{\x@docbundle}[1]{\bgroup
+  \def\thisDoc{\jobname}\count\z@=0 %
+  \edef\@tmpexp{\noexpand\@for\noexpand\@arg:=#1}%
+  \@tmpexp\do{\advance\count\z@ by 1\relax
+    \edef\x{\noexpand\xbmk@recordDoc{\@arg}}\x
+    \edef\x{\noexpand\xbmk@docID{\@arg}}\x
+  }%
+  \xdef\xbmk@cnt{\the\count\z@}\egroup
+}
+\newcommand{\xbmk@recordDoc}[1]{%
+  \xbmkcsarg\xdef{xbmk@doc\the\count\z@}{#1}}
+%    \end{macrocode}
+%    Because we are bringing in multiple outline files, there may be duplicate anchor names.
+%    We assign each file in the document bundle a unique ID `\texttt{x1\ameta{anchor}}', `\texttt{x2\ameta{anchor}}', etc.
+%    The IDs are ultimately assigned through \cs{pdfbookmarkx}.
+%    \begin{macrocode}
+\newcommand{\xbmk@docID}[1]{%
+  \xbmkcsarg\xdef{x#1}{x\the\count\z@}}
+\xbmkcsarg\xdef{x\jobname}{x0}
+%    \end{macrocode}
+%    \end{macro}
+%
+%    \section{Extending bookmarks to arbitrary actions}
+%
+%    It is possible to create bookmarks with arbitrary actions, just as the \pkg{bookmark}
+%    package, does. Here we try to use \pkg{hyperref}'s native bookmark support. The
+%    \pkg{hyperref} commands \cs{pdfbookmark}, \cs{currentbookmark}, \cs{subpdfbookmark}, and
+%    \cs{belowpdfbookmark} are modified.
+%    \begin{macro}{\pdfbookmarkx}\hskip-\marginparsep\,
+%    \texttt{[\ameta{level}]\darg{\ameta{text}}[\ameta{xbmkskeys-kvp}]\darg{\ameta{name}}}\\
+%    Defines a bookmark at \ameta{level}. If \ameta{level} is not provided, the level 1 is assumed.
+%    We write to the outline file the action desired for this bookmark.
+%    \cs{currentAction} is defined below. We do not set an anchor; if the
+%    document author wants an anchor, he should use \cs{pdfbookmark}. As with
+%    \cs{pdfbookmark}, the \cs{pdfbookmarkx} should not normally be directly
+%    used.
+%    \paragraph*{Key-values for the `\cs{...bookmarkx}' commands.} Recognized keys are
+%    \IndexKey{action}\texttt{action}, \IndexKey{color}\texttt{color}, and \IndexKey{style}\texttt{style}.
+%    Note that these keys are singular, as opposed to \texttt{colors} and \texttt{styles} defined in the
+%    \texttt{xbmksetup} family. This is the \texttt{xbmkskeys} family.
+%    \changes{v2.0}{2018/06/21}{Added `\string\cs{...bookmarkx} commands}
+%    \changes{v2.0.1}{2018/06/25}{Added key-values for action, color, and style for custom `\string\cs{...bookmarkx} commands}
+%    \begin{macrocode}
+\define@key{xbmkskeys}{action}{\def\x@bmks@action{#1}}
+\let\x@bmks@action\@empty
+\define@key{xbmkskeys}{color}[]{%
+  \HyColor@BookmarkColor{#1}{\x@bmks@C}{xbmks}{color}%
+  \ifx\x@bmks@C\@empty\else
+  \edef\x@bmks@C{/C[\x@bmks@C]}\fi
+}
+\let\x@bmks@C\@empty
+\define@key{xbmkskeys}{style}[]{%
+  \edef\x{\noexpand\setkeys{xbmks@style}{#1}}\x
+  \let\x@bmks@F\@empty
+  \ifKV@xbmks@style@it
+    \ifKV@xbmks@style@bf
+      \def\x@bmks@F{/F 3}\else
+      \def\x@bmks@F{/F 1}\fi
+  \else
+    \ifKV@xbmks@style@bf
+      \def\x@bmks@F{/F 2}\fi
+  \fi
+}
+\let\x@bmks@F\@empty
+%    \end{macrocode}
+%    The \texttt{style} key takes zero, one, or two values, these are \texttt{bf} and \texttt{it}.
+%    \begin{macrocode}
+\define@boolkey{xbmks@style}{bf}[true]{}
+\define@boolkey{xbmks@style}{it}[true]{}
+\def\x@rollCFIntoActionBmrk#1{%
+  \xbmkcsarg\ifx{X_#1}\relax
+    \let\x@bmks@C\@empty\let\x@bmks@F\@empty\fi
+  \ifx\xbmk@J\xbmk@filename
+    \ifx\x@bmks@C\@empty\let\thisCol\xbmks@intC\else
+      \let\thisCol\x@bmks@C\fi
+    \ifx\x@bmks@F\@empty\let\thisF\xbmk@intF\else
+      \let\thisF\x@bmks@F\fi
+  \else
+    \ifx\x@bmks@C\@empty\let\thisCol\xbmks@extC\else
+      \let\thisCol\x@bmks@C\fi
+    \ifx\x@bmks@F\@empty\let\thisF\xbmk@extF\else
+      \let\thisF\x@bmks@F\fi
+  \fi
+  \global\let\x@bmks@C\@empty\global\let\x@bmks@F\@empty
+}
+%    \end{macrocode}
+%    We finally arrive at \cs{pdfbookmarkx} command.
+%    \begin{macrocode}
+\newcommand\pdfbookmarkx[2][0]{%
+  \@ifnextchar[%]
+    {\pdfbookmarkx@i{#1}{#2}}
+    {\pdfbookmarkx@i{#1}{#2}[]}}
+\def\pdfbookmarkx@i#1#2[#3]#4{% level, title, action, name
+  \def\x@rgiii{#3}\ifx\x@rgiii\@empty
+%    \end{macrocode}
+% if there is no action, treat as a destination
+%    \begin{macrocode}
+    \Hy@writebookmark{}{#2}{#4.#1}{#1}{toc}%
+    \hyper@anchorstart{#4.#1}\hyper@anchorend
+  \else
+  \protected@write\@outlinefile{}{%
+    \string\nextAction% assign doc ID
+      {\@nameuse{x\jobname}#4.#1}{#3}}%
+  \Hy@writebookmark{}{#2}{\@nameuse{x\jobname}#4.#1}{#1}{toc}%
+  \fi
+}
+%    \end{macrocode}
+%    \end{macro}
+%    \begin{macro}{\currentpdfbookmarkx}
+%    \hskip-\marginparsep\,\texttt{\darg{\ameta{text}}[\ameta{xbmkskeys-kvp}]\darg{\ameta{name}}}\\
+%    The \texttt{action=\ameta{action}} is raw PDF code, for example,
+%\begin{quote}\ttfamily
+%\string\currentpdfbookmarkx[/S/URI/URI(http://www.acrotex.net)]\\\null
+%\qquad\darg{http://www.acrotex.net}\darg{home}
+%\end{quote}
+%   The command creates a bookmark at the current
+%   bookmark level in the outline tree and associates the specified \ameta{action}. The argument
+%   \ameta{text} appears in the bookmark panel. The \ameta{name} is used for identification purposes.
+%    \begin{macrocode}
+\newcommand{\currentpdfbookmarkx}[1]{%
+  \@ifnextchar[%]
+    {\currentpdfbookmarkx@i{#1}}
+    {\currentpdfbookmarkx@i{#1}[]}}
+\def\currentpdfbookmarkx@i#1[#2]#3{%
+  \pdfbookmarkx[\Hy@currentbookmarklevel]{#1}[{#2}]{#3}}
+%    \end{macrocode}
+%    \end{macro}
+%    \begin{macro}{\subpdfbookmarkx}
+%    \hskip-\marginparsep\,\texttt{\darg{\ameta{text}}[\ameta{\ameta{xbmkskeys-kvp}}]\darg{\ameta{name}}}\\
+%    Reduces the current bookmark level by one, then creates
+%    the bookmark at that level. The reduced level is the new current
+%    bookmark level.
+%    \begin{macrocode}
+\newcommand{\subpdfbookmarkx}[1]{%
+  \@ifnextchar[%]
+    {\subpdfbookmarkx@i{#1}}
+    {\subpdfbookmarkx@i{#1}[]}}
+\def\subpdfbookmarkx@i#1[#2]#3{%
+  \@tempcnta\Hy@currentbookmarklevel
+  \Hy@StepCount\@tempcnta
+  \expandafter
+  \pdfbookmarkx\expandafter[\the\@tempcnta]{#1}[{#2}]{#3}}
+%    \end{macrocode}
+%    \end{macro}
+%    \begin{macro}{\belowpdfbookmarkx}
+%    \hskip-\marginparsep\,\texttt{\darg{\ameta{text}}[\ameta{xbmkskeys-kvp}]\darg{\ameta{name}}}\\
+%    Creates a bookmark at one level below the current
+%    bookmark level without changing the value of the current bookmark
+%    level.
+%    \begin{macrocode}
+\newcommand{\belowpdfbookmarkx}[1]{%
+  \@ifnextchar[%]
+    {\belowpdfbookmarkx@i{#1}}
+    {\belowpdfbookmarkx@i{#1}[]}}
+\def\belowpdfbookmarkx@i#1[#2]#3{%
+  \@tempcnta\Hy@currentbookmarklevel
+  \Hy@StepCount\@tempcnta
+  \expandafter
+  \pdfbookmarkx\expandafter[\the\@tempcnta]{#1}[{#2}]{#3}%
+  \advance\@tempcnta by -1 %
+  \xdef\Hy@currentbookmarklevel{\the\@tempcnta}}
+%    \end{macrocode}
+%    \end{macro}
+%    \begin{macro}{\nextAction@i}
+%     \hskip-\marginparsep\,\texttt{\darg{\ameta{anchor.level}}\darg{\ameta{xbmkskeys-kvp}}}\\
+%     This command is used internally, the document author need not do anything.
+%     The command \cs{nextAction} is \cs{let} to \cs{nextAction@i} just prior to when
+%     the outline file is input; and is \cs{let} to \cs{@gobbletwo}, otherwise.
+%    \begin{macrocode}
+\def\nextAction@i#1#2{\@ifundefined{X_#1}{%
+    \setkeys{xbmkskeys}{#2}%
+    \xbmkcsarg\xdef{X_#1}{\x@bmks@action}%
+    }{\global\xbmkcsarg\let{X_#1}\relax
+    \PackageWarning{xbmks}
+    {The anchor name `#1' is already defined,\MessageBreak
+    change this name, the bookmark will be created\MessageBreak
+    but it will have no associated action}}}
+%    \end{macrocode}
+%    \end{macro}
+%    \begin{macrocode}
+\def\x@outWarningMsg{\PackageWarningNoLine{xbmks}{%
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\MessageBreak
+@@ Outline files were not input, compile again @@\MessageBreak
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@}}%
+%    \end{macrocode}
+%    These commands are implemented in the driver dependent sections.
+%    \begin{macrocode}
+% End package
+%</package>
+%<*pdfmark>
+%    \end{macrocode}
+%    \section{Driver dependent code}
+%    \subsection{The pdfmark driver}
+%    We redefine/modify the \cs{ReadBookmarks} command of \pkg{hyperref},
+%    this definition is driver dependent.
+%    \begin{macrocode}
+\def\ReadBookmarks{%
+  \pdf@ifdraftmode{}{%
+    \begingroup\def\\{\@backslashchar\@backslashchar}% dps
+      \def\calc@bm@number##1{%
+      \@tempcnta=\check@bm@number{##1}\relax
+      \advance\@tempcnta by 1 %
+      \expandafter\edef\csname B_##1\endcsname{\the\@tempcnta}%
+      }%
+      \def\do##1{%
+        \ifnum\catcode`##1=\active
+          \@makeother##1%
+        \else
+          \ifnum\catcode`##1=6 %
+            \@makeother##1%
+          \fi
+        \fi
+      }%
+      \dospecials
+      \Hy@safe@activestrue
+      \escapechar=`\\%
+      \ifx\WriteBookmarks\relax
+        \global\let\WriteBookmarks\relax
+      \fi
+      \begingroup
+        \def\WriteBookmarks{0}%
+        \count\z@=0\relax
+        \edef\xbmk@J{\jobname}%
+        \@whilenum \count\z@<\xbmk@cnt\relax\do{%
+          \advance\count\z@ by 1 %
+          \edef\xbmk@thisdoc{xbmk@doc\the\count\z@}%
+          \edef\xbmk@filename{\@nameuse{\xbmk@thisdoc}}%
+          \@onelevel@sanitize\xbmk@filename
+          \bgroup
+          \def\@@BOOKMARK[##1][##2]##3##4##5{%
+            \calc@bm@number{##5}%
+          }%
+          \let\nextAction\@gobbletwo
+          \InputIfFileExists{\xbmk@filename.out}{}{\x@outWarningMsg}%
+          \def\@@BOOKMARK[##1][##2]##3##4##5{%
+            \def\Hy@temp{##4}%
+%    \end{macrocode}
+%    If `\texttt{X\_\#\#3}' is undefined (\cs{relax}), it is a  normal bookmark.
+%    \begin{macrocode}
+            \xbmkcsarg\ifx{X_##3}\relax
+              \ifx\xbmk@J\xbmk@filename
+                \pdfmark{%
+                  pdfmark=/OUT,%
+                  Count={##2\check@bm@number{##3}},%
+                  Raw={\xbmks@intC\xbmk@intF},%
+                  Dest={##3},%
+                  Title=\expandafter\strip@prefix\meaning\Hy@temp
+                }%
+              \else
+                \pdfmark{%
+                  pdfmark=/OUT,%
+                  Count={##2\check@bm@number{##3}},%
+                  Raw={\xbmks@extC\xbmk@extF},%
+                  Action=/GoToR,%
+                  File={\xbmk@filename.pdf},%
+                  Dest={##3},%
+                  Title=\expandafter\strip@prefix\meaning\Hy@temp
+                }%
+              \fi
+            \else
+%    \end{macrocode}
+%    The anchor has an `\texttt{X\_}' definition, it is a bookmark created
+%    from one of the `\texttt{bookmarkx}' commands. We treat this as a separate case.
+%    \begin{macrocode}
+              \x@rollCFIntoActionBmrk{##3}%
+              \pdfmark{%
+                pdfmark=/OUT,%
+                Count={##2\check@bm@number{##3}},%
+                Raw={/Action<<\@nameuse{X_##3}>>\thisCol\thisF},%
+                Title=\expandafter\strip@prefix\meaning\Hy@temp
+              }%
+            \fi
+          }% bookmark
+          \let\nextAction\nextAction@i
+          \InputIfFileExists{\xbmk@filename.out}{}{}%
+          \egroup
+        }% \@whilenum
+      \endgroup
+    \endgroup
+  }%
+  \ifx\WriteBookmarks\relax\else
+    \if@filesw
+      \newwrite\@outlinefile
+      \Hy@OutlineRerunCheck
+     \immediate\openout\@outlinefile=\jobname.out\relax
+      \ifHy@typexml
+        \immediate\write\@outlinefile{<relaxxml>\relax}%
+      \fi
+    \fi
+  \fi
+}
+%</pdfmark>
+%    \end{macrocode}
+%    \subsection{Code for pdftex/luatex driver}
+%    We redefine/modify the \cs{ReadBookmarks} command of \pkg{hyperref},
+%    this definition is driver dependent.
+%    \begin{macrocode}
+%<*pdftex>
+\def\ReadBookmarks{%
+  \pdf@ifdraftmode{}{%
+    \begingroup\def\\{\@backslashchar\@backslashchar}% dps
+    \def\calc@bm@number##1{%
+      \@tempcnta=\check@bm@number{##1}\relax
+      \advance\@tempcnta by 1 %
+      \expandafter\edef\csname B_##1\endcsname{\the\@tempcnta}%
+    }%
+    \def\Hy@OutlineName##1##2##3##4{\def\@rgi{##1}%
+      \expandafter\pdfoutline\ifx\@rgi\@empty\else
+      attr {##1} \fi
+      user {##2} count##3{##4}%
+    %  goto name{#2} count#3{#4}%
+    }%
+    \def\do##1{%
+      \ifnum\catcode`##1=\active
+        \@makeother##1%
+      \else
+        \ifnum\catcode`##1=6 %
+          \@makeother##1%
+        \fi
+      \fi
+    }%
+    \dospecials
+    \Hy@safe@activestrue
+    \escapechar=`\\%
+    \ifx\WriteBookmarks\relax
+      \global\let\WriteBookmarks\relax
+    \fi
+    \begingroup
+    \def\WriteBookmarks{0}%
+    \count\z@=0\relax
+    \edef\xbmk@J{\jobname}%
+    \@whilenum \count\z@<\xbmk@cnt\relax\do{%
+      \advance\count\z@ by 1 %
+      \edef\xbmk@thisdoc{xbmk@doc\the\count\z@}%
+      \edef\xbmk@filename{\@nameuse{\xbmk@thisdoc}}%
+      \@onelevel@sanitize\xbmk@filename
+      \bgroup
+      \gdef\@@BOOKMARK[##1][##2]##3##4##5{%
+        \calc@bm@number{##5}%
+      }%
+      \let\nextAction\@gobbletwo
+      \InputIfFileExists{\xbmk@filename.out}{}{\x@outWarningMsg}%
+      \gdef\@@BOOKMARK[##1][##2]##3##4##5{%
+        \def\Hy@temp{##4}%
+        \Hy@pstringdef\Hy@pstringName{\HyperDestNameFilter{##3}}%
+        \xbmkcsarg\ifx{X_##3}\relax
+%    \end{macrocode}
+%     Ordinary bookmark
+%    \begin{macrocode}
+          \ifx\xbmk@J\xbmk@filename
+            \Hy@OutlineName{\xbmks@intC\xbmk@intF}{<</S/GoTo%
+              /D(\Hy@pstringName)>>}{%
+              ##2\check@bm@number{\Hy@pstringName}%
+            }{%
+              \expandafter\strip@prefix\meaning\Hy@temp
+            }%
+          \else
+            \Hy@OutlineName{\xbmks@extC\xbmk@extF}{<</S/GoToR%
+              /F(\xbmk@filename.pdf)/D(\Hy@pstringName)>>}{%
+              ##2\check@bm@number{##3}%
+            }{%
+              \expandafter\strip@prefix\meaning\Hy@temp
+            }%
+          \fi
+        \else
+%    \end{macrocode}
+%     Bookmark created by one of the `\texttt{...bookmarkx} commands
+%    \begin{macrocode}
+          \x@rollCFIntoActionBmrk{##3}%
+          \Hy@OutlineName{\thisCol\thisF}
+          {<<\@nameuse{X_##3}>>}{%
+              ##2\check@bm@number{\Hy@pstringName}%
+          }{%
+            \expandafter\strip@prefix\meaning\Hy@temp
+          }%
+        \fi
+      }% bookmark
+      \let\nextAction\nextAction@i
+      \InputIfFileExists{\xbmk@filename.out}{}{}%
+      \egroup
+    } % \@whilenum
+    \endgroup
+  }%
+  \ifx\WriteBookmarks\relax
+  \else
+    \if@filesw
+      \newwrite\@outlinefile
+      \Hy@OutlineRerunCheck
+      \immediate\openout\@outlinefile=\jobname.out\relax
+      \ifHy@typexml
+        \immediate\write\@outlinefile{<relaxxml>\relax}%
+      \fi
+    \fi
+  \fi
+}
+%</pdftex>
+%<*xetex>
+%    \end{macrocode}
+%    \subsection{Code for xetex driver}
+%    We redefine/modify the \cs{ReadBookmarks} command of \pkg{hyperref},
+%    this definition is driver dependent.
+%    \begin{macrocode}
+\def\ReadBookmarks{%
+  \pdf@ifdraftmode{}{%
+    \begingroup\def\\{\@backslashchar\@backslashchar}% dps
+      \def\calc@bm@number##1{%
+        \@tempcnta=\check@bm@number{##1}\relax
+        \advance\@tempcnta by 1 %
+        \expandafter\edef\csname B_##1\endcsname{\the\@tempcnta}%
+      }%
+      \def\do##1{%
+        \ifnum\catcode`##1=\active
+          \@makeother##1%
+        \else
+          \ifnum\catcode`##1=6 %
+            \@makeother##1%
+          \fi
+        \fi
+      }%
+      \dospecials
+      \Hy@safe@activestrue
+      \escapechar=`\\%
+      \ifx\WriteBookmarks\relax
+        \global\let\WriteBookmarks\relax
+      \fi
+      \begingroup
+        \def\WriteBookmarks{0}%
+        \count\z@=0\relax
+        \edef\xbmk@J{\jobname}%
+        \@whilenum \count\z@<\xbmk@cnt\relax\do{%
+          \advance\count\z@ by 1 %
+          \edef\xbmk@thisdoc{xbmk@doc\the\count\z@}%
+          \edef\xbmk@filename{\@nameuse{\xbmk@thisdoc}}%
+          \@onelevel@sanitize\xbmk@filename
+          \bgroup
+          \def\@@BOOKMARK[##1][##2]##3##4##5{%
+            \calc@bm@number{##5}%
+          }%
+          \let\nextAction\@gobbletwo
+          \InputIfFileExists{\xbmk@filename.out}{}{\x@outWarningMsg}%
+          \def\@@BOOKMARK[##1][##2]##3##4##5{%
+            \def\Hy@temp{##4}%
+            \Hy@pstringdef\Hy@pstringName{\HyperDestNameFilter{##3}}%
+            \x@rollCFIntoActionBmrk{##3}%
+            \@pdfm@mark{%
+              outline \ifHy@DvipdfmxOutlineOpen
+                [\ifnum##21>\z@\else-\fi] \fi
+              ##1<<%
+              /Title(\expandafter\strip@prefix\meaning\Hy@temp)%
+              \xbmkcsarg\ifx{X_##3}\relax
+%    \end{macrocode}
+%     Ordinary bookmark
+%    \begin{macrocode}
+                \ifx\xbmk@J\xbmk@filename
+                  /A<<%
+                    /S/GoTo%
+                    /D(\Hy@pstringName)%
+                  >>%
+                \else
+                  /A<<%
+                    /S/GoToR/F(\xbmk@filename.pdf)%
+                    /D(\Hy@pstringName)%
+                  >>%
+                \fi
+              \else
+%    \end{macrocode}
+%     Bookmark created by one of the \texttt{\string\...bookmarkx} commands
+%    \begin{macrocode}
+                /A<<\@nameuse{X_##3}>>
+              \fi
+              \thisCol\thisF
+              >>%
+            }% \@pdfm@mark
+            \let\thisC\@empty\let\thisF\@empty
+          }% bookmark
+          \let\nextAction\nextAction@i
+          \InputIfFileExists{\xbmk@filename.out}{}{}%
+          \egroup
+        }% \@whilenum
+      \endgroup
+    \endgroup
+  }%
+  \ifx\WriteBookmarks\relax
+  \else
+    \if@filesw
+      \newwrite\@outlinefile
+      \Hy@OutlineRerunCheck
+     \immediate\openout\@outlinefile=\jobname.out\relax
+      \ifHy@typexml
+        \immediate\write\@outlinefile{<relaxxml>\relax}%
+      \fi
+    \fi
+  \fi
+}
+%</xetex>
+%<*package>
+\InputIfFileExists{xbmks.cfg}{}{}
+\@ifpackageloaded{bookmark}{\PackageWarningNoLine{xbmks}{The
+  bookmark package is not supported;\MessageBreak
+  this package does nothing, as a result}}
+{\InputIfFileExists{\xbmk@driver}{}{}}
+%</package>
+%    \end{macrocode}
+%    \Finale

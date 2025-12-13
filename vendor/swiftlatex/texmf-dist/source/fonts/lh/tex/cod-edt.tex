@@ -1,0 +1,372 @@
+%
+% cod-edt.tex
+%
+%% Cyrillic font container with T2 encoding beta-support
+%
+% This file is future part of lxfonts package
+% Version 3.5 // Patchlevel=0
+% (c) O.Lapko
+%
+% This package is freeware product under conditions similar to
+% those of D. E. Knuth specified for the Computer Modern family of fonts.
+% In particular, only the authors are entitled to modify this file
+% (and all this package as well) and to save it under the same name.
+%
+% Content:
+%
+% Generating Cyrillic codings for both MF and TeX
+%   and uccode/lccode/mathcode for TeX
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\lhvercheck(3,5)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\catcode`\_=11
+\catcode`\~=11
+%
+\ifx\encodingletters\undefined\let\encodingletters\fonttwoletters\fi
+\ifBabel\Berestafalse\fi
+%
+\long\def\CodesToBeGenerated{\input \codebase}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% The idea and macros were borrowed from
+% dcstdedt.tex (V1.1/22.3.92) (DC fonts package)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\let\EA\expandafter
+\def\empty{}
+\def\minus{-}
+\def\blank{ }
+\def\Del#1{}
+
+%%% TeX encoding config files creation macros
+\def\singlecode#1 {
+        \def\lettercode{#1}%
+        \ifx\lettercode\blank\let\next\singlecode
+        \else
+           \ifx\lettercode\empty\let\next\singlecode
+           \else
+              \ifx\lettercode\minus\Del\lettercode\let\next\relax
+              \else
+                 \advance\tablecount1
+                 \ifnum\tablecount=\currtable\let\next\docode
+                 \else
+                    \ifnum\tablecount<\currtable\let\next\singlecode
+                    \else
+                       \ifnum\currtable=0
+                       \message{Wrong currtable: currtable=\the\currtable}%
+                       \Del\lettercode\let\next\singlecode
+                       \fi
+                       \Del\lettercode\let\next\singlecode
+                 \fi\fi
+        \fi\fi\fi
+        \next}
+
+\def\singletablevalue#1 {%
+        \edef\lettercode{#1}%
+        \ifx\lettercode\blank\let\next\singletablevalue
+        \else
+           \ifx\minus\lettercode\Del\lettercode\let\next\relax
+           \else
+             \ifx\encodingletters\lettercode\currtable\codecount
+             \let\next\singletablevalue
+             \else\advance\codecount1\let\next\singletablevalue
+             \fi
+        \fi\fi
+        \next}
+
+\def\tablevalues(#1){\codecount=0\singletablevalue#1 -
+        }
+
+\def\Makecod #1 #2 (#3){%
+        \edef\letternamemf{#1}%
+        \edef\letnamestring{#2}%
+        \tablecount=0\singlecode #3 -
+        }
+
+\def\makecod{\chardeffalse\upperfalse\Makecod
+        }
+\def\makeCOD{\chardeffalse\uppertrue\Makecod
+        }
+\def\makechr{\chardeftrue\accentfalse\Makecod
+        }
+\def\makeacc{\chardeftrue\accenttrue\Makecod
+        }
+
+\def\makechardef#1#2{%
+        \def\charletter{#1}\edef\charcode{#2}\Dochfile%
+        }
+\def\makeaccdef#1#2{%
+        \def\charletter{#1}\edef\charcode{#2}\Doacfile%
+        }
+
+\def\makeuclcletter#1#2#3#4{%
+        \ifx#1\undefined %relax
+        \else
+           \def\upperletter{#1}\def\uppercode{#2}%
+           \ifx#3\undefined %
+              \message{\string#1: Uppercase letter has not pair}
+           \else
+              \def\lowerletter{#3}\def\lowercode{#4}\Doucfile
+           \fi
+        \fi
+        }
+
+\def\docodetest#1[#2]#3\nothing{%
+\def\lettercode{#2}%
+\ifx\lettercode\empty
+        \def\lettercodelig{#1}%
+        \def\lettercode{#1}%
+\else
+        \def\lettercode{#1}%
+        \def\lettercodelig{#2}%
+\fi}
+
+\def\docode{\expandafter\docodetest\lettercode[]\nothing
+ \expandafter\codesUP\lettercode\endcodesUP
+\Docode}
+
+\def\LetA{A}\def\LetB{B}\def\LetC{C}\def\LetD{D}\def\LetE{E}\def\LetF{F}
+\def\Leta{a}\def\Letb{b}\def\Letc{c}\def\Letd{d}\def\Lete{e}\def\Letf{f}
+\def\codesUP#1#2\endcodesUP{\gdef\firstlet{#1}\gdef\secondlet{#2}%
+             \ifx\firstlet\Leta\let\firstlet\LetA\else
+                \ifx\firstlet\Letb\let\firstlet\LetB\else
+                   \ifx\firstlet\Letc\let\firstlet\LetC\else
+                      \ifx\firstlet\Letd\let\firstlet\LetD\else
+                         \ifx\firstlet\Lete\let\firstlet\LetE\else
+                            \ifx\firstlet\Letf\let\firstlet\LetF\else
+             \fi\fi\fi\fi\fi\fi
+             \ifx\secondlet\Leta\let\secondlet\LetA\else
+                \ifx\secondlet\Letb\let\secondlet\LetB\else
+                   \ifx\secondlet\Letc\let\secondlet\LetC\else
+                      \ifx\secondlet\Letd\let\secondlet\LetD\else
+                         \ifx\secondlet\Lete\let\secondlet\LetE\else
+                            \ifx\secondlet\Letf\let\secondlet\LetF\else
+             \fi\fi\fi\fi\fi\fi\Del\firstlet\Del\secondlet
+}
+
+{\catcode`\%=11 \catcode`\|=14
+\gdef\MakeHeadFileDefinition#1#2{|
+   \immediate\write#1{% This is #2\space in text format as of \today^^J%\space
+        created by LHfonts (TeX4MF) version\space
+        \number\lhmajver.\number\lhminver^^J%^^J%^^J}|
+}
+\ifchartest|
+ \gdef\Docode{|
+  \edef\dowrite{|
+    \ifnum\chartestcount>\charteststart
+     \ifnum\chartestcount<\chartestfinish
+      \def\csname MF\letternamemf\endcsname{-1}|for ligs&kerning file
+      \immediate\write\encfontoutput{CYR_.\letternamemf\space:=-1;}|
+      \immediate\write\testfontoutput{testchar (\letternamemf);}|
+      \immediate\write16{CYR_.\letternamemf:= \number\chartestcount;\blank}|
+    \fi\fi\advance\chartestcount1
+  }\dowrite\singlecode
+ }
+\else
+ \catcode`\{=12 \catcode`\}=12
+ \catcode`\(=1 \catcode`\)=2
+ \catcode`\^=12
+ \gdef\Docode(|
+  \edef\dowrite(|
+   \ifx\lettercode\nolettercode|relax
+   \else
+    \ifx\letnamestring\nolettercode|relax
+    \else
+     \ifMakeFontEnc
+      \ifBeresta\else
+       \ifchardef
+        \immediate\write\chardefoutput(|
+         \ifaccent
+          \string\makeaccdef  {\letnamestring} {"\firstlet\secondlet}|
+         \else
+          \string\makechardef {\letnamestring} {"\firstlet\secondlet}|
+         \fi)|
+       \else
+        \immediate\write\rusdefoutput(|
+         \ifupper
+          \string\makeuclcletter\expandafter\string\csname\letnamestring\endcsname{\firstlet\secondlet}%|tempdefinition
+         \else
+          \|\expandafter\string\csname\letnamestring\endcsname{\firstlet\secondlet}
+         \fi)|
+        \expandafter\def\expandafter\csname\letnamestring\endcsname(\lettercode)|for lccode/uccode file
+       \fi
+      \fi
+      \ifBabel\else
+       \ifchardef
+        \ifBeresta
+         \immediate\write\codeoutput(|
+          \string\def\expandafter\string\csname\berestachar CYR_\letternamemf\endcsname{\ifcodehats\string\char"\firstlet\secondlet\else--\fi}|
+         )|
+        \fi
+       \else|only letters
+        \immediate\write\codeoutput(|
+         \ifx\lettercode\lettercodelig|no letter ligatures
+          \ifcodehats|Cyrillic letter defined as ^^hex
+           \ifBeresta
+            \string\def\expandafter\string\csname\berestachar CYR_\letternamemf\endcsname{\ifcodehats\string\char"\firstlet\secondlet\else--\fi}|
+           \else
+            \string\def\expandafter\string\csname\letnamestring\endcsname{^^\lettercode}|
+           \fi
+          \else
+           \ifBeresta
+            \string\def\expandafter\string\csname\berestachar CYR_\letternamemf\endcsname{\ifcodehats\string\char"\firstlet\secondlet\else--\fi}|
+            \else
+            \string\chardef\expandafter\string\csname\letnamestring\endcsname="\firstlet\secondlet|
+           \fi
+          \fi
+         \else
+          \ifBeresta
+           \string\def\expandafter\string\csname\berestachar CYR_\letternamemf\endcsname{\ifcodehats\string\char"\firstlet\secondlet\else--\fi}|
+          \else
+           \string\def\expandafter\string\csname\letnamestring\endcsname{\lettercodelig}|
+          \fi
+         \fi
+        )|
+       \fi
+      \fi
+     \fi
+    \fi
+    \def\csname MF\letternamemf\endcsname(\lettercode)|for ligs&kerning file
+    \immediate\write\encfontoutput(CYR_.\letternamemf\space:= hex"\lettercode";)|
+    \immediate\write16(CYR_.\letternamemf:=hex"\lettercode";\blank)|
+   \fi
+  )\dowrite\singlecode
+ )
+\fi
+\ifchartest|
+\else|
+(\catcode`\#=12 |\catcode`\^=7
+\gdef\Doucfile(|
+ \edef\dowrite(|
+   \ifBabel
+    \immediate\write\codeoutput(|
+     \string\@tmpb\expandafter\string\upperletter{\uppercode}|
+      \expandafter\string\lowerletter{\lowercode}|
+    )|
+   \else
+    \ifBeresta\else
+     \immediate\write\codeoutput(|
+      \string\letter{^^\upperletter}{^^\lowerletter}
+     )|
+    \fi
+   \fi
+ )\dowrite|\singlecode
+)
+\gdef\Dochfile(|
+ \edef\dowrite(|
+  \immediate\write\codeoutput(|
+   \ifBabel
+    \string\@tmpd\expandafter\string\csname\charletter\endcsname{\charcode}
+   \else
+    \ifBeresta
+     \string\def\expandafter\string\csname\berestachar CYR_\letternamemf\endcsname{\ifcodehats\string\char\charcode\else--\fi}|
+    \else
+     \string\chardef\expandafter\string\csname\charletter\endcsname=\charcode
+    \fi
+   \fi)|
+ )\dowrite|\singlecode
+)
+\gdef\Doacfile(|
+ \edef\dowrite(|
+  \immediate\write\codeoutput(|
+   \ifBabel
+    \string\@tmpc\expandafter\string\csname\charletter\endcsname{\charcode}
+   \else
+    \ifBeresta
+     \string\def\expandafter\string\csname\berestachar CYR_\letternamemf\endcsname{\ifcodehats\string\char\charcode\else--\fi}|
+    \else
+     \string\def\expandafter\string\csname\charletter\endcsname{\string\accent\charcode}
+    \fi
+   \fi)|
+ )\dowrite|\singlecode
+)
+\gdef\Doucfilehead(\ifBabel\else\ifBeresta\else|
+ \edef\dowrite(|
+ \immediate\write\codeoutput(%)
+ \immediate\write\codeoutput(\string\def\string\letter#1#2{%\space
+    catcodes for Russian letters = \string\letter\space
+    \string(like A-Z,a-z\string))
+ \immediate\write\codeoutput(\string\catcode`#1=11\string\catcode`#2=11%)
+ \immediate\write\codeoutput(\string\uccode`#1=`#1\string\lccode`#1=`#2%)
+ \immediate\write\codeoutput(\string\uccode`#2=`#1\string\lccode`#2=`#2%)
+ \immediate\write\codeoutput(|
+ \string\count0`#1\string\advance\string\count0  by7000|
+ \string\mathcode`#1=\string\count0%)
+ \immediate\write\codeoutput(|
+ \string\count0`#2\string\advance\string\count0  by7000|
+ \string\mathcode`#2=\string\count0%)
+ \immediate\write\codeoutput(})
+ )\dowrite\fi\fi|\singlecode
+ )\catcode`\#=6)
+\gdef\Doucfilefoot(\ifBabel\else\ifBeresta\else|
+ \edef\dowrite(|
+ \immediate\write\codeoutput(\string\def\string\letter{}%)
+ \immediate\write\codeoutput(%)
+ )\dowrite\fi\fi|\singlecode
+)|
+\fi
+\catcode`\{=1 \catcode`\}=2
+}
+
+\immediate\write16{generated letters:}
+\immediate\write16{==================}
+
+\immediate\openout\encfontoutput=\encfontname
+\ifchartest
+ \immediate\openout\testfontoutput=\testfontname
+\fi
+\MakeHeadFileDefinition\encfontoutput{\Nencfontname}
+\ifMakeFontEnc
+ \immediate\openout\codeoutput   =\codefilename
+ \MakeHeadFileDefinition\codeoutput{\Ncodefilename}
+ \ifBabel
+  {\catcode`\{=12 \catcode`\}=12
+  \catcode`\(=1 \catcode`\)=2
+  \immediate\write\codeoutput(%
+  \string\ifx\string\ProvidesFile\string\undefined^^J%
+  \|\def\string\ProvidesFile\string#1[\string#2]{}^^J\string\fi^^J^^J%
+  \string\ProvidesFile{\Ncodefilename}^^J%
+  \|\|\|[\today\space v1.1^^J%
+  \|\|\|8-bit Cyrillic font encoding based on CM fonts^^J%
+  \|\|\|created by LHfonts version\space
+        \number\lhmajver.\number\lhminver])
+  \catcode`\{=1 \catcode`\}=2
+  }
+ \fi
+ \ifBeresta\else
+  \immediate\openout\rusdefoutput =\rusdefname
+  \immediate\openout\chardefoutput=\chardefname
+ \fi
+\fi
+%
+\CodesToBeGenerated
+%
+\immediate\closeout\encfontoutput
+\ifchartest
+ \immediate\closeout\testfontoutput
+\fi
+\ifMakeFontEnc
+ \ifBeresta\else
+  \immediate\closeout\rusdefoutput
+  \immediate\closeout\chardefoutput
+ \fi
+ \Doucfilehead
+ \ifBeresta\else
+  \input \rusdefname
+ \fi
+ \Doucfilefoot
+ \ifBeresta\else
+  \input \chardefname
+ \fi
+ \ifBabel\else\ifBeresta\else\begingroup\catcode`\%=11
+  \immediate\write\codeoutput{%^^J\string\input\space rusdef %input additional macros}
+ \endgroup\fi\fi
+ \immediate\closeout\codeoutput
+\fi
+\catcode`\~=13
+\endinput

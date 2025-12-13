@@ -1,0 +1,5568 @@
+% xeplain.tex: macros for nonformatting.  Written 1989--94 by (mostly)
+% Karl Berry. Some additions/changes 1997--98 by Adam Lewenberg,
+% with subsequent contributions from many people.
+% These macros are in the public domain.
+% 
+% This is the ``extended plain'' TeX format that's described in
+% `eplain.texi', which you should have received with this file. 
+% It assumes that plain has been loaded.
+%
+% N.B.: A version number is defined at the beginning and end of this file;
+% please change those numbers whenever the file is modified!
+% And it's best to rename the file if you're going to distribute a
+% modified version.
+%
+% Some macros were written and/or suggested by Paul Abrahams.
+% Other sources (e.g., The TeXbook) are cited at the appropriate places.
+% 
+%% @texfile{
+%%   author = "Karl Berry, Steven Smith, Oleg Katsitadze, and others",
+%%   version = "REPLACE-WITH-VERSION",
+%%   date = "REPLACE-WITH-DATE",
+%%   filename = "xeplain.tex",
+%%   email = "bug-eplain@tug.org",
+%%   checksum = "REPLACE-WITH-CHECKSUM",
+%%   codetable = "ASCII",
+%%   supported = "yes",
+%%   docstring = "This file defines macros that extend and expand on
+%%                plain TeX. eplain.tex is xeplain.tex and the other
+%%                source files with comments stripped; see the original
+%%                files for author credits, etc.  The original sources
+%%                can be found in Eplain sources in your TeX
+%%                distribution, on CTAN or on Eplain's home page at
+%%                http://tug.org/eplain.  Please base diffs or
+%%                other contributions on xeplain.tex, not the
+%%                stripped-down eplain.tex.",
+%% }
+%
+%
+% Load eplain.tex only once (to avoid using up \new's). 
+% \eplain is defined at the end of this file, so we can test \eplain to
+% detect whether eplain.tex has been loaded already or not. 
+% 
+% We use \expandafter because the merge script strips any lines
+% with an \endinput.
+%
+\ifx\eplain\undefined
+  \let\next\relax
+\else
+  \expandafter\let\expandafter\next\csname endinput\endcsname
+\fi
+\next
+% The ifpdf.sty file included below was written by Heiko Oberdiek.
+% See the complete source file (e.g., in this distribution) for
+% comments.
+%% [[[include ifpdf.sty]]]
+% 
+% 
+% Category codes, etc.
+%
+\def\makeactive#1{\catcode`#1 = \active \ignorespaces}%
+\chardef\letter = 11
+\chardef\other = 12
+% The following two macros were adopted from miniltx.tex of graphics.
+\def\makeatletter{%
+  \edef\resetatcatcode{\catcode`\noexpand\@\the\catcode`\@\relax}%
+  \catcode`\@11\relax
+}%
+\def\makeatother{%
+  \edef\resetatcatcode{\catcode`\noexpand\@\the\catcode`\@\relax}%
+  \catcode`\@12\relax
+}%
+% 
+% 
+% So we can have user-inaccessible control sequences.
+% 
+\edef\leftdisplays{\the\catcode`@}%
+\catcode`@ = \letter
+\let\@eplainoldatcode = \leftdisplays
+%
+% Save miniscule amounts of memory and time by writing \toks@ii instead
+% of \toks2.
+\toksdef\toks@ii = 2
+% 
+% 
+% This macro is defined in The TeXbook, but it never made it
+% into plain TeX.  \dospecials is defined there, though.
+% 
+\def\uncatcodespecials{%
+   \def\do##1{\catcode`##1 = \other}%
+   \dospecials
+}%
+%
+% 
+% Here is a way to do \let^^M = \cs, where the \let need not be global.
+{%
+   \makeactive\^^M %
+   \long\gdef\letreturn#1{\let^^M = #1}%
+}%
+% 
+% 
+% Swallow parameters, etc.
+% 
+\let\@eattoken = \relax  % Define this, so \eattoken can be used in \edef.
+\def\eattoken{\let\@eattoken = }%
+\def\gobble#1{}%
+\def\gobbletwo#1#2{}%
+\def\gobblethree#1#2#3{}%
+%
+% We can't just use \empty as the identity function, since then outer
+% braces which would supposedly delimit the argument would define a group.
+\def\identity#1{#1}%
+% 
+% True if #1 is the empty string, i.e., called like `\ifempty{}'.
+% Use notes:
+% So far, \ifempty works in the following cases:
+% 1. \ifempty{}\message{empty}\else\message{not empty}\fi --> empty
+% 2. \ifempty\undefined\message{empty}\else\message{not empty}\fi --> not empty
+%   But does NOT work in the case
+% 3. \def\empty{}
+%    \ifempty\empty\message{empty}\else\message{not empty}\fi --> not empty
+% Question: When should \ifempty be true?
+\def\@emptymarkA{\@emptymarkB} 
+% The above line suggested by Stanislav Brabec.
+\def\ifempty#1{\@@ifempty #1\@emptymarkA\@emptymarkB}%
+\def\@@ifempty#1#2\@emptymarkB{\ifx #1\@emptymarkA}%
+%
+% True if #1 is an integer.  From the UK List of TeX Frequently Asked
+% Questions, http://www.tex.ac.uk/cgi-bin/texfaq2html.
+\def\@gobbleminus#1{\ifx-#1\else#1\fi}%
+\def\ifinteger#1{\ifcat_\ifnum9<1\@gobbleminus#1 _\else A\fi}%
+% This is a convenience to be used in places where TeX might be
+% skipping tokens, e.g., in conditionals.  Usage:
+%   \if\isinteger{<subject of test>}%
+%     <deal with integer>%
+%   \else
+%     <deal with non-integer>%
+%   \fi
+\def\isinteger{TT\fi\ifinteger}%
+%
+% Turn a definition into the characters that compose it.  See
+% ``Sanitizing control sequences under \write'', by Ron Whitney, TUGboat
+% 11(4), p.620.
+\def\@gobblemeaning#1:->{}%
+\def\sanitize{\expandafter\@gobblemeaning\meaning}%
+%
+% 
+% From p.308 of the TeXbook.  This cannot be used in places where TeX
+% might be skipping tokens, e.g., in conditionals.
+% 
+\def\ifundefined#1{\expandafter\ifx\csname#1\endcsname\relax}%
+% 
+% 
+% \csname constructions come up an awful lot, so we save typing with the
+% following.  (But the extra macro expansion does take time, so we don't
+% use these in frequently-executed code.)
+% 
+\def\csn#1{\csname#1\endcsname}%
+\def\ece#1#2{\expandafter#1\csname#2\endcsname}%
+%
+% 
+% \expandonce{TOKEN} abbreviates \expandafter\noexpand TOKEN.
+% 
+\def\expandonce{\expandafter\noexpand}%
+%
+%
+% Don't show our register allocations in the log.
+% 
+\let\@plainwlog = \wlog
+\let\wlog = \gobble
+%
+% 
+% Make it convenient to put newlines in error messages.
+% 
+\newlinechar = `^^J
+% 
+%
+% Sometimes it is convenient to have everything in the transcript file
+% and nothing on the terminal.  We don't just call \tracingall here,
+% since that produces some useless output on the terminal.
+%
+\def\gloggingall{\begingroup \globaldefs = 1 \loggingall \endgroup}%
+\def\loggingall{\tracingcommands\tw@\tracingstats\tw@
+   \tracingpages\@ne\tracingoutput\@ne\tracinglostchars\@ne
+   \tracingmacros\tw@\tracingparagraphs\@ne\tracingrestores\@ne
+   \showboxbreadth\maxdimen\showboxdepth\maxdimen
+}%
+% Show the complete contents of boxes.
+%
+\def\tracingboxes{\showboxbreadth = \maxdimen \showboxdepth = \maxdimen}%
+%
+% Don't trace anything, except restore \showbox... to plain's values.
+% 
+\def\gtracingoff{\begingroup \globaldefs = 1 \tracingoff \endgroup}%
+\def\tracingoff{\tracingonline\z@\tracingcommands\z@\tracingstats\z@
+  \tracingpages\z@\tracingoutput\z@\tracinglostchars\z@
+  \tracingmacros\z@\tracingparagraphs\z@\tracingrestores\z@
+  \showboxbreadth5 \showboxdepth3
+}%
+%
+% 
+% Definitions to produce actual `{' (et al.) characters in an output
+% file via \write.  We omit the line break after the first }, since we
+% have no comment character at that point.
+% 
+\begingroup
+  \catcode`\{ = 12 \catcode`\} = 12
+  \catcode`\[ = 1 \catcode`\] = 2
+  \gdef\lbracechar[{]%
+  \gdef\rbracechar[}]%
+  \catcode`\% = \other
+  \gdef\percentchar[%]\endgroup
+%
+% 
+% Leave horizontal mode (if we're in it), then insert a penalty.
+% And conversely.
+% 
+\def\vpenalty{\ifhmode\par\fi \penalty}%
+\def\hpenalty{\ifvmode\leavevmode\fi \penalty}%
+%
+% 
+% Make \else usable in \loop.  From Victor Eijkhout's TeX by Topic (page
+% 104).  See also Alois Kabelschacht, TUGboat 8(2), page 184.
+%
+\def\iterate{%
+  \let\loop@next\relax
+  \body
+  \let\loop@next\iterate
+  \fi
+  \loop@next
+}%
+% 
+% 
+% Add #2 (which is expanded in an \edef) to the end of the definition of
+% #1 (which must be a previously-defined control sequence).  This is a
+% way to construct simple lists.
+% 
+\def\edefappend#1#2{%
+  \toks@ = \expandafter{#1}%
+  \edef#1{\the\toks@ #2}%
+}%
+%
+% 
+% \allowhyphens, from TeXbook, p. 395.  Allows following & preceding word
+% to be hyphenated.
+%
+\def\allowhyphens{\nobreak\hskip\z@skip}%
+%
+% 
+% 
+%  Hooks.
+%
+% \hookaction{HOOK}{TOKENS} adds TOKENS to the list of actions for
+% HOOK.  We avoid defining a \toks register for each hook, although
+% maybe that isn't so important.
+% 
+% \hookappend and \hookprepend add TOKENS specificially to the end or
+% the beginning.  When the argument is used, \toks@ will be the previous
+% value of the hook, and \toks@ii the new tokens.
+%
+\long\def\hookprepend{\@hookassign{\the\toks@ii \the\toks@}}%
+\long\def\hookappend{\@hookassign{\the\toks@ \the\toks@ii}}%
+\let\hookaction = \hookappend % either one should be ok
+%
+% 
+% \@hookassign{LAST-DEF}{HOOK}{TOKENS} makes \toks@ the previous value
+% of HOOK, and \toks@ii TOKENS, and then assigns the new value using
+% LASTDEF.  We store the hook in a control sequence \@HOOKhook.
+% 
+\long\def\@hookassign#1#2#3{%
+  % Make \toks@ be the expansion (to one level) of \@HOOKhook, or empty.
+  \expandafter\ifx\csname @#2hook\endcsname \relax
+    % If \@HOOKhook was undefined, let it be empty.
+    \toks@ = {}%
+  \else
+    % Otherwise, expand it to one level.  We can't just assign from
+    % \expandafter{\csname ...} since then the \toks register would
+    % contain the control sequence, not its definition.
+    \expandafter\let\expandafter\temp \csname @#2hook\endcsname
+    \toks@ = \expandafter{\temp}%
+  \fi
+  \toks2 = {#3}% Don't expand the argument all the way.
+  \ece\edef{@#2hook}{#1}%
+}%
+%
+% 
+% \hookactiononce{HOOK}\CS adds `\global\let\CS=\relax' to the
+% definition of \CS, then adds to HOOK.  Thus, \CS is expanded the next
+% time HOOK is called, but then it goes away.  This only works if \CS is
+% expandable, though.
+% 
+\long\def\hookactiononce#1#2{%
+  \edefappend#2{\global\let\noexpand#2\relax}
+  \hookaction{#1}#2%
+}%
+%
+% 
+% \hookrun{HOOKNAME} runs whatever actions have been defined for HOOK.
+% 
+\def\hookrun#1{%
+  \expandafter\ifx\csname @#1hook\endcsname \relax \else
+    % Isn't this fun?  We want to get rid of the \fi before expanding
+    % the actions, so that they can read what's coming up next.
+    \def\temp{\csname @#1hook\endcsname}%
+    \expandafter\temp
+  \fi
+}%
+%
+% 
+% 
+%  Properties a la Lisp.
+%
+% \setproperty{ATOM}{PROPNAME}{VALUE} defines the property PROPNAME on the
+% ``atom'' ATOM to have VALUE.
+% 
+\def\setproperty#1#2#3{\ece\edef{#1@p#2}{#3}}%
+\def\setpropertyglobal#1#2#3{\ece\xdef{#1@p#2}{#3}}%
+%
+% 
+% \getproperty{ATOM}{PROPNAME} expands to the value of the property
+% PROPNAME on ATOM, or to nothing (i.e., \empty), if the property isn't
+% present.
+% 
+\def\getproperty#1#2{%
+  \expandafter\ifx\csname#1@p#2\endcsname\relax
+  % then \empty
+  \else \csname#1@p#2\endcsname
+  \fi
+}%
+%
+% 
+% 
+%  Macros to support BibTeX are in a separate file, btxmac.tex.
+% 
+% (They are maintained separately, too, by Oren Patashnik,
+% opbibtex@cs.stanford.edu.)  btxmac.tex also defines other macros we
+% want to use and make available.
+% 
+% But not all people want to read the BibTeX macros, because of either
+% space or time considerations.  Therefore, we look for \nobibtex,
+% which, if defined, causes btxmac.tex not to be read.  But we still
+% have to get \tokstostring et al. defined---so eplain.tex contains
+% those definitions, automatically edited in from btxmac.tex.  All the
+% documentation has been removed, so you must read btxmac.tex if you
+% want the comments.
+% 
+% 
+% We want to give a slightly different message than btxmac if no .aux
+% file exists (unless the person using us has already define some
+% message, possibly empty.)
+% 
+\ifx\@undefinedmessage\@undefined
+  \def\@undefinedmessage
+    {No .aux file; I won't warn you about undefined labels.}%
+\fi
+%
+% 
+% We use a token register to define all the BibTeX definitions, to avoid
+% problems with the \if... constructions when they are conditionally
+% read.
+% 
+%% [[[here is the first set of common definitions from btxmac]]]
+\toks0 = {%
+  %% [[[here are the BibTeX-specific definitions from btxmac]]]
+}%
+\ifx\nobibtex\@undefined \the\toks0 \fi
+%% [[[here is the second set of common definitions from btxmac]]]
+%
+% Here are the control sequences that btxmac.tex defines using an @,
+% because btxmac.tex wants to absolutely minimize the chance of
+% conflicts.  But these control sequence implement documented features
+% of eplain, so we want to allow people to use them without the @.
+% 
+\let\auxfile = \@auxfile
+\let\for = \@for
+\let\futurenonspacelet = \@futurenonspacelet
+\def\iffileexists{\if@fileexists}%
+\let\innerdef = \@innerdef
+\let\innernewcount = \@innernewcount
+\let\innernewdimen = \@innernewdimen
+\let\innernewif = \@innernewif
+\let\innernewwrite = \@innernewwrite
+\let\linenumber = \@linenumber
+\let\readauxfile = \@readauxfile
+\let\spacesub = \@spacesub
+\let\testfileexistence = \@testfileexistence
+\let\writeaux = \@writeaux
+% 
+%
+% btxmac.tex defines \innerdef.  Let's use it to make an abbreviation
+% for \innerdef\inner<name>{<name>}.
+% 
+\def\innerinnerdef#1{\expandafter\innerdef\csname inner#1\endcsname{#1}}%
+%
+% Use that in turn to make non-outer versions of the rest of plain TeX's
+% allocation macros.  (btxmac.tex already did a few of them.)
+% 
+\innerinnerdef{newbox}%
+\innerinnerdef{newfam}%
+\innerinnerdef{newhelp}%
+\innerinnerdef{newinsert}%
+\innerinnerdef{newlanguage}%
+\innerinnerdef{newmuskip}%
+\innerinnerdef{newread}%
+\innerinnerdef{newskip}%
+\innerinnerdef{newtoks}%
+% 
+% 
+% Besides doing a \write to the aux file, we also need to do an
+% \immediate\write.
+% 
+\def\immediatewriteaux#1{%
+  \ifx\noauxfile\@undefined
+    \immediate\write\@auxfile{#1}%
+  \fi
+}%
+%
+%
+% We want \biblabelprint to define hyperlink destination.  For that,
+% we save the label for the current bibliography entry from within
+% \bblitemhook.
+\def\bblitemhook#1{\gdef\@hlbblitemlabel{#1}}%
+%
+\def\biblabelprint#1{%
+   \noindent
+   \hbox to \biblabelwidth{%
+      \hldest@impl{bib}{\@hlbblitemlabel}%
+      \biblabelprecontents
+      \biblabelcontents{#1}%
+      \biblabelpostcontents
+   }%
+   \kern\biblabelextraspace
+}%
+% We want each citation item to be hyperlink to bibliography entry.
+% To avoid unnecessary warnings about undefined destinations (e.g.,
+% from pdfTeX), produce the link only when .bbl file (which does the
+% \hldest's) is present.
+\def\eplainprintcitepreitem#1{\hlstart@impl{cite}{#1}}%
+\def\eplainprintcitepostitem{\hlend@impl{cite}}%
+%
+%
+\def\printcitepreitem#1{%
+  \testfileexistence[\bblfilebasename]{bbl}%
+  \iffileexists
+    \global\let\printcitepreitem\eplainprintcitepreitem
+    \global\let\printcitepostitem\eplainprintcitepostitem
+  \else
+    \global\let\printcitepreitem\gobble
+    \global\let\printcitepostitem\relax
+  \fi
+  \printcitepreitem{#1}%
+}%
+%
+% btxmac.tex defines a \@for loop.  We provide an alternative \For
+% loop, extended to strip an optional leading space off list items.
+\def\@Nnil{\@Nil}%
+\def\@Fornoop#1\@@#2#3{}%
+%
+\def\For#1:=#2\do#3{%
+   \edef\@Fortmp{#2}%
+   \ifx\@Fortmp\empty \else
+      \expandafter\@Forloop#2,\@Nil,\@Nil\@@#1{#3}%
+   \fi
+}%
+%
+\def\@Forloop#1,#2,#3\@@#4#5{\@Fordef#1\@@#4\ifx #4\@Nnil \else
+       #5\@Fordef#2\@@#4\ifx #4\@Nnil \else#5\@iForloop #3\@@#4{#5}\fi\fi
+}%
+%
+\def\@iForloop#1,#2\@@#3#4{\@Fordef#1\@@#3\ifx #3\@Nnil
+       \let\@Nextwhile=\@Fornoop \else
+      #4\relax\let\@Nextwhile=\@iForloop\fi\@Nextwhile#2\@@#3{#4}%
+}%
+% \@Fordef<TEXT>\@@<COMMAND> defines COMMAND to the TEXT trimmed off
+% optional space tokens at the beginning.  Assume spaces are of
+% category 10 (won't work when \obeyspaces is in effect).
+\def\@Forspc{ }%
+%
+\def\@Fordef{\futurelet\@Fortmp\@@Fordef}% Peep at the next token.
+%
+\def\@@Fordef{%
+  \expandafter\ifx\@Forspc\@Fortmp % Next token is a space.
+    \expandafter\@Fortrim
+  \else
+    \expandafter\@@@Fordef
+  \fi
+}%
+%
+\expandafter\def\expandafter\@Fortrim\@Forspc#1\@@{\@Fordef#1\@@}%
+%
+\def\@@@Fordef#1\@@#2{\def#2{#1}}%
+%
+% From texinfo.tex.  Emulate eTeX's \scantokens with a temporary file
+% in ordinary TeX.
+\def\tmpfileextension{.tmp}%
+\let\tmpfilebasename = \jobname
+\ifx\eTeXversion\undefined
+  \innernewwrite\eplain@tmpfile
+  \def\scantokens#1{%
+    \toks@={#1}%
+    \immediate\openout\eplain@tmpfile=\tmpfilebasename\tmpfileextension
+    \immediate\write\eplain@tmpfile{\the\toks@}%
+    \immediate\closeout\eplain@tmpfile
+    \input \tmpfilebasename\tmpfileextension\relax
+  }%
+\fi
+% 
+% 
+% 
+%  Macros that produce output.
+% 
+% \obeywhitespace makes both end-of-lines and spaces in the input be
+% respected in the output.  Even spaces at the beginning of lines turn
+% into blank space the size of the natural space of the current font.
+% The reason why plain TeX's \obeyspaces does not do this last is that
+% it produces actual space characters, i.e., glue, and glue is discarded
+% at a(n output) line break, and so if line breaks in the input are
+% line breaks in the output...
+% 
+% Tabs are not affected; they will still produce glue (a single space).
+%
+\begingroup
+   \makeactive\^^M \makeactive\ % No spaces or ^^M's from here on.
+\gdef\obeywhitespace{%
+\makeactive\^^M\def^^M{\par\futurelet\next\@finishobeyedreturn}%
+\makeactive\ \let =\ %
+%
+% The group we use here is the one \obeywhitespace must be enclosed in.
+% If we don't do this, then if the obeyed stuff ends in a newline, the
+% indent produced by the definition of ^^M will make that line indented,
+% even if it isn't the end of the paragraph.
+\aftergroup\@removebox%
+\futurelet\next\@finishobeywhitespace%
+}%
+%
+% \@finishobeywhitespace eats any spaces and/or the end-of-line after
+% the \obeywhitespace command itself.  The group here is the one that it
+% itself creates.
+%
+\gdef\@finishobeywhitespace{{%
+\ifx\next %
+\aftergroup\@obeywhitespaceloop%
+\else\ifx\next^^M%
+\aftergroup\gobble%
+\fi\fi}}%
+%
+% \@finishobeyedreturn is invoked at the end of every input line.  We
+% check if the next thing is also a return, and, if so, insert extra
+% space.  Then we start the next line.
+% 
+\gdef\@finishobeyedreturn{%
+\ifx\next^^M\vskip\blanklineskipamount\fi%
+\indent%
+}%
+\endgroup
+%
+% The argument here is the space that we are supposed to eat after the
+% \obeywhitespace command.
+% 
+\def\@obeywhitespaceloop#1{\futurelet\next\@finishobeywhitespace}%
+% 
+% 
+% This removes the last box, if it was a empty box of width \parindent.
+% We might have been called inside a \vbox, so we have to test if we are
+% in horizontal mode before using \lastbox.
+% 
+\def\@removebox{%
+  \ifhmode
+    \setbox0 = \lastbox
+    \ifdim\wd0=\parindent
+      \setbox2 = \hbox{\unhcopy0}% Preserve \box0 so we can put it back.
+      \ifdim\wd2=0pt
+        % Don't put it back: it was an indentation box.
+        % This \ignorespaces ignores spaces after the group.
+        \ignorespaces
+      \else
+        \box0 % Put it back: it wasn't empty.
+      \fi
+    \else
+       \box0 % Put it back: it wasn't the right width.
+    \fi
+  \fi
+}%
+%
+% We allow for extra (possibly negative) space when we hit blank lines.
+% 
+\newskip\blanklineskipamount
+\blanklineskipamount = 0pt
+%
+% 
+% A good way to print fractions in text when you don't want
+% to use \over (which should be most of the time), and yet
+% just `1/2' doesn't look right.  (From the TeXbook,
+% the answer to exercise 11.6, p.311.)
+% 
+\def\frac#1/#2{\leavevmode
+   \kern.1em \raise .5ex \hbox{\the\scriptfont0 #1}%
+   \kern-.1em $/$%
+   \kern-.15em \lower .25ex \hbox{\the\scriptfont0 #2}%
+}%
+%
+% 
+% The `e' just means `Eplain', as in `Eplain's hrule'.  The advantage
+% to using these is that you can change the default thickness.
+% 
+\newdimen\hruledefaultheight  \hruledefaultheight = 0.4pt
+\newdimen\hruledefaultdepth   \hruledefaultdepth = 0.0pt
+\newdimen\vruledefaultwidth   \vruledefaultwidth = 0.4pt
+%
+\def\ehrule{\hrule height\hruledefaultheight depth\hruledefaultdepth}%
+\def\evrule{\vrule width\vruledefaultwidth}%
+%
+%
+% The texnames.sty and path.sty files included below were originally
+% written by Nelson Beebe and Philip Taylor, respectively. See the
+% complete source files (e.g., in this distribution) for comments.
+%% [[[include texnames.sty]]]
+%% [[[include path.sty]]]
+%
+% 
+% More TeX logos.
+%
+% Adapted from tugboat.dtx.
+\ifx\eTeX\undefined
+  \def\eTeX{\hbox{\mathsurround=0pt $\varepsilon$-\kern-.125em\TeX}}%
+\fi
+%
+\ifx\ExTeX\undefined
+  \def\ExTeX{\hbox{\mathsurround=0pt
+    $\textstyle\varepsilon_{\kern-0.15em\cal{X}}$\kern-.2em\TeX}}%
+\fi
+%
+% XeTeX require the graphics package for reflecting/rotating.  From
+% tugboat.dtx:  "Also, at Barbara's suggestion, if the current font is
+% slanted, we rotate by 180 instead of reflecting so there is at least
+% a chance to look ok.  (The magic values here seem more or less ok
+% for \texttt{cmsl} and \texttt{cmti}.)".
+\def\eplain@Xe@reflect#1{%
+  \ifx\reflectbox\undefined
+    \errmessage{A graphics package must be loaded for \string\XeTeX}%
+  \else
+    \ifdim \fontdimen1\font>0pt
+      \raise 1.75ex \hbox{\kern.1em\rotatebox{180}{#1}}\kern-.1em
+    \else
+      \reflectbox{#1}%
+    \fi
+  \fi
+}%
+\def\eplain@Xe#1{\leavevmode
+  \smash{\hbox{X%
+    \setbox0=\hbox{\TeX}\setbox2=\hbox{E}%
+    \lower\dp0\hbox{\raise\dp2\hbox{\kern-.125em\eplain@Xe@reflect{E}}}%
+    \kern-.1667em #1}}}%
+\ifx\XeTeX\undefined
+  \def\XeTeX{\eplain@Xe\TeX}%
+\fi
+\ifx\XeLaTeX\undefined
+  \def\XeLaTeX{\eplain@Xe{\thinspace\LaTeX}}%
+\fi
+%
+%
+% A square box, suitable for being a marker in lists.
+% 
+\def\blackbox{\vrule height .8ex width .6ex depth -.2ex \relax}% square bullet
+%
+% 
+% From p.311 of the TeXbook.
+% 
+% Make an unfilled rectangle with the dimensions of \box0.  #1 is the
+% height of the rules, #2 the depth (i.e., the thicknesses).
+% 
+\def\makeblankbox#1#2{%
+  \ifvoid0
+    \errhelp = \@makeblankboxhelp
+    \errmessage{Box 0 is void}%
+  \fi
+  \hbox{\lower\dp0
+    \vbox{\hidehrule{#1}{#2}%
+      \kern -#1% overlap rules
+      \hbox to \wd0{\hidevrule{#1}{#2}%
+        \raise\ht0\vbox to #1{}% vrule height
+        \lower\dp0\vtop to #1{}% vrule depth
+        \hfil\hidevrule{#2}{#1}%
+      }%
+      \kern-#1\hidehrule{#2}{#1}%
+    }%
+  }%
+}%
+%
+\newhelp\@makeblankboxhelp{Assigning to the dimensions of a void^^J%
+  box has no effect.  Do `\string\setbox0=\string\null' before you^^J%
+  define its dimensions.}%
+%
+% 
+% Produce an hrule with height #1 and depth #2, and insert kerning so it
+% doesn't change the current position.
+% 
+\def\hidehrule#1#2{\kern-#1\hrule height#1 depth#2 \kern-#2}%
+%
+% Produce a vrule with width #1+#2, kerning so as not to change the
+% current position.
+% 
+\def\hidevrule#1#2{%
+  \kern-#1%
+  \dimen@=#1\advance\dimen@ by #2%
+  \vrule width\dimen@
+  \kern-#2%
+}%
+% 
+% 
+% The \boxit macro from the TeXbook, trivially generalized to allow
+% something other than 3pt around the TeX box being boxed.
+% 
+\newdimen\boxitspace \boxitspace = 3pt
+%
+\long\def\boxit#1{%
+  \vbox{%
+    \ehrule
+    \hbox{%
+      \evrule
+      \kern\boxitspace
+      \vbox{\kern\boxitspace \parindent = 0pt #1\kern\boxitspace}%
+      \kern\boxitspace
+      \evrule
+    }%
+    \ehrule
+  }%
+}%
+%
+% 
+% Produce the written-out form of a number.
+% 
+\def\numbername#1{\ifcase#1%
+   zero%
+   \or one%
+   \or two%
+   \or three%
+   \or four%
+   \or five%
+   \or six%
+   \or seven%
+   \or eight%
+   \or nine%
+   \or ten%
+   \or #1%
+   \fi
+}%
+%
+% The following arrow macros were written by Steven Smith. See arrow.tex.
+\let\@plainnewif = \newif
+\let\@plainnewdimen = \newdimen
+\let\newif = \innernewif
+\let\newdimen = \innernewdimen
+\edef\@eplainoldandcode{\the\catcode`& }%
+\catcode`& = 11
+\toks0 = {%
+  %% [[[include arrow1]]]
+}%
+\catcode`& = 4
+\toks2 = {%
+  %% [[[include arrow2]]]
+}%
+\let\newif = \@plainnewif
+\let\newdimen = \@plainnewdimen
+\ifx\noarrow\@undefined \the\toks0 \the\toks2 \fi
+\catcode`& = \@eplainoldandcode
+% 
+% 
+% 
+%  Environments.
+% 
+% Define an ``environment'': arbitrary text, enclosed by \begingroup and
+% \endgroup.  But you get to label the group, so that if you forget an
+% \environment or an \endenvironment, you will probably get an error
+% message about it.
+% 
+% Since the environment names appear in \errmessage arguments, it's best
+% to keep them to `letter' and `other' characters.  I suppose we could
+% call \tokstostring to allow more general labels.
+% 
+% These macros improve slightly on the answer to exercise 5.7 in
+% The TeXbook, by making some checks on \begingroup and \endgroup, as
+% well as just making sure \environment and \endenvironment's match.
+% 
+%
+\def\environment#1{%
+   \ifx\@groupname\@undefined\else
+      % This gets invoked if we have two \environments (and no matching
+      % \endenvironment to the first) with an \endgroup in between.
+      \errhelp = \@unnamedendgrouphelp
+      \errmessage{`\@groupname' was not closed by \string\endenvironment}%
+   \fi
+   % Use \edef in case we are passed a macro that contains the name,
+   % instead of the name.
+   \edef\@groupname{#1}%
+   \begingroup
+      \let\@groupname = \@undefined
+}%
+%
+\def\endenvironment#1{%
+   \endgroup
+   \edef\@thearg{#1}%
+   \ifx\@groupname\@thearg
+   \else
+      \ifx\@groupname\@undefined
+         % Unfortunately, one gets an `extra \endgroup' message before
+         % seeing this.  But we have to restore \@groupname, so I see no
+         % alternative. 
+         \errhelp = \@isolatedendenvironmenthelp
+         \errmessage{Isolated \string\endenvironment\space for `#1'}%
+      \else
+         \errhelp = \@mismatchedenvironmenthelp
+         \errmessage{Environment `#1' ended, but `\@groupname' started}%
+         \endgroup % Probably a typo in the names.
+      \fi
+   \fi
+   \let\@groupname = \@undefined
+}%
+%
+\newhelp\@unnamedendgrouphelp{Most likely, you just forgot an^^J%
+   \string\endenvironment.  Maybe you should try inserting another^^J%
+   \string\endgroup to recover.}%
+%
+\newhelp\@isolatedendenvironmenthelp{You ended an environment X, but^^J%
+   no \string\environment{X} to start it is anywhere in sight.^^J%
+   You might also be at an \string\endenvironment\space that would match^^J%
+   a \string\begingroup, i.e., you forgot an \string\endgroup.}%
+%
+\newhelp\@mismatchedenvironmenthelp{You started an environment named X, but^^J%
+   you ended one named Y.  Maybe you made a typo in one^^J%
+   or the other of the names?}%
+% 
+% 
+% The above sort of environment allows nesting.  But environments
+% shouldn't always be allowed to nest (like the \flushright,
+% \flushleft, and \center ones defined below).  Here are some macros to
+% help deal with that.
+% 
+% \checkenv goes at the beginning of a macro that is
+% going to define the environment.
+% 
+\newif\ifenvironment
+\def\checkenv{\ifenvironment \errhelp = \@interwovenenvhelp
+   \errmessage{Interwoven environments}%
+   \egroup \fi
+}%
+%
+\newhelp\@interwovenenvhelp{Perhaps you forgot to end the previous^^J%
+   environment? I'm finishing off the current group,^^J%
+   hoping that will fix it.}%
+%
+% 
+% 
+%  Mathematics displays.
+%
+% By default, TeX centers displayed material.  To get left-justified
+% displays, say \leftdisplays.  To go back to centered displays, say
+% \centereddisplays.
+% 
+% This is based on an approach developed by Donald Arseneau,
+% asnd@triumfrg.bitnet.
+% 
+\newtoks\previouseverydisplay
+% Here we want to make ordinary math displays flush left, 
+% indented by the dimen \leftdisplayindent, which defaults
+% to \parindent.
+%
+% How do you want the first column aligned?
+\let\@leftleftfill\relax % as it was
+%\let\@leftleftfill\hfill % makes more sense, but could be too ugly
+%
+% Surely it makes more sense to not sum \leftdisplayindent+\parindent
+\newdimen\leftdisplayindent \leftdisplayindent=\parindent
+\newif\if@leftdisplays
+%
+\def\leftdisplays{%
+  \if@leftdisplays\else
+    \previouseverydisplay = \everydisplay
+    \everydisplay = {\the\previouseverydisplay \leftdisplaysetup}%
+    \let\@save@maybedisableeqno = \@maybedisableeqno
+    \let\@saveeqno = \eqno
+    \let\@saveleqno = \leqno
+    \let\@saveeqalignno = \eqalignno
+    \let\@saveleqalignno = \leqalignno
+    \let\@maybedisableeqno = \relax
+    \def\eqno{\hfill\textstyle\enspace}%
+    \def\leqno{%
+      \hfill
+      \hbox to0pt\bgroup
+        \kern-\displaywidth
+        % was: \kern-\displayindent % really \displayindent?  
+        \kern-\leftdisplayindent    % I'll use just \leftdisplayindent
+        $\aftergroup\@leftleqnoend  % inserted after ending $
+    }%
+    \@redefinealignmentdisplays
+    \@leftdisplaystrue
+  \fi
+}%
+\newbox\@lignbox
+\newdimen\disprevdepth
+
+% In order to use $$ for left-aligned equation we have to
+% put something like \leftline{$\displaystyle ...$} in the
+% display.  Then \eqno works basically like \hfill.
+% In order to make $$<assignments>\eqalignno{...}$$ work as
+% expected, including page breaks, we have to get rid of the
+% horizontal box, and un-vbox the alignment.  Sadly, \unvbox
+% does not perform baselineskip handing, so we need to get
+% the \prevdepth ourselves...in order to get the prevdepth,
+% the outermost display must be an alignment display.
+% Therefore, an ordinary $$ a=b $$ becomes:
+% $$\halign{#\cr\noalign{\disprevdepth = \prevdepth
+%       \leftline{$\displaystyle a=b$}
+%   }}$$
+%
+\def\centereddisplays{%
+  % If \leftdisplays hasn't been called, don't try to restore all the
+  % stuff it changes.
+  % 
+  \if@leftdisplays
+    \everydisplay = \previouseverydisplay
+    \let\@maybedisableeqno = \@save@maybedisableeqno
+    \let\eqno = \@saveeqno
+    \let\leqno = \@saveleqno
+    \let\eqalignno = \@saveeqalignno
+    \let\leqalignno = \@saveleqalignno
+    \@leftdisplaysfalse
+  \fi
+}%
+%
+\def\leftdisplaysetup{%
+%  surely not this *and* \leftdisplayindent? :  \dimen@ = \parindent
+   \dimen@ = \leftdisplayindent
+   \advance\dimen@ by \leftskip
+   \advance\displayindent by \dimen@
+   \advance\displaywidth by -\dimen@
+%  this outermost alignment doesn't align anything.
+   \halign\bgroup##\cr \noalign\bgroup
+      \disprevdepth = \prevdepth
+      \setbox\z@ = \hbox to\displaywidth\bgroup
+      %  Why strut??  \strut
+      %  Why this??   \advance\hsize by -\displayindent
+      $\displaystyle
+      \aftergroup\@lefteqend % inserted after ending $
+}
+%
+\def\@lefteqend{% gets inserted between the ending $$
+   \hfil\egroup% end box 0
+   \@putdisplay}
+% gets inserted between trailing $$.
+\def\@leftleqnoend{\hss \egroup $}% end the \hbox to 0pt for \leqno, restore $
+%
+\def\@putdisplay{%
+   \ifvoid\@lignbox %  Ordinary display; use it.
+     \moveright\displayindent\box\z@ 
+   \else % alignment display; unwrap alignment
+     \prevdepth = \dp\@lignbox % affects the skip *below*
+     \unvbox\@lignbox
+   \fi
+   \egroup\egroup % end \noalign, end outer \halign
+   $% restore first $ of trailing $$
+}
+%
+\def\@redefinealignmentdisplays{%
+  \def\displaylines##1{
+    \global\setbox\@lignbox\vbox{%
+      \prevdepth = \disprevdepth
+      \displ@y
+      \tabskip\displayindent
+      \halign{\hbox to\displaywidth
+        {$\@lign\displaystyle####\hfil$\hfil}\crcr
+              ##1\crcr}}}%
+  \def\eqalignno##1{%
+    \def\eqno{&}%
+    \def\leqno{&}%
+    \global\setbox\@lignbox\vbox{%
+      \prevdepth = \disprevdepth
+      \displ@y
+      \advance\displaywidth by \displayindent
+      \tabskip\displayindent
+      \halign to\displaywidth{%
+         \hfil $\@lign\displaystyle{####}$\@leftleftfill\tabskip\z@skip
+        &$\@lign\displaystyle{{}####}$\hfil\tabskip\centering
+        &\llap{$\@lign####$}\tabskip\z@skip\crcr
+        ##1\crcr}}}%
+  \def\leqalignno##1{%
+    \def\eqno{&}%
+    \def\leqno{&}%
+    \global\setbox\@lignbox\vbox{%
+      \prevdepth = \disprevdepth
+      \displ@y
+      \advance\displaywidth by \displayindent
+      \tabskip\displayindent
+      \halign to\displaywidth{%
+         \hfil $\@lign\displaystyle{####}$\@leftleftfill\tabskip\z@skip
+        &$\@lign\displaystyle{{}####}$\hfil\tabskip\centering
+        &\kern-\displaywidth 
+%         \showthe\displayindent \showthe\leftdisplayindent
+         \rlap{\kern\displayindent \kern-\leftdisplayindent$\@lign####$}%
+         \tabskip\displaywidth\crcr
+        ##1\crcr}}}%
+}%
+% 
+% \noalign is typically used to insert a few words (`and', for example)
+% between two aligned equations.  So I don't think the \noaligned
+% material should be indented.  Since \noalign takes <vertical mode
+% material>, we would end up with double indentation, anyway: one
+% because we're indenting the whole display, and one at the start of the
+% <v.m.m.>.  (If you want to change any of this, you can put something in
+% \@everynoalign.)  So, we use this definition for \noalign in a
+% left-justified \eqalignno:
+% 
+\let\@primitivenoalign = \noalign
+\newtoks\@everynoalign
+\def\@lefteqalignonoalign#1{%
+  \@primitivenoalign{%
+    % Is it right to set \leftskip=0pt first, thus perhaps making this
+    % work in lists and so forth?  We just compensate for the other ways
+    % the display is indented here.
+    \advance\leftskip by -\parindent
+    \advance\leftskip by -\leftdisplayindent
+    \parskip = 0pt
+    %
+    % We use \parindent=0pt instead of \noindent because the latter
+    % starts unrestricted horizontal mode, which means the alignment
+    % we're inside will wind up being as wide as the page.  When the arg
+    % is just vertical material, this is wrong.  For example, using
+    % \matrix inside \eqalignno fails if \noindent is used.
+    \parindent = 0pt
+    \the\@everynoalign
+    #1%
+  }%
+}%
+% 
+% 
+% 
+%  Time macros.
+% 
+% TeX sets \time, \day, \month, and \year when it begins.  (And does not
+% update them as it runs!)
+% 
+% 
+% \monthname produces the name of the month, abbreviated to three
+% letters.  The primitive \month should never be zero.
+% 
+\def\monthname{%
+   \ifcase\month
+      \or Jan\or Feb\or Mar\or Apr\or May\or Jun%
+      \or Jul\or Aug\or Sep\or Oct\or Nov\or Dec%
+   \fi
+}%
+%
+% \fullmonthname is like \monthname, except it doesn't abbreviate.
+% 
+\def\fullmonthname{%
+   \ifcase\month
+      \or January\or February\or March\or April\or May\or June%
+      \or July\or August\or September\or October\or November\or December%
+   \fi
+}%
+%
+% \timestring produces the current time, in a format like `1:14 p.m.'.
+% 
+\def\timestring{\begingroup
+   \count0 = \time
+   \divide\count0 by 60
+   \count2 = \count0   % The hour, from zero to 23.
+   %
+   \count4 = \time
+   \multiply\count0 by 60
+   \advance\count4 by -\count0   % The minute, from zero to 59.
+   % But we need the minutes with a leading zero, if necessary.
+   \ifnum\count4<10
+      \toks1 = {0}%
+   \else
+      \toks1 = {}%
+   \fi
+   % 
+   % Convert the hour into `a.m.' or `p.m.', and make it mod 12.
+   \ifnum\count2<12
+      \toks0 = {a.m.}%
+   \else
+      \toks0 = {p.m.}%
+      \advance\count2 by -12
+   \fi
+   %
+   % If it's midnight, call it `12', not `0'.
+   \ifnum\count2=0
+      \count2 = 12
+   \fi
+   %
+   % Produce the output.
+   \number\count2:\the\toks1 \number\count4 \thinspace \the\toks0
+\endgroup}%
+%
+%
+% \timestamp produces a text string for the whole thing like
+% `23 Apr 1964  1:14 p.m.'.
+%
+\def\timestamp{\number\day\space\monthname\space\number\year\quad\timestring}%
+%
+% 
+% \today produces the current date, as in `23 April 1964'.
+% 
+\def\today{\the\day\ \fullmonthname\ \the\year}%
+%
+% 
+% 
+%  (Typographical) lists.
+% 
+% These macros can produce numbered or unnumbered lists.
+% 
+% You can change the spacing by assigning new values to these registers.
+% They are used by both kinds of lists.  \listleftindent is relative to
+% the current paragraph indentation, while \listrightindent is an
+% absolute value.  I do this for two reasons: (1) it is more useful, if not
+% more ``logical'', to make list indentation depend on the paragraph
+% indentation; (2) footnotes do not work if \parindent is zero, and
+% having a footnote in a list item is perfectly reasonable.
+% 
+% If you change \baselineskip and want \abovelistskip and \belowlistskip
+% to retain their meanings here, you will have to reassign to them.  The
+% \baselineskip here is the value at the time eplain.tex is read, i.e.,
+% 12pt (most likely).
+% 
+% If the items in your lists are very long, you might want to
+% make \interitemskipamount nonzero.  
+% 
+\newskip\abovelistskipamount      \abovelistskipamount = .5\baselineskip
+  \newcount\abovelistpenalty      \abovelistpenalty    = 10000
+  \def\abovelistskip{\vpenalty\abovelistpenalty \vskip\abovelistskipamount}%
+\newskip\interitemskipamount      \interitemskipamount = 0pt
+  \newcount\belowlistpenalty      \belowlistpenalty    = -50
+  \def\belowlistskip{\vpenalty\belowlistpenalty \vskip\belowlistskipamount}%
+\newskip\belowlistskipamount      \belowlistskipamount = .5\baselineskip
+  \newcount\interitempenalty      \interitempenalty    = 0
+  \def\interitemskip{\vpenalty\interitempenalty \vskip\interitemskipamount}%
+\newdimen\listleftindent    \listleftindent = 0pt
+\newdimen\listrightindent   \listrightindent = 0pt        
+\let\listmarkerspace = \enspace
+%
+% To do arbitrary things at the start of each list:
+\newtoks\everylist
+%
+% If you want no space between items for a particular list
+% (perhaps because the items in it are short), you can say,
+% e.g., \numberedlist\listcompact.
+% 
+\def\listcompact{\interitemskipamount = 0pt \relax}%
+%
+% This is called to set up the parameters by both sorts of lists.
+% Because we set \rightskip, we finish off the current paragraph.
+% 
+\newdimen\@listindent
+%
+\def\beginlist{%
+  % Insert the space above this list, before we change \leftskip
+  % (because the \vskip in here might be what ends the paragraph).
+  \abovelistskip
+  %
+  \@listindent = \parindent
+  \advance\@listindent by \listleftindent
+  %
+  % \leftskip shifts nested lists to the right on the page.
+  \advance\leftskip by \@listindent
+  \advance\rightskip by \listrightindent
+  %
+  % We always need \itemnumber, so we can know whether an item is the
+  % first one or not.
+  \itemnumber = 1
+  %
+  \the\everylist
+}%
+%
+% A list item, for both kinds of lists.
+% 
+\def\li{\@getoptionalarg\@finli}%
+\def\@finli{%
+  % Save \@optionalarg in case \interitemskip garble it.
+  \let\@lioptarg\@optionalarg
+  % Write xref definition but do not define hyperlink destination
+  % (\printitem will do it).
+  \ifx\@lioptarg\empty \else
+    \begingroup
+      \@@hldestoff
+      \expandafter\writeitemxref\expandafter{\@lioptarg}%
+    \endgroup
+  \fi
+  \ifnum\itemnumber=1 \else \interitemskip \fi
+  % Add hyperlink destination in front of \marker before doing \printitem.
+  \begingroup
+    \ifx\@lioptarg\empty \else
+      \toks@ = \expandafter{\@lioptarg}%
+      \let\li@nohldest@marker\marker
+      \edef\marker{\noexpand\hldest@impl{li}{\the\toks@}\noexpand\li@nohldest@marker}%
+    \fi
+    \printitem
+  \endgroup
+  \advance\itemnumber by 1
+  \advance\itemletter by 1
+  \advance\itemromannumeral by 1
+  %
+  % Just in case somebody creeps in with an argument or something.
+  \ignorespaces
+}%
+%
+% \writeitemxref{LABEL} writes out a definition for LABEL to be \marker
+% for the aux file.
+% 
+\def\writeitemxref#1{\definexref{#1}\marker{item}}%
+%
+% \printitem is used to print items by both sorts of lists.  A \par gets
+% produced before every item -- even the first one.  We also want to
+% make paragraphs after the first appear to be indented -- i.e., they
+% will have double indentation.  It is usually bad exposition to have
+% lists with multiparagraph items, but sometimes it is unavoidable.
+% 
+\def\printitem{%
+  \par
+  \nobreak
+  \vskip-\parskip
+  \noindent
+  \printmarker\marker
+}%
+%
+% Output the list marker.
+% 
+\def\printmarker#1{\llap{\marker \enspace}}%
+%
+% Common ending.
+% 
+\def\endlist{\belowlistskip}%
+%
+% 
+% \numberedlist produces items which are numbered sequentially, starting
+% from one.  You start items with \li (`list item').  End the list with
+% \endnumberedlist.
+% 
+% A nested \numberedlist produces items labelled `(a)', `(b)', etc.  A
+% doubly (and deeper) nested \numberedlist labels items with `*'.
+% 
+% These registers keep track of where we are.
+% 
+\newcount\numberedlistdepth
+\newcount\itemnumber
+\newcount\itemletter
+\newcount\itemromannumeral
+%
+\def\numberedmarker{%
+  \ifcase\numberedlistdepth
+      (impossible)%
+  \or \printitemnumber
+  \or \printitemletter
+  \or \printitemromannumeral
+  \else *%
+  \fi
+}%
+%
+% These produce the text of the labels.  We use \the\itemletter so that
+% the value will expand.
+% 
+\def\printitemnumber{\number\itemnumber}%
+\def\printitemletter{\char\the\itemletter}%
+\def\printitemromannumeral{\romannumeral\itemromannumeral}%
+\def\numberedprintmarker#1{\llap{#1) \listmarkerspace}}%
+%
+\def\numberedlist{\environment{@numbered-list}%
+  % This is set back to zero by getting to the end of the group.
+  \advance\numberedlistdepth by 1
+  \itemletter = `a
+  \itemromannumeral = 1
+  \beginlist
+  \let\marker = \numberedmarker
+  \let\printmarker = \numberedprintmarker
+}%
+%
+\def\endnumberedlist{%
+  \par
+  \endenvironment{@numbered-list}%
+  \endlist
+}%
+%
+% Allow synonyms for \numberedlist.
+\let\orderedlist = \numberedlist
+\let\endorderedlist = \endnumberedlist
+% 
+% 
+% 
+% \unorderedlist produces items which are labelled with bullets.  You
+% start an item with \li, just as with numbered lists.  You end the list
+% with \endunorderedlist.
+% 
+% A nested \unorderedlist produces items labelled with em-dashes.  A
+% doubly (and deeper) nested \unorderedlist uses `*'.
+% 
+\newcount\unorderedlistdepth
+%
+\def\unorderedmarker{%
+  \ifcase\unorderedlistdepth
+      (impossible)%
+  \or \blackbox
+  \or ---%
+  \else *%
+  \fi
+}%
+\def\unorderedprintmarker#1{\llap{#1\listmarkerspace}}%
+%
+\def\unorderedlist{\environment{@unordered-list}%
+  \advance\unorderedlistdepth by 1
+  \beginlist
+  \let\marker = \unorderedmarker
+  \let\printmarker = \unorderedprintmarker
+}%
+%
+\def\endunorderedlist{%
+  \par
+  \endenvironment{@unordered-list}%
+  \endlist
+}%
+%
+% 
+% 
+%  Verbatim listing.
+% 
+% ... well, almost verbatim.  We assume the font \tt has all the
+% characters that will appear.  Control characters, except for tabs and
+% form feeds (and returns) won't produce anything useful.  Tabs produce
+% a fixed amount of space, and form feeds produce a page break.
+% 
+% This is based on Knuth's ideas in Appendix D of the TeXbook, p. 380.
+% The argument should be a filename.
+% 
+% if you need to do something more for your particular fonts and/or
+% environment before the file is input, give a definition to
+% \setuplistinghook.  If you want line numbers on the output, you can
+% say \let\setuplistinghook = \linenumberedlisting.  To omit last
+% (empty) line of input, say \let\setuplistinghook = \nolastlinelisting.
+% (This works with line numbers, too, but only if \printlistinglineno
+% consists of boxes only.)
+\def\listing#1{%
+   \par \begingroup
+   \@setuplisting
+   \setuplistinghook
+   \input #1
+   \endgroup
+}%
+%
+\let\setuplistinghook = \relax
+%
+\def\linenumberedlisting{%
+  \ifx\lineno\undefined \innernewcount\lineno \fi
+  \lineno = 0
+  \everypar = {\advance\lineno by 1 \printlistinglineno}%
+}%
+\def\printlistinglineno{\llap{[\the\lineno]\quad}}%
+% Remove the last line by removing all boxes (indentation \hbox and/or
+% line number from \everypar).
+\def\nolastlinelisting{\aftergroup\@removeboxes}%
+% Remove boxes until we remove all of them, or until we
+% encounter something other than a box.
+\def\@removeboxes{%
+  \setbox0 = \lastbox
+  \ifvoid0
+    \ignorespaces % Ignore spaces after the \obeywhitespace's group.
+  \else
+    \expandafter\@removeboxes
+  \fi
+}%
+%
+%
+% 
+% \uncatcodespecials must come before \obeywhitespace, lest a space
+% character in the input produce character 32 from the \tt font.
+% Ensure ^^L is active and non-outer.
+% 
+{%
+  \makeactive\^^L
+  \let^^L = \relax
+  \gdef\@setuplisting{%
+     \uncatcodespecials
+     \obeywhitespace
+     \makeactive\`
+     \makeactive\^^I
+     \makeactive\^^L
+     \def^^L{\vfill\break}%
+     \parskip = 0pt
+     \listingfont
+  }%
+}%
+\def\listingfont{\tt}%
+%
+% Give definitions to the characters we want to be special.
+% 
+% Do ` separately, so can use ` in the \catcode commands elsewhere.
+% 
+{%
+   \makeactive\`
+   \gdef`{\relax\lq}% Defeat ligatures.
+}%
+{%
+   \makeactive\^^I
+   \gdef^^I{\hskip8\fontdimen2\font \relax}%
+}%
+%
+% 
+% \verbatim ... |endverbatim typesets the ... in typewriter.  To produce a |
+% in the ..., use ||.  This macro was contributed by beebe@math.utah.edu.
+% Generalized to characters other than | by dorai@cs.rice.edu.
+% 
+\def\verbatimescapechar#1{%
+  \gdef\@makeverbatimescapechar{%
+    \@makeverbatimdoubleescape #1%
+    \catcode`#1 = 0
+  }%
+}%
+\def\@makeverbatimdoubleescape#1{%
+  \catcode`#1 = \other
+  \begingroup
+    \lccode`\* = `#1%
+    \lowercase{\endgroup \ece\def*{*}}%
+}%
+\verbatimescapechar\|  % initially escapechar is |
+%
+\def\verbatim{\begingroup
+  \uncatcodespecials
+  \makeactive\` % make space character a single space, not stretchable
+  \@makeverbatimescapechar
+  \tt\obeywhitespace}
+\let\endverbatim = \endgroup
+% 
+% 
+% 
+%  Table of contents, list of figures, etc.
+% 
+% Entries for the table of contents are recorded in \jobname.toc, which
+% we open for writing at the first \writetocentry.  Actually, we use
+% \tocfilebasename for the root of the filename to read; \jobname is
+% the default.
+%
+\def\definecontentsfile#1{%
+  \ece\innernewwrite{#1file}%
+  \ece\innernewif{if@#1fileopened}%
+  \ece\let{#1filebasename} = \jobname
+  \ece\def{open#1file}{\opencontentsfile{#1}}%
+  \ece\def{write#1entry}{\writecontentsentry{#1}}%
+  \ece\def{writenumbered#1entry}{\writenumberedcontentsentry{#1}}%
+  \ece\def{writenumbered#1line}{\writenumberedcontentsline{#1}}%
+  \ece\innernewif{ifrewrite#1file} \csname rewrite#1filetrue\endcsname
+  \ece\def{read#1file}{\readcontentsfile{#1}}%
+}%
+% 
+% We provide \opentocfile, \readtocfile, etc., by default.
+\definecontentsfile{toc}%
+%
+% And `toc' is just the argument to this macro.
+\def\opencontentsfile#1{%
+  \csname if@#1fileopened\endcsname \else
+     \ece{\immediate\openout}{#1file} = \csname #1filebasename\endcsname.#1
+     \ece\global{@#1fileopenedtrue}%
+  \fi
+}%
+%
+% \writetocentry#1#2 produces a line in the .toc file that
+% looks like:
+% \toc#1entry{#2}{page number}
+% e.g., 
+% \tocchapterentry{Introduction}{2}
+% would be written by
+% \writetocentry{chapter}{Introduction}
+% if the chapter started on page two.
+% 
+% Thus, #1 is intended to be something like `chapter' or `section', #2
+% to be the text of the title.
+% 
+% One special case is for #1 to be an integer (once fully expanded).
+% If it is, we produce a line in the .toc file that looks like:
+%   \tocentry{#1}{#2}{page number}
+% This might be useful if you want to write one generic \tocentry
+% macro to format all TOC entries on the basis of their depth (#1).
+%
+% Of course, if you want, you can \write\tocfile yourself with whatever
+% you like.  In that case, you must also call \opentocfile.
+% 
+% By the way, it would be wrong to put a \percentchar at the end of the
+% output line.  Then, when the .toc file is read, if each line is turned
+% into a \leftline, say, there would be no legal breakpoint between the
+% boxes, and one extremely long line would result.
+% 
+% `toc' is the first argument to this; \writetocentry is defined by
+% \definecontentsfile.
+\def\writecontentsentry#1#2#3{\writenumberedcontentsentry{#1}{#2}{#3}{}}%
+%
+% Sometimes you want the control sequence to take another number (e.g.,
+% a chapter number) as a parameter.  (Although you can pass anything you
+% want as the third parameter, naturally.)  The third parameter is
+% expanded at the point of the \writenumberedtocentry, not when the
+% \write actually happens.  This makes the usual case---the third
+% parameter being \the\someregister---work.
+% 
+% For example:
+% \writenumberedtocentry{chapter}{The second chapter}{2}
+% would produce:
+% \tocchapterentry{The second chapter}{2}{14}
+% 
+% if the second chapter started on page 14.
+% 
+% `toc' is the first argument, as above.
+\def\writenumberedcontentsentry#1#2#3#4{%
+  \csname ifrewrite#1file\endcsname
+    % Set \toks0 to the initial part (command name and possible PART argument).
+    \writenumberedcontents@cmdname{#1}{#2}%
+    %
+    \def\temp{#3}% the text
+    %
+    % Usually #4 is just `\the\register', which we want to expand.  But
+    % if it's not a number at all -- e.g., if it's an author's name, we
+    % don't want to expand control sequences for accents and the like.
+    % So we play some games here.
+    \toks2 = \expandafter{#4}%
+    \edef\cs{\the\toks2}%
+    \edef\@wr{%
+      \write\csname #1file\endcsname{%
+        \the\toks0 % the \toc...entry control sequence
+        {\sanitize\temp}% the text
+        \ifx\empty\cs\else {\sanitize\cs}\fi % a secondary number, or nothing
+        {\noexpand\folio}% the page number
+      }%
+    }%
+    \@wr
+  \fi
+  \ignorespaces
+}%
+% This is very similar to \writenumberedcontentsentry, differing only
+% in the order of parameters it takes and writes for the
+% \toc...entry control sequence.  #3 is the chapter (section, etc.)
+% number, and #4 is the text.
+\def\writenumberedcontentsline#1#2#3#4{%
+  \csname ifrewrite#1file\endcsname
+    % Set \toks0 to the initial part (command name and possible PART argument).
+    \writenumberedcontents@cmdname{#1}{#2}%
+    %
+    \def\temp{#4}% the text
+    %
+    % Usually #3 is just `\the\register', which we want to expand.  But
+    % if it's not a number at all -- e.g., if it's an author's name, we
+    % don't want to expand control sequences for accents and the like.
+    % So we play some games here.
+    \toks2 = \expandafter{#3}%
+    \edef\cs{\the\toks2}%
+    \edef\@wr{%
+      \write\csname #1file\endcsname{%
+        \the\toks0 % the \toc...entry control sequence
+        \ifx\empty\cs\else {\sanitize\cs}\fi % a secondary number, or nothing
+        {\sanitize\temp}% the text
+        {\noexpand\folio}% the page number
+      }%
+    }%
+    \@wr
+  \fi
+  \ignorespaces
+}%
+% This is the common part of \writenumberedcontentsentry and
+% \writenumberedcontentsline.  It takes `toc' and PART arguments,
+% opens toc file and sets \toks0 to `\tocentry{PART}' (if PART is an
+% integer) or `\tocPARTentry' (otherwise).
+\def\writenumberedcontents@cmdname#1#2{%
+  \csname open#1file\endcsname
+  \edef\temp{#2}% Expand PART fully and see if this produced an integer.
+  \expandafter\if\expandafter\isinteger\expandafter{\temp}%
+    \toks0 = {\expandafter\noexpand \csname #1entry\endcsname}%
+    \edef\temp{\the\toks0{\temp}}%
+    \toks0 = \expandafter{\temp}%
+  \else
+    \toks0 = {\expandafter\noexpand \csname #1#2entry\endcsname}%
+  \fi
+}%
+% 
+% The entries are read in when the user invokes \readtocfile (which
+% should be before the first \writetocentry).  We do not open the .toc
+% file to allow reading it in twice to make a short contents or some
+% such.  This should not cause any problems because each of
+% \writecontentsentry and \writenumberedcontentsentry open the .toc
+% file for writing (i.e., empty it) before trying to write to it.
+\def\readcontentsfile#1{%
+   \edef\temp{%
+     \noexpand\testfileexistence[\csname #1filebasename\endcsname]{#1}%
+   }\temp
+   \if@fileexists
+      \input \csname #1filebasename\endcsname.#1\relax
+   \fi
+}%
+%
+% Here are some sample definitions of the \toc...entry macros.  Perhaps
+% you or your book designer can come up with a better way of handling
+% contents than leaders.  These definitions are just examples, not
+% something you might want to actually use to print a document.
+\def\tocchapterentry#1#2{\line{\bf #1 \dotfill\ #2}}%
+\def\tocsectionentry#1#2{\line{\quad\sl #1 \dotfill\ \rm #2}}%
+\def\tocsubsectionentry#1#2{\line{\qquad\rm #1 \dotfill\ #2}}%
+\def\tocentry#1#2#3{\line{\rm\hskip#1em #2 \dotfill\ #3}}%
+%
+% 
+% 
+%  Cross-references.
+% 
+% Definitions of references are recorded in \jobname.aux, called
+% \auxfile in the macros, which btxmac.tex has opened.
+% 
+% When a label isn't defined, we only want to complain if
+% \xrefwarningtrue; btxmac uses \if@citewarning for this, so we have to
+% reuse that name.  We can't just say \let\ifxrefwarning =
+% \if@citewarning, since then changes to the latter won't be reflected
+% in the former.  On the other hand, we have to have a true \if...
+% command, so \if's and \fi's match properly.  What a mess.
+%
+\let\ifxrefwarning = \iftrue
+\def\xrefwarningtrue{\@citewarningtrue \let\ifxrefwarning = \iftrue}%
+\def\xrefwarningfalse{\@citewarningfalse \let\ifxrefwarning = \iffalse}%
+%
+% 
+% \xref{foo} produces ``p.\thinspace <page#>''.  \xrefn{foo} produces
+% ``<page#>''.  \xrdef{foo} produces nothing, but defines the label
+% `foo' to be on the current page.
+%
+% As usual, it takes two passes to get the cross-references right.
+%
+% We check for multiply defined labels during the reading of the aux
+% file, not at the time a cross-reference macro is called by the user.
+% (From Tomas Penicka <tom.penicka@centrum.cz>.)
+%
+% 
+% \xrlabel{LABEL} expands to a cross-reference internal name.  We append
+% an _ character to NAME, to help avoid conflicts.  And we append an `x'
+% so that we don't redefine \_ on an empty label.
+% 
+\begingroup
+  % Mike Spivak's MathTime macros for Times Roman fonts changes the
+  % catcode of _ to be active. Undo that. (From adam@symcom.math.uiuc.edu.)
+  \catcode`\_ = 8
+  \gdef\xrlabel#1{#1_x}%
+\endgroup
+%
+%
+% \xrdef{LABEL} defines LABEL to be the current page number.  But we
+% don't define the label here, because the page number might be off: if
+% this is not the first time through, the label would already be
+% defined, and we would redefine it with the wrong information.
+% 
+\def\xrdef#1{%
+  \begingroup
+    % Define hyperlink destination.
+    \hldest@impl{xrdef}{#1}%
+    % Define cross-reference but not hyperlink destination.
+    \begingroup
+      \@@hldestoff
+      \definexref{#1}{\noexpand\folio}{page}%
+    \endgroup
+  \endgroup
+  \ignorespaces
+}%
+%
+% \definexref{LABEL}{DEFINITION}{CLASS} defines a cross-reference named
+% LABEL of label class CLASS to be DEFINITION.  (Or LABEL can be a
+% control sequence; it's expanded to get the label text.)  To get a
+% possible page number right, we have to write the definition out to the
+% auxiliary file, instead of only defining it directly.
+% 
+\def\definexref#1#2#3{%
+  % Define a hyperlink destination LABEL.
+  \hldest@impl{definexref}{#1}%
+  % Remember what we're given; it might be `\@optionalarg', which
+  % \readauxfile trashes.  (No loss of generality here, since \csname
+  % will fully expand the label anyway.)
+  \edef\temp{#1}%
+  %
+  % Be sure we've read the aux file before we zap it:
+  \readauxfile
+  %
+  % When we read in the aux file next time, define the label:
+  \edef\@wr{\noexpand\writeaux{\string\@definelabel{\temp}{#2}{#3}}}%
+  \@wr
+  \ignorespaces
+}%
+%
+% \@definelabel{LABEL}{DEFINITION}{CLASS} actually defines LABEL of
+% label class CLASS to be DEFINITION.
+% 
+\def\@definelabel#1{% #2 and #3 will be read later.
+  % The following group will keep the save stack from overflowing:
+  % We are reading the .aux file inside a group.  For undefined
+  % commands, \csname...\endcsname makes them equivalent to \relax
+  % locally in that group; when we globally redefine them, TeX enters
+  % the definitions on the save stack, once for each label.  When done
+  % in the topmost group, this can overflow stack of any size, given
+  % sufficient number of label definitions.  So, we put these
+  % \csname...\endcsname's inside another group, to pop the stack for
+  % every label.
+  \begingroup % Will be ended in \@definelabel@nocheck.
+    % Warn if we see that another label with the same name has been
+    % defined.  Remember, we are called when the aux file is being read,
+    % which means that no labels have been defined yet except the ones
+    % which come earlier in this aux file.
+    \expandafter\ifx\csname\xrlabel{#1}\endcsname \relax
+      \expandafter\@definelabel@nocheck
+    \else
+      \expandafter\@definelabel@warn
+    \fi
+    % Define the control sequences or warn.
+    {#1}%
+}%
+% Define a label without checking for redefinitions.
+\def\@definelabel@nocheck#1#2#3{%
+    % Define the control sequence.
+    \expandafter\gdef\csname\xrlabel{#1}\endcsname{#2}%
+    %
+    % Remember what kind of label this is, so \ref will know what to do.
+%    \global\setproperty{\xrlabel{#1}}{class}{#3}%
+    \setpropertyglobal{\xrlabel{#1}}{class}{#3}%
+  \endgroup % From \@definelabel.
+}%
+% Warn and then redefine a label.
+\def\@definelabel@warn#1#2#3{%
+  \message{^^J\linenumber Label `#1' multiply defined,
+           value `#2' of class `#3' overwriting value
+           `\csname\xrlabel{#1}\endcsname' of class
+           `\getproperty{\xrlabel{#1}}{class}'.}%
+  \@definelabel@nocheck{#1}{#2}{#3}%
+}%
+%
+% \reftie is used by several cross-referencing macros to separate
+% optional text from label reference.  \refspace is used by \ref to
+% separate optional text from \CLASSword and by \xref to separate
+% optional text from `p. '.
+%
+\def\reftie{\penalty\@M \ }% Do not rely on `~' being defined as a tie.
+\let\refspace\ 
+% 
+% Typeset a reference to the label #1.  If optional argument is
+% present it will be tied with \reftie to the reference and become
+% part of the hyperlink.
+% 
+\def\xrefn{\@getoptionalarg\@finxrefn}%
+\def\@finxrefn#1{%
+  % Hyperlink and optional TEXT.
+  \hlstart@impl{ref}{#1}%
+  \ifx\@optionalarg\empty \else
+    % Save \@optionalarg before it is trashed by \readauxfile.
+    \let\@xrefnoptarg\@optionalarg
+    % Read .aux file -- \@optionalarg may contain cross-references.
+    \readauxfile
+    % Typeset the \@optionalarg
+    {\@@hloff\@xrefnoptarg}\reftie
+  \fi
+  % Typeset the reference.
+  \plain@xrefn{#1}%
+  \hlend@impl{ref}%
+}%
+% This is equivalent to \xrefn but without the hyperlink stuff and the
+% optional parameter so that its expansion does not contain the many
+% \let's, \def's and such which the expansion of \xrefn contains.  It
+% is needed by \eqdefn and \eqsubdefn to be able to `cleanly' write
+% texts of equation labels to .aux file.  It is also used when
+% functionality of \xrefn is needed without the hyperlink and the
+% optional parameter.
+\def\plain@xrefn#1{%
+  \readauxfile
+  %
+  \expandafter \ifx\csname\xrlabel{#1}\endcsname\relax
+    \if@citewarning
+       \message{\linenumber Undefined label `#1'.}%
+    \fi
+    %
+    % Give it a dummy definition, though, to stop multiple error messages.
+    \expandafter\def\csname\xrlabel{#1}\endcsname{%
+      `{\tt
+        \escapechar = -1
+        \expandafter\string\csname#1\endcsname
+      }'%
+    }%
+  \fi
+  \csname\xrlabel{#1}\endcsname % Always produce something.
+}%
+%
+% \refn is just a synonym.
+% 
+\let\refn = \xrefn
+%
+% One common case: print `p. ' before the page number.
+% 
+\def\xrefpageword{p.\thinspace}%
+%
+\def\xref{\@getoptionalarg\@finxref}%
+\def\@finxref#1{%
+  % Hyperlink and optional TEXT.
+  \hlstart@impl{xref}{#1}%
+  \ifx\@optionalarg\empty \else
+    {\@@hloff\@optionalarg}\refspace
+  \fi
+  % Typeset page reference but omit hyperlink.
+  \xrefpageword\plain@xrefn{#1}%
+  \hlend@impl{xref}%
+}%
+%
+% \ref[TEXT]{LABEL} typesets TEXT, \CLASSword for LABEL's class (if it's defined)
+% and then does \refn on LABEL. But amstex also has a \ref, so tell the
+% user if they try to use \ref and have loaded amsppt.sty.
+% 
+% \refs{LABEL} is similar, but puts the letter `s' after the \...word, thus
+% producing (for example) `Figures 1.2' (presumably to be followed by
+% `and~\refn{fig-1.3}').
+% 
+% Note that \ref takes an optional TEXT, while \refs does not.  This
+% text (together with \CLASSword) will become part of the hyperlink
+% generated by \ref.  \refs does not include \CLASSword in the
+% hyperlink.
+%
+\def\@maybewarnref{%
+  \ifundefined{amsppt.sty}%
+    % No amsppt.sty, so just use ours.
+  \else
+    \message{Warning: amsppt.sty and Eplain both define \string\ref. See
+             the Eplain manual.}%
+    % Remember their definition.
+    \let\amsref = \ref
+  \fi
+  \let\ref = \eplainref
+  \ref
+}
+\let\ref = \@maybewarnref
+%
+\def\eplainref{\@getoptionalarg\@fineplainref}%
+\def\@fineplainref{\@generalref{1}{}}%
+\def\refs{\let\@optionalarg\empty \@generalref{0}s}%
+%
+% #1 is an integer flag which tells whether hyperlink should include
+% \@optionalarg and class word (non-0) or not (0).  #2 is the text to
+% follow the \...word.  Both #1 and #2 are supplied by the macros
+% above.  #3 comes from the document, and is the LABEL.
+%
+% \reftie separates \@optionalarg or \..word from \refn; \refspace
+% separates \@optionalarg from \..word.
+%
+\def\@generalref#1#2#3{%
+  % Save \@optionalarg before it is trashed by \readauxfile.
+  \let\@generalrefoptarg\@optionalarg
+  \readauxfile
+  % Maybe start hyperlink here.
+  \ifcase#1 \else \hlstart@impl{ref}{#3}\fi
+  % Get the class of the label.
+  \edef\@generalref@class{\getproperty{\xrlabel{#3}}{class}}%
+  % If the word for this class is not defined, don't complain.
+  \expandafter\ifx\csname \@generalref@class word\endcsname\relax
+    % Produce \@optionalarg followed by a \reftie, if \@optionalarg is
+    % not empty.
+    \ifx\@generalrefoptarg\empty \else {\@@hloff\@generalrefoptarg\reftie}\fi
+  \else
+    \begingroup
+      \@@hloff
+      % Produce \@optionalarg, if not empty, followed by a \refspace.
+      \ifx\@generalrefoptarg\empty \else \@generalrefoptarg \refspace \fi
+      % Produce the word.
+      \csname \@generalref@class word\endcsname
+      % Add the suffix and then put in a \reftie before the \refn.
+      #2\reftie
+    \endgroup
+  \fi
+  % Maybe start hyperlink here.
+  \ifcase#1 \hlstart@impl{ref}{#3}\fi
+  % Typeset the reference omitting hyperlinks.
+  \plain@xrefn{#3}%
+  \hlend@impl{ref}%
+}%
+%
+%
+% References to equations are similar.
+%
+% \eqref{foo} produces ``(<text for equation label foo>)''.
+% \eqdefn{foo} advances \eqnumber, resets \eqsubnumber, and defines
+%   `foo' to be the new number. 
+% \eqsubdefn{foo} advances \eqsubnumber and defines `foo'.  \eqref works
+%   for both equations and subequations,
+% \eqdef{foo} does \eqdefn, then inserts an \eqno and \eqref.
+% \eqsubdef{foo} does \eqsubdefn, then what \eqdef does.
+% 
+% The non-``sub'' macros also take an optional argument; if it's
+% present, we use it as the text for the equation label, instead of the
+% various counters.
+%
+% Because there are no page break issues with equations, we can
+% immediately define the control sequence.  But we also need to write
+% the definition out, in case the user wants to forward reference an
+% equation (bad style as that may be).
+%
+% The current equation number is in \eqnumber; we just advance it by one
+% for each \eqdef.  You can handle fancier equation numbers (e.g., ones
+% that include a chapter number) by redefining \eqprint, below, and
+% using your own counters.  We do provide for one level of substructure,
+% since that's more painful to implement than superstructures.
+%
+\newcount\eqnumber
+\newcount\subeqnumber
+%
+%
+% \eqdefn[TEXT]{LABEL} defines LABEL to be TEXT (if it's present),
+% otherwise it advances \eqnumber and defines LABEL to be that.  It
+% doesn't produce anything.
+% 
+\def\eqdefn{\@getoptionalarg\@fineqdefn}%
+\def\@fineqdefn#1{%
+  \ifx\@optionalarg\empty
+    \global\advance\eqnumber by 1
+    % We call \eqconstruct here instead of in \@eqdefn because we don't
+    % want to expand it for \eqsubdefn -- \eqsubdefn already includes an
+    % \eqrefn which includes the text of the label which was \eqconstructed.
+    \def\temp{\eqconstruct{\number\eqnumber}}%
+  \else
+    % In the next \def there is (I believe) a spurious \noexpand. 
+    % I leave in the old definition, albeit commented out, in case the
+    % \noexpand really _is_ necessary. But I don't thikn so. Adam Lewenberg
+%    \def\temp{\noexpand\@optionalarg}%
+    \def\temp{\@optionalarg}% 
+  \fi
+  %
+  % Always reset the current subequation number:
+  \global\subeqnumber = 0
+  %
+  % Remember this label, so that we can define subequations:
+  \gdef\@currenteqlabel{#1}%
+  \toks0 = \expandafter{\@currenteqlabel}%
+  %
+  % Actually do the definition, replacing \xrefn and \eqrefn with
+  % \plain@xrefn and taking precautions not to expand \plain@xrefn
+  % in what we output to the aux file.  \plain@xrefn expands to many things,
+  % including \count@'s and \edef's and the expansion of \xrlabel, and
+  % it's just a real mess.
+  \begingroup
+    \def\eqrefn{\noexpand\plain@xrefn}%
+    \def\xrefn{\noexpand\plain@xrefn}%
+    \edef\temp{\noexpand\@eqdefn{\the\toks0}{\temp}}%
+    \temp
+  \endgroup
+}%
+% 
+% 
+% \eqsubdefn defines its argument as a ``subequation'' of the last \eqdef.
+%
+\def\eqsubdefn#1{%
+  \global\advance\subeqnumber by 1
+  \toks0 = {#1}%
+  %
+  % Get the text of the label;
+  \toks2 = \expandafter{\@currenteqlabel}%
+  %
+  % We must expand \@currenteqlabel.  We have to not expand
+  % \eqsubreftext here, as well as \plain@xrefn (which we substitute
+  % for \eqrefn and \xrefn), since the first arg to \eqsubreftext
+  % could also include lots of complicated things.
+  \begingroup
+    \def\eqrefn{\noexpand\plain@xrefn}%
+    \def\xrefn{\noexpand\plain@xrefn}%
+    \def\eqsubreftext{\noexpand\eqsubreftext}%
+    \edef\temp{%
+      \noexpand\@eqdefn
+        {\the\toks0}%
+        {\eqsubreftext{\eqrefn{\the\toks2}}{\the\subeqnumber}}%
+    }%
+    \temp           
+  \endgroup
+}%
+% 
+% \@eqdefn{LABEL}{REF-TEXT} actually handles the equation number
+% definitions and writing to the aux file.
+% 
+% In contrast to \xrdef, we define LABEL right away (as REF-TEXT).  We
+% can do this since we know right now what the right equation number is.
+% This eliminates some unnecessary warning.  It also lets the user put
+% \eqdef{} on all equations and have it work, since then \eqref
+% refers to the just-defined new value.  This however needs special
+% treatment with respect to hyperlink labels which should not be
+% duplicated.  For each \eqdef{}, we define a destination with a
+% unique hyperlink label.  These labels can be customized with:
+\newcount\phantomeqnumber
+\def\phantomeqlabel{PHEQ\the\phantomeqnumber}%
+%
+\def\@eqdefn#1#2{%
+  % Write out xref into the aux file to allow forward references, but
+  % only if the label is not empty.  Otherwise numerous redefinitions
+  % of the empty label might be reported.
+  \ifempty{#1}%
+    % LABEL is empty, so generate a `phantom' label.
+    \global\advance\phantomeqnumber by 1
+    \edef\hl@eqlabel{\phantomeqlabel}%
+    % Do not write to the aux file but read it anyway, so that
+    % \@definelabel's get a chance to do the checks for multiple
+    % definitions before we define any cross-references.
+    \readauxfile
+  \else
+    % LABEL is not empty, so use it for hyperlinks.
+    \def\hl@eqlabel{#1}%
+    % Write the definition to the aux file, but do not create
+    % hyperlink destination (we'll create it ourselves below).
+    % This also reads the aux file.
+    {\@@hldestoff \definexref{#1}{#2}{eq}}%
+  \fi
+  % Define hyperlink destination.
+  \hldest@impl{eq}{\hl@eqlabel}%
+  % Define the LABEL omitting redefinition check.
+  \begingroup % \@definelabel@nocheck will end this group.
+    \@definelabel@nocheck{#1}{#2}{eq}%
+}%
+% 
+% \eqdef{LABEL} defines LABEL, with \eqdefn, then prints it.  We allow
+% an optional argument to explicitly specify the text which we define
+% the label as.
+%
+\def\eqdef{\@getoptionalarg\@fineqdef}%
+\def\@fineqdef{%
+  \toks0 = \expandafter{\@optionalarg}%
+  \edef\temp{\noexpand\@eqdef{\noexpand\eqdefn[\the\toks0]}}%
+  \temp
+}%
+%
+% \eqsubdef is to \eqdef as \eqsubdefn is to \eqdefn.  No optional
+% argument allowed here.
+% 
+\def\eqsubdef{\@eqdef\eqsubdefn}%
+%
+% \@eqdef{DEFN-CMD}{LABEL} defines LABEL, using DEFN-CMD.  Then it
+% inserts an \eqno (unless it's called when an \eqno would be invalid).
+% Then it prints the newly-defined value using \eqprint.
+% 
+\def\@eqdef#1#2{%
+  \@maybedisableeqno
+  \eqnum #1{#2}% Define the label and hyperlink destination.
+        \let\@optionalarg\empty % \@fineqref will examine \@optionalarg.
+        {\@@hloff\@fineqref{#2}}% Print the text without a hyperlink.
+  \@mayberestoreeqno
+  \ignorespaces
+}%
+% 
+% 
+% If we are in an alignment or some other inner place, \eqno won't work.
+% 
+\let\@mayberestoreeqno = \relax
+%
+\def\@maybedisableeqno{%
+  \ifinner
+    \global\let\eqno = \relax
+    \global\let\leqno = \relax
+    \global\let\@mayberestoreeqno = \@restoreeqno
+  \fi
+}%
+%
+% This makes `\eqno' mean \eqno again.
+% 
+\let\@primitiveeqno = \eqno
+\let\@primitiveleqno = \leqno
+\def\@restoreeqno{%
+  \global\let\eqno = \@primitiveeqno
+  \global\let\leqno = \@primitiveleqno
+  \global\let\@mayberestoreeqno = \empty
+}%
+%
+%
+% \righteqnumbers/\lefteqnumbers configure \eqnum, \eqdef
+% and \eqalignnum to place the equation number against right/left
+% margin respectively.
+%
+\def\righteqnumbers{%
+  \def\eqnum{\eqno}%
+  \def\eqalignnum{\eqalignno}%
+}%
+%
+\def\lefteqnumbers{%
+  \def\eqnum{\leqno}%
+  \def\eqalignnum{\leqalignno}%
+}%
+%
+\righteqnumbers
+%
+% 
+% \eqrefn[TEXT]{LABEL} produces the text for the equation label LABEL, or
+% something suitable if LABEL is undefined.  (It possibly issues a
+% warning in the latter case as well.)  TEXT followed by a \reftie is
+% prepended to the equation text as part of the hyperlink.
+%
+\def\eqrefn{\@getoptionalarg\@fineqrefn}%
+\def\@fineqrefn#1{%
+  \eqref@start{#1}%
+  % Typeset the equation reference but do not produce hyperlink.
+  \plain@xrefn{#1}%
+  \hlend@impl{eq}%
+}%
+%
+% \eqref[TEXT]{LABEL} is the usual way to refer to equation labels; it
+% calls \eqprint on the text of LABEL, prepending it with TEXT and a
+% \reftie as part of the hyperlink.
+% 
+\def\eqref{\@getoptionalarg\@fineqref}%
+\def\@fineqref#1{%
+  \eqref@start{#1}%
+  % Typeset the equation reference but do not produce hyperlink.
+  \eqprint{\plain@xrefn{#1}}%
+  \hlend@impl{eq}%
+}%
+% Common code executed at the start of \@fineqrefn and \@fineqref.
+\def\eqref@start#1{%
+  % Save \@optionalarg in case \phantomeqlabel is redefined by the
+  % user to something that trashes it.
+  \let\@eqrefoptarg\@optionalarg
+  % Hyperlink (fetch last `phantom' equation label if LABEL is empty).
+  \ifempty{#1}%
+    \hlstart@impl{eq}{\phantomeqlabel}%
+  \else
+    \hlstart@impl{eq}{#1}%
+  \fi
+  % Optional TEXT followed by a \reftie.
+  \ifx\@eqrefoptarg\empty \else
+    {\@@hloff\@eqrefoptarg\reftie}%
+  \fi
+}%
+%
+% 
+% \eqconstruct{EQ-TEXT} constructs an equation number, i.e., the text to
+% be defined as the value of a label.
+% 
+\let\eqconstruct = \identity
+%
+% \eqprint{EQ-TEXT} produces the typeset equation number EQ-TEXT.
+%
+\def\eqprint#1{(#1)}%
+%
+% \eqsubreftext{EQ-TEXT}{SUBEQ-TEXT} produces the text of a subequation
+% reference.  (\eqprint is later called on the result of this to produce
+% output for subequations; I didn't define any \subeqprint.)
+% 
+\def\eqsubreftext#1#2{#1.#2}%
+%
+%
+% 
+%  Indexing.
+% 
+% \defineindex{PREFIX} defines an index with ``prefix'' PREFIX.  The
+% prefix is used to construct the output filename and the various
+% commands.  We just define all the index commands for this index to
+% call the general commands with PREFIX.
+%
+\let\extraidxcmdsuffixes = \empty
+%
+\def\defineindex#1{%
+  \def\@idxprefix{#1}%
+  %
+  % Define a switch to control opening and writing of the index file
+  % for this prefix.
+  \expandafter\innernewif\csname if\@idxprefix dx\endcsname
+  \csname \@idxprefix dxtrue\endcsname
+  %
+  % Define the indexing commands for this prefix. 
+  \for\@idxcmd:=,marked,submarked,name%
+                \extraidxcmdsuffixes\do
+  {%
+    \@defineindexcmd\@idxcmd
+  }%
+  %
+  % Allocate a stream for the output.
+  \ece\innernewwrite{@#1indexfile}%
+  %
+  % And a conditional to test whether we've opened the file.
+  \ece\innernewif{if@#1indexfileopened}%
+}%
+%
+%
+% \@defineindexcmd{SUFFIX} defines both silent and non-silent index
+% command for prefix \@idxprefix with suffix SUFFIX.  That is, we define
+% both `\@idxprefix dxSUFFIX' and `\s\@idxprefix dxSUFFIX' to call the
+% corresponding generic command with \@idxprefix.  \silentindexentry is
+% used to decide whether we should ignore following spaces.
+% 
+\newif\ifsilentindexentry
+%
+\def\@defineindexcmd#1{%
+  \@defineoneindexcmd{s}{#1}\silentindexentrytrue
+  \@defineoneindexcmd{}{#1}\silentindexentryfalse
+}%
+%
+%
+% \@defineoneindexcmd{PREFIX}{SUFFIX}{PRECALL} does just one silent or
+% non-silent commands.  We define the command `\@@PREFIXidxSUFFIX' to do
+% PRECALL, then define \@idxprefix, then call \@idxgetrange with an
+% argument of `\@@{,s}idxSUFFIX'.  (So far every indexing command 
+% should allow a range.  If not, you could redefine `\@@{,s}idxSUFFIX'
+% after this macro is called.)
+% 
+\def\@defineoneindexcmd#1#2#3{%
+  \toks@ = {#3}%
+  \edef\temp{%
+    \def
+      % We have to restrict expansion because the generic (\@@...)
+      % commands will be defined after the first call to \defineindex.
+      % Not expanding the user (\idx...) commands is unnecessary unless
+      % the user has defined some new commands, but may as well be cautious.
+      \expandonce\csname#1\@idxprefix dx#2\endcsname % e.g., \idx or \sidxname.
+      {\def\noexpand\@idxprefix{\@idxprefix}% define \@idxprefix
+       % call, e.g., \@@idx or \@@sidxname:
+       \expandonce\csname @@#1idx#2\endcsname
+      }%
+    \def
+      \expandonce\csname @@#1idx#2\endcsname{% e.g., \@@idx
+        % First do PRECALL.
+        \the\toks@
+        % Then call \@idxgetrange with, e.g., \@idx or \@sidxname as its arg.
+        \noexpand\@idxgetrange\expandonce\csname @#1idx#2\endcsname
+      }%
+  }%
+  \temp
+}%
+%
+%
+% \@idxwrite{TERM}{PAGENO} writes a general index entry for TERM on page
+% PAGENO to the index file `\@idxprefix indexfile'.  We open the stream
+% as `\indexfilebasename.\@idxprefix dx' if it isn't already open.  We
+% only write out the index term if this has not been disabled with
+% \csname\@idxprefix dxfalse\endcsname.
+%
+\let\indexfilebasename = \jobname
+%
+\def\@idxwrite#1#2{%
+  \csname if\@idxprefix dx\endcsname
+    % Be sure the file is opened.
+    \@openidxfile
+    %
+    % Save the index term.
+    \def\temp{#1}%
+    %
+    % Write the index term and page number.
+    \edef\@wr{%
+      \expandafter\write\csname @\@idxprefix indexfile\endcsname{%
+        \string\indexentry
+        {\sanitize\temp}%
+        {\noexpand#2}%
+      }%
+    }%
+    \@wr
+  \else
+    % Produce a whatsit anyway, to ensure consistent page-breaking.
+    \write-1{}%
+  \fi
+  % 
+  % Marginalize the index term, if desired.  We \sanitize the term to
+  % avoid expansion of any (user-defined) active characters that made
+  % it through (e.g., because they had not been added to \dospecials
+  % and hence were not read verbatim by the indexing commands).
+  \ifindexproofing
+    \def\temp{#1}%
+    \edef\temp{%
+      \insert\@indexproof{\noexpand\indexproofterm{\sanitize\temp}}%
+    }%
+    \temp
+    % Allow `infinitesimal' in \sidx{Infinitesimal}infinitesimal to be
+    % hyphenated.
+    \ifhmode\allowhyphens\fi
+  \fi
+  %
+  % We just appended at least one non-discardable item (namely, the
+  % whatsit from the \write) to the current list.  So in case glue comes
+  % next (not unlikely), be sure we don't inadvertently make that glue a
+  % valid breakpoint, if it wouldn't have been without us.
+  \hookrun{afterindexterm}%
+  %
+  % This is the end of the index entry processing.  If this was a silent
+  % entry, ignore following spaces.
+  \ifsilentindexentry \expandafter\ignorespaces\fi
+}%
+%
+\def\@openidxfile{%
+  \csname if@\@idxprefix indexfileopened\endcsname \else
+    \expandafter\immediate\openout\csname @\@idxprefix indexfile\endcsname =
+      \indexfilebasename.\@idxprefix dx
+    \expandafter\global\csname @\@idxprefix indexfileopenedtrue\endcsname
+  \fi
+}%
+%
+%
+% If this conditional is true, we output the index terms on the page
+% where they occur.
+\newif\ifindexproofing
+%
+% We need a new insertion class to collect the proofed terms.
+\newinsert\@indexproof
+\dimen\@indexproof = \maxdimen                  % No limit on number of terms.
+\count\@indexproof = 0  \skip\@indexproof = 0pt % They take up no space.
+%
+% This actually typesets the proofed term.  We don't go to any lengths
+% to provide nice-looking output; since the term might have all kinds of
+% weird characters in it, we just dump it in the smallest standard
+% Computer Modern typewriter font.
+% 
+% We put the term in an \hbox, even though that might make the output
+% run off the page, since we don't really need to see all of it, and
+% I think it's better to opt for simplicity -- one term per line.
+%
+\font\indexprooffont = cmtt8
+\def\indexproofterm#1{\hbox{\strut \indexprooffont #1}}%
+%
+%
+% If \output doesn't use \makeheadline, or redefines it, it's up to the
+% new \output to define index hyperlink destination and to call
+% \indexproofunbox.
+%
+\let\@plainmakeheadline = \makeheadline
+\def\makeheadline{%
+  % Define index page destination only when this `page anchor' is defined.
+  \expandafter\ifx\csname\idxpageanchor{\folio}\endcsname\relax \else
+    % Say \@@hldeston in case a page break happened at an unfortunate
+    % time when user said \hldestoff.
+    {\@@hldeston \hldest@impl{idx}{\hlidxpagelabel{\folio}}}%
+  \fi
+  \indexproofunbox
+  \@plainmakeheadline
+}%
+%
+% We want to put the proof index terms in the margin, outside the
+% printed area. So if \outsidemargin (for odd pages) and \insidemargin
+% (for even pages) are undefined, we define them (both) to be the default
+% TeX margin -- one inch + \hoffset.
+\def\indexsetmargins{%
+  \ifx\undefined\outsidemargin
+    \dimen@ = 1truein
+    \advance\dimen@ by \hoffset
+    \edef\outsidemargin{\the\dimen@}%
+    \let\insidemargin = \outsidemargin
+  \fi
+}%
+%
+% We always put the terms in the right-hand margin, so long terms run
+% off the page, instead of into the text.
+\def\indexproofunbox{%
+  \ifvoid\@indexproof\else
+    \indexsetmargins
+    \rlap{%
+      \kern\hsize
+      \ifodd\pageno \kern\outsidemargin \else \kern\insidemargin \fi
+      \vbox to 0pt{\unvbox\@indexproof\vss}%
+    }\nointerlineskip
+  \fi
+}%
+%
+%
+% \@idxgetrange\CS parses an optional argument which, if present, should
+% be either `begin' or `end', marking the beginning or ending of a range
+% for the index entry.  If we find this, we set the appropriate one of
+% \@idxrangestr.  Then we call \CS.
+% 
+% If the optional argument is `see' or `seealso' we read another
+% argument, namely, the entry to see.
+% 
+\def\idxrangebeginword{begin}%
+\def\idxbeginrangemark{(}% the corresponding magic char to go in the idx file
+%
+\def\idxrangeendword{end}%
+\def\idxendrangemark{)}%
+%
+\def\idxseecmdword{see}%
+\def\idxseealsocmdword{seealso}%
+\newif\if@idxsee
+\newif\if@hlidxencap
+\let\@idxseenterm = \relax
+%
+\def\idxpagemarkupcmdword{pagemarkup}%
+\let\@idxpagemarkup = \relax
+%
+\def\@idxgetrange#1{%
+  \let\@idxrangestr = \empty
+  \let\@afteridxgetrange = #1%
+  % Since \@getoptionalarg scans ahead, it might scan the \idxargopen
+  % character of the following non-optional argument if the optional
+  % argument is missing.  To make sure that \idxargopen gets the right
+  % catcode, we need to set it up before calling \@getoptionalarg.
+  \begingroup
+    \catcode\idxargopen=1
+    \@getoptionalarg\@finidxgetopt
+}%
+\def\@finidxgetopt{%
+    \global\let\@idxgetrange@arg\@optionalarg
+  \endgroup
+  %
+  \@hlidxencaptrue
+  %
+  \for\@idxarg:=\@idxgetrange@arg\do{%
+    % These are ordered by my guess at frequency of use.
+    \expandafter\@idxcheckpagemarkup\@idxarg=,%
+    %
+    \ifx\@idxarg\idxrangebeginword
+      \def\@idxrangestr{\idxencapoperator\idxbeginrangemark}%
+    \else
+      \ifx\@idxarg\idxrangeendword
+        \def\@idxrangestr{\idxencapoperator\idxendrangemark}%
+        \@hlidxencapfalse
+      \else
+        \ifx\@idxarg\idxseecmdword
+          \def\@idxpagemarkup{indexsee}%
+          \@idxseetrue
+          \@hlidxencapfalse
+        \else
+          \ifx\@idxarg\idxseealsocmdword
+            \def\@idxpagemarkup{indexseealso}%
+            \@idxseetrue
+            \@hlidxencapfalse
+          \else
+             \ifx\@idxpagemarkup\relax
+               \errmessage{Unrecognized index option `\@idxarg'}%
+             \fi
+          \fi
+        \fi
+      \fi
+    \fi
+  }%
+  % Stick hyperlink encapsulator into \@idxpagemarkup.
+  \ifnum\hldest@place@idx < 0 \else
+    \if@hlidxencap
+      \ifx\@idxpagemarkup\relax
+        % Even when user gives no pagemarkup command, we still do
+        % insert our hyperlink encapsulator.
+        \let\@idxpagemarkup\empty
+      \fi
+      \ifcase\hldest@place@idx \relax
+        % \hldest@place@idx = 0, dests point to a page with a term.
+        \edef\@idxpagemarkup{hlidxpage{\@idxpagemarkup}}%
+        % We want to define index \hldest's only on those
+        % pages which contain at least one index term, so this
+        % `page anchor' will tell \makeheadline on which pages to
+        % generate an \hldest.
+        \definepageanchor{\noexpand\folio}%
+      \else
+        % \hldest@place@idx = 1, dests point to exact location of a term.
+        \global\advance\hlidxlabelnumber by 1
+        \edef\@idxpagemarkup{hlidx{\hlidxlabel}{\@idxpagemarkup}}%
+        \hldest@impl{idx}{\hlidxlabel}%
+      \fi
+    \fi
+  \fi
+  %
+  \@afteridxgetrange
+}%
+%
+%
+% Check for a command of the form `pagemarkup=\cmd', and if found, set
+% \@idxpagemarkup to `cmd'.
+% 
+\def\@idxcheckpagemarkup#1=#2,{%
+  \def\temp{#1}%
+  \ifx\temp\idxpagemarkupcmdword
+    \if ,#2, % If #2 is empty, complain.
+      \errmessage{Missing markup command to `pagemarkup'}%
+    \else
+      % Remove a trailing =.
+      \def\temp##1={##1}%
+      \edef\@idxpagemarkup{\temp\string#2}%
+    \fi
+  \fi
+}%
+%
+%
+% \hlidxpage and \hlidx are hyperlink encapsulators for the two types
+% of hyperlink destinations for index terms.
+%
+% \hldest@place@idx defines which type is selected.  When defined to 0,
+% we generate destinations pointing to the page on which the indexed
+% term is located.  When defined to 1, we generate destinations
+% pointing to exact location of the indexed term.  When negative, we
+% generate no hyperlinks / destinations.
+\def\hldest@place@idx{-1}%
+%
+% \idxpageanchor{PAGE} expands to index page anchor internal name.
+% This page anchor is used when index entries point to pages.  Like in
+% \xrlabel, we append an _ character to NAME, to help avoid conflicts.
+% And we append a `p' so that we don't redefine \_ on an empty label.
+\begingroup
+  % Mike Spivak's MathTime macros for Times Roman fonts changes the
+  % catcode of _ to be active. Undo that. (From adam@symcom.math.uiuc.edu.)
+  \catcode`\_ = 8
+  \gdef\idxpageanchor#1{#1_p}%
+\endgroup
+% \definepageanchor{PAGE} defines a page anchor for the page PAGE.
+% \makeheadline will then define a hyperlink destination on top of
+% each page for which an anchor is defined.  To get a possible page
+% number right, we have to write the definition out to the auxiliary
+% file, instead of only defining it directly.
+\def\definepageanchor#1{%
+  % Be sure we've read the aux file before we zap it:
+  \readauxfile
+  %
+  % When we read in the aux file next time, define the label:
+  \edef\@wr{\noexpand\writeaux{\string\@definepageanchor{#1}}}%
+  \@wr
+  \ignorespaces
+}%
+% \@definepageanchor{PAGE} actually defines page anchor for the PAGE.
+\def\@definepageanchor#1{%
+  \expandafter\gdef\csname\idxpageanchor{#1}\endcsname{}%
+}%
+%
+% Hyperlink labels for both types of destinations.
+\newcount\hlidxlabelnumber
+\def\hlidxlabel{IDX\the\hlidxlabelnumber}%
+\def\hlidxpagelabel#1{IDXPG#1}%
+%
+% \hlidx{HYPERLINK-LABEL}{PAGEENCAP}{PAGESPEC}
+\def\hlidx#1#2#3{%
+  \ifempty{#2}%
+    \let\@idxpageencap\relax
+  \else
+    \expandafter\let\expandafter\@idxpageencap\csname #2\endcsname
+  \fi
+  \hlstart@impl{idx}{#1}%
+  \@idxpageencap{#3}%
+  \hlend@impl{idx}%
+}%
+%
+% \hlidxpage{PAGEENCAP}{PAGESPEC}
+%
+% We expect PAGESPEC to be one of the following:
+%   14          (single page number)
+%   14, 15      (list of two consecutive page numbers)
+%   14--15      (page range)
+%
+% If you configure MakeIndex to use different page list separator
+% (delim_n parameter in .mst file) / different page range separator
+% (delim_r parameter), you should call \setidxpagelistdelimiter /
+% \setidxpagerangedelimiter to setup the new separators.
+%
+% In case of a single page number, we call \PAGEENCAP on the page
+% number and turn the result into a hyperlink.
+%
+% In case of a two-page list, we break the list, call \PAGEENCAP on
+% each of the page numbers separately, and turn each result into a
+% hyperlink, producing page list separator between the page numbers.
+%
+% In case of a page range, we do not break the range, call \PAGEENCAP
+% on the entire range and turn what results into a hyperlink for the
+% first of the page numbers.
+\def\hlidxpage#1#2{%
+  % Set \@idxpagei[i][ref] and \@idxpagesep
+  \@hlidxgetpages{#2}%
+  % Alias for \PAGEENCAP.
+  \ifempty{#1}%
+    \let\@idxpageencap\relax
+  \else
+    \expandafter\let\expandafter\@idxpageencap\csname #1\endcsname
+  \fi
+  % Now comes the first part, to be done in any of the three cases.
+  \hlstart@impl{idx}{\hlidxpagelabel{\@idxpageiref}}%
+  \expandafter\@idxpageencap\expandafter{\@idxpagei}%
+  \hlend@impl{idx}%
+  % The second part, to be done only if there is a second page number.
+  \ifx\@idxpageii\empty \else
+    \@idxpagesep
+    \hlstart@impl{idx}{\hlidxpagelabel{\@idxpageiiref}}%
+    \expandafter\@idxpageencap\expandafter{\@idxpageii}%
+    \hlend@impl{idx}%
+  \fi
+}%
+%
+% This macro parses PAGESPEC parameter to \hlidxpage.  It sets
+% \@idxpagei to the first page number, \@idxpageii to the second (if
+% present; if not, \@idxpageii will be set to \empty).  For the first
+% page number, use \@idxpageiref to construct hyperlink label; for
+% the second page number, use \@idxpageiiref.  Use \@idxpagesep to
+% separate the two page numbers.
+%
+% NOTE:  we use \@idxpagei[i], not \idxpagei[i], because the user may
+% use \idxparselist / \idxparserange in his \PAGEENCAP, in which case
+% our \idxpagei[i]'s will get garbled.
+\def\@hlidxgetpages#1{%
+  % Try to parse a two-page list.
+  \idxparselist{#1}%
+  \ifx\idxpagei\empty
+    % It is not a two-page list, try page range.
+    \idxparserange{#1}%
+    \ifx\idxpagei\empty
+      % It is neither a two-page list nor a page range, so we assume
+      % it is a single page number.
+      \def\@idxpageiref{#1}% Label for \hlstart.
+    \else
+      % It is a page range.
+      \let\@idxpageiref\idxpagei % Label for \hlstart.
+    \fi
+    \def\@idxpagei{#1}%
+    \let\@idxpageii\empty
+  \else
+    % It is a two-page list.
+    \let\@idxpagei\idxpagei
+    \let\@idxpageii\idxpageii
+    \let\@idxpageiref\idxpagei % Label for \hlstart.
+    \let\@idxpageiiref\idxpageii % Label for \hlstart.
+    \let\@idxpagesep\idxpagelistdelimiter
+  \fi
+}%
+%
+% Set up a macro \@idxparselist and user-accessible \idxparselist for
+% parsing two-page list.  Takes list separator (which is saved in
+% \idxpagelistdelimiter).  If the list is found, \@idxparselist will
+% set \idxpagei to the first page number, \idxpageii to the second;
+% if not found, it will set \idxpagei to \empty (this implies that
+% the list's first page number should never be empty).
+\def\setidxpagelistdelimiter#1{%
+  \gdef\idxpagelistdelimiter{#1}%
+  \gdef\@removepagelistdelimiter##1#1{##1}%
+  \gdef\@idxparselist##1#1##2\@@{%
+    \ifempty{##2}%
+      \let\idxpagei\empty
+    \else
+      \def\idxpagei{##1}%
+      \edef\idxpageii{\@removepagelistdelimiter##2}%
+    \fi
+  }%
+  \gdef\idxparselist##1{\@idxparselist##1#1\@@}%
+}%
+%
+% Same as previous, but \@idxparserange and \idxparserange will parse
+% page range, range separator is saved in \idxpagerangedelimiter.
+\def\setidxpagerangedelimiter#1{%
+  \gdef\idxpagerangedelimiter{#1}%
+  \gdef\@removepagerangedelimiter##1#1{##1}%
+  \gdef\@idxparserange##1#1##2\@@{%
+    \ifempty{##2}%
+      \let\idxpagei\empty
+    \else
+      \def\idxpagei{##1}%
+      \edef\idxpageii{\@removepagerangedelimiter##2}%
+    \fi
+  }%
+  \gdef\idxparserange##1{\@idxparserange##1#1\@@}%
+}%
+%
+% Set up the default delimiters.
+\setidxpagelistdelimiter{, }%
+\setidxpagerangedelimiter{--}%
+%
+%
+% \@idxtokscollect uses \@idxmaintoks as the token list for the main
+% part of an index entry and \@idxsubtoks for the subpart.  Then it
+% calls \@idxwrite.
+% 
+\def\idxsubentryseparator{!}%
+\def\idxencapoperator{|}%
+\def\idxmaxpagenum{99999}%
+%
+\newtoks\@idxmaintoks
+\newtoks\@idxsubtoks
+%
+\def\@idxtokscollect{%
+  % Remember the subentry.
+  \edef\temp{\the\@idxsubtoks}%
+  %
+  % We want to expand the conditions, but not the terms.  The index
+  % entry starts simply with \@idxmaintoks and \@idxsubtoks.
+  \edef\@indexentry{%
+    \the\@idxmaintoks
+    \ifx\temp\empty\else \idxsubentryseparator\the\@idxsubtoks \fi
+    \@idxrangestr
+  }%
+  %
+  % If this is a `see' or `see also' entry, we need to read one more
+  % arg.  We use a giant page number so the entry will be last (for the
+  % benefit of `see also's).  MakeIndex rejects page numbers >=1000.
+  % 
+  \if@idxsee
+    \@idxseefalse % Reset so the next term won't be a `see'.
+    \edef\temp{\noexpand\idx@getverbatimarg
+      {\noexpand\@finidxtokscollect{\idxmaxpagenum}}}%
+  \else
+    \def\temp{\@finfinidxtokscollect\folio}%
+  \fi
+  \temp
+}%
+%
+%
+% \@finidxtokscollect{PAGENO}{REAL-TERM} reads the final term for
+% see/see also entries.  We do not check if the person has put both a
+% range and a see in the same index term (which will confuse makeindex).
+% 
+\def\@finidxtokscollect#1#2{%
+  \def\@idxseenterm{#2}%
+  \@finfinidxtokscollect{#1}%
+}%
+%
+% \@finfinidxtokscollect{PAGENO} writes \@indexentry for page PAGENO.
+% Besides \@indexentry, if \@idxpagemarkup is not \relax we output an
+% index entry \@indexentry|\@idxpagemarkup{PAGENO} (but omitting | if
+% this is a range term, because in that case | will have been added
+% together with \@idxrangestr in \@idxtokscollect).  And if
+% \@idxseenterm is not \relax we output {\@idxseenterm} after the
+% \@idxpagemarkup.  (This will become an argument to the ``markup''
+% command, which will be \indexsee or \indexseealso.)
+% 
+\def\@finfinidxtokscollect#1{%
+  % If we've got a page markup command, append it.
+  \ifx\@idxpagemarkup\relax \else
+    \toks@ = \expandafter{\@indexentry}%
+    \edef\@indexentry{%
+      \the\toks@
+      % Add | only if this is not a range term, otherwise | has
+      % already been added with \@idxrangestr by \@idxtokscollect.
+      \ifx\@idxrangestr\empty \idxencapoperator \fi
+      \@idxpagemarkup
+    }%
+    \let\@idxpagemarkup = \relax
+  \fi
+  %
+  % If we've got an argument to the ``page markup'' command, append it.
+  \ifx\@idxseenterm\relax \else
+    \toks@ = \expandafter{\@indexentry}%
+    \edef\@indexentry{\the\toks@{\sanitize\@idxseenterm}}%
+    \let\@idxseenterm = \relax
+  \fi
+  %
+  % Finally, write what we've constructed.
+  \expandafter\@idxwrite\expandafter{\@indexentry}{#1}%
+}%
+%
+%
+% \@idxcollect{MAIN}{SUB} sets up the token registers
+% \@idx{main,sub}toks, then calls \@idxtokscollect.  This is convenient
+% for some of the macros below.
+% 
+\def\@idxcollect#1#2{%
+  \@idxmaintoks = {#1}%
+  \@idxsubtoks = {#2}%
+  \@idxtokscollect
+}%
+%
+%
+% Macros for reading verbatim the TERM, SUBTERM, SEE and SEEALSO
+% arguments of indexing commands.
+%
+% These can be customized by the user to different beginning and
+% end of group characters, so that `{' and `}' can be used inside
+% index terms.
+\def\idxargopen{`\{}%
+\def\idxargclose{`\}}%
+% \idx@getverbatimarg#1{ARG} reads ARG verbatim and then calls #1 with
+% that argument.  We use it to read all TERM, (non-optional) SUBTERM,
+% SEE and SEEALSO arguments.
+\def\idx@getverbatimarg#1{%
+  \def\idx@getverbatimarg@cmd{#1}% Save the command, allowing it to be
+                                 % more than just a command sequence.
+  \begingroup
+    \uncatcodespecials
+    \catcode\idxargopen=1
+    \catcode\idxargclose=2
+    \catcode`\ =10   % Swallow multiple consequent spaces.
+    \catcode`\^^I=10 % Just in case, to avoid dependence on
+    \catcode`\^^M=5  % current meanings of tabs and newlines.
+    \idx@fingetverbatimarg
+}%
+\def\idx@fingetverbatimarg#1{\endgroup\idx@getverbatimarg@cmd{#1}}%
+% \idx@getverboptarg#1[ARG] reads ARG verbatim and then calls #1 with
+% that argument.  We use it to read all optional SUBTERM arguments.
+% This is adopted from btxmac.tex's \@getoptionalarg.
+\def\idx@getverboptarg#1{%
+  \def\idx@optionaltemp{#1}% Save the command, allowing it to be more
+            % than just a command sequence (unlike \@getoptionalarg).
+  \let\idx@optionalnext = \relax
+  % If this is a SEE or SEEALSO entry, we know that another
+  % non-optional arg follows, delimited by the \idxargopen and
+  % \idxargclose characters.  Since \@futurenonspacelet scans ahead,
+  % it might scan \idxargopen if the optional argument is missing.  To
+  % make sure that \idxargopen gets the right catcode, we need to set
+  % it up before calling \@futurenonspacelet.
+  \begingroup
+    \if@idxsee \catcode\idxargopen=1 \fi
+    \@futurenonspacelet\idx@optionalnext\idx@bracketcheck
+}%
+% The \expandafter's in this macro let us avoid the use of \aftergroup,
+% which is somewhat more expensive.
+\def\idx@bracketcheck{%
+  \ifx [\idx@optionalnext
+    \endgroup % Cancel \catcode\idxargopen=1.
+    \expandafter\idx@finbracketcheck
+  \else
+    \endgroup % Cancel \catcode\idxargopen=1.
+    \let\@optionalarg = \empty
+    % We can't do the \temp after the \fi, because then the \temp gets
+    % in the way of reading the optional argument from the input, if
+    % we do have one.
+    \expandafter\idx@optionaltemp
+  \fi
+}%
+%
+\def\idx@finbracketcheck{%
+  \begingroup
+    \uncatcodespecials
+    % `[' should already be \other since \idx@bracketcheck succeeded;
+    % we assume that the user also didn't give `]' a funky catcode
+    % (otherwise it should have been added to \dospecials, anyway).
+    %\catcode`\[=\other
+    %\catcode`\]=\other
+    \catcode`\ =10   % Swallow multiple consequent spaces.
+    \catcode`\^^I=10 % Just in case, to avoid dependence on
+    \catcode`\^^M=5  % current meanings of tabs and newlines.
+    \idx@@getoptionalarg
+}%
+%
+\def\idx@@getoptionalarg[#1]{%
+  \endgroup
+  \def\@optionalarg{#1}%
+  \idx@optionaltemp
+}%
+%
+% Produce term (which has been scanned verbatim) as output, rescanning
+% with `real' catcodes.  \endinput ensures TeX does not see the ending
+% newline.  Stepan Kasal verified that it is necessary both for e-TeX
+% and for ordinary TeX (see texinfo.tex).  We reset catcode of newline
+% because \scantokens (both the e-TeX primitive and the Eplain's
+% emulation) generate a trailing newline when newline is catcode 13
+% (putting \scantokens in an \hbox also fixes that newline--strange).
+% We don't write `\endinput' directly because the merge script strips
+% any lines with an \endinput.
+{\catcode`\&=0
+\gdef\idx@scanterm#1{%
+  \edef\idx@scanterm@nl@catcode{\the\catcode`\^^M\relax}%
+  \catcode`\^^M=5
+  \scantokens{#1&endinput}%
+  \catcode`\^^M=\idx@scanterm@nl@catcode
+}}%
+%
+%
+% Following are the TeX macros that correspond to the commands
+% that actually appear in the document.
+%
+% \@idx{TERM} produces TERM in the output and then makes the index entry
+% for TERM as usual.  We don't allow a [SUBTERM] here since then we
+% would lose spaces after the command, which would be very inconvenient.
+%
+% As with all our index commands, we've already defined \@idxprefix (in
+% \idx or whatever), to save passing it around, and we've looked for a
+% range argument before TERM.
+% 
+\def\@idx{\idx@getverbatimarg\@finidx}%
+\def\@finidx#1{%
+  \idx@scanterm{#1}% Produce TERM as output.
+  \@idxcollect{#1}{}%
+}%
+%
+% \@sidx{TERM}[SUBTERM] produces an index entry TERM and no output.  If
+% SUBTERM is present, this is a subentry.  (At the moment, I don't
+% provide for subsubentries, since I've never needed that.)
+% 
+\def\@sidx{\idx@getverbatimarg\@finsidx}%
+\def\@finsidx#1{\@idxmaintoks = {#1}\idx@getverboptarg\@finfinsidx}%
+\def\@finfinsidx{%
+  \@idxsubtoks = \expandafter{\@optionalarg}%
+  \@idxtokscollect
+}%
+%
+%
+% \@idxconstructmarked{TOKS-REG}\CS{TERM}
+% 
+\def\idxsortkeysep{@}% This `@' is catcode 11, but it doesn't matter.
+%
+\def\@idxconstructmarked#1#2#3{%
+  \toks@ = {#2}% The control sequence.
+  \toks2 = {#3}% The term.
+  %
+  % Construct TERM@\CS{TERM} as the string to write.
+  \edef\temp{\the\toks2 \idxsortkeysep \the\toks@{\the\toks2}}%
+  %
+  % Save it in TOKS-REG.
+  #1 = \expandafter{\temp}%
+}%
+%
+%
+% \@idxmarked\CS{TERM} outputs \CS{TERM} and then makes an index entry
+% sorted by TERM but producing \CS{TERM}.
+%
+\def\@idxmarked#1{\idx@getverbatimarg{\@finidxmarked{#1}}}%
+\def\@finidxmarked#1#2{%
+  \idx@scanterm{#1{#2}}% Produce \CS{TERM} as output.
+  \@idxconstructmarked\@idxmaintoks{#1}{#2}%
+  \@idxsubtoks = {}%
+  \@idxtokscollect
+}%
+%
+% \@sidxmarked\CS{TERM}[SUBTERM] outputs an index entry sorted by TERM
+% but producing \CS{TERM}.
+% 
+\def\@sidxmarked#1{\idx@getverbatimarg{\@finsidxmarked{#1}}}%
+\def\@finsidxmarked#1#2{%
+  \@idxconstructmarked\toks@{#1}{#2}%
+  \edef\temp{{\the\toks@}}%
+  \expandafter\@finsidx\temp
+}%
+%
+%
+% \@idxsubmarked{TERM}\CS{SUBTERM} is like \@idxmarked, except that it's
+% SUBTERM that's marked instead of TERM.
+% 
+\def\@idxsubmarked{%
+  \let\sidxsubmarked@print\idxsubmarked@print
+  \idx@getverbatimarg\@finsidxsubmarked
+}%
+\def\idxsubmarked@print{\expandafter\idx@scanterm\expandafter}%
+%
+% \@sidxsubmarked{TERM}\CS{SUBTERM} is to \@sidxmarked as \@idxsubmarked
+% is to \@idxmarked.
+% 
+\def\@sidxsubmarked{%
+  \let\sidxsubmarked@print\gobble
+  \idx@getverbatimarg\@finsidxsubmarked
+}%
+\def\@finsidxsubmarked#1{\@idxmaintoks = {#1}\@@finsidxsubmarked}% Reads TERM.
+\def\@@finsidxsubmarked#1{\idx@getverbatimarg{\@@@finsidxsubmarked{#1}}}% Reads \CS.
+\def\@@@finsidxsubmarked#1#2{% Reads {\CS}{SUBTERM}.
+  \sidxsubmarked@print % Prints for \@idxsubmarked, gobbles for \@sidxsubmarked.
+    {\the\@idxmaintoks\space #1{#2}}% Maybe produce `TERM \CS{SUBTERM}' as output.
+  \@idxconstructmarked\@idxsubtoks{#1}{#2}%
+  \@idxtokscollect
+}%
+%
+%
+% \@idxcollectname{FIRST}{LAST} puts `LAST, FIRST' into \temp. (Well,
+% we use \idxnameseparator instead of hardwiring `, '.) If FIRST is
+% empty, don't include the separator.
+% 
+\def\idxnameseparator{, }% as in `Tachikawa, Elizabeth'
+%
+\def\@idxcollectname#1#2{%
+  \def\temp{#1}%
+  \ifx\temp\empty
+    \toks@ = {}%
+  \else
+    \toks@ = \expandafter{\idxnameseparator #1}%
+  \fi
+  \toks2 = {#2}%
+  %
+  \edef\temp{\the\toks2 \the\toks@}%
+}%
+%
+%
+% \@idxname{FIRST}{LAST} also produces `FIRST LAST' in the output and an
+% index entry for `LAST, FIRST'.
+%
+\def\@idxname{\idx@getverbatimarg\@finidxname}%
+\def\@finidxname#1{\idx@getverbatimarg{\@finfinidxname{#1}}}%
+\def\@finfinidxname#1#2{%
+  \idx@scanterm{#1 #2}% Separate the names by a space in the output.
+  \@idxcollectname{#1}{#2}%
+  \expandafter\@idxcollect\expandafter{\temp}{}%
+}%
+%
+% \@sidxname{FIRST}{LAST}[SUBTERM] is to \@sidx as \@idxname is to
+% \@idx.
+% 
+\def\@sidxname{\idx@getverbatimarg\@finsidxname}%
+\def\@finsidxname#1{\idx@getverbatimarg{\@finfinsidxname{#1}}}%
+\def\@finfinsidxname#1#2{%
+  \@idxcollectname{#1}{#2}%
+  \expandafter\@finsidx\expandafter{\temp}%
+}%
+%
+%
+% Now we come to actually producing the index, i.e., implementing the
+% formatting commands that MakeIndex outputs.
+%
+% \readindexfile is responsible for formatting and printing the index.
+% It reads \indexfilebasename.ind.  We implement the same commands that
+% LaTeX does.  I suppose we could allow for different indices having
+% different basenames, but I can't imagine when that would be useful.
+% 
+\let\indexfonts = \relax
+%
+\def\readindexfile#1{%
+  \edef\@idxprefix{#1}%
+  %
+  % Does the output file exist?
+  \testfileexistence[\indexfilebasename]{\@idxprefix nd}%
+  \iffileexists \begingroup
+    % If no \begin or \end, define them. The argument will be `{theindex}'.
+    \ifx\begin\undefined
+      \def\begin##1{\@beginindex}%
+      \let\end = \@gobble
+    \fi
+    %
+    % Read the file:
+    \input \indexfilebasename.\@idxprefix nd
+    % 
+    % \doublecolumns isn't affected by groups.
+    \singlecolumn
+  \endgroup
+  \else
+    \message{No index file \indexfilebasename.\@idxprefix nd.}%
+  \fi
+}%
+%
+% Here's the default for `\begin{theindex}', if \begin isn't defined.
+\def\@beginindex{%
+  % Define the commands MakeIndex outputs.
+  \let\item = \@indexitem
+  \let\subitem = \@indexsubitem
+  \let\subsubitem = \@indexsubsubitem
+  %
+  % Set up the default formatting:
+  \indexfonts
+  \doublecolumns
+  \parindent = 0pt
+  %
+  % Let the user override the defaults.
+  \hookrun{beginindex}%
+}%
+%
+% MakeIndex puts \indexspace between groups in the ind file.
+\let\indexspace = \bigbreak
+%
+% You can make \afterindexterm appear after the term and before the
+% first page with the following in the ist file:
+% delim_0 "\\afterindexterm "
+% delim_1 "\\afterindexterm "
+% delim_2 "\\afterindexterm "
+\let\afterindexterm = \quad
+%
+%
+% Top-level index entries start with \item.
+\newskip\aboveindexitemskipamount  \aboveindexitemskipamount = 0pt plus2pt
+\def\aboveindexitemskip{\vskip\aboveindexitemskipamount}%
+%
+\def\@indexitem{\begingroup
+  \@indexitemsetup
+  \leftskip = 0pt
+  \aboveindexitemskip
+  \penalty-100 % Encourage page breaks before items.
+  % 
+  % But forbid page breaks after items, in case a subitem follows.
+  \def\par{\endgraf\endgroup\nobreak}%
+}%
+%
+% Secondary index entries.
+\def\@indexsubitem{%
+  \@indexitemsetup
+  \leftskip = 1em
+}%
+%
+% And tertiary entries.
+\def\@indexsubsubitem{%
+  \@indexitemsetup
+  \leftskip = 2em
+}%
+%
+% Common setup for the formatting.
+\def\@indexitemsetup{%
+  \par
+  \hangindent = 1em
+  \raggedright
+  \hyphenpenalty = 10000
+  \hookrun{indexitem}%
+}%
+%
+%
+% \indexsee{TERM}{PAGENO} ignores PAGENO, and says `see TERM'.
+\def\seevariant{\it}%
+\def\indexseeword{see}%
+\def\indexsee{\idx@getverbatimarg\@finindexsee}%
+\def\@finindexsee#1#2{{\seevariant \indexseeword\/ }\idx@scanterm{#1}}%
+%
+% \indexseealso{TERM}{PAGENO} is similar.
+\def\indexseealsowords{see also}%
+\def\indexseealso{\idx@getverbatimarg\@finindexseealso}%
+\def\@finindexseealso#1#2{{\seevariant \indexseealsowords\/ }\idx@scanterm{#1}}%
+%
+%
+% We provide one index by default; commands are \idx, \sidx, etc.
+\defineindex{i}%
+%
+%
+% 
+%  Justification of multiple input lines.
+%
+% You use these by saying 
+% {\flushright 
+% <flush right text>
+% }
+% 
+% and similarly for \flushleft and \center.  The command must be
+% embedded in a group.  The lines are set in paragraphs as usual, i.e.,
+% blank lines start a new paragraph (by virtue of the
+% \blanklineskipamount vertical glue being inserted).
+% 
+% \environment ... \endenvironment isn't appropriate in this case, since
+% these ``environments'' can't be nested.
+% 
+\begingroup
+  \catcode `\^^M = \active %
+  \gdef\flushleft{%
+    \def\@endjustifycmd{\@endflushleft}%
+    \def\@eoljustifyaction{\null\hfil\break}%
+    \let\@firstlinejustifyaction = \relax
+    \@startjustify %
+  }%
+  \gdef\flushright{%
+    \def\@endjustifycmd{\@endflushright}%
+    \def\@eoljustifyaction{\break\null\hfil}%
+    \def\@firstlinejustifyaction{\hfil\null}%
+    \@startjustify %
+  }%
+  \gdef\center{%
+    \def\@endjustifycmd{\@endcenter}%
+    \def\@eoljustifyaction{\hfil\break\null\hfil}%
+    \def\@firstlinejustifyaction{\hfil\null}%
+    \@startjustify %
+  }%
+  %
+  % We do this before starting any of the justification commands.
+  \gdef\@startjustify{%
+    \parskip = 0pt
+    \catcode`\^^M = \active %
+    \def^^M{\futurelet\next\@finjustifyreturn}%
+    %
+    % \@eateol is called at the beginning of each justified paragraph.
+    \def\@eateol##1^^M{%
+      \def\temp{##1}%
+      \@firstlinejustifyaction %
+      \ifx\temp\empty\else \temp^^M\fi %
+    }%
+    \expandafter\aftergroup\@endjustifycmd %
+    \checkenv \environmenttrue %
+    \par\noindent %
+    \@eateol %
+  }%
+  %
+  % If the next thing is a ^^M, insert \blanklineskipamount glue.  Then
+  % do \@eoljustifyaction (which each justification command defines).
+  \gdef\@finjustifyreturn{%
+    \@eoljustifyaction %
+    \ifx\next^^M%
+      % Insert extra glue when the \@end... command does the \par.
+      \def\par{\endgraf\vskip\blanklineskipamount \global\let\par = \endgraf}%
+      \@endjustifycmd %
+      % Get back into horizontal mode for the next line.
+      \noindent %
+      \@firstlinejustifyaction %
+    \fi %
+  }%
+\endgroup
+% 
+\def\@endflushleft{\unpenalty{\parfillskip = 0pt plus1fil\par}\ignorespaces}%
+\def\@endflushright{% Remove the \hfil\null\break we just put on.
+   \unskip \setbox0=\lastbox \unpenalty
+   % We have fil glue at the left of the line; \parfillskip shouldn't
+   % affect that.
+   {\parfillskip = 0pt \par}\ignorespaces
+}%
+\def\@endcenter{% Remove the \hfil\null\break we just put on.
+   \unskip \setbox0=\lastbox \unpenalty
+   % We have fil glue at the left of the line; \parfillskip must balance it.
+   {\parfillskip = 0pt plus1fil \par}\ignorespaces
+}%
+% 
+\ifx\@undefined\raggedleft
+% like plain's \raggedright except for \parfillskip.
+\innernewskip\raggedleftskip \raggedleftskip=0pt plus2em
+\def\raggedleft{\leftskip\raggedleftskip \parindent=0pt
+  \spaceskip.3333em \xspaceskip.5em \parfillskip0pt \relax} 
+\fi % \raggedleft undefined
+%
+% 
+%  Automatically-columnated tables.
+% 
+% \makecolumns N/K: organizes the entries on the following N lines into
+% K columns.  If N is too small, some text beyond the end of the table
+% will be incorporated into the table, probably producing an error
+% message.  If N is too large, some of the entries will appear after the
+% table, probably looking very out of place.
+% 
+% You can adjust the position of the table on the page by changing
+% \parindent (space to the left of the block) and \hsize (distance from
+% the left margin to the right of the block).  (No doubt inside a
+% group.)  And you can allow a page break above the valign by changing
+% \abovecolumnspenalty.
+% 
+\newcount\abovecolumnspenalty   \abovecolumnspenalty = 10000
+\newcount\@linestogo         % Lines remaining to process.
+\newcount\@linestogoincolumn % Lines remaining in column.
+\newcount\@columndepth       % Number of lines in a column.
+\newdimen\@columnwidth       % Width of each column.
+\newtoks\crtok  \crtok = {\cr}%
+\newcount\currentcolumn
+%
+% The space matches an end-of-line that will probably be there.
+% 
+\def\makecolumns#1/#2: {\par \begingroup
+   % Set \@columndepth to the number of items we will put in a column:
+   % ceiling(N/K), i.e.  (N - 1) / K + 1.
+   \@columndepth = #1
+   \advance\@columndepth by -1
+   \divide \@columndepth by #2
+   \advance\@columndepth by 1
+   \@linestogoincolumn = \@columndepth
+   \@linestogo = #1
+   %
+   % We start in the first column.
+   \currentcolumn = 1
+   %
+   \def\@endcolumnactions{%
+      \ifnum \@linestogo<2 
+         \the\crtok \egroup \endgroup \par % End \valign and \makecolumns.
+      \else
+         % We've done one more line out of the total.
+         \global\advance\@linestogo by -1
+         % 
+         % How many left in the column?
+         % 
+         \ifnum\@linestogoincolumn<2
+            % End this column, that was the last line.
+            \global\advance\currentcolumn by 1
+            \global\@linestogoincolumn = \@columndepth
+            \the\crtok
+         \else
+            % Still got more lines to go.
+            &\global\advance\@linestogoincolumn by -1
+         \fi
+      \fi
+   }%
+   %
+   % Set up to read the table.
+   % 
+   \makeactive\^^M
+   \letreturn \@endcolumnactions
+   % 
+   % Figure out how wide our columns are going to be; each column has
+   % exactly the same template, so we can use the feature described on
+   % p.241 of the TeXbook for repeating preambles.
+   % 
+   \@columnwidth = \hsize
+     \advance\@columnwidth by -\parindent
+     \divide\@columnwidth by #2
+   \penalty\abovecolumnspenalty
+   \noindent % It's not a paragraph (usually).
+   \valign\bgroup
+     &\hbox to \@columnwidth{\strut \hsize = \@columnwidth ##\hfil}\cr
+     %
+     % The next end-of-line starts everything going.
+}%
+%
+% 
+% 
+% \numberedfootnote is like plain TeX's \footnote, but automatically
+% numbered.  When you want to reset the footnote number, say
+% \footnotenumber = 0.
+% 
+% We also provide for more general formatting than \footnote:
+%   \footnotemarkseparation is the space between the reference mark and
+%     the footnote text;
+%  \interfootnoteskip is the space between footnotes;
+%  \everyfootnote is expanded just before we typeset the footnote.
+% 
+% The dimensions of the footnote rule are controlled by
+% \footnoterulewidth and \footnoteruleheight (the depth is always zero);
+% the space after the rule is \belowfootnoterulespace.
+% 
+\newcount\footnotenumber
+\newcount\hlfootlabelnumber
+\newdimen\footnotemarkseparation \footnotemarkseparation = .5em
+\newskip\interfootnoteskip \interfootnoteskip = 0pt
+\newtoks\everyfootnote
+\newdimen\footnoterulewidth \footnoterulewidth = 2in
+\newdimen\footnoteruleheight \footnoteruleheight = 0.4pt
+\newdimen\belowfootnoterulespace \belowfootnoterulespace = 2.6pt
+%
+\let\@plainfootnote = \footnote
+\let\@plainvfootnote = \vfootnote
+% Hyperlink labels for forward and back references.
+\def\hlfootlabel{FOOT\the\hlfootlabelnumber}%
+\def\hlfootbacklabel{FOOTB\the\hlfootlabelnumber}%
+%
+\def\@eplainfootnote#1{\let\@sf\empty % parameter #2 (the text) is read later
+  \ifhmode\edef\@sf{\spacefactor\the\spacefactor}\/\fi
+  \global\advance\hlfootlabelnumber by 1
+  \hlstart@impl{foot}{\hlfootlabel}%
+  \hldest@impl{footback}{\hlfootbacklabel}%
+  #1%
+  \hlend@impl{foot}%
+  \@sf\vfootnote{#1}%
+}%
+%
+\let\footnote\@eplainfootnote
+%
+\def\vfootnote#1{\insert\footins\bgroup
+  \interlinepenalty\interfootnotelinepenalty
+  \splittopskip\ht\strutbox % top baseline for broken footnotes
+  \advance\splittopskip by \interfootnoteskip
+  \splitmaxdepth\dp\strutbox
+  \floatingpenalty\@MM
+  \leftskip\z@skip \rightskip\z@skip \spaceskip\z@skip \xspaceskip\z@skip
+  \everypar = {}%
+  \parskip = 0pt % because of the vskip
+  % Even if typesetting in multicolumns, do footnotes in normal page width.
+  % (We don't have any provision in the output routine for having
+  % footnotes per column, anyway.)
+  \ifnum\@numcolumns > 1 \hsize = \@normalhsize \fi
+  \the\everyfootnote
+  \vskip\interfootnoteskip
+  \indent\llap{%
+    \hlstart@impl{footback}{\hlfootbacklabel}%
+    \hldest@impl{foot}{\hlfootlabel}%
+    #1%
+    \hlend@impl{footback}%
+    \kern\footnotemarkseparation
+  }%
+  \footstrut\futurelet\next\fo@t
+}%
+%
+\def\footnoterule{\dimen@ = \footnoteruleheight
+  \advance\dimen@ by \belowfootnoterulespace
+  \kern-\dimen@
+  \hrule width\footnoterulewidth height\footnoteruleheight depth0pt
+  \kern\belowfootnoterulespace
+  \vskip-\interfootnoteskip
+}%
+%
+\def\numberedfootnote{%
+  \global\advance\footnotenumber by 1
+  \@eplainfootnote{$^{\number\footnotenumber}$}%
+}%
+%
+%
+% 
+%  Margins.
+% 
+% TeX's primitives determine the type area.  But some users prefer to
+% think in terms of margins.  These definitions allow one to say, for
+% example, `\topmargin = 2in', instead of `\voffset=1in\advance\vsize by
+% -1in'.  Constructions like `\advance\topmargin by 1in' give an error
+% message, though, since \topmargin is not a parameter.  Instead, the
+% macro \advancetopmargin has to be used.
+% 
+\newdimen\paperheight 
+\ifnum\mag=1000
+  \paperheight = 11in % No magnification (yet).
+\else
+  \paperheight = 11truein % We already have a magnification. 
+\fi
+%
+\def\topmargin{\afterassignment\@finishtopmargin \dimen@}%
+\def\@finishtopmargin{%
+  \dimen2 = \voffset		% Remember the old \voffset.
+  \voffset = \dimen@ \advance\voffset by -1truein
+  \advance\dimen2 by -\voffset	% Compute the change in \voffset.
+  \advance\vsize by \dimen2	% Change type area accordingly.
+}%
+\def\advancetopmargin{%
+  \dimen@ = 0pt \afterassignment\@finishadvancetopmargin \advance\dimen@
+}%
+\def\@finishadvancetopmargin{%
+  \advance\voffset by \dimen@
+  \advance\vsize by -\dimen@
+}%
+%
+%
+\def\bottommargin{\afterassignment\@finishbottommargin \dimen@}%
+\def\@finishbottommargin{%
+  \@computebottommargin		% Result in \dimen2.
+  \advance\dimen2 by -\dimen@	% Compute the change in the bottom margin.
+  \advance\vsize by \dimen2	% Change the type area.
+}%
+\def\advancebottommargin{%
+  \dimen@ = 0pt \afterassignment\@finishadvancebottommargin \advance\dimen@
+}%
+\def\@finishadvancebottommargin{%
+  \advance\vsize by -\dimen@
+}%
+%
+% Find the current bottom margin, putting the result in \dimen2.
+% 
+\def\@computebottommargin{%
+  \dimen2 = \paperheight	% The total paper size.
+  \advance\dimen2 by -\vsize	% Less the text size.
+  \advance\dimen2 by -\voffset	% Less the offset at the top.
+  \advance\dimen2 by -1truein	% Less the default offset.
+}%
+% 
+% 
+\newdimen\paperwidth
+\ifnum\mag=1000
+  \paperwidth = 8.5in % No magnification (yet).
+\else
+  \paperwidth = 8.5truein % We already have a magnification. 
+\fi
+%
+\def\leftmargin{\afterassignment\@finishleftmargin \dimen@}%
+\def\@finishleftmargin{%
+  \dimen2 = \hoffset		% Remember the old \hoffset.
+  \hoffset = \dimen@ \advance\hoffset by -1truein
+  \advance\dimen2 by -\hoffset	% Compute the change in \hoffset.
+  \advance\hsize by \dimen2	% Change type area accordingly.
+}%
+\def\advanceleftmargin{%
+  \dimen@ = 0pt \afterassignment\@finishadvanceleftmargin \advance\dimen@
+}%
+\def\@finishadvanceleftmargin{%
+  \advance\hoffset by \dimen@
+  \advance\hsize by -\dimen@
+}%
+%
+%
+\def\rightmargin{\afterassignment\@finishrightmargin \dimen@}%
+\def\@finishrightmargin{%
+  \@computerightmargin		% Result in \dimen2.
+  \advance\dimen2 by -\dimen@	% Compute the change in the right margin.
+  \advance\hsize by \dimen2	% Change the type area.
+}%
+\def\advancerightmargin{%
+  \dimen@ = 0pt \afterassignment\@finishadvancerightmargin \advance\dimen@
+}%
+\def\@finishadvancerightmargin{%
+  \advance\hsize by -\dimen@
+}%
+%
+% Find the current right margin, putting the result in \dimen2.
+% 
+\def\@computerightmargin{%
+  \dimen2 = \paperwidth		% The total paper size.
+  \advance\dimen2 by -\hsize	% Less the text size.
+  \advance\dimen2 by -\hoffset	% Less the offset at the left.
+  \advance\dimen2 by -1truein	% Less the default offset.
+}%
+% 
+% There is a potential problem when using the margin macros at a true
+% dimension and then calling \magnification. So we redefine
+% \magnification to address this. 
+% 
+\let\@plainm@g = \m@g
+\def\m@g{\@plainm@g \paperwidth = 8.5 true in \paperheight = 11 true in}%
+%
+% 
+% 
+%  Double column output.
+%
+% \doublecolumns begins double column output.  It can be called
+% in the midst of a page.  \singlecolumn restores single column 
+% output.  (It would be wrong to require \enddoublecolumns, because 
+% often one wants double column mode to continue to the end of 
+% the document.)
+%
+% The basic approach is that of Appendix E of the TeXbook, p.417.
+% David Guichard made significant improvements to my original implementation.
+%
+% The glue here (the default is intended to be one linespace) is inserted
+% before double columns start, and after they end.
+%
+\newskip\abovecolumnskip \abovecolumnskip = \bigskipamount
+\newskip\belowcolumnskip \belowcolumnskip = \bigskipamount
+%
+% Space between the columns. It can be changed as desired.
+\newdimen\gutter \gutter = 2pc
+%
+% These registers are needed for dealing with switching back and forth.
+\newbox\@partialpage
+\newdimen\@normalhsize
+\newdimen\@normalvsize  % The original (before multi-columns) \vsize.
+\newtoks\previousoutput
+%
+% Some synonymous ways to refer to multiple column modes.
+\def\quadcolumns{\@columns4}%
+\def\triplecolumns{\@columns3}%
+\def\doublecolumns{\@columns2}%
+\def\begincolumns#1{\ifcase#1\relax \or \singlecolumn \or \@columns2 \or
+                            \@columns3 \or \@columns4 \else \relax \fi}%
+\def\endcolumns{\singlecolumn}%
+\let\@ndcolumns = \relax
+%
+% Set this by default so \vfootnote can unconditionally inspect it.
+\chardef\@numcolumns = 1
+%
+\mathchardef\@ejectpartialpenalty = 10141
+%
+%
+% \@columns:  Start typesetting with #1 columns.
+%
+% Before we actually start, we have to make sure that there are at least
+\chardef\@col@minlines = 3
+% free lines.
+% (It could be 2, or even 1, but it might give ugly results; at least one
+% line is absolutely necessary, or the output routine might get confused.)
+% We have to be careful, so that eg.
+%	\hbox{TITLE}
+%	\nobreak
+%	\doublecolumns
+% won't break between the title and the start of the columned output.
+%
+% To achieve this, we add vskip of fixed size equal to
+%	@col@minlines * baselineskip
+% and then eject the page.
+% The output routine then catches the pages ejected:
+%  1) if it's a normal page, it is processed by previous output routine;
+%  2) if it's the last one, it is saved and the added skip is removed.
+%
+% When the box is processed according to 1), an underfull vbox can appear,
+% but it's not our problem, the manuscript (or its macros) has to be fixed.
+%
+% Gather this many baselines
+\chardef\@col@extralines = 3
+% of additional material per each column than the combined height of the
+% columns, before attempting to break the columns.  This sometimes
+% considerably improves the last column, when it would become too spaced
+% out because TeX had to squeeze some lines into the previous columns
+% due to unfortunate column breaks.
+%
+% The larger \@col@extralines, the better, but we don't want to make
+% it too large.  If there are less than \@col@extralines * num_columns
+% lines left before we start gathering these extra lines, we'll hit
+% \@endcolumns while gathering material for this page.  If the extra
+% lines will not actually fit in the columns, we'll have to move them
+% to the next page.  But we won't move them if there are any
+% insertions on this page (see \@balancecolumns), so in such case
+% we'll stuff everything on the current page, producing an overfull
+% box, even though these extra lines could successfully be moved to
+% the next page.
+%
+\newdimen\@col@extraheight
+%
+% Another note: all assignments are global; it is not possible to call
+% \doublecolumns in a group.
+%
+\def\@columns#1{%
+  \@ndcolumns
+  %
+  \global\let\@ndcolumns = \@endcolumns
+  \global\chardef\@numcolumns = #1
+  \global\previousoutput = \expandafter{\the\output}%
+  %
+  % Grab the page so far (i.e., the material BEFORE \@columns was called)
+  % and save it in \@partialpage.
+  \global\output = {%
+    \ifnum\outputpenalty = -\@ejectpartialpenalty
+      \dimen@ = \vsize
+      \advance\dimen@ by \@col@minlines\baselineskip
+      \global\setbox\@partialpage =
+        \vbox  \ifdim \pagetotal > \vsize  to \dimen@  \fi  {%
+	  \unvbox255 \unskip
+	}%
+    \else
+      \the\previousoutput
+    \fi
+  }%
+  %
+  \vskip \abovecolumnskip
+  \vskip \@col@minlines\baselineskip
+  % now execute the output routine:
+  \penalty -\@ejectpartialpenalty
+  %
+  % Reset \output to prepare for the first real page break.
+  \global\output = {\@columnoutput}%
+  %
+  \global\@normalhsize = \hsize
+  \global\@normalvsize = \vsize
+  %
+  % Figure out how wide the columns should be -- for n columns,
+  % decrement by n - 1 gutters.
+  \count@ = \@numcolumns
+  \advance\count@ by -1
+  \global\advance\hsize by -\count@\gutter
+  \global\divide\hsize by \@numcolumns
+  %
+  % Compute \vsize based on what's already on the page
+  % and the number of columns. Also change the mag factor for insertions.
+  %
+  \advance\vsize by -\ht\@partialpage
+  %
+  \advance\vsize by -\ht\footins
+  \ifvoid\footins\else \advance\vsize by -\skip\footins \fi
+  \multiply\count\footins by \@numcolumns
+  %
+  \advance\vsize by -\ht\topins
+  \ifvoid\topins\else \advance\vsize by -\skip\topins \fi
+  \multiply\count\topins by \@numcolumns
+  %
+  \global\vsize = \@numcolumns\vsize
+  %
+  % Gather some extra material, to improve the last column.
+  \@col@extraheight=\@col@extralines\baselineskip
+  \multiply\@col@extraheight by \@numcolumns
+  \global\advance\vsize by \@col@extraheight
+}%
+%
+% When this is invoked box 255 contains just the right amount of
+% material, whether triggered by an output routine or a change in the
+% number of columns. Because columns have to contain an integral number
+% of lines of type, we take a bit of care with balancing the heights of
+% the columns to prevent either losing material or having a very short
+% last column.
+%
+% When a page ends due to \bye or \eject, box 255 will contain lots of
+% white space, so the columns will not look balanced. To fix this use
+% \singlecolumn before ending the page.
+%
+% [gutterbox material added by AHL on 5 November 1997.]
+% \gutterbox is a hook to enable the placement of arbitrary vertical
+% material in the gutter between columns. For example, to put a
+% vertical line between the columns you could say 
+%
+%   \def\gutterbox{\vbox to \dimen0{\vfil\hbox{\vrule height\dimen0}\vfil}}%
+%
+% The dimension counter \dimen0 contains the height of the column. 
+%
+% By default, we define \gutterbox to be "empty": 
+\def\gutterbox{\vbox to \dimen0{\vfil\hbox{\hfil}\vfil}}%
+%
+\def\@columnsplit{%
+  \splittopskip = \topskip
+  \splitmaxdepth = \baselineskip
+  %
+  % \dimen@ should be the height that columns on this page should
+  % have, i.e., the height of the page (\singlecolumvsize) minus
+  % single-column material, which includes insertions.  (If you want
+  % your insertions to respect the columns, you will have to change
+  % the output routine.)  If you add more insertions, they should be
+  % taken into account in \@columns and \@endcolumns.
+  %
+  % Unfortunately, we lose on flexible glue because we must
+  % \vsplit to a <dimen>.
+  %
+  % Split the long scroll into columns.
+  \begingroup
+    % We do not want to see underfull \vbox messages unless the final
+    % page is underfull.
+    \vbadness = 10000
+    %
+    % The first (leftmost) column.
+    %d\message{^^J starting columnsplit, splitting to \the\dimen@}%
+    %d\showbox255
+    \global\setbox1 = \vsplit255 to \dimen@  \global\wd1 = \hsize
+    %d\message{^^J split off to this box1:}%
+    %d\showbox1
+    %
+    % The second column.
+    \global\setbox3 = \vsplit255 to \dimen@  \global\wd3 = \hsize
+    %
+    \ifnum\@numcolumns > 2
+      % The third column, if requested.
+      \global\setbox5 = \vsplit255 to \dimen@ \global\wd5 = \hsize
+    \fi
+    \ifnum\@numcolumns > 3
+      % The fourth column, likewise if requested.
+      \global\setbox7 = \vsplit255 to \dimen@ \global\wd7 = \hsize
+    \fi
+  \endgroup
+  %
+  % Set up \box255 with the real output page, as the previous output
+  % routine expects.
+  \setbox0 = \box255
+  \global\setbox255 = \vbox{%
+    \unvbox\@partialpage
+    \ifcase\@numcolumns \relax\or\relax
+      \or \hbox to \@normalhsize{\box1\hfil\gutterbox\hfil\box3}%
+      \or \hbox to \@normalhsize{\box1\hfil\gutterbox\hfil\box3%
+                                      \hfil\gutterbox\hfil\box5}%
+      \or \hbox to \@normalhsize{\box1\hfil\gutterbox\hfil\box3%
+                                      \hfil\gutterbox\hfil\box5%
+                                      \hfil\gutterbox\hfil\box7}%
+    \fi
+  }%
+  %
+  % Save what's left over in a private register before calling their
+  % output routine.
+  \setbox\@partialpage = \box0
+}%
+%
+% Our output routine splits the columns and then calls the previous one.
+% 
+\def\@columnoutput{%
+  %d\message{^^J starting columnoutput, ht255: \the\ht255}%
+  \dimen@ = \ht255
+    \advance\dimen@ by -\@col@extraheight
+    %d\message{^^J minus col@extraheight: \the\@col@extraheight}%
+    \divide\dimen@ by \@numcolumns
+  \@columnsplit
+  \@recoverclubpenalty 
+  \hsize = \@normalhsize % Local to \output's group.
+  \vsize = \@normalvsize
+  \the\previousoutput
+  %
+  % Put back what didn't fit.
+  \unvbox\@partialpage
+  \penalty\outputpenalty
+  %
+  % The correct vsize is the original vsize times the
+  % number of columns, plus the ``extra height''.
+  \global\vsize = \@numcolumns\@normalvsize
+  \global\advance\vsize by \@col@extraheight
+}%
+%
+% Go back to single-column typesetting.  Assume \doublecolumns has
+% been called.
+% 
+\def\singlecolumn{%
+  \@ndcolumns
+  \chardef\@numcolumns = 1
+  \vskip\belowcolumnskip
+  \nointerlineskip
+}%
+%
+\newbox\@singlecolumnbox 
+\newdimen\column@pagegoal
+\newdimen\column@vsize
+%
+\def\@endcolumns{%
+  \global\let\@ndcolumns = \relax
+  \par % Shouldn't start in horizontal mode.
+  % Save the combined height of the columns and the page goal.  We
+  % have to be careful -- the last line of the multi-column material
+  % might have taken \pagetotal just over \pagegoal, in which case we
+  % have to use \pagegoal for the height, otherwise the box produced
+  % when splitting the columns will not fit on the page.
+  \column@pagegoal = \pagegoal
+  \advance\column@pagegoal by-\@col@extraheight
+  \ifdim \pagetotal > \column@pagegoal
+    \column@vsize = \column@pagegoal
+  \else
+    \column@vsize = \pagetotal
+  \fi
+  % Grab whatever is left of the multi-column material.
+  \global\output = {\global\setbox1 = \box255}%
+  \pagegoal = \pagetotal
+  \break                     % Exercise the page builder, i.e., \output.
+  \setbox2 = \box1           % Save material in box2 in case of overflow.
+  % We won't need \columnoutput anymore.
+  \global\output = \expandafter{\the\previousoutput}%
+  % Save single column material (in case the multi-column material
+  % ends on the same page where it starts; otherwise \@partialpage
+  % will be void).  This also voids \@partialpage.
+  \setbox\@singlecolumnbox = \box\@partialpage
+  % Try to fit what's left into the columns.
+  \@balancecolumns
+}%
+%
+% There are many caveats when balancing columns at the end of
+% multi-column material.  The core of all problems is the following.
+% Eplain collects multi-column material in one long scroll until the
+% scroll's length is at least \vsize * \@numcolumns.  But when we try
+% to split that scroll into columns, there is no guarantee that all
+% the collected material will fit (for example, because a column break
+% occured inside a large unbreakable block, so we had to carry it over
+% to the next column and stretch out the previous column).  So every
+% time we call \@columnsplit, we should expect it to leave something
+% for us in \@partialpage.
+%
+% Now, what should we do with these left-overs?  We increase column
+% height a bit and try to split the scroll again, and so on until
+% everything fits.
+%
+% However, while doing this, we might increase column height so much
+% that the columns no longer fit on a page.  What we do then is output
+% the highest fitting columns, break the page and then restart the
+% whole process on what's left.
+%
+% However, there's another catch -- if a page contains insertions,
+% there's a slight chance that the footnotes or top insertions were
+% inserted by the multi-column material we are going to carry over to
+% the next page, so those footnotes or top insertions will appear one
+% page ahead of their references.  The worst thing is that the user
+% will get no warning of this.  Therefore, when we have left-overs on
+% a page with insertions, we just stuff them into columns to produce
+% an overfull box warning.
+%
+\def\@balancecolumns{%
+  % Split the scroll to the new column height.
+  \global\setbox255 = \copy2  % Retrieve what the fake \output set.
+  \dimen@ = \column@vsize
+    \divide\dimen@ by \@numcolumns
+  \@columnsplit
+  %
+  \ifvoid\@partialpage
+    % Everything fits -- we're done.
+    \global\vsize = \@normalvsize
+    \global\hsize = \@normalhsize
+    \dump@balanced@columns
+    \let\next\relax
+  \else
+    % There is some left-over.  Increase column height.
+    \advance \column@vsize by \@numcolumns pt
+    % Check what we should do with the left-over.
+    \test@spill@columns
+    \ifspill@columns
+      % We are to break the page here.  Make up a page from the
+      % single-column material followed by the columns that we've
+      % already split off into \box255.
+      \begingroup
+        \vsize = \@normalvsize
+        \hsize = \@normalhsize
+        \dump@balanced@columns
+        \break
+        \@recoverclubpenalty
+      \endgroup
+      % Now put back what didn't fit and process it recursively.
+      \unvbox\@partialpage
+      \let\next\@endcolumns
+    \else
+      % We should continue incrementing column height.
+      \setbox0=\box\@partialpage % Merely to void \@partialpage.
+      \let\next\@balancecolumns
+    \fi
+  \fi
+  \next
+}%
+%
+\def\dump@balanced@columns{%
+  \ifvoid\topins\else\topinsert\unvbox\topins\endinsert\fi
+  \unvbox\@singlecolumnbox
+  % Avoid interline glue here -- we didn't (couldn't) account for it
+  % when assessing \vsize for the columns in \@columns, which means
+  % the columns may not fit if we also add the interline glue.
+  \nointerlineskip
+  \box255
+}%
+%
+% If we hit page bottom while balancing columns and there are no
+% insertions on the page, we can let the left-over spill to the next
+% page.  If there are insertions on the page, we shouldn't let
+% \@partialpage to the next page, to avoid separating a possible
+% reference from an insertion.  The following flag and test are to
+% check these conditions.
+\newif\ifspill@columns
+\def\test@spill@columns{%
+  \spill@columnsfalse
+  \ifdim \column@vsize > \column@pagegoal
+    \ifvoid\footins
+      \ifvoid\topins
+        \spill@columnstrue
+      \fi
+    \fi
+  \fi
+}%
+%
+% [\columnfill]
+% We don't have any way to force a column eject, since the \output
+% routine is only prepared to split up a full page of material. Instead,
+% we provide the following as a guess at enough space to fill up the
+% current column.
+%
+% [April 30, 1998] This definition is from
+% Helmut Jarausch <jarausch@IGPM.Rwth-Aachen.DE> with some
+% modifications by A. Lewenberg <ahl@uakron.edu>. 
+%
+% Here is the main difficulty: when \vsplitting the long page into the
+% component columns, \vsplit prepends to the top of each column glue
+% in the amount \topskip - (height of top box). But this happens
+% in the output routine _after_ the \columnfill does its
+% calculations. The result of this is that if we are not careful
+% \columnfill will insert too much space attempting to ``eject'' the
+% current column. There is no simple way around this, so what I have
+% done is have is make \columnfill insert less space than needed, and
+% then not allow any \club lines by setting \clubpenalty to its
+% maximum value. Not a pretty solution, but until something better
+% comes along, it will have to do. 
+%
+\def\@saveclubpenalty{% save the current value of \clubpenalty
+  \edef\@recoverclubpenalty{%
+     \global\clubpenalty=\the\clubpenalty\relax%
+     \global\let\noexpand\@recoverclubpenalty\relax
+  }% the \noexpand handles infinite self-reference
+}%
+\let\@recoverclubpenalty\relax
+\newdimen\temp@dimen
+\def\columnfill{%
+  \par
+  \dimen@ = \pagetotal  % The height of the text so far. 
+  %d\message{^^J pagetotal start (dimen@): \the\dimen@}%
+  %
+  \temp@dimen = \vsize  % = \@numcolumns * columnheight
+  %d\message{^^J temp@dimen (total height): \the\temp@dimen}%
+  %
+  \advance\temp@dimen by -\@col@extraheight
+  %d\message{^^J reducing temp@dimen \the\temp@dimen (-@col@extraheight)}%
+  %
+  \divide\temp@dimen by \@numcolumns  % Compute column height
+  %d\message{^^J col height (tempdimen@): \the\temp@dimen}%
+  %
+  \loop
+    %d\message{^^J looping}%
+    \ifdim \dimen@ > \temp@dimen  % more material than a column?
+      \advance \dimen@ by -\temp@dimen
+      \advance \dimen@ by \topskip % fudge factor
+      %d\message{^^J reducing dimen@ to \the\dimen@ (tempdimen@ + \the\topskip)}%
+  \repeat
+  \advance \temp@dimen by -\dimen@
+  %d\message{^^J reducing temp@dimen to \the\temp@dimen (-dimen@)}%
+  %
+  \advance \temp@dimen by -\prevdepth
+  %d\message{ reducing temp@dimen to \the\temp@dimen (-prevdepth)}%
+  %
+  \@saveclubpenalty 
+  \clubpenalty=10000\relax
+  \hrule height\temp@dimen width0pt depth0pt\relax  % fill space with rule
+  \nointerlineskip
+  \par
+  \nointerlineskip
+  \allowbreak \vfil % To allow a page break here.
+  \relax
+}%
+%
+%
+%  Hypertext links support.
+%
+% Hyperlink destinations (driver-independent code).
+%
+% \hldest{TYPE}{OPTIONS}{LABEL} defines a hyperlink destination
+% LABEL.  OPTIONS is a comma-separated list of option assignments of
+% the form `opt=value'; permitted values for TYPE and OPTIONS depend
+% on selected hyperlink driver.
+%
+% \hldest will be \let to \@hldest by \enablehyperlinks.  TYPE,
+% OPTIONS and LABEL will be read by \hl@getparam.
+\def\@hldest{%
+  \def\hl@prefix{hldest}%
+  \let\after@hl@getparam\hldest@aftergetparam
+  % Start the group which will isolate option settings.  It will be
+  % ended in \hldest@aftergetparam
+  \begingroup
+    \hl@getparam
+}%
+% This actually produces hyperlink destination.  It will be called at
+% the end of \hl@getparam, after the parameters are parsed.
+\def\hldest@aftergetparam{%
+  \ifvmode
+    % In vertical mode we don't raise the destination, so it can go
+    % directly into the vertical list.
+    \hldest@driver
+  \else
+    % In horizontal mode, the destination is raised \hldest@opt@raise
+    % above the baseline and placed inside a zero-width/height/depth
+    % box; the box is surrounded by \allowhyphens in case it is
+    % placed next to a word, to allow hyphenation of that word.
+    \allowhyphens
+    \smash{\ifx\hldest@opt@raise\empty \else \raise\hldest@opt@raise\fi
+             \hbox{\hldest@driver}}%
+    \allowhyphens
+  \fi
+  % End the group which was isolating option settings (it was started
+  % in \@hldest).
+  \endgroup
+}%
+%
+% Hyperlinks (driver-independent code).
+%
+% \hlstart{TYPE}{OPTIONS}{LABEL} starts a hyperlink to destination
+% LABEL.  OPTIONS is a comma-separated list of option assignments of
+% the form `opt=value'; permitted values of TYPE and OPTIONS depend on
+% selected hyperlink driver.  End the link with \hlend.
+%
+% \hlstart will be \let to \@hlstart by \enablehyperlinks.  TYPE,
+% OPTIONS and LABEL will be read by \hl@getparam.
+\def\@hlstart{%
+  \leavevmode
+  \def\hl@prefix{hl}%
+  \let\after@hl@getparam\hlstart@aftergetparam
+  % Start the group which will isolate option settings and color
+  % changes.  It will be ended in \@hlend
+  \begingroup
+    \hl@getparam
+}%
+%
+\def\hlstart@aftergetparam{%
+  % Set the color for the link.
+  \ifx\color\undefined \else
+    \ifx\hl@opt@color\empty \else
+      \ifx\hl@opt@colormodel\empty
+        \edef\temp{\noexpand\color{\hl@opt@color}}%
+      \else
+        \edef\temp{\noexpand\color[\hl@opt@colormodel]{\hl@opt@color}}%
+      \fi
+      \temp
+    \fi
+  \fi
+  % Call the driver.
+  \hl@driver
+}%
+% \hlend will be \let to \@hlend by \enablehyperlinks.  \@hlend will
+% be defined by a driver.
+%
+% Macros which are used commonly by \hldest and \hlstart to parse and
+% save parameters.  \hl@prefix must be set to `hldest' by \hldest and
+% to `hl' by \hlstart.
+%
+% \hl@getparam{TYPE}{OPTIONS}{LABEL} reads, parses and saves the
+% parameters for \hldest or \hlstart into \@hltype, \hl[dest]@opt@...
+% and \@hllabel.  After doing that it calls \after@hl@getparam which
+% should be defined by \@hldest and \@hlstart to produce destination /
+% link using the saved parameters.
+\def\hl@getparam#1#2{% We'll read #3 (LABEL) later.
+  % Save TYPE in \@hltype (use default if empty).
+  \edef\@hltype{#1}%
+  \ifx\@hltype\empty
+    \expandafter\let\expandafter\@hltype
+      \csname \hl@prefix @type\endcsname
+  \fi
+  % For each supported destination / link type TYPE, a driver should
+  % define \hl[dest]@typeh@TYPE handler.
+  \expandafter\ifx\csname \hl@prefix @typeh@\@hltype\endcsname \relax
+    \errmessage{Invalid hyperlink type `\@hltype'}%
+  \fi
+  % \for will expand #2 once so user can pass a shortcut macro.  We
+  % also ignore empty \hl@arg, so that the following
+  %     \hldest{TYPE}{\myopt,height=200pt}{LABEL}
+  % would be legal even when \myopt happens to be empty.
+  \For\hl@arg:=#2\do{%
+    \ifx\hl@arg\empty \else
+      \expandafter\hl@set@opt\hl@arg=,%
+    \fi
+  }%
+  % Now read the third argument, LABEL.  Do so inside a group with
+  % \uncatcodespecials, to allow `#' and `~' in it (LABEL can be a URL
+  % for some link types).
+  \bgroup
+    \uncatcodespecials
+    \catcode`\{=1 \catcode`\}=2
+    \@hl@getparam
+}%
+%
+\def\@hl@getparam#1{%
+  \egroup
+  % Save LABEL in \@hllabel.
+  \edef\@hllabel{#1}%
+  % Execute the commands specific to destination / link
+  \after@hl@getparam
+  % Ignore spaces after \hlstart and \hldest.
+  \ignorespaces
+}%
+% Parse and set a (default, not a group) option.
+\def\hl@set@opt#1=#2,{%
+  % For each supported option OPTION, a driver should define
+  % \hl[dest]@opt@OPTION.
+  \expandafter\ifx\csname \hl@prefix @opt@#1\endcsname \relax
+    \errmessage{Invalid hyperlink option `#1'}%
+  \fi
+  % Save the value of the option.
+  \if ,#2, % if #2 is empty, complain.
+    \errmessage{Missing value for option `#1'}%
+  \else
+    % Remove a trailing =.
+    \def\temp##1={##1}%
+    \expandafter\edef\csname \hl@prefix @opt@#1\endcsname{\temp#2}%
+  \fi
+}%
+% \hl{dest,start,end}@impl{GROUP}{LABEL} will generate `implicit' destination /
+% hyperlink, if the user has not turned off this kind of implicit
+% destinations / hyperlinks.  This is used by Eplain's cross-reference
+% macros.
+\def\hldest@impl#1{%
+  \expandafter\ifcase\csname hldest@on@#1\endcsname
+    \relax\expandafter\gobble
+  \else
+    \toks@=\expandafter{\csname hldest@type@#1\endcsname}%
+    \toks@ii=\expandafter{\csname hldest@opts@#1\endcsname}%
+    \edef\temp{\noexpand\hldest{\the\toks@}{\the\toks@ii}}%
+    \expandafter\temp
+  \fi
+}%
+\def\hlstart@impl#1{%
+  \expandafter\ifcase\csname hl@on@#1\endcsname
+    % Still produce \leavevmode, to be consistent with \hloff.
+    \leavevmode\expandafter\gobble
+  \else
+    \toks@=\expandafter{\csname hl@type@#1\endcsname}%
+    \toks@ii=\expandafter{\csname hl@opts@#1\endcsname}%
+    \edef\temp{\noexpand\hlstart{\the\toks@}{\the\toks@ii}}%
+    \expandafter\temp
+  \fi
+}%
+\def\hlend@impl#1{%
+  \expandafter\ifcase\csname hl@on@#1\endcsname
+  \else
+    \hlend
+  \fi
+}%
+%
+% Setting options and types.
+%
+\def\hl@asterisk@word{*}%
+\def\hl@opts@word{opts}%
+\newif\if@params@override
+% We define hyperlink / destination groups.  A group is a macro or a
+% group of macros which implicitly generate hyperlink / destination.
+% The user can set parameters for each group individually, as well as
+% the default parameters, with the macros defined below.  Group
+% settings will override the default hyperlink / destination
+% parameters.
+\def\hldest@groups{definexref,xrdef,li,eq,bib,foot,footback,idx}%
+\def\hl@groups{ref,xref,eq,cite,foot,footback,idx,url,hrefint,hrefext}%
+% \hldesttype [GROUPS]{VALUE}
+% \hldestopts [GROUPS]{VALUE}
+% \hltype     [GROUPS]{VALUE}
+% \hlopts     [GROUPS]{VALUE}
+%
+% Set hyperlink or destination parameter (type / opts) to VALUE for
+% each group in GROUPS.  An empty `group' will set default value for
+% the parameter.  A star (*) `group' stands for all groups (except the
+% empty `group').  If the macro is followed by an exclamation mark
+% (like \hlopts!...), the parameters will be overridden; otherwise,
+% they will be updated (this has effect only on group option list).
+\def\hldesttype{%
+  \def\hl@prefix{hldest}%
+  \def\hl@param{type}%
+  \let\hl@all@groups\hldest@groups
+  \futurelet\hl@excl\hl@param@read@excl
+}%
+\def\hldestopts{%
+  \def\hl@prefix{hldest}%
+  \def\hl@param{opts}%
+  \let\hl@all@groups\hldest@groups
+  \futurelet\hl@excl\hl@param@read@excl
+}%
+\def\hltype{%
+  \def\hl@prefix{hl}%
+  \def\hl@param{type}%
+  \let\hl@all@groups\hl@groups
+  \futurelet\hl@excl\hl@param@read@excl
+}%
+\def\hlopts{%
+  \def\hl@prefix{hl}%
+  \def\hl@param{opts}%
+  \let\hl@all@groups\hl@groups
+  \futurelet\hl@excl\hl@param@read@excl
+}%
+\def\hl@param@read@excl{%
+  \ifx!\hl@excl
+    \let\next\hl@param@read@opt@arg
+    \@params@overridetrue
+  \else
+    \def\next{\hl@param@read@opt@arg{!}}%
+    \@params@overridefalse
+  \fi
+  \next
+}%
+\def\hl@param@read@opt@arg#1{% #1 is the `!', ignore it.
+  \@getoptionalarg\hl@setparam
+}%
+% Set the parameter \hl@param to #1 for each group in \@optionalarg.
+% This will become \hl@setparam in \enablehyperlinks.
+\def\@hl@setparam#1{%
+  \ifx\@optionalarg\empty
+    \hl@setparam@default{#1}% Set default.
+  \else
+    % If we find an asterisk in the list, we have no choice but to
+    % finish the list and then call \hl@setparam again, now with
+    % \hl@all@groups for the list of groups.
+    \let\hl@do@all@groups\gobble
+%
+    \For\hl@group:=\@optionalarg\do{%
+      \ifx\hl@group\hl@asterisk@word
+        \def\hl@do@all@groups{\let\@optionalarg\hl@all@groups \hl@setparam}%
+      \else
+        \hl@setparam@group{#1}%
+      \fi
+    }%
+%
+    \hl@do@all@groups{#1}%
+  \fi
+}%
+% Set a parameter (\hl@param) for one group (\hl@group) to the value
+% (#1).  The group may be empty, in which case we call
+% \hl@setparam@default
+\def\hl@setparam@group#1{%
+  \ifx\hl@group\empty
+    \hl@setparam@default{#1}%
+  \else
+    \expandafter\ifx\csname\hl@prefix @\hl@param @\hl@group\endcsname\relax
+      \errmessage{Hyperlink group `\hl@prefix:\hl@param:\hl@group' is not defined}%
+    \fi
+    \ifx\hl@param\hl@opts@word
+      % For the `opts' parameter, we want to expand the first token of
+      % #1 once, in case the user passed a macro containing the option
+      % list.  Even if we simply need to override the old option list,
+      % we still call \hl@update@opts@with@list to go through the
+      % options and trim possible leading space token in option keys.
+      \if@params@override
+        \expandafter\let\csname\hl@prefix @\hl@param @\hl@group\endcsname\empty
+      \fi
+      \hl@update@opts@with@list{#1}% #1 will be used in the \for
+                                % loop, so it will be expanded once.
+    \else
+      % Do not use \edef here to define the parameter, so the user can
+      % define it to, e.g., \normalbaselineskip, and make the parameter
+      % adjustable to a situation.
+      \ece\def{\hl@prefix @\hl@param @\hl@group}{#1}%
+    \fi
+  \fi
+}%
+% Set default parameter values.  We have to treat `opts' (list of
+% options) specially, because for option defaults we don't store a
+% list of options (like we do for the group options) but set each
+% option individually.
+\def\hl@setparam@default#1{%
+  \ifx\hl@param\hl@opts@word
+    % `opts'.
+    \For\hl@opt:=#1\do{%
+      \ifx\hl@opt\empty \else
+        \expandafter\hl@set@opt\hl@opt=,%
+      \fi
+    }%
+  \else
+    % Everything except `opts'.
+    \expandafter\ifx\csname\hl@prefix @\hl@param\endcsname\relax
+      \message{Default hyperlink parameter `\hl@prefix:\hl@param' is not defined}%
+    \fi
+    % Should not use \edef, so the user could define this to, e.g.,
+    % \normalbaselineskip, to make the parameter adjustable to a
+    % situation.
+    \ece\def{\hl@prefix @\hl@param}{#1}%
+  \fi
+}%
+% For each option in the list (#1), call \hl@update@opts@with@opt to update
+% the group's option list (\csname\hl@prefix @opts@ \hl@group\endcsname)
+% with this new option.
+\def\hl@update@opts@with@list#1{%
+  % Start with the current list of the group.
+  \global\expandafter\let\expandafter\hl@update@new@list
+    \csname \hl@prefix @opts@\hl@group\endcsname
+  % We have to isolate the \for loop inside a (TeX) group, to avoid
+  % clashes with the loop in \hl@setparam
+  \begingroup
+    \For\hl@opt:=#1\do{%
+      \hl@update@opts@with@opt
+    }%
+  \endgroup
+  % Save the final list back in the option list for the group.
+  \ece\let{\hl@prefix @opts@\hl@group}\hl@update@new@list
+}%
+% Go through the option list (\hl@update@new@list) and construct the
+% new list (in \hl@update@new@list), replacing the old definition of
+% the option with the new one (\hl@opt).
+\def\hl@update@opts@with@opt{%
+  % Save the old list and the new option.
+  \global\let\hl@update@old@list\hl@update@new@list
+  \global\let\hl@update@new@list\empty
+  \global\let\hl@update@new@opt\hl@opt
+  % Get the key of the new option and save it.
+  \expandafter\hl@parse@opt@key\hl@opt=,%
+  \let\hl@update@new@key\hl@update@key
+  % We will set this to real comma after the first entry.
+  \global\let\hl@update@comma\empty
+  % We have to isolate the \for loop inside a (TeX) group, to avoid
+  % clashes with the loop in \hl@update@opts@with@list
+  \begingroup
+    \for\hl@opt:=\hl@update@old@list\do{%
+      \ifx\hl@opt\empty \else % Skip empty `options'.
+        % Get the key of this option.
+        \expandafter\hl@parse@opt@key\hl@opt=,%
+        % If the key matches, replace the option definition with the
+        % new definition, otherwise, repeat the old definition.
+        \toks@=\expandafter{\hl@update@new@list}%
+        \ifx\hl@update@key\hl@update@new@key
+          \ifx\hl@update@new@opt\empty \else % Skip multiple options.
+            \toks@ii=\expandafter{\hl@update@new@opt}%
+            \xdef\hl@update@new@list{\the\toks@\hl@update@comma\the\toks@ii}%
+            \global\let\hl@update@new@opt\empty
+            \global\def\hl@update@comma{,}%
+          \fi
+        \else
+          \toks@ii=\expandafter{\hl@opt}%
+          \xdef\hl@update@new@list{\the\toks@\hl@update@comma\the\toks@ii}%
+          \global\def\hl@update@comma{,}%
+        \fi
+      \fi
+    }%
+  \endgroup
+  % If nothing was replaced, add the new option to the end of the new list.
+  \ifx\hl@update@new@opt\empty \else
+    \toks@=\expandafter{\hl@update@new@list}%
+    \toks@ii=\expandafter{\hl@update@new@opt}%
+    \xdef\hl@update@new@list{\the\toks@\hl@update@comma\the\toks@ii}%
+  \fi
+}%
+% Parse the key of the option and save it in \hl@update@key
+\def\hl@parse@opt@key#1=#2,{\def\hl@update@key{#1}}%
+%
+% Default and group parameters (options and types).
+%
+% Option `raise' will determine how much to raise hyperlink
+% destinations above the baseline.  It will be supported by all
+% drivers, since it is handled outside the drivers, in
+% \hldest@aftergetparam.
+\def\hldest@opt@raise{\normalbaselineskip}%
+% Options `colormodel' and `color' will also be handled outside the
+% drivers, in \hlstart@aftergetparam.
+\def\hl@opt@colormodel{cmyk}%
+\def\hl@opt@color{0.28,1,1,0.35}%
+%
+% Parameters for destinations and links produced implicitly by
+% cross-reference macros.  Note that each driver will additionally
+% define \hldest@type and \hl@type parameters which will be used when
+% one of the below is empty, and default values for destination and
+% link options (which are driver-specific).
+%
+% Destination on/off flags (0=off, 1=on).  Changing them here has no
+% effect, modify \enablehyperlinks to set defaults.
+\def\hldest@on@definexref{0}%
+\def\hldest@on@xrdef{0}%
+\def\hldest@on@li{0}%
+\def\hldest@on@eq{0}% \eqdef and friends
+\def\hldest@on@bib{0}% \biblabelprint (BibTeX)
+\def\hldest@on@foot{0}% \footnote / \numberedfootnote
+\def\hldest@on@footback{0}% back-ref for \footnote / \numberedfootnote
+\def\hldest@on@idx{0}% both `page' dests and `exact' dests
+% Types of destinations.
+\let\hldest@type@definexref\empty
+\let\hldest@type@xrdef\empty
+\let\hldest@type@li\empty
+\let\hldest@type@eq\empty % \eqdef and friends
+\let\hldest@type@bib\empty % \biblabelprint (BibTeX)
+\let\hldest@type@foot\empty % \footnote / \numberedfootnote
+\let\hldest@type@footback\empty % back-ref for \footnote / \numberedfootnote
+\let\hldest@type@idx\empty % both `page' dests and `exact' dests
+% Options for destinations.
+\let\hldest@opts@definexref\empty
+\let\hldest@opts@xrdef\empty
+\let\hldest@opts@li\empty
+\def\hldest@opts@eq{raise=1.7\normalbaselineskip}% \eqdef and friends
+\let\hldest@opts@bib\empty % \biblabelprint (BibTeX)
+\let\hldest@opts@foot\empty % \footnote / \numberedfootnote
+\let\hldest@opts@footback\empty % back-ref for \footnote / \numberedfootnote
+\let\hldest@opts@idx\empty % both `page' dests and `exact' dests
+%
+% Hyperlink on/off flags (0=off, 1=on).  Changing them here has no
+% effect, modify \enablehyperlinks to set defaults.
+\def\hl@on@ref{0}% \refn and \xrefn, \ref, \refs
+\def\hl@on@xref{0}%
+\def\hl@on@eq{0}% \eqref and \eqrefn
+\def\hl@on@cite{0}% \cite (BibTeX)
+\def\hl@on@foot{0}% \footnote / \numberedfootnote
+\def\hl@on@footback{0}% back-reference for \footnote / \numberedfootnote
+\def\hl@on@idx{0}%
+\def\hl@on@url{0}% \url from url.sty
+\def\hl@on@hrefint{0}% \href with internal #labels
+\def\hl@on@hrefext{0}% \href with external labels (URLs)
+% Types of links.
+\let\hl@type@ref\empty % \refn and \xrefn, \ref, \refs
+\let\hl@type@xref\empty
+\let\hl@type@eq\empty % \eqref and \eqrefn
+\let\hl@type@cite\empty % \cite (BibTeX)
+\let\hl@type@foot\empty % \footnote / \numberedfootnote
+\let\hl@type@footback\empty % back-reference for \footnote / \numberedfootnote
+\let\hl@type@idx\empty
+\let\hl@type@url\empty % \url from url.sty (this will be set to `url' by
+                       % drivers which support the `url' type)
+\let\hl@type@hrefint\empty % \href with internal #labels
+\let\hl@type@hrefext\empty % \href with external labels (URLs) (this
+      % will be set to `url' by drivers which support the `url' type)
+% Options for links.
+\let\hl@opts@ref\empty % \refn and \xrefn, \ref, \refs
+\let\hl@opts@xref\empty
+\let\hl@opts@eq\empty % \eqref and \eqrefn
+\let\hl@opts@cite\empty % \cite (BibTeX)
+\let\hl@opts@foot\empty % \footnote / \numberedfootnote
+\let\hl@opts@footback\empty % back-reference for \footnote / \numberedfootnote
+\let\hl@opts@idx\empty
+\let\hl@opts@url\empty % \url from url.sty
+\let\hl@opts@hrefint\empty % \href with internal #labels
+\let\hl@opts@hrefext\empty % \href with external labels (URLs)
+%
+% \@hlon[GROUPS]
+% \@hloff[GROUPS]
+% \@hldeston[GROUPS]
+% \@hldestoff[GROUPS]
+% \@@hlon
+% \@@hloff
+% \@@hldeston
+% \@@hldestoff
+%
+% Macros to switch hyperlinks / destinations on/off.
+%
+% The optional arg is the list of groups.  It can contain a star (*)
+% which will make the macros affect all groups (but not the low-level
+% macros \hlstart, \hlend and \hldest).
+%
+% \@hlon, \@hldeston, \@hloff and \@hldestoff will turn low-level
+% macros on/off only when they are used either without the optional
+% arg or with an empty `group' in the optional arg, otherwise only the
+% specified groups are affected.
+%
+% The single-`@' variants (\@hl...) are for the user.  In your macros,
+% if you want to (temporarily) turn low-level macros on/off, it's
+% better to use the double-`@' variants (\@@hl...), because they are
+% much faster and won't clobber \@optionalarg or anything else.
+%
+\def\@hlon{\@hlonoff@value@stub{hl}\@@hlon1 }%
+\def\@hloff{\@hlonoff@value@stub{hl}\@@hloff0 }%
+\def\@hldeston{\@hlonoff@value@stub{hldest}\@@hldeston1 }%
+\def\@hldestoff{\@hlonoff@value@stub{hldest}\@@hldestoff0 }%
+%
+\def\@hlonoff@value@stub#1#2#3{%
+  \def\hl@prefix{#1}%
+  \let\hl@on@empty#2%
+  \def\hl@value{#3}%
+  \expandafter\let\expandafter\hl@all@groups
+    \csname \hl@prefix @groups\endcsname
+  \@getoptionalarg\@finhlswitch
+}%
+%
+\def\@finhlswitch{%
+  \ifx\@optionalarg\empty
+    \hl@on@empty
+  \fi
+  % If we find an asterisk in the list, we have no choice but to
+  % finish the list and then call \@finhlswitch again, now with
+  % \hl@all@groups for the list of groups.
+  \let\hl@do@all@groups\relax
+%
+  \For\hl@group:=\@optionalarg\do{%
+    \ifx\hl@group\hl@asterisk@word
+      \let\@optionalarg\hl@all@groups
+      \let\hl@do@all@groups\@finhlswitch
+    \else
+      \ifx\hl@group\empty
+        \hl@on@empty
+      \else
+        \expandafter\ifx\csname\hl@prefix @on@\hl@group\endcsname \relax
+          \errmessage{Hyperlink group `\hl@prefix:on:\hl@group'
+                      is not defined}%
+        \fi
+        \ece\edef{\hl@prefix @on@\hl@group}{\hl@value}%
+      \fi
+    \fi
+  }%
+%
+  \hl@do@all@groups
+}%
+% Turn low-level macros on/off.
+\def\@@hlon{%
+  \let\hlstart\@hlstart
+  \let\hlend\@hlend
+}%
+\def\@@hloff{%
+  \def\hlstart##1##2##3{\leavevmode\ignorespaces}%
+  \let\hlend\relax
+}%
+\def\@@hldeston{%
+  \let\hldest\@hldest
+}%
+\def\@@hldestoff{%
+  \def\hldest##1##2##3{\ignorespaces}%
+}%
+%
+% Hyperlink drivers.
+%
+% \enablehyperlinks[OPTIONS] will enable hyperlinks.  OPTIONS is a
+% list of comma-separated options.  An option is one of the following:
+%
+%     idxexact      Point index links to exact locations of the term
+%     idxpage       Point index links to pages with the term (default)
+%     idxnone       No links for index entries
+%     <driver-name> Force the hyperlink driver
+%
+% If <driver-name> is omitted, appropriate driver will be detected, if
+% possible; if not, we fall back on `hypertex'.
+\def\hl@idxexact@word{idxexact}%
+\def\hl@idxpage@word{idxpage}%
+\def\hl@idxnone@word{idxnone}%
+\def\hl@raw@word{raw}%
+%
+\def\enablehyperlinks{\@getoptionalarg\@finenablehyperlinks}%
+\def\@finenablehyperlinks{%
+  \let\hl@selecteddriver\empty
+  % By default we generate `idxpage' index hyperlinks.
+  \def\hldest@place@idx{0}%
+  % Go through the option list.
+  \for\hl@arg:=\@optionalarg\do{%
+    \ifx\hl@arg\hl@idxexact@word
+      \def\hldest@place@idx{1}%
+    \else
+      \ifx\hl@arg\hl@idxnone@word
+        \def\hldest@place@idx{-1}%
+      \else
+        \ifx\hl@arg\hl@idxpage@word
+          \def\hldest@place@idx{0}%
+        \else
+          \let\hl@selecteddriver\hl@arg
+        \fi
+      \fi
+    \fi
+  }%
+  % Check the driver name.
+  \ifx\hl@selecteddriver\empty
+    % The user did not specify a driver, detect.
+    \ifpdf
+      \def\hl@selecteddriver{pdftex}%
+      \message{^^JEplain: using `pdftex' hyperlink driver.}%
+    \else
+      \def\hl@selecteddriver{hypertex}%
+      \message{^^JEplain: using `hypertex' hyperlink driver.}%
+    \fi
+  \else
+    % Check that the requested driver's initialization routine is
+    % available.
+    \expandafter\ifx\csname hldriver@\hl@selecteddriver\endcsname \relax
+      \errmessage{No hyperlink driver `\hl@selecteddriver' available}%
+    \fi
+  \fi
+  % Enable \hltype, \hlopts, \hldest and \hldestopts now (the driver's
+  % initialization routine may change this).
+  \let\hl@setparam\@hl@setparam
+  % Call the driver's initialization routine.
+  \csname hldriver@\hl@selecteddriver\endcsname
+  % Driver should not be changed later.
+  \def\@finenablehyperlinks{\errmessage{Hyperlink driver `\hl@selecteddriver'
+                                        already selected}}%
+  % Free memory taken up by the drivers.
+  \let\hldriver@nolinks\undefined
+  \let\hldriver@hypertex\undefined
+  \let\hldriver@pdftex \undefined
+  \let\hldriver@dvipdfm\undefined
+  % The user can use these to turn the links / destinations on/off
+  % (see comments to the driver `nolinks').
+  \let\hloff\@hloff
+  \let\hlon\@hlon
+  \let\hldestoff\@hldestoff
+  \let\hldeston\@hldeston
+  % By default turn everything on except the footnotes.
+  \hlon[*,]\hloff[foot,footback]%
+  \hldeston[*,]\hldestoff[foot,footback]%
+}%
+%
+% Driver `nolinks'.
+%
+% Select this driver to suppress any hyperlinks / destinations in your
+% document.
+%
+% NOTE:  selecting this driver is quite different from not selecting
+% any driver at all, or from selecting some driver and then turning
+% off links and destinations for the entire document with \hloff and
+% \hldestoff.
+%
+% The purpose of \hldestoff and \hloff is to mark (parts) of document
+% where links should never appear.  (Imagine you want to prevent a
+% cross-referencing macro from generating a link at a certain spot in
+% your document.)
+%
+% If instead you have prepared a document with links and just want to
+% compile a version without the links, it is better to select the
+% driver `nolinks'.  This will ensure that spacing and pagebreaking
+% will be the same as what you were getting with hyperlinks enabled.
+%
+% The reason for this is that hyperlinks are produced by \special
+% commands.  Each \special is placed inside a whatsit which may
+% introduce a legitimate breakpoint at places where none would exist
+% without the whatsit.  The macros \hldestoff and \hloff disable
+% hyperlink macros so drastically that no whatsits are produced.
+%
+% On the other hand, `nolinks' driver does not completely disable
+% hyperlink macros.  Instead, it defines them to write to the log
+% file (what gets written is not really important).  This will produce
+% the whatsits imitating the whatsits from the \special's.  (This
+% trick was borrowed from graphics bundle.)
+%
+% Another reason for using `nolinks' is that in horizontal mode
+% \hldest places destinations inside zero-width/height/depth boxes.
+% When you say \hldestoff, \hldest will omit both destination specs
+% and these boxes.  The missing boxes can cause typesetting to be
+% inconsistent with what you were getting with destinations enabled.
+% Again, `nolinks' driver helps here by defining \hldest to still
+% produce the empty boxes.
+%
+% Additionally, `nolinks' driver defines the \hldesttype, \hldestopts,
+% \hltype, \hlopts macros to gobble their parameters, to avoid error
+% messages about "unknown" options and types under the `nolinks'
+% driver.
+\def\hldriver@nolinks{%
+  \def\@hldest##1##2##3{%
+    \edef\temp{\write-1{hldest: ##3}}%
+    \ifvmode
+      \temp
+    \else
+      \allowhyphens
+      \expandafter\smash\expandafter{\temp}%
+      \allowhyphens
+    \fi
+    \ignorespaces
+  }%
+  \def\@hlstart##1##2##3{%
+    \leavevmode
+    \begingroup % Start the color group.
+    \edef\temp{\write-1{hlstart: ##3}}%
+    \temp
+    \ignorespaces
+  }%
+  \def\@hlend{%
+    \edef\temp{\write-1{hlend}}%
+    \temp
+    \endgroup % End the color group from \@hlstart.
+  }%
+  % Make \hltype, \hlopts, \hldesttype and \hldestopts ignore their
+  % parameters.
+  \let\hl@setparam\gobble
+}%
+%
+% Driver `hypertex'.
+%
+{\catcode`\#=\other
+\gdef\hlhash{#}}%
+%
+\def\hldriver@hypertex{%
+  %
+  % Hyperlink destinations.
+  %
+  % Default type.
+  \def\hldest@type{xyz}%
+  % Set defaults for the options (this also tells \hl@set@opt what
+  % options we support).  (We do not define \hldest@opt@raise,
+  % \hl@opt@colormodel and \hl@opt@color, they are defined and used
+  % outside the drivers.)
+  \let\hldest@opt@cmd \empty
+  % Multiplexer for all supported destination types.
+  \def\hldest@driver{%
+    % Special case for `raw' destinations.
+    \ifx\@hltype\hl@raw@word
+      \csname \hldest@opt@cmd \endcsname
+    \else
+      \special{html:<a name="\@hllabel">}\special{html:</a>}%
+    \fi
+  }%
+  % Define handlers for each supported destination type (this also
+  % tells \hl@getparam what types we support).
+  \let\hldest@typeh@raw \empty
+  \let\hldest@typeh@xyz \empty
+  %
+  % Hyperlinks.
+  %
+  % Default type.
+  \def\hl@type{name}%
+  % We support `url' hyperlinks, so set some group types.
+  \ifx\hl@type@url\empty
+    \def\hl@type@url{url}%
+  \fi
+  \ifx\hl@type@hrefext\empty
+    \def\hl@type@hrefext{url}%
+  \fi
+  % Set defaults for the options (this also tells \hl@set@opt what
+  % options we support).
+  \let\hl@opt@cmd  \empty
+  \let\hl@opt@ext  \empty
+  \let\hl@opt@file \empty
+  % Multiplexer for all supported link types.
+  \def\hl@driver{%
+    % Special case for `raw' links.
+    \ifx\@hltype\hl@raw@word
+      \csname \hl@opt@cmd \endcsname
+    \else
+      % Construct common preamble of a link.
+      \def\hlstart@preamble{html:<a href="}%
+      % Call the handler.
+      \csname hl@typeh@\@hltype\endcsname
+    \fi
+  }%
+  % Define handlers for each supported link type (this also tells
+  % \hl@getparam what types we support).
+  \let\hl@typeh@raw \empty
+  \def\hl@typeh@name{\special{\hlstart@preamble \hlhash\@hllabel">}}%
+  \def\hl@typeh@filename{%
+    \special{%
+      \hlstart@preamble
+        file:\hl@opt@file\hl@opt@ext
+        \ifempty\@hllabel \else \hlhash\@hllabel\fi
+      ">%
+    }%
+  }%
+  \def\hl@typeh@url{%
+    \special{%
+      \hlstart@preamble
+        \@hllabel
+      ">%
+    }%
+  }%
+  %
+  \def\@hlend{\special{html:</a>}\endgroup}% End the group from \@hlstart.
+}%
+%
+% Driver `pdftex'.
+%
+\def\hldriver@pdftex{%
+\ifpdf % PDF output is enabled.
+  %
+  % Hyperlink destinations.
+  %
+  % Default type.
+  \def\hldest@type{xyz}%
+  % Set defaults for the options (this also tells \hl@set@opt what
+  % options we support).  (We do not define \hldest@opt@raise,
+  % \hl@opt@colormodel and \hl@opt@color, they are defined and used
+  % outside the drivers.)
+  \let\hldest@opt@width  \empty
+  \let\hldest@opt@height \empty
+  \let\hldest@opt@depth  \empty
+  \let\hldest@opt@zoom   \empty
+  \let\hldest@opt@cmd    \empty
+  % Multiplexer for all supported destination types.
+  \def\hldest@driver{%
+    % Special case for `raw' destinations.
+    \ifx\@hltype\hl@raw@word
+      \csname \hldest@opt@cmd \endcsname
+    \else
+      \pdfdest name{\@hllabel}\@hltype
+        \csname hldest@typeh@\@hltype\endcsname
+    \fi
+  }%
+  % Define handlers for each supported destination type (this also
+  % tells \hl@getparam what types we support).
+  \let\hldest@typeh@raw   \empty
+  \let\hldest@typeh@fit   \empty
+  \let\hldest@typeh@fith  \empty
+  \let\hldest@typeh@fitv  \empty
+  \let\hldest@typeh@fitb  \empty
+  \let\hldest@typeh@fitbh \empty
+  \let\hldest@typeh@fitbv \empty
+  \def\hldest@typeh@fitr{%
+    \ifx\hldest@opt@width  \empty \else width  \hldest@opt@width  \fi
+    \ifx\hldest@opt@height \empty \else height \hldest@opt@height \fi
+    \ifx\hldest@opt@depth  \empty \else depth  \hldest@opt@depth  \fi
+  }%
+  \def\hldest@typeh@xyz{%
+    \ifx\hldest@opt@zoom\empty \else zoom \hldest@opt@zoom \fi
+  }%
+  %
+  % Hyperlinks.
+  %
+  % Default type.
+  \def\hl@type{name}%
+  % We support `url' hyperlinks, so set some group types.
+  \ifx\hl@type@url\empty
+    \def\hl@type@url{url}%
+  \fi
+  \ifx\hl@type@hrefext\empty
+    \def\hl@type@hrefext{url}%
+  \fi
+  % Set defaults for the options (this also tells \hl@set@opt what
+  % options we support).
+  \let\hl@opt@width   \empty
+  \let\hl@opt@height  \empty
+  \let\hl@opt@depth   \empty
+  \def\hl@opt@bstyle  {S}%
+  \def\hl@opt@bwidth  {1}%
+  \let\hl@opt@bcolor  \empty
+  \let\hl@opt@hlight  \empty
+  \let\hl@opt@bdash   \empty
+  \let\hl@opt@pagefit \empty
+  \let\hl@opt@cmd     \empty
+  \let\hl@opt@file    \empty
+  \let\hl@opt@newwin  \empty
+  % Multiplexer for all supported link types.
+  \def\hl@driver{%
+    % Special case for `raw' links.
+    \ifx\@hltype\hl@raw@word
+      \csname \hl@opt@cmd \endcsname
+    \else
+      % See if we will construct a /BS spec.  We want to bother only
+      % if any of \hl@opt@bstyle, \hl@opt@bwidth and \hl@opt@bdash is
+      % not empty.
+      \let\hl@BSspec\relax % construct
+      \ifx\hl@opt@bstyle \empty
+        \ifx\hl@opt@bwidth \empty
+          \ifx\hl@opt@bdash \empty
+            \let\hl@BSspec\empty % don't construct
+          \fi
+        \fi
+      \fi
+      % Construct common preamble of a link.
+      \def\hlstart@preamble{%
+        \pdfstartlink
+          \ifx\hl@opt@width  \empty \else width  \hl@opt@width  \fi
+          \ifx\hl@opt@height \empty \else height \hl@opt@height \fi
+          \ifx\hl@opt@depth  \empty \else depth  \hl@opt@depth \fi
+          attr{%
+            \ifx\hl@opt@bcolor\empty\else /C[\hl@opt@bcolor]\fi
+            \ifx\hl@opt@hlight\empty\else /H/\hl@opt@hlight\fi
+            \ifx\hl@BSspec\relax
+              /BS<<%
+                /Type/Border%
+                \ifx\hl@opt@bstyle\empty\else /S/\hl@opt@bstyle\fi
+                \ifx\hl@opt@bwidth\empty\else /W \hl@opt@bwidth\fi
+                \ifx\hl@opt@bdash\empty \else /D[\hl@opt@bdash]\fi
+              >>%
+            \fi
+          }%
+      }%
+      % Call the handler.
+      \csname hl@typeh@\@hltype\endcsname
+    \fi
+  }%
+  % Define handlers for each supported link type (this also tells
+  % \hl@getparam what types we support).
+  \let\hl@typeh@raw\empty
+  \def\hl@typeh@name{\hlstart@preamble goto name{\@hllabel}}%
+  \def\hl@typeh@num{\hlstart@preamble  goto num \@hllabel}%
+  \def\hl@typeh@page{%
+    % PDF requires pages to start from 0, so adjust page number.
+    \count@=\@hllabel
+    \advance\count@ by-1
+    %
+    \hlstart@preamble
+    user{%
+      /Subtype/Link%
+      /Dest%
+        [\the\count@
+          \ifx\hl@opt@pagefit\empty/Fit\else\hl@opt@pagefit\fi]%
+    }%
+  }%
+  \def\hl@typeh@filename{\hl@file{(\@hllabel)}}%
+  \def\hl@typeh@filepage{%
+    % PDF requires pages to start from 0, so adjust page number.
+    \count@=\@hllabel
+    \advance\count@ by-1
+    %
+    \hl@file{%
+      [\the\count@ \ifx\hl@opt@pagefit\empty/Fit\else\hl@opt@pagefit\fi]%
+    }%
+  }%
+  \def\hl@file##1{%
+    \hlstart@preamble
+    user{%
+      /Subtype/Link%
+      /A<<%
+        /Type/Action%
+        /S/GoToR%
+        /D##1%
+        /F(\hl@opt@file)%
+        \ifx\hl@opt@newwin\empty \else
+          /NewWindow \ifcase\hl@opt@newwin false\else true\fi
+        \fi
+      >>%
+    }%
+  }%
+  \def\hl@typeh@url{%
+    \hlstart@preamble
+    user{%
+      /Subtype/Link%
+      /A<<%
+        /Type/Action%
+        /S/URI%
+        /URI(\@hllabel)%
+      >>%
+    }%
+  }%
+  %
+  \def\@hlend{\pdfendlink\endgroup}% End the group from the \@hlstart.
+%
+\else % PDF output is not enabled.
+  \message{Eplain warning: `pdftex' hyperlink driver: PDF output is^^J
+           \space not enabled, falling back on `nolinks' driver.}%
+  \hldriver@nolinks
+\fi
+}%
+%
+% Driver `dvipdfm'.
+%
+\def\hldriver@dvipdfm{%
+  %
+  % Hyperlink destinations.
+  %
+  % Default type.
+  \def\hldest@type{xyz}%
+  % Set defaults for the options (this also tells \hl@set@opt what
+  % options we support).  (We do not define \hldest@opt@raise,
+  % \hl@opt@colormodel and \hl@opt@color, they are defined and used
+  % outside the drivers.)
+  \let\hldest@opt@left   \empty
+  \let\hldest@opt@top    \empty
+  \let\hldest@opt@right  \empty
+  \let\hldest@opt@bottom \empty
+  \let\hldest@opt@zoom   \empty
+  \let\hldest@opt@cmd    \empty
+  % Multiplexer for all supported destination types.
+  \def\hldest@driver{%
+    % Special case for `raw' destinations.
+    \ifx\@hltype\hl@raw@word
+      \csname \hldest@opt@cmd \endcsname
+    \else
+      % Construct common preamble of a destination.
+      \def\hldest@preamble{%
+        pdf: dest (\@hllabel) [@thispage
+      }%
+      % Call the handler.
+      \csname hldest@typeh@\@hltype\endcsname
+    \fi
+  }%
+  % Define handlers for each supported destination type (this also
+  % tells \hl@getparam what types we support).
+  \let\hldest@typeh@raw\empty
+  \def\hldest@typeh@fit{%
+    \special{\hldest@preamble /Fit]}%
+  }%
+  \def\hldest@typeh@fith{%
+    \special{\hldest@preamble /FitH
+      \ifx\hldest@opt@top\empty @ypos \else \hldest@opt@top \fi]}%
+  }%
+  \def\hldest@typeh@fitv{%
+    \special{\hldest@preamble /FitV
+      \ifx\hldest@opt@left\empty @xpos \else \hldest@opt@left \fi]}%
+  }%
+  \def\hldest@typeh@fitb{%
+    \special{\hldest@preamble /FitB]}%
+  }%
+  \def\hldest@typeh@fitbh{%
+    \special{\hldest@preamble /FitBH
+      \ifx\hldest@opt@top\empty @ypos \else \hldest@opt@top \fi]}%
+  }%
+  \def\hldest@typeh@fitbv{%
+    \special{\hldest@preamble /FitBV
+      \ifx\hldest@opt@left\empty @xpos \else \hldest@opt@left \fi]}%
+  }%
+  \def\hldest@typeh@fitr{%
+    \special{\hldest@preamble /FitR
+      \ifx\hldest@opt@left\empty @xpos\else\hldest@opt@left\fi\space
+      \ifx\hldest@opt@bottom\empty @ypos\else\hldest@opt@bottom\fi\space
+      \ifx\hldest@opt@right\empty @xpos\else\hldest@opt@right\fi\space
+      \ifx\hldest@opt@top\empty @ypos\else\hldest@opt@top \fi]}%
+  }%
+  \def\hldest@typeh@xyz{%
+    \begingroup
+      % Convert zoom factor:  12345 -> 12.345
+      \ifx\hldest@opt@zoom\empty
+        \count1=\z@ \count2=\z@
+      \else
+        \count2=\hldest@opt@zoom
+        \count1=\count2 \divide\count1 by 1000
+        \count3=\count1 \multiply\count3 by 1000
+        \advance\count2 by -\count3
+      \fi
+      \special{\hldest@preamble /XYZ
+        \ifx\hldest@opt@left\empty @xpos\else\hldest@opt@left\fi\space
+        \ifx\hldest@opt@top\empty @ypos\else\hldest@opt@top\fi\space
+        \the\count1.\the\count2]}%
+    \endgroup
+  }%
+  %
+  % Hyperlinks.
+  %
+  % Default type.
+  \def\hl@type{name}%
+  % We support `url' hyperlinks, so set some group types.
+  \ifx\hl@type@url\empty
+    \def\hl@type@url{url}%
+  \fi
+  \ifx\hl@type@hrefext\empty
+    \def\hl@type@hrefext{url}%
+  \fi
+  % Set defaults for the options (this also tells \hl@set@opt what
+  % options we support).
+  \def\hl@opt@bstyle  {S}%
+  \def\hl@opt@bwidth  {1}%
+  \let\hl@opt@bcolor  \empty
+  \let\hl@opt@hlight  \empty
+  \let\hl@opt@bdash   \empty
+  \let\hl@opt@pagefit \empty
+  \let\hl@opt@cmd     \empty
+  \let\hl@opt@file    \empty
+  \let\hl@opt@newwin  \empty
+  % Multiplexer for all supported link types.
+  \def\hl@driver{%
+    % Special case for `raw' links.
+    \ifx\@hltype\hl@raw@word
+      \csname \hl@opt@cmd \endcsname
+    \else
+      % See if we will construct a /BS spec.  We want to bother only
+      % if any of \hl@opt@bstyle, \hl@opt@bwidth and \hl@opt@bdash is
+      % not empty.
+      \let\hl@BSspec\relax % construct
+      \ifx\hl@opt@bstyle \empty
+        \ifx\hl@opt@bwidth \empty
+          \ifx\hl@opt@bdash \empty
+            \let\hl@BSspec\empty % don't construct
+          \fi
+        \fi
+      \fi
+      % Construct common preamble of a link.
+      \def\hlstart@preamble{%
+        pdf: beginann
+          <<%
+            /Type/Annot%
+            /Subtype/Link%
+            \ifx\hl@opt@bcolor\empty\else /C[\hl@opt@bcolor]\fi
+            \ifx\hl@opt@hlight\empty\else /H/\hl@opt@hlight\fi
+            \ifx\hl@BSspec\relax
+              /BS<<%
+                /Type/Border%
+                \ifx\hl@opt@bstyle\empty\else /S/\hl@opt@bstyle\fi
+                \ifx\hl@opt@bwidth\empty\else /W \hl@opt@bwidth\fi
+                \ifx\hl@opt@bdash\empty \else /D[\hl@opt@bdash]\fi
+              >>%
+            \fi
+      }%
+      % Call the handler.
+      \csname hl@typeh@\@hltype\endcsname
+    \fi
+  }%
+  % Define handlers for each supported link type (this also tells
+  % \hl@getparam what types we support).
+  \let\hl@typeh@raw\empty
+  \def\hl@typeh@name{\special{\hlstart@preamble /Dest(\@hllabel)>>}}%
+  \def\hl@typeh@page{%
+    % PDF requires pages to start from 0, so adjust page number.
+    \count@=\@hllabel
+    \advance\count@ by-1
+    %
+    \special{%
+      \hlstart@preamble
+      /Dest[\the\count@
+            \ifx\hl@opt@pagefit\empty/Fit\else\hl@opt@pagefit\fi]%
+     >>%
+    }%
+  }%
+  \def\hl@typeh@filename{\hl@file{(\@hllabel)}}%
+  \def\hl@typeh@filepage{%
+    % PDF requires pages to start from 0, so adjust page number.
+    \count@=\@hllabel
+    \advance\count@ by-1
+    %
+    \hl@file{%
+      [\the\count@ \ifx\hl@opt@pagefit\empty/Fit\else\hl@opt@pagefit\fi]%
+    }%
+  }%
+  \def\hl@file##1{%
+    \special{%
+      \hlstart@preamble
+      /A<<%
+        /Type/Action%
+        /S/GoToR%
+        /D##1%
+        /F(\hl@opt@file)%
+        \ifx\hl@opt@newwin\empty \else
+          /NewWindow \ifcase\hl@opt@newwin false\else true\fi
+        \fi
+      >>%
+     >>%
+    }%
+  }%
+  \def\hl@typeh@url{%
+    \special{%
+      \hlstart@preamble
+      /A<<%
+        /Type/Action%
+        /S/URI%
+        /URI(\@hllabel)%
+      >>%
+     >>%
+    }%
+  }%
+  %
+  \def\@hlend{\special{pdf: endann}\endgroup}% End the group from \@hlstart.
+}%
+%
+% Miscellaneous hyperlink macros.
+%
+%
+% \href{URL}{TEXT} typesets TEXT as a link to the URL.  If URL starts
+% with a #, the rest of the URL is assumed to be this document's local
+% anchor.  Special chars (like # and ~) in URL don't need to be
+% escaped in any way.
+\def\href{%
+  % Read #1 (URL) inside a group with \uncatcodespecials, to get the #
+  % and ~ right.
+  \bgroup
+    \uncatcodespecials
+    \catcode`\{=1 \catcode`\}=2
+    \@href
+}%
+%
+\def\@href#1{% We'll read #2 (TEXT) later.
+  \egroup
+  \edef\@hreftmp{\ifempty{#1}{}\fi}% Parameter stuffing for \@@href.
+  \expandafter\@@href\@hreftmp#1\@@
+}%
+%
+\def\href@end@int{\hlend@impl{hrefint}}%
+\def\href@end@ext{\hlend@impl{hrefext}}%
+% Split out the first token and check if it is a #.
+\def\@@href#1#2\@@{%
+  \def\@hreftmp{#1}%
+  \ifx\@hreftmp\hlhash
+    \let\href@end\href@end@int
+    \hlstart@impl{hrefint}{#2}%
+  \else
+    \let\href@end\href@end@ext
+    \hlstart@impl{hrefext}{#1#2}%
+  \fi
+  \@@@href
+}%
+% Now some tricks to avoid reading the TEXT as an argument (from the
+% \footnote definition in plain TeX).
+\def\@@@href{%
+  \futurelet\@hreftmp\href@
+}%
+%
+\def\href@{%
+  \ifcat\bgroup\noexpand\@hreftmp
+    \let\@hreftmp\href@@
+  \else
+    \let\@hreftmp\href@@@
+  \fi
+  \@hreftmp
+}%
+%
+\def\href@@{\bgroup\aftergroup\href@end \let\@hreftmp}%
+%
+\def\href@@@#1{#1\href@end}%
+%
+% Make all user-visible \hl* macros to give errors until hyperlinks
+% are explicitly enabled with \enablehyperlinks.
+\def\hldeston{\errmessage{Please enable hyperlinks with
+  \string\enablehyperlinks\space before using hyperlink commands
+  (consider selecting the `nolinks' driver to ignore all hyperlink
+  commands in your document)}}%
+\let\hldestoff\hldeston \let\hlon\hldeston \let\hloff\hldeston
+\let\hlstart\hldeston \let\hlend\hldeston \let\hldest\hldeston
+% This catches \hltype, \hlopts, \hldesttype, \hldestopts.
+\let\hl@setparam\hldeston
+% Turn off all groups to make sure \hlstart@impl, \hlend@impl and
+% \hldest@impl do not call \hlstart, \hlend and \hldest until
+% hyperlinks are enabled.
+\@hloff[*]\@hldestoff[*]%
+%
+%
+%  Support for LaTeX packages under plain TeX.
+%
+% We use miniltx.tex from the LaTeX graphics collection and build on
+% it to provide package options support, package version check,
+% recursive package loading with \RequirePackage, proper handling of
+% \AtBeginDocument and \AtEndOfPackage.
+%
+% Much of the following was borrowed from LaTeX.
+%
+% The internal variables are quite a mess, so here is a hint:
+%
+%  - \usepkg@pkg, \usepkg@options, \usepkg@date are used by
+%    \usepackage to save its parameters.
+%
+%  - When \RequirePackage is called within a package, the above
+%    variables are saved in \usepkg@save@VAR@RECURSIONLEVEL, where
+%    VAR={pkg,options,date}, and RECURSIONLEVEL is incremented for
+%    each nested package inclusion.  This way the variables can be
+%    restored after the (nested) package will have been loaded.
+%
+%  - Options for package PACKAGE (no .sty extension) are accumulated
+%    in \usepkg@options@PACKAGE.
+%
+%  - For each declared option OPTION in package PACKAGE, we save the
+%    code which enables OPTION in \usepkg@option@PACKAGE@OPTION.
+%    There may be a star (`*') option declaration, the code from which
+%    will be used to process options not declared by the package
+%    (without it, an undeclared option will cause an error).
+%
+%  - For each loaded PACKAGE / FILE.EXT we declare \ver@PACKAGE.sty /
+%    \ver@FILE.EXT.  We use \ver@PACKAGE.sty to detect reloading
+%    of packages.  Some packages also use these macros.
+%
+%  - Calls to \AtBeginDocument accumulate the code in
+%    \usepkg@at@begin@document.  We will expand it at the end of the
+%    \beginpackages...\endpackages `environment'.
+%
+%  - Calls to \AtEndOfPackage accumulate the code in
+%    \usepkg@at@end@of@package.  We will expand it after the package
+%    is loaded.  To allow recursive package loading, \RequirePackage
+%    saves \usepkg@at@end@of@package analogous to \usepkg@pkg.
+%
+\newif\ifusepkg@miniltx@loaded
+\newcount\usepkg@recursion@level
+\def\usepkg@rcrs{\the\usepkg@recursion@level}%
+\let\usepkg@at@begin@document\empty
+\let\usepkg@at@end@of@package\empty
+\def\usepkg@word@autopict{autopict}%
+\def\usepkg@word@psfrag{psfrag}%
+%
+% \beginpackages...\endpackages
+%
+% All packages must be loaded within this `environment' (a kind of
+% LaTeX's preamble).  This is so to give us a chance to expand the
+% accumulated \AtBeginDocument commands.  Usually, you will want to
+% restrict all \usepackage's to a single \beginpackages...\endpackages,
+% just like in LaTeX, where you load all packages within a (single)
+% preamble.
+%
+% At the end of the \beginpackages...\endpackages block, we restore
+% the \input command to whatever it was defined before the
+% package(s), because miniltx.tex and some packages make (sometimes
+% incompatible) redefinitions of \input, and under plain TeX
+% non-primitive \input is probably not what the user expects.  But in
+% case the redefined \input is actually needed, we save it as
+% \packageinput.
+% 
+% Define \DoNotLoadEpstopdf so that graphics.cfg does not try to load
+% epstopdf.sty, which is a complication surely not wanted by default.
+%
+\long\def\beginpackages#1\endpackages{%
+  \let\usepackage\real@usepackage
+  \let\DoNotLoadEpstopdf=t
+  \let\eplaininput=\input
+  #1%
+  \usepkg@at@begin@document
+  \global\let\usepkg@at@begin@document\empty
+  \global\let\usepackage\fake@usepackage
+  \let\packageinput=\input
+  \let\input=\eplaininput
+  % should always be defined (from miniltx), but just in case:
+  \ifx\resetatcatcode\@undefined \else\resetatcatcode \fi
+}%
+%
+% \fake@usepackage
+%
+% This is what \usepackage is defined to outside of
+% \beginpackages...\endpackages `environment'.
+\def\fake@usepackage{\errmessage{You should not use \string\usepackage\space outside of^^J
+  \@spaces\string\beginpackages...\string\endpackages\space environment}%
+}%
+% \RequirePackage[OPTIONS]{PACKAGES}[YYYY/MM/DD]
+%
+% Save parameters for the package being loaded and call \usepackage to
+% load PACKAGES.  We depend on \usepackage to restore the saved
+% parameters.  We allow for nested calls to \RequirePackage.
+\def\eplain@RequirePackage{%
+  \global\ece\let{usepkg@save@pkg\usepkg@rcrs}\usepkg@pkg
+  \global\ece\let{usepkg@save@options\usepkg@rcrs}\usepkg@options
+  \global\ece\let{usepkg@save@date\usepkg@rcrs}\usepkg@date
+  \global\ece\let{usepkg@at@end@of@package\usepkg@rcrs}\usepkg@at@end@of@package
+  \global\advance\usepkg@recursion@level by\@ne
+  \real@usepackage
+}%
+% \usepackage[OPTIONS]{PACKAGES}[YYYY/MM/DD]
+%
+% Load each of the PACKAGES with OPTIONS, checking that the package
+% date is at least YYYY/MM/DD; if it is not, issue a warning.
+\let\usepackage\fake@usepackage
+\def\real@usepackage{\@getoptionalarg\@finusepackage}%
+\def\@finusepackage#1{%
+  \let\usepkg@options\@optionalarg
+  \ifempty{#1}%
+    \errmessage{No packages specified}%
+  \fi
+  % Load miniltx.tex, if it is not loaded.
+  \ifusepkg@miniltx@loaded \else
+    \testfileexistence[miniltx]{tex}%
+    \if@fileexists
+      \input miniltx.tex
+      \global\usepkg@miniltx@loadedtrue
+      % Redefine some macros from miniltx.tex
+      \global\let\RequirePackage\eplain@RequirePackage
+      \global\let\DeclareOption\eplain@DeclareOption
+      \global\let\PassOptionsToPackage\eplain@PassOptionsToPackage
+      \global\let\ExecuteOptions\eplain@ExecuteOptions
+      \gdef\ProcessOptions{\@ifstar\eplain@ProcessOptions
+                                   \eplain@ProcessOptions}%
+      \global\let\AtBeginDocument\eplain@AtBeginDocument
+      \global\let\AtEndOfPackage\eplain@AtEndOfPackage
+      \global\let\ProvidesFile\eplain@ProvidesFile
+      \global\let\ProvidesPackage\eplain@ProvidesPackage
+    \else
+      \errmessage{miniltx.tex not found, cannot load LaTeX packages}%
+    \fi
+  \fi
+  % Read the trailing optional arg (YYYY/MM/DD).
+  \@ifnextchar[%]
+    {\@finfinusepackage{#1}}%
+    {\@finfinusepackage{#1}[]}%
+}%
+%
+\def\@finfinusepackage#1[#2]{%
+  \edef\usepkg@date{#2}%
+  % Load each package from the list.  Do it outside the \for loop to
+  % avoid clashes with any \for loops executed by the package.
+  \let\usepkg@load@list\empty
+  \for\usepkg@pkg:=#1\do{%
+    \toks@=\expandafter{\usepkg@load@list}%
+    \edef\usepkg@load@list{%
+      \the\toks@
+      \noexpand\usepkg@load@pkg{\usepkg@pkg}%
+    }%
+  }%
+  \usepkg@load@list
+  % Restore parameters in case we were called from \RequirePackage.
+  \ifnum\usepkg@recursion@level>0
+    \global\advance\usepkg@recursion@level by\m@ne
+    \expandafter\let\expandafter\usepkg@pkg\csname usepkg@save@pkg\usepkg@rcrs\endcsname
+    \expandafter\let\expandafter\usepkg@options\csname usepkg@save@options\usepkg@rcrs\endcsname
+    \expandafter\let\expandafter\usepkg@date\csname usepkg@save@date\usepkg@rcrs\endcsname
+    \expandafter\let\expandafter\usepkg@at@end@of@package\csname usepkg@at@end@of@package\usepkg@rcrs\endcsname
+    % Free the memory.
+    \global\ece\let{usepkg@save@pkg\usepkg@rcrs}\undefined
+    \global\ece\let{usepkg@save@options\usepkg@rcrs}\undefined
+    \global\ece\let{usepkg@save@date\usepkg@rcrs}\undefined
+    \global\ece\let{usepkg@at@end@of@package\usepkg@rcrs}\undefined
+  \fi
+}%
+% Load one package.  We assume packages have `sty' extension.
+\def\usepkg@load@pkg#1{%
+  % Special cases for `autopict' and `psfrag' packages:
+  %   - `psfrag' is loaded by psfrag.tex.
+  %   - `autopict' is loaded by picture.tex, but the package file is
+  %      autopict.sty.
+  \def\usepkg@pkg{#1}%
+  \ifx\usepkg@pkg\usepkg@word@autopict
+    \testfileexistence[picture]{tex}%
+    \if@fileexists \else
+      \errmessage{Loader `picture.tex' for package `\usepkg@pkg' not found}%
+    \fi
+  \else
+    \ifx\usepkg@pkg\usepkg@word@psfrag
+      \testfileexistence[psfrag]{tex}%
+      \if@fileexists \else
+        \errmessage{Loader `psfrag.tex' for package `\usepkg@pkg' not found}%
+      \fi
+    \fi
+  \fi
+  % See if the package was loaded.  If it was, we just bail out.
+  % (Maybe we should skip reloading it/warn?  We don't want to go into
+  % checking that the package was first loaded with a superset of
+  % options which are requested now.)  \ProvidePackage and
+  % \ProvideFile define the macro \ver@PACKAGE.sty (see
+  % \eplain@pr@videpackage below).
+  \ifundefined{ver@\usepkg@pkg.sty}%
+    \expandafter\@finusepkg@load@pkg
+  \else
+    \immediate\write-1{^^J\linenumber Eplain: package `\usepkg@pkg' already
+             loaded, skipping reloading}%
+  \fi
+}%
+\def\@finusepkg@load@pkg{%
+  \testfileexistence[\usepkg@pkg]{sty}%
+  \if@fileexists \else
+    \errmessage{Package `\usepkg@pkg' not found}%
+  \fi
+  % Construct option list for the package.  Include any options
+  % passed to us by \PassOptionsToPackage and \RequirePackage.
+  \expandafter\let\expandafter\temp\csname usepkg@options@\usepkg@pkg\endcsname
+  \ifx\temp\relax
+    \let\temp\empty
+  \fi
+  \ifx\temp\empty
+    \let\temp\usepkg@options
+  \else
+    \ifx\usepkg@options\empty \else
+      \edef\temp{\temp,\usepkg@options}%
+    \fi
+  \fi
+  \global\ece\let{usepkg@options@\usepkg@pkg}\temp
+  % For the duration of the package, we want any calls to \usepackage
+  % to be mapped to \RequirePackage, to allow nested package loads
+  % without clobbering up anything.  (Maybe packages never use
+  % \usepackage instead of \RequirePackage, but this won't hurt.)
+  \let\usepackage\eplain@RequirePackage
+  % Clear \AtEndOfPackage commands (can be non-empty during recursive
+  % package loading).
+  \global\let\usepkg@at@end@of@package\empty
+  % Load the package.  If the package asks to load other package,
+  % \RequirePackage will save our \usepkg@{pkg,options,date} and
+  % \AtEndOfPackage commands, and \usepackage will restore them after
+  % recursively loading that package, so we don't worry about our
+  % setup being clobbered.
+  \ifx\usepkg@pkg\usepkg@word@autopict
+    \input picture.tex
+  \else
+    \ifx\usepkg@pkg\usepkg@word@psfrag
+      \input \usepkg@pkg.tex
+    \else
+      \input \usepkg@pkg.sty
+    \fi
+  \fi
+  % Execute the accumulated \AtEndOfPackage commands, and reset them
+  % to free the memory.
+  \usepkg@at@end@of@package
+  \global\let\usepkg@at@end@of@package\empty
+  % Restore the `real' \usepackage definition.
+  \let\usepackage\real@usepackage
+  % Clear the option list for the loaded package (we won't load a
+  % second copy anyway).
+  \global\ece\let{usepkg@options@\usepkg@pkg}\undefined
+  % Set \Url@HyperHook for url.sty
+  \def\Url@HyperHook##1{\hlstart@impl{url}{\Url@String}##1\hlend@impl{url}}%
+  % We check package version in \ProvidePackage, before reading the
+  % rest of the package, so that in case of errors (which can be
+  % numerous) the warning hopefully comes before the errors.
+%  \@ifl@ter{sty}\usepkg@pkg\usepkg@date{}%
+%    {\message{Warning: you have requested package `\usepkg@pkg', version \usepkg@date,^^J
+%       \@spaces but only version `\csname ver@\usepkg@pkg.sty\endcsname' is available.}}%
+}%
+% \DeclareOption{OPTION}{CODE}
+%
+% Save CODE in `usepkg@option@PACKAGE@OPTION'.  Starred version is not
+% treated any different here, but when defined it will be used by
+% \ProcessOptions and \ExecuteOptions to process undeclared options.
+\def\eplain@DeclareOption#1#2{%
+  \toks@{#2}%
+  \expandafter\xdef\csname usepkg@option@\usepkg@pkg @#1\endcsname{\the\toks@}%
+}%
+% \PassOptionsToPackage{OPTIONS}{PACKAGES}
+%
+% Add OPTIONS to the option list for each of the PACKAGES.
+\def\eplain@PassOptionsToPackage#1#2{%
+  \ifempty{#1}\else
+    \for\usepkg@temp:=#2\do{%
+      \expandafter\let\expandafter\temp\csname usepkg@options@\usepkg@temp\endcsname
+      \ifx\temp\relax
+        \let\temp\empty
+      \fi
+      \ifx\temp\empty
+        \edef\temp{#1}%
+      \else
+        \edef\temp{\temp,#1}%
+      \fi
+      \global\ece\let{usepkg@options@\usepkg@temp}\temp
+    }%
+  \fi
+}%
+% \ExecuteOptions{OPTIONS}
+% \ProcessOptions
+%
+% \ExecuteOptions executes each option from OPTIONS, \ProcessOptions
+% executes each option from the option list for the current package.
+% If the star (`*') option is declared, it will be used to process
+% undeclared options; otherwise, undeclared option will cause an
+% error.
+\def\usepkg@exec@options#1{%
+  % The iterator \CurrentOption below was used purposely.  Some
+  % packages use it in the argument to \DeclareOption.
+  \for\CurrentOption:=#1\do{%
+    \expandafter\let\expandafter\usepkg@temp
+      \csname usepkg@option@\usepkg@pkg @\CurrentOption\endcsname
+%
+    \ifx\usepkg@temp\relax
+      % Option is not declared.  If a `default' option handler is
+      % declared, use it.
+      \expandafter\let\expandafter\temp\csname usepkg@option@\usepkg@pkg @*\endcsname
+      \ifx\temp\relax
+        \errmessage{Unknown option `\CurrentOption' to package `\usepkg@pkg'}%
+      \else
+        \temp
+      \fi
+    \else
+      % Option is declared.
+      \usepkg@temp
+    \fi
+  }%
+}%
+%
+\let\eplain@ExecuteOptions\usepkg@exec@options
+\def\eplain@ProcessOptions{%
+  \expandafter\usepkg@exec@options\csname usepkg@options@\usepkg@pkg\endcsname
+}%
+% \AtBeginDocument{CODE}
+% \AtEndOfPackage{CODE}
+%
+% miniltx.tex defines \AtBeginDocument to execute its parameter right
+% away, but some packages depend on \AtBeginDocument to be executed
+% after packages are processed.  So we redefine \AtBeginDocument to
+% accumulate its argument, to be executed by us at the end of
+% \beginpackages...\endpackages.  \AtEndOfPackage is not defined by
+% miniltx.tex at all; we define it similar to \AtBeginDocument.
+%
+\def\usepkg@accumulate@cmds#1#2{%
+  \toks@=\expandafter{#1}%
+  \toks@ii={#2}%
+  \xdef#1{\the\toks@\the\toks@ii}%
+}%
+\def\eplain@AtBeginDocument{\usepkg@accumulate@cmds\usepkg@at@begin@document}%
+\def\eplain@AtEndOfPackage{\usepkg@accumulate@cmds\usepkg@at@end@of@package}%
+%
+% \ProvidesFile{FILENAME.EXT}[VERSION]
+% \ProvidesPackage{PACKAGENAME}[VERSION]
+%
+% miniltx.tex defines \ProvidesFile and \ProvidesPackage to only log a
+% message.  We want to define \ver@PACKAGE.sty / \ver@FILENAME.EXT, as
+% we depend on these to know when a package/file has been loaded, and
+% some packages depend on them, too.
+\def\eplain@ProvidesPackage#1{%
+  \@ifnextchar[%]
+    {\eplain@pr@videpackage{#1.sty}}{\eplain@pr@videpackage#1[]}%
+}%
+\def\eplain@pr@videpackage#1[#2]{%
+  \wlog{#1: #2}%
+  % This will flag the package as loaded.
+  \expandafter\xdef\csname ver@#1\endcsname{#2}%
+%  \expandafter\edef\expandafter\temp{\csname usepkg@options@\usepkg@pkg\endcsname}%
+%  \message{^^JPackage:\usepkg@pkg^^JOptions:\usepkg@options^^J+ passed options:\temp^^J}%
+  % Check package version.
+  \@ifl@t@r{#2}\usepkg@date{}%
+    {\message{Warning: you have requested package `\usepkg@pkg', version \usepkg@date,^^J
+       \@spaces but only version `\csname ver@#1\endcsname' is available.}}%
+}%
+%
+\def\eplain@ProvidesFile#1{%
+  \@ifnextchar[%]
+    {\eplain@pr@videfile{#1}}{\eplain@pr@videfile#1[]}%
+}%
+\def\eplain@pr@videfile#1[#2]{%
+  \wlog{#1: #2}%
+  % This will flag the file as loaded.
+  \expandafter\xdef\csname ver@#1\endcsname{#2}%
+  % We don't check file version.  graphics calls \ProvideFile to
+  % \includegraphics, and it does not give any date at the beginning
+  % of #2, so checking the date will cause an error.
+}%
+% Check package version.  From LaTeX.
+\def\@ifl@ter#1#2{%
+  \expandafter\@ifl@t@r
+    \csname ver@#2.#1\endcsname
+}%
+\def\@ifl@t@r#1#2{%
+  \ifnum\expandafter\@parse@version#1//00\@nil<%
+        \expandafter\@parse@version#2//00\@nil
+    \expandafter\@secondoftwo
+  \else
+    \expandafter\@firstoftwo
+  \fi
+}%
+\def\@parse@version#1/#2/#3#4#5\@nil{#1#2#3#4 }%
+% For the `draft' option to graphic{s,x}.sty.
+\let\ttfamily\tt
+\def\strip@prefix#1>{}%
+% Definitions for epstopdf.sty.
+\def\@ifpackageloaded#1{%
+  \expandafter\ifx\csname ver@#1.sty\endcsname\relax
+    \expandafter\@secondoftwo
+  \else
+    \expandafter\@firstoftwo
+  \fi
+}%
+\long\def\g@addto@macro#1#2{%
+  \begingroup
+    \toks@\expandafter{#1#2}%
+    \xdef#1{\the\toks@}%
+  \endgroup
+}%
+% These are for the warnings from epstopdf.sty when graphics.sty is
+% not loaded.  From pdftex.def.
+\def\PackageWarning#1#2{%
+  \begingroup
+    \newlinechar=10 %
+    \def\MessageBreak{%
+      ^^J(#1)\@spaces\@spaces\@spaces\@spaces
+    }%
+    \immediate\write16{^^JPackage #1 Warning: #2\on@line.^^J}%
+  \endgroup
+}%
+\def\PackageWarningNoLine#1#2{%
+  \PackageWarning{#1}{#2\@gobble}%
+}%
+\def\on@line{ on input line \the\inputlineno}%
+% Needed by some packages.
+\def\@spaces{\space\space\space\space}%
+\def\@inmatherr#1{%
+   \relax
+   \ifmmode
+     \errmessage{The command is invalid in math mode}%
+   \fi
+}%
+\let\protected@edef\edef
+%
+%
+%
+\let\wlog = \@plainwlog
+\catcode`@ = \@eplainoldatcode
+%
+\def\fmtname{eplain}%
+\def\eplain{t}%
+{\edef\plainversion{\fmtversion}%
+ \xdef\fmtversion{REPLACE-WITH-VERSION: REPLACE-WITH-DAY-MONTH-YEAR (and plain \plainversion)}%
+}%
+%
+% 
+% 
+% 
+% Local variables:
+% page-delimiter: "^% \f"
+% End:

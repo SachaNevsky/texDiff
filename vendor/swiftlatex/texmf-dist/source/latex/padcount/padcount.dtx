@@ -1,0 +1,190 @@
+% \iffalse
+% +AMDG  This document was begun on 1 May 1202, the
+% feast of St. Joseph the Worker, and it
+% is humbly dedicated to him and to the Immaculate Heart of
+% Mary for their prayers, and to the Sacred Heart of Jesus 
+% for His mercy.
+%
+% This document is copyright 2018 by Donald P. Goodman, and is
+% released publicly under the LaTeX Project Public License.  The
+% distribution and modification of this work is constrained by the
+% conditions of that license.  See
+% 	http://www.latex-project.org/lppl.txt
+% for the text of the license.  This document is released
+% under version 1.3c of that license, and this work may be distributed
+% or modified under the terms of that license or, at your option, any
+% later version.
+% 
+% This work has the LPPL maintenance status 'maintained'.
+% 
+% The Current Maintainer of this work is Donald P. Goodman
+% (dgoodmaniii@gmail.com).
+% 
+% This work consists of padcount.dtx, padcount.ins, and
+% derived files padcount.sty and padcount.pdf.
+% \fi
+
+% \iffalse
+%<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+%<package>\ProvidesPackage{padcount}[2018/05/04 v1.0 Pad numbers with arbitrary characters]
+%<*driver>
+\documentclass{ltxdoc}
+
+\usepackage{doc}
+\usepackage{padcount}
+\usepackage{fancyvrb}
+\usepackage{fvrb-ex}
+\usepackage{booktabs}
+
+\begin{document}
+\DocInput{padcount.dtx}
+\end{document}
+%</driver> \fi
+%
+% \title{The |padcount| Package, v1.0}
+% \author{Donald P.\ Goodman III}
+% \date{\today}
+%
+% \maketitle
+%
+% \begin{abstract}
+% \noindent
+% Sometimes a plain number is fine; other times, you want it
+% \emph{padded}, either with zeroes or some other character.
+% This small package makes it easy to do that.  It works not
+% only on 
+% arabic numerals, but on any expanded list of tokens passed
+% to it.  This makes it suitable for, among other things,
+% counters of all kinds.
+% \end{abstract}
+%
+% \section{Usage}
+%
+% About as simply as possible, the package centers on the
+% \DescribeMacro{\padnum}|\padnum| macro, which is defined
+% as follows:
+%
+% \begin{quote}
+% \cmd{\padnum} \marg{stuff}
+% \end{quote}
+%
+% The argument can be anything that \TeX\ will recognize as
+% a list of tokens, though it's anticipated that it'll be
+% used mostly for numbers.  By default,
+% |padcount| pads to two digits, and it does that
+% padding with the character |0|.
+%
+% The examples in this document assume the existence of a
+% \TeX\ count register |\tmp| (created by |\newcount\tmp|)
+% and a \LaTeX\ counter |temp| (created by
+% |\newcounter{temp}|).
+%
+% \newcount\tmp
+% \newcounter{temp}
+% \begin{center}\tabcolsep=0pt
+% \begin{tabular}{p{2in}lp{0.4in}p{2in}l}
+% |\padnum{4}| & \padnum{4} & {} & |\padnum{47}| & \padnum{47} \\
+% |\tmp=8\padnum{\the\tmp}| & \tmp=8\padnum{\the\tmp} & {} &
+%		|\tmp=16\padnum{\the\tmp}| & \tmp=16\padnum{\the\tmp} \\
+% |\setcounter{temp}{8}| |\padnum{\thetemp}| &
+%		\setcounter{temp}{8}\padnum{\thetemp} & {} &
+%		|\setcounter{temp}{16}| |\padnum{\thetemp}| &
+%		\setcounter{temp}{16}\padnum{\thetemp} \\
+% \end{tabular}
+% \end{center}
+%
+% You can change the number of digits you'd like to pad to
+% with the macro \DescribeMacro{\setpadnum}|\setpadnum|,
+% which takes a single integer as its argument.  By default,
+% this is |2|; but any integer whatsoever will work.
+%
+% \begin{center}\tabcolsep=0pt
+% \begin{tabular}{p{2in}r}
+% |\setpadnum{4}\padnum{4}| & \setpadnum{4}\padnum{4} \\
+% |\setpadnum{8}\padnum{42424}| & \setpadnum{8}\padnum{42424} \\
+% \end{tabular}
+% \end{center}
+%
+% You can set the character that will be used for padding
+% with \DescribeMacro{\setpadchar}|\setpadchar|.  In fact,
+% this need not be a character; it can be any expansible set
+% of tokens.
+%
+% \begin{center}\tabcolsep=0pt
+% \begin{tabular}{p{3.65in}r}
+% |\setpadnum{4}\setpadchar{*}=\padnum{4}=| &
+%		\setpadnum{4}\setpadchar{*}=\padnum{4}= \\
+% |\setpadnum{4}\setpadchar{\hskip1.2ex}=\padnum{4}=| &
+%		\setpadnum{4}\setpadchar{\hskip1.2ex}=\padnum{4}= \\
+% |\setpadnum{4}\setpadchar{*}=\padnum{\roman{temp}}=| &
+%		\setpadnum{4}\setpadchar{*}=\padnum{\roman{temp}}= \\
+% \end{tabular}
+% \end{center}
+%
+% That last example, incidentally, also demonstrates that we
+% can send a counter in any format, without regard to base,
+% and |padcount| will do its job.
+%
+% And that's it; just a small utility package.  Hope it's
+% useful in some way.
+%
+% \section{Implementation}
+%
+% We start with the macros to count characters, which we've
+% gently adapted from those of David Carlisle's answer on
+% \url{tex.stackexchange.com}, question 57598.
+%    \begin{macrocode}
+\newcount\pad@charcount%
+\def\pad@expandloop#1{%
+	\pad@xloop#1\relax
+}
+\def\pad@xloop#1{%
+	\ifx\relax#1%
+	\else%
+		\advance\pad@charcount by1%
+	\expandafter\pad@xloop%
+	\fi%
+}%
+\def\pad@countchar#1{%
+	\pad@charcount=0%
+	\expandafter\expandafter\pad@expandloop{#1}%
+}%
+%    \end{macrocode}
+% Now, we can set the defaults.  Set the padding level to
+% two characters and the padding character to |0|.  Also
+% define some throwaway counters for loops and
+% value-holding.
+%    \begin{macrocode}
+\newcount\pad@tmp%
+\newcount\pad@tmpi%
+\newcount\pad@num\pad@num=2%
+\def\pad@char{0}%
+%    \end{macrocode}
+% Now, the money:  count the characters, determine how many
+% new characters we need to print, then loop the appropriate
+% number of times to print them.
+%    \begin{macrocode}
+\def\padnum#1{%
+	\edef\pad@yy{#1}%
+	\expandafter\pad@countchar{\pad@yy}%
+	\pad@tmp=\pad@charcount%
+	\multiply\pad@tmp by-1%
+	\advance\pad@tmp by\pad@num%
+	\pad@tmpi=0%
+	\ifnum\pad@tmp>0%
+		\loop%
+			\ifnum\pad@tmpi<\pad@tmp%
+				\pad@char%
+				\advance\pad@tmpi by1%
+		\repeat%
+	\fi%
+	\leavevmode#1%
+}%
+%    \end{macrocode}
+% Lastly, some macros to reset the internal values used by
+% |\padnum|.
+%    \begin{macrocode}
+\def\setpadnum#1{\pad@num=#1}%
+\def\setpadchar#1{\def\pad@char{#1}}%
+%    \end{macrocode}
+% Happy \TeX{}ing!

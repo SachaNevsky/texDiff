@@ -1,0 +1,1505 @@
+% \iffalse
+% This is feyn.dtx, which manages the use of the feyn Metafont
+%
+%% This software is copyright 1991, 1994, 2001-2, 2005, 2008-17, Norman Gray.
+%% It is distributed under the terms of the 2-clause BSD Licence;
+%% see the file LICENCE for details.
+%
+%<+package|driver>%% VCS Info: Mercurial revision 558acb5f2e14, 2017-11-03 14:43 +0000, tag 0.4.1 + 0
+%<+package>\NeedsTeXFormat{LaTeX2e}
+%<+package>\ProvidesPackage{feyn}[2017/11/03 0.4.1]
+%<+package>\typeout{Package: `feyn' 0.4.1 <2017/11/03>}
+%
+%<*driver>
+\documentclass{ltxdoc}
+\usepackage{feyn}
+\title{The feyn font}
+\author{Norman Gray\\(\texttt{norman@astro.gla.ac.uk})}
+\date{Version 0.4.1, 2017 November 03}
+\newcommand\Lopt[1]{\textsf {#1}}
+\newcommand\file[1]{\texttt {#1}}
+\newcommand\Lcount[1]{\textsl {\small#1}}
+\newcommand\pstyle[1]{\textsl {#1}}
+%% \url macro (url.sty does this better)
+\def\setpathdots{\discretionary{.}{}{.}}
+\def\setpathslash{\discretionary{/}{}{/}}
+{\catcode`\.=\active
+ \catcode`\/=\active
+  \gdef\pathcats{%
+    \catcode`\%=12      \catcode`\~=12
+    \catcode`\.=\active  \let.\setpathdots
+    \catcode`\/=\active \let/\setpathslash
+    \catcode`\#=12      \catcode`\_=12}%
+    }
+\def\setpath#1{\ttfamily <\nobreak #1\nobreak>\endgroup}
+\def\url{\begingroup\pathcats\setpath}
+%\RecordChanges
+\OnlyDescription
+\parskip=\medskipamount
+\parindent=0pt
+\begin{document}
+\maketitle
+\DocInput{feyn.dtx}
+\end{document}
+%</driver>
+%
+% \fi
+%
+%
+%
+%% \CharacterTable
+%%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%%   Digits        \0\1\2\3\4\5\6\7\8\9
+%%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%%   Dollar        \$     Percent       \%     Ampersand     \&
+%%   Acute accent  \'     Left paren    \(     Right paren   \)
+%%   Asterisk      \*     Plus          \+     Comma         \,
+%%   Minus         \-     Point         \.     Solidus       \/
+%%   Colon         \:     Semicolon     \;     Less than     \<
+%%   Equals        \=     Greater than  \>     Question mark \?
+%%   Commercial at \@     Left bracket  \[     Backslash     \\
+%%   Right bracket \]     Circumflex    \^     Underscore    \_
+%%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%%   Right brace   \}     Tilde         \~}
+%
+% \CheckSum{680}
+%
+%
+%
+%
+% \newcommand{\pslash}{p\llap{/\kern-0.3pt}}
+% \newcommand{\feynx}{\pstyle{feyn}}
+% \newcommand{\metafont}{Metafont}
+%
+%
+%
+% This document describes the font \feynx, which can be used to produce relatively
+% simple Feynman diagrams within equations in a \LaTeX\ document.  The
+% package and font aims to be capable of producing all of the diagrams
+% of one- and two-loop QED and QCD, plus $\phi^4$ theory.
+%
+% The other Feynman diagram package which exists is Thorsten Ohl's
+% \textsl{feynmf}/\textsl{feynmp} package.  That
+% works by creating \metafont\ or MetaPost figures using a preprocessor.
+% It's more general than this package, but is at its best when
+% creating relatively large diagrams, for figures.
+% In contrast, the present system consists of a carefully-designed font
+% with which you can easily write simple diagrams, within equations or within text,
+% in a size matching the surrounding text size.
+%
+% \iftrue
+% \textbf{Contents:}
+% \def\numberline#1{\space\emph{\S#1}~}
+% \def\contentsline#1#2#3{#2,~p#3;}
+% \makeatletter \@starttoc{toc} \makeatother
+% \fi
+%
+% \subsection*{Status}
+%
+% The propagators and vertices which are implemented are those of one-
+% and two-loop QED and QCD, plus $\phi^4$ theory, plus a few extras
+% which commonly appear in non-figure displays (the practical
+% definition of `commonly appear is `which I wanted' or `which
+% people asked me for').  I'd be delighted to add others which folk
+% feel would be useful, as long as they're still in the rather simple
+% scope of the font.
+%
+% \newpage
+% \section{Description}
+%
+% You use the font by including the package \texttt{feyn.sty}, as in
+% \begin{verbatim}
+% \usepackage{feyn}
+% \end{verbatim}
+% If you use the `amsmath' package, you should load that before
+% loading the `feyn' package.\footnote{Because of a slight peculiarity
+% of the amsmath package, the active~`!' command described below will
+% not work properly within amsmath |{align}| or |{align*}|
+% environments unless the~`!' is made active globally.  This is done
+% by default if the `amsmath' package is loaded first, and not done by
+% default otherwise.  If you have to override this behaviour for some
+% very arcane reason, then you can force the global or local declaration
+% of~`!' using the \Lopt{globalbang} and \Lopt{noglobalbang} options
+% to the \texttt{$\backslash$usepackage\{feyn\}} command.}
+%
+% \makeatletter
+% \def\refptcirc{\lower\feyn@maxis \hbox to 0pt{\hss$\circ$\hss}}
+% \makeatother
+% \begin{table}
+% \def\tableskip{\noalign{\smallskip}}
+% \halign{$\refptcirc\Feyn{#}$%
+%     \hfil\quad & $#$\hfil\quad & # \hfil\qquad && # \cr
+% \omit Character & \omit  & Name & Width & Height & Depth \cr
+% \noalign{\smallskip\hrule\smallskip}
+% f & f &	    fermion$^{\dag}$
+%	& 2 & 0 & 0 \cr \tableskip
+% fs & fs &   short fermion
+%	& 1 & 0 & 0 \cr \tableskip
+% fl & fl &   fermion loop$^{\dag\ddag}$
+%	& 0 & $2-$ & 0 \cr \tableskip
+% flS & flS &  fermion loop (small)$^{\dag\ddag}$
+%       & 0 & 1 & 0 \cr \tableskip
+% flo & flo &   fermion loop (for $\phi^4$ theory)$^{\dag}$
+%       & 0 & 2 & 0 \cr \tableskip
+% fu & fu &   upward fermion$^\dag$ (45$^\circ$)
+%	& $\sqrt2$ & $\sqrt2$ & 0 \cr \tableskip
+% fd & fd &   downward fermion$^\dag$
+%	& $\sqrt2$ & $\sqrt2$ & 0 \cr \tableskip
+% fv & fv &   vertical fermion$^\dag$
+%	& 0 & 2 & 0 \cr \tableskip
+% f0 & f0 &   spacer
+%	& 2 & 0 & 0 \cr \tableskip
+% fs0 & fs0 & short spacer
+%	& 1 & 0 & 0 \cr \tableskip
+% g & g &	    gluon/photon$^{\dag}$
+%	& 2 & 0 & 0 \cr \tableskip
+% gl & gl &   gluon loop$^{\dag\ddag}$
+%	& 0 & $2-$ & 0 \cr \tableskip
+% glB & glB & gluon loop (big)$^{\dag}$
+%	& 0 & 2.67 & 0 \cr \tableskip
+% glS & glS & gluon loop (small)$^{\dag}$
+%	& 0 & 1.33 & 0 \cr \tableskip
+% g1\quad g2  & g1, g2  & gluon loop, 1st \& 2nd quadrants$^{\dag}$
+%       & 0 & 2 & 0 \cr \tableskip
+% g4\quad g3  & g4, g3  & gluon loop, 4th \& 3rd quadrants$^{\dag}$
+%       & 0 & 0 & -2 \cr \tableskip
+% gu & gu &   upward gluon$^\dag$ (45$^\circ$)
+%	& $\sqrt2$ & $\sqrt2$ & 0 \cr \tableskip
+% gd & gd &   downward gluon$^\dag$
+%	& $\sqrt2$ & $\sqrt2$ & 0 \cr \tableskip
+% gv & gv &   vertical gluon$^\dag$
+%	& 0 & 2 & 0 \cr \tableskip
+% m & m &	    massive fermion$^{\dag}$
+%	& 2 & 0 & 0 \cr \tableskip
+% ms & ms &   short massive fermion
+%	& 1 & 0 & 0 \cr \tableskip
+% h & h &	    ghost$^{\dag}$
+%	& 2 & 0 & 0 \cr \tableskip
+% hs & hs &   short ghost
+%	& 1 & 0 & 0 \cr \tableskip
+% hu & hu &   upward ghost$^{\dag}$ (45$^\circ$)
+%	& $\sqrt2$ & $\sqrt2$ & 0 \cr \tableskip
+% hd & hd &   downward ghost$^{\dag}$
+%	& $\sqrt2$ & $\sqrt2$ & 0 \cr \tableskip
+% hl & hl &   ghost loop$^{\dag\ddag}$
+%         & 0 & $2-$ & 0 \cr\tableskip
+% x & x &	    counterterm vertex & 0 & $a$ & $-a$ \cr \tableskip
+% p & p &	    proper vertex	& - & - & - \cr \tableskip
+% P & P &	    proper vertex (variant)	& - & - & - \cr \tableskip
+% c & c &	    complete vertex	& - & - & - \cr \tableskip
+% a & a &	    arrow$^\dag$	& 0 & 0 & 0 \cr
+% }
+% \caption{\label{chars} The characters in font \feynx, and their
+% reference points, marked with circles.  Characters
+% marked~$\dag$ have arrowed variants indicated with~`A' and~`V' suffixes;
+% and characters marked~$\ddag$ have an upside-down variant
+% indicated with a `u' suffix.  The `u' must come before the `A' or
+% `V'. Character `a' has an `arrowed variant' in the sense that `aV'
+% produces a backward arrow. A length of `$2-$' indicates a length
+% slightly less than two units, for aesthetic reasons.}
+% \end{table}
+%
+% The characters in the font are shown in table~\ref{chars}.
+% These are shown in textstyle size, but all characters are also available in
+% displaystyle size.
+% All of the displaystyle characters are additionally offset vertically
+% up to the math axis, which has height~$a$.
+% All the dimensions are shown as multiples of the
+% length of a module which is the length of the short fermion.
+% The~$\circ$ shows the reference point of each character.
+% The proper vertex and the complete vertex are specified
+% in terms of a `blob-radius' which is about half a module.
+% They have a width of 2~radii, and a height and depth of 1~radius.
+%
+% Each of the characters marked with a~$\dag$ in the table has two
+% arrowed variants, so that |\feyn{fA + gV}| produces $\feyn{fA +
+% gV}$.  The `A' variants produce arrows pointing rightwards or
+% upwards, and the `V' variants arrows pointing leftwards or
+% downwards.  The characters marked with a~$\ddag$ also have an
+% upside-down variant, thus `flu' is an upside-down variant of the
+% fermion loop, and `fluV' an arrowed variant.
+%
+% Note that the fermion, gluon and ghost half-loop characters are
+% slightly shorter than the height you might expect.  These characters
+% are deliberately slightly squashed partly because that makes them
+% look slightly better (in my opinion!) in a one-loop self-energy
+% diagram, but also so that the `gl glu' or `fl flu' loop in a
+% two-loop diagram looks better.  The loop formed by the pair of `g1
+% g2' is the size you might expect.  See section~\ref{s:examples} below
+% for some illustrations of this.
+%
+% The unnassigned positions in the \feynx\ font are filled
+% with an obviously wrong dummy character, so that |$\feyn{A}$|, for example,
+% produces $\feyn{fs0Afs0}$.
+%
+% If you were to print out a font table, you would discover that many
+% of the glyphs in the font can be obtained using single
+% characters, rather than the ligatures mentioned in the table.  Do
+% not be tempted to use this as a shortcut, since the assignment of
+% glyphs to character positions may be changed without warning from release to
+% release, as long as the ligature maps remain valid.
+%
+% The file \file{feyn.sty} additionally defines a number of macros,
+% described here.
+% \begin{description}
+% \item[\cs{feyn}] Selects the diagram font.  This must be used
+%     within math mode.  \cs{Feyn} selects the text-mode diagram font.
+% \item[\cs{momentum}\{ch\}\{text\}] sets the character
+%     `ch', which may be a ligature, and puts the given text at the recommended
+%     annotation position for that character.  |\momentum[pos]{ch}{text}|
+%     is the same, except that the optional argument indicates the
+%     position relative to the annotation position.  It must be one of
+%     `top', `urt', `lrt', `bot', `llft' or `ulft'.  This is rarely
+%     used as such, since the |\feyn| and |\Feyn|
+%     commands make~`!' a temporarily active character, and define it
+%     to be |\momentum|.  See section~\ref{s:examples} for
+%     examples and further discussion.
+% \item[\cs{belowl\{\}}] A common pattern in diagrams is to have a pair
+%     of incoming or outgoing propagators.  If the lower one of this
+%     pair is enclosed within |\belowl{...}|, then it is set so that it
+%     occupies zero horizontal space, and moved leftwards and
+%     downwards, to fit under the upper of the pair of propagators.
+%     The command |\belowr{...}| is the same, except that the argument
+%     is moved rightwards.
+%     See examples below.
+% \item[\cs{Diagram\{\}}] This is for building more complicated diagrams.  It
+%     takes one argument, which is like the contents of an \texttt{\{array\}}
+%     environment---a series of formulae separated by \&'s and \verb-\\-.  See
+%     below for an example.  The result is a box on the math-axis.
+% \item[\cs{maxis}] Raises a formula to the math-axis, which is
+%     occasionally useful  within in-text equations: eg
+%     |$\Feyn{fglf} - \maxis{\Feyn{faf}}$| produces
+%     $\Feyn{fglf} - \maxis{\Feyn{faf}}$.
+% \item[\cs{vertexlabel\{p\}\{text\}}] Allows you to label a vertex.  If
+%     the first parameter~$p$ is~$\wedge$, the~\emph{text} is placed above the
+%     point at which the command is given, if it is~\texttt{\_}, it is
+%     placed below. For example, |$\feyn{f\vertexlabel^{a}}$| produces
+%     $\feyn{f\vertexlabel^{a}}$.  More often used within |\Diagram|
+%     than elsewhere.
+% \item[\cs{feynstrut\{h\}\{d\}}] For use within an (eqn)array environment, or
+%     the like. It modifies the control sequence \verb-\strut- to be a strut of
+%     height~$h$ and depth~$d$ modules, which can therefore be used to
+%     space the array out.  Note that it modifies |\strut|, rather
+%     than being the strut itself.
+% \item[\cs{annotate\{x\}\{y\}\{text\}}] Puts the \emph{text}, between dollars,
+%     in a zero width box at offset~$(x,y)$ modules from the position of the
+%     |\annotate| command (which is generally the first command(s) after
+%     entering math-mode).  Because the \emph{text} is in math-mode, anything
+%     that is not maths should be in an |\mbox|.  You will probably
+%     use this only rarely, as the |\momentum| command supports most
+%     of the annotation you will need.
+% \end{description}
+%
+% The \feynx\ font is modular, in the sense that all the
+% dimensions are in terms of a module of 10pt, and all sizes given
+% below are in units of modules.  As well as 10pt, the font has
+% versions for 11pt, 12pt, 18pt and 24pt text, and the most
+% appropriate one is selected depending on the text size declared (or
+% defaulted) in the |\documentclass| command.  This range of sizes
+% seems to be appropriate for the sizes required, but the author would
+% welcome comments on this.  The distribution
+% contains a sample file using the 18pt \feynx\ font in a
+% \texttt{foiltex} document.
+%
+% You draw a diagram by going into math-mode (between \$\dots\$), and selecting
+% the diagrams font by the font-changing command \verb-\feyn{}-
+% (exactly as you might use \verb-\mathrm- in math-mode). With a couple of
+% exceptions, all the characters are obtained by typing a single
+% letter, or a couple of letters which form a ligature, so that the
+% letter~$f$ in the diagrams font (\verb-$\feyn{f}$-) produces a
+% fermion of length~2 (modules), and~$fs$ produces a short fermion of
+% length~1.  As usual in maths mode, space characters are ignored, so
+% you can add whitespace as required to make the expressions more
+% legible.   Some of the more heavily used characters are available in
+% both display size and text size, with the text-size version invoked
+% by |\Feyn{...}|, so that |\feyn{fglf}| gives $\feyn{fglf}$ and
+% |\Feyn{fglf}| gives $\Feyn{fglf}$.  The displaystyle characters
+% are all on the math-axis, the textstyle ones are on the text line.
+%
+% The display and text sizes of diagrams (that is, as produced by
+% |\feyn| and |\Feyn| respectively) are intended to be used
+% within equations, and they are sized accordingly.  When diagrams
+% have significantly complicated annotation, however, this size can
+% look unhelpfully cramped, and it is for this case that there is an
+% `extended' set of diagram characters, which are approximately double
+% the size, and are available, in |\displaystyle| only, with the
+% |\FEYN| and |\DIAGRAM| macros.  These are used exactly like the
+% |\feyn| and |\Diagram| macros.  Note
+% that the line width, the module used by the (rare) |\annotate| command, and the math
+% axis, do not change from the sizes they have for the |\feyn|
+% command.  That is, this font is \emph{not} the appropriate one to
+% use if you simply want a larger font size -- in that case, simply
+% increase the \LaTeX\ font size and the \feynx\ font will change in
+% size accordingly.  See below for an example of the use of |\FEYN|.
+%
+% \subsection{More complicated diagrams}
+%
+% \newdimen\halftextwidth
+% \halftextwidth=\textwidth
+%   \advance\halftextwidth by -\tabcolsep
+%   \advance\halftextwidth by -\arrayrulewidth
+%   \divide\halftextwidth by 2
+% \newenvironment{codeexample}
+%    {\vskip\medskipamount
+%     \def\Becomes{\cr
+%                  \noalign{\vrule width \arrayrulewidth \hskip\tabcolsep}}
+%     \valign\bgroup
+%               \hrule height 0pt depth 0pt width \halftextwidth
+%               \hsize=\halftextwidth
+%               \vfil ## \vfil \cr}
+%    {\crcr\egroup
+%     \vskip\medskipamount}
+% \newenvironment{examplerhs}{\begin{minipage}[t]{\halftextwidth}}
+%                            {\\ \end{minipage}}
+%
+%
+% The \feynx\ font is designed so that simple diagrams are simple to
+% produce, and are as far as possible writable as a single line of
+% characters.  There are a couple of more complicated diagrams which
+% are drawable without too much effort.
+%
+% A common pattern in diagrams is to have a pair
+% of incoming or outgoing propagators.  If the lower one of this
+% pair is enclosed within |\belowl{...}|, then it is set so that it
+% occupies zero horizontal space, and moved leftwards and
+% downwards, to fit under the upper of the pair of propagators.  For
+% example the sequence |\feyn{f gu \belowl{fd}}| would put the downward
+% fermion directly below the upward gauge boson.  See below for this
+% and other examples.
+%
+% The second way of composing more complicated diagrams is to use the
+% |\Diagram| macro.  This allows you to lay out a diagram in an
+% array-like environment, each cell of which is set within a
+% |\feyn{...}| macro.  On the right is the same diagram drawn with
+% lines indicating the boundaries between the cells.
+% \begin{codeexample}
+% \begin{verbatim}
+%   \Diagram{   & x \\
+%            fs & gv f & gu \\
+%               &      & fd }
+% \end{verbatim}
+% \Becomes
+% \begin{examplerhs}$
+%   \Diagram{   & x \\
+%            fs & gv f & gu \\
+%               &      & fd }
+%   \qquad\left(\quad
+%   \makeatletter
+%   \Diagram{          &\vrule x    &\vrule height \feyn@maxis \\
+%            \hline fs &\vrule gv f &\vrule height \feyn@module gu \\
+%            \hline    &\vrule height 0.7\feyn@module &\vrule fd \\
+%            \iffalse \hline    &\vrule height \feyn@module &\vrule\fi
+%            }
+%   \quad\right)
+% $\end{examplerhs}
+% \end{codeexample}
+%
+% The |\Diagram| and |\DIAGRAM| macros take an optional argument of
+% either `centre' or `bottom': with `centre', the diagram is centred
+% on the math axis, with `bottom' the reference point of the diagram
+% is the reference point of the bottom-most row of the array.  The
+% default is `centre'.
+%
+% Before the introduction of the |\belowl| macro in \feynx~v0.4, this
+% was the only way to produce this pair of angled propagators one on
+% top of the other.  With |\belowl|, however, an alternative way of
+% producing this diagram is as shown below.
+% \begin{codeexample}
+% \begin{verbatim}
+% \feyn{fs
+%   \Diagram[bottom]{x\\gv}
+%   f gu\belowl{fd}}
+% \end{verbatim}
+% \Becomes
+% \begin{examplerhs}$
+% \feyn{fs
+%   \Diagram[bottom]{x\\gv}
+%   f gu\belowl{fd}}
+% $\end{examplerhs}
+% \end{codeexample}
+%
+% Diagrams much more complicated than this are probably better dealt
+% with using Thorsten Ohl's \textsl{feynmf/feynmp} package.
+%
+% \section{Examples}
+% \label{s:examples}
+%
+% A simple propagator:
+% \begin{codeexample}
+% \begin{verbatim}
+% \feyn{\vertexlabel^a
+%     !{fA}p \vertexlabel^b}
+% = \displaystyle
+%     \frac{i\delta^{ab}}
+%          {\pslash-m_0}}
+% \end{verbatim}
+% \Becomes
+% \begin{examplerhs}$
+%   \feyn{\vertexlabel^a
+%     !{fA}p \vertexlabel^b}
+%   = \displaystyle
+%     \frac{i\delta^{ab}}{\pslash-m_0}
+% $\end{examplerhs}
+% \end{codeexample}
+%
+% The |\Diagram| command lays out its arguments as an array.
+% \begin{codeexample}
+% \begin{verbatim}
+%  \Diagram{\vertexlabel^a \\
+%    fd \\
+%      & g\vertexlabel_{\mu,c} \\
+%    \vertexlabel_b fu\\
+%    }
+%  = ig\gamma_\mu (T^c)_{ab}
+% \end{verbatim}
+% \Becomes
+% \begin{examplerhs}$
+% \Diagram{\vertexlabel^a \\
+% 		fd \\
+% 		    & g\vertexlabel_{\mu,c} \\
+% 		\vertexlabel_b fu\\
+% 	    }
+%     = ig\gamma_\mu (T^c)_{ab}
+% $\end{examplerhs}
+% \end{codeexample}
+% The |\Diagram| is here necessary only for the vertex labels.
+% Without those, it would be as simple as:
+% \begin{codeexample}
+% \begin{verbatim}
+% \feyn{fd \belowl{fu} g
+%   = ig\gamma_\mu (T^c)_{ab}}
+% \end{verbatim}
+% \Becomes
+% \begin{examplerhs}$
+% \feyn{fd \belowl{fu} g} = ig\gamma_\mu (T^c)_{ab}
+% $\end{examplerhs}
+% \end{codeexample}
+%
+% An assortment of two-loop diagrams:
+% \begin{codeexample}
+% \begin{verbatim}
+% \feyn{fs f gl f glu f fs}
+% \end{verbatim}
+% \Becomes
+% $\feyn{fs f gl f glu f fs}$
+% \end{codeexample}
+% This is a ``short-fermion fermion gluon-loop fermion
+% gluon-loop-upsidedown fermion short-fermion''.
+%
+% We can include vertical gluons:
+% \begin{codeexample}
+% \begin{verbatim}
+% \feyn{ms mA g1 gv g2 ms x f}
+% \end{verbatim}
+% \Becomes
+% $\feyn{ms mA g1 gv g2 ms x f}$
+% \end{codeexample}
+% Note, in this example, that the gluon loop is formed by a pair of
+% `g1 g2' characters.  This is because the `gl' half-loop character is
+% deliberately slightly squashed, and wouldn't meet the vertical gluon
+% properly.  The half-loop character is squashed (as are
+% the fermion and ghost half-loops) partly because it looks
+% slightly better in a one-loop self-energy diagram, but also so that
+% the `gl glu' two-gluon loop in a two-loop diagram looks better:
+% \begin{codeexample}
+% \begin{verbatim}
+% \Diagram{&gl glu\\
+%  fsf g1 f&f g2 ffs \\}
+% \end{verbatim}
+% \Becomes
+% \begin{examplerhs}$
+% \Diagram{&gl glu\\
+% fsf g1 f&f g2 ffs \\}
+% $\end{examplerhs}
+% \end{codeexample}
+% The diagrams for `hl hlu' or `flA fluV', for example, are very similar.
+%
+% The |\momentum| command (more usually called with simply the~`!'
+% character) allows you to annotate a propagator with a momentum or a
+% particle label.  For example
+% \begin{codeexample}
+% \begin{verbatim}
+% \feyn{fA + !{fA}{p} + ![bot]{fA}{p}}
+% \end{verbatim}
+% \Becomes
+% \begin{examplerhs}$
+% \feyn{fA + !{fA}{p} + ![bot]{fA}{p}}
+% $\end{examplerhs}
+% \end{codeexample}
+%
+% \begin{codeexample}
+% \begin{verbatim}
+% \feyn{f !{g1A}1 !{g2V}2
+%   !{g3A}3 !{g4V}4 f},
+% \feyn{fs f !{flA}{p}
+%       !{fluV}{k} f fs}
+% \end{verbatim}
+% \Becomes
+% \begin{examplerhs}$
+% \feyn{f !{g1A}1 !{g2V}2
+%   !{g3A}3 !{g4V}4 f},
+% \feyn{fs f !{flA}{p}
+%       !{fluV}{k} f fs}
+% $\end{examplerhs}
+% \end{codeexample}
+%
+% \begin{codeexample}
+% \begin{verbatim}
+% \feyn{!{fA}p
+%    f!{glBV}k !{glSA}l
+%    a\vertexlabel_{p+k-l} ff}
+% \end{verbatim}
+% \Becomes
+% \begin{examplerhs}$
+% \feyn{!{fA}p
+%    f!{glBV}k !{glSA}l
+%    a\vertexlabel_{p+k-l} ff}
+% $\end{examplerhs}
+% \end{codeexample}
+%
+% \newenvironment{bigdisplay}[1]
+%    {\endgraf
+%     \penalty 50 \vskip 0.5\baselineskip plus 0.5\textheight
+%     \vbox\bgroup
+%     #1\endgraf \smallskip
+%     \vbox{\hrule\hbox to \textwidth{\vrule height 1.5ex\hfil\vrule}}%
+%     \parskip0pt}
+%    {\vbox{\hbox to \textwidth{\vrule height 1.5ex \hfil\vrule}\hrule}
+%     \egroup}
+%
+% \begin{bigdisplay}{Bremsstrahlung:}
+% \begin{verbatim}
+% \[
+%   \Diagram{        & x \\
+%                    & ![ulft]{gvV}{q=p'+k-p} & !{guA}k \\
+%        ![bot]{fA}p & ![bot]{fA}{p'+k}       & ![lrt]{fA}{p'} \\
+%         }
+%         +
+%   \Diagram{    & !{guA}k \\
+%         !{fA}p & ![bot]{fA}{p-k} fs & !{fA}{p'} \\
+%                &                    & ![lrt]{gvA}{q=p'+k-p} \\
+%                &                    & x\\
+%         }
+% \]
+% \end{verbatim}
+% \hrule
+% \[
+%   \Diagram{        & x \\
+%                    & ![ulft]{gvV}{q=p'+k-p}   & !{guA}k \\
+%            ![bot]{fA}p & ![bot]{fA}{p'+k} & ![lrt]{fA}{p'} \\
+%         }
+%         +
+%   \Diagram{    & !{guA}k \\
+%            !{fA}p & ![bot]{fA}{p-k} fs & !{fA}{p'} \\
+%                &         & ![lrt]{gvA}{q=p'+k-p} \\
+%                &         & x\\
+%         }
+% \]
+% \end{bigdisplay}
+%
+% \begin{bigdisplay}{And now the same, with
+% \texttt{\textbackslash belowl} and \texttt{\textbackslash belowr}:}
+% \begin{verbatim}
+% \[
+% \def\stack#1#2{\Diagram[bottom]{#1\\#2}}
+% \feyn{
+%   !{fA}p
+%     \stack{x}{![ulft]{gvV}{q=p'+k-p}}
+%     ![bot]{fA}{p'+k}
+%     \stack{!{guA}k}{![lrt]{fA}{p'}}
+%   +
+%   !{fA}p
+%     \belowr{![llft]{gdA}k} !{fA}{p-k}
+%     fs
+%     \stack x{!{gvV}{q=p'+k-p}} !{fA}{p'}}
+% \]
+% \end{verbatim}
+% \hrule
+% \[
+% \def\stack#1#2{\Diagram[bottom]{#1\\#2}}
+% \feyn{
+%   !{fA}p
+%     \stack{x}{![ulft]{gvV}{q=p'+k-p}}
+%     ![bot]{fA}{p'+k}
+%     \stack{!{guA}k}{![lrt]{fA}{p'}}
+%   +
+%   !{fA}p
+%     \belowr{![llft]{gdA}k} !{fA}{p-k}
+%     fs
+%     \stack x{!{gvV}{q=p'+k-p}} !{fA}{p'}}
+% \]
+% \end{bigdisplay}
+%
+% The |\stack| macro isn't defined by the \feynx\ package, but
+% it is useful enough that you might want to define it as one of your
+% own macros.
+%
+% \iffalse
+% We can also have diagrams in the text, like~$\Feyn{fsfglffs}$, and we can
+% annotate the diagrams
+% \begin{codeexample}
+% \begin{verbatim}
+% \annotate{2}{-0.5}
+%     {\mbox{counterterm}}
+% \feyn{ms m gl ![llft]{gv}l
+%       ms x f}
+% \end{verbatim}
+% \Becomes
+% \begin{examplerhs} $
+% \annotate{2}{-0.5}
+%     {\mbox{counterterm}}
+% \feyn{ms m gl ![llft]{gv}l
+%       ms x f}
+% $\end{examplerhs}
+% \end{codeexample}
+% This is a ``short-massive massive gluon-loop gluon-vertical
+% short-massive counterterm fermion''.
+% \fi
+%
+% \begin{bigdisplay}{The expression for the heavy-fermion self-energy in the \textsc{ope} is:}
+% \begin{verbatim}
+% \def\bracket#1{\langle #1 \rangle}
+% \def\stack#1#2{\Diagram[bottom]{#1\\#2}}
+% \begin{eqnarray*}
+% -i\Sigma_{\rm ope} &=&
+%     \left[ \feyn{faf + fsfglffs + \cdots} \right] 1
+%               \feynstrut{1}{1}\strut \\
+%     && \quad{}+ \left[ \feyn{ fxfs0glfs0xf + \cdots} \right]
+%         \bracket{\overline\psi M \psi} \\
+%     && \quad{}+ \left[
+%                   \feyn{fs \stack x{gv} fs \stack x{gv} fs} + \cdots
+%                 \right]
+%         \bracket{G_{\mu\nu}^a G_{\mu\nu}^a}\\
+% \end{eqnarray*}
+% \end{verbatim}
+% \hrule
+% \def\bracket#1{\langle #1 \rangle}
+% \def\stack#1#2{\Diagram[bottom]{#1\\#2}}
+% \begin{eqnarray*}
+% -i\Sigma_{\rm ope} &=&
+%     \left[ \feyn{faf + fsfglffs + \cdots} \right] 1
+%               \feynstrut{1}{1}\strut \\
+%     && \quad{}+ \left[ \feyn{ fxfs0glfs0xf + \cdots} \right]
+%         \bracket{\overline\psi M \psi} \\
+%     && \quad{}+ \left[
+%                   \feyn{fs \stack x{gv} fs \stack x{gv} fs} + \cdots
+%                 \right]
+%         \bracket{G_{\mu\nu}^a G_{\mu\nu}^a}\\
+% \end{eqnarray*}
+% \end{bigdisplay}
+%
+% Now for two examples using |\FEYN|:
+% \begin{codeexample}
+% \begin{verbatim}
+% \feyn{f gu \belowl{fd}}
+% \end{verbatim}
+% \Becomes
+% \begin{examplerhs}$
+% \feyn{f gu \belowl{fd}}
+% $\end{examplerhs}
+% \end{codeexample}
+% \begin{codeexample}
+% \begin{verbatim}
+% \FEYN{
+%    !{fA}s !{gu}{W^-_\mu}
+%      \belowl{!{fdA}u}
+% }
+% \end{verbatim}
+% \Becomes
+% \begin{examplerhs}$
+% \FEYN{
+%    !{fA}s !{gu}{W^-_\mu} \belowl{!{fdA}u}
+% }
+% $\end{examplerhs}
+% \end{codeexample}
+% \begin{codeexample}
+% \begin{verbatim}
+% \DIAGRAM{
+%    !{fA}s &!{gu}{W^-_\mu}\\
+%           & !{fdA}u
+% }
+% \end{verbatim}
+% \Becomes
+% \begin{examplerhs}$
+% \DIAGRAM{!{fA}s &!{gu}{W^-_\mu}\\ & !{fdA}u}
+% $\end{examplerhs}
+% \end{codeexample}
+%
+% \begin{bigdisplay}{The Feynman Rules are as follows:}
+% \begin{verbatim}
+% \def\arraystretch{3} \arraycolsep=0.2cm
+% \[ \begin{array}{rcl}
+% \feyn{\vertexlabel^a !{fA}p \vertexlabel^b} % quark prop
+%   &=& \displaystyle
+% 	{i\delta^{ab} \over \pslash- m_0} \\
+%
+% \Diagram{\vertexlabel^a \\ fd \\ & g\vertexlabel_{\mu,c} \\
+%    \vertexlabel_b fu\\}  % 3-point vertex
+%  &=& \displaystyle
+%    ig\gamma_\mu (t^c)_{ab} \\
+%
+% \feyn{\vertexlabel_{\mu, a} !{gA}k \vertexlabel_{\nu, b}} % gluon prop
+% &=& \displaystyle
+%   {-i\over k^2} \left[g_{\mu\nu} + (a_0 - 1) {k_\mu k_\nu \over k^2}\right]
+%   \delta^{ab} \\
+%
+% \Diagram{\vertexlabel^{\alpha,a} \\
+%          !{gdA}p \\
+%                  & !{gA}r \vertexlabel_{\gamma,c} \\
+%          !{guA}q \\
+%          \vertexlabel_{\beta,b}
+%         } % 3-gluon vertex
+%     &=& \displaystyle
+% 	-g f^{abc} (
+% 	g_{\beta\gamma}  (q-r)_\alpha +
+% 	g_{\gamma\alpha} (r-p)_\beta +
+% 	g_{\alpha\beta}  (p-q)_\gamma
+% 	) \\
+%
+% \feyn{\vertexlabel^a !hp \vertexlabel^b} % ghost prop
+% &=& \displaystyle
+% 	{i \over p^2} \delta_{ab} \\
+%
+% \Diagram{\vertexlabel^b \\ hd \\ & g\vertexlabel^{\mu,a} \\
+%    \vertexlabel_c hu\\} % ghost-gluon vertex
+% &=& \displaystyle
+% 	-g f^{abc}p_\mu
+% 	\quad\raise 1ex\hbox{\vtop{\hsize=15em
+% 	    where $p$ is the momentum of the outgoing positive energy
+%           ghost\par}}
+% \end{array} \]
+% \end{verbatim}
+% \end{bigdisplay}
+%
+% \begin{bigdisplay}{\dots giving:}
+% \def\arraystretch{3} \arraycolsep=0.2cm
+% \[ \begin{array}{rcl}
+%     \feyn{\vertexlabel^a !{fA}p \vertexlabel^b}
+%     &=& \displaystyle
+% 	{i\delta^{ab} \over \pslash- m_0} \\
+%
+%     \Diagram{\vertexlabel^a \\ fd \\ & g\vertexlabel_{\mu,c} \\
+%          \vertexlabel_b fu\\}
+%     &=& \displaystyle
+% 	ig\gamma_\mu (t^c)_{ab} \\
+%
+%     \feyn{\vertexlabel_{\mu, a} !{gA}k \vertexlabel_{\nu, b}}
+%     &=& \displaystyle
+%     {-i\over k^2} \left[g_{\mu\nu} + (a_0 - 1) {k_\mu k_\nu \over k^2}\right]
+%     \delta^{ab} \\
+%
+% \Diagram{\vertexlabel^{\alpha,a} \\
+%          !{gdA}p \\
+%                  & !{gA}r \vertexlabel_{\gamma,c} \\
+%          !{guA}q \\
+%          \vertexlabel_{\beta,b}
+%         }
+%     &=& \displaystyle
+% 	-g f^{abc} (
+% 	g_{\beta\gamma}  (q-r)_\alpha +
+% 	g_{\gamma\alpha} (r-p)_\beta +
+% 	g_{\alpha\beta}  (p-q)_\gamma
+% 	) \\
+%
+%     \feyn{\vertexlabel^a !hp \vertexlabel^b}
+%     &=& \displaystyle
+% 	{i \over p^2} \delta_{ab} \\
+%
+%     \Diagram{\vertexlabel^b \\ hd \\ & g\vertexlabel^{\mu,a} \\
+% 	\vertexlabel_c hu\\}
+%     &=& \displaystyle
+% 	-g f^{abc}p_\mu
+% 	\quad\raise 1ex\hbox{\vtop{\hsize=15em
+% 	    where $p$ is the momentum of the outgoing positive energy
+%           ghost\par}}
+% \end{array} \]
+% \end{bigdisplay}
+%
+% \begin{bigdisplay}{The diagrams can very naturally appear as parts of equations
+% (as is perhaps by now obvious):}
+% \begin{verbatim}
+% \begin{eqnarray}
+% \feyn{fcf} &=& \feyn{faf + fpf + fpfpf + \cdots} \\
+%     &=& \sum_{n=0}^\infty \feyn{fsafs ( pfsafs)}^n \\
+%     &=& \feyn{\frac{fsafs}{1-(pfsafs)}}.
+% \end{eqnarray}
+% \end{verbatim}
+% \hrule
+% \begin{eqnarray}
+% \feyn{fcf} &=& \feyn{faf + fpf + fpfpf + \cdots} \\
+%     &=& \sum_{n=0}^\infty \feyn{fsafs ( pfsafs)}^n \\
+%     &=& \feyn{\frac{fsafs}{1-(pfsafs)}}.
+% \end{eqnarray}
+% \end{bigdisplay}
+%
+% \section{Installation}
+%
+% The nominal distribution point for the Feyn package is CTAN,
+% under \texttt{fonts/feyn}\footnote{\url{https://ctan.org/pkg/feyn}}.
+%
+% The feyn package is included in the TeXLive distribution\footnote{\url{http://www.tug.org/texlive/}}, so
+% you may have it on your machine already.  If not, or if you need a
+% more up-to-date version, read on.
+%
+% Since the package is on CTAN, it should be easily installed and
+% updated using the tools which support this in your TeX distribution.
+% For TeXLive, that's
+% `tlmgr'\footnote{\url{https://www.tug.org/texlive/tlmgr.html}}, and
+% for MikTeX see the maintenance section of the
+% manual\footnote{\url{https://docs.miktex.org/faq/maintenance.html}}.
+%
+% \subsection{Installing by hand}
+%
+% If, for some reason, you need to install the package by hand, then
+% you should be able to find generic instructions for installing
+% \LaTeX\ files at
+% \url{http://www.tex.ac.uk/cgi-bin/texfaq2html?label=installthings}.
+%
+% In brief: If you have not done so already, you need to extract the package
+% file from the distribution file using |latex feyn.ins|.  The
+% resulting \file{feyn.sty} should be installed in the usual location
+% for style files -- that is, something like
+% \file{texmf.local/tex/latex/feyn.sty}.  The \metafont\ source files
+% \file{*.mf} should be installed in a directory with a location such as
+% \file{texmf.local/fonts/source/feyn/}.  That should be all you need
+% to do as regards the installation of the fonts -- if your \TeX\
+% setup is installed correctly, then the usual font-generation
+% commands (such as \file{mktexpk} for example) should work as normal,
+% and these will usually be invoked by default when \LaTeX\ or
+% pdf\LaTeX\ is run.
+%
+% If you are using a \TeX\ system based on TeXLive (which is true of most Unix
+% installations, and most macOS installations), then you can
+% determine the style-file and \metafont\ search paths using the commands
+% \begin{verbatim}
+% % kpsepath tex
+% % kpsepath mf
+% \end{verbatim}
+% respectively.  After you have installed them, you will probably need
+% to give the command \texttt{mktexlsr} to rebuild the paths database,
+% and you can confirm that the files are findable with the commands
+% \texttt{kpsewhich feyn.sty} and \texttt{kpsewhich feyn10.mf}.
+%
+% \section{Licence}
+%
+% The following is the text of the BSD 2-clause licence.
+%
+% All rights reserved.
+%
+% Redistribution and use in source and binary forms, with or without
+% modification, are permitted provided that the following conditions are
+% met:
+%
+% 1. Redistributions of source code must retain the above copyright
+% notice, this list of conditions and the following disclaimer.
+%
+% 2. Redistributions in binary form must reproduce the above copyright
+% notice, this list of conditions and the following disclaimer in the
+% documentation and/or other materials provided with the distribution.
+%
+% This software is provided by the copyright holders and contributors
+% ``as is'' and any express or implied warranties, including, but not
+% limited to, the implied warranties of merchantability and fitness for
+% a particular purpose are disclaimed. in no event shall the copyright
+% holder or contributors be liable for any direct, indirect, incidental,
+% special, exemplary, or consequential damages (including, but not
+% limited to, procurement of substitute goods or services; loss of use,
+% data, or profits; or business interruption) however caused and on any
+% theory of liability, whether in contract, strict liability, or tort
+% (including negligence or otherwise) arising in any way out of the use
+% of this software, even if advised of the possibility of such damage.
+%
+%
+% \subsection*{Acknowledgements}
+%
+% Thanks to Purnendu Chakraborty, Fabio Correa, Bryan Chen, Hoang
+% Nghia Nguyen and Luciano Pandola for
+% suggestions and testing (and encouragement) at various times.
+%
+%
+% \StopEventually{}
+%
+% \section{Implementation}
+%    \begin{macrocode}
+%<*package>
+%    \end{macrocode}
+%
+% Start off with the available options.
+%
+% A wrinkle is that the |{align}| environment, which is defined
+% in the amsmath package, reads its contents before processing them,
+% which means that a `!' within the environment has its catcode fixed
+% before it can be changed by |\feyn| or |\diagram|.  To handle this
+% situation, we support \Lopt{globalbang} and \Lopt{noglobalbang}
+% options, which cause the `!' character to be redefined globally or
+% not.  The default depends on whether the amsmath package was loaded
+% before this one was.
+%    \begin{macrocode}
+\newif\ifFeyn@globalbang
+\@ifpackageloaded{amsmath}{\Feyn@globalbangtrue}{\Feyn@globalbangfalse}
+\DeclareOption{globalbang}{\Feyn@globalbangtrue}
+\DeclareOption{noglobalbang}{\Feyn@globalbangfalse}
+%    \end{macrocode}
+%
+% Now process the options specified in the package command.
+%    \begin{macrocode}
+\ProcessOptions
+%    \end{macrocode}
+%
+% Declare the feyn math font family.  The |\skewchar| for this font
+% (see the \TeX book, p431) can be set to zero, since it's a
+% completely upright maths font (the least of its peculiarities).  We
+% don't have the font in much of a range of sizes.
+%    \begin{macrocode}
+\DeclareFontFamily{OMS}{feyn}{\skewchar\font'000}
+\DeclareFontShape{OMS}{feyn}{m}{n}{%
+	<-10.5>feyn10%
+	<10.5-11.5>feyn11%
+	<11.5-15>feyn12%
+        <15-21>feyn18%
+        <21->feyn24%
+	}{}
+%    \end{macrocode}
+%
+% Now do the same for the text-size fonts, declaring the textfeyn math
+% font family.
+%    \begin{macrocode}
+\DeclareFontFamily{OMS}{textfeyn}{\skewchar\font'000}
+\DeclareFontShape{OMS}{textfeyn}{m}{n}{%
+	<-10.5>feyntext10%
+	<10.5-11.5>feyntext11%
+	<11.5-15>feyntext12%
+        <15-21>feyntext18%
+        <21->feyntext24%
+	}{}
+%    \end{macrocode}
+%
+% Finally, do the same for the extended-size fonts, declaring the
+% feynx math font family.
+%    \begin{macrocode}
+\DeclareFontFamily{OMS}{feynx}{\skewchar\font'000}
+\DeclareFontShape{OMS}{feynx}{m}{n}{%
+	<-10.5>feynx10%
+	<10.5-11.5>feynx11%
+	<11.5-15>feynx12%
+        <15-21>feynx18%
+        <21->feynx24%
+	}{}
+%    \end{macrocode}
+%
+% XXX It would be nice to arrange things so that superscripts in
+% the feyn font were drawn from cmmi7, or something.  The original
+% feyn.sty arranged this with |\scriptfont\diagramfam=\ninmi|, but
+% it's not clear what the analogue in the FSS is.
+%
+% Now declare the `feynman' symbol font, and make the command |\feyn|
+% set its argument in that font.  Similarly have |\Feyn| invoke the
+% feynman symbol font for the text sizes.
+%    \begin{macrocode}
+\DeclareSymbolFont{feynman}{OMS}{feyn}{m}{n}
+\DeclareSymbolFontAlphabet{\feyn@alphabet}{feynman}
+\DeclareSymbolFont{textfeynman}{OMS}{textfeyn}{m}{n}
+\DeclareSymbolFontAlphabet{\Feyn@alphabet}{textfeynman}
+\DeclareSymbolFont{feynmanextended}{OMS}{feynx}{m}{n}
+\DeclareSymbolFontAlphabet{\FEYN@alphabet}{feynmanextended}
+%    \end{macrocode}
+%
+% Now use these font-setting commands, defining |\feyn| and |\Feyn| to
+% switch to the given alphabets, defining ! as a shortcut for
+% |\momentum| (so that |!{x}{y}| is interpreted as |\momentum{x}{y}|).
+% We have to make sure that the `!' character produces that character
+% everywhere except within |\feyn| or |\Feyn|.  How we do this depends
+% on the value of the |\ifFeyn@globalbang| switch.
+% \begin{macro}{\feyn}
+%    \begin{macrocode}
+\ifFeyn@globalbang
+  \catcode`\!=\active
+  \def!{\char`\!}               % ! produces this character everywhere
+  \def\feyn{\begingroup
+    \let!\momentum              % ...except within \feyn
+    \feyn@}
+  \def\Feyn{\begingroup
+    \let!\momentum              % ...or \Feyn
+    \Feyn@}
+  \def\FEYN{\begingroup
+    \let!\momentum              % ...or \FEYN
+    \FEYN@}
+\else
+  {\catcode`\!=\active          % only make ! active within \feyn
+    \gdef\feyn{%
+      \begingroup  % ends in \feyn@
+      \catcode`\!=\active
+      \let!=\momentum
+      \feyn@}
+    \gdef\Feyn{%
+      \begingroup  % ends in \Feyn@
+      \catcode`\!=\active
+      \let!=\momentum
+      \Feyn@}
+    \gdef\FEYN{%
+      \begingroup  % ends in \FEYN@
+      \catcode`\!=\active
+      \let!=\momentum
+      \FEYN@}}
+\fi
+\def\feyn@#1{\let\feyn@mfmodule\feyn@mfbasemodule
+  \feyn@alphabet{#1}\endgroup}
+\def\Feyn@#1{\let\feyn@mfmodule\feyn@mfbasemodule
+  \Feyn@alphabet{#1}\endgroup}
+\def\FEYN@#1{\let\feyn@mfmodule\feyn@mfextendedmodule
+  \FEYN@alphabet{#1}\endgroup}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% Now get the size of the `module' (the length of the fermion), and the
+% height of the math-axis, from the font.  You might think that the
+% math-axis is obtainable from |\fontdimen22| of the font, but we do
+% not load it as an |{operator}| font when we invoke
+% |\DeclareSymbolFont|, so it does not have all 22 parameters that a
+% symbol font (as the \TeX book uses the term, rather than \LaTeXe's
+% NFSS).  I confess I don't \emph{really} understand the ins and outs
+% of this, but this route is robust and not wrong.
+%
+% The character |"20| in the feyn font is a dummy charcter, with width
+% |module#| and height |a#| (using the dimensions of the font
+% file).  Use this to set the |\feyn@module| and |\feyn@maxis|.  Note
+% that the `module' used in this package file is twice the module used
+% in the \metafont\ files themselves.
+% \begin{macro}{\feyn@module}
+% \begin{macro}{\feyn@maxis}
+%    \begin{macrocode}
+\DeclareMathSymbol{\FeynSpaceChar}{\mathord}{feynman}{"20}
+\setbox0=\hbox{$\FeynSpaceChar$}
+\newdimen\feyn@mfbasemodule \feyn@mfbasemodule=\wd0
+\newdimen\feyn@module   \feyn@module=2\wd0
+\newdimen\feyn@maxis    \feyn@maxis=\ht0
+\DeclareMathSymbol{\FeynxSpaceChar}{\mathord}{feynmanextended}{"20}
+\setbox0=\hbox{$\FeynxSpaceChar$}
+\newdimen\feyn@mfextendedmodule \feyn@mfextendedmodule=\wd0
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\Diagram}
+% Define the |\Diagram| macro, which lays out a semi-complicated
+% diagram in 2-d.  The macro takes an optional argument which can be
+% either |[bottom]| or |[centre]|
+%    \begin{macrocode}
+{\catcode`\!=\active
+  \gdef\Diagram{%
+    \begingroup  % ends in \Diagram@
+    \catcode`\!=\active
+    \let!\momentum
+    % \Diagram@
+    \@ifnextchar[\Diagram@{\Diagram@[centre]}%]
+  }}
+\let\Diagram@pos@centre\vcenter
+\let\Diagram@pos@center\vcenter     %for Webster fans
+\let\Diagram@pos@bottom\relax
+\def\Diagram@[#1]#2{\setbox0=\hbox{\vbox{\offinterlineskip \let\\\cr
+    \halign{&$\displaystyle\feyn{##}$\cr #2\crcr}}}%
+%    \end{macrocode}
+% At this point, |\box0| has zero depth.  It must be an hbox, because
+% we're fiddling with its height within a enclosing |\vbox|.  See the
+% \TeX book pp 388--389. This takes advantage of appx G, rule 8 to
+% move box0 down by the height of the math axis.  The construction
+% |\dp0 = -2\fontdimen22 \textfont2| also works, in the sense of
+% moving the box onto the math axis, but makes the box too small,
+% which means that surrounding text can encroach.
+%    \begin{macrocode}
+    \@tempdima=\ht0
+    \advance\@tempdima by 2\feyn@maxis \ht0=\@tempdima
+    % no error checking -- unrecognised placement specifiers just expand to \relax
+    \csname Diagram@pos@#1\endcsname{\box0}%
+    \endgroup}% end group begun in \Diagram
+%    \end{macrocode}
+% \end{macro}
+%
+% Define |\DIAGRAM| identically, except for using |\FEYN| rather than |\feyn|.
+%    \begin{macrocode}
+{\catcode`\!=\active
+  \gdef\DIAGRAM{%
+    \begingroup  % ends in \Diagram@
+    \catcode`\!=\active
+    \let!\momentum
+    % \DIAGRAM@
+    \@ifnextchar[\DIAGRAM@{\DIAGRAM@[centre]}%]
+  }}
+\def\DIAGRAM@[#1]#2{\setbox0=\hbox{\vbox{\offinterlineskip \let\\\cr
+    \halign{&$\displaystyle\FEYN{##}$\cr #2\crcr}}}%
+    \@tempdima=\ht0
+    \advance\@tempdima by 2\feyn@maxis \ht0=\@tempdima
+    \csname Diagram@pos@#1\endcsname{\box0}%
+    \endgroup}% end group begun in \Diagram
+%    \end{macrocode}
+%
+% \begin{macro}{\maxis}
+% Raise the argument to the math axis.
+%    \begin{macrocode}
+\def\maxis#1{\raise\feyn@maxis \hbox{$#1$}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \iffalse
+% I feel that something like the following is surely somehow useful,
+% but the spacing doesn't quite work out with what I've got here.
+% \def\fstack#1{\vbox{\baselineskip=0pt \@fstack#1,,}}
+% \def\@fstack#1,{%
+%   \def\@tempa{#1}%
+%   \ifx\@tempa\@empty
+%     \let\@next\relax
+%   \else
+%     \hbox{$\feyn{#1}$}%
+%     \let\@next\@fstack
+%   \fi
+%   \@next
+% }
+% \[
+%   \feyn{fsfg1\fstack{f0 gl,f0 glu,gv,ff}g2ffs \showlists}
+% \]
+% \fi
+%
+% \begin{macro}{\belowl}
+% The argument of the |\belowl| macro is a string of characters in the
+% \feynx\ font.  They are set in a box, and then moved so that the box
+% takes up zero horizontal width, and is moved downwards by its height
+% -- that is, it is moved diagonally downwards and leftwards.  It
+% means that the bottom half of a pair of incoming or outgoing
+% propagators can be set immediately belowl the upper half, without
+% having to use the |\Diagram| macro.
+%    \begin{macrocode}
+\def\belowl#1{%
+  \ifdim\feyn@mfmodule=\feyn@mfbasemodule
+    \let\@next\feyn
+  \else
+    \let\@next\FEYN
+  \fi
+  \setbox0\hbox{$\@next{#1}$}%
+  \hskip-\wd0 \lower\ht0\box0
+}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\belowr}
+% The |\belowr| macro is almost exactly the same, except that the
+% argument is shifted rightwards, which is sometimes more natural to
+% express.
+%    \begin{macrocode}
+\def\belowr#1{%
+  \ifdim\feyn@mfmodule=\feyn@mfbasemodule
+    \let\@next\feyn
+  \else
+    \let\@next\FEYN
+  \fi
+  \setbox0\hbox{$\@next{#1}$}%
+  \@tempdima=\wd0
+  \lower\ht0\box0
+  \hskip-\@tempdima
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\momentum}
+% Manages annotation of characters.  |\momentum{ch}{text}| sets the character
+% ch, which may be a ligature, and puts the given text at the recommended
+% annotation position for that character.  |\momentum[pos]{ch}{text}|
+% is the same, except that the optional argument indicates the
+% position relative to the annotation position.  It must be one of
+% `top', `urt', `lrt', `bot', `llft' or `ulft'.
+%
+% First, some support macros.
+%
+% |\feyn@nudge| is a small amount
+% which is added to the annotation positions, to keep them clear of the
+% point they're annotating.
+%    \begin{macrocode}
+\newdimen\feyn@nudge
+  \feyn@nudge=\feyn@mfbasemodule \divide\feyn@nudge by 3
+%    \end{macrocode}
+%
+% The various |\feyn@pos@<x>| macros position their third argument
+% adjacent to a point offset by an amount |(#1,#2)| from the current
+% position.  The macro |\feyn@pos@top| has the third argument adjacent
+% and above the point, |\feyn@pos@urt| has it to the upper-right, and
+% so on.
+%    \begin{macrocode}
+\def\feyn@pos@top#1#2#3{% top
+    \leavevmode
+    \@tempdima=#2\feyn@mfmodule \advance\@tempdima\feyn@nudge
+    \setbox1=\hbox{\raise \@tempdima\hbox to 0pt{%
+    \hskip #1\feyn@mfmodule
+        \hbox to 0pt{\hss$\scriptstyle #3$\hss}\hss}}%
+    \ht1=0pt \dp1=0pt \box1}
+\def\feyn@pos@urt#1#2#3{% urt
+    \leavevmode
+    \@tempdima=#2\feyn@mfmodule \advance\@tempdima\feyn@nudge
+    \setbox1=\hbox{\raise \@tempdima\hbox to 0pt{%
+        \hskip #1\feyn@mfmodule \hskip\feyn@nudge $\scriptstyle #3$\hss}}%
+    \ht1=0pt \dp1=0pt \box1}
+\def\feyn@pos@lrt#1#2#3{% lrt
+    \leavevmode
+    \setbox0=\hbox to 0pt{\hskip\feyn@nudge $\scriptstyle #3$\hss}%
+    \@tempdima=#2\feyn@mfmodule
+        \advance\@tempdima -\ht0
+        \advance\@tempdima-\feyn@nudge
+    \setbox1=\hbox{\raise \@tempdima\hbox to 0pt{%
+        \hskip #1\feyn@mfmodule \box0\hss}}%
+    \ht1=0pt \dp1=0pt \box1}
+\def\feyn@pos@bot#1#2#3{% bot
+    \leavevmode
+    \setbox0=\hbox to 0pt{\hss$\scriptstyle #3$\hss}%
+    \@tempdima=#2\feyn@mfmodule
+        \advance\@tempdima -\ht0
+        \advance\@tempdima-\feyn@nudge
+    \setbox1=\hbox{\raise \@tempdima\hbox to 0pt{%
+        \hskip #1\feyn@mfmodule \box0\hss}}%
+    \ht1=0pt \dp1=0pt \box1}
+\def\feyn@pos@llft#1#2#3{% llft
+    \leavevmode
+    \setbox0=\hbox to 0pt{\hss$\scriptstyle #3$\hskip\feyn@nudge}%
+    \@tempdima=#2\feyn@mfmodule
+        \advance\@tempdima -\ht0
+        \advance\@tempdima-\feyn@nudge
+    \setbox1=\hbox{\raise \@tempdima\hbox to 0pt{%
+        \hskip #1\feyn@mfmodule \box0\hss}}%
+    \ht1=0pt \dp1=0pt \box1}
+\def\feyn@pos@ulft#1#2#3{% ulft
+    \leavevmode
+    \@tempdima=#2\feyn@mfmodule \advance\@tempdima\feyn@nudge
+    \setbox1=\hbox{\raise \@tempdima\hbox to 0pt{%
+        \hskip #1\feyn@mfmodule
+        \hbox to 0pt{\hss$\scriptstyle #3$\hskip\feyn@nudge}\hss}}%
+    \ht1=0pt \dp1=0pt \box1}
+%    \end{macrocode}
+%
+% Now include the definitions of the annotation positions, as extracted
+% from the Metafont file.  These define macros |\feyn@ann@#1|,
+% where argument |#1| is a given character (or ligature) at the
+% position |(#2,#3)|, using  the various |\feyn@pos@<x>| macros.  The
+% |<x>| is either the value of argument |#4|, or the contents of
+% |\@tempa| if that has been set non-empty by |\momentum@|.
+%    \begin{macrocode}
+\def\feyn@annotation#1#2#3#4{%
+    \expandafter\def\csname feyn@ann@#1\endcsname##1{%
+        \csname feyn@pos@\ifx\@tempa\@empty #4\else\@tempa\fi\endcsname
+            {#2}{#3}{##1}%
+    #1}}
+%    \end{macrocode}
+% Now read in the collection of annotation positions.  These are
+% generated by the \texttt{./parse-ligtables} script, and inserted
+% into this file by the Makefile when \file{feyn.dtx} is generated.
+%    \begin{macrocode}
+% @FEYNANNOTATIONS@
+% commands generated by parse-ligtables...
+\feyn@annotation{f}{0.99974}{0.35}{top}% 102 = "f"
+\feyn@annotation{fA}{0.99974}{0.35}{top}% 70 = "F"
+\feyn@annotation{fV}{0.99974}{0.35}{top}% 6 = 6
+\feyn@annotation{flo}{0}{2.25}{top}% 107 = "k"
+\feyn@annotation{floA}{0}{2.25}{top}% 75 = "K"
+\feyn@annotation{floV}{0}{2.25}{top}% 11 = 11
+\feyn@annotation{fu}{0.70692}{0.95692}{ulft}% 101 = "e"
+\feyn@annotation{fuA}{0.70692}{0.95692}{ulft}% 69 = "E"
+\feyn@annotation{fuV}{0.70692}{0.95692}{ulft}% 5 = 5
+\feyn@annotation{fd}{0.70692}{0.95692}{urt}% 100 = "d"
+\feyn@annotation{fdA}{0.70692}{0.95692}{urt}% 68 = "D"
+\feyn@annotation{fdV}{0.70692}{0.95692}{urt}% 4 = 4
+\feyn@annotation{fv}{0}{1.24974}{urt}% 98 = "b"
+\feyn@annotation{fvA}{0}{1.24974}{urt}% 66 = "B"
+\feyn@annotation{fvV}{0}{1.24974}{urt}% 2 = 2
+\feyn@annotation{m}{0.99974}{0.32802}{top}% 109 = "m"
+\feyn@annotation{mA}{0.99974}{0.32802}{top}% 77 = "M"
+\feyn@annotation{mV}{0.99974}{0.32802}{top}% 13 = 13
+\feyn@annotation{ms}{0.49986}{0.32802}{top}% 35 = "#"
+\feyn@annotation{fl}{0}{1.75}{top}% 108 = "l"
+\feyn@annotation{flA}{0}{1.75}{top}% 76 = "L"
+\feyn@annotation{flV}{0}{1.75}{top}% 12 = 12
+\feyn@annotation{flu}{0}{-1.25}{bot}% 110 = "n"
+\feyn@annotation{fluA}{0}{-1.25}{bot}% 78 = "N"
+\feyn@annotation{fluV}{0}{-1.25}{bot}% 14 = 14
+\feyn@annotation{flS}{0}{1.16667}{top}% 111 = "o"
+\feyn@annotation{flSA}{0}{1.16667}{top}% 79 = "O"
+\feyn@annotation{flSV}{0}{1.16667}{top}% 15 = 15
+\feyn@annotation{flSu}{0}{-0.83334}{bot}% 119 = "w"
+\feyn@annotation{flSuA}{0}{-0.83334}{bot}% 87 = "W"
+\feyn@annotation{flSuV}{0}{-0.83334}{bot}% 23 = 23
+\feyn@annotation{g}{0.99974}{0.45}{top}% 103 = "g"
+\feyn@annotation{gA}{0.99974}{0.45}{top}% 71 = "G"
+\feyn@annotation{gV}{0.99974}{0.45}{top}% 7 = 7
+\feyn@annotation{gu}{0.70692}{0.95692}{ulft}% 117 = "u"
+\feyn@annotation{guA}{0.70692}{0.95692}{ulft}% 85 = "U"
+\feyn@annotation{guV}{0.70692}{0.95692}{ulft}% 21 = 21
+\feyn@annotation{gd}{0.70692}{0.95692}{urt}% 118 = "v"
+\feyn@annotation{gdA}{0.70692}{0.95692}{urt}% 86 = "V"
+\feyn@annotation{gdV}{0.70692}{0.95692}{urt}% 22 = 22
+\feyn@annotation{gv}{0}{1.24974}{urt}% 125 = "}"
+\feyn@annotation{gvA}{0}{1.24974}{urt}% 93 = "]"
+\feyn@annotation{gvV}{0}{1.24974}{urt}% 29 = 29
+\feyn@annotation{g1}{-1}{1.98206}{ulft}% 113 = "q"
+\feyn@annotation{g1A}{-1}{1.98206}{ulft}% 81 = "Q"
+\feyn@annotation{g1V}{-1}{1.98206}{ulft}% 17 = 17
+\feyn@annotation{g2}{1.41422}{1.66422}{urt}% 114 = "r"
+\feyn@annotation{g2A}{1.41422}{1.66422}{urt}% 82 = "R"
+\feyn@annotation{g2V}{1.41422}{1.66422}{urt}% 18 = 18
+\feyn@annotation{g3}{1.41422}{-1.16422}{lrt}% 115 = "s"
+\feyn@annotation{g3A}{1.41422}{-1.16422}{lrt}% 83 = "S"
+\feyn@annotation{g3V}{1.41422}{-1.16422}{lrt}% 19 = 19
+\feyn@annotation{g4}{-1}{-1.48206}{llft}% 116 = "t"
+\feyn@annotation{g4A}{-1}{-1.48206}{llft}% 84 = "T"
+\feyn@annotation{g4V}{-1}{-1.48206}{llft}% 20 = 20
+\feyn@annotation{gl}{0}{1.75}{urt}% 121 = "y"
+\feyn@annotation{glA}{0}{1.75}{urt}% 89 = "Y"
+\feyn@annotation{glV}{0}{1.75}{urt}% 25 = 25
+\feyn@annotation{glu}{0}{-1.25}{llft}% 122 = "z"
+\feyn@annotation{gluA}{0}{-1.25}{llft}% 90 = "Z"
+\feyn@annotation{gluV}{0}{-1.25}{llft}% 26 = 26
+\feyn@annotation{glB}{1.02051}{2.71367}{urt}% 123 = "{"
+\feyn@annotation{glBA}{1.02051}{2.71367}{urt}% 91 = "["
+\feyn@annotation{glBV}{1.02051}{2.71367}{urt}% 27 = 27
+\feyn@annotation{glS}{0}{1.5833}{llft}% 124 = "|"
+\feyn@annotation{glSA}{0}{1.5833}{llft}% 92 = "\"
+\feyn@annotation{glSV}{0}{1.5833}{llft}% 28 = 28
+\feyn@annotation{h}{0.99974}{0.25}{top}% 104 = "h"
+\feyn@annotation{hA}{0.99974}{0.25}{top}% 72 = "H"
+\feyn@annotation{hV}{0.99974}{0.25}{top}% 8 = 8
+\feyn@annotation{hu}{0.70464}{0.95464}{ulft}% 105 = "i"
+\feyn@annotation{huA}{0.70464}{0.95464}{ulft}% 73 = "I"
+\feyn@annotation{huV}{0.70464}{0.95464}{ulft}% 9 = 9
+\feyn@annotation{hd}{0.70464}{0.95464}{urt}% 106 = "j"
+\feyn@annotation{hdA}{0.70464}{0.95464}{urt}% 74 = "J"
+\feyn@annotation{hdV}{0.70464}{0.95464}{urt}% 10 = 10
+\feyn@annotation{hl}{0}{1.75}{top}% 126 = "~"
+\feyn@annotation{hlA}{0}{1.75}{top}% 94 = "^"
+\feyn@annotation{hlV}{0}{1.75}{top}% 30 = 30
+\feyn@annotation{hlu}{0}{-1.25}{top}% 127 = 127
+\feyn@annotation{hluA}{0}{-1.25}{top}% 95 = "_"
+\feyn@annotation{hluV}{0}{-1.25}{top}% 31 = 31
+\feyn@annotation{hs}{0.49986}{0.25}{top}% 34 = """
+\feyn@annotation{c}{0.65044}{0.90044}{top}% 99 = "c"
+\feyn@annotation{p}{0.65}{0.9}{top}% 112 = "p"
+\feyn@annotation{P}{0.65044}{0.90044}{top}% 80 = "P"
+\feyn@annotation{x}{0}{0.55641}{top}% 120 = "x"
+%    \end{macrocode}
+%
+%
+% The |\momentum| macro (finally) invokes its worker macro
+% |\momentum@|, defaulting that macro's optional argument to empty.
+% In fact the macro |\momentum| should be only rarely
+% invoked, since ! is made active and bound to it within |\feyn|.
+%
+% The |\momentum@| macro takes two arguments, and expands to a call to
+% macro |\feyn@ann@#1|, acting on the second argument.  This macro is
+% one of those defined by |\feyn@annotation| above.  There is an
+% optional argument, giving the position for the annotation, if it has
+% turned out that the default position for this character is
+% inappropriate.  The adjusted position may be one of `top', `urt',
+% `lrt', `bot', `llft' or `ulft'.
+%    \begin{macrocode}
+\def\momentum{\@ifnextchar[\momentum@{\momentum@[]}}
+\def\momentum@[#1]#2#3{%
+  \def\@tempa{#1}
+  \ifx\@tempa\@empty \else
+    \@ifundefined{feyn@pos@#1}
+        {\@latex@error{No annotation position #1}%
+           {You cannot call \string\momentum[#1]{...}^^J(must be one
+             of top, urt, lrt, bot, llft, ulft)}%
+        #2}%
+  \fi
+  \@ifundefined{feyn@ann@#2}%
+    {\@latex@error{No annotation defined for #2}%
+      {You cannot call \string\momentum{#2}{...}}%
+     #2}%
+  {\csname feyn@ann@#2\endcsname{#3}}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\vertexlabel}
+% The command |\vertexlabel^{text}| or |\vertexlabel_{text}| positions
+% the |{text}| in maths mode either above or below, respectively, the
+% current position.  It's used between characters to label a vertex.
+%    \begin{macrocode}
+\def\vertexlabel#1#2{\setbox0=\hbox to 0pt{\hss$\scriptstyle #2$\hss}
+  \ifcat #1^
+    \vbox to 0pt{\vss\box0\nointerlineskip\kern2\feyn@maxis}
+  \else\ifcat #1_
+    \vbox to 0pt{\kern\feyn@maxis\nointerlineskip\box0\vss}
+  \else
+    \PackageError{feyn}
+      {Bad arguments for \string\vertexlabel}
+      {Usage: \string\vertexlabel^{text} or \string\vertexlabel_{text}}
+  \fi\fi
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\annotate}
+% The |\annotate| command takes $x$ and $y$ coordinates in units of
+% modules, and text (in math mode) to be placed on a |\diagram|.
+% Deprecated, now that the characters have annotation built in to them.
+%    \begin{macrocode}
+\def\annotate#1#2#3{\vcenter to 0pt{\vss
+    \hbox to 0pt{\hskip #1\feyn@module\hbox to 0pt{\hss$\scriptstyle #3$\hss}\hss
+    }\vskip #2\feyn@module}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\tannotate}
+% The |\tannotate| command is just the same, but the annotating text
+% is in horizontal mode.
+%    \begin{macrocode}
+\def\tannotate#1#2#3{\vcenter to 0pt{\vss
+    \hbox to 0pt{\hskip #1\feyn@module\hbox to 0pt{\hss #3\hss}\hss
+    }\vskip #2\feyn@module}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\feynstrut}
+% The macro |\feynstrut#1#2| defines |\strut| to have a height
+% |#1| modules, and depth |#2| modules.
+%    \begin{macrocode}
+\def\feynstrut#1#2{\setbox\strutbox=\hbox{\vrule
+	height #1\feyn@module depth #2\feyn@module width 0pt}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\arrow}
+% The command |\arrow#1#2#3| puts an arrow of gradient |#3|${}\times 45^\circ$
+% at position |(#1,#2)|(modules).  This doesn't work -- the |\char|
+% results in a |\rm| character appearing, rather than a |\feyn|
+% character.  Putting in a symbol like `+' has the same effect, but
+% putting in, say, `a' works as expected.  In other words, it's to do
+% with the character's mathcode, and the |\char|
+% should be replaced by a |\mathchar"7?\@tempcnta| somehow.  The
+% problem is that that depends on the parameter |\fam| having a
+% suitable value.  It's not clear to me what this corresponds to in
+% \LaTeXe.  See the \TeX book, chapter 17.
+%    \begin{macrocode}
+\def\arrow#1#2#3{\@latex@error{Do not use the \string\arrow macro any more}{}}
+%    \end{macrocode}
+% \end{macro}
+%
+% Declare symbols.  All of these are ligatures.
+%    \begin{macrocode}
+\DeclareMathSymbol{\wfermion}{0}{feynman}{"64}
+%\DeclareMathSymbol{\Wfermion}{0}{feynman}{"44}
+\DeclareMathSymbol{\hfermion}{0}{feynman}{"6B}
+%\DeclareMathSymbol{\Hfermion}{0}{feynman}{"4B}
+\DeclareMathSymbol{\shfermion}{0}{feynman}{"6C}
+%\DeclareMathSymbol{\sHfermion}{0}{feynman}{"4C}
+\DeclareMathSymbol{\whfermion}{0}{feynman}{"6D}
+%\DeclareMathSymbol{\wHfermion}{0}{feynman}{"4D}
+\DeclareMathSymbol{\gvcropped}{0}{feynman}{"07}
+%    \end{macrocode}
+% But the following are not ligatures.
+%    \begin{macrocode}
+\DeclareMathSymbol{\bigbosonloop}{0}{feynman}{"7B}
+%\DeclareMathSymbol{\Bigbosonloop}{7}{feynman}{"21}
+\DeclareMathSymbol{\smallbosonloop}{0}{feynman}{"7C}
+\DeclareMathSymbol{\bigbosonloopA}{0}{feynman}{"5B}
+\DeclareMathSymbol{\smallbosonloopA}{0}{feynman}{"5C}
+\DeclareMathSymbol{\bigbosonloopV}{0}{feynman}{"1B}
+\DeclareMathSymbol{\smallbosonloopV}{0}{feynman}{"1C}
+%    \end{macrocode}
+%
+%
+% \Finale
+\endinput

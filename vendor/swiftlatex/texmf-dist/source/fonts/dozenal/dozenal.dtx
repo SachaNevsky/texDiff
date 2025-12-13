@@ -1,0 +1,1187 @@
+% \iffalse
+% +AMDG  This document was begun on 14 November 2008, the
+% feast of St. Josaphat, and it is humbly dedicated to him
+% and to the Immaculate Heart of Mary for their prayers, and
+% to the Sacred Heart of Jesus for His mercy.
+% 
+% This document is copyright 2008-2018 by Donald P. Goodman, and is
+% released publicly under the LaTeX Project Public License.  The
+% distribution and modification of this work is constrained by the
+% conditions of that license.  See
+% 	http://www.latex-project.org/lppl.txt
+% for the text of the license.  This document is released
+% under version 1.3 of that license, and this work may be distributed
+% or modified under the terms of that license or, at your option, any
+% later version.
+% 
+% This work has the LPPL maintenance status 'maintained'.
+% 
+% The Current Maintainer of this work is Donald P. Goodman
+% (dgoodmaniii@gmail.com).
+% 
+% This work consists of the files listed in dozenalfilelist.txt.
+% \fi
+
+% \iffalse
+%<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+%<package>\ProvidesPackage{dozenal}[2018/05/11 v7.2 support for dozenal fonts]
+%<*driver>
+
+\documentclass{ltxdoc}
+\usepackage{doc}
+\usepackage{verbatim}
+\usepackage{url}
+\usepackage[typeone]{dozenal}
+\usepackage{mflogo}
+\usepackage{makeidx}
+\makeindex
+\long\def\demonstrate#1#2{%
+	\bigskip%
+	\hrule%
+	\hbox to\linewidth{%
+		\hbox to0.5\linewidth{%
+			\vbox to2in{\vfil#1\vfil}%
+		}\hbox to0.5\linewidth{%
+			\vbox to2in{\vfil#2\vfil}%
+		}%
+	}%
+	\hrule%
+	\bigskip%
+}
+
+\begin{document}
+\DocInput{dozenal.dtx}
+\end{document}
+%</driver>
+% \fi
+% \title{The \texttt{dozenal} Package, v7.2}
+% \author{Donald P.\ Goodman III}
+% \date{\today}
+%
+% \maketitle
+% \begin{abstract}\noindent
+% The |dozenal| package provides some simple mechanisms for
+% working with the dozenal (duodecimal or ``base 12'')
+% numerical system.  It redefines all basic \LaTeX\
+% counters, provides a command for converting arbitrary
+% decimal numbers into dozenal, and provides new, real
+% \MF\ characters for ten and eleven, though the
+% commands for producing them can be redefined to produce
+% any figure.  As of v2.0, it also includes Type 1 versions
+% of the fonts, selected (as of v5.0) with the |typeone|
+% package option.  This package uses the |\basexii|
+% algorithm by David Kastrup.
+% \end{abstract}
+% 
+% \tableofcontents
+% 
+% \section{Introduction}
+% \label{sect:intro}
+% 
+% While most would probably call it at best overoptimistic and
+% at worst foolish, some people (the author included) do still
+% find themselves attracted to the dozenal (base-twelve)
+% system.  These people, however, have been pretty hard
+% up\footnote{This is an Americanism for ``out of luck'' or
+% ``in difficult circumstances,'' for those who do not
+% know.} in the \LaTeX\ world.  There is no package file
+% available which produces dozenal counters, like page and
+% chapter numbers, nor were there \emph{any} (I made a
+% pretty diligent search) dozenal characters for ten and
+% eleven, leaving dozenalists forced to use such makeshift
+% ugliness as the ``X/E'' or ``T/E'' or ``*/\#'' or whatever
+% other standard they decided to use.  While this sort of
+% thing may be acceptable in ASCII, it's absolutely
+% unacceptable in a beautiful, typeset document.
+% 
+% Enter the |dozenal| package.  This package automates all
+% the messiness of being a dozenalist and using \LaTeX.  It
+% redefines all the counters (though you'll have to redefine
+% them yourself if you're using your own), provides an
+% algorithm (generously donated by the intrepid David
+% Kastrup) for converting arbitrary positive whole numbers
+% into dozenal (this is e\TeX, but all modern distributions
+% will compile that), and finally, it includes original
+% dozenal characters, specifically designed to blend in well
+% with Knuth's Computer Modern fonts, though they should do
+% fine with a few other common body fonts, as well.
+% 
+% This document was typeset in accordance with the \LaTeX\
+% \textsc{docstrip} utility, which allows automatic
+% extraction of source code and documentation from the same
+% source.
+%
+% \section{Basic Functionality}
+% \label{sect:func}
+%
+% The |dozenal| package performs several basic tasks, which
+% are the core of its functionality.  A brief listing of
+% them will help the user understand the options available,
+% which are explained later on in this document.
+%
+% \begin{itemize}
+% \item Provides commands for converting decimal numbers to
+% dozenal and back again.  (The ``back again,'' conversion
+% of dozenal back to decimal, only works in limited
+% circumstances.)
+% \item Provides default characters for the two transdecimal
+% digits, ``\x'' for ten and ``\e'' for eleven; these
+% correspond to the accepted Unicode standard digits
+% ``turned digit two'' and ``turned digit three,'' which (as
+% of June 11\e\e) are now part of the Unicode standard.
+% These characters copy-paste as ``X'' and
+% ``E,'' the (somewhat) standard ASCII representations of
+% these two digits.  However, other characters can easily be
+% substituted if desired.
+% \item Redefines the counters in standard \LaTeX\ document
+% classes (such as |article|, |book|, and so forth) to use
+% dozenal rather than decimal.  This behavior can be shut
+% off if desired.
+% \item Provides macros for converting dozenal numbers to
+% words; e.g., ``3\e'' to ``three dozen eleven.''
+% \item Provides macros for converting numbers to ``doman''
+% numerals; that is, a dozenal version of Roman numerals.
+% \end{itemize}
+%
+% That covered, we can now move on to how these features are
+% exploited by the user.
+% 
+% \subsection{Base Conversion}
+% \label{sub:numconv}
+%
+% The |dozenal| package provides several new commands for
+% base conversion.  The first, and by far the most important
+% given the purpose and content of this package, is
+% |\basexii|\DescribeMacro{\basexii}.  This is a very simple
+% command which takes the following structure:
+% \begin{quote}
+% \cs{basexii}\marg{number}\marg{ten symbol}\marg{eleven symbol}
+% \end{quote}
+% What the above means is that the command is |\basexii| and
+% it takes three mandatory arguments:  first, the number to
+% be converted into dozenal; second, the symbol that should
+% be used for ten; and third, the symbol that should be used
+% for eleven.  This number should be positive and whole;
+% that is, it should be zero or higher, and it should not
+% contain a fractional part.  \TeX\ is a typesetting
+% program, after all; if you want a robust decimal to
+% dozenal converter, there are many options that any
+% dozenalists caring enough to use this package will already
+% know about.
+% 
+% This |\basexii| algorithm was produced by David Kastrup,
+% well known and admired in the \TeX\ world for his many
+% useful packages and other contributions.  He posted this
+% algorithm on comp.text.tex; it is included here with his 
+% kind and generous permission.
+%
+% \label{page:dozens}
+% That one would want to use the same ten and eleven symbols
+% throughout a document seems a reasonable assumption;
+% therefore, I have provided a simplified version of the
+% |\basexii| command, |\dozens|\DescribeMacro{\dozens}.
+% |\dozens| takes only a single argument, the number to be
+% converted; the ten and eleven symbols used are those
+% produced by the commands |\x| and |\e|, to which we'll get
+% in a moment.
+%
+% Finally, as of v5.0, we can convert numbers back to
+% decimal from dozenal, if we wish.  We do this with the
+% \DescribeMacro{\basex}|\basex| macro, which takes a single
+% argument, which is the dozenal number you wish to convert
+% to decimal.  This is subject to a pretty harsh
+% restriction, however:  the only tokens allowed in
+% the number are 0--9, |X|, and |E|; putting in anything
+% else will cause violent choking with ``expected a
+% number''-type errors.
+%
+% To illustrate these limitations, let's define a new
+% counter and dozenize it.  Here, we define the counter and
+% give it a nice value which will ensure that its dozenal
+% value will have an |\e| in it:
+%
+% \newcounter{testcount}\setcounter{testcount}{47}
+% \begin{quotation}
+% |\newcounter{testcount}\setcounter{testcount}{47}|
+% \end{quotation}
+%
+% In dozenal, of course, ``47'' is ``3\e.''  Now, let's
+% redefine that counter so that its results will be dozenal:
+%
+% \renewcommand\thetestcount{\basexii{\value{testcount}}{\x}{\e}}
+% \begin{quotation}
+% |\renewcommand\thetestcount{\basexii{\value{testcount}}{\x}{\e}}|
+% \end{quotation}
+%
+% Now |dozenal| allow us to do lovely things like the following:
+%
+% \begin{quotation}
+% |\thetestcount| = \thetestcount
+% \end{quotation}
+%
+% It's tempting to try to put that number into |\basex| to
+% get it in decimal; but don't try it;
+% |\basex{\thetestcount}| doesn't work because it contains
+% expanded versions of |\x| and |\e|.  Fortunately, you
+% don't need it; \LaTeX\ already has the value of the
+% |testcount| counter in its innards, and is quite used to
+% outputting it in decimal:
+%
+% \begin{quotation}
+% |\arabic{testcount}| = \arabic{testcount}
+% \end{quotation}
+%
+% On the other hand, if you have an actual string you want
+% converted, you can send it directly to |\basex|:
+%
+% \begin{quotation}
+% |\basex{3E}| = \basex{3E}
+% \end{quotation}
+%
+% So |\basex| is of limited utility, but it's a nice tool to
+% add to the box.
+%
+% \subsection{Numbers to Words}
+% \label{sub:numtowords}
+%
+% |dozenal| allows you to easily convert counters into
+% \emph{words}, by supplying said counter's name to the
+% \DescribeMacro{\doznumtoword}|\doznumtoword| macro.  It
+% takes as its argument the name of a \emph{counter} (not a
+% number itself!) and converts this into words:
+%
+% \newcounter{somecount}\setcounter{somecount}{851} 
+% \begin{quote}
+% |This page's number is ``\doznumtoword{page}.''| \\
+% This page's number is ``\doznumtoword{page}.''
+% \end{quote}
+%
+% This macro works with much larger numbers, as well.
+% Purely for exemplary purposes, let's define a counter
+% |somecount| with |\newcounter{somecount}|, and set it
+% equal to (decimal) 851 with |\setcounter{somecount}{851}|.
+% ``851''
+% in dozenal is ``5\x\e.''  Therefore,
+% |\doznumtoword{somecount}| will yield
+% ``\doznumtoword{somecount}.''  If you want to change the
+% capitalization, use other macros; e.g.,
+% \DescribeMacro{\DOZnumtoword}|\DOZnumtoword{somecount}| gives
+% ``\DOZnumtoword{somecount},'' while
+% \DescribeMacro{\Doznumtoword}|\Doznumtoword{somecount}| gives
+% ``\Doznumtoword{somecount}.''
+%
+% |\doznumtoword| (and friends) do act correctly when there
+% are zeroes in the middle of the number, e.g., when
+% |somecount| is equal to decimal 6977, which is dozenal
+% 4055, it will output
+% \setcounter{somecount}{6977}``\doznumtoword{somecount}.''
+% When there's a zero at the \emph{end} of the number, that
+% zero is still output:  |\doznumtoword{somecount}| where
+% |somecount|\setcounter{somecount}{144} is equal to 144 gives
+% ``\doznumtoword{somecount},'' not simply ``one biqua.''  I
+% haven't decided yet if this is a bug or a feature; when I
+% do, I'll act accordingly.
+%
+% The rank words (``unqua,'' ``biqua,'' and so forth) are
+% all customizable by user-level commands, which are named
+% |\dozrankoneword| for ``unqua,'' |\dozranktwoword| for
+% ``biqua,'' and so forth.  Simply redefine them like so:
+%
+% \begin{quote}
+% |\def\dozrankoneword{dozen}|\def\dozrankoneword{dozen} \\
+% |\setcounter{somecount}{51}|\setcounter{somecount}{51} \\
+% |\doznumtoword{somecount}| = \doznumtoword{somecount}
+% \end{quote}
+% \def\dozrankoneword{unqua}
+%
+% This type of macro is useful for putting page numbers in
+% both digits and words, for example.
+% 
+% \subsection{Doman Numerals}
+% \label{sub:domannums}
+%
+% Dozenalists have also come up with some ideas for how to
+% use Roman numerals in a decimal way; therefore, the
+% |dozenal| package provides some macros to assist with
+% that, as well.
+%
+% To form ``Doman'' numerals, we simply alter the values of
+% the traditional Roman characters into more
+% dozenal-friendly alternatives.  So ``v'' is 6, ``x'' is
+% 10, and so on.  Then, to avoid stringing four of the same
+% character together, we extend the subtractive principle to
+% allow up to \emph{two} lower characters prior to a
+% higher-value character.  So, e.g., ``iiv'' is $6 - 2$, or
+% 4, while ``iv'' is $6 - 1$, or 5.
+%
+% The macros |\Doman|\DescribeMacro{\Doman}\ and
+% |\doman|\DescribeMacro{\doman}\ are equivalent to |\Roman|
+% and |\roman|, giving either capitalized or lowercase
+% dozenal Roman numerals.
+%
+% \newcounter{testdoman}\setcounter{testdoman}{1}
+% \renewcommand\thetestdoman{\doman{\value{testdoman}}}
+%
+% \begin{center}
+% \begin{tabular}{cccccccccccccc}
+% \dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} \\
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+% \dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} \\
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+% \dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} \\
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} \\
+% \dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} \\
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+% \dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} \\
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} \\
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} \\
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} \\
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} \\
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} \\
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} &
+%	\dozens{\value{testdoman}} & \thetestdoman\stepcounter{testdoman} \\
+% \end{tabular}
+% \end{center}
+%
+% In the table above, the Doman numerals 1--60 are
+% displayed, along with their Hindu-Arabic equivalents.  This
+% table was produced entirely using a new \LaTeX\ counter,
+% |testdoman|; |\thetestdoman| was defined by saying
+%
+% \begin{quote}
+% |\renewcommand\thetestdoman{\doman{\value{testdoman}}}|
+% \end{quote}
+%
+% The Hindu-Arabic columns were displayed with
+% |\dozens{\value{testdoman}}|.  Every two table cells,
+% |testdoman| is increased by one.  The whole table was
+% produced without manually entering a single number in
+% either form.
+%
+% Most commonly, Roman numerals are seen in part numbers and
+% in the page numbering of frontmatter.  
+% To achieve that result, do:
+%
+% \begin{quote}
+% |\renewcommand\thepage{\doman{\arabic{page}}}|
+% \end{quote}
+%
+% You can reset this to normal dozenal numerals (or whatever
+% else you'd prefer) when you reach your mainmatter.
+%
+% \section{Dozenal Characters and Fonts}
+% \label{sect:fonts}
+%
+% \subsection{Shorthands for Dozenal Characters}
+% \label{sub:shorthands}
+%
+% To make use of the |\dozens| shorthand discussed
+% earlier,\footnote{See supra, Section \ref{sub:numconv},
+% at page \pageref{page:dozens}.} you need to have the
+% commands |\x| and |\e| defined.  Fortunately, this package
+% does that for you.
+%
+% |\x|\DescribeMacro{\x}\ and |\e|\DescribeMacro{\e}\ are
+% the commands used to quickly and easily access the symbols
+% for ten and eleven.  They default to using the special
+% dozenal characters that are part of this package; they
+% could be easily redefined if for some reason you don't
+% like the Pitman characters (which are soon to be included
+% in Unicode) in the following manner:
+% \begin{quote}
+% |\renewcommand\x{X}|
+% \end{quote}
+% Or whichever characters you like to use.  If you prefer
+% the Dozenal Society of America's proposed characters (a
+% stylized X and E), then this package will disappoint you.
+% May I suggest |$\chi$| ($\chi$) and |$\xi$| ($\xi$) as a
+% stopgap while you locate or produce real characters of
+% your own?  Sorry; I'm an American myself, but I much
+% prefer the Pitman characters for a variety of reasons
+% (feel free to email me if you care), and creating fonts in
+% \MF, even small and inconsequential ones like this, is too
+% much work for characters that I don't even like.
+% 
+% \subsection{The \texttt{dozenal} Fonts}
+% \label{sub:dozfonts}
+%
+% The fonts provided by the dozenal package are essentially
+% complete fonts which contain only the Pitman dozenal
+% characters; these are \x\ for ten and \e\ for eleven.
+% These characters are designed to blend well with the
+% Computer Modern fonts; they work passably well with
+% Times-type fonts and with kpfonts, and possibly with
+% others.
+%
+% The characters also come in all the appropriate shapes and
+% sizes; a few examples follow.
+%
+% \begin{center}
+% \begin{tabular}{lccc}
+% {} & Roman & \textit{Italic} & \textbf{Boldface} \\
+% \footnotesize Footnotesize & \footnotesize\x\ \e & \footnotesize\itshape
+% 	\x\ \e & \footnotesize\bfseries \x \e \\
+% \normalsize Normalsize & \normalsize\x\ \e & \normalsize\itshape
+% 	\x\ \e & \normalsize\bfseries \x \e \\
+% \LARGE LARGE & \LARGE\x\ \e & \LARGE\itshape
+% 	\x\ \e & \LARGE\bfseries \x \e \\
+% \Huge Huge & \Huge\x\ \e & \Huge\itshape
+% 	\x\ \e & \Huge\bfseries \x \e \\
+% \end{tabular}
+% \end{center}
+% 
+% They will work in paragraph or math mode without
+% distinction.
+%
+% \subsection{Tally Marks}
+% \label{sub:tallymarks}
+% 
+% As of v4.0, |dozenal| also includes fonts for tally marks
+% specifically designed for use in the dozenal base.  In many
+% European countries tallies are kept in a very similar way;
+% this font demonstrates a way that such tally marks can be
+% made consistent as well as dozenal.
+% 
+% \begin{center}
+% \begin{tabular}{cccccc}
+% 1 & 2 & 3 & 4 & 5 & 6 \\
+% \Huge\tally{1} & \Huge\tally{2} & \Huge\tally{3} & \Huge\tally{4} & \Huge\tally{5} & \Huge\tally{6} \\
+% \end{tabular}
+% \end{center}
+%
+% These are accessed by the \DescribeMacro{\tally}|\tally|
+% command, which takes one argument:  the number, 1--6,
+% which you want to put in tallies.  Entering ``X'' or ``E''
+% will yield ``\x'' or ``\e'' respectively.  Other
+% characters will produce nothing.
+%
+% As of v6.0, there are separate, hand-written versions of
+% the tally marks, accessed by putting tallies in italic:
+%
+% \begin{center}\itshape
+% \begin{tabular}{cccccc}
+% 1 & 2 & 3 & 4 & 5 & 6 \\
+% \Huge\tally{1} & \Huge\tally{2} & \Huge\tally{3} & \Huge\tally{4} & \Huge\tally{5} & \Huge\tally{6} \\
+% \end{tabular}
+% \end{center}
+%
+% In other words, to get these shapes, say
+% |\textit{\tally{6}}|; this will give you
+% ``\textit{\tally{6}}.''
+%
+% The fonts are all prefixed |dozch|, if for some reason
+% direct access to them is needed.
+%
+% \subsection{Dozenal Radix Point}
+% \label{sub:dozradixpoint}
+%
+% Lastly, |dozenal| allows the use of the common dozenal
+% radix point, ``;'', to work properly in math mode.  Some
+% dozenalists prefer to use ``;'' rather than ``.'' (or
+% ``,'') to mark the transition from integers to fractions
+% in numbers; e.g., three-and-a-half is ``3;6.''  In math
+% mode, however, this doesn't work; a semicolon in math
+% mode is punctuation, and a spurious space is inserted
+% (quite correctly) afterward.  We don't want this space
+% when we're using it as a radix point.  So |dozenal| (using
+% code adapted from Walter Schmidt's |icomma| package) fixes
+% this:
+%
+% |$3;6$| = 3;6
+%
+% And all is right with the world.
+%
+% \section{Package Options}
+% \label{sect:packopts}
+%
+% The |dozenal| package redefines all the standard
+% \LaTeX\ counters, such as |section| and |enumii|.  If
+% you've defined your own counters, you'll need to dozenize
+% them yourself; however, this is an easy matter: 
+% \begin{quote}
+% |\renewcommand\thecounter{\basexii{\arabic{counter}}{\x}{\e}}|
+% \end{quote}
+% For example.  Of course, you can fill in the |\x| and |\e|
+% with whatever you want (though it would make more sense to
+% simply redefine |\x| and |\e|, so that all the counters
+% would use the same characters), or you could use the
+% |\dozens| command instead.  Whatever your pleasure might
+% be.
+%
+% If you \emph{don't} want all the counters to be redefined,
+% or if you're using a class which doesn't include basic
+% \LaTeX\ counters, you'll want to use the |nocounters|
+% option.  The |nocounters|\DescribeMacro{nocounters}\
+% option to the package prevents the redefinition of these
+% counters.  The effect of this is that the commands of the
+% package (|\basexii|, |\dozens|, etc.) are made available,
+% but all the counters will still be in decimal.  This
+% permits using dozenal characters in an otherwise decimal
+% document; it also proves useful in document classes in
+% which these counters are undefined (e.g., |minimal|).
+%
+% The |dozenal| fonts were designed in \MF, and they are
+% distributed in both \MF-generated bitmaps and autotraced
+% Postscript Type1 fonts.  The
+% |typeone|\DescribeMacro{typeone}\ option forces |dozenal|
+% to provide Postscript Type 1 fonts rather than \MF\
+% bitmaps to \TeX.  Both of these are produced from the same
+% font files, though, so the difference is very slight.
+% However, the Type1 fonts do generally look better on
+% screen; the |typeone| option will probably be used most of
+% the time that |dozenal| itself is used.
+%
+% \section{Implementation}
+% \label{sect:code}
+% 
+% Make sure that we have |fixltx2e| loaded, so that the 
+% |\TextOrMath| magic will work.  Also, as of v6.0, we also
+% require |xstring| to use |\IfStrEq| in the number-to-word
+% code.
+%    \begin{macrocode}
+\RequirePackage{fixltx2e}
+\RequirePackage{xstring}
+%    \end{macrocode}
+% Now we ensure that |ifpdf| is loaded, so that we can test
+% for pdf or dvi modes.  We also make sure we have
+% |ifluatex|, so that |dozenal| won't choke when you use it
+% with the |typeone| option.  We'll take care of the
+% |luatex| stuff right away, while we're at it:
+%    \begin{macrocode}
+\RequirePackage{ifpdf}
+\RequirePackage{ifluatex}
+\ifluatex
+	\protected\def\pdfmapfile {\pdfextension mapfile }
+\fi
+%    \end{macrocode}
+% We also require |mfirstuc|, because it's \emph{great}:
+%    \begin{macrocode}
+\RequirePackage{mfirstuc}
+%    \end{macrocode}
+% Now we declare the option ``nocounters'', which prevents
+% |dozenal| from redefining all the counters.  This prevents
+% errors in document classes which don't have these counters,
+% such as |minimal|.  Defines the command |\nocounters| if
+% and only if the options is named.
+%    \begin{macrocode}
+\DeclareOption{nocounters}{%
+	\def\nocounters{}%
+}%
+%    \end{macrocode}
+% Now we define the |typeone| option, which forces the use
+% of the Type 1 versions of the dozenal fonts.
+%    \begin{macrocode}
+\newif\iftypeone\typeonefalse
+\DeclareOption{typeone}{\typeonetrue}
+\ProcessOptions\relax
+%    \end{macrocode}
+% We then define the font that we're using for our
+% \MF-produced Pitman characters.  Incidentally, we also
+% define the command |\doz|, though I can't foresee any
+% decent use for it except in packages and preambles; it is
+% then used to define |\x| and |\e|, which provide the ten
+% and eleven symbols for all the counter redefinitions.
+% This includes definitions for both T1 and OT1 encodings,
+% so it will work with either.
+%    \begin{macrocode}
+\iftypeone%
+	\ifpdf
+		\pdfmapfile{=dozenal.map}
+	\fi
+	\DeclareFontFamily{T1}{dozch}{}
+	\DeclareFontShape{T1}{dozch}{m}{n}{<-6> dozchars6 
+		<7> dozchars7 <8> dozchars8 <9> dozchars9 <10-11> 
+		dozchars10 <12-16> dozchars12 <17-> dozchars17  }{}
+	\DeclareFontShape{T1}{dozch}{b}{n}{<-> dozchb10 }{}
+	\DeclareFontShape{T1}{dozch}{bx}{n}{<-6> dozchbx6 
+		<7> dozchbx7 <8> dozchbx8 <9> dozchbx9 <10-11> 
+		dozchbx10 <12-> dozchbx12 }{}
+	\DeclareFontShape{T1}{dozch}{m}{sl}{<-8> dozchsl8 
+		<9> dozchsl9 <10-11> dozchsl10 <12-> dozchsl12 }{}
+	\DeclareFontShape{T1}{dozch}{bx}{sl}{<-> dozchbxsl10 }{}
+	\DeclareFontShape{T1}{dozch}{m}{it}{<-7> dozchit7 
+		<8> dozchit8 <9> dozchit9 <10-11> dozchit10 
+		<12-> dozchit12 }{}
+	\DeclareFontShape{T1}{dozch}{bx}{it}{<-> dozchbxi10 }{}
+	\def\doz#1{{\fontfamily{dozch}\fontencoding{T1}\selectfont #1}}%
+	\DeclareSymbolFont{dozens}{T1}{dozch}{m}{n}
+\else%
+	\DeclareFontFamily{OT1}{dozch}{}
+	\DeclareFontShape{OT1}{dozch}{m}{n}{<-6> dozchars6 
+		<7> dozchars7 <8> dozchars8 <9> dozchars9 <10-11> 
+		dozchars10 <12-16> dozchars12 <17-> dozchars17  }{}
+	\DeclareFontShape{OT1}{dozch}{b}{n}{<-> dozchb10 }{}
+	\DeclareFontShape{OT1}{dozch}{bx}{n}{<-6> dozchbx6 
+		<7> dozchbx7 <8> dozchbx8 <9> dozchbx9 <10-11> 
+		dozchbx10 <12-> dozchbx12 }{}
+	\DeclareFontShape{OT1}{dozch}{m}{sl}{<-8> dozchsl8 
+		<9> dozchsl9 <10-11> dozchsl10 <12-> dozchsl12 }{}
+	\DeclareFontShape{OT1}{dozch}{bx}{sl}{<-> dozchbxsl10 }{}
+	\DeclareFontShape{OT1}{dozch}{m}{it}{<-7> dozchit7 
+		<8> dozchit8 <9> dozchit9 <10-11> dozchit10 
+		<12-> dozchit12 }{}
+	\DeclareFontShape{OT1}{dozch}{bx}{it}{<-> dozchbxi10 }{}
+	\def\doz#1{{\fontfamily{dozch}\fontencoding{OT1}\selectfont #1}}%
+	\DeclareSymbolFont{dozens}{OT1}{dozch}{m}{n}
+\fi%
+\newcommand\x{\unexpanded{\TextOrMath{\protect\doz{{X}}}{\doz@X}}}%
+\newcommand\e{\unexpanded{\TextOrMath{\protect\doz{{E}}}{\doz@E}}}%
+\DeclareMathSymbol{\doz@X}{\mathord}{dozens}{88}%
+\DeclareMathSymbol{\doz@E}{\mathord}{dozens}{69}%
+%    \end{macrocode}
+% Put in some additional code for the tally marks.
+%    \begin{macrocode}
+\newcommand\tally[1]{%
+%	\usefont{OT1}{dozch}{m}{n}\selectfont{#1}%
+	\doz{#1}%
+}%
+%    \end{macrocode}
+% Then we define our command which will produce the dozenal
+% numbers from decimal sources.  This algorithm was taken
+% directly from the publicly available archives of
+% comp.text.tex, where it was posted by the well-known and
+% redoubtable David Kastrup.  We also define the |\dozens|
+% command, a simplified |\basexii| (which, in fact, depends
+% utterly upon |\basexii|), just to make it easy for
+% everyone.
+%    \begin{macrocode}
+\def\basexii#1#2#3{\ifcase\numexpr(#1)\relax
+0\or1\or2\or3\or4\or5\or6\or7\or8\or9\or#2\or#3\else
+\expandafter\basexii\expandafter{\number\numexpr((#1)-6)/12}{#2}{#3}\expandafter\basexii\expandafter{\number\numexpr(#1)-((#1)-6)/12*12}{#2}{#3}\fi}
+\newcommand\dozens[1]{\basexii{#1}{\x}{\e}}
+%    \end{macrocode}
+% Now that we can convert numbers \emph{to} dozenal, let's
+% set it up so that we can convert them \emph{from} dozenal.
+% I use |xstring| here, replacing a messy macro mesh from
+% the last version (5.3).
+%    \begin{macrocode}
+\newcount\doz@countchar
+\def\doz@charcount#1{%
+	\StrLen{#1}[\doz@filler]%
+	\doz@countchar=\doz@filler%
+}%
+%    \end{macrocode}
+% Now we develop our conversion routines for |\basex|.  For
+% v6.0, these were hugely simplified by using the |xstring|
+% package instead of trying to bash through in plain
+% \TeX, which eventually worked but was \emph{not} pretty.
+% We start by defining a few counters to help us out:
+%    \begin{macrocode}
+\newcount\doz@lfiller\doz@lfiller=-1%
+\newcount\doz@total\doz@total=0%
+\newcount\doz@loopi\doz@loopi=0%
+\newcount\doz@multiplier\doz@multiplier=1%
+%    \end{macrocode}
+% Next we adopt a macro from TeX.SE question 140476, from
+% user "Dan", which works like a charm even when using
+% counter values rather than simple integers.  These macros
+% let us grab an individual character from a string; in this
+% case, from the argument of |\basex|.
+%    \begin{macrocode}
+% macro from TeX.SE question 140476, posted by user "Dan"
+\def\ninthofmany#1#2#3#4#5#6#7#8#9{#9\gobbletorelax}
+\def\gobbletorelax#1\relax{}
+\def\doz@CharAt#1#2{%
+	\expandafter\ninthofmany\romannumeral\numexpr(9000-\number#1000)#2\relax}
+% end "Dan" macro
+%    \end{macrocode}
+% Here's where the money happens.  We loop through each
+% digit of the argument, multiplying it by the appropriate
+% factor of 10 (the dozen, of course), and then add that to
+% a rolling total.  At the end, we output the number.
+%    \begin{macrocode}
+\def\doz@ten{X}%
+\def\doz@elv{E}%
+\def\doz@basex#1{%
+	\doz@total=0%
+	\doz@loopi=\doz@countchar%
+	\doz@multiplier=1%
+	\def\doz@wholenum{#1}%
+	\loop\ifnum\doz@loopi>0%
+		\def\doz@currchar{\doz@CharAt{\number\doz@loopi}{\doz@wholenum}}%
+		\if\doz@currchar\doz@ten%
+			\doz@lfiller=10%
+		\else\if\doz@currchar\doz@elv%
+			\doz@lfiller=11%
+		\else%
+			\doz@lfiller=\doz@currchar%
+		\fi\fi%
+		\multiply\doz@lfiller by\doz@multiplier%
+		\multiply\doz@multiplier by12%
+		\advance\doz@total by\doz@lfiller%
+		\advance\doz@loopi by-1%
+	\repeat%
+	\the\doz@total%
+}%
+\def\basex#1{%
+	\doz@charcount{#1}%
+	\doz@loopi=0%
+	\doz@basex{#1}%
+	\doz@multiplier=1%
+	\doz@total=0%
+}%
+%    \end{macrocode}
+% Finally, we define the macros for creating ``Doman''
+% (dozenal Roman) numerals.  One, of course, is defined in
+% terms of the other.  First, though, we need a modulus
+% operator:
+%    \begin{macrocode}
+\newcount\doz@modulus%
+\def\doz@modulo#1#2{%
+	\doz@modulus=#1%
+	\divide\doz@modulus by#2%
+	\multiply\doz@modulus by#2%
+	\multiply\doz@modulus by-1%
+	\advance\doz@modulus by#1\relax%
+}%
+\newcount\doz@quotient%
+\def\doz@quot#1#2{%
+	\doz@quotient=#1%
+	\divide\doz@quotient by#2%
+}%
+%    \end{macrocode}
+% Now we can move on to the meat of the operation:
+%    \begin{macrocode}
+\newcount\doz@romct%
+\newif\ifdoz@domancaps%
+\def\doz@doman#1{%
+	\doz@romct=#1%
+	\doz@quot{\doz@romct}{1728}%
+	\loop\ifnum\doz@quotient>0%
+		\ifdoz@domancaps M\else m\fi%
+		\advance\doz@quotient by-1%
+		\advance\doz@romct by-1728%
+	\repeat
+	\ifnum\doz@romct>1440
+		\ifnum\doz@romct<1584
+			\ifdoz@domancaps CCM\else ccm\fi%
+			\advance\doz@romct by-1440
+		\else%\ifnum\doz@romct>1583
+			\ifdoz@domancaps CM\else cm\fi%
+			\advance\doz@romct by-1584
+		\fi
+	\fi
+	\ifnum\doz@romct>575%
+		\ifnum\doz@romct<719
+			\ifdoz@domancaps CCD\else ccd\fi%
+			\advance\doz@romct by-576
+		\else
+			\ifnum\doz@romct<864%
+				\ifdoz@domancaps CD\else cd\fi%
+				\advance\doz@romct by-720%
+			\fi
+		\fi
+	\else
+		\ifnum\doz@romct>719
+			\ifdoz@domancaps D\else d\fi%
+			\advance\doz@romct by-719%
+		\fi
+	\fi
+	\doz@quot{\doz@romct}{144}%
+	\loop\ifnum\doz@quotient>0%
+		\ifdoz@domancaps C\else c\fi%
+		\advance\doz@quotient by-1%
+		\advance\doz@romct by-144%
+	\repeat
+	\ifnum\doz@romct>119
+		\ifnum\doz@romct<132
+			\ifdoz@domancaps XXC\else xxc\fi%
+			\advance\doz@romct by-120
+		\else
+			\ifdoz@domancaps XC\else xc\fi%
+			\advance\doz@romct by-132
+		\fi
+	\fi
+	\ifnum\doz@romct>71
+		\ifdoz@domancaps L\else l\fi%
+		\advance\doz@romct by-72
+	\fi
+	\ifnum\doz@romct>47%
+		\ifnum\doz@romct>59%
+			\ifdoz@domancaps XL\else xl\fi%
+			\advance\doz@romct by-60%
+		\else
+			\ifdoz@domancaps XXL\else xxl\fi%
+			\advance\doz@romct by-48%
+		\fi
+	\fi
+	\doz@quot{\doz@romct}{12}%
+	\loop\ifnum\doz@quotient>0%
+		\ifdoz@domancaps X\else x\fi%
+		\advance\doz@quotient by-1%
+		\advance\doz@romct by-12%
+	\repeat
+	\doz@modulo{\doz@romct}{12}%
+	\ifnum\doz@modulus=10
+		\ifdoz@domancaps IIX\else iix\fi%
+		\advance\doz@romct by-10
+	\fi
+	\ifnum\doz@modulus=11
+		\ifdoz@domancaps IX\else ix\fi%
+		\advance\doz@romct by-11
+	\fi
+	\ifnum\doz@romct>5
+		\ifdoz@domancaps V\else v\fi%
+		\advance\doz@romct by-6
+	\fi
+	\ifnum\doz@romct>3%
+		\ifnum\doz@romct=4%
+			\ifdoz@domancaps IIV\else iiv\fi%
+			\advance\doz@romct by-4%
+		\else
+			\ifnum\doz@romct=5%
+				\ifdoz@domancaps IV\else iv\fi%
+				\advance\doz@romct by-5%
+			\fi
+			\ifnum\doz@romct=6%
+				\ifdoz@domancaps V\else v\fi%
+				\advance\doz@romct by-6
+			\fi
+		\fi
+	\fi
+	\doz@quot{\doz@romct}{1}%
+	\loop\ifnum\doz@quotient>0%
+		\ifdoz@domancaps I\else i\fi%
+		\advance\doz@quotient by-1%
+		\advance\doz@romct by-1%
+	\repeat
+}
+\protected\def\doman#1{%
+	\doz@domancapsfalse%
+	\doz@doman{#1}%
+}%
+\protected\def\Doman#1{%
+	\doz@domancapstrue%
+	\doz@doman{#1}%
+}%
+%    \end{macrocode}
+% Now, of course, we simply redefine all the counters.  This
+% covers only those counters included in the basic \LaTeX\
+% document classes, however, so if you've written your own,
+% you'll need to redefine them yourself.
+%
+% This first bit ensures that the counters are redefined
+% even if the command |\mainmatter| is not defined.  We have
+% to do this outside of the |\g@addto@macro| below;
+% otherwise, in documents where |\mainmatter| is defined but
+% not used, the counters will not be redefined.  This way,
+% they're redefined in all cases.
+% 
+% This also takes care of ensuring that the counters are
+% only redefined if the ``nocounters'' options was
+% \emph{not} specified.
+%    \begin{macrocode}
+\@ifundefined{nocounters}{%
+	\@ifundefined{c@page}{}{%
+		\renewcommand\thepage{\basexii{\value{page}}{\x}{\e}}}
+	\@ifundefined{c@footnote}{}{%
+		\renewcommand\thefootnote{%
+			\basexii{\value{footnote}}{\x}{\e}}}
+	\@ifundefined{c@part}{}{%
+		\renewcommand\thepart{%
+			\basexii{\value{part}}{\x}{\e}}}
+	\@ifundefined{c@subparagraph}{}{%
+		\renewcommand\thesubparagraph{%
+		\basexii{\value{subparagraph}}{\x}{\e}}}
+	\@ifundefined{c@paragraph}{}{%
+		\renewcommand\theparagraph{%
+			\basexii{\value{paragraph}}{\x}{\e}}}
+	\@ifundefined{c@equation}{}{%
+		\renewcommand\theequation{%
+			\basexii{\value{equation}}{\x}{\e}}}
+	\@ifundefined{c@figure}{}{%
+		\renewcommand\thefigure{%
+			\basexii{\value{figure}}{\x}{\e}}}
+	\@ifundefined{c@table}{}{%
+		\renewcommand\thetable{%
+			\basexii{\value{table}}{\x}{\e}}}
+	\@ifundefined{c@table}{}{%
+		\renewcommand\thempfootnote{%
+			\basexii{\value{mpfootnote}}{\x}{\e}}}
+	\@ifundefined{c@enumi}{}{%
+		\renewcommand\theenumi{%
+			\basexii{\value{enumi}}{\x}{\e}}}
+	\@ifundefined{c@enumii}{}{%
+		\renewcommand\theenumii{%
+			\basexii{\value{enumii}}{\x}{\e}}}
+	\@ifundefined{c@enumiii}{}{%
+		\renewcommand\theenumiii{%
+			\basexii{\value{enumiii}}{\x}{\e}}}
+	\@ifundefined{c@enumiv}{}{%
+		\renewcommand\theenumiv{%
+			\basexii{\value{enumiv}}{\x}{\e}}}
+	\@ifundefined{c@chapter}{%
+		\renewcommand\thesection{%
+			\basexii{\value{section}}{\x}{\e}}
+		\renewcommand\thesubsection{%
+			\thesection.\basexii{\value{subsection}}{\x}{\e}}
+		\renewcommand\thesubsubsection{%
+			\thesubsection.\basexii{\value{subsubsection}}{\x}{\e}}
+	}{
+		\renewcommand\thechapter{%
+			\basexii{\value{chapter}}{\x}{\e}}
+		\renewcommand\thesection{%
+			\thechapter.\basexii{\value{section}}{\x}{\e}}
+		\renewcommand\thesubsection{%
+			\thesection.\basexii{\value{subsection}}{\x}{\e}}
+		\renewcommand\thesubsubsection{%
+			\thesubsection.\basexii{\value{subsubsection}}{\x}{\e}}
+	}
+%    \end{macrocode}
+% Finally, if the |\mainmatter| command is used, we need to
+% make sure that it doesn't mess up our numbering scheme.
+%    \begin{macrocode}
+\@ifundefined{mainmatter}{}{%
+	\g@addto@macro\mainmatter{%
+		\@ifundefined{c@page}{}{%
+			\renewcommand\thepage{\basexii{\value{page}}{\x}{\e}}}
+		\@ifundefined{c@footnote}{}{%
+			\renewcommand\thefootnote{\basexii{\value{footnote}}{\x}{\e}}}
+		\@ifundefined{c@part}{}{%
+			\renewcommand\thepart{\basexii{\value{part}}{\x}{\e}}}
+		\@ifundefined{c@subparagraph}{}{%
+			\renewcommand\thesubparagraph{%
+				\basexii{\value{subparagraph}}{\x}{\e}}}
+		\@ifundefined{c@paragraph}{}{%
+			\renewcommand\theparagraph{%
+				\basexii{\value{paragraph}}{\x}{\e}}}
+		\@ifundefined{c@equation}{}{%
+			\renewcommand\theequation{%
+				\basexii{\value{equation}}{\x}{\e}}}
+		\@ifundefined{c@figure}{}{%
+			\renewcommand\thefigure{%
+				\basexii{\value{figure}}{\x}{\e}}}
+		\@ifundefined{c@table}{}{%
+			\renewcommand\thetable{%
+				\basexii{\value{table}}{\x}{\e}}}
+		\@ifundefined{c@table}{}{%
+			\renewcommand\thempfootnote{%
+				\basexii{\value{mpfootnote}}{\x}{\e}}}
+		\@ifundefined{c@enumi}{}{%
+			\renewcommand\theenumi{%
+				\basexii{\value{enumi}}{\x}{\e}}}
+		\@ifundefined{c@enumii}{}{%
+			\renewcommand\theenumii{%
+				\basexii{\value{enumii}}{\x}{\e}}}
+		\@ifundefined{c@enumiii}{}{%
+			\renewcommand\theenumiii{%
+				\basexii{\value{enumiii}}{\x}{\e}}}
+		\@ifundefined{c@enumiv}{}{%
+			\renewcommand\theenumiv{%
+				\basexii{\value{enumiv}}{\x}{\e}}}
+		\@ifundefined{c@chapter}{
+			\renewcommand\thesection{%
+				\basexii{\value{section}}{\x}{\e}}
+			\renewcommand\thesubsection{%
+				\thesection.\basexii{\value{subsection}}{\x}{\e}}
+			\renewcommand\thesubsubsection{%
+				\thesubsection.\basexii{\value{subsubsection}}{\x}{\e}}
+		}{
+			\renewcommand\thechapter{%
+				\basexii{\value{chapter}}{\x}{\e}}
+			\renewcommand\thesection{%
+				\thechapter.\basexii{\value{section}}{\x}{\e}}
+			\renewcommand\thesubsection{%
+				\thesection.\basexii{\value{subsection}}{\x}{\e}}
+			\renewcommand\thesubsubsection{%
+				\thesubsection.\basexii{\value{subsubsection}}{\x}{\e}}
+		} % end if it's defined
+	}
+}
+}{} % end redefinition of counters block
+%    \end{macrocode}
+% Now we begin the number-to-word macros.  First, we define
+% the macros which allow the user to specify his own words
+% for each rank:
+%    \begin{macrocode}
+\def\dozrankoneword{unqua}
+\def\dozranktwoword{biqua}
+\def\dozrankthreeword{triqua}
+\def\dozrankfourword{quadqua}
+\def\dozrankfiveword{pentqua}
+\def\dozranksixword{hexqua}
+\def\dozranksevenword{septqua}
+\def\dozrankeightword{octqua}
+\def\dozranknineword{ennqua}
+\def\dozranktenword{decqua}
+\def\dozrankelvword{elvqua}
+%    \end{macrocode}
+% Then we define some |\if|s to help us decide how we should
+% capitalize the end result.
+%    \begin{macrocode}
+\newif\ifDOZcaps\DOZcapsfalse
+\newif\ifDozcaps\Dozcapsfalse
+%    \end{macrocode}
+% Then, we give some utility macros:
+%    \begin{macrocode}
+\def\doz@expandloop#1{\doz@xloop#1\relax}
+\def\doz@xloop#1{%
+	\ifx\relax#1\else%
+	\doz@numword#1%
+	\expandafter\doz@xloop\fi%
+}
+\def\printdozrankword{}
+\def\doz@rankword{%
+	\ifnum\doz@countchar=12
+		\def\printdozrankword{\dozrankelvword}%
+	\fi
+	\ifnum\doz@countchar=11
+		\def\printdozrankword{\dozranktenword}%
+	\fi
+	\ifnum\doz@countchar=10
+		\def\printdozrankword{\dozranknineword}%
+	\fi
+	\ifnum\doz@countchar=9
+		\def\printdozrankword{\dozrankeightword}%
+	\fi
+	\ifnum\doz@countchar=8
+		\def\printdozrankword{\dozranksevenword}%
+	\fi
+	\ifnum\doz@countchar=7
+		\def\printdozrankword{\dozranksixword}%
+	\fi
+	\ifnum\doz@countchar=6
+		\def\printdozrankword{\dozrankfiveword}%
+	\fi
+	\ifnum\doz@countchar=5
+		\def\printdozrankword{\dozrankfourword}%
+	\fi
+	\ifnum\doz@countchar=4
+		\def\printdozrankword{\dozrankthreeword}%
+	\fi
+	\ifnum\doz@countchar=3
+		\def\printdozrankword{\dozranktwoword}%
+	\fi
+	\ifnum\doz@countchar=2
+		\def\printdozrankword{\dozrankoneword}%
+	\fi
+	\ifnum\doz@countchar=1
+		\def\printdozrankword{\relax}%
+	\fi
+	\advance\doz@countchar by-1
+	\ifDOZcaps
+		\edef\printdozrankword{\uppercase{\printdozrankword}}%
+	\fi
+	\ifDozcaps
+		\edef\printdozrankword{\capitalisewords{\printdozrankword}}%
+	\fi
+	\ifnum\doz@countchar>0
+		\ \printdozrankword\ %
+	\else
+		\printdozrankword%
+	\fi
+}%
+\def\doz@numword#1{%
+	\IfStrEq{#1}{0}{\def\doz@numberword{zero}}{}%
+	\IfStrEq{#1}{1}{\def\doz@numberword{one}}{}%
+	\IfStrEq{#1}{2}{\def\doz@numberword{two}}{}%
+	\IfStrEq{#1}{3}{\def\doz@numberword{three}}{}%
+	\IfStrEq{#1}{4}{\def\doz@numberword{four}}{}%
+	\IfStrEq{#1}{5}{\def\doz@numberword{five}}{}%
+	\IfStrEq{#1}{6}{\def\doz@numberword{six}}{}%
+	\IfStrEq{#1}{7}{\def\doz@numberword{seven}}{}%
+	\IfStrEq{#1}{8}{\def\doz@numberword{eight}}{}%
+	\IfStrEq{#1}{9}{\def\doz@numberword{nine}}{}%
+	\IfStrEq{#1}{X}{\def\doz@numberword{ten}}{}%
+	\IfStrEq{#1}{E}{\def\doz@numberword{eleven}}{}%
+	\ifDOZcaps
+		\edef\doz@numberword{\uppercase{\doz@numberword}}%
+	\fi
+	\ifDozcaps
+		\edef\doz@numberword{\makefirstuc{\doz@numberword}}%
+	\fi
+	\doz@numberword%
+	\doz@rankword%
+}%
+\def\doznumtoword#1{%
+	\edef\thenumber{\basexii{\value{#1}}{X}{E}}%
+	\expandafter\doz@charcount\expandafter{\thenumber}%
+	\expandafter\doz@expandloop\expandafter{\thenumber}%
+	\doz@countchar=0%
+}%
+\def\DOZnumtoword#1{%
+	\DOZcapstrue%
+	\doznumtoword{#1}%
+	\DOZcapsfalse%
+}%
+\def\Doznumtoword#1{%
+	\Dozcapstrue%
+	\doznumtoword{#1}%
+	\Dozcapsfalse%
+}%
+%    \end{macrocode}
+% Our last job is to make sure the semicolon (Humphrey
+% point) works correctly as a radix point in math mode.
+% This code is adapted from the |icomma| package by Walter
+% Schmidt.
+%    \begin{macrocode}
+\AtBeginDocument{%
+   	\mathchardef\humphrey\mathcode`\;%
+   	\mathcode`\;="8000 %
+}
+{\catcode`;=\active
+   	\gdef;{\futurelet\@let@token\sm@rtsemi}
+}
+\def\sm@rtsemi{%
+   	\ifx\@let@token\@sptoken \else
+   	\ifx\@let@token\space \else
+   	\mathord\fi\fi \humphrey}
+%    \end{macrocode}
+% And that's the end.  Thanks for reading, 
+% folks; please email me with any suggestions or improvements.

@@ -1,0 +1,3966 @@
+% \iffalse meta-comment
+%
+% Copyright (C) 2019-2020 by Pablo González L <pablgonz@educarchile.cl>
+%
+% This work may be distributed and/or modified under the conditions of the
+% LaTeX Project Public License, either version 1.3c of this license or (at
+% your option) any later version. The latest version of this license is in
+%
+%  http://www.latex-project.org/lppl.txt
+%
+% and version 1.3c or later is part of all distributions of LaTeX version
+% 2005/12/01 or later.
+%
+% This work is "maintained" (as per the LPPL maintenance status)
+% by Pablo González Luengo.
+%
+% This work consists of the files scontents.dtx and
+%                                 scontents.ins,
+% and the derived files           scontents.sty,
+%                                 scontents.tex,
+%                                 t-scontents.mkiv and
+%                                 scontents-code.tex.
+%
+%<*driver>
+\documentclass[full]{l3doc}
+% imakeidx also opens a write stream for the .idx file, and that conflicts
+% with the one opened by l3doc. Here we close that write stream:
+\makeatletter
+\immediate\closeout\@indexfile
+\makeatother
+% and later we will copy the write stream opened by imakeidx into \@indexfile
+% so that entries written to both streams end up in the same file.
+\usepackage[english]{babel}
+\usepackage[top=0.5in,bottom=0.3in,left=2in,right=0.7in,footskip=0.2in,headheight=1cm,headsep=0.27cm]{geometry}
+\usepackage[osf,mono=false,scale=0.95,llscaled=0.95]{libertine}
+\setmonofont[
+    Numbers        = OldStyle,
+    Scale          = 0.80,
+    UprightFont    = *-Regular,
+    ItalicFont     = *-RegularIt,
+    BoldFont       = *-Semibold,
+    BoldItalicFont = *-SemiboldIt,
+    RawFeature     = {+zero,+ss06},
+    FontFace       = {m}{sc}{LinBiolinum_R.otf},
+    Extension      = .otf]{SourceCodePro}
+\newfontfamily\sourcecodeprolight{SourceCodePro-Regular.otf}[
+    Scale = 0.80,FakeStretch =0.75,
+    FontFace = {m}{it}{Font =SourceCodePro-RegularIt.otf,Color=FF0000}]
+\RenewDocumentCommand{\MacroLongFont}{}
+  {
+    \sourcecodeprolight\small
+  }
+% The character of visible space is now taken from Latin Modern Mono
+% to prevent fonts in T1. The original definition for xetex/luatex is
+% \def\verbvisiblespace{\usefont{OT1}{cmtt}{m}{n}\asciispace}
+\def\verbvisiblespace{{\fontfamily{lmtt}\selectfont\char"2423}}
+
+\usepackage{unicode-math}
+% Unicode-math changes the position of the glyphs, so the position 26A is now
+% a letter `j'. The doc package ensures that mathcode and the | actually prints
+% a j inside docstrip guards. This changes the mathcode of | to 07C:
+\makeatletter
+\def\mod@math@codes{\mathcode`\|="207C \mathcode`\&="2026
+                    \mathcode`\-="702D \mathcode`\+="702B
+                    \mathcode`\:="703A \mathcode`\=="703D }
+\makeatother
+\setmathfont[Scale = 0.95]{latinmodern-math.otf}
+\usepackage{fontawesome5}
+\newfontfamily\fetamontotf{ffmw10.otf}[
+   Scale             = 0.95,%
+   RawFeature        = {+latn,+rand,+kern,+size},%
+   FontFace          = {bx}{n}{ffmw10.otf},
+   ]
+\usepackage[svgnames]{xcolor}
+\usepackage[sf,bf,compact,medium,pagestyles]{titlesec}
+\usepackage{lastpage,imakeidx,microtype,attachfile2}
+\usepackage{adjustbox,multicol,listings,accsupp,titletoc,hypdestopt}
+\usepackage{scontents} % main
+\usepackage[contents]{colordoc}
+% \show\docCodelineNo
+\def\textnew#1{\color{color-def}#1\/}
+\def\AltMacroFont{\fontencoding\encodingdefault
+                  \fontfamily\ttdefault
+                  \fontseries\mddefault
+                  \fontshape\updefault
+                  \small
+                  }%
+
+% Patching colordoc.sty to work with l3doc.cls
+\ExplSyntaxOn
+\cs_new_eq:cN { liii@xmacro@code } \__codedoc_xmacro_code:n
+\ExplSyntaxOff
+\begingroup
+\makeatletter
+\catcode`\[\@ne\catcode`\]\tw@
+\@makebracesactive
+\gdef{[\@openingbrace[\char'173]]
+\gdef}[\@closingbrace[\char'175]]
+\catcode`\|\z@\catcode`\%12
+\catcode`\ \active\catcode`\\\active
+|gdef|xmacro@code#1%    \end{macrocode}[|liii@xmacro@code[#1]|end[macrocode]]
+|catcode`| 12|gdef|sxmacro@code#1%    \end{macrocode*}[|liii@xmacro@code[#1]|end[macrocode*]]
+|endgroup
+
+\EnableCrossrefs
+% \PageIndex % \CodelineIndex undoes what \PageIndex does
+% \CodelineIndex tries to open another write stream for the index file. We don't
+% want that, so we temporarily make \makeindex a no-op:
+\let\ORGmakeindex\makeindex
+\def\makeindex{}
+\CodelineIndex
+\let\makeindex\ORGmakeindex
+\DoNotIndex{\ , \1,\^}
+\expandafter\DoNotIndex\expandafter{\string\{}
+\expandafter\DoNotIndex\expandafter{\string\}}
+\expandafter\DoNotIndex\expandafter{\string\begin}
+\newcommand{\HP}[1]{\emph{\hyperpage{#1}}\normalsize}
+\ExplSyntaxOn
+\cs_new_protected:Npn \StartImplementation
+  { \bool_set_true:N \l__codedoc_in_implementation_bool }
+\bool_set_false:N \l__codedoc_in_implementation_bool
+\cs_new_protected:Npn \MYSortIndex #1 #2
+  {
+    \bool_if:NTF \l__codedoc_in_implementation_bool
+      { \index{#1\actualchar#2|HP} }
+      { \index[userdoc]{#1\actualchar#2|HP} }
+  }
+\ExplSyntaxOff
+
+\indexsetup{level=\section,firstpagestyle=myheader,othercode=\pagestyle{myheader}}
+\makeindex[name=userdoc,options=-s gind.ist,columnsep=15pt,title={Index of Documentation}]
+\makeindex[options=-s gind.ist,columnsep=15pt,title={Index of Implementation}]
+% Now, after imakeidx opens the write stream for the index file, we copy
+% the reference to \@indexfile:
+\makeatletter
+\expandafter\let\expandafter\@indexfile\csname \jobname @idxfile\endcsname
+\makeatother
+
+\setlength{\parindent}{0pt}
+
+% Colors
+\definecolor{optcolor}{rgb}{0.281,0.275,0.485}
+\definecolor{pkgcolor}{rgb}{0,0.5,0.5}
+\definecolor{araracolor}{rgb}{0, 0.72, 0.28}
+\definecolor{linkcolor}{rgb}{0.04,0.38,0.04}
+\definecolor{rulecolor}{rgb}{0.96,0.96,0.96}
+
+% Only for arara... I like arara :)
+\usepackage[scale=0.85]{comfortaa}
+\newcommand{\araratext}[1]{{\small\normalfont\comfortaa\color{araracolor}\bfseries#1}}
+\newcommand*\arara{\araratext{ar\kern-.03emar\kern-.03ema}}
+
+% User level commands
+\ExplSyntaxOn
+% Logo with fetamont font
+\NewDocumentCommand{\pkglogo}{}
+  {
+    \group_begin:
+    \fetamontotf{\textcolor{pkgcolor}{s}\textcolor{OrangeRed}{content}\textcolor{pkgcolor}{s}}
+    \group_end:
+  }
+
+% Custom \meta[...]{...}, \marg[...]{...} and \oarg[...]{...} with color
+\NewDocumentCommand{\mymeta}{O{}m}
+  {
+    \userdoc_meta_generic:Nnn \userdoc_meta:n { #1 } { #2 }
+  }
+\NewDocumentCommand{\mymarg}{O{}m}
+  {
+    \userdoc_meta_generic:Nnn \userdoc_marg:n { #1 } { #2 }
+  }
+\NewDocumentCommand{\myoarg}{O{}m}
+  {
+    \userdoc_meta_generic:Nnn \userdoc_oarg:n { #1 } { #2 }
+  }
+% Variables and keys
+\tl_new:N \l_userdoc_meta_font_tl
+
+\keys_define:nn { userdoc / mymeta }
+  {
+    type .choice:,
+    type / tt .code:n = \tl_set:Nn \l_userdoc_meta_font_tl { \ttfamily },
+    type / rm .code:n = \tl_set:Nn \l_userdoc_meta_font_tl { \rmfamily },
+    type .initial:n   = rm,
+    cf .tl_set:N      = \l_userdoc_meta_color_tl,
+    cf .initial:n     = optcolor,
+    ac .tl_set:N      = \l_userdoc_meta_anglecolor_tl,
+    ac .initial:n     = lightgray,
+    sbc .tl_set:N     = \l_userdoc_meta_brackcolor_tl,
+    sbc .initial:n    = gray,
+    cbc .tl_set:N     = \l_userdoc_meta_bracecolor_tl,
+    cbc .initial:n    = gray,
+  }
+% Internal commands
+\cs_new_protected:Npn \userdoc_meta_generic:Nnn #1 #2 #3
+  {
+    \group_begin:
+    \keys_set:nn { userdoc / mymeta } { #2 }
+    \color{ \l_userdoc_meta_color_tl }
+    \l_userdoc_meta_font_tl
+    #1 { #3 } % #1 is \userdoc_meta:n, \userdoc_marg:n or \userdoc_oarg:n
+    \group_end:
+  }
+\cs_new_protected:Npn \userdoc_meta:n #1
+  {
+    \userdoc_meta_angle:n { \textlangle }
+    \userdoc_meta_meta:n { #1 }
+    \userdoc_meta_angle:n { \textrangle }
+  }
+\cs_new_protected:Npn \userdoc_marg:n #1
+  {
+    \userdoc_meta_brace:n { \textbraceleft }
+    \userdoc_meta:n { #1 }
+    \userdoc_meta_brace:n { \textbraceright }
+  }
+\cs_new_protected:Npn \userdoc_oarg:n #1
+  {
+    \userdoc_meta_brack:n { [ }
+    \userdoc_meta:n { #1 }
+    \userdoc_meta_brack:n { ] }
+  }
+\cs_new_protected:Npn \userdoc_meta_meta:n #1
+  {
+    \textnormal{\textit{#1}}
+  }
+\cs_new_protected:Npn \userdoc_meta_angle:n #1
+  {
+    \group_begin:
+    \fontfamily{lmr}\selectfont
+    \textcolor{\l_userdoc_meta_anglecolor_tl}{#1}
+    \group_end:
+  }
+\cs_new_protected:Npn \userdoc_meta_brace:n #1
+  {
+    \group_begin:
+    \color{\l_userdoc_meta_bracecolor_tl}
+    #1
+    \group_end:
+  }
+\cs_new_protected:Npn \userdoc_meta_brack:n #1
+  {
+    \textcolor{\l_userdoc_meta_brackcolor_tl}{#1}
+  }
+% \envexamp{m}
+\newsavebox{\boxexaenv}
+\NewDocumentCommand{\envexamp}{m}
+  {
+   \begin{lrbox}{\boxexaenv}%
+    \begin{minipage}[t]{\marginparwidth}%
+     \raggedright\ttfamily\small
+     \textcolor{gray}{\textbackslash begin\{\textcolor{pkgcolor}{{#1}}\}\myoarg
+     [type=tt,sbc=gray,ac=lightgray,cf=optcolor]{keyval ~ list}}\par%
+     \hspace{0.5cm}\mymeta[type=tt,ac=lightgray,cf=gray]{env ~ contents}\par%
+     \textcolor{gray}{\textbackslash end\{{\textcolor{pkgcolor}{{#1}}}\}}\par
+    \end{minipage}%
+   \end{lrbox}%
+   \usebox{\boxexaenv}
+  }
+\NewDocumentCommand{\envexaplain}{O{} m O{end}}
+  {
+   \begin{lrbox}{\boxexaenv}%
+    \begin{minipage}[t]{\marginparwidth}%
+     \raggedright\ttfamily\small
+     \textcolor{pkgcolor}{{\textbackslash#1#2}}\myoarg
+     [type=tt,sbc=gray,ac=lightgray,cf=optcolor]{keyval ~ list}\par%
+     \hspace{0.5cm}\mymeta[type=tt,ac=lightgray,cf=gray]{env ~ contents}\par%
+     \textcolor{pkgcolor}{{\textbackslash #3#2}}\par
+    \end{minipage}%
+   \end{lrbox}%
+   \usebox{\boxexaenv}
+  }
+
+% \cmdexamp{s m o m o}
+\DeclareDocumentCommand{\cmdexamp}{o m o m o}
+  {
+    \group_begin:
+    \small\ttfamily
+    \textcolor{pkgcolor}{\textbackslash#2}
+    \IfValueT{#1}{ \textcolor{MediumOrchid}{#1} }
+    \IfValueT{#3}{ \myoarg[type=tt,sbc=gray,ac=lightgray,cf=optcolor]{#3} }
+    \IfValueTF{#5}
+      {
+        \mymeta[ac=gray,type=tt,cf=MediumOrchid]{#5}%
+        \mymeta[type=tt,ac=gray,cf=optcolor]{#4}
+        \mymeta[ac=gray,type=tt,cf=MediumOrchid]{#5}%
+      }
+      { \mymarg[type=tt,cbc=gray,ac=lightgray,cf=optcolor]{#4} }
+    \par
+    \group_end:
+  }
+
+% \keyexamp{mmm}
+\DeclareDocumentCommand{\keyexamp}{ m m m }
+  {
+    \par
+    \adjustbox{outer=-\marginparsep}{\textcolor{black}{\small\ttfamily{#1}}}
+    \textcolor{gray}{\,\bfseries\texttt{=}}\,{}
+    \mymarg[type=tt,cbc=gray,ac=lightgray,cf=optcolor]{\small{#2}}
+    \hfill\textcolor{gray}{\small\textsf{default}:~\emph{#3}}
+    \par
+    \MYSortIndex{Keys}{Keys>\texttt{#1}}%
+  }
+
+% \mykey{m}
+\DeclareDocumentCommand{\mykey}{ m }
+  {
+    \textcolor{optcolor}{\texttt{#1}}
+    \MYSortIndex{Keys}{Keys>\texttt{#1}}%
+  }
+
+% \mypkg{sm}
+\NewDocumentCommand{\mypkg}{sm}
+  {
+    \group_begin:
+    \IfBooleanTF{#1}
+      {
+        \pkglogo
+        \MYSortIndex{packages}{Packages>\texttt{#2}}
+      }
+      {
+        \textcolor{darkgray}{\textsf{#2}}
+        \MYSortIndex{packages}{Packages>\texttt{#2}}%
+      }
+     \group_end:
+  }
+
+% \myenv{sm}
+\DeclareDocumentCommand{\myenv}{sm}
+  {
+    \IfBooleanTF{#1}
+      {
+        \textcolor{pkgcolor}{\ttfamily{#2}}%
+        \MYSortIndex{environment}{ Environment ~ provide ~ by ~\pkglogo :>\texttt{#2}}
+      }
+      {
+        \textcolor{darkgray}{\ttfamily{#2}}%
+        \MYSortIndex{environment}{Environments>\texttt{#2}}
+      }
+  }
+
+% \ics{sm}
+\DeclareDocumentCommand{\ics}{sm}
+  {
+    \IfBooleanTF{#1}
+      {
+        \tl_set:Nn \l_tmpa_tl { #2 }
+        \regex_replace_once:nnN { (\*) } { \c{textcolor}\cB\{MediumOrchid\cE\}\cB\{\1\cE\} } \l_tmpa_tl
+        \textcolor{pkgcolor}{\ttfamily\textbackslash{\tl_use:N \l_tmpa_tl}}
+        \MYSortIndex{Commands}{ Commands ~ provide  ~ by ~ \pkglogo :>\texttt{\textbackslash#2}}
+      }
+      {
+        \textcolor{darkgray}{\ttfamily\textbackslash{#2}}
+        \MYSortIndex{#2}{\texttt{\textbackslash#2}}
+      }
+  }
+\ExplSyntaxOff
+
+% email https://tex.stackexchange.com/a/663
+\catcode`\_=11\relax%
+\newcommand\email[1]{\_email #1\q_nil}%
+\def\_email#1@#2\q_nil{%
+  \href{mailto:#1@#2}{{\emailfont #1\emailampersat #2}}%
+}%
+\newcommand\emailfont{\sffamily}%
+\newcommand\emailampersat{{\color{optcolor}\footnotesize @}}%
+\catcode`\_=8\relax%
+
+% Custom vertamimsc
+\makeatletter
+\let\verbatimsc\@undefined
+\let\endverbatimsc\@undefined
+\makeatother
+\usepackage{listings}
+\lstnewenvironment{verbatimsc}
+  {
+    \lstset{
+       language   =,%
+       basicstyle = \ttfamily\small,
+       gobble     = 2,%
+           }
+   }{}
+\makeatother
+
+% Don't copy numbers in code example
+\newcommand*{\noaccsupp}[1]{\BeginAccSupp{ActualText={}}#1\EndAccSupp{}}
+
+% Create a language for documentation
+\lstdefinelanguage{scontents-doc}{
+    texcsstyle    = *,%
+    escapechar    = Ç,%
+    extendedchars = true,%
+    keepspaces    = true,%
+    stringstyle   = {\color{red}},%
+    basicstyle    = \ttfamily\small,%
+    alsoletter    = {-,@,.},%
+% comments
+    morecomment   = [l]{\%},%
+    commentstyle  = \ttfamily\small\color{lightgray},%
+% Important words 1
+    keywordstyle  = [1]{\color{gray}},%
+    keywords      = [1]{begin,end,Verbatim,env,myseq,false},%
+% Other words 2
+    keywordstyle  = [2]{\color{blue!75}},%
+    keywords      = [2]{usepackage,section,documentclass,input,usemodule,
+                    subsection,ExplSyntaxOff,ExplSyntaxOn,RequirePackage,
+                    ProvidesExplPackage},%
+% Other words 3
+    keywordstyle  = [3]{\color{optcolor!85}},%
+    keywords      = [3]{document,article,setlength,pagestyle,definecolor},%
+% Reserved words 4 (scontents pkg)
+    keywordstyle  = [4]{\color{pkgcolor}},%
+    keywords      = [4]{scontents,Scontents,getstored,typestored,verbatimsc,%
+                    endverbatimsc,countsc,meaningsc,foreachsc,macros,newenvsc,
+                    endscontents,startscontents,stopscontents,scontents.tex},%
+% Reserved words 5 (in red)
+    keywordstyle  = [5]{\color{red}},%
+    keywords      = [5]{makeatletter,makeatother,let,verb,@undefined,makebox,def,%
+                    par,item,parindent,lstinline,@ifpackagelater,ver@xparse.sty,%
+                    ver@scontents.sty,dospecials,do@noligs,char,outer,jobname,inner},%
+% Reserved words 6 (optcolor)
+    keywordstyle  = [6]{\color{optcolor}},%
+    keywords      = [6]{store-cmd,store-env,print-env,print-cmd,write-env,%
+                    start,stopt,wrapper,sep,step,before,after,write-out,%
+                    overwrite,width-tab,force-eol,inner,outer,I,J,M,L,Ascheol},%
+% Reserved words 7 (OrangeRed)
+    keywordstyle  = [7]{\color{OrangeRed}},%
+    keywords      = [7]{DefineVerbatimEnvironment,lstnewenvironment,newminted,%
+                    newtheorem,newenvironment,VerbatimEnvironment,myenvstore},%
+% literate
+    literate      =*{\{}{{{\color{gray}{\char`\{}}}}{1}
+                    {\}}{{{\color{gray}{\char`\}}}}}{1}
+                    {\|}{{{\color{gray}{\char`\|}}}}{1}
+                    {\$}{{{\color{gray}{\char`\$}}}}{1}
+                    {\#}{{{\color{optcolor}{\char`\#}}}}{1}
+                    {[}{{\textcolor{gray}{[}}}{1}
+                    {]}{{\textcolor{gray}{]}}}{1}
+                    {,}{{\textcolor{gray}{,}}}{1}
+                    {;}{{\textcolor{gray}{;}}}{1}
+                    {`}{{\textcolor{gray}{\textasciigrave}}}{1}
+                    {\&}{{\textcolor{gray}{\&}}}{1}
+                    {>}{{\textcolor{OrangeRed}{\guillemotright}}}{1}
+                    {<}{{\textcolor{OrangeRed}{\guillemotleft}}}{1}
+                    {*}{{\textcolor{MediumOrchid}{*}}}{1}
+                    {\^}{{\textcolor{optcolor}{\textasciicircum}}}{1}
+                    {0}{{\textcolor{MediumOrchid}{0}}}{1}
+                    {1}{{\textcolor{MediumOrchid}{1}}}{1}
+                    {2}{{\textcolor{MediumOrchid}{2}}}{1}
+                    {3}{{\textcolor{MediumOrchid}{3}}}{1}
+                    {4}{{\textcolor{MediumOrchid}{4}}}{1}
+                    {5}{{\textcolor{MediumOrchid}{5}}}{1}
+                    {6}{{\textcolor{MediumOrchid}{6}}}{1}
+                    {7}{{\textcolor{MediumOrchid}{7}}}{1}
+                    {8}{{\textcolor{MediumOrchid}{8}}}{1}
+                    {9}{{\textcolor{MediumOrchid}{9}}}{1}
+                    {.0}{{\textcolor{MediumOrchid}{.0}}}{2}% Following is to ensure that only periods
+                    {.1}{{\textcolor{MediumOrchid}{.1}}}{2}% followed by a digit are changed.
+                    {.2}{{\textcolor{MediumOrchid}{.2}}}{2}
+                    {.3}{{\textcolor{MediumOrchid}{.3}}}{2}
+                    {.4}{{\textcolor{MediumOrchid}{.4}}}{2}
+                    {.5}{{\textcolor{MediumOrchid}{.5}}}{2}
+                    {.6}{{\textcolor{MediumOrchid}{.6}}}{2}
+                    {.7}{{\textcolor{MediumOrchid}{.7}}}{2}
+                    {.8}{{\textcolor{MediumOrchid}{.8}}}{2}
+                    {.9}{{\textcolor{MediumOrchid}{.9}}}{2}
+                    {=}{{\textcolor{gray}{=}}}{1},%
+}[keywords,tex,comments,strings]% end languaje
+
+% \begin{examplecode}[key=val]...\end{examplecode}
+\lstnewenvironment{examplecode}[1][]{%
+\lstset{
+    language    = scontents-doc,%
+    stringstyle = {\color{red}},%
+    basicstyle  = \ttfamily\small,%
+    columns     = fullflexible,%
+    fontadjust  = true,%
+    aboveskip   = 8pt,%
+    belowskip   = 5pt,%
+    rulecolor   = \color{gray!50},%
+    framesep    = \fboxsep,%
+    framerule   = \fboxrule,%
+    xleftmargin = \dimexpr\fboxsep+\fboxrule\relax,%
+    xrightmargin= \dimexpr\fboxsep+\fboxrule\relax,%
+           #1,%
+    }% close lstset
+}{}% close examplecode
+
+% \lstinline[style=inline]|...|
+\lstdefinestyle{inline}
+  {
+    language    = scontents-doc,%
+    upquote     = true,%
+    numbersep   = 1em,%
+    numberstyle = \tiny\color{lightgray}\noaccsupp,%
+    literate    =*{\%}{{\textcolor{gray}{\%}}}{1}
+  }
+
+% Set default \lstinline style
+\lstset{style=inline}
+
+% Set short §...§
+\lstMakeShortInline[language=scontents-doc,basicstyle=\ttfamily]§
+
+% Get file info
+\GetFileInfo{\jobname.sty}
+
+% Config hyperref
+\hypersetup{
+   allcolors          = linkcolor,
+   colorlinks         = true,%
+   linktoc            = all,%
+   pdftitle           = {.:: The scontents package --- \fileinfo{} ::.},%
+   pdfauthor          = {Pablo González L},
+   pdfsubject         = {Documentation for \fileversion{} [\filedate] },%
+   pdfkeywords        = {sequences, contents, external files, expl3, xparse, l3seq, store contents},
+   bookmarksopenlevel = 1,%
+  }
+
+% Configuration titleps and titlesec
+\settitlemarks{section}
+\renewpagestyle{plain}[\color{optcolor}\small\sffamily]{%
+\setfoot{\rlap{\hskip\dimexpr-\oddsidemargin-1in\relax%
+         \parbox{1.93\paperwidth}{\hfil\thepage\,/\,\pageref{LastPage}}}}%
+        {}%
+        {}%
+}
+\newpagestyle{myheader}[\color{optcolor}\small\sffamily]{%
+\renewcommand\makeheadrule{%
+\rlap{\hskip\dimexpr-\oddsidemargin-1in\relax
+      \color{rulecolor}\rule[0.3cm]{\paperwidth}{0.7cm}}\hss
+}
+\setfoot{\rlap{\hskip\dimexpr-\oddsidemargin-1in\relax%
+         \parbox{1.93\paperwidth}{\hfil\thepage\,/\,\pageref{LastPage}}}}%
+        {\parbox{\textwidth}{\raggedright \textcolor{gray}{\raisebox{-1pt}{\textcopyright}{}2019--2020 by Pablo González}}}%
+        {}%
+\sethead{\llap{\raisebox{0.55cm}{\parbox{\dimexpr\oddsidemargin+1in\relax}{\makebox[0pt][l]{\hspace{15pt}\pkglogo\space\fileversion}}}}}
+        {\raisebox{0.55cm}{\parbox{\textwidth}{\hspace*{-\oddsidemargin}\centering\small\S.\thesection\space\sectiontitle}}}%
+        {}%
+}
+
+\titlecontents{section}[0mm]{}%
+    {\bfseries\contentspush{\makebox[5mm][l]{\thecontentslabel\hfill}}}%
+    {\hspace*{-5mm}}% numberless
+    {\hspace{0.25em}\titlerule*[6pt]{.}\contentspage}%
+\titlecontents{subsection}[5mm]{}%
+    {\contentspush{\makebox[6mm][l]{\thecontentslabel\hfill}}}
+    {\hspace*{-11mm}}% numberless
+    {\hspace{0.25em}\titlerule*[6pt]{.}\contentspage}%
+
+% Table of contents
+\makeatletter
+\renewcommand\tableofcontents{%
+\begingroup%
+\section*{\contentsname\quad{\color{gray}\leaders\hrule height 5pt depth -4.4pt\hfill}%
+  \@mkboth{%
+    \MakeUppercase\contentsname}{\MakeUppercase\contentsname}}%
+\vspace*{-14pt}
+\setlength{\columnsep}{10pt}%
+ \begin{multicols}{2}%
+    \@starttoc{toc}%
+\end{multicols}%
+\vspace*{-3pt}{\color{gray}\hrule height 0.6pt}%
+\vspace*{5pt}
+\endgroup
+}
+\makeatother
+% thanks
+\makeatletter
+\renewcommand*{\@fnsymbol}[1]{\ensuremath{\ifcase#1\or \textcolor{pkgcolor}{*}
+\or \textcolor{pkgcolor}{\dagger} \or \ddagger\or \mathsection
+\or \mathparagraph\or \|\or **\or \dagger\dagger
+\or \ddagger\ddagger \else\@ctrerr\fi}}
+\makeatother
+\begin{document}
+  \DocInput{\jobname.dtx}
+\end{document}
+%</driver>
+% \fi
+%
+% \title{
+%    \scalebox{1.57}{\pkglogo}\\[2pt]
+%    \Large
+%    \textsf{Stores \hologo{LaTeX}}{ \fetamontotf{contents} }\\[3pt]
+%    \fileversion{} --- \filedate\thanks{
+%    This file describes a documentation for \fileversion, last revised
+%    \filedate.}\\[25pt]
+%    \author{
+%    \large
+%    \raisebox{-1pt}{\textcopyright}{}2019--2020 by Pablo González\thanks{
+%    E-mail: \textcolor{OrangeRed}{\textsf{\guillemotleft}}\email{pablgonz@educarchile.cl}\textcolor{OrangeRed}{\textsf{\guillemotright}}.
+%       }%
+%    }
+% \small
+% \textsc{ctan}: \url{https://www.ctan.org/pkg/scontents}\\
+% \textcolor{gray}{\scriptsize\faIcon[regular]{github}}\,\,\,\url{https://github.com/pablgonz/scontents}
+% \vspace*{-2cm}
+% }
+% \date{}
+% \maketitle
+%
+% \begin{scontents}[store-env=abstract, print-env=true]
+% \begin{abstract}
+% This package allows to store \hologo{LaTeX} code, including \enquote{\emph{verbatim}},
+% in \mymeta{sequences} using the \mypkg{l3seq} module of \mypkg{expl3}. The \mymeta{stored
+% content} can be used as many times as desired in the document, additionally you can write
+% to \mymeta{external files} or show it in \mymeta{verbatim style}.
+% \end{abstract}
+% \end{scontents}
+%
+% \tableofcontents
+%
+% \setlength{\parskip}{3pt}
+%
+% \section{Motivation and Acknowledgments}
+%
+% In \hologo{LaTeX} there is no direct way to record content for later use, although
+% you can do this using §\macros§, recording \mymeta[type=rm]{verbatim content}  is a
+% problem, usually you can avoid this by creating external files or boxes. The
+% general idea of this package is to try to imitate this implementation
+% \enquote{\emph{buffers}} that has \hologo{ConTeXt} which allows you to save content in
+% memory, including \emph{verbatim}, to be used later. The package
+% \mypkg{filecontentsdef} solves this problem and since \mypkg{expl3} has an
+% excellent way to manage data, ideas were combined giving rise to this package.
+%
+% This package would not be possible without the great work of \textsc{Jean
+% Fran\c{c}ois Burnol} who was kind enough to take my requirements into account
+% and add the \myenv{filecontentsdefmacro} environment. Also a special thanks to
+% Phelype Oleinik who has collaborated and adapted a large part of the code and
+% all \hologo{LaTeX3} team for their great work and to the different members
+% of the \href{https://tex.stackexchange.com}{TeX-SX} community who have provided
+% great answers and ideas. Here a note of the main ones:
+%
+% \begin{enumerate}[left=0pt, labelsep=5pt, noitemsep, nosep, label=\small\arabic*.]
+% \item \href{https://tex.stackexchange.com/q/45946/7832}{Stack datastructure using LaTeX}
+%
+% \item \href{https://tex.stackexchange.com/q/5338/7832}{LaTeX equivalent of ConTeXt buffers}
+%
+% \item \href{https://tex.stackexchange.com/q/215563/7832}{Storing an array of strings in a command}
+%
+% \item \href{https://tex.stackexchange.com/q/184503/7832}{Collecting contents of environment and store them for later retrieval}
+%
+% \item \href{https://tex.stackexchange.com/q/373647/7832}{Collect contents of an environment (that contains verbatim content)}
+% \end{enumerate}
+%
+% \section{License and Requirements}
+% \label{sec:licence}
+%
+% Permission is granted to copy, distribute and/or modify this software under
+% the terms of the LaTeX Project Public License (lppl), version 1.3 or later
+% (\url{http://www.latex-project.org/lppl.txt}). The software has the status
+% \enquote{maintained}.
+%
+% \medskip
+%
+% The \mypkg*{scontents} package loads \mypkg{expl3}, \mypkg{xparse} and
+% \mypkg{l3keys2e}. This package can be used with "plain", "context", "xelatex",
+% "lualatex", "pdflatex" and the classical workflow §latex>dvips>ps2pdf§.
+%
+% \thispagestyle{plain}
+%
+% \newpage
+%
+% \pagestyle{myheader}
+%
+% \section{The \texttt{scontents} package}
+% \label{sec:pkgscontents}
+%
+% \subsection{Description of the package and load}
+%
+% \begin{scontents}[store-env=description, print-env=true]
+% The \mypkg*{scontents} package allows to \mymeta{store contents} in \mymeta{sequences}
+% or \mymeta{external files}. In some ways it is similar to the \mypkg{filecontentsdef}
+% package, with the difference in which the \mymeta{content} is stored. The idea behind
+% this package is to get an approach to \hologo{ConTeXt} \enquote{\emph{buffers}} by
+% making use \mymeta{sequences}.
+% \end{scontents}
+%
+% The package is loaded in the usual way:
+%
+% \subsubsection*{For \hologo{LaTeX} users}
+% \iffalse
+%<*example>
+% \fi
+\begin{examplecode}[frame=single]
+\usepackage{scontents}
+\end{examplecode}
+% \iffalse
+%</example>
+% \fi
+%
+% or
+%
+% \iffalse
+%<*example>
+% \fi
+\begin{examplecode}[frame=single]
+\usepackageÇ\small\myoarg[type=tt]{key \textnormal{\textcolor{gray}{=}} val}Ç{scontents}
+\end{examplecode}
+% \iffalse
+%</example>
+% \fi
+%
+% The package options are not available for \hologo{plainTeX} and
+% \hologo{ConTeXt}, see \ref{sec:confopt}.
+%
+% \subsubsection*{For \hologo{plainTeX} users}
+%
+% \iffalse
+%<*example>
+% \fi
+\begin{examplecode}[frame=single]
+\input scontents.tex
+\end{examplecode}
+% \iffalse
+%</example>
+% \fi
+%
+% \subsubsection*{For \hologo{ConTeXt} users}
+%
+% \iffalse
+%<*example>
+% \fi
+\begin{examplecode}[frame=single]
+\usemodule{scontents}
+\end{examplecode}
+% \iffalse
+%</example>
+% \fi
+%
+% \subsection{The TAB character}
+% \label{sec:tabcharacter}
+%
+% Some users use horizontal "TAB"s \enquote{\LKeyTab} from keyboard to indented the source
+% code of the document and depending on the text editor used, some will use real "TAB"s
+% (\enquote{hard tabs}), others with \enquote{soft tabs}(\verb*|  | or \verb*|    |)
+% or both.
+%
+% At first glance it may seem the same, but the way in which "TAB"s (\enquote{hard tabs})
+% are processed according to the context in which they are found within
+% a file, both in \mymeta{reading}\footnote{Check the answer given by Ulrich Diez
+% in \href{https://tex.stackexchange.com/a/508103/7832}{Keyboard TAB
+% character in argument v (xparse)}.} and \mymeta{writing}\footnote{Check the answer
+% given by Enrico Gregorio in \href{https://tex.stackexchange.com/a/58740/7832}{How to output a
+% tabulation into a file}.} are different and may have adverse consequences.
+%
+% In a standard \hologo{LaTeX} document, the character "TAB" \enquote{\LKeyTab}
+% are treated as explicit spaces (in most contexts) and is the behavior when
+% \mymeta{stored contents}, but when \mymeta{writing files} these are preserved.
+%
+% With a \hologo{TeX}Live distribution, the "TAB" character is \enquote{printable}
+% for "latex", "pdflatex" and "lualatex", but if you use "xelatex" you
+% must add the \texttt{\textcolor{optcolor}{-8bit}} option on the command
+% line, otherwise you will get \hologo{TeX}-"TAB" (§^^I§) in the \mymeta{output file}.
+%
+% As a general recommendation \enquote{Do not use "TAB" character unless strictly
+% necessary}, for example within a \emph{verbatim} environment that supports
+% this character such as \myenv{Verbatim} of the package \mypkg{fancyvrb} or \myenv{lstlisting}
+% of the package \mypkg{listings} or when you want to generate a §MakeFile§ file.
+%
+% \subsection{Configuration of the options}
+% \label{sec:confopt}
+%
+% Most of the options can be passed directly to the package or using the
+% command \ics*{setupsc}. All boolean keys can be passed using the
+% equal sign \enquote{\textnormal{\textcolor{gray}{=}}} or just the
+% name of the key, all unknown keys will return an error. In this section
+% are described some of the options, a summary of all options is shown in
+% section \ref{sec:optover}.
+%
+% \vspace*{-10pt}
+%
+% \begin{function}{\setupsc}
+%   \begin{syntax}
+%       \cmdexamp{setupsc}{keyval list}
+%   \end{syntax}
+%
+% The command \ics*{setupsc} sets the \mymeta{keys} in a global way,
+% it can be used both in the preamble and in the body of the document
+% as many times as desired. However, options set in the declaration of
+% an environment (with \ics*{newenvsc}) have precedence over options
+% set with \ics*{setupsc}.
+%
+% Options in the optional arguments of environments and
+% commands have the highest precedence, overriding both
+% options in \ics*{newenvsc}, and in \ics*{setupsc}.
+% \end{function}
+%
+% \keyexamp{verb-font}{font family}{\textnormal{\ttfamily\textbackslash{}ttfamily}}
+% Sets the \mymeta{font family} used to display the \mymeta{stored content} for the
+% \ics*{typestored} and \ics*{meaningsc} commands. This key is only available
+% as a package option or using \ics*{setupsc}.
+%
+% \medskip
+%
+% \keyexamp{store-all}{seq name}{not used}
+% It is a \mymeta{meta-key} that sets the \mykey{store-env} key of the \myenv*{scontents}
+% environment and the \mykey{store-cmd} key of the \ics*{Scontents} command. This key is
+% only available as a package option or using \ics*{setupsc}.
+%
+% \newpage
+%
+% \keyexamp{overwrite}{true \textnormal{\textcolor{lightgray}{\textbar}} false}{false}
+% Sets whether the \mymeta{files} generated by \mykey{write-out} and \mykey{write-env}
+% from the \myenv*{scontents} environment will be rewritten. This key is available as
+% a package option, for \ics*{setupsc}, for \ics*{Scontents*} and for the environment
+% \myenv*{scontents}.
+%
+% \medskip
+%
+% \keyexamp{print-all}{true \textnormal{\textcolor{lightgray}{\textbar}} false}{false}
+% It is a \mymeta{meta-key} that sets the \mykey{print-env} key of the \myenv*{scontents}
+% environment and the \mykey{print-cmd} key of the \ics*{Scontents} command. This key is
+% only available as a package option or using \ics*{setupsc}.
+%
+% \keyexamp{force-eol}{true \textnormal{\textcolor{lightgray}{\textbar}} false}{false}
+% Sets if the end of line for the \mymeta{stored content} is hidden or not.
+% This key is necessary only if the last line is the closing of some
+% environment defined by the \mypkg{fancyvrb} package as §\end{Verbatim}§
+% or another environment that does not support a comments \enquote{\ttfamily\textcolor{gray}{\%}}
+% after closing §\end{<env>}%§. This key is available for the \myenv*{scontents}
+% environment and the \ics*{Scontents} command.
+%
+% \keyexamp{width-tab}{integer}{1}
+% Sets the equivalence in \mymeta{spaces} for the character "TAB"
+% used when displaying stored content in \emph{verbatim style}. The value
+% must be a \mymeta{positive integer}. This key is available for the \ics*{typestored}
+% and the \ics*{meaningsc} commands.
+%
+% \subsection{Options Overview}
+% \label{sec:optover}
+%
+% \newcommand*{\xmark}{\textcolor{OrangeRed}{✘}}%
+% \newcommand*{\cmark}{\textcolor{linkcolor}{✔}}%
+%
+% Summary of available options:
+%
+% \setlength{\tabcolsep}{0.25em}
+% \begin{center}
+% \small
+% \begin{tabular}{cccccccc}
+% \toprule
+% \texttt{key} &package &\ics*{setupsc} &\myenv*{scontents} &\ics*{Scontents} &\ics*{Scontents*} &\ics*{typestored} &\ics*{meaningsc}\\
+% \midrule
+%  \mykey{store-env} & \cmark  & \cmark  &  \cmark  & \xmark  & \xmark  & \xmark  & \xmark \\
+%  \mykey{store-cmd} & \cmark  & \cmark  &  \xmark  & \cmark  & \cmark  & \xmark  & \xmark \\
+%  \mykey{print-env} & \cmark  & \cmark  &  \cmark  & \xmark  & \xmark  & \xmark  & \xmark \\
+%  \mykey{print-cmd} & \cmark  & \cmark  &  \xmark  & \cmark  & \cmark  & \xmark  & \xmark \\
+%  \mykey{print-all} & \cmark  & \cmark  &  \xmark  & \xmark  & \xmark  & \xmark  & \xmark \\
+%  \mykey{store-all} & \cmark  & \cmark  &  \xmark  & \xmark  & \xmark  & \xmark  & \xmark \\
+%  \mykey{write-env} & \xmark  & \xmark  &  \cmark  & \xmark  & \xmark  & \xmark  & \xmark \\
+%  \mykey{write-cmd} & \xmark  & \xmark  &  \xmark  & \xmark  & \cmark  & \xmark  & \xmark \\
+%  \mykey{write-out} & \xmark  & \xmark  &  \cmark  & \xmark  & \cmark  & \xmark  & \xmark \\
+%  \mykey{overwrite} & \cmark  & \cmark  &  \cmark  & \xmark  & \cmark  & \xmark  & \xmark \\
+%  \mykey{width-tab} & \cmark  & \cmark  &  \xmark  & \xmark  & \xmark  & \cmark  & \cmark \\
+%  \mykey{force-eol} & \cmark  & \cmark  &  \cmark  & \cmark  & \cmark  & \xmark  & \xmark \\
+%  \mykey{verb-font} & \cmark  & \cmark  &  \xmark  & \xmark  & \xmark  & \xmark  & \xmark \\
+% \bottomrule
+% \end{tabular}
+% \end{center}
+%
+% \section{User interface}
+% \label{sec:interface}
+%
+% The user interface consists in \myenv*{scontents} environment, \ics*{Scontents}
+% and \ics*{Scontents*} commands to \mymeta{stored content} and \ics*{getstored}
+% command to get the \mymeta{stored content} along with other utilities described
+% in this documentation.
+%
+% \subsection{The environment \texttt{scontents}}
+% \label{sec:envscontents}
+%
+% \vspace*{-10pt}
+%
+% \begin{function}[label=SCONTENTS]{scontents}
+%   \begin{syntax}
+%   \envexamp{scontents}
+%   \end{syntax}
+%
+% The \myenv*{scontents} environment allows you to \mymeta{store} and \mymeta{write}
+% content, including \emph{verbatim} material. After the package has been
+% loaded, the environment can be used both in the preamble and in the body
+% of the document.
+%
+% For the correct operation §\begin{scontents}§ and §\end{scontents}§ must
+% be in different lines, all \mymeta{keys} must be passed separated by
+% commas and \enquote{without separation} of the start of the environment.
+% \end{function}
+%
+% Comments \enquote{\textcolor{gray}{\%}} or \enquote{any character} after
+% §\begin{scontents}§ or \myoarg{keyval list} on the same line are not
+% supported, the package will return an \enquote{error} message if this happens.
+% In a similar way comments \enquote{\textcolor{gray}{\%}} or \enquote{any character} after
+% §\end{scontents}§ on the same line the package will return a \enquote{warning} message.
+%
+% The environment can be \mymeta{nested} if it is properly balanced and
+% does not appear \enquote{literally} in commented lines or in some \emph{verbatim}
+% environment or command. As an example:
+%
+% \iffalse
+%<*example>
+% \fi
+\begin{examplecode}[frame=single]
+\begin{scontents}[store-env=outer]
+This text is in the outer environment (before nested).
+\begin{scontents}[store-env=inner]
+This text is found in the inner environment (inside of nested).
+\end{scontents}
+This text is in the outer environment (after nested).
+\end{scontents}
+\end{examplecode}
+% \iffalse
+%</example>
+% \fi
+%
+% Of course, content stored in the \mymeta{inner} sequence is only available
+% after content stored in the \mymeta{outer} sequence one has been retrieved,
+% either by using the key \mykey{print-env} or \ics*{getstored} command.
+%
+% It is advisable to store content within sequences with different names,
+% so as not to get lost in the order in which content is stored.
+%
+% \subsection*{Notes for \hologo{plainTeX} and \hologo{ConTeXt} users}
+%
+% In \hologo{plainTeX} there is not environments as in \hologo{LaTeX}.
+% Instead of using the environment \myenv*{scontents}, one should use a
+% \emph{pseudo environment} delimited by \ics*{scontents} and \ics*{endscontents}.
+%
+% \vspace*{-10pt}
+% \begin{function}{\scontents,\endscontents}
+%   \begin{syntax}
+%   \envexaplain{scontents}
+%   \end{syntax}
+% \end{function}
+%
+% \hologo{ConTeXt} users should use \ics*{startscontents} and \ics*{stopscontents}.
+% \vspace*{-10pt}
+% \begin{function}{\startscontents,\stopscontents}
+%   \begin{syntax}
+%   \envexaplain[start]{scontents}[stop]
+%   \end{syntax}
+% \end{function}
+% \subsection*{Options for environment}
+%
+% The environment options can be configured globally using option
+% in package or the \ics*{setupsc} command and locally using
+% \myoarg{key \textnormal{\textcolor{gray}{=}} val} in the environment.
+% The key \mykey{force-eol} is available for this environment.
+%
+% \keyexamp{store-env}{seq name}{contents}
+% Sets the name of the \mymeta{sequence} in which the contents will be
+% stored. If the sequence does not exist, it will be created globally.
+%
+% \medskip
+%
+% \keyexamp{print-env}{true \textnormal{\textcolor{lightgray}{\textbar}} false}{false}
+% Sets if the \mymeta{stored content} is displayed or not at the time of
+% running the environment. The content is extracted from the \mymeta{sequence}
+% in which it is stored.
+%
+% \medskip
+%
+% \keyexamp{write-env}{file.ext}{not used}
+% Sets the name of the \mymeta{external file} in which the \mymeta{contents} of
+% the environment will be written.  The \mymeta{file.ext} will be created
+% in the working directory, relative or absolute paths are not supported. If \mymeta{file.ext}
+% does not exist, it will be created or overwritten if the \mykey{overwrite} key is used.
+%
+% The characters "TAB"s will be written in \mymeta{file.ext} and the \mymeta{contents}
+% will be stored in the \mymeta{sequence} established at that time. \hologo{XeLaTeX} users
+% using the "TAB" character must add \texttt{\textcolor{optcolor}{-8bit}}
+% at the command line, otherwise you will get \hologo{TeX}-"TAB" (§^^I§)
+% in \mymeta{file.ext}.
+%
+% \medskip
+%
+% \keyexamp{write-out}{file.ext}{not used}
+% Sets the name of the \mymeta{external file} in which the \mymeta{contents} of
+% the environment will be written. The \mymeta{file.ext} will be created
+% in the working directory, relative or absolute paths are not supported. If \mymeta{file.ext}
+% does not exist, it will be created or overwritten if the \mykey{overwrite} key is used.
+%
+% The characters "TAB"s will be written in \mymeta{file.ext}, the rest of the
+% \mymeta{keys} will not be available and the \mymeta{contents} will NOT
+% be stored in any \mymeta{sequence}. \hologo{XeLaTeX} users using the "TAB" character
+% must add \texttt{\textcolor{optcolor}{-8bit}} at the command line,
+% otherwise you will get \hologo{TeX}-"TAB" (§^^I§) in \mymeta{file.ext}.
+%
+%
+% \subsection{The command \cs{newenvsc}}
+% \label{sec:newenvsc}
+%
+% \newsavebox{\exaboxtmp}
+% \begin{lrbox}{\exaboxtmp}
+%    \small\ttfamily
+%    \textcolor{pkgcolor}{\textbackslash newenvsc}\mymarg[type=tt]{env name}\myoarg[type=tt]{initial keys}
+% \end{lrbox}
+%
+% \vspace*{-10pt}
+%
+% \begin{function}{\newenvsc}
+%   \begin{syntax}
+%    \usebox{\exaboxtmp}
+%   \end{syntax}
+% \end{function}
+%
+% The command \ics*{newenvsc} allows you to create \mymeta{new environments}
+% based on the same characteristics of the \myenv*{scontents} environment.
+% The values entered in \myoarg{initial keys} will be considered as the
+% default values for this new environment and the valid \mymeta{keys} are
+% \mykey{store-env} and \mykey{print-env}. For example:
+%
+% \iffalse
+%<*example>
+% \fi
+\begin{examplecode}[frame=single]
+\newenvsc{myenvstore}[store-env=myseq,print-env=false]
+\end{examplecode}
+% \iffalse
+%</example>
+% \fi
+%
+% created the §myenvstore§ environment that stored the content in the §myseq§
+% sequence and will not display the content when it is executed.
+%
+% \subsection{The command \cs{Scontents}}
+% \label{sec:Scontents}
+%
+% \vspace*{-10pt}
+%
+% \begin{function}{\Scontents}
+%   \begin{syntax}
+%     \cmdexamp{Scontents}[key \textnormal{\textcolor{gray}{=}} val]{argument}
+%     \cmdexamp[*]{Scontents}[key \textnormal{\textcolor{gray}{=}} val]{argument}
+%     \cmdexamp[*]{Scontents}[key \textnormal{\textcolor{gray}{=}} val]{argument}[del]
+%   \end{syntax}
+% \end{function}
+%
+% The \ics*{Scontents} command reads the \mymarg{argument} in standard
+% mode. It is not possible to pass environments such as \emph{verbatim},
+% but it is possible to use the implementation of \ics{Verb} provided by
+% the \mypkg{fvextra} package for contents on one line and \ics{lstinline}
+% from \mypkg{listings} package, but it is preferable to use the starred (§*§)
+% version.
+%
+% The \ics*{Scontents*} command reads the \mymarg{argument} under \emph{verbatim}
+% category code regimen. If its first delimiter is a brace, it will be
+% assumed that the \mymarg{argument} is nested into braces. Otherwise it
+% will be assumed that the ending of that \mymeta{argument} is delimited by that
+% first delimiter \mymeta[cf=MediumOrchid]{del} like command \ics{verb}.
+%
+% Blank lines are preserved, escaped braces \enquote{\texttt{\textcolor{gray}{\textbackslash\hspace{-1pt}\{}}} and
+% \enquote{\texttt{\textcolor{gray}{\textbackslash\}}}} must also be
+% balanced if the argument is used with braces and "TAB"s characters typed
+% from the keyboard are converted into spaces.
+% The starred argument (§*§) and \myoarg{key \textnormal{\textcolor{gray}{=}} val}
+% must not be separated by horizontal spaces between them and the command.
+%
+% Both versions can be used anywhere in the document and cannot be used
+% as an \mymeta{argument} for other command.
+%
+% \subsection*{Options for command}
+% \label{sec:optcmdsc}
+%
+% The command options can be configured globally using option in package
+% or the \ics*{setupsc} command and locally using \myoarg{key \textnormal{\textcolor{gray}{=}} val}.
+% The key \mykey{force-eol} is available for this command.
+%
+% \keyexamp{store-cmd}{seq name}{contents}
+% Sets the name of the \mymeta{sequence} in which the contents will be stored.
+% If the sequence does not exist, it will be created globally.
+%
+% \medskip
+%
+% \keyexamp{print-cmd}{true \textnormal{\textcolor{lightgray}{\textbar}} false}{false}
+% Sets if the \mymeta{stored content} is displayed or not at the time of
+% running the command. The content is extracted from the \mymeta{sequence}
+% in which it is stored.
+%
+% \subsection*{Options only for the starred version}
+% \label{sec:onlystarred}
+%
+% \keyexamp{write-cmd}{file.ext}{not used}
+% Sets the name of the \mymeta{external file} in which the \mymeta{contents} of
+% the \mymarg{argument} will be written. The \mymeta{file.ext} will be created
+% in the working directory, relative or absolute paths are not supported. If \mymeta{file.ext}
+% does not exist, it will be created or overwritten if the \mykey{overwrite} key is used.
+%
+% The characters "TAB"s will be written in \mymeta{file.ext} and the \mymeta{contents}
+% will be stored in the \mymeta{sequence} established at that time. \hologo{XeLaTeX} users
+% using the "TAB" character must add \texttt{\textcolor{optcolor}{-8bit}}
+% at the command line, otherwise you will get \hologo{TeX}-"TAB" (§^^I§)
+% in \mymeta{file.ext}.
+%
+% \medskip
+%
+% \keyexamp{write-out}{file.ext}{not used}
+% Sets the name of the \mymeta{external file} in which the \mymeta{contents} of
+% the \mymarg{argument} will be written. The \mymeta{file.ext} will be created
+% in the working directory, relative or absolute paths are not supported. If \mymeta{file.ext}
+% does not exist, it will be created or overwritten if the \mykey{overwrite} key is used.
+%
+% The characters "TAB"s will be written in \mymeta{file.ext}, the rest of the
+% \mymeta{keys} will not be available and the \mymeta{contents} will NOT
+% be stored in any \mymeta{sequence}. \hologo{XeLaTeX} users using the "TAB" character
+% must add \texttt{\textcolor{optcolor}{-8bit}} at the command line,
+% otherwise you will get \hologo{TeX}-"TAB" (§^^I§) in \mymeta{file.ext}.
+%
+% The key \mykey{overwrite} is available for this command.
+%
+% \subsection{The command \cs{getstored}}
+% \label{sec:getstored}
+%
+% \vspace*{-10pt}
+%
+% \begin{function}{\getstored}
+%   \begin{syntax}
+%      \cmdexamp{getstored}[index]{seq name}
+%   \end{syntax}
+% \end{function}
+%
+% The command \ics*{getstored} gets the content stored in \mymarg{seq name}
+% according to the \mymeta{index} in which it was stored. The command is
+% robust and can be used as an \mymeta{argument} for another command. If
+% the optional argument is not passed, the default value is the \enquote{last
+% element} stored in \mymarg{seq name}.
+%
+% \subsection{The command \cs{foreachsc}}
+% \label{sec:foreachsc}
+%
+% \vspace*{-10pt}
+%
+% \begin{function}{\foreachsc}
+%   \begin{syntax}
+%     \cmdexamp{foreachsc}[key \textnormal{\textcolor{gray}{=}} val]{seq name}
+%   \end{syntax}
+% \end{function}
+%
+% The command \ics*{foreachsc} goes through and executes the command §\getstored§
+% on the contents stored in \mymarg{seq name}. If you pass without options run
+% §\getstored§ on all contents stored in \mymarg{seq name}.
+%
+% \subsection*{Options for command}
+% \label{sec:optcmdfor}
+%
+% \keyexamp{sep}{code}{empty}
+% Establishes the separation between each content stored in \mymarg{seq name}.
+% For example, you can use §sep={\\[10pt]}§ for vertical separation of stored
+% contents.
+%
+% \keyexamp{step}{integer}{1}
+% Sets the increment (\mymeta{step}) applied to the value set by key §start§
+% for each element stored in the \mymarg{seq name}. The value must be a
+% \mymeta{positive integer}.
+%
+% \keyexamp{start}{integer}{1}
+% Sets the \mymeta{index} number of the \mymarg{seq name} from which execution
+% will start. The value must be a \mymeta{positive integer}.
+%
+% \keyexamp{stop}{integer}{total}
+% Sets the \mymeta{index} number of the \mymarg{seq name} from which execution
+% it will finish executing. The value must be a \mymeta{positive integer}.
+%
+% \keyexamp{before}{code}{empty}
+% Sets the \mymarg{code} that will be executed \mymeta{before} each content stored
+% in \mymarg{seq name}. The \mymarg{code} must be passed between braces.
+%
+% \medskip
+%
+% \keyexamp{after}{code}{empty}
+% Sets the \mymarg{code} that will be executed \mymeta{after} each content stored
+% in \mymarg{seq name}. The \mymarg{code} must be passed between braces.
+%
+% \newsavebox{\hashbox}
+% \begin{lrbox}{\hashbox}
+% \lstinline[language=scontents-doc,basicstyle=\ttfamily]+{#1}+
+% \end{lrbox}
+%
+% \keyexamp{wrapper}{code{} \space\usebox{\hashbox} more code}{empty}
+% Wraps the content stored in \mymarg{seq name} referenced by §{#1}§.
+% The \mymarg{code} must be passed between braces. For example
+% §\foreachsc[wrapper={\makebox[1em][l]{#1}}]{contents}§.
+%
+%
+% \subsection{The command \cs{typestored}}
+% \label{sec:typestored}
+%
+% \vspace*{-10pt}
+%
+% \begin{function}{\typestored}
+%   \begin{syntax}
+%      \cmdexamp{typestored}[index\textnormal{\textcolor{gray}{,}} width-tab \textnormal{\textcolor{gray}{=}} number]{seq name}
+%   \end{syntax}
+% The command \ics*{typestored} internally places the content stored in
+% the \mymarg{seq name} into the \myenv*{verbatimsc} environment. The \mymeta{index}
+% corresponds to the position in which the content is stored in the \mymarg{seq name}.
+% \end{function}
+%
+% If the optional argument is not passed it defaults to the first element
+% stored in the \mymarg{seq name}. The key \mykey{width-tab} is available for
+% this command.
+%
+%
+% \subsection{The environment \env{verbatimsc}}
+% \label{sec:verbatimsc}
+%
+% \vspace*{-10pt}
+%
+% \begin{function}{verbatimsc}
+% Internal environment used by \ics*{typestored} to display \mymeta{verbatim style}
+% contents.
+% \end{function}
+%
+% One consideration to keep in mind is that this is a \emph{representation}
+% of the \mymeta{stored content} in a \emph{verbatim} environment and not
+% a real \emph{verbatim} environment. The \mypkg{verbatim} package is not
+% compatible with the implementation of the \myenv*{verbatimsc} environment.
+%
+%^^A \newpage
+%
+% The \myenv*{verbatimsc} environment can be customized in the following ways:
+%
+% Using the package \mypkg{fancyvrb}:
+% \iffalse
+%<*example>
+% \fi
+\begin{examplecode}[frame=single]
+\makeatletter
+\let\verbatimsc\@undefined
+\let\endverbatimsc\@undefined
+\makeatother
+\DefineVerbatimEnvironment{verbatimsc}{Verbatim}{numbers=left}
+\end{examplecode}
+% \iffalse
+%</example>
+% \fi
+% Using the package \mypkg{minted}:
+% \iffalse
+%<*example>
+% \fi
+\begin{examplecode}[frame=single]
+\makeatletter
+\let\verbatimsc\@undefined
+\let\endverbatimsc\@undefined
+\makeatother
+\usepackage{minted}
+\newminted{tex}{linenos}
+\newenvironment{verbatimsc}{\VerbatimEnvironment\begin{texcode}}{\end{texcode}}
+\end{examplecode}
+% \iffalse
+%</example>
+% \fi
+% Using the package \mypkg{listings}:
+% \iffalse
+%<*example>
+% \fi
+\begin{examplecode}[frame=single]
+\makeatletter
+\let\verbatimsc\@undefined
+\let\endverbatimsc\@undefined
+\makeatother
+\usepackage{listings}
+\lstnewenvironment{verbatimsc}
+  {
+   \lstset{
+           basicstyle=\small\ttfamily,
+           columns=fullflexible,
+           language=[LaTeX]TeX,
+           numbers=left,
+           numberstyle=\tiny\color{gray},
+           keywordstyle=\color{red}
+          }
+  }{}
+\end{examplecode}
+% \iffalse
+%</example>
+% \fi
+%
+% \section{Other commands provided}
+%
+% \subsection{The command \cs{meaningsc}}
+% \label{sec:meaningsc}
+%
+% \vspace*{-10pt}
+%
+% \begin{function}{\meaningsc}
+%   \begin{syntax}
+%      \cmdexamp{meaningsc}[index\textnormal{\textcolor{gray}{,}} width-tab \textnormal{\textcolor{gray}{=}} number]{seq name}
+%   \end{syntax}
+% The command \ics*{meaningsc} executes \ics{meaning} on the content stored
+% in \mymarg{seq name}. The \mymeta{index} corresponds to the position
+% in which the content is stored in the \mymarg{seq name}.
+% \end{function}
+%
+% If the optional argument is not passed it defaults to the first element
+% stored in the \mymarg{seq name}. The key \mykey{width-tab} is available for
+% this command.
+%
+% \subsection{The command \cs{countsc}}
+% \label{sec:countsc}
+%
+% \vspace*{-10pt}
+%
+% \begin{function}{\countsc}
+%   \begin{syntax}
+%      \cmdexamp{countsc}{seq name}
+%   \end{syntax}
+% The command \ics*{countsc} count a number of contents stored in \mymarg{seq name}.
+% \end{function}
+%
+% \subsection{The command \cs{cleanseqsc}}
+% \label{sec:cleansc}
+%
+% \vspace*{-10pt}
+%
+% \begin{function}{\cleanseqsc}
+%   \begin{syntax}
+%      \cmdexamp{cleanseqsc}{seq name}
+%   \end{syntax}
+% The command \ics*{cleanseqsc} remove all contents stored in \mymarg{seq name}.
+% \end{function}
+%
+% \section[The \textnormal{\texttt{scontents}} package in action]{The \mypkg*{scontents} package in action}
+%
+% Remember the abstract on the first page?, this is it:
+%
+% \getstored{abstract}
+%
+% And the description of the package?
+%
+% \getstored{description}
+%
+% \medskip
+%
+% I've only written:
+%
+% \typestored{abstract}
+%
+% and
+%
+% \typestored{description}
+%
+% Of course, I didn't copy and paste. The real code they were written with is:
+%
+% \iffalse
+%<*example>
+% \fi
+\begin{examplecode}[numbers=left]
+\begin{scontents}[store-env=abstract,print-env=true]
+\begin{abstract}
+This package allows to store \hologo{LaTeX} code, including \enquote{\emph{verbatim}},
+in \mymeta{sequences} using the \mypkg{l3seq} module of \mypkg{expl3}. The \mymeta{stored
+content} can be used as many times as desired in the document, additionally you can write
+to \mymeta{external files} or show it in \mymeta{verbatim style}.
+\end{abstract}
+\end{scontents}
+\end{examplecode}
+% \iffalse
+%</example>
+% \fi
+%
+% and
+%
+% \iffalse
+%<*example>
+% \fi
+\begin{examplecode}[numbers=left]
+\begin{scontents}[store-env=description, print-env=true]
+The \mypkg*{scontents} package allows to \mymeta{store contents} in \mymeta{sequences}
+or \mymeta{external files}. In some ways it is similar to the \mypkg{filecontentsdef}
+package, with the difference in which the \mymeta{content} is stored. The idea behind
+this package is to get an approach to \hologo{ConTeXt} \enquote{\emph{buffers}} by
+making use \mymeta{sequences}.
+\end{scontents}
+\end{examplecode}
+% \iffalse
+%</example>
+% \fi
+%
+% I stored the content in memory and then ran §\getstored§ and
+% §\typestored§. This is one of the ways you can use \mypkg*{scontents}.
+%
+% \section{Examples}
+%
+% These are some adapted examples that have served as inspiration for
+% the creation of this package. The examples are attached to this documentation
+% and can be extracted from your PDF viewer or from the command line by running:
+% \iffalse
+%<*example>
+% \fi
+\begin{examplecode}[frame=single]
+$ pdfdetach -saveall scontents.pdf
+\end{examplecode}
+% \iffalse
+%</example>
+% \fi
+% and then you can use the excellent \arara\footnote{The cool \TeX\ automation tool:
+% \url{https://www.ctan.org/pkg/arara}} tool to compile them.
+%
+% \subsection{From \texttt{answers} package}
+%
+% \subsubsection*{Example 1}
+%
+% \iffalse
+%<*example>
+% \fi
+\begin{scontents}[write-out=scexamp1.ltx]
+% arara: pdflatex
+% arara: clean: { extensions: [ aux, log] }
+\documentclass{article}
+\usepackage[store-cmd=solutions]{scontents}
+\newtheorem{ex}{Exercise}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+\begin{document}
+\section{Problems}
+\begin{ex}
+First exercise
+\Scontents{First solution.}
+\end{ex}
+
+\begin{ex}
+Second exercise
+\Scontents{Second solution.}
+\end{ex}
+
+\section{Solutions}
+\foreachsc[sep={\\[10pt]}]{solutions}
+\end{document}
+\end{scontents}
+% \iffalse
+%</example>
+% \fi
+%
+% Adaptation of example 1 of the package \mypkg{answers}
+% \textattachfile[color=linkcolor,print=false]{scexamp1.ltx}{\faFile*[regular]}.
+% \lstinputlisting[language=scontents-doc,numbers=left]{scexamp1.ltx}
+%
+% \subsection{From \texttt{filecontentsdef} package}
+%
+% \subsubsection*{Example 2}
+%
+% \iffalse
+%<*example>
+% \fi
+\begin{scontents}[write-out=scexamp2.ltx]
+% arara: pdflatex
+% arara: clean: { extensions: [ aux, log] }
+\documentclass{article}
+\usepackage[store-env=defexercise,store-cmd=defexercise]{scontents}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+\begin{document}
+% not starred
+\Scontents{
+Prove that \[x^n+y^n=z^n\] is not solvable in positive integers if $n$ is at
+most $-3$.\par
+}
+% starred
+\Scontents*|Refute the existence of black holes in less than $140$ characters.|
+% write environment to \jobname.txt
+\begin{scontents}[write-env=\jobname.txt]
+\def\NSA{NSA}%
+Prove that factorization is easily done via probabilistic algorithms and
+advance evidence from knowledge of the names of its employees in the
+seventies that the \NSA\ has known that for 40 years.\par
+\end{scontents}
+% see all stored
+\begin{itemize}
+\foreachsc[before={\item }]{defexercise}
+\end{itemize}
+% \getstored are robust :)
+\section{\getstored[2]{defexercise}}
+\end{document}
+\end{scontents}
+% \iffalse
+%</example>
+% \fi
+%
+% Adaptation of example from package \mypkg{filecontentsdef}
+% \textattachfile[color=linkcolor,print=false]{scexamp2.ltx}{\faFile*[regular]}.
+% \lstinputlisting[language=scontents-doc,numbers=left]{scexamp2.ltx}
+%
+% \subsection{From TeX-SX}
+%
+% \subsubsection*{Example 3}
+%
+% \iffalse
+%<*example>
+% \fi
+\begin{scontents}[write-out=scexamp3.ltx]
+% arara: pdflatex
+% arara: clean: { extensions: [ aux, log] }
+\documentclass{article}
+\usepackage[store-cmd=tikz]{scontents}
+\usepackage{tikz}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+\Scontents*{\matrix{ \node (a) {$a$} ; & \node (b) {$b$} ; \\ } ;}
+\Scontents*{\matrix[ampersand replacement=\&]
+{ \node (a) {$a$} ; \& \node (b) {$b$} ; \\ } ;}
+\Scontents*{\matrix{\node (a) {$a$} ; & \node (b) {$b$} ; \\ } ; }
+\begin{document}
+\section{tikzpicture}
+\begin{tikzpicture}
+\getstored[1]{tikz}
+\end{tikzpicture}
+
+\begin{tikzpicture}
+\getstored[2]{tikz}
+\end{tikzpicture}
+
+\begin{tikzpicture}
+\getstored{tikz}
+\end{tikzpicture}
+
+\begin{scontents}[store-env=buffer]
+Hello World!
+
+This is a \verb*|fake poor man's buffer :)|.
+\end{scontents}
+
+\section{source tikz}
+\typestored[1]{tikz}
+\typestored[2]{tikz}
+\typestored[3]{tikz}
+
+\section{fake buffer}
+\subsection{real content}
+\getstored[1]{buffer}
+\subsection{verbatim style}
+\typestored[1]{buffer}
+\subsection{meaning}
+\meaningsc[1]{buffer}
+
+\section{tikz again}
+\foreachsc[before={\begin{tikzpicture}},after={\end{tikzpicture}},sep={\\[10pt]}]{tikz}
+\end{document}
+\end{scontents}
+% \iffalse
+%</example>
+% \fi
+%
+% Adapted from \href{https://tex.stackexchange.com/q/5338/7832}{LaTeX equivalent of ConTeXt buffers}
+% \textattachfile[color=linkcolor,print=false]{scexamp3.ltx}{\faFile*[regular]}.
+% \lstinputlisting[language=scontents-doc,numbers=left]{scexamp3.ltx}
+%
+% \subsubsection*{Example 4}
+%
+% \iffalse
+%<*example>
+% \fi
+\begin{scontents}[write-out=scexamp4.ltx]
+% arara: pdflatex
+% arara: clean: { extensions: [ aux, log] }
+\documentclass{article}
+\usepackage{scontents}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+\begin{document}
+\begin{scontents}[store-env=main]
+Something for main A.
+\end{scontents}
+
+\begin{scontents}[store-env=main]
+Something for \verb|main B|.
+\end{scontents}
+
+\begin{scontents}[store-env=other]
+Something for \verb|other|.
+\end{scontents}
+
+\textbf{Let's print them}
+
+This is first stored in main: \getstored[1]{main}\par
+This is second stored in main: \getstored{main}\par
+This is stored in other: \getstored{other}
+
+\textbf{Print all of stored in main}\par
+\foreachsc[sep={\\[10pt]}]{main}
+\end{document}
+\end{scontents}
+% \iffalse
+%</example>
+% \fi
+%
+% Adapted from \href{https://tex.stackexchange.com/q/184503/7832}{Collecting contents of environment and store them for later retrieval}
+% \textattachfile[color=linkcolor,print=false]{scexamp4.ltx}{\faFile*[regular]}.
+% \lstinputlisting[language=scontents-doc,numbers=left]{scexamp4.ltx}
+%
+% \subsubsection*{Example 5}
+%
+% \iffalse
+%<*example>
+% \fi
+\begin{scontents}[write-out=scexamp5.ltx]
+% arara: pdflatex
+% arara: clean: { extensions: [ aux, log] }
+\documentclass{article}
+\usepackage{scontents}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+\begin{document}
+\section{Problem stated the first time}
+\begin{scontents}[print-env=true,store-env=problem]
+This is normal text.
+\verb|This is from the verb command.|
+\verb*|This is from the verb* command.|
+This is normal text.
+\begin{verbatim}
+This is from the verbatim environment:
+&%{}~
+\end{verbatim}
+\end{scontents}
+\section{Problem restated}
+\getstored[1]{problem}
+\section{Problem restated once more}
+\getstored[1]{problem}
+\end{document}
+\end{scontents}
+% \iffalse
+%</example>
+% \fi
+%
+% Adapted from \href{https://tex.stackexchange.com/q/373647/7832}{Collect contents of an environment (that contains verbatim content)}
+% \textattachfile[color=linkcolor,print=false]{scexamp5.ltx}{\faFile*[regular]}.
+% \lstinputlisting[language=scontents-doc,numbers=left]{scexamp5.ltx}
+%
+%
+% \subsubsection*{Example 6}
+%
+% \iffalse
+%<*example>
+% \fi
+\begin{scontents}[write-out=scexamp6.ltx]
+% arara: pdflatex
+% arara: clean: { extensions: [ aux, log] }
+\documentclass[10pt]{article}
+\usepackage{scontents}
+\newenvsc{forshort}[store-env=forshort,print-env=false]
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+\begin{document}
+
+Something in the whole course.
+
+\begin{forshort}
+    Just a summary...
+\end{forshort}
+
+\end{document}
+\end{scontents}
+% \iffalse
+%</example>
+% \fi
+%
+% Adapted from \href{https://tex.stackexchange.com/q/509595/7832}{Environment hiding its content}
+% \textattachfile[color=linkcolor,print=false]{scexamp6.ltx}{\faFile*[regular]}.
+% \lstinputlisting[language=scontents-doc,numbers=left]{scexamp6.ltx}
+%
+% \subsection{Customization of \texttt{verbatimsc}}
+%
+% \subsubsection*{Example 7}
+%
+% \iffalse
+%<*example>
+% \fi
+\begin{scontents}[write-out=scexamp7.ltx]
+\documentclass{article}
+% arara: pdflatex
+% arara: clean: { extensions: [ aux, log] }
+\usepackage{scontents}
+\makeatletter
+\let\verbatimsc\@undefined
+\let\endverbatimsc\@undefined
+\makeatother
+\usepackage{fvextra}
+\usepackage{xcolor}
+\definecolor{mygray}{gray}{0.9}
+\usepackage{tcolorbox}
+\newenvironment{verbatimsc}%
+{\VerbatimEnvironment
+\begin{tcolorbox}[colback=mygray, boxsep=0pt, arc=0pt, boxrule=0pt]
+\begin{Verbatim}[fontsize=\scriptsize, breaklines, breakafter=*, breaksymbolsep=0.5em,
+breakaftersymbolpre={\,\tiny\ensuremath{\rfloor}}]}%
+{\end{Verbatim}%
+\end{tcolorbox}}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+\begin{document}
+\section{Test \texttt{\textbackslash begin\{scontents\}} whit \texttt{fancyvrb}}
+Test \verb+{scontents}+ \par
+
+\begin{scontents}
+Using \verb+scontents+ env no \verb+[key=val]+, save in seq \verb+contents+
+with index 1.
+
+Prove new \Verb*{ fancyvrb whit braces } and environment \verb+Verbatim*+
+\begin{verbatim}
+ verbatim  environment
+\end{verbatim}
+\end{scontents}
+
+\section{Test \texttt{\textbackslash Scontents} whit \texttt{fancyvrb}}
+\Scontents{ We have coded this in \LaTeX: $E=mc^2$.}
+
+\section{Test \texttt{\textbackslash getstored}}
+\getstored[1]{contents}\par
+\getstored{contents}
+
+\section{Test \texttt{\textbackslash meaningsc}}
+\meaningsc[1]{contents}\par
+\meaningsc[2]{contents}
+
+\section{Test \texttt{\textbackslash typestored}}
+\typestored[1]{contents}
+\typestored[2]{contents}
+\end{document}
+\end{scontents}
+% \iffalse
+%</example>
+% \fi
+%
+% Customization of \myenv*{verbatimsc} using the \mypkg{fancyvrb} and
+% \mypkg{tcolorbox} package
+% \textattachfile[color=linkcolor,print=false]{scexamp7.ltx}{\faFile*[regular]}.
+% \lstinputlisting[language=scontents-doc,numbers=left]{scexamp7.ltx}
+%
+% \subsubsection*{Example 8}
+%
+% \iffalse
+%<*example>
+% \fi
+\begin{scontents}[write-out=scexamp8.ltx]
+% arara: pdflatex
+% arara: clean: { extensions: [ aux, log] }
+\documentclass{article}
+\usepackage{scontents}
+\makeatletter
+\let\verbatimsc\@undefined
+\let\endverbatimsc\@undefined
+\makeatother
+\usepackage{xcolor}
+\usepackage{listings}
+\lstnewenvironment{verbatimsc}
+  {
+   \lstset{
+           basicstyle=\small\ttfamily,
+           breaklines=true,
+           columns=fullflexible,
+           language=[LaTeX]TeX,
+           numbers=left,
+           numbersep=1em,
+           numberstyle=\tiny\color{gray},
+           keywordstyle=\color{red}
+          }
+  }{}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+\begin{document}
+\section{Test \texttt{\textbackslash begin\{scontents\}} whit \texttt{listings}}
+Test \verb+{scontents}+ \par
+
+\begin{scontents}
+Using \verb+scontents+ env no \verb+[key=val]+, save in seq \verb+contents+ with index 1.\par
+
+Prove \lstinline[basicstyle=\ttfamily]| lstinline | and environment \verb+Verbatim*+
+\begin{verbatim}
+  verbatim  environment
+\end{verbatim}
+\end{scontents}
+
+\section{Test \texttt{\textbackslash Scontents*} whit \texttt{listings}}
+
+\Scontents*+ We have coded this in \lstinline[basicstyle=\ttfamily]|\LaTeX: $E=mc^2$|
+and more.+
+
+\section{Test \texttt{\textbackslash getstored}}
+\getstored{contents}\par
+\getstored[1]{contents}
+
+\section{Test \texttt{\textbackslash typestored}}
+\typestored[1]{contents}
+\typestored[2]{contents}
+\end{document}
+\end{scontents}
+% \iffalse
+%</example>
+% \fi
+%
+% Customization of \myenv*{verbatimsc} using the \mypkg{listings} package
+% \textattachfile[color=linkcolor,print=false]{scexamp8.ltx}{\faFile*[regular]}.
+% \lstinputlisting[language=scontents-doc,numbers=left]{scexamp8.ltx}
+%
+% \subsubsection*{Example 9}
+%
+% \iffalse
+%<*example>
+% \fi
+\begin{scontents}[write-out=scexamp9.ltx]
+% arara: xelatex : {shell: true, options: [-8bit]}
+% arara: clean: { extensions: [ aux, log] }
+\documentclass{article}
+\usepackage{scontents}
+\makeatletter
+\let\verbatimsc\@undefined
+\let\endverbatimsc\@undefined
+\makeatother
+\usepackage{minted}
+\newminted{tex}{linenos}
+\newenvironment{verbatimsc}{\VerbatimEnvironment\begin{texcode}}{\end{texcode}}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\begin{document}
+\section{Test \texttt{\textbackslash begin\{scontents\}} whit \texttt{minted}}
+Test \verb+{scontents}+ \par
+
+\begin{scontents}[overwrite,write-env=\jobname.tsc,force-eol=true]
+Using \verb+scontents+ env no \verb+[key=val]+, save in seq \verb+contents+
+with index 1.\par
+
+Prove new \Verb*{ new fvextra whit braces } and environment \verb+Verbatim*+
+\begin{Verbatim}[obeytabs, showtabs, tab=\rightarrowfill, tabcolor=red]
+No tab
+	One real tab
+		Two real Tab plus 	one tab
+\end{Verbatim}
+\end{scontents}
+
+\section{See \Verb{\jobname.tsc}}
+Read \Verb{\jobname.tsc} (shows TABs as red arrows):
+\VerbatimInput[obeytabs, showtabs, tab=\rightarrowfill, tabcolor=red]{\jobname.tsc}
+
+\section{Test \texttt{\textbackslash Scontents} whit \texttt{minted}}
+
+\Scontents{ We have coded \par this in \LaTeX: $E=mc^2$.}
+
+\section{Test \texttt{\textbackslash getstored}}
+\getstored[1]{contents}\par
+\getstored{contents}
+
+\section{Test \texttt{\textbackslash typestored}}
+\typestored[1]{contents}
+\typestored[2]{contents}
+\end{document}
+\end{scontents}
+% \iffalse
+%</example>
+% \fi
+%
+% Customization of \myenv*{verbatimsc} using the \mypkg{minted} package
+% \textattachfile[color=linkcolor,print=false]{scexamp9.ltx}{\faFile*[regular]}.
+% \lstinputlisting[language=scontents-doc,numbers=left]{scexamp9.ltx}
+%
+% \newpage
+%
+%
+% \section{Change history}
+% \label{sec:changes}
+%
+% In this section you will find some (not all) of the changes in \mypkg*{scontents}
+% development, from the first public implementation using the \mypkg{filecontentsdef}
+% package to the current version with only \mypkg{expl3}.
+%
+% \medskip
+%
+% \setlist[itemize,1]{label=\textendash,wide=0.5em,nosep,noitemsep,leftmargin=10pt}
+% \newlength\descrwidth
+% \settowidth{\descrwidth}{\textsf{v1.0, (ctan), 2019-07-30} }
+%
+% \begin{description}[font=\small\sffamily,wide=0pt,style=multiline,leftmargin=\descrwidth,nosep,noitemsep]
+% \item [\fileversion{} (ctan), \filedate]
+%    \begin{itemize}
+%    \item Update and improvements in the internal code.
+%    \item Updating the generic code for |I/O| verification.
+%    \item Add |write-cmd| and |write-out| keys for |\Scontents*|.
+%    \item Fix |sep| key in |\foreachsc|.
+%    \end{itemize}
+% \item [v1.8 (ctan), 2019-11-18]
+%    \begin{itemize}
+%    \item Add |\newenvsc| command.
+%    \item Fix nested environment in \hologo{plainTeX} and \hologo{ConTeXt}.
+%    \item Modified default value in |\getstored|.
+%    \item Add |overwrite| key to reduce |I/O| operations.
+%    \item Deleted an unnecessary group in the code.
+%    \end{itemize}
+% \item [v1.7 (ctan), 2019-10-29]
+%    \begin{itemize}
+%    \item The |verbatimsc| environment was rewritten.
+%    \item Minor adjustments in documentation.
+%    \end{itemize}
+% \item [v1.6 (ctan), 2019-10-26]
+%    \begin{itemize}
+%    \item The internal behavior of |\getstored| has been modified.
+%    \item The internal behavior of |\foreachsc| has been modified.
+%    \item Corrected file extension for \hologo{ConTeXt}.
+%    \item Remove spurious warning.
+%    \end{itemize}
+% \item [v1.5 (ctan), 2019-10-24]
+%    \begin{itemize}
+%        \item Add support for \hologo{plainTeX} and \hologo{ConTeXt}.
+%        \item Split internal code for optimization.
+%        \item Add support for vertical spaces in |key=val|.
+%        \item Add |\foreachsc| command.
+%        \item Check if |verbatim| package is loaded.
+%    \end{itemize}
+% \item [v1.4 (ctan), 2019-10-03]
+%    \begin{itemize}
+%        \item Add |store-all| key.
+%        \item Messages and keys were separated.
+%        \item Restructuring of documentation.
+%        \item Now the version of |expl3| is checked instead of |xparse|.
+%        \item The internal behavior of |force-eol| has been modified.
+%    \end{itemize}
+% \item [v1.3 (ctan), 2019-09-24]
+%    \begin{itemize}
+%        \item The environment can now nest.
+%        \item Added |force-eol|, |verb-font| and |width-tab| keys.
+%        \item The extra space has been removed when you run |\getstored|.
+%        \item Internal code has been rewritten more efficiently.
+%        \item Remove |\typestored|.
+%        \item Remove |filecontentsdef| dependency.
+%        \item Changing |\regex_replace_all:| for |\tl_replace_all:|.
+%    \end{itemize}
+% \item [v1.2 (ctan), 2019-08-28]
+%    \begin{itemize}
+%        \item Restructuring of documentation.
+%        \item Added copy of |\tex_scantokens:|.
+%    \end{itemize}
+% \item [v1.1 (ctan), 2019-08-12]
+%    \begin{itemize}
+%        \item Extension of documentation.
+%        \item Replace |\tex_endinput:D| by |\file_input_stop:|.
+%    \end{itemize}
+% \item [v1.0 (ctan), 2019-07-30]
+%    \begin{itemize}
+%        \item First public release.
+%    \end{itemize}
+% \end{description}
+%
+% \newpage
+%
+% \indexprologue{
+% The italic numbers denote the pages where the corresponding entry is
+% described.}
+%
+% \printindex[userdoc]
+%
+% \let\stdsection\section
+% \def\section*#1{\stdsection{#1}}
+%
+% \begin{thebibliography}{9}
+% \bibitem{expl3} The \hologo{LaTeX3} Project. \enquote{The \textsf{expl3}
+% package}. Available from
+% \textsc{ctan}, \url{https://www.ctan.org/pkg/expl3}, 2020.
+%
+% \bibitem{xparse} The \hologo{LaTeX3} Project. \enquote{The \textsf{xparse}
+% package}. Available from
+% \textsc{ctan}, \url{https://www.ctan.org/pkg/xparse}, 2020.
+%
+% \bibitem{l3keys} The \hologo{LaTeX3} Project. \enquote{The \textsf{l3keys2e}
+% package}. Available from
+% \textsc{ctan}, \url{https://www.ctan.org/pkg/l3keys2e}, 2020.
+%
+% \bibitem{keyval} \textsc{Wright, Joseph}. \enquote{Programming
+% \textsf{key–value} in \textsf{expl3}}. Available from
+% \textsc{TUGboat},
+% \url{https://www.tug.org/TUGboat/tb31-1/tb97wright-l3keys.pdf}, 2010.
+% \end{thebibliography}
+%
+% \let\section\stdsection
+%
+% \newpage
+%
+% \StartImplementation
+%
+% \StopEventually{^^A
+% \newgeometry{top=0.5in,bottom=0.3in,left=1.0in,right=0.5in,footskip=0.2in,headheight=1cm,headsep=0.27cm}
+% \addtocontents{toc}{\protect\setcounter{tocdepth}{2}}
+% \cleardoublepage
+% \phantomsection
+% \indexprologue{
+% The italic numbers denote the pages where the corresponding entry is
+% described, the numbers underlined and all others indicate the line on
+% which they are implemented in the package code.
+% }
+% \printindex
+% }
+%
+% \section{Implementation}
+% \label{sec:Implementation}
+% \addtocontents{toc}{\protect\setcounter{tocdepth}{0}}
+%
+% The most recent publicly released version of \mypkg*{scontents} is available at
+% \textsc{ctan}: \url{https://www.ctan.org/pkg/scontents}. Historical and
+% developmental versions are available at \textcolor{gray}{\scriptsize\faIcon[regular]{github}}
+% \url{https://github.com/pablgonz/scontents}. While general feedback via email is
+% welcomed, specific bugs or feature requests should be reported through the issue
+% tracker: \url{https://github.com/pablgonz/scontents/issues}.
+%
+% \subsection{Declaration of the package}
+%
+% First we set up the module name for \pkg{l3doc}:
+%    \begin{macrocode}
+%<@@=scontents>
+%    \end{macrocode}
+%
+% Now we define some common macros to hold the package date and version:
+%    \begin{macrocode}
+%<loader>\def\ScontentsFileDate{2020-01-21}%
+%<core>\def\ScontentsCoreFileDate{2020-01-21}%
+%<*loader>
+\def\ScontentsFileVersion{1.9}%
+\def\ScontentsFileDescription{Stores LaTeX contents in memory or files}%
+%    \end{macrocode}
+%
+% The \LaTeX{} loader is fairly simple: just load the dependencies, load the
+% core code, and then set interfaces up.
+%
+% We also check if the \pkg{verbatim} package is loaded and show a compatibility
+% warning.
+%    \begin{macrocode}
+%<*latex>
+\RequirePackage{expl3,xparse,l3keys2e}[2019/05/28]
+\ProvidesExplPackage
+  {scontents} {\ScontentsFileDate} {\ScontentsFileVersion} {\ScontentsFileDescription}
+\@ifpackageloaded { verbatim }
+  {
+    \msg_set:nnn { scontents } { unsupported-verbatim }
+      {
+        The~implementation~of~the~'verbatimsc'~environment~used~by~
+        \iow_char:N \\typestored~is~not~compatible~with~package~'verbatim'.~
+        Review~the~documentation~and~redefine~the~'verbatimsc'~environment.
+      }
+    \msg_warning:nn { scontents } { unsupported-verbatim }
+  } { }
+%</latex>
+%    \end{macrocode}
+% The Plain and \hologo{ConTeXt} loaders are similar (probably because I don't
+% know how to make a proper \hologo{ConTeXt} module :-). We define a
+% \LaTeX{}-style §\ver@scontents.sty§ macro with version info (just in case):
+%    \begin{macrocode}
+%<*!latex>
+%<context>\writestatus{loading}{User Module scontents v\ScontentsFileVersion}
+%<context>\unprotect
+\input expl3-generic.tex
+\ExplSyntaxOn
+\tl_gset:cx { ver @ scontents . sty } { \ScontentsFileDate\space
+  v\ScontentsFileVersion\space \ScontentsFileDescription }
+\iow_log:x { Package: ~ scontents ~ \use:c { ver @ scontents . sty } }
+%</!latex>
+%    \end{macrocode}
+%
+% In Plain, check that the package isn't being loaded twice (\LaTeX{} and
+% \hologo{ConTeXt} already defend against that):
+%    \begin{macrocode}
+%<*plain>
+\msg_gset:nnn { scontents } { already-loaded }
+  { The~'scontents'~package~is~already~loaded.~Aborting~input~\msg_line_context:. }
+\cs_if_exist:NT \@@_rescan_tokens:n
+  {
+    \msg_warning:nn { scontents } { already-loaded }
+    \ExplSyntaxOff
+    \file_input_stop:
+  }
+%</plain>
+%    \end{macrocode}
+%
+% \begin{macro}{\g_@@_end_verbatimsc_tl,\c_@@_end_env_tl}
+%   A token list to match when ending \env{verbatimsc} and \env{scontents}
+%   environments.
+%
+%    \begin{macrocode}
+\tl_new:N \g_@@_end_verbatimsc_tl
+\tl_gset_rescan:Nnn
+  \g_@@_end_verbatimsc_tl
+  {
+    \char_set_catcode_other:N \\
+%<*latex>
+    \char_set_catcode_other:N \{
+    \char_set_catcode_other:N \}
+%</latex>
+  }
+%<latex>  { \end{verbatimsc} }
+%<plain>  { \endverbatimsc }
+%<context>  { \stopverbatimsc }
+\tl_const:Nx \c_@@_end_env_tl
+  {
+    \c_backslash_str
+%<latex|plain>    end
+%<context>    stop
+%<latex>    \c_left_brace_str
+      \exp_not:N \l_@@_env_name_tl
+%<latex>    \c_right_brace_str
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% Now we load the core \mypkg*{scontents} code:
+%    \begin{macrocode}
+\file_input:n { scontents-code.tex }
+%    \end{macrocode}
+%
+% Sometimes we need to detect the format from within a macro:
+%    \begin{macrocode}
+\cs_new:Npn \@@_format_case:nnn #1 #2 #3
+%<latex>  {#1} % LaTeX
+%<plain>  {#2} % Plain/Generic
+%<context>  {#3} % ConTeXt
+%    \end{macrocode}
+%
+% Checking that the package was loaded with the proper loader code. This code
+% was copied from \texttt{expl3-code.tex}.
+%    \begin{macrocode}
+%</loader>
+%<*core>
+\begingroup
+  \catcode32=10
+  \endlinechar=32
+  \def\next{\endgroup}%
+  \expandafter\ifx\csname PackageError\endcsname\relax
+    \begingroup
+      \def\next{\endgroup\endgroup}%
+      \def\PackageError#1#2#3%
+        {%
+          \endgroup
+          \errhelp{#3}%
+          \errmessage{#1 Error: #2!}%
+        }%
+  \fi
+  \expandafter\ifx\csname ScontentsFileDate\endcsname\relax
+    \def\next
+      {%
+        \PackageError{scontents}{No scontents loader detected}
+          {%
+            You have attempted to use the scontents code directly rather than using
+            the correct loader. Loading of scontents will abort.
+          }%
+        \endgroup
+        \endinput
+      }%
+  \else
+    \ifx\ScontentsFileDate\ScontentsCoreFileDate
+    \else
+      \def\next
+        {%
+          \PackageError{scontents}{Mismatched scontents files detected}
+            {%
+              You have attempted to load scontents with mismatched files:
+              probably you have one or more files 'locally installed' which
+              are in conflict. Loading of scontents will abort.
+            }%
+          \endgroup
+          \endinput
+        }%
+    \fi
+  \fi
+\next
+%    \end{macrocode}
+%
+% \subsection{Definition of common keys}
+%
+% We create some common \mymeta{keys} that will be used by the options passed to
+% the package as well as by the environments and commands defined.
+%
+%    \begin{macrocode}
+\keys_define:nn { scontents }
+  {
+    store-env .tl_set:N         = \l_@@_name_seq_env_tl,
+    store-env .initial:n        = contents,
+    store-env .value_required:n = true,
+    store-cmd .tl_set:N         = \l_@@_name_seq_cmd_tl,
+    store-cmd .initial:n        = contents,
+    store-cmd .value_required:n = true,
+    verb-font .tl_set:N         = \l_@@_verb_font_tl,
+    verb-font .value_required:n = true,
+    print-env .bool_set:N       = \l_@@_print_env_bool,
+    print-env .initial:n        = false,
+    print-env .default:n        = true,
+    print-cmd .bool_set:N       = \l_@@_print_cmd_bool,
+    print-cmd .initial:n        = false,
+    print-cmd .default:n        = true,
+    force-eol .bool_set:N       = \l_@@_forced_eol_bool,
+    force-eol .initial:n        = false,
+    force-eol .default:n        = true,
+    overwrite .bool_set:N       = \l_@@_overwrite_bool,
+    overwrite .initial:n        = false,
+    overwrite .default:n        = true,
+    width-tab .int_set:N        = \l_@@_tab_width_int,
+    width-tab .initial:n        = 1,
+    width-tab .value_required:n = true,
+    print-all .meta:n           = { print-env = #1 , print-cmd = #1 },
+    print-all .default:n        = true,
+    store-all .meta:n           = { store-env = #1 , store-cmd = #1 },
+    store-all .value_required:n = true
+  }
+%</core>
+%<loader>\keys_define:nn { scontents }
+%<latex>  { verb-font .initial:n = \ttfamily }
+%<plain|context>  { verb-font .initial:n = \tt }
+%    \end{macrocode}
+%
+% In \LaTeX{} mode we load \mypkg{l3keys2e} process the \mymeta{keys} as options
+% passed on to the package, the package \pkg{l3keys2e} will verify the
+% \mymeta{keys} and will return an error when they are \emph{unknown}.
+%    \begin{macrocode}
+%<latex>\ProcessKeysOptions { scontents }
+%<*core>
+%    \end{macrocode}
+%
+% \subsection{Internal variables}
+%
+% Now we declare the internal variables we will use.
+%
+% \begin{macro}{\l_@@_macro_tmp_tl,\l_@@_fname_out_tl,\l_@@_temp_tl,
+%               \l_@@_file_tl,\g_@@_temp_tl,\l_@@_foreach_name_seq_tl,
+%               \l_@@_foreach_before_tl,\l_@@_foreach_after_tl}
+%   \cs{l_@@_macro_tmp_tl} is a temporary token list to hold the contents
+%   of the macro/environment, \cs{l_@@_fname_out_tl} is used as the name
+%   of the output file, when there's one, \cs{l_@@_file_tl} holds the contents
+%   of an environment as it's being read, and \cs{l_@@_temp_tl} and
+%   \cs{g_@@_temp_tl} are generic temporary token lists.
+%
+%   \cs{l_@@_foreach_name_seq_tl} is the name assigned to the sequence on
+%   which the loop will be made, \cs{l_@@_foreach_before_tl} and \cs{l_@@_foreach_after_tl}
+%   are token lists in which the assigned material will be placed before
+%   and after the execution of the §\foreachsc§ loop.
+%
+%    \begin{macrocode}
+\tl_new:N \l_@@_macro_tmp_tl
+\tl_new:N \l_@@_fname_out_tl
+\tl_new:N \l_@@_temp_tl
+\tl_new:N \l_@@_file_tl
+\tl_new:N \g_@@_temp_tl
+\tl_new:N \l_@@_foreach_name_seq_tl
+\tl_new:N \l_@@_foreach_before_tl
+\tl_new:N \l_@@_foreach_after_tl
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\l_@@_seq_item_int,\l_@@_env_nesting_int,\l_@@_tmpa_int,
+%    \l_@@_foreach_stop_int}
+%   \cs{l_@@_seq_item_int} stores the index in the sequence of the item
+%   requested to \cs{typestored} or \cs{meaningsc}. \cs{l_@@_env_nesting_int}
+%   stores the current nesting level of the \env{scontents} environment.
+%  \cs{l_@@_foreach_stop_int} will save the value at which the §\foreachsc§
+%  loop will stop.
+%
+%    \begin{macrocode}
+\int_new:N \l_@@_foreach_stop_int
+\int_new:N \l_@@_seq_item_int
+\int_new:N \l_@@_env_nesting_int
+\int_new:N \l_@@_tmpa_int
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\l_@@_writing_bool,\l_@@_storing_bool}
+%   The boolean \cs{l_@@_writing_bool} keeps track of whether we should write
+%   to a file, and \cs{l_@@_storing_bool} determines whether it is in write-only
+%   mode when the §write-out§ option is used.
+%
+%    \begin{macrocode}
+\bool_new:N \l_@@_writing_bool
+\bool_set_false:N \l_@@_writing_bool
+\bool_new:N \l_@@_storing_bool
+\bool_set_true:N  \l_@@_storing_bool
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\l_@@_foreach_before_bool,\l_@@_foreach_after_bool,
+%               \l_@@_foreach_stop_bool,\l_@@_foreach_wrapper_bool}
+%   Boolean variables used by the §\foreachsc§ loop.
+%
+%    \begin{macrocode}
+\bool_new:N \l_@@_foreach_before_bool
+\bool_set_false:N \l_@@_foreach_before_bool
+\bool_new:N \l_@@_foreach_after_bool
+\bool_set_false:N \l_@@_foreach_after_bool
+\bool_new:N \l_@@_foreach_stop_bool
+\bool_set_false:N \l_@@_foreach_stop_bool
+\bool_new:N \l_@@_foreach_wrapper_bool
+\bool_set_false:N \l_@@_foreach_wrapper_bool
+\bool_new:N \l_@@_writable_bool
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\l_@@_foreach_print_seq}
+%   The \cs{l_@@_foreach_print_seq} is the sequence used by §\foreachsc§.
+%
+%    \begin{macrocode}
+\seq_new:N \l_@@_foreach_print_seq
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\c_@@_hidden_space_str}
+%   \cs{c_@@_hidden_space_str} is a constant \emph{string} to used to hide
+%   the \mymeta{forced space} added by \hologo{TeX} when recording content
+%   in a macro. This \emph{string} contains the \emph{reserved phrase}
+%   ``§%§§^^Ascheol%§'' which is added to the end of the argument stored
+%   in |seq| when the key §force-eol§ is false.
+%
+%    \begin{macrocode}
+\str_const:Nx \c_@@_hidden_space_str
+  { \c_percent_str \c_circumflex_str \c_circumflex_str A scheol \c_percent_str }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\q_@@_stop,\q_@@_mark}
+%   Some quarks used along the code as macro delimiters.
+%
+%    \begin{macrocode}
+\quark_new:N \q_@@_stop
+\quark_new:N \q_@@_mark
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\l_@@_file_iow}
+%   An output stream for saving the contents of an environment to a file.
+%
+%    \begin{macrocode}
+\iow_new:N \l_@@_file_iow
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_rescan_tokens:n}
+%   \cs{tl_rescan:nn} doesn't fit the needs of this package because
+%   it does not allow catcode changes inside the argument, so verbatim
+%   commands used inside one of \mypkg*{scontents}'s commands/environments
+%   will not work. Here we create a private copy of \cs{tex_scantokens:D}
+%   which will serve our purposes.
+%
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_rescan_tokens:n #1 { \tex_scantokens:D {#1} }
+\cs_generate_variant:Nn \@@_rescan_tokens:n { V, x }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_tab:,\@@_par:}
+%   Control sequences to replace tab (§^^I§) and form feed (§^^L§) characters.
+%
+%    \begin{macrocode}
+\cs_new:Npx \@@_tab: { \c_space_tl }
+\cs_new:Npn \@@_par: { ^^J ^^J }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\tl_remove_once:NV,\tl_replace_all:Nxx,
+%     \tl_replace_all:Nxn,\tl_replace_all:Nnx,\tl_if_empty:fTF}
+%   Some nonstandard variants.
+%
+%    \begin{macrocode}
+\cs_generate_variant:Nn \tl_remove_once:Nn { NV }
+\cs_generate_variant:Nn \tl_replace_all:Nnn { Nx, Nxx, Nnx }
+\cs_generate_variant:Nn \msg_error:nnnn { nnx }
+\prg_generate_conditional_variant:Nnn \tl_if_empty:n { f } { TF }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{Defining keys for the environment and commands}
+%
+% We add the \mymeta{keys} divided into subgroups to handle errors and
+% \emph{unknown} \mymeta{keys} separately.
+%
+% \subsubsection{Keys for environment \env{scontents}}
+%
+% We define a set of \mymeta{keys} for environment §scontents§.
+%
+%    \begin{macrocode}
+\keys_define:nn { scontents / scontents }
+  {
+    write-env .code:n           = {
+                                    \bool_set_true:N \l_@@_writing_bool
+                                    \tl_set:Nn \l_@@_fname_out_tl {#1}
+                                  },
+    write-out .code:n           = {
+                                    \bool_set_false:N \l_@@_storing_bool
+                                    \bool_set_true:N  \l_@@_writing_bool
+                                    \tl_set:Nn \l_@@_fname_out_tl {#1}
+                                  },
+    write-env .value_required:n = true,
+    write-out .value_required:n = true,
+    print-env .meta:nn          = { scontents } { print-env = #1 },
+    print-env .default:n        = true,
+    store-env .meta:nn          = { scontents } { store-env = #1 },
+    force-eol .meta:nn          = { scontents } { force-eol = #1 },
+    force-eol .default:n        = true,
+    overwrite .meta:nn          = { scontents } { overwrite = #1 },
+    overwrite .default:n        = true,
+    unknown   .code:n           = { \@@_parse_environment_keys:n {#1} }
+  }
+%    \end{macrocode}
+%
+% \subsubsection{Keys for command \cs{Scontents}}
+%
+% We define a set of \mymeta{keys} for commands §\Scontents§ and
+% §\Scontents*§.
+%
+%    \begin{macrocode}
+\keys_define:nn { scontents / Scontents }
+  {
+    write-cmd .code:n           = {
+                                    \bool_set_true:N \l_@@_writing_bool
+                                    \tl_set:Nn \l_@@_fname_out_tl {#1}
+                                  },
+    write-out .code:n           = {
+                                    \bool_set_false:N \l_@@_storing_bool
+                                    \bool_set_true:N  \l_@@_writing_bool
+                                    \tl_set:Nn \l_@@_fname_out_tl {#1}
+                                  },
+    write-env .value_required:n = true,
+    write-out .value_required:n = true,
+    print-cmd .meta:nn          = { scontents } { print-cmd = #1 },
+    print-cmd .default:n        = true,
+    store-cmd .meta:nn          = { scontents } { store-cmd = #1 },
+    force-eol .meta:nn          = { scontents } { force-eol = #1 },
+    force-eol .default:n        = true,
+    overwrite .meta:nn          = { scontents } { overwrite = #1 },
+    overwrite .default:n        = true,
+    unknown   .code:n           = { \@@_parse_command_keys:n {#1} }
+  }
+%    \end{macrocode}
+%
+% \subsubsection{Keys for command \cs{foreachsc}}
+%
+% We define a set of \mymeta{keys} for command §\foreachsc§.
+%
+%    \begin{macrocode}
+\keys_define:nn { scontents / foreachsc }
+  {
+    before  .code:n           = {
+                                  \bool_set_true:N \l_@@_foreach_before_bool
+                                  \tl_set:Nn \l_@@_foreach_before_tl {#1}
+                                },
+    before  .value_required:n = true,
+    after   .code:n           = {
+                                  \bool_set_true:N \l_@@_foreach_after_bool
+                                  \tl_set:Nn \l_@@_foreach_after_tl {#1}
+                                },
+    after   .value_required:n = true,
+    start   .int_set:N        = \l_@@_foreach_start_int,
+    start   .value_required:n = true,
+    start   .initial:n        = 1,
+    stop    .code:n           = {
+                                  \bool_set_true:N \l_@@_foreach_stop_bool
+                                  \int_set:Nn \l_@@_foreach_stop_int {#1}
+                                 },
+    stop    .value_required:n = true,
+    step    .int_set:N        = \l_@@_foreach_step_int,
+    step    .value_required:n = true,
+    step    .initial:n        = 1,
+    wrapper .code:n           = {
+                                  \bool_set_true:N \l_@@_foreach_wrapper_bool
+                                  \cs_set_protected:Npn
+                                  \@@_foreach_wrapper:n ##1 {#1}
+                                },
+    wrapper .value_required:n = true,
+    sep     .tl_set:N         = \l_@@_foreach_sep_tl,
+    sep     .initial:n        = {},
+    sep     .value_required:n = true,
+    unknown .code:n           = { \@@_parse_foreach_keys:n {#1} }
+  }
+%    \end{macrocode}
+%
+% \subsubsection{Key for commands \cs{typestored} and \cs{meaningsc}}
+%
+% We define a \mymeta{key} for command §\typestored§ and §\meaningsc§.
+% Both commands accept the same type of optional arguments, just define
+% a common \mymeta{key}.
+%
+%    \begin{macrocode}
+\keys_define:nn { scontents / typemeaning }
+  {
+    width-tab .meta:nn = { scontents } { width-tab = #1 },
+    unknown   .code:n  = { \@@_parse_type_meaning_key:n {#1} }
+  }
+%    \end{macrocode}
+%
+% \subsection{Handling undefined keys}
+%
+% The \mymeta{keys} are stored in the token list variable \cs{l_keys_key_tl},
+% and the value (if any) is passed as an argument to each \mymeta{function}.
+%
+% \subsubsection{Undefined keys for environment \env{scontents}}
+%
+% \begin{macro}{\@@_parse_environment_keys:n,
+%               \@@_parse_environment_keys:nn}
+%
+%   We check the \mymeta{keys} passed to the environment
+%   §scontents§ and process it with \cs{@@_parse_environment_keys:n}
+%   if the \mymeta{key} is \emph{unknown} we return an error message.
+%
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_parse_environment_keys:n #1
+  { \exp_args:NV \@@_parse_environment_keys:nn \l_keys_key_tl {#1} }
+\cs_new_protected:Npn \@@_parse_environment_keys:nn #1#2
+  {
+    \tl_if_blank:nTF {#2}
+      { \msg_error:nnn { scontents } { env-key-unknown } {#1} }
+      { \msg_error:nnnn { scontents } { env-key-value-unknown } {#1} {#2} }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Undefined keys for \cs{Scontents} and \cs{Scontents*}}
+%
+% \begin{macro}{\@@_parse_command_keys:n,
+%               \@@_parse_command_keys:nn}
+%
+%   We check the \meta{keys} passed to commands §\Scontents§ or
+%   §\Scontents*§ and process it with \cs{@@_parse_command_keys:n}
+%   if the \mymeta{key} is \emph{unknown} we return an error message.
+%
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_parse_command_keys:n #1
+  { \exp_args:NV \@@_parse_command_keys:nn \l_keys_key_tl {#1} }
+\cs_new_protected:Npn \@@_parse_command_keys:nn #1#2
+  {
+    \tl_if_blank:nTF {#2}
+      { \msg_error:nnn { scontents } { cmd-key-unknown } {#1} }
+      { \msg_error:nnnn { scontents } { cmd-key-value-unknown } {#1} {#2} }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Undefined keys for \cs{foreachsc}}
+%
+% \begin{macro}{\@@_parse_foreach_keys:n,
+%               \@@_parse_foreach_keys:nn}
+%
+%   We check the \meta{keys} passed to command §\foreachsc§ and process
+%   it with \cs{@@_parse_foreach_keys:n}, if the \mymeta{key} is
+%   \emph{unknown} we return an error message.
+%
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_parse_foreach_keys:nn #1#2
+  {
+    \tl_if_blank:nTF {#2}
+      { \msg_error:nnn { scontents } { for-key-unknown } {#1} }
+      { \msg_error:nnnn { scontents } { for-key-value-unknown } {#1} {#2} }
+  }
+\cs_new_protected:Npn \@@_parse_foreach_keys:n #1
+  { \exp_args:NV \@@_parse_foreach_keys:nn \l_keys_key_tl {#1} }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Undefined keys for \cs{typestored} and \cs{meaningsc}}
+%
+% \begin{macro}{\@@_parse_type_meaning_key:n,
+%               \@@_parse_type_meaning_key:nn}
+%
+%   The commands §\typestored§ and §\meaningsc§ accept an optional
+%   argument for setting the §width-tab§ to print the stored
+%   contents. However their optional argument also contains the number
+%   of the item to retrieve from the stored sequence. To avoid the
+%   awkward §\typestored[]§\myoarg[type=tt]{options}§{...}§ syntax, we'll make the
+%   commands have a single optional argument which is processed by
+%   \pkg{l3keys}, and the unknown keys are brought here to
+%   \cs{@@_parse_typemeaning_key:n} to process.
+%
+%   First we check if the \mymeta{key} is an integer using \cs{int_to_roman:n}.
+%   If it is, we check that the value passed to the key is blank
+%   (otherwise something odd as §1=1§ might have been used). If everything
+%   is correct, then set the value of the integer which holds the \mymeta{index}.
+%   Otherwise raise an error about an \emph{unknown} option.
+%
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_parse_type_meaning_key:n #1
+  { \exp_args:NV \@@_parse_type_meaning_key:nn \l_keys_key_tl {#1} }
+\cs_new_protected:Npn \@@_parse_type_meaning_key:nn #1#2
+  {
+    \tl_if_empty:fTF { \int_to_roman:n { -0 #1 } }
+      {
+        \tl_if_blank:nTF {#2}
+          { \int_set:Nn \l_@@_seq_item_int {#1} }
+          { \msg_error:nnnn { scontents } { type-key-value-unknown } {#1} {#2} }
+      }
+      {
+        \tl_if_blank:nTF {#2}
+          { \msg_error:nnn { scontents } { type-key-unknown } {#1} }
+          { \msg_error:nnnn { scontents } { type-key-value-unknown } {#1} {#2} }
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{Compatibility layer with Plain}
+%
+% When loading the package outside of \LaTeX{} we can't usually use \pkg{xparse}.
+% However since \pkg{xparse} doesn't actually hold any dependency with \LaTeX{}
+% except for package-loading commands, we can emulate those commands (much like
+% in \pkg{miniltx}) so that \pkg{xparse} is loadable in any format.
+%
+% The bunch of macros below is adapted from the \LaTeX{} kernel (greatly simplified).
+%    \begin{macrocode}
+%</core>
+%<*loader&!latex>
+\seq_new:N \l_@@_compat_seq
+\cs_new_protected:Npn \@@_compat_redefine:Npn #1
+  {
+    \seq_put_right:Nn \l_@@_compat_seq {#1}
+    \cs_set_eq:cN { @@_saved_\cs_to_str:N #1: } #1
+    \cs_new_protected:Npn #1
+  }
+\cs_new_protected:Npn \@@_compat_restore:
+  { \seq_map_function:NN \l_@@_compat_seq \@@_compat_restore:N }
+\cs_new_protected:Npn \@@_compat_restore:N #1
+  {
+    \cs_set_eq:Nc #1 { @@_saved_\cs_to_str:N #1: }
+    \cs_undefine:c { @@_saved_\cs_to_str:N #1: }
+  }
+\cs_generate_variant:Nn \@@_compat_redefine:Npn { c }
+\cs_new_protected:Npn \@@_optarg:nn #1 #2
+  { \peek_charcode_ignore_spaces:NTF [ {#1} {#1[#2]} }
+\cs_new_protected:Npn \@@_stararg:nn #1 #2
+  { \peek_charcode_remove_ignore_spaces:NTF * {#1} {#2} }
+\@@_compat_redefine:Npn \RequirePackage
+  { \@@_optarg:nn { \@@_require_auxi:wn } { } }
+\cs_new_protected:Npn \@@_require_auxi:wn [#1] #2
+  { \@@_optarg:nn { \@@_require_auxii:wnw [{#1}]{#2} } { } }
+\cs_new:Npn \@@_zap_space:ww #1~#2
+  {
+    #1 \if_meaning:w #2 \q_mark
+      \exp_after:wN \use_none:n
+    \else:
+      \exp_after:wN \@@_zap_space:ww
+    \fi: #2
+  }
+\cs_new_protected:Npn \@@_require_auxii:wnw [#1] #2 [#3]
+  {
+    \tl_set:Nx \l_@@_temp_tl { \@@_zap_space:ww #2 ~ \q_mark }
+    \clist_map_function:NN \l_@@_temp_tl \@@_require_auxiii:n
+  }
+\cs_new_protected:Npn \@@_require_auxiii:n #1
+  {
+    \str_if_eq:eeF {expl3} {#1}
+      { \msg_error:nnn { scontents } { invalid-package } {#1} }
+  }
+\msg_new:nnn { scontents } { invalid-package }
+  { Package~'#1'~invalid~in~scontents.~This~is~an~error~in~scontents. }
+\@@_compat_redefine:cpn { @ifpackagelater } #1
+  { \exp_args:Nc \@@_package_later_aux:Nn { ver@#1.sty } }
+\cs_new_protected:Npn \@@_package_later_aux:Nn #1 #2
+  {
+    \int_compare:nNnTF
+      { \exp_after:wN \@@_parse_version:w #1 //00 \q_mark } <
+      { \exp_after:wN \@@_parse_version:w #2 //00 \q_mark }
+  }
+\cs_new:Npn \@@_parse_version:w #1 { \@@_parse_version_auxi:w 0#1 }
+\cs_new:Npn \@@_parse_version_auxi:w #1/#2/#3#4#5 \q_mark
+  { \@@_parse_version_auxii:w #1-#2-#3#4 \q_mark }
+\cs_new:Npn \@@_parse_version_auxii:w #1-#2-#3#4#5 \q_mark
+  { \tl_if_blank:nF {#2} {#1} #2 #3 #4 }
+\@@_compat_redefine:Npn \ProvidesExplPackage #1 #2 #3 #4
+  { \@@_provides_aux:nn {#1} { #2 \tl_if_empty:nF {#3} {#3~} #4 } }
+\cs_new_protected:Npn \@@_provides_aux:nn #1 #2
+  {
+    \tl_gset:cx { ver@#1.sty } {#2}
+    \iow_log:n { Package~#1:~#2 }
+    \ExplSyntaxOn
+  }
+\@@_compat_redefine:Npn \DeclareOption
+  { \@@_stararg:nn { \use_none:n } { \use_none:nn } }
+\@@_compat_redefine:Npn \ProcessOptions
+  { \@@_stararg:nn { } { } }
+%    \end{macrocode}
+%
+% Now that the compatibility layer is defined, we can finally load \pkg{xparse}.
+% \pkg{xparse} expects to be loaded with §\ExplSyntaxOff§ (not much harm would
+% be done otherwise, but just to be on the safe side).
+%
+% Within \pkg{xparse} a §\RequirePackage{expl3}§ is done. We can ignore that since
+% we have already loaded \pkg{expl3}. Next, a §\@ifpackagelater§ test is done:
+% we do that test too to ensure that \pkg{xparse} is compatible with the current
+% running version of \pkg{expl3}. The following §\ProvidesExplPackage§ simply
+% defines §\ver@xparse.sty§ for any other package that might uset it, and then
+% does §\ExplSyntaxOn§. At the end of the package, \pkg{xparse} parses (heh)
+% the package options. Since we don't have those in non-\LaTeX{} formats, they are
+% ignored. Okay, so load \pkg{xparse}:
+%    \begin{macrocode}
+\int_set:Nn \l_@@_tmpa_int { \char_value_catcode:n { `\@ } }
+\char_set_catcode_letter:N \@
+\exp_after:wN
+\ExplSyntaxOff
+\file_input:n { xparse.sty }
+\ExplSyntaxOn
+\char_set_catcode:nn { `\@ } { \l_@@_tmpa_int }
+\@@_compat_restore:
+%</loader&!latex>
+%<*core>
+%    \end{macrocode}
+% (actually we don't need to do §\ExplSyntaxOn§ there because we don't have
+%  \LaTeX{}'s full package loading mechanism, so the \pkg{expl3} syntax remains
+%  active after \pkg{xparse} is loaded, but it doesn't harm either).
+%
+% \subsection{Programming of the sequences}
+%
+%   The storage of the package is done using |seq| variables.  Here we
+%   set up the macros that will manage the variables.
+% \begin{macro}{\@@_append_contents:nn}
+%   \cs{@@_append_contents:nn} creates a seq variable if one didn't
+%   exist and appends the contents in the argument to the right of the
+%   sequence.
+%
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_append_contents:nn #1#2
+  {
+    \tl_if_blank:nT {#1}
+      { \msg_error:nn { scontents } { empty-store-cmd } }
+    \seq_if_exist:cF { g_@@_name_#1_seq }
+      { \seq_new:c { g_@@_name_#1_seq } }
+    \seq_gput_right:cn { g_@@_name_#1_seq } {#2}
+  }
+\cs_generate_variant:Nn \@@_append_contents:nn { Vx }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_getfrom_seq:nn,\@@_getfrom_seq:nnn}
+%   \cs{@@_getfrom_seq:nn} retrieves the saved item from the
+%   sequence.
+%
+%    \begin{macrocode}
+\cs_new:Npn \@@_getfrom_seq:nn #1#2
+  {
+    \seq_if_exist:cTF { g_@@_name_#2_seq }
+      {
+        \exp_args:Nf \@@_getfrom_seq:nnn
+          { \seq_count:c { g_@@_name_#2_seq } }
+          {#1} {#2}
+      }
+      { \msg_expandable_error:nnn { scontents } { undefined-storage } {#2} }
+  }
+\cs_new:Npn \@@_getfrom_seq:nnn #1#2#3
+  {
+    \bool_lazy_or:nnTF
+      { \int_compare_p:nNn {#2} = { 0 } }
+      { \int_compare_p:nNn { \int_abs:n {#2} } > {#1} }
+      { \msg_expandable_error:nnnnn { scontents } { index-out-of-range } {#2} {#3} {#1} }
+      { \seq_item:cn { g_@@_name_#3_seq } {#2} }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_lastfrom_seq:n}
+%   \cs{@@_lastfrom_seq:n} retrieves the last saved item from the
+%   sequence when \cs{l_@@_print_env_bool} or \cs{l_@@_print_cmd_bool}
+%   is true.
+%
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_lastfrom_seq:n #1
+  {
+    \tl_gset:Nx \g_@@_temp_tl { \seq_item:cn { g_@@_name_#1_seq } {-1} }
+    \group_insert_after:N \@@_rescan_tokens:V
+    \group_insert_after:N \g_@@_temp_tl
+    \group_insert_after:N \tl_gclear:N
+    \group_insert_after:N \g_@@_temp_tl
+  }
+\cs_generate_variant:Nn \@@_lastfrom_seq:n { V }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_store_to_seq:NN}
+%   The \cs{@@_store_to_seq:NN} writes the recorded contents
+%   in §#1§ to the log and stores it in §#2§.
+%
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_store_to_seq:NN #1#2
+  {
+    \tl_log:N #1
+    \@@_append_contents:Vx #2 { \exp_not:V #1 }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{Construction of environment \env{scontents}}
+%
+% In order to be able to define environments that behave similarly to
+% \myenv{scontents}, we define a generic environment and make all other
+% environment as wappers around that one.
+%
+% \subsubsection{The command \cs{newenvsc}}
+%
+% \begin{macro}{\newenvsc,\l_@@_env_name_tl,\@@_scontents_setenv:nn}
+%   The \cs{newenvsc} command defines two functions \cs[no-index]{@@_\#1_env_begin:}
+%   and \cs[no-index]{@@_\#1_env_end:}, which set the current environment's
+%   default properties and then call the generic \cs{@@_env_generic_begin:} and
+%   \cs{@@_env_generic_end:}.
+%    \begin{macrocode}
+\tl_new:N \l_@@_env_name_tl
+\cs_new_protected:Npn \@@_scontents_setenv:nn #1 #2
+  {
+    \cs_new_protected:cpn { @@_#1_env_begin: }
+      {
+        \tl_set:Nn \l_@@_env_name_tl {#1}
+        \keys_set:nn { scontents } {#2}
+        \@@_setup_verb_processor:
+        \@@_env_generic_begin:
+      }
+    \cs_new_protected:cpn { @@_#1_env_end: }
+      { \@@_env_generic_end: }
+    \exp_args:Nooo % http://nooooooooooooooo.com :) jeje
+    \@@_env_define:nnn { \tl_to_str:n {#1} }
+      { \cs:w @@_#1_env_begin: \cs_end: }
+      { \cs:w @@_#1_env_end: \cs_end: }
+  }
+%</core>
+%<*loader>
+\NewDocumentCommand { \newenvsc } { m O{} }
+  {
+%<latex|plain>    \cs_if_exist:cTF { #1 }
+%<context>    \cs_if_exist:cTF { start #1 }
+      { \msg_error:nnn { scontents } { env-already-defined } {#1} }
+      { \@@_scontents_setenv:nn {#1} {#2} }
+  }
+\cs_new_protected:Npn \@@_env_define:nnn #1 #2 #3
+  {
+%<latex|plain>    \NewDocumentEnvironment {#1} { }
+%<context>    \cs_new_protected:cpn { start #1 }
+      {
+%<!latex>        \group_begin:
+          #2
+      }
+%<context>    \cs_new_protected:cpn { stop #1 }
+      {
+          #3
+%<!latex>        \group_end:
+      }
+  }
+%</loader>
+%<*core>
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Generic definition of the environment}
+%
+% \begin{macro}{
+%     \@@_env_generic_begin:,
+%     \@@_env_generic_begin:,
+%   }
+%   Now we define the generic environment \cs{@@_env_generic_begin:}
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_env_generic_begin:
+  {
+    \char_set_catcode_active:N \^^M
+    \@@_start_environment:w
+  }
+\cs_new_protected:Npn \@@_env_generic_end:
+  {
+    \@@_stop_environment:
+    \@@_finish_storing:NNN \l_@@_macro_tmp_tl
+      \l_@@_name_seq_env_tl \l_@@_print_env_bool
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Definition of the environment \env{scontents}}
+%
+% \begin{macro}{
+%     scontents,
+%     \scontents,
+%     \endscontents,
+%     \startscontents,
+%     \stopscontents,
+%   }
+%   Now defining the \myenv{scontents} environment should be easy:
+%    \begin{macrocode}
+%</core>
+%<loader>\newenvsc{scontents}
+%<*core>
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{key val for environment}
+%
+% Define a \myoarg{key \textnormal{\textcolor{gray}{=}} val} for
+% environment \env{scontents}
+%
+% \begin{macro}{\@@_grab_optional:n,\@@_grab_optional:w}
+%   The macro \cs{@@_grab_optional:w} is called from the
+%   \env{scontents} environment with the tokens following the
+%   §\begin{scontents}§ when the next character is a §[§. This function
+%   is defined using \mypkg{xparse} to exploit its delimited argument
+%   processor.
+%
+%   The function is called from a context where §^^M§ is active, so
+%   \cs{@@_normalise_line_ends:N} is used to replace active §^^M§
+%   characters by spaces.
+%    \begin{macrocode}
+%</core>
+%<*loader>
+\NewDocumentCommand \@@_grab_optional:w { r[] }
+  { \@@_grab_optional:n {#1} }
+%</loader>
+%<*core>
+\cs_new_protected:Npn \@@_grab_optional:n #1
+  {
+    \tl_if_novalue:nF {#1}
+      {
+        \tl_set:Nn \l_@@_temp_tl {#1}
+        \@@_normalise_line_ends:N \l_@@_temp_tl
+        \keys_set:nV { scontents / scontents } \l_@@_temp_tl
+      }
+    \@@_start_after_option:w
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{The environment itself}
+%
+% \begin{macro}{\@@_start_environment:w,\@@_start_after_option:w,
+%     \@@_check_line_process:xn,\@@_stop_environment:}
+%   Here we make §^^I§, §^^L§ and §^^M§ active characters so that the end of
+%   line can be \enquote{seen} to be used as a delimiter, and \hologo{TeX} doesn't try to
+%   eliminate space-like characters.
+%
+%   First we check if the immediate next token after §\begin{scontents}§
+%   is a §[§. If it is, then \cs{@@_grab_optional:w} is called
+%   to do the heavy lifting. \cs{@@_grab_optional:w} processes the optional
+%   argument and calls \cs{@@_start_after_option:w}.
+%
+%   \cs{@@_start_after_option:w} also checks for trailing tokens after
+%   the optional argument and issues an error if any.
+%
+%   In all cases, \cs{@@_check_line_process:xn} ckecks that
+%   everything past §\begin{scontents}§ is empty and then process
+%   the environment. \cs{@@_check_line_process:xn} calls the
+%   \cs{@@_file_tl_write_start:V} function, which will then read the contents
+%   of the environment and optionally store them in a token list or write to
+%   an external file.
+%
+%   When that's done, \cs{@@_file_write_stop:N} does the cleanup. This part of
+%   the code is inspired and adapted from the code of the package \pkg{xsimverb}
+%   by Clemens Niederberger.
+%
+%    \begin{macrocode}
+\group_begin:
+  \char_set_catcode_active:N \^^I
+  \char_set_catcode_active:N \^^L
+  \char_set_catcode_active:N \^^M
+  \cs_new_protected:Npn \@@_normalise_line_ends:N #1
+    { \tl_replace_all:Nnn #1 { ^^M } { ~ } }
+  \cs_new_protected:Npn \@@_start_environment:w #1 ^^M
+    {
+      \tl_if_head_is_N_type:nTF {#1}
+        {
+          \str_if_eq:eeTF { \tl_head:n {#1} } { [ }
+            { \@@_grab_optional:w #1 ^^M }
+            { \@@_check_line_process:xn { } {#1} }
+        }
+        { \@@_check_line_process:xn { } {#1} }
+    }
+  \cs_new_protected:Npn \@@_start_after_option:w #1 ^^M
+    { \@@_check_line_process:xn { [...] } {#1} }
+  \cs_new_protected:Npn \@@_check_line_process:xn #1 #2
+    {
+      \tl_if_blank:nF {#2}
+        {
+          \msg_error:nnxn { scontents } { junk-after-begin }
+            { after~\c_backslash_str begin { \l_@@_env_name_tl } #1 } {#2}
+        }
+      \@@_make_control_chars_active:
+      \@@_file_tl_write_start:V \l_@@_fname_out_tl
+    }
+  \cs_new_protected:Npn \@@_stop_environment:
+    {
+      \@@_file_write_stop:N \l_@@_macro_tmp_tl
+      \bool_lazy_and:nnT
+        { \l_@@_storing_bool }
+        { \tl_if_empty_p:N \l_@@_macro_tmp_tl }
+        {
+          \msg_warning:nnx { scontents } { empty-environment }
+            { \l_@@_env_name_tl }
+        }
+    }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{
+%     \@@_file_tl_write_start:n,
+%     \@@_file_tl_write_start:V,
+%     \@@_verb_processor_iterate:w,
+%     \@@_verb_processor_iterate:nnn,
+%     \@@_setup_verb_processor:,
+%     \@@_file_write_stop:N,
+%     \@@_remove_leading_nl:n,
+%     \@@_remove_leading_nl:w,
+%   }
+%   This is the main macro to collect the contents of a verbatim environment.
+%   The macro starts a group, opens the \mymeta{output file}, if necessary,
+%   sets verbatim catcodes, and then issues §^^M§ (set equal to \cs{@@_ret:w})
+%   to read the environment line by line until reaching its end. The output
+%   token list will be appended with an active §^^J§ character and the line
+%   just read, and this line is written to the output file, if any. At the end
+%   of the environment the \mymeta{output file} is closed (if it was open),
+%   and the output token list is smuggled out of the verbatim group. A leading
+%   §^^J§ is removed from the token list using \cs{@@_remove_leading_nl:n}
+%  (which expects an active §^^J§ token at the head of the token list; a low
+%  level \hologo{TeX} error is raised otherwise).
+%
+%    \begin{macrocode}
+  \cs_new_protected:Npn \@@_file_tl_write_start:n #1
+    {
+      \group_begin:
+        \@@_file_if_writable:nTF {#1}
+          {
+            \bool_set_true:N \l_@@_writable_bool
+            \iow_open:Nn \l_@@_file_iow {#1}
+          }
+          { \bool_set_false:N \l_@@_writable_bool }
+        \tl_clear:N \l_@@_file_tl
+        \seq_map_function:NN \l_char_special_seq \char_set_catcode_other:N
+        \int_step_function:nnnN { 128 } { 1 } { 255 } \char_set_catcode_letter:n
+        \cs_set_protected:Npx \@@_ret:w ##1 ^^M
+          {
+            \exp_not:N \@@_verb_processor_iterate:w
+            ##1 \c_@@_end_env_tl
+                \c_@@_end_env_tl
+                \exp_not:N \q_@@_stop
+          }
+        \@@_make_control_chars_active:
+        \@@_ret:w
+    }
+  \cs_new:Npn \@@_setup_verb_processor:
+    {
+      \use:x
+        {
+          \cs_set:Npn \exp_not:N \@@_verb_processor_iterate:w
+            ####1 \c_@@_end_env_tl
+            ####2 \c_@@_end_env_tl
+            ####3 \exp_not:N \q_@@_stop
+        }   { \@@_verb_processor_iterate:nnn {##1} {##2} {##3} }
+    }
+  \cs_new:Npn \@@_verb_processor_iterate:nnn #1 #2 #3
+    {
+      \tl_if_blank:nTF {#3}
+        {
+          \@@_analyse_nesting:n {#1}
+          \@@_verb_processor_output:n {#1}
+        }
+        {
+          \@@_if_nested:TF
+            {
+              \@@_nesting_decr:
+              \@@_verb_processor_output:x
+                { \exp_not:n {#1} \c_@@_end_env_tl \exp_not:n {#2} }
+            }
+            {
+              \tl_if_blank:nF {#1}
+                { \@@_verb_processor_output:n {#1} }
+              \cs_set_protected:Npx \@@_ret:w
+                {
+                  \@@_env_end_function:
+                  \bool_lazy_or:nnF
+                    { \tl_if_blank_p:n {#2} }
+                    { \str_if_eq_p:ee {#2} { \c_percent_str } }
+                    {
+                      \str_if_eq:VnF \c_@@_hidden_space_str {#2}
+                        {
+                          \msg_warning:nnnn { scontents } { rescanning-text }
+                            {#2} { \tl_use:N \l_@@_env_name_tl }
+                        }
+                      \@@_rescan_tokens:n {#2}
+                    }
+                }
+              \char_set_active_eq:NN ^^M \@@_ret:w
+            }
+        }
+      ^^M
+    }
+  \cs_new:Npn \@@_env_end_function:
+    {
+      \@@_format_case:nnn
+        { \exp_not:N \end { \if_false: } \fi: }
+        { \exp_after:wN \exp_not:N \cs:w end }
+        { \exp_after:wN \exp_not:N \cs:w stop }
+      \tl_use:N \l_@@_env_name_tl
+      \@@_format_case:nnn
+        { \if_false: { \fi: } }
+        { \cs_end: }
+        { \cs_end: }
+    }
+  \cs_new_protected:Npn \@@_file_write_stop:N #1
+    {
+      \bool_if:NT \l_@@_writable_bool
+        { \iow_close:N \l_@@_file_iow }
+      \use:x
+        {
+          \group_end:
+          \bool_if:NT \l_@@_storing_bool
+            {
+              \tl_set:Nn \exp_not:N #1
+                { \exp_args:NV \@@_remove_leading_nl:n \l_@@_file_tl }
+            }
+        }
+    }
+  \cs_new:Npn \@@_remove_leading_nl:n #1
+    {
+      \tl_if_head_is_N_type:nTF {#1}
+        {
+          \exp_args:Nf
+            \@@_remove_leading_nl:nn
+              { \tl_head:n {#1} } {#1}
+        }
+        { \exp_not:n {#1} }
+    }
+  \cs_new:Npn \@@_remove_leading_nl:nn #1 #2
+    {
+      \token_if_eq_meaning:NNTF ^^J #1
+        { \exp_not:o { \@@_remove_leading_nl:w #2 } }
+        { \exp_not:n {#2} }
+    }
+  \cs_new:Npn \@@_remove_leading_nl:w ^^J { }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{
+%     \@@_verb_processor_output:n,
+%     \@@_verb_processor_output:x,
+%   }
+%   \cs{@@_verb_processor_output:n} does the output of each line read,
+%   to a token list and to a file, depending on the booleans
+%   \cs{l_@@_writing_bool} and \cs{l_@@_storing_bool}.
+%    \begin{macrocode}
+  \cs_new_protected:Npn \@@_verb_processor_output:n #1
+    {
+      \bool_if:NT \l_@@_writable_bool
+        { \iow_now:Nn \l_@@_file_iow {#1} }
+      \bool_if:NT \l_@@_storing_bool
+        { \tl_put_right:Nn \l_@@_file_tl { ^^J #1 } }
+    }
+\group_end:
+\cs_generate_variant:Nn \@@_verb_processor_output:n { x }
+\cs_generate_variant:Nn \@@_file_tl_write_start:n { V }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{
+%     \@@_analyse_nesting:n,
+%     \@@_analyse_nesting:w,
+%     \@@_nesting_decr:,
+%     \@@_use_none_delimit_by_q_stop:w,
+%   }
+% \begin{macro}[TF]{\@@_if_nested:}
+%   \cs{@@_analyse_nesting:n} scans nested §\begin{scontents}§
+%   and steps a \cs{l_@@_env_nesting_int} counter. The \cs{@@_if_nested:}
+%   conditional tests if we're in a nested environment, and
+%   \cs{@@_nesting_decr:} reduces the nesting level, if an §\end{scontents}§
+%   is found.
+%
+%   Multiple §\end{scontents}§ in the same line are not supported\dots
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_analyse_nesting:n #1
+  {
+    \int_zero:N \l_@@_tmpa_int
+    \@@_analyse_nesting_format:n {#1}
+    \int_compare:nNnT { \l_@@_tmpa_int } > { 1 }
+      { \msg_warning:nn { scontents } { multiple-begin } }
+  }
+\cs_new_protected:Npn \@@_nesting_incr:
+  {
+    \int_incr:N \l_@@_env_nesting_int
+    \int_incr:N \l_@@_tmpa_int
+  }
+\cs_new_protected:Npn \@@_nesting_decr:
+  { \int_decr:N \l_@@_env_nesting_int }
+\prg_new_protected_conditional:Npnn \@@_if_nested: { TF }
+  {
+    \int_compare:nNnTF { \l_@@_env_nesting_int } > { \c_zero_int }
+      { \prg_return_true: }
+      { \prg_return_false: }
+  }
+\cs_new:Npn \@@_use_none_delimit_by_q_stop:w #1 \q_@@_stop { }
+%    \end{macrocode}
+%   In \LaTeX{}, environments start with §\begin{<env>}§, so checking if a
+%   string contains §\begin{scontents}§ is straightforward. Since no §}§ can
+%   appear inside §<env>§, then just a macro delimited by §}§ is enough.
+%    \begin{macrocode}
+\use:x
+  {
+    \cs_new_protected:Npn \exp_not:N \@@_analyse_nesting_latex:w ##1
+      \c_backslash_str begin \c_left_brace_str ##2 \c_right_brace_str
+  }   {
+        \@@_tl_if_head_is_q_mark:nTF {#2}
+          { \@@_use_none_delimit_by_q_stop:w }
+          {
+            \str_if_eq:VnT \l_@@_env_name_tl {#2}
+              { \@@_nesting_incr: }
+            \@@_analyse_nesting_latex:w
+          }
+      }
+\cs_new_protected:Npx \@@_analyse_nesting_latex:n #1
+  {
+    \@@_analyse_nesting_latex:w #1
+      \c_backslash_str begin
+        \c_left_brace_str \exp_not:N \q_@@_mark \c_right_brace_str
+    \exp_not:N \q_@@_stop
+  }
+%    \end{macrocode}
+%   In other formats, however, we don't have an \enquote{end anchor} to delimit the
+%   environment name, so a delimited macro won't help. We have to search for
+%   the entire environment command (usually §\scontents§ and §\startscontents§).
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_analyse_nesting_generic_process:nn #1 #2
+  {
+    \tl_if_head_is_N_type:nTF {#2}
+      {
+        \@@_tl_if_head_is_q_mark:nF {#2}
+          {
+            \@@_nesting_incr:
+            \@@_analyse_nesting_generic:w #2 \q_@@_stop
+          }
+      }
+      { \@@_analyse_nesting_generic:w #2 \q_@@_stop }
+  }
+\cs_new_protected:Npn \@@_analyse_nesting_generic:nn #1 #2
+  {
+    \@@_define_generic_nesting_function:n {#1}
+    \use:x
+      {
+        \exp_not:N \@@_analyse_nesting_generic:w #2
+          \c_backslash_str #1 \tl_use:N \l_@@_env_name_tl
+            \exp_not:N \q_@@_mark \exp_not:N \q_@@_stop
+      }
+  }
+\cs_new_protected:Npn \@@_define_generic_nesting_function:n #1
+  {
+    \use:x
+      {
+        \cs_set_protected:Npn \exp_not:N \@@_analyse_nesting_generic:w ####1
+          \c_backslash_str #1 \tl_use:N \l_@@_env_name_tl
+            ####2 \exp_not:N \q_@@_stop
+      }   { \@@_analyse_nesting_generic_process:nn {##1} {##2} }
+  }
+%</core>
+%<*loader>
+%<latex>\cs_new_eq:NN \@@_analyse_nesting_format:n
+%<latex>  \@@_analyse_nesting_latex:n
+%<!latex>\cs_new_protected:Npn \@@_analyse_nesting_format:n
+%<plain>  { \@@_analyse_nesting_generic:nn { } }
+%<context>  { \@@_analyse_nesting_generic:nn { start } }
+%</loader>
+%<*core>
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \subsubsection{Recording of the content in the sequence}
+%
+% \begin{macro}{\@@_finish_storing:NNN}
+%   Finishes the environment by optionally calling \cs{@@_store_to_seq:}
+%   and then clearing the temporary token list.
+%
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_finish_storing:NNN #1 #2 #3
+  {
+    \bool_if:NT \l_@@_storing_bool
+      {
+        \bool_if:NF \l_@@_forced_eol_bool
+          { \tl_put_right:Nx #1 { \c_@@_hidden_space_str } }
+        \@@_store_to_seq:NN #1 #2
+        \bool_if:NT #3 { \@@_lastfrom_seq:V #2 }
+      }
+  }
+%</core>
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\verbatimsc,\endverbatimsc}
+%   In Plain we emulate \LaTeX's \env{verbatim} environment.
+%    \begin{macrocode}
+%<*plain>
+\bool_new:N \l_@@_temp_bool
+\cs_new_protected:Npn \verbatimsc
+  {
+    \group_begin:
+      \@@_verbatimsc_aux: \frenchspacing \@@_vobeyspaces:
+      \@@_xverb:
+  }
+\cs_new_protected:Npn \endverbatimsc
+  { \group_end: }
+\cs_new_protected:Npn \@@_verbatimsc_aux:
+  {
+    \skip_vertical:N \parskip
+    \int_set:Nn \parindent { 0pt }
+    \skip_set:Nn \parfillskip { 0pt plus 1fil }
+    \int_set:Nn \parskip { 0pt plus0pt minus0pt }
+    \tex_par:D
+    \bool_set_false:N \l_@@_temp_bool
+    \cs_set:Npn \par
+      {
+        \bool_if:NTF \l_@@_temp_bool
+          {
+            \mode_leave_vertical:
+            \null
+            \tex_par:D
+            \penalty \interlinepenalty
+          }
+          {
+            \bool_set_true:N \l_@@_temp_bool
+            \mode_if_horizontal:T
+              { \tex_par:D \penalty \interlinepenalty }
+          }
+      }
+    \cs_set_eq:NN \do \char_set_catcode_other:N
+    \dospecials \obeylines
+    \tl_use:N \l_@@_verb_font_tl
+    \cs_set_eq:NN \do \@@_do_noligs:N
+    \@@_nolig_list:
+    \tex_everypar:D \exp_after:wN
+      { \tex_the:D \tex_everypar:D \tex_unpenalty:D }
+  }
+\cs_new_protected:Npn \@@_nolig_list:
+  { \do\`\do\<\do\>\do\,\do\'\do\- }
+\cs_new_protected:Npn \@@_vobeyspaces:
+  { \@@_set_active_eq:NN \  \@@_xobeysp: }
+\cs_new_protected:Npn \@@_xobeysp:
+  { \mode_leave_vertical: \nobreak \ }
+%</plain>
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[int]{\dospecials}
+%   \pkg{xparse} also requires \LaTeX's §\dospecials§. In case it doesn't
+%   exist (at the time \pkg{scontents} is loaded) we define §\dospecials§
+%   to use the \cs{l_char_special_seq}.
+%    \begin{macrocode}
+%<*!latex>
+\cs_if_exist:NF \dospecials
+  {
+    \cs_new:Npn \dospecials
+      { \seq_map_function:NN \l_char_special_seq \do }
+  }
+%</!latex>
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_bsphack:,\@@_esphack:}
+%   \pkg{xparse} also requires \LaTeX's §\dospecials§. In case it doesn't
+%   exist (at the time \pkg{scontents} is loaded) we define §\dospecials§
+%   to use the \cs{l_char_special_seq}.
+%    \begin{macrocode}
+%<*core>
+\int_new:N \l_@@_save_sf_int
+\dim_new:N \l_@@_save_skip_dim
+\cs_new_protected:Npn \@@_bsphack:
+  {
+    \scan_stop:
+    \mode_if_horizontal:T
+      {
+        \dim_set_eq:NN \l_@@_save_skip_dim \tex_lastskip:D
+        \int_set_eq:NN \l_@@_save_sf_int \tex_spacefactor:D
+      }
+  }
+\cs_new_protected:Npn \@@_esphack:
+  {
+    \scan_stop:
+    \mode_if_horizontal:T
+      {
+        \int_set_eq:NN \tex_spacefactor:D \l_@@_save_sf_int
+        \dim_compare:nNnT { \l_@@_save_skip_dim } > { \c_zero_dim }
+          {
+            \dim_compare:nNnT { \tex_lastskip:D } = { \c_zero_dim }
+              {
+                \nobreak
+                \skip_horizontal:n { \c_zero_skip }
+              }
+            \tex_ignorespaces:D
+          }
+      }
+  }
+%</core>
+%<*latex>
+\cs_gset_eq:NN \@@_bsphack: \@bsphack
+\cs_gset_eq:NN \@@_esphack: \@esphack
+%</latex>
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{The command \cs{Scontents}}
+%
+% User command to \mymeta{stored content}, adapted from
+% \url{https://tex.stackexchange.com/a/500281/7832}.
+%
+% \begin{macro}{
+%     \Scontents,
+%     \@@_norm_arg:n,
+%     \@@_Scontents_auxi:N,
+%     \@@_Scontents_internal:nn,
+%     \@@_verb_arg:w,
+%     \@@_verb_arg_internal:n,
+%   }
+%   The §\Scontents§ macro starts by parsing an optional argument and
+%   then delegates to \cs{@@_verb_arg:w} or \cs{@@_norm_arg:n} depending whether
+%   a star (§*§) argument is present.
+%
+%   \cs{@@_norm_arg:n} grabs a normal argument, adds it to the |seq| varaible,
+%   and optionally prints it.
+%
+%   \cs{@@_verb_arg:w} grabs a verbatim argument using \pkg{xparse}'s |+v|
+%   argument parser.
+%
+%    \begin{macrocode}
+%<*loader>
+\NewDocumentCommand { \Scontents }{ !s !O{} }
+  { \@@_Scontents_internal:nn {#1} {#2} }
+%</loader>
+%<*core>
+\cs_new_protected:Npn \@@_Scontents_internal:nn #1 #2
+  {
+    \@@_bsphack:
+    \group_begin:
+      \tl_if_novalue:nF {#2}
+        { \keys_set:nn { scontents / Scontents } {#2} }
+      \char_set_catcode_active:n { 9 }
+      \bool_if:NTF #1
+        { \@@_verb_arg:w }
+        { \@@_norm_arg:n }
+  }
+\cs_new_protected:Npn \@@_norm_arg:n #1
+  {
+      \tl_set:Nn \l_@@_temp_tl {#1}
+      \@@_Scontents_finish:
+  }
+%</core>
+%<*loader>
+\NewDocumentCommand { \@@_verb_arg:w } { +v }
+  { \@@_verb_arg_internal:n {#1} }
+%</loader>
+%<*core>
+\cs_new_protected:Npn \@@_verb_arg_internal:n #1
+  {
+      \tl_set:Nn \l_@@_temp_tl {#1}
+      \tl_replace_all:Nxx \l_@@_temp_tl { \iow_char:N \^^M } { \iow_char:N \^^J }
+      \@@_Scontents_finish:
+  }
+\cs_new_protected:Npn \@@_Scontents_finish:
+  {
+      \@@_file_write_cmd:VV \l_@@_fname_out_tl \l_@@_temp_tl
+      \@@_finish_storing:NNN \l_@@_temp_tl
+          \l_@@_name_seq_cmd_tl \l_@@_print_cmd_bool
+      \use:x
+        {
+    \group_end:
+    \bool_if:NF \l_@@_print_cmd_bool { \@@_esphack: }
+        }
+  }
+\cs_new_protected:Npn \@@_file_write_cmd:nn #1#2
+  {
+    \@@_file_if_writable:nT {#1}
+      {
+        \iow_open:Nn \l_@@_file_iow {#1}
+        \iow_now:Nn  \l_@@_file_iow {#2}
+        \iow_close:N \l_@@_file_iow
+      }
+  }
+\prg_new_protected_conditional:Npnn \@@_file_if_writable:n #1 { T, F, TF }
+  {
+    \bool_if:NTF \l_@@_writing_bool
+      {
+        \file_if_exist:nTF {#1}
+          {
+            \bool_if:NTF \l_@@_overwrite_bool
+              {
+                \msg_warning:nnx { scontents } { overwrite-file } {#1}
+                \prg_return_true:
+              }
+              {
+                \msg_warning:nnx { scontents } { not-writing } {#1}
+                \prg_return_false:
+              }
+          }
+          {
+            \msg_warning:nnx { scontents } { writing-file } {#1}
+            \prg_return_true:
+          }
+      }
+      { \prg_return_false: }
+  }
+\cs_generate_variant:Nn \@@_file_write_cmd:nn { VV }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{The command \cs{getstored}}
+%
+% \begin{macro}{\getstored}
+%   User command §\getstored§ to extract \mymeta{stored content} in |seq|
+%   (robust).
+%
+%    \begin{macrocode}
+%</core>
+%<*loader>
+\NewDocumentCommand { \getstored } { O{-1} m }
+  { \@@_getstored_internal:nn {#1} {#2} }
+%</loader>
+%<*core>
+\cs_new_protected:Npn \@@_getstored_internal:nn #1 #2
+  {
+    \group_begin:
+      \int_set:Nn \tex_newlinechar:D { `\^^J }
+      \@@_rescan_tokens:x
+        {
+    \endgroup % This assumes \catcode`\\=0... Things might go off otherwise.
+    \@@_getfrom_seq:nn {#1} {#2}
+        }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{The command \cs{foreachsc}}
+%
+% \begin{macro}{\foreachsc}
+%   User command §\foreachsc§ to loop over \mymeta{stored content} in |seq|.
+%
+%    \begin{macrocode}
+%</core>
+%<*loader>
+\NewDocumentCommand { \foreachsc } { o m }
+  { \@@_foreachsc_internal:nn {#1} {#2} }
+%</loader>
+%<*core>
+\cs_new_protected:Npn \@@_foreachsc_internal:nn #1 #2
+  {
+    \group_begin:
+      \tl_if_novalue:nF {#1} { \keys_set:nn { scontents / foreachsc } {#1} }
+      \tl_set:Nn \l_@@_foreach_name_seq_tl {#2}
+      \seq_clear:N \l_@@_foreach_print_seq
+      \bool_if:NF \l_@@_foreach_stop_bool
+        {
+          \int_set:Nn \l_@@_foreach_stop_int
+            { \seq_count:c { g_@@_name_#2_seq } }
+        }
+      \int_step_function:nnnN
+        { \l_@@_foreach_start_int }
+        { \l_@@_foreach_step_int }
+        { \l_@@_foreach_stop_int }
+        \@@_foreach_add_body:n
+      \tl_gset:Nx \g_@@_temp_tl
+        {
+          \exp_args:NNV \seq_use:Nn
+            \l_@@_foreach_print_seq \l_@@_foreach_sep_tl
+        }
+    \group_end:
+    \exp_after:wN \tl_gclear:N
+    \exp_after:wN \g_@@_temp_tl
+      \g_@@_temp_tl
+  }
+\cs_new_protected:Npn \@@_foreach_add_body:n #1
+  {
+    \seq_put_right:Nx \l_@@_foreach_print_seq
+      {
+        \bool_if:NT \l_@@_foreach_before_bool
+          { \exp_not:V \l_@@_foreach_before_tl }
+        \bool_if:NTF \l_@@_foreach_wrapper_bool
+          { \@@_foreach_wrapper:n }
+          { \use:n }
+            { \getstored [#1] { \tl_use:N \l_@@_foreach_name_seq_tl } }
+        \bool_if:NT \l_@@_foreach_after_bool
+          { \exp_not:V \l_@@_foreach_after_tl }
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{The command \cs{typestored}}
+%
+% \begin{macro}{\typestored,\@@_verb_print:N,\@@_xverb:w,verbatimsc}
+%   The §\typestored§ commands fetches a buffer from memory, prints it
+%   to the log file, and then calls \cs{@@_verb_print:N}.
+%
+%    \begin{macrocode}
+%</core>
+%<*loader>
+\NewDocumentCommand { \typestored } { o m }
+  { \@@_typestored_internal:nn {#1} {#2} }
+%</loader>
+%<*core>
+\cs_new_protected:Npn \@@_typestored_internal:nn #1 #2
+  {
+    \group_begin:
+      \int_set:Nn \l_@@_seq_item_int { 1 }
+      \tl_if_novalue:nF {#1} { \keys_set:nn { scontents / typemeaning } {#1} }
+      \tl_set:Nx \l_@@_temp_tl
+        { \exp_args:NV \@@_getfrom_seq:nn \l_@@_seq_item_int {#2} }
+      \tl_remove_once:NV \l_@@_temp_tl \c_@@_hidden_space_str
+      \tl_log:N \l_@@_temp_tl
+      \tl_if_empty:NF \l_@@_temp_tl
+        { \@@_verb_print:N \l_@@_temp_tl }
+    \group_end:
+  }
+%    \end{macrocode}
+%
+%   The \cs{@@_verb_print:N} macro is defined with active carriage return
+%   (\textsc{ascii} 13) characters to mimick an actual verbatim environment
+%   \enquote{on the loose}. The contents of the environment are placed in a
+%   §verbatimsc§ environment and rescanned using \cs{@@_rescan_tokens:x}.
+%
+%    \begin{macrocode}
+\group_begin:
+  \char_set_catcode_active:N \^^M
+  \cs_new_protected:Npn \@@_verb_print:N #1
+    {
+      \tl_if_blank:VT #1
+        { \msg_error:nnn { scontents } { empty-variable } {#1} }
+      \cs_set_eq:NN \@@_verb_print_EOL: ^^M
+      \cs_set_eq:NN ^^M \scan_stop:
+      \cs_set_eq:cN { do@noligs } \@@_do_noligs:N
+      \int_set:Nn \tex_newlinechar:D { `\^^J }
+      \@@_rescan_tokens:x
+        {
+          \@@_format_case:nnn
+            { \exp_not:N \begin{verbatimsc} } % LaTeX
+            { \verbatimsc } % Plain/Generic
+            { \startverbatimsc } % ConTeXt
+            ^^M
+          \exp_not:V #1 ^^M
+          \g_@@_end_verbatimsc_tl
+        }
+      \cs_set_eq:NN ^^M \@@_verb_print_EOL:
+    }
+\group_end:
+%    \end{macrocode}
+%
+%   Finally, the §verbatimsc§ environment is defined.
+%
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_xverb:
+  {
+    \char_set_catcode_active:n { 9 }
+    \char_set_active_eq:nN { 9 } \@@_tabs_to_spaces:
+    \@@_xverb:w
+  }
+%</core>
+%<*loader>
+%<*!context>
+\use:x
+  {
+    \cs_new_protected:Npn \exp_not:N \@@_xverb:w
+      ##1 \g_@@_end_verbatimsc_tl
+%<latex>      { ##1 \exp_not:N \end{verbatimsc} }
+%<plain>      { ##1 \exp_not:N \endverbatimsc }
+%<context>      { ##1 \exp_not:N \stopverbatimsc }
+  }
+%</!context>
+%<*latex>
+\NewDocumentEnvironment { verbatimsc } { }
+  {
+    \cs_set_eq:cN { @xverbatim } \@@_xverb:
+    \verbatim
+  }
+  { }
+%</latex>
+%<context>\definetyping[verbatimsc]
+%</loader>
+%<*core>
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{Some auxiliaries}
+%
+% \begin{macro}{\@@_tabs_to_spaces:}
+%   In a verbatim context the |TAB| character is made active and set
+%   equal to \cs{@@_tabs_to_spaces:}, to produce as many spaces as
+%   the §width-tab§ key was set to.
+%
+%    \begin{macrocode}
+\cs_new:Npn \@@_tabs_to_spaces:
+  { \prg_replicate:nn { \l_@@_tab_width_int } { ~ } }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@@_do_noligs:N}
+%   \cs{@@_do_noligs:N} is an alternative definition for \LaTeXe's
+%   §\do@noligs§ which makes sure to not consume following space
+%   tokens. The \LaTeXe{} version ends with §\char`#1§, which
+%   leaves \TeX{} still looking for an \mymeta{optional~space}.
+%   This version uses \cs{char_generate:nn} to ensure that doesn't
+%   happen.
+%
+%    \begin{macrocode}
+\cs_new:Npn \@@_do_noligs:N #1
+  {
+    \char_set_catcode_active:N #1
+    \char_set_active_eq:Nc #1 { @@_active_char_ \token_to_str:N #1 : }
+    \cs_set:cpx { @@_active_char_ \token_to_str:N #1 : }
+      {
+        \mode_leave_vertical:
+        \tex_kern:D \c_zero_dim
+        \char_generate:nn { `#1 } { 12 }
+      }
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}[TF]{\@@_tl_if_head_is_q_mark:n}
+%   Tests if the head of the token list is \cs{q_@@_mark}.
+%    \begin{macrocode}
+\prg_new_protected_conditional:Npnn \@@_tl_if_head_is_q_mark:n #1
+  { T, F, TF }
+  {
+    \if_meaning:w \q_@@_mark #1 \scan_stop:
+      \prg_return_true:
+    \else:
+      \prg_return_false:
+    \fi:
+  }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{
+%     \@@_set_active_eq:NN,
+%     \@@_make_control_chars_active:,
+%   }
+%   Shortcut definitions for common catcode changes.
+%   The §^^L§ needs a special treatment in non-\LaTeX{} mode
+%   because in Plain\,\TeX{} it is an §\outer§ token.
+%    \begin{macrocode}
+\cs_new_protected:Npn \@@_set_active_eq:NN #1
+  {
+    \char_set_catcode_active:N #1
+    \char_set_active_eq:NN #1
+  }
+%</core>
+%<*loader>
+\group_begin:
+%<plain>  \char_set_catcode_active:n { `\* }
+  \cs_new_protected:Npn \@@_plain_disable_outer_par:
+%<*plain>
+    {
+      \group_begin:
+        \char_set_lccode:nn { `\* } { `\^^L }
+        \tex_lowercase:D { \group_end:
+        \tex_let:D * \scan_stop:
+      }
+    }
+%</plain>
+%<latex|context>    { }
+\group_end:
+%</loader>
+%<*core>
+\group_begin:
+  \char_set_catcode_active:N \*
+  \cs_new_protected:Npn \@@_make_control_chars_active:
+    {
+      \@@_plain_disable_outer_par:
+      \@@_set_active_eq:NN \^^I \@@_tab:
+      \@@_set_active_eq:NN \^^L \@@_par:
+      \@@_set_active_eq:NN \^^M \@@_ret:w
+    }
+\group_end:
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{The command \cs{setupsc}}
+%
+% User command §\setupsc§ to setup module.
+%
+% \begin{macro}{\setupsc}
+%   A user-level wrapper for \cs{keys_set:nn}§{ scontents }§.
+%
+%    \begin{macrocode}
+%</core>
+%<*loader>
+\NewDocumentCommand { \setupsc } { +m }
+  { \keys_set:nn { scontents } {#1} }
+%</loader>
+%<*core>
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{The command \cs{meaningsc}}
+%
+% \begin{macro}{\meaningsc}
+%   User command §\meaningsc§ to see content stored in |seq|.
+%
+%    \begin{macrocode}
+%</core>
+%<*loader>
+\NewDocumentCommand { \meaningsc } { o m }
+  { \@@_meaningsc_internal:nn {#1} {#2} }
+%</loader>
+%<*core>
+\cs_new_protected:Npn \@@_meaningsc_internal:nn #1 #2
+  {
+    \group_begin:
+      \int_set:Nn \l_@@_seq_item_int { 1 }
+      \tl_if_novalue:nF {#1} { \keys_set:nn { scontents / typemeaning } {#1} }
+      \@@_meaningsc:n {#2}
+    \group_end:
+  }
+\group_begin:
+  \char_set_catcode_active:N \^^I
+  \cs_new_protected:Npn \@@_meaningsc:n #1
+    {
+      \tl_set:Nx \l_@@_temp_tl
+        { \exp_args:NV \@@_getfrom_seq:nn \l_@@_seq_item_int {#1} }
+      \tl_replace_all:Nxn \l_@@_temp_tl { \iow_char:N \^^J } { ~ }
+      \tl_remove_once:NV  \l_@@_temp_tl \c_@@_hidden_space_str
+      \tl_log:N \l_@@_temp_tl
+      \tl_use:N \l_@@_verb_font_tl
+      \tl_replace_all:Nnx \l_@@_temp_tl { ^^I } { \@@_tabs_to_spaces: }
+      \cs_replacement_spec:N \l_@@_temp_tl
+    }
+\group_end:
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{The command \cs{countsc}}
+%
+% \begin{macro}{\countsc}
+%   User command §\countsc§ to count number of contents stored in |seq|.
+%
+%    \begin{macrocode}
+%</core>
+%<*loader>
+\NewExpandableDocumentCommand { \countsc } { m }
+  { \seq_count:c { g_@@_name_#1_seq } }
+%</loader>
+%<*core>
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{The command \cs{cleanseqsc}}
+%
+%
+% \begin{macro}{\cleanseqsc}
+%   A user command §\cleanseqsc§ to clear (remove) a defined |seq|.
+%
+%    \begin{macrocode}
+%</core>
+%<*loader>
+\NewDocumentCommand { \cleanseqsc } { m }
+  { \seq_clear_new:c { g_@@_name_#1_seq } }
+%</loader>
+%<*core>
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{Warning and error messages}
+%
+% Warning and error messages used throughout the package.
+%
+%    \begin{macrocode}
+\msg_new:nnn { scontents } { junk-after-begin }
+  {
+    Junk~characters~#1~\msg_line_context: :
+    \\ \\
+    #2
+  }
+\msg_new:nnnn { scontents } { env-already-defined }
+  { Environment~'#1'~already~defined! }
+  {
+    You~have~used~\newenvsc
+    with~an~environment~that~already~has~a~definition. \\ \\
+    The~existing~definition~of~'#1'~will~not~be~altered.
+  }
+\msg_new:nnn { scontents } { empty-stored-content }
+  { Empty~value~for~key~'getstored'~\msg_line_context:. }
+\msg_new:nnn { scontents } { empty-variable }
+  { Variable~'#1'~empty~\msg_line_context:. }
+\msg_new:nnn { scontents } { overwrite-file }
+  { Overwriting~file~'#1'. }
+\msg_new:nnn { scontents } { writing-file }
+  { Writing~file~'#1'. }
+\msg_new:nnn { scontents } { not-writing }
+  { File~`#1'~already~exists.~Not~writing. }
+\msg_new:nnn { scontents } { rescanning-text }
+  { Rescanning~text~'#1'~after~\c_backslash_str end{#2}~\msg_line_context:.}
+\msg_new:nnn { scontents } { multiple-begin }
+  { Multiple~\c_backslash_str begin{ \l_@@_env_name_tl }~\msg_line_context:.}
+\msg_new:nnn { scontents } { undefined-storage }
+  { Storage~named~'#1'~is~not~defined. }
+\msg_new:nnn { scontents } { index-out-of-range }
+  {
+    \int_compare:nNnTF {#1} = { 0 }
+      { Index~of~sequence~cannot~be~zero. }
+      {
+        Index~'#1'~out~of~range~for~'#2'.~
+        \int_compare:nNnTF {#1} > { 0 }
+          { Max = } { Min = -} #3.
+      }
+  }
+\msg_new:nnnn { scontents } { env-key-unknown }
+  {
+    The~key~'#1'~is~unknown~by~environment~
+    '\l_@@_env_name_tl'~and~is~being~ignored.
+  }
+  {
+    The~environment~'\l_@@_env_name_tl'~does~not~have~a~key~called~'#1'.\\
+    Check~that~you~have~spelled~the~key~name~correctly.
+  }
+\msg_new:nnnn { scontents } { env-key-value-unknown }
+  {
+    The~key~'#1=#2'~is~unknown~by~environment~
+    '\l_@@_env_name_tl'~and~is~being~ignored.
+  }
+  {
+    The~environment~'\l_@@_env_name_tl'~does~not~have~a~key~called~'#1'.\\
+    Check~that~you~have~spelled~the~key~name~correctly.
+  }
+\msg_new:nnnn { scontents } { cmd-key-unknown }
+  { The~key~'#1'~is~unknown~by~'\c_backslash_str Scontents'~and~is~being~ignored.}
+  {
+    The~command~'\c_backslash_str Scontents'~does~not~have~a~key~called~'#1'.\\
+    Check~that~you~have~spelled~the~key~name~correctly.
+  }
+\msg_new:nnnn { scontents } { cmd-key-value-unknown }
+  { The~key~'#1=#2'~is~unknown~by~'\c_backslash_str Scontents'~and~is~being~ignored. }
+  {
+    The~command~'\c_backslash_str Scontents'~does~not~have~a~key~called~'#1'.\\
+    Check~that~you~have~spelled~the~key~name~correctly.
+  }
+\msg_new:nnnn { scontents } { for-key-unknown }
+  { The~key~'#1'~is~unknown~by~'\c_backslash_str foreachsc'~and~is~being~ignored.}
+  {
+    The~command~'\c_backslash_str foreachsc'~does~not~have~a~key~called~'#1'.\\
+    Check~that~you~have~spelled~the~key~name~correctly.
+  }
+\msg_new:nnnn { scontents } { for-key-value-unknown }
+  { The~key~'#1=#2'~is~unknown~by~'\c_backslash_str foreachsc'~and~is~being~ignored. }
+  {
+    The~command~'\c_backslash_str foreachsc'~does~not~have~a~key~called~'#1'.\\
+    Check~that~you~have~spelled~the~key~name~correctly.
+  }
+\msg_new:nnnn { scontents } { type-key-unknown }
+  { The~key~'#1'~is~unknown~and~is~being~ignored. }
+  {
+    This~command~does~not~have~a~key~called~'#1'.\\
+    This~command~only~accepts~the~key~'width-tab'.
+  }
+\msg_new:nnnn { scontents } { type-key-value-unknown }
+  { The~key~'#1'~to~which~you~passed~'#2'~is~unknown~and~is~being~ignored. }
+  {
+    This~command~does~not~have~a~key~called~'#1'.\\
+    This~command~only~accepts~the~key~'width-tab'.
+  }
+\msg_new:nnn { scontents } { empty-environment }
+  { environment~'#1'~empty~\msg_line_context:. }
+\msg_new:nnnn { scontents } { verbatim-newline }
+  { Verbatim~argument~of~#1~ended~by~end~of~line. }
+  {
+    The~verbatim~argument~of~the~#1~cannot~contain~more~than~one~line,~
+    but~the~end~
+    of~the~current~line~has~been~reached.~You~may~have~forgotten~the~
+    closing~delimiter.
+    \\ \\
+    LaTeX~will~ignore~'#2'.
+  }
+\msg_new:nnnn { scontents } { verbatim-tokenized }
+  { The~verbatim~#1~cannot~be~used~inside~an~argument. }
+  {
+    The~#1~takes~a~verbatim~argument.~
+    It~may~not~appear~within~the~argument~of~another~function.~
+    It~received~an~illegal~token \tl_if_empty:nF {#3} { ~'#3' } .
+    \\ \\
+    LaTeX~will~ignore~'#2'.
+  }
+%    \end{macrocode}
+%
+% \subsection{Finish package}
+%
+% Finish package implementation.
+%
+%    \begin{macrocode}
+%</core>
+%<plain|context>\ExplSyntaxOff
+%    \end{macrocode}
+%
+% \Finale

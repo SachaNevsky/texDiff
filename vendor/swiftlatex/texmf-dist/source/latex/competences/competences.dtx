@@ -1,0 +1,479 @@
+% \iffalse meta-comment
+%
+% Copyright (C) 2016 by Christophe Bares <christopheATbares.fr>
+% -------------------------------------------------------------
+%
+% This file may be distributed and/or modified under the
+% conditions of the LaTeX Project Public License, either version 1.3
+% of this license or (at your option) any later version.
+% The latest version of this license is in:
+%
+%    http://www.latex-project.org/lppl.txt
+%
+% and version 1.3 or later is part of all distributions of LaTeX
+% version 2005/12/01 or later.
+%
+% \fi
+%
+% \iffalse
+%<*driver>
+\ProvidesFile{competences.dtx}
+%</driver>
+%<package>\NeedsTeXFormat{LaTeX2e}[2005/12/01]
+%<package>\ProvidesPackage{competences}
+%<*package>
+    [2016/10/27 v1.0]
+%</package>
+%
+%<*driver>
+\documentclass{ltxdoc}
+\usepackage{competences}[2016/10/27]
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+\begin{document}
+  \DocInput{competences.dtx}
+  \PrintChanges
+  \PrintIndex
+\end{document}
+%</driver>
+% \fi
+%
+% \CheckSum{0}
+%
+% \CharacterTable
+%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%   Digits        \0\1\2\3\4\5\6\7\8\9
+%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%   Dollar        \$     Percent       \%     Ampersand     \&
+%   Acute accent  \'     Left paren    \(     Right paren   \)
+%   Asterisk      \*     Plus          \+     Comma         \,
+%   Minus         \-     Point         \.     Solidus       \/
+%   Colon         \:     Semicolon     \;     Less than     \<
+%   Equals        \=     Greater than  \>     Question mark \?
+%   Commercial at \@     Left bracket  \[     Backslash     \\
+%   Right bracket \]     Circumflex    \^     Underscore    \_
+%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%   Right brace   \}     Tilde         \~}
+%
+%
+% \changes{v0.1}{2016/06/26}{Initial version}
+% \changes{v1.0}{2016/10/27}{First functional version}
+%
+% \GetFileInfo{competences.dtx}
+%
+% \DoNotIndex{\newcommand,\newenvironment}
+%
+%
+% \title{The \textsf{competences} package\thanks{This document
+%   corresponds to \textsf{competences}~\fileversion, dated \filedate.}}
+% \author{Christophe Bares\\ \texttt{<christopheATbares.fr>}}
+%
+% \maketitle
+%
+% \section{Introduction}
+%
+% This package is a attempt to
+%
+% \section{Usage}
+%
+%
+% \DescribeMacro{\declareprefix}
+% This macro declares a new prefix as competence tag
+% \index{declareprefix|usage}. This macro takes the prefix you want
+% to declare as unique argument.
+%
+% This prefix will be use in sumup table. If you want to declare several
+% prefixes, use this macro for each prefix.
+
+
+% \DescribeEnv{dummyEnv}
+% This environment does nothing.  It is merely an example.
+% If this were a real environment, you would put a paragraph here
+% describing what the environment is supposed to do, what its
+% mandatory and optional arguments are, and so forth.
+%
+% \StopEventually{}
+%
+% \section{Implementation}
+%
+% \begin{macro}{\dummyMacro}
+% This is a dummy macro.  If it did anything, we'd describe its
+% implementation here.
+%    \begin{macrocode}
+\newcommand{\dummyMacro}{}
+
+
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{environment}{dummyEnv}
+% This is a dummy environment.  If it did anything, we'd describe its
+% implementation here.
+%    \begin{macrocode}
+\newenvironment{dummyEnv}{%
+}{%
+%    \end{macrocode}
+% \changes{v1.0a}{2004/11/05}{Added a spurious change log entry to
+%   show what a change \emph{within} an environment definition looks
+%   like.}
+% Don't use |%| to introduce a code comment within a |macrocode|
+% environment.  Instead, you should typeset all of your comments with
+% \LaTeX---doing so gives much prettier results.  For comments within a
+% macro/environment body, just do an |\end{macrocode}|, include some
+% commentary, and do another |\begin{macrocode}|.  It's that simple.
+%    \begin{macrocode}
+}
+%    \end{macrocode}
+% \end{environment}
+%
+
+% \iffalse
+%<*package>
+\RequirePackage[%
+color=blue!20,%
+]{todonotes}
+\reversemarginpar
+
+\RequirePackage{datatool}
+\RequirePackage{etoolbox}
+\RequirePackage{longtable}
+
+\def\total{0}
+\def\gtotal{0}
+
+
+\newcommand{\getCurrentSectionNumber}{%
+  \ifnum\c@enumi=0 %
+    \ifnum\c@section=0 %
+      \thechapter
+    \else
+      \ifnum\c@subsection=0 %
+        \thesection
+      \else
+        \ifnum\c@subsubsection=0 %
+          \thesubsection
+        \else
+          \thesubsubsection
+        \fi
+      \fi
+    \fi
+  \else
+    \ifnum\c@enumii=0 %
+       \theenumi
+     \else
+       \theenumii
+     \fi
+   \fi
+}
+
+%</package>
+\newcommand{\getCurrentpartiedocument}{%
+  \thesection
+}
+%<*package>
+
+\DTLgnewdb{CS}
+\DTLgnewdb{QUEST}
+\DTLgnewdb{PARTIE}
+\DTLgnewdb{PF}
+\DTLaddcolumn{QUEST}{compsec}%
+\DTLaddcolumn{QUEST}{partie}%
+
+% Is Competence already in DB?
+\newcommand{\ifcompexists}[3]{%
+  \DTLgetrowforkey{\competences@tmpcs}{CS}{cs}{#1}%
+  \ifdefempty{\competences@tmpcs}{#3}{#2}%
+}
+
+% Is Question already in DB?
+\newcommand{\ifquestexists}[3]{%
+  \DTLgetrowforkey{\competences@tmpq}{QUEST}{compsec}{#1}%
+  \ifdefempty{\competences@tmpq}{#3}{#2}%
+}
+
+% Is Part already in DB?
+\newcommand{\ifpartexists}[3]{%
+  \DTLgetrowforkey{\competences@tmpp}{PARTIE}{partie}{#1}%
+  \ifdefempty{\competences@tmpp}{#3}{#2}%
+}
+
+
+\newcommand{\addcompetence}[2][1]{%
+  \todo[noline]{#2}
+
+
+  \ifcompexists{#2}{%
+    }
+    {\DTLnewrow{CS}%
+    \DTLnewdbentry{CS}{cs}{#2}%
+    \DTLaddcolumn{QUEST}{#2}%
+    }
+  \def\quest{\getCurrentSectionNumber}
+  \def\partie{\getCurrentpartiedocument}
+
+  \ifpartexists{\partie}{}{
+    \DTLnewrow{PARTIE}%
+    \dtlexpandnewvalue
+    \DTLnewdbentry{PARTIE}{partie}{\partie}%
+    \dtlnoexpandnewvalue
+    }
+
+  \ifquestexists{\quest}{%
+    \DTLnewdbentry{QUEST}{#2}{#1}%
+  }{%
+    \DTLforeach*{CS}{\cs=cs}{
+      \DTLaddcolumn{QUEST}{\cs}%
+    }%
+
+    \DTLnewrow{QUEST}%
+    \dtlexpandnewvalue
+    \DTLnewdbentry{QUEST}{compsec}{\quest}%
+    \DTLnewdbentry{QUEST}{partie}{\partie}%
+    \dtlnoexpandnewvalue
+    \DTLnewdbentry{QUEST}{#2}{#1}%
+  }
+}
+
+\newcommand{\addGlobalCompetence}[2][1]{%
+  \ifcompexists{#2}{%
+  }{%
+    \DTLnewrow{CS}%
+    \DTLnewdbentry{CS}{cs}{#2}%
+    \DTLaddcolumn{QUEST}{#2}%
+  }
+
+  \def\quest{-}
+  \def\partie{Global}
+
+  \ifpartexists{\partie}{%
+  }{%
+    \DTLnewrow{PARTIE}%
+    \dtlexpandnewvalue
+    \DTLnewdbentry{PARTIE}{partie}{\partie}%
+    \dtlnoexpandnewvalue
+    }
+
+  \ifquestexists{\quest}{%
+    \DTLnewdbentry{QUEST}{#2}{#1}%
+  }{%
+    \DTLforeach*{CS}{\cs=cs}{
+      \DTLaddcolumn{QUEST}{\cs}%
+    }%
+
+    \DTLnewrow{QUEST}%
+    \dtlexpandnewvalue
+    \DTLnewdbentry{QUEST}{compsec}{\quest}%
+    \DTLnewdbentry{QUEST}{partie}{\partie}%
+    \dtlnoexpandnewvalue
+    \DTLnewdbentry{QUEST}{#2}{#1}%
+  }
+}
+
+
+\newcommand{\tableaucompetences}{%
+Ce sujet aborde \DTLrowcount{CS}\ compétences: \DTLforeach*{CS}{\compname=cs}{\compname\DTLiflastrow{.}{, }}
+  \bigskip
+
+
+  \begin{longtable}{l|c|*{\DTLrowcount{CS}}{|c}||c}
+  Question &Partie& \DTLforeach*{CS}{\cs=cs}{\cs &} points\\\hline
+  \DTLforeach*{QUEST}{\compsec=compsec,\partie=partie}{
+       \DTLforeachkeyinrow{\point}
+	{\DTLifstringeq{\point}{NULL}{}{
+	  \point%
+	  \DTLifstringeq{\dtlkey}{compsec}{}{%
+	    \DTLifstringeq{\dtlkey}{partie}{}{%
+	      \DTLgadd{\total}{\point}{\total}%
+	      }%
+	    }%
+	  } & %
+	}
+   \total
+   \DTLgadd{\gtotal}{\total}{\gtotal}
+   \DTLgadd{\total}{0}{0}
+   \DTLiflastrow{\\\hline}{\\}%
+  }%
+  Total &-&\DTLforeach*{CS}{\cs=cs}{\DTLsumforkeys{QUEST}{\cs}{\total} \total&} \gtotal\\\hline
+  & & \DTLforeach*{CS}{\cs=cs}{\cs &}
+  \end{longtable}
+
+%% For debugging
+%   \DTLdisplaylongdb{CS}
+%   \DTLdisplaylongdb{PARTIE}
+%  \DTLdisplaylongdb{QUEST}
+
+}
+%<*package>
+\def\cstotal{0}%
+%</package>
+\newcommand{\sumcspartie}[2]{%
+    \DTLgadd{\cstotal}{0}{0}%
+    \DTLforeach*[\DTLiseq{\part}{#1}]{QUEST}{\comp=#2,\part=partie}{%
+      \DTLifnull{\comp}{}{\DTLgadd{\cstotal}{\cstotal}{\comp}}%
+    }%
+%     \cstotal
+}
+
+
+
+\newcommand{\tableaupartie}[1]{%
+\def\ptotal{0}
+\def\pctotal{0}
+\def\gptotal{0}
+Bilan Partie #1
+  \begin{longtable}{l|c|*{\DTLrowcount{CS}}{|c}||c}%
+  Question &Partie& \DTLforeach*{CS}{\cs=cs}{\cs &} points\\\hline
+  \DTLforeach*[\DTLiseq{\partie}{#1}]{QUEST}{\compsec=compsec,\partie=partie}{%
+    \DTLforeachkeyinrow{\point}%
+      {\DTLifstringeq{\point}{NULL}{}{%
+	\point%
+	\DTLifstringeq{\dtlkey}{compsec}{}{%
+	  \DTLifstringeq{\dtlkey}{partie}{}{%
+	    \DTLgadd{\ptotal}{\point}{\ptotal}%
+	     }%
+	   }%
+	}&%
+      }%
+    \ptotal%
+    \DTLgadd{\gptotal}{\ptotal}{\gptotal}%
+    \DTLgadd{\ptotal}{0}{0}%
+    \\\hline%
+  }%
+  Total &-&\DTLforeach*{CS}{\cs=cs}{%
+    \sumcspartie{#1}{\cs}%
+    \cstotal
+    &
+    }%
+    \gptotal\\\hline
+  Total \% &-&\DTLforeach*{CS}{\cs=cs}{%
+    \sumcspartie{#1}{\cs}
+    \DTLdiv{\pctotal}{\cstotal}{\gptotal}%
+    \DTLmul{\pctotal}{100}{\pctotal}%
+    \DTLround{\pctotal}{\pctotal}{1}%
+    \pctotal \%&%
+    }%
+    100.0\%\\\hline
+  & & \DTLforeach*{CS}{\cs=cs}{\cs &}
+  \end{longtable}
+
+%% For debugging
+%   \DTLdisplaylongdb{CS}
+%   \DTLdisplaylongdb{QUEST}
+%    \DTLdisplaylongdb{PARTIE}
+}
+
+\def\pftotal{0}
+\newcommand{\sumpfpartie}[2]{%
+  \DTLgadd{\pftotal}{0}{0}%
+  \DTLforeach*[\DTLisinlist{\partiein}{#1}]{QUEST}{\compsec=compsec,\partiein=partie}{%
+    \DTLforeachkeyinrow{\point}{%
+      \DTLifstringeq{\point}{NULL}{}{%
+	\DTLifstringeq{\dtlkey}{compsec}{}{%
+	  \DTLifstringeq{\dtlkey}{partie}{}{%
+	    \DTLifStartsWith{\dtlkey}{#2}{%
+		\DTLgadd{\pftotal}{\pftotal}{\point}%
+	    }{}%
+	  }%
+	}%
+      }%
+    }%
+  }%
+}%
+
+
+
+\newcommand{\tableauprefix}[1]{%
+\begin{center}
+\begin{tabular}{|c|*{\DTLrowcount{PF}}{|c}||c|}\hline%
+  Partie & \DTLforeach*{PF}{\pf=pf}{\pf &} Total\\\hline
+  \DTLforeach*[\DTLisinlist{\partie}{#1}]{PARTIE}{\partie=partie}{%
+    \partie &
+    \DTLgadd{\gptotal}{0}{0}%
+    \DTLforeach*{PF}{\pf=pf}{%
+      \sumpfpartie{\partie}{\pf}%
+      \pftotal
+      \DTLgadd{\gptotal}{\pftotal}{\gptotal}%
+      \DTLgadd{\pftotal}{0}{0}%
+      &
+    }%
+    \gptotal\\
+    &
+    \DTLforeach*{PF}{\pf=pf}{%
+      \sumpfpartie{\partie}{\pf}%
+      \DTLdiv{\pctotal}{\pftotal}{\gptotal}%
+      \DTLmul{\pctotal}{100}{\pctotal}%
+      \DTLround{\pctotal}{\pctotal}{1}%
+      \pctotal \%%
+      \DTLgadd{\pftotal}{0}{0}%
+      &
+    }%
+    \\\hline
+  }%
+  Total &
+  \DTLgadd{\gptotal}{0}{0}%
+    \DTLforeach*{PF}{\pf=pf}{%
+      \sumpfpartie{#1}{\pf}%
+      \pftotal
+      \DTLgadd{\gptotal}{\pftotal}{\gptotal}%
+      \DTLgadd{\pftotal}{0}{0}%
+      &
+    }%
+    \gptotal\\
+    &%
+    \DTLforeach*{PF}{\pf=pf}{%
+      \sumpfpartie{#1}{\pf}%
+      \DTLdiv{\pctotal}{\pftotal}{\gptotal}%
+      \DTLmul{\pctotal}{100}{\pctotal}%
+      \DTLround{\pctotal}{\pctotal}{1}%
+      \pctotal \%%
+      \DTLgadd{\pftotal}{0}{0}%
+      &
+    }%
+    100\%\\\hline
+\end{tabular}
+\end{center}
+}%
+
+% preremplissage de la BdD CS
+\newcommand{\declarecompetence}[1]{%
+   \DTLnewrow{CS}%
+   \DTLnewdbentry{CS}{cs}{#1}%
+}
+
+% preremplissage de la BdD PF
+\newcommand{\declareprefix}[1]{%
+   \DTLnewrow{PF}%
+   \DTLnewdbentry{PF}{pf}{#1}%
+}
+
+%</package>
+% \fi
+
+% \iffalse meta-comment
+%
+% \RequirePackage{pgfkeys,pgffor}
+%
+% \newcounter{mainargs}
+% \pgfkeys{mainargs/.is family, mainargs,
+% step counter/.code=\stepcounter{mainargs},
+% add argument/.style={step counter, arg\themainargs/.initial={#1}},
+% }
+%
+% \newcommand{\listecompetences}[2][]{%
+%      \setcounter{mainargs}{0}%
+%      \pgfkeys{mainargs, add argument/.list={#2}}%
+%      %
+%      \foreach \n in {1,...,\themainargs}{%
+%      \DTLnewrow{CS}%
+%      \DTLnewdbentry{CS}{cs}{\pgfkeysvalueof{/mainargs/arg\n}}%
+% %    \pgfkeysvalueof{/mainargs/arg\n},
+%     }%
+%
+% }
+% \fi
+
+
+% \Finale
+\endinput

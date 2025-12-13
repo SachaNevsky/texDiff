@@ -1,0 +1,406 @@
+% \iffalse meta-comment
+%
+% Copyright (C) 2013 by Alberto Sartori
+% Copyright (C) 2019 by David Lichti
+% -------------------------------------------------------
+% 
+% This file may be distributed and/or modified under the
+% conditions of the LaTeX Project Public License, either
+% version 1.3 of this license or (at your option) any later
+% version. The latest version of this license is in:
+%
+%    http://www.latex-project.org/lppl.txt
+%
+% and version 1.3 or later is part of all distributions of
+% LaTeX version 2005/12/01 or later.
+%
+% \fi
+%
+% \iffalse
+%
+%<package>\NeedsTeXFormat{LaTeX2e}
+%<package>\ProvidesClass{embedall}[2019/05/18 v2.0 Automatically embed source files in PDF]
+%
+%<*driver>
+\documentclass{ltxdoc}
+\usepackage[notall]{embedall}[2019/05/18]
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[osf,sc]{mathpazo}
+\usepackage{parskip}
+\renewcommand\sfdefault{lmsf}
+\renewcommand\ttdefault{lmtt}
+\usepackage{microtype}
+\linespread{1.1}
+\usepackage{enumitem}
+\setdescription{font=\itshape,leftmargin=2cm,style=sameline}
+\usepackage{hyperref}
+\EnableCrossrefs         
+\CodelineIndex
+\RecordChanges
+\begin{document}
+  \DocInput{embedall.dtx}
+\end{document}
+%</driver>
+% 
+% \fi
+%
+% \CheckSum{154}
+%
+% \CharacterTable
+%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%   Digits        \0\1\2\3\4\5\6\7\8\9
+%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%   Dollar        \$     Percent       \%     Ampersand     \&
+%   Acute accent  \'     Left paren    \(     Right paren   \)
+%   Asterisk      \*     Plus          \+     Comma         \,
+%   Minus         \-     Point         \.     Solidus       \/
+%   Colon         \:     Semicolon     \;     Less than     \<
+%   Equals        \=     Greater than  \>     Question mark \?
+%   Commercial at \@     Left bracket  \[     Backslash     \\
+%   Right bracket \]     Circumflex    \^     Underscore    \_
+%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%   Right brace   \}     Tilde         \~}
+%
+% \changes{v1.0}{2013/10/10}{Initial version}
+% \changes{v2.0}{2019/05/18}{Overhaul using filehook package}
+%
+% \GetFileInfo{embedall.sty}
+%
+% \DoNotIndex{\newcommand,\def,\let,\DeclareRobustCommand}
+% \DoNotIndex{\newif,\DeclareOption,\ProcessOptions,\relax,\RequirePackage,\fi,\else,\ifcsname,\endcsname,\PackageWarning,\^\^}
+% \DoNotIndex{\AtBeginDocument,\IfFileExists,\input,\jobname,\LetLtxMacro,\listxadd,\message,\newlinechar,\xifinlist}
+% \DoNotIndex{\embedfile,\currfilename,\AtBeginOfInputs,\AtBeginOfIncludes}
+% \DoNotIndex{\Gin@setfile}
+% \DoNotIndex{\csvloop,\csv@input@filename}
+%
+% \title{The \textbf{embedall} package\thanks{This document
+%   corresponds to \textsf{embedall}~\fileversion, dated \filedate.}}
+% \author{
+%    Alberto Sartori -- \texttt{\href{mailto:alberto.sartori.as@gmail.com}{alberto.sartori.as@gmail.com}}\\
+%    David Lichti -- \texttt{\href{mailto:dlichtistw@gmx.de}{dlichtistw@gmx.de}}
+% }
+%
+% \maketitle
+%
+% \embedsource[desc=main source file]
+%
+% \section{Introduction}
+%
+% This package is designed to help you storing your projects without losing anything.
+% It uses the |filehook| package and some custom patches to hook into several supported import mechanisms.
+% These imported files are then attached to the PDF file using the |embedfile| package.
+% In particular it can embed images, external TeX files, external code listings, CSV files, and, most importantly, the main TeX file itself.
+%
+% \section{Usage}
+%
+% To use the package, simply add |\usepackage{embedsources}| to your document's preamble.
+% Without any option, the default behaviour is to attach all supported source file types to the finished document.
+% See section~\ref{sec:PackageOptions} for options to change this behaviour.
+% No furhter macros are needed, and no change has to be made to the rest of the source.
+%
+% As of now, this package can hook into |\input| and |\include| using the |filehook| package.
+% Furthermore, two hooks for |graphicx| and |csvsimple| are provided.
+%
+% \subsection{Package Options}\label{sec:PackageOptions}
+%
+% If the package is loaded without any option, then all hooks are installed.
+% In case this is not wanted, each hook can be enabled individually.
+% \begin{description}
+%    \item[|main|] Attach the main source file.
+%        This uses the |\AtBeginDocument| hook.
+%    \item[|input|] Attach files loaded with |\input|.
+%        This is done using |\AtBeginOfInputs| from the |filehook| package.
+%        It also applies to every macro relying on |\input| to load external content.
+%    \item[|include|] Attach files loaded with |\include|.
+%        This is done using the |\AtBeginOfIncludes| hook.
+%    \item[|graphicx|] Attach image files used with |\includegraphics|.
+%        This patches some macro in the |graphicx| package, so make sure that it is loaded prior to |embedsources|.
+%    \item[|csvsimple|] Attach data files used with the |csvsimple| package.
+%        Make sure that it is already loaded.
+% \end{description}
+% Specifying any of these options will disable all hooks that are not enabled explicitly.
+%
+% There are some other options for very special cases.
+% \begin{description}
+%    \item[|all|] Enable all file type hooks.
+%        This is the default and the option is mostly redundant.
+%        However, it may be used to reenable all hooks, after an explicit type option has disabled them.
+%    \item[|notall|] Do not enable all file type hooks.
+%        As for the the |all| option, this is mostly useless, since it disables all effects this package was intended for.
+%        However, some side effects may remain.
+%        Consider not loading the package at all.
+%    \item[|compat|] Enable compatibility mode to maintain some functionality from version 1.0.
+%        Use this if your document needs the old style |\embedinput| macro.
+%\end{description}
+%
+% \subsection{User Commands}
+%
+% \DescribeMacro{\embedfile \oarg{options} \marg{filename}}
+% Although not defined by this package, it is made available by loading |embedfile|.
+% You may use it to manually embed sources or any file, that is not covered by the hooks described above.
+% See the |embedfile| documentation for more details.
+%
+% \DescribeMacro{\embedsource \oarg{options}}
+% This macro can be used to embed the current TeX file in case the automatic hook has been disabled.
+% Use it inside the file to be loaded.
+% The \meta{options} are passed to the |\embedfile| macro.
+% 
+% \DescribeMacro{\embedinput \oarg{options} \marg{filename}}
+% This command is a substitute for |\input{<filename>}| in compatibility mode.
+% It adds the feature of attaching the file to the PDF after inserting it in the TeX source.
+% The \meta{options} are ultimately passed to the |\embedfile| macro.
+% As of version 2.0 with the automatic input file hook enabled, this is not needed anymore.
+% Consider using |\embedsource| for manual embedding without the automatic hook.
+%
+% \section{Compatibility}
+%
+% This package heavily relies on |filehook|'s\footnote{filehook package: \url{https://ctan.org/pkg/filehook}} file hooks and |embedfile|'s\footnote{embedfile package: \url{https://ctan.org/pkg/embedfile}} file embedding.
+% See the compatibility notes in their respective documentations.
+%
+% Furthermore, hooking into the |graphicx| and |csvsimple| macros is done by patching some of their macros.
+% If they have not been loaded when |embedall| is loaded, this will fail.
+% If they are loaded or reloaded after |embedall|, these patches may be overwritten.
+% To ensure good functionality, load this package after all packages providing import commands.
+%
+% \StopEventually{}
+%
+% \section{Implementation}
+%
+% \subsection{Options}
+%
+% First, we need some booleans to store package options.
+% The switch |embedall@all| acts on all types of hooks.
+%    \begin{macrocode}
+\newif\ifembedall@all
+\embedall@alltrue
+%    \end{macrocode}
+% The following |embedall@<hook>| can be used to enable specific embedding hooks.
+%    \begin{macrocode}
+\newif\ifembedall@main
+\embedall@mainfalse
+\newif\ifembedall@input
+\embedall@inputfalse
+\newif\ifembedall@include
+\embedall@includefalse
+\newif\ifembedall@graphicx
+\embedall@graphicxfalse
+\newif\ifembedall@csvsimple
+\embedall@csvsimplefalse
+%    \end{macrocode}
+% Compatibility mode is disabled by default.
+%    \begin{macrocode}
+\newif\ifembedall@compat
+\embedall@compatfalse
+%    \end{macrocode}
+%
+% Now, declare the actual package options.
+%    \begin{macrocode}
+\DeclareOption{all}{\embedall@alltrue}
+\DeclareOption{notall}{\embedall@allfalse}
+%    \end{macrocode}
+% The following options correspond to the more specific embedding hooks mentioned above.
+% Using any of these options will turn of general embedding off all source file types.
+%    \begin{macrocode}
+\DeclareOption{main}{\embedall@maintrue\embedall@allfalse}
+\DeclareOption{input}{\embedall@inputtrue\embedall@allfalse}
+\DeclareOption{include}{\embedall@includetrue\embedall@allfalse}
+\DeclareOption{graphicx}{\embedall@graphicxtrue\embedall@allfalse}
+\DeclareOption{csvsimple}{\embedall@csvsimpletrue\embedall@allfalse}
+%    \end{macrocode}
+% Request compatibility mode.
+%    \begin{macrocode}
+\DeclareOption{compat}{\embedall@compattrue}
+%    \end{macrocode}
+%
+% Now, process these options.
+%    \begin{macrocode}
+\ProcessOptions\relax
+%    \end{macrocode}
+%
+% Turn on all |embedall@<hook>| if |embedall@all| is |true|.
+%    \begin{macrocode}
+\ifembedall@all
+    \embedall@maintrue
+    \embedall@inputtrue
+    \embedall@includetrue
+    \embedall@graphicxtrue
+    \embedall@csvsimpletrue
+\fi
+%    \end{macrocode}
+%
+% \subsection{Dependencies}
+%
+% Load packages for file embedding and file hooks.
+%    \begin{macrocode}
+\RequirePackage{embedfile}
+\RequirePackage{filehook}
+\RequirePackage{currfile}
+\RequirePackage{etoolbox}
+\ifembedall@compat
+    \RequirePackage{letltxmacro}
+\fi
+%    \end{macrocode}
+%
+% \subsection{Macros}
+%
+% \begin{macro}{\embedsource}
+% We define a shorthand to embed the current source file.
+%    \begin{macrocode}
+\newcommand\embedsource[1][]{\embedall@embed[#1]{\currfilename}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\embedall@filelist}
+% Keep a list of files that have already been attached.
+%    \begin{macrocode}
+\def\embedall@filelist{}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\embedall@embed}
+% This is done to avoid embedding the same file multiple times.
+%    \begin{macrocode}
+\newcommand{\embedall@embed}[2][]{%
+    \xifinlist{#2}{\embedall@filelist}{}{%
+        \newlinechar=`\^^J%
+        \message{^^J^^Jembedall: Attaching file '#2'.^^J^^J}%
+        \embedfile[#1]{#2}%
+        \listxadd{\embedall@filelist}{#2}%
+    }%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{Compatibility Commands}
+%
+% The following macros are only defined in compatibility mode to maintain backward compatibility.
+%    \begin{macrocode}
+\ifembedall@compat
+%    \end{macrocode}
+%
+% \begin{macro}{\embedall@includegraphics}
+% This macro is the modified version of |\includegraphics| command from the |graphicx| package with included the |\embedfile| command.
+% First the original |\includegraphics| command is stored inside the not-user-accessible |\embedall@latex@includegraphics|.
+%    \begin{macrocode}
+    \LetLtxMacro\embedall@latex@includegraphics\includegraphics
+%    \end{macrocode}
+% |\LetLtxMacro| is used (instead of simply |\let|) because some packages modify the |\includegraphics| command.
+% For this reason you can not use the * variant of this command but you have to declare the |clip| option instead.
+%
+% Then the |\embedall@includegraphics| is defined
+%    \begin{macrocode}
+    \newcommand\embedall@includegraphics[2][]{%
+        \embedall@embed[desc=image]{#2}
+        \embedall@latex@includegraphics[#1]{#2}%
+    }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\embedall@listinputlisting}
+% This macro is the modified version of |\listinputlisting| command from the |listings| package with included the |\embedfile| command.
+% First the original |\listinputlisting| command is stored inside the not-user-accessible |\embedall@latex@listinputlisting|.
+%    \begin{macrocode}
+    \LetLtxMacro\embedall@latex@lstinputlisting\lstinputlisting
+%    \end{macrocode}
+% Then the |\embedall@listinputlisting| is defined
+%    \begin{macrocode}
+    \newcommand\embedall@lstinputlisting[2][]{%
+        \embedfile[desc=listing file]{#2}
+        \embedall@latex@lstinputlisting[#1]{#2}%
+    }
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\embedinput}
+% This command can be used as a substitute for |\input| to manually embed the source if the automatic file hook is not enabled.
+% Otherwise, it will just call |\input| without further side effects.
+% The additional optional parameter sets the input file description in the generated PDF.
+%    \begin{macrocode}
+    \ifembedall@input
+        \DeclareRobustCommand\embedinput[2][]{%
+            \input{#2}%
+        }
+    \else
+        \DeclareRobustCommand\embedinput[2][input file]{%
+            \input{#2}%
+            \embedall@embed[desc={#1}]{#2}%
+        }
+    \fi
+\fi
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{Installing Hooks}
+%
+% The actual work happens here.
+% First, the main source file is attached.
+%    \begin{macrocode}
+\ifembedall@main
+    \ifembedall@compat
+        \IfFileExists{./\jobname.tex}{%
+            \embedall@embed[desc=main source file]{\jobname.tex}
+        }{}
+    \else
+        \AtBeginDocument{\embedsource[desc=main source file]}
+    \fi
+\fi
+%    \end{macrocode}
+% These macros are provided by the |embedfile| and |currfile| packages.
+%
+% Then, the hooks for |\input| and |\include| are installed, given the respective switch was enabled.
+%    \begin{macrocode}
+\ifembedall@input
+    \AtBeginOfInputs{\embedsource[desc=input file]}
+\fi
+\ifembedall@include
+    \AtBeginOfIncludes{\embedsource[desc=include file]}
+\fi
+%    \end{macrocode}
+% The macros |\AtBeginOfInputs| and |\AtBeginOfIncludes| are provided by the |filehook| package.
+%
+% For the |graphicx| hook, we need to patch the |\Gin@setfile| macro to call |\embedfile| after finishing its own work.
+% At this point, the full file name including the file name extension will be available as the third argument passed to the macro.
+%    \begin{macrocode}
+\ifembedall@graphicx
+    \ifcsname Gin@setfile\endcsname
+        \let\embedall@Gin@setfile\Gin@setfile
+        \def\Gin@setfile#1#2#3{%
+            \embedall@Gin@setfile{#1}{#2}{#3}%
+            \embedall@embed[image file]{#3}%
+        }
+%    \end{macrocode}
+% Issue a warning if |\Gin@setfile| does not exists.
+% This could happen in the unlikely case that the internal workings of |graphicx| have changed, or, more likely, because the package was not loaded.
+%    \begin{macrocode}
+    \else
+        \ifembedall@all\else
+            \PackageWarning{embedall}{Patching of graphicx requested, but package not loaded. Consider removing the 'graphicx' option.}
+        \fi
+    \fi
+\fi
+%    \end{macrocode}
+%
+% The |csvsimple| hook is very similar to the |graphicx| hook.
+% It patches into the |\csvloop| macro which is used by all other user macros to do the actual work.
+%    \begin{macrocode}
+\ifembedall@csvsimple
+    \ifcsname csvloop\endcsname
+        \let\embedall@csvloop\csvloop
+        \def\csvloop#1{%
+            \embedall@csvloop{#1}%
+            \embedall@embed[CSV file]{\csv@input@filename}%
+        }
+    \else
+        \ifembedall@all\else
+            \PackageWarning{embedall}{Patching of csvsimple requested explicitly, but package not loaded. Consider removing the 'csvsimple' option.}
+        \fi
+    \fi
+\fi
+%    \end{macrocode}
+% The |\csv@input@filename| macro is used in the |csvsimple| macro to store the input file name.
+%
+% \Finale
+%
+\endinput

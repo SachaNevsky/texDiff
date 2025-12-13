@@ -1,0 +1,583 @@
+% \iffalse
+% +AMDG  This document was begun on E January 1202, and it
+% is humbly dedicated to her Immaculate Heart for
+% her prayers, and to the Sacred Heart of Jesus for His
+% mercy.
+%
+% This document is copyright 2017 by Donald P. Goodman, and is
+% released publicly under the LaTeX Project Public License.  The
+% distribution and modification of this work is constrained by the
+% conditions of that license.  See
+% 	http://www.latex-project.org/lppl.txt
+% for the text of the license.  This document is released
+% under version 1.3 of that license, and this work may be distributed
+% or modified under the terms of that license or, at your option, any
+% later version.
+% 
+% This work has the LPPL maintenance status 'maintained'.
+% 
+% The Current Maintainer of this work is Donald P. Goodman
+% (dgoodmaniii@gmail.com).
+% 
+% This work consists of catechis.dtx, catechis.ins, and
+% derived files catechis.sty and catechis.pdf.
+% \fi
+
+% \iffalse
+%<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+%<package>\ProvidesPackage{catechis}[2018/11/02 v2.5 Support for writing catechism questions and answers]
+%<*driver>
+\documentclass{ltxdoc}
+
+\usepackage{doc}
+\usepackage{array}
+\usepackage{lettrine}
+	\setcounter{DefaultLines}{3}
+	\setlength{\DefaultFindent}{2pt}
+	\renewcommand{\LettrineFontHook}{\color{red}}
+\usepackage{url}
+\usepackage{spverbatim}
+\usepackage{fancyvrb}
+	\newcommand\vitem[1][]{\SaveVerb[%
+		aftersave={\item[\textnormal{\bfseries\UseVerb[#1]{vsave}}]}]{vsave}}
+\usepackage[typeone]{dozenal}
+\usepackage{lmodern}
+\usepackage[]{catechis}
+\usepackage[colorlinks]{hyperref}
+\usepackage{makeidx}
+\EnableCrossrefs
+\PageIndex
+\CodelineNumbered
+\RecordChanges
+\makeindex
+
+\def\exline{\bigskip\hrule\bigskip}
+
+\tracingmacros=3 \begin{document} \DocInput{catechis.dtx}
+\end{document}
+%</driver> \fi
+%
+% \title{The |catechis| Package, v2.5} \author{Donald P.\
+% Goodman III} \date{\today}
+%
+% \maketitle
+%
+% \begin{abstract}
+% \noindent
+% The catechism (a text consisting of explicitly-stated and
+% usually numbered questions and answers) has long been an
+% important vehicle for teaching the basics of concepts.
+% \LaTeX, however, does not by default have much facility
+% for producing such texts.  The |catechis| package provides
+% a number of highly customizable macros for writing
+% catechisms, including a numbered question-and-answer
+% environment; comments on answers; and citations.
+% \end{abstract}
+%
+% \tableofcontents
+%
+% \section{Introduction}
+%
+% Catechisms are largely known for basic religious
+% instruction, and this has indeed been their primary use.
+% For this reason alone, \LaTeX\ ought to have some
+% facilities for authoring them.  Furthermore, the form is
+% useful for other topics, as well; it provides an easy way
+% to give basic information on a topic, making it easily
+% extractable by eye from the full text, while still
+% allowing more advanced discussion for those who wish to
+% plunge more deeply into a given question.
+%
+% |catechis| is packaged according to the \LaTeX\
+% \textsc{docstrip} utility, which allows automatic
+% extraction of code and documentation from the same files.
+%
+% This is version 2.0 of |catechis|; it represents a mostly
+% complete rewrite of the package, which is therefore much
+% simpler and more robust.
+%
+% \section{The State of the \TeX\ for Catechisms}
+% \label{sect:state}
+%
+% \LaTeX\ has basically no provision for producing
+% well-formed catechisms.  It's easy enough to fake it, of
+% course; for example:
+%
+% \begin{verbatim}
+% \begin{enumerate}
+%		\item\textbf{Who made us?} \\ God made us.
+%		\item\textbf{Why did God make us?} \\ God made us to
+%			know Him, love Him, and serve Him, and by so doing
+%			to gain everlasting life with Him in Heaven.
+% \end{enumerate}
+% \end{verbatim}
+%
+% This gives the following result:
+%
+% \exline
+%\begin{enumerate}
+%		\item\textbf{Who made us?} \\ God made us.
+%		\item\textbf{Why did God make us?} \\ God made us to
+%			know Him, love Him, and serve Him, and by so doing
+%			to gain everlasting life with Him in Heaven.
+%\end{enumerate}
+% \exline
+%
+% However, this solution is far from satisfactory.  It's
+% unportable, fit really only for this one document;
+% uncustomizable, because it's hard-wired to do only this
+% one thing; unmodifiable, at least automatically, because
+% it uses explicit visual formatting in the text; and far
+% too wordy.  What is desired is something more along the
+% lines of the following:
+%
+% \begin{verbatim}
+% \catques{Who made us?}{God made us.}
+% \catques{Why did God make us?}{God made us to
+%	know Him, love Him, and serve Him, and by so doing
+%	to gain everlasting life with Him in Heaven.}
+% \end{verbatim}
+%
+% Which, with the |catechis| package, produces this:
+%
+% \exline
+% \catques{Who made us?}{God made us.}
+% \catques{Why did God make us?}{God made us to
+%	know Him, love Him, and serve Him, and by so doing
+%	to gain everlasting life with Him in Heaven.}
+% \catques{What will happen if the question is really long,
+% so that it wraps to the next line?}{It will work properly,
+% with the wrapped line appropriately indented.  The answer,
+% as you have already seen, will behave likewise.}
+% \exline
+%
+% |catechis| provides these facilities and more to produce
+% high-quality, useful catechisms.
+%
+% \section{Basic Usage}
+% \label{sect:basics}
+%
+% The most basic usage of |catechis| is encompassed by the
+% \DescribeMacro{\catques}|\catques| macro:
+%
+% \begin{center}
+% \cmd{\catques} \marg{question} \marg{answer}
+% \end{center}
+%
+% There is no more to this than meets the eye.  Both
+% arguments are mandatory, though either may be empty; the
+% first is the question, and the second is the answer.  It
+% is often helpful to indent sensibly to keep these more
+% readable in the source:
+%
+% \begin{verbatim}
+% \catques{What is the question?}{%
+%        The question is, ``What is the question?''}%
+% \end{verbatim}
+%
+% This produces the following:
+%
+% \exline
+% \catques{What is the question?}{The question is, ``What is the question?''}%
+% \exline
+%
+% Our next macro, \DescribeMacro{\catcomment}|\catcomment|,
+% really shows the genius of the catechism concept.  The
+% question and answer are the \emph{basic} information; it's
+% easily followed up by a comment, which is visually
+% separate and can be skipped by those interested in, or
+% only ready for, the basics, but is still sensibly placed
+% and ready for those who wish it.
+%
+% \exline
+% \catques{What is the question?}{The question is, ``What is the question?''}%
+% \catcomment{This is a comment.  It's very interesting, it
+% wraps and indents correctly, and the package's default
+% comment style is demonstrated here.}
+% \catques{How are the questions numbered?  Are they
+% numbered sequentially, throughout the text?}{Yes, the
+% questions are numbered sequentially throughout the text.
+% You can reset the numbers manually, which we'll talk about
+% later; but by default, there is one question stream which
+% is numbered from 1 on up.}
+% \catcomment{We're numbering questions sequentially to show
+% that you can have catechism questions scattered throughout
+% a text, or your text can be entirely in the form of a
+% catechism.  |catechis| works either way.}
+% \exline
+%
+% There is also the \DescribeMacro{\catexplic}|\catexplic|
+% command, which works essentially identically to
+% |\catcomment| but can include paragraph breaks and is
+% intended for much lengthier commentary on the answer.
+%
+% \begin{verbatim}
+% \catques{What is the question?}{The question is, ``What is the question?''}%
+% \catcomment{This is a comment.  It's very interesting, it
+% wraps and indents correctly, and the package's default
+% comment style is demonstrated here.}
+% \catexplic{We can make some really impressive things
+% happen with this command.  While comments allow
+% short explanatory comments on an answer, explics
+% give us field to go on for a long time, if we want.
+%
+% We can put in paragraph breaks, and we can even do the
+% following:
+% \begin{compactenum}
+% \item We can put lists in them!
+% \item Isn't that cool?  This can provide a great way to
+% give advanced information on a topic that people can read
+% if they want, or just skip on to the next question!
+% \end{compactenum}\restoreindents
+%
+% You can really produce beautiful catechetical works using
+% this facility, which will do a great job of instructing
+% people at all levels of expertise.
+% }%
+% \end{verbatim}
+%
+% \exline
+% \catques{What is the question?}{The question is, ``What is the question?''}%
+% \catcomment{This is a comment.  It's very interesting, it
+% wraps and indents correctly, and the package's default
+% comment style is demonstrated here.}
+% \catexplic{We can make some really impressive things
+% happen with this command.  While comments allow
+% short explanatory comments on an answer, explics
+% give us field to go on for a long time, if we want.
+%
+% We can put in paragraph breaks, the indentation of which
+% we can control with fine granularity; and we can even do the
+% following:
+%
+% \begin{compactenum}
+% \item We can put lists in them!
+% \item Isn't that cool?  This can provide a great way to
+% give advanced information on a topic that people can read
+% if they want, or just skip on to the next question!
+% \end{compactenum}\restoreindents
+%
+% You can really produce beautiful catechetical works using
+% this facility, which will do a great job of instructing
+% people at all levels of expertise.
+%
+% }%
+% \exline
+%
+% You'll note that lists \emph{will} hose all of
+% |catechis|'s careful indentation, so after using one in a
+% |\catexplic|, you must issue
+% \DescribeMacro{\restoreindents}|\restoreindents| to get
+% everything back to normal.
+%
+% Catechisms also routinely provide citations to support
+% their claims; |catechis| provides for this, too.  A
+% heading for a group of citations is printed by issuing
+% \DescribeMacro{\catcitetitle}|\catcitetitle|, and each
+% individual citation is printed by issuing the |\catcite|
+% command, which takes the citation as the first argument
+% and the source as the second:
+%
+% \begin{center}
+% \DescribeMacro{\catcite}
+% \cmd{\catcite} \marg{citation} \marg{source}
+% \end{center}
+%
+% An example:
+%
+% \begin{verbatim}
+% \catcitetitle
+% \catcite{For the apparel oft proclaims the man.}{Polonius}
+% \catcite{And this above all: to thine own self be true; /
+% and it must follow, as the night the day, / that thou
+% canst not be false to any man.}{Polonius}
+% \end{verbatim}
+%
+% \exline
+% \catcitetitle
+% \catcite{For the apparel oft proclaims the man.}{Polonius}
+% \catcite{And this above all: to thine own self be true; /
+% and it must follow, as the night the day, / that thou
+% canst not be false to any man.}{Polonius}
+% \exline
+%
+% Because this will often not result in proper spacing,
+% |catechis| provides an environment,
+% \DescribeMacro{catcitations}|catcitations|, which
+% will insert appropriate spacing before and after the
+% citations.  This environment will automatically run
+% |\catcitetitle| for you.
+%
+% \begin{verbatim}
+% \begin{catcitations}
+% \catcite{For the apparel oft proclaims the man.}{Polonius}
+% \catcite{And this above all: to thine own self be true; /
+% and it must follow, as the night the day, / that thou
+% canst not be false to any man.}{Polonius}
+% \end{catcitations}
+% \end{verbatim}
+%
+% \exline
+% \begin{catcitations}
+% \catcite{For the apparel oft proclaims the man.}{Polonius}
+% \catcite{And this above all: to thine own self be true; /
+% and it must follow, as the night the day, / that thou
+% canst not be false to any man.}{Polonius}
+% \end{catcitations}
+% \exline
+%
+% Lastly, |catechis| gives some provisions for more
+% customary catechetical enumerates.  It uses standard
+% features from the |paralist| package for this, and simply
+% makes those the default.
+%
+% \begin{verbatim}
+% \catques{Can we do enumerates?}{Yes, we can do those; we
+% can even do them in a special way, so that it looks more
+% like the way catechisms customarily look.}
+% \catcomment{Just check this out; we have here a comment
+% giving slightly more detailed information, then an
+% enumerate giving \emph{much} more detailed information.}
+% \begin{enumerate}
+% \item Here, we have the first item, with some extra
+% details elaborating on what was said before.
+% \item Here, we have another item.
+% \item Here, we have still another.
+% \end{enumerate}
+% \end{verbatim}
+% 
+% \exline
+% \catques{Can we do enumerates?}{Yes, we can do those; we
+% can even do them in a special way, so that it looks more
+% like the way catechisms customarily look.}
+% \catcomment{Just check this out; we have here a comment
+% giving slightly more detailed information, then an
+% enumerate giving \emph{much} more detailed information.}
+% \begin{compactenum}
+% \item Here, we have the first item, with some extra
+% details elaborating on what was said before.
+% \item Here, we have another item.
+% \item Here, we have still another.
+% \end{compactenum}
+% \exline
+%
+% \section{Customization}
+% \label{sect:custom}
+%
+% Pretty much everything in the package can be customized.
+% The names of the necessary commands and lengths are fairly
+% predictable: they will start with |\cat|, be followed by
+% the type of thing (|ques|, |comm|, |explic|, etc.), and
+% then the property to be set (|sty|, |indent|, |hindent|,
+% etc.).
+%
+% In all cases, lengths are set with |\setlength|, while
+% commands are set with |\newcommand| or |\def|.
+%
+% \begin{description}
+% \vitem|catquesnum| \DescribeMacro{catquesnum} The counter
+% which |catechis| maintains for the questions.  It can be
+% set or reset with the usual \LaTeX\ counter commands
+% (e.g., |\setcounter|, |\addtocounter|).
+% \vitem|\thecatquesnum| \DescribeMacro{\thecatquesnum}  The
+% actual typeset version of |catquesnum|.  By default, this
+% is defined as |\renewcommand{\thecatquesnum}{\arabic{catquesnum}.}|.
+% \vitem|\catquesnumwd| \DescribeMacro{\catquesnumwd}  The
+% width of the box in which |catechis| typesets the question
+% number.  By default, |2em|.
+%	\vitem|\catquesindent| \DescribeMacro{\catquesindent}
+%	The indentation of the first line of the question in
+%	|\catques|.  By default, |0em|.
+% \vitem|\catqueshindent| \DescribeMacro{\catqueshindent}
+% The indentation of subsequent lines of the question in
+% |\catques|.  By default, |2em|.
+% \vitem|\catquessty| \DescribeMacro{\catquessty} The style
+% in which the question will be printed in |\catques|.  By
+% default, |\bfseries|.
+%	\vitem|\catansindent| \DescribeMacro{\catansindent}
+%	The indentation of the first line of the answer in
+%	|\catques|.  By default, |2em|.
+% \vitem|\catanshindent| \DescribeMacro{\catanshindent}
+% The indentation of subsequent lines of the answer in
+% |\catques|.  By default, |2em|.
+% \vitem|\catanssty| \DescribeMacro{\catanssty} The style
+% in which the answer will be printed in |\catques|.  By
+% default, empty.
+%	\vitem|\catcommindent| \DescribeMacro{\catcommindent}
+%	The indentation of the first line of the comment in
+%	|\catcomment|.  By default, |2em|.
+% \vitem|\catcommhindent| \DescribeMacro{\catcommhindent}
+% The indentation of subsequent lines of the comment in
+% |\catcomment|.  By default, |2em|.
+% \vitem|\catcommsty| \DescribeMacro{\catcommsty} The style
+% in which the comment will be printed in |\catcomment|.  By
+% default, empty.
+%	\vitem|\catexplicindent| \DescribeMacro{\catexplicindent}
+%	The indentation of the first line of the paragraphs in a 
+%	|\catexplic|.  By default, |4em|.
+% \vitem|\catexplichindent| \DescribeMacro{\catexplichindent}
+% The indentation of subsequent lines of the paragraphs in a
+% |\catexplic|.  By default, |2em|.
+% \vitem|\catexplicsty| \DescribeMacro{\catexplicsty} The style
+% in which the comment will be printed in |\catexplic|.  By
+% default, |\small|.
+% \vitem|\catcitetitleword|
+% \DescribeMacro{\catcitetitleword}  The word which the
+% |\catcitetitle| command will print.  By default,
+% |Citations|.
+% \vitem|\catcitetitlesty| \DescribeMacro{\catcitetitlesty}
+% The style in which |\catcitetitle| will print its
+% contents.  By default, |\Large\scshape|.
+% \vitem|\catcitationbefskip| \DescribeMacro{\catcitationbefskip}
+% The distance to skip prior to beginning a |catcitations|
+% environment, before running |\catcitetitle|.
+% \vitem|\catcitationaftskip| \DescribeMacro{\catcitationaftskip}
+% The distance to skip after ending a |catcitations|
+% environment.
+%	\vitem|\catciteindent| \DescribeMacro{\catciteindent} The
+%	indentation of the first line of the citation itself
+%	(that is, the quotation) in a |\catcite|.  By default,
+%	|0em|.
+% \vitem|\catcitehindent| \DescribeMacro{\catcitehindent}
+% The indentation of subsequent lines in the citation itself
+% (that is, the quotation) in a |\catcite|.  By default,
+% |0em|.
+% \vitem|\catcitesty| \DescribeMacro{\catcitesty} The style
+% in which the citation itself (that is, the quotation) will
+% be printed in |\catcite|.  By default, |\itshape|.
+%	\vitem|\catsrcindent| \DescribeMacro{\catsrcindent} The
+%	indentation of the first line of the source
+%	in a |\catcite|.  By default, |2em|.
+% \vitem|\catsrchindent| \DescribeMacro{\catsrchindent}
+% The indentation of subsequent lines in the source
+% in a |\catcite|.  By default, |2em|.
+% \vitem|\catsrcsty| \DescribeMacro{\catsrcsty} The style in
+% which the source will be printed in |\catcite|.  By
+% default, empty.
+% \end{description}
+%
+% Finally, the list settings are all from |paralist|, so
+% that package's documentation should be consulted for
+% changing the defaults set up for them.
+%
+% These options are sufficient to manipulate |catechis|
+% into behaving however you'd like.
+%
+% \section{Implementation}
+%
+% Start by requiring |paralist|, to take care of our custom
+% enumerates.
+%    \begin{macrocode}
+\RequirePackage{paralist}
+	\setdefaultenum{(a)}{(1)}{(i)}{(A)}
+	\setdefaultleftmargin{3.8em}{}{}{}{}{}
+%    \end{macrocode}
+% Now we create the indentations and styles for the default
+% question counter, the questions themselves, and the
+% answers.  We also set sensible defaults.
+%    \begin{macrocode}
+\newlength{\catquesindent}\setlength{\catquesindent}{0em}
+\newlength{\catqueshindent}\setlength{\catqueshindent}{2em}
+\newlength{\catansindent}\setlength{\catansindent}{2em}
+\newlength{\catanshindent}\setlength{\catanshindent}{2em}
+\newlength{\catquesnumwd}\setlength{\catquesnumwd}{2em}
+\newcounter{catquesnum}\setcounter{catquesnum}{0}
+\def\catquesnumsty{\bfseries}
+\def\catquessty{\bfseries}
+\def\catanssty{}
+\renewcommand{\thecatquesnum}{\arabic{catquesnum}.}
+%    \end{macrocode}
+% Here, we define the catechism question macro.  Nothing
+% much surprising here.
+%    \begin{macrocode}
+\def\catques#1#2{%
+	\stepcounter{catquesnum}%
+	\def\@currentlabel{\thecatquesnum}%
+	{\parindent=\catquesindent\hangindent=\catqueshindent\hangafter=1%
+	{\par\leavevmode\hbox to\catquesnumwd{\catquesnumsty\thecatquesnum\hfil}%
+		\catquessty #1}\par\nobreak}%
+	{\parindent=\catansindent\hangindent=\catanshindent\hangafter=1%
+		{\par\catanssty #2}\par}%
+}%
+%    \end{macrocode}
+% Define the catechism comments, and set sensible defaults
+% for the settings.
+%    \begin{macrocode}
+\def\catcommsty{}
+\newlength{\commindent}\setlength{\commindent}{2em}
+\newlength{\commhindent}\setlength{\commhindent}{2em}
+\def\catcomment#1{%
+	{\parindent=\commindent\hangindent=\commhindent\hangafter=1%
+	{\par\catcommsty #1}\par}
+}%
+%    \end{macrocode}
+% Define the catechism explications (longer than comments,
+% allowing paragraph breaks), and set sensible defaults for
+% their settings.
+%    \begin{macrocode}
+\def\catexplicsty{\small}
+\newlength{\explicindent}\setlength{\explicindent}{4em}
+\newlength{\explichindent}\setlength{\explichindent}{2em}
+\long\def\catexplic#1{%
+	{\par\everypar={\parindent=\explicindent\hangindent=\explichindent\hangafter=1}%
+	{\par\catexplicsty\  #1}\par}%
+}%
+%    \end{macrocode}
+% Because lists always seem to run roughshod over
+% indentation settings, and because it's easier to do this
+% than to write custom lists just for this package, we
+% define |\restoreindents| to fix settings after a list in a
+% |\catexplic|.
+%    \begin{macrocode}
+\def\restoreindents{%
+	\par%
+	\everypar={%
+		\parindent=\explicindent%
+		\hangindent=\explichindent%
+		\hangafter=1%
+	}%
+	\par%
+}%
+%    \end{macrocode}
+% Define the commands to produce citation titles, and set
+% sensible defaults; also for the citation environment.
+%    \begin{macrocode}
+\def\catcitetitlesty{\Large\scshape}%
+\def\catcitetitleword{Citations}%
+\def\catcitetitle{%
+	\begin{center}%
+		\catcitetitlesty\catcitetitleword%
+	\end{center}%
+}%
+\newlength\catcitationbefskip\catcitationbefskip=1em%
+\newlength\catcitationaftskip\catcitationaftskip=1em%
+\def\catcitations{%
+	\leavevmode%
+	\vskip\catcitationbefskip%
+	\catcitetitle%
+}%
+\def\endcatcitations{%
+	\leavevmode%
+	\vskip\catcitationaftskip%
+}%
+%    \end{macrocode}
+% Define actual citations macros and lengths.
+%    \begin{macrocode}
+\def\catcitesty{\itshape}%
+\def\catsrcsty{}%
+\newlength{\catciteindent}\setlength{\catciteindent}{0em}%
+\newlength{\catcitehindent}\setlength{\catcitehindent}{0em}%
+\newlength{\catsrcindent}\setlength{\catsrcindent}{2em}%
+\newlength{\catsrchindent}\setlength{\catsrchindent}{2em}%
+\def\catcite#1#2{%
+	{\parindent=\catciteindent\hangindent=\catcitehindent\hangafter=1%
+		{\par\catcitesty #1}\par}%
+	{\parindent=\catsrcindent\hangindent=\catsrchindent\hangafter=1%
+		{\par\catsrcsty#2}\par}%
+}%
+\let\scripture=\catcite
+%    \end{macrocode}
+%
+% And that's it.  Happy \TeX{}ing!
+%
+% \PrintIndex

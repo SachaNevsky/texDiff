@@ -1,0 +1,1915 @@
+% \iffalse meta comment
+% This file is a part of the ANTOMEGA project version \fileversion
+% -----------------------------------------------------
+% 
+% It may be distributed under the terms of the LaTeX Project Public
+% License, as described in lppl.txt in the base LaTeX distribution.
+% Either version 1.0 or, at your option, any later version.
+% Copyright (C) 2001 -- 2005 by Alexej Kryukov
+% Please report errors to: A.M. Kryukov <basileia@yandex.ru>
+%
+% \fi
+%
+% \iffalse
+%
+%<*dtx>
+\ProvidesFile{antomega.dtx}
+%</dtx>
+%
+%<antomega>\NeedsTeXFormat{LaTeX2e}
+%<antomega>\ProvidesPackage{antomega}
+%<antomega>\RequirePackage{keyval,ifthen,calc}
+%
+%<driver>\ProvidesFile{antomega.dtx}
+%
+%<*driver>
+\documentclass{ltxdoc}
+\GetFileInfo{antomega.dtx}
+\def\fileversion{0.8}
+\def\filedate{7 May 2005}
+\def\docdate{7 May 2005}
+
+\newcommand*\file[1]{\texttt{#1}}
+\title{Typesetting multilingual documents with ANTOMEGA
+        \thanks{This file
+        has version number \fileversion, last
+        revised on \filedate.}}
+\author{Alexej Kryukov}
+
+\begin{document}
+   \maketitle
+   \DocInput{antomega.dtx}
+   \DocInput{antenc.dtx}
+\end{document}
+%</driver>
+%
+% \fi
+%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% \changes{v0.2}{2002/10/12}{First public release}
+% \changes{v0.5}{2002/11/14}{Added new interface for loading translation 
+%       processes}
+% \changes{v0.5}{2002/11/14}{The documentation is totally rewritten using
+%       the doc package}
+% \changes{v0.5}{2002/11/14}{Many bugs fixed}
+% \changes{v0.6}{2003/03/18}{Added new translation processes in order
+%       to make antomega more independent from the original `omega'
+%       package}
+% \changes{v0.6}{2003/03/18}{Added new language switching commands,
+%       compatible with the Babel package. Old commands are still
+%       supported for backwards compatibility purposes.}
+% \changes{v0.61}{2003/03/27}{Fixed a bug in uni1f00.def}
+% \changes{v0.7}{2003/08/30}{Keyval syntax is now used for package
+%       options. Old options are still supported for backwards 
+%       compatibility.}
+% \changes{v0.7}{2003/08/30}{Now it is possible to specify `input=utf-8'
+%       in options of the whole package. This option will be inherited
+%       by commands used to load specific languages.}
+% \changes{v0.7}{2003/08/30}{Added support files for new languages: German
+%        (thanks to Olaf Dietrich <olaf.dietrich@ikra.med.uni-muenchen.de>),
+%        Polish (thanks to Mariusz Wodzicki <wodzicki@Math.Berkeley.EDU>)
+%        and Latvian (thanks to Dmitry Ivanov <dimss@solutions.lv>).}
+% \changes{v0.7}{2003/08/30}{Added special version of the file `hyphen.cfg',
+%        allowing to load character codes for specific Unicode ranges
+%        into Lambda format.}
+% \changes{v0.7}{2003/08/30}{Removed options `localtoc' and `nolocaltoc'.
+%        These options were used to control if language markup should
+%        be included into the arguments of `contentsline'. This is not
+%        needed now, because language markup commands are written
+%        into *.toc files separately, exactly as in Babel.}
+% \changes{v0.7}{2003/08/30}{Various minor improvements and bugfixes}
+% \changes{v0.8}{2004/04/30}{Bugfix: `local@hyphenmins' produced an 
+%        extra space in the output.}
+% \changes{v0.8}{2004/04/30}{Bugfix: An OCP was assigned to a wrong slot 
+%        in German and Polish language support files -- now fixed.}
+% \changes{v0.8}{2005/01/08}{Bugfix: fixed a bug which caused a language name 
+%        to be reproduced in the output while using that name as a name of a 
+%        language switching environment.}
+% \changes{v0.8}{2005/01/08}{Added an (experimental) support file for Latin
+%        language.}
+% \changes{v0.8}{2005/01/09}{Bugfix: the `specials' key didn't work as
+%        expected.}
+% \changes{v0.8}{2005/04/15}{Bugfix: the correct language environment was not 
+%        restored after exiting from `otherlanguage'.}
+% \changes{v0.8}{2005/04/17}{Language switching commands (i.~e.
+%        `seletlanguage' and `otherlanguage' now cause locale dependent 
+%        captions to be displayed in the current language. So the concept
+%        of having a special set of extras, applicable only for the 
+%        `background' document language (inherited from older omega.sty) 
+%        is abandoned.}
+% \changes{v0.8}{2005/04/17}{ANTOMEGA now prevents some special characters,
+%        produced by text commands, from placing back to the OCP stack. To
+%        implement this feature, I had to add a set of encoding definition
+%        files, designed specially for ANTOMEGA. In particular this means 
+%        ANTOMEGA is no longer dependent from ut1enc.def.}
+% \changes{v0.8}{2005/04/17}{uppercase.otp (now called uppercase-dflt.otp) 
+%        is incorporated into ANTOMEGA. OCP-based conversion to uppercase
+%        is now used by default, since Omega incorrectly performs the
+%        standard (uccode/lccode based) conversion in the UTF-8 mode.}
+% \changes{v0.8}{2005/05/03}{Added an experimental support for Scientific
+%        Word/Scientific Workplace.}
+% \changes{v0.8}{2005/05/07}{Workaround for the `accent' command: now all
+%        standard commands used to type accents are redefined to produce
+%        a character followed by a Unicode combining accent. Later this
+%        sequence may be processed by OCP and turned back to an accented
+%        character. So arguments of such commands may be processed by OCP
+%        and correctly converted from user's input encoding to Unicode.}
+%
+% \MakeShortVerb{\|}
+%
+% \begin{abstract}
+% Antomega is a language support package for Lambda, based on the
+% original \file{omega.sty} file. However, it provides some additional 
+% functionality.
+% \end{abstract}
+%
+% \section{Introduction}
+% Moving from \LaTeX\ to $\Omega$ is always difficult for an average
+% user, since the $\Omega$ distribution doesn't include any language support
+% package which could be used as a Babel replacement. The \file{omega.sty}
+% file, version of 1999/06/01, was released by the $\Omega$ developers as
+% a first attempt to make something like `Omega-Babel', but, unfortunately, 
+% this work was not finished. Moreover, more recent versions of
+% \file{omega.sty} are suitable only for testing some right-to-left languages, 
+% but not for regular work. So I prepared my own package, based on the original
+% \file{omega.sty}, which fixes some bugs and provides some additional
+% functionality.
+%
+% \section{Installation instructions}
+%
+% First, download and install the $\Omega$ binaries or ensure that your \TeX\ 
+% installation already includes them. Unpack the archive file with ANTOMEGA
+% and move all files to the appropriate directories (for example,
+% everything in \file{omega/lambda/} to |$$texmf/omega/lambda|, everything
+% in \file{omega/ocp/} to |$$texmf/omega/ocp|, and so on. If you already
+% have a file named \file{language.dat} in |$$texmf/omega/lambda/base|,
+% replace it with the provided file (called language.dat.sample) in case you 
+% want to get correct hyphenation for Russian and/or Greek.
+%
+% Note that ANTOMEGA still needs some files from the original $\Omega$ 
+% distribution. The most important file is \file{ut1omlgc.fd}. 
+% Unfortunately, this file was not included into some recent 
+% $\Omega$ distributions. I can neither include
+% it into my package as is (this might cause name clashes) nor rename
+% it (since I can't rename the default font and the default encoding
+% vector used in $\Omega$). So in case you haven't this file already
+% installed you have to install it separately. Either take it from 
+% an older \TeX\ distribution or from the $\Omega$ CVS tree.
+%
+% There are also some additional translation processes (useful mainly
+% for typesetting polytonic (classical) Greek), which you may want to
+% take from old $\Omega$.
+%
+% Of course, after installing new files you have to update the \TeX\
+% file names database. On teTeX or fpTeX systems this is performed 
+% with |texconfig rehash| or |mktexlsr| commands. On MikTeX you
+% can do the same via a menu item. Refer yourself to a special 
+% section (\ref{sw}) of this manual, in case you are interested in 
+% installing and configuring ANTOMEGA under Scientific Word/Scientific 
+% Workplace.
+%
+% \subsection{Deprecated files}
+%
+% If you are upgrading from an older version of ANTOMEGA, you can
+% safely delete the following deprecated files:
+%
+% \begin{itemize}
+%
+% \item In |$$TEXMF/omega/unidata|: 
+%
+% \begin{itemize}
+%
+% \item \file{uni0300.def} (now called \file{uni0370.def};
+% 
+% \item \file{grahyph.tex} and \file{grmhyph.tex} (replaced with
+% \file{ograhyph.tex} and \file{ogrmhyph.tex} correspondingly according
+% to the naming convention proposed by Dimitrios Filippou);
+% 
+% \end{itemize}
+%
+% \item In |$$TEXMF/omega/hyphen|: \file{greek2uni.tex} and
+% \file{greek2omega.tex} (no longer needed);
+%
+% \item In |$$TEXMF/omega/otp/antomega|: \file{latin2punct.otp} and
+% \file{cyr2punct.otp} (replaced with files \file{tex2punct.otp},
+% \file{babel2punct.otp} and \file{babel2ru.otp});
+%
+% \item In |$$TEXMF/omega/ocp/antomega|: \file{latin2punct.ocp} and
+% \file{cyr2punct.ocp} (replaced with files \file{tex2punct.ocp},
+% \file{babel2punct.ocp} and \file{babel2ru.ocp}).
+%
+% \end{itemize}
+%
+% \subsection{Updating Lambda format}
+%
+% With older versions of ANTOMEGA you could do without updating Lambda
+% format (at least if you work only with Latin-based languages), but now 
+% this operation is strongly recommended for the following
+% reasons. As you probably know, the core of the \LaTeX\ system consists of
+% \file{latex.ltx} and some other files which should be loaded into format.
+% Since there are no special versions of those files for $\Omega$,
+% the same files are used also for Lambda format. 
+%
+% Of course, files designed for \LaTeX\ not always work well for 
+% $\Omega$. For example, in order to get correct hyphenation for a text
+% in a specific language, we have to set |\catcode| (which should be equal 
+% to 11 or 12) and |\lccode| for all characters used in that language.
+% For correct conversion to uppercase we need also |\uccode| values.
+% In standard \LaTeX\ these values are defined for all 256 characters 
+% of the encoding table, but with $\Omega$ we need similar definitions for 
+% a wider range of Unicode characters, and it would be nice to have these
+% definitions loaded into format. Some people achieve this effect putting
+% tables of such codes together with their hyphenation patterns.
+% 
+% However, this approach causes some problems. First of all, it is very
+% inconvenient to set |\catcode|, |\lccode| and |\uccode| with primitive
+% commands for each letter from a large amount of characters. Antomega defines
+% some commands (namely |\makeletter|, |\makeucletter|, |\makelcletter|
+% and |\makesameletter|), allowing to simplify this process. It also
+% provides definition tables for some Unicode ranges, written using
+% these commands. However, in order to load these tables into the format
+% the commands they use should be already known to \file{iniomega}.
+%
+% There is another problem, even more important. The file responsible for
+% loading hyphenation patterns is called \file{hyphen.cfg}. This file
+% is part of the \file{babel} package, but some language-specific formats
+% like cslatex, platex etc. include their own versions of \file{hyphen.cfg}. 
+% Note that those versions are mainly incompatible with ANTOMEGA. The
+% official $\Omega$ distribution also included its own simplified version
+% of \file{hyphen.cfg}, but this file was removed from the most recent versions.
+% That's why original babel's version of the file is also often loaded
+% into Lambda format.
+%
+% \emph{This} \file{hyphen.cfg} is mainly compatible with $\Omega$,
+% although it defines a lot of specific commands not needed if we are not
+% planning to use Babel itself. However, in last versions it has the following 
+% feature: hyphenation patterns are loaded inside a \TeX\ group. This 
+% means that hyphenation rules itself will be saved, but character codes
+% loaded together with them will be forgotten immediately after
+% processing hyphenation rules. That's correct, because character codes
+% required by specific hyphenation patterns may not match codes normally used 
+% by \LaTeX. For example, Russian hyphenation patterns usually have the
+% koi8 encoding, which is not directly used by \LaTeX. So we need a specific
+% table of codes in order to reencode these patterns into an internal 
+% font encoding supported by \TeX. Once reencoding is performed, these
+% character codes are no longer needed.
+%
+% However, this means that hyphenation patterns is an incorrect place
+% to store character codes for Unicode symbols, because it is very
+% possible that our settings will take no effect. And even if they are
+% saved (in case we have old Omega's \file{hyphen.cfg} installed) the
+% result may be rather unexpected, because $\Omega$ has no way to
+% determine which codes are necessary only for processing specific
+% hyphenation patterns, and which should really be stored for further
+% use.
+%
+% That's why ANTOMEGA now includes its own version of \file{hyphen.cfg}
+% and special file \file{antomega.cfg} which contains references to
+% tables of character codes for all supported Unicode ranges. This
+% version of \file{hyphen.cfg} first defines commands |\makeletter|,
+% |\makelcletter|, |\makeucletter| and |\makesameletter|. After that
+% it loads \file{antomega.cfg}. So if you created a custom table of 
+% character codes for your script, you may load it via 
+% \file{antomega.cfg} instead of including it into your hyphenation patterns. 
+% Of course you can also prevent codes for a specific Unicode range
+% from loading into your format. For example, if you never use polytonic
+% Greek, comment out the following line in \file{antomega.cfg}:
+%
+% \begin{verbatim}
+% \input{uni1f00.def}
+% \end{verbatim}
+%
+% Only after loading character codes into format, hyphenation patterns
+% are processed. As well as in Babel, this procession is done inside a
+% group, and so all character codes defined here should be used only
+% for converting your patterns into another encoding.
+%
+% Note that, while old Omega's \file{hyphen.cfg} resides in
+% |$TEXMF/omega/lambda/config|, ANTOMEGA installes its version of the file 
+% into |$TEXMF/omega/lambda/antomega|. This prevents name clashes, but,
+% in case you have old \file{hyphen.cfg} installed, you have to remove
+% it manually to ensure that the correct version will be found and loaded
+% by \file{iniomega}. Only after that you may rebuild the \file{lambda}
+% format file. On teTeX or fpTeX systems you have to run
+%
+% \begin{verbatim}
+% fmtutil --byfmt lambda
+% \end{verbatim}
+%
+% See section~\ref{sw} for information on doing that with True\TeX{}/
+% Scientific Word systems.
+% 
+% It is easy to test if you have the correct \file{hyphen.cfg} version loaded 
+% into your format: just take a look at any |.log| file produced by \file{lambda}. 
+% In case everything is correct it should contain the following text at the
+% beginning: ``Antomega and hyphenation patters for\ldots loaded''.
+% Now you should be able to typeset you documents with ANTOMEGA.
+%
+% \section{Loading ANTOMEGA}
+% One of the main advantages of \file{omega.sty} was using different commands
+% for setting the main language of the document and for loading additional
+% languages. ANTOMEGA preserves this feature, using the same |\background|
+% and |\load| commands. So if you want to prepare an English
+% document including some Greek text, you can do it by the same way as
+% with \file{omega.sty}, for example:
+%
+% \begin{verbatim}
+% \usepackage{antomega}
+% \background{english}
+% \load{greek}
+% \end{verbatim}
+%
+% However, \file{omega.sty} needs two different files for each language: 
+% first of them (with the *.bgd extension) is used by the |\background|
+% command, and second (with the *.lay extension) by the |\load| command.
+% Of course, these two files usually have very similar code. ANTOMEGA
+% fixes this problem: both |\background| and |\load| commands load the same
+% language definition file with the .ldf extension, but process it in a 
+% different way.
+%
+% \section{Typesetting in different languages}
+%
+% \file{omega.sty} supported only a limited set of languages, which included
+% |usenglish|, |french| and |greek|. ANTOMEGA supports these languages too,
+% but separate support for |usenglish| is no longer available. Instead you
+% can load |english| with options |dialect=british| or |dialect=american|,
+% for example:
+%
+% \begin{verbatim}
+% \background[dialect=american]{english}
+% \end{verbatim}
+%
+% I added support files for Russian, and later also for German, Polish
+% and Latvian.
+%
+% Generally speaking, it is not 
+% difficult to provide support for a new language, since language definition 
+% files are quite independent from the core package, and so you can write
+% a file with definitions for your language without changing anything
+% in \file{antomega.sty}, using the existing .ldf files as an example.
+%
+% In the original \file{omega} package we could use for switching to
+% another language either an environment with the same
+% name as a name of your language, or
+% (for small pieces of text) the |\local<$language>| macro, there
+% |<$language>| is your language name. These commands had to be defined in
+% the language definition file. For example, \file{usenglish.bgd}
+% defined the |usenglish| environment and the |\localusenglish| command.
+%
+% These commands are still supported in ANTOMEGA. However, beginning
+% from the version 0.6 ANTOMEGA provides new language switching
+% commands, compatible with the Babel package. So you can use the
+% |\selectlanguage| and |\foreignlanguage| macros and the |otherlanguage|
+% environment exactly as you did with Babel. This means that your old
+% documents may be transferred to $\Omega$ with minimal changes.
+%
+% \section{Loading languages with options}
+%
+% As well as the original \file{omega.sty} file, ANTOMEGA requires the \file{keyval} 
+% package. So all commands used for loading languages may be executed with
+% different parameters, which may take different values. Each language has
+% its own set of such parameters. However, some options are suitable for all
+% supported languages. The most important of them are |input| and |output|
+% parameters, which replace the \file{inputenc} and \file{fontenc} packages,
+% used in standard \LaTeX{}.
+%
+% Beginning from ANTOMEGA v.~0.7 the same \file{keyval} syntax is also
+% supported for options of the \file{antomega} package itself.
+%
+% \subsection{The ``input'' parameter}
+% 
+% Of course, this parameter is language-specific. However, there are two
+% values, which are always supported: |utf-8| and |ucs-2|. The later really
+% means ``no conversion'', since ucs-2 is the native format for $\Omega$.
+% Since these two encodings are suitable for most languages, they may be 
+% specified in options of the ANTOMEGA package, for example:
+%
+% \begin{verbatim}
+% \usepackage[input=utf-8]{antomega}
+% \end{verbatim}
+%
+% The |\load| and |\background| commands also support this option, 
+% but they may additionally accept other values for it, depending
+% from the language you want to load. For example, if you want to type an
+% English document with some international symbols encoded in iso-8859-1, 
+% you may put the following line into your \LaTeX{} preamble:
+%
+% \begin{verbatim}
+% \background[input=iso-8859-1]{english}
+% \end{verbatim}
+%
+% \subsection{The ``output'' parameter}
+%
+% For this parameter you can use one of the following values: |unicode|,
+% |omega| and |tex|. |unicode| is used by default. Note that the |omlgc|
+% font, distributed with $\Omega$, is not fully compatible with Unicode.
+% For example, it has a specific encoding for Latin ligatures and
+% general punctuation. So you have to set |output=omega| if you want
+% to use this font, and |output=unicode| if you have another font, more
+% strictly conforming the Unicode standard. You my want to set also
+% |output=tex| if you prefer using 8-bit fonts in standard \TeX{} encodings
+% (T1 for Western languages, T2A for Russian, LGR for Greek).
+%
+% For example, if you want to typeset your English text with the standard 
+% EC fonts, but haven't any corresponding font for Greek, you may use the
+% following preamble:
+%
+% \begin{verbatim}
+% \documentclass{article}
+% \usepackage{antomega}
+% \background[output=tex]{english}
+% \load[output=omega]{greek}
+% \end{verbatim}
+%
+% \subsection{The ``shorthands'' parameter}
+%
+% Since ANTOMEGA tries to completely reproduce the functionality of
+% the Babel package, it also supports combinations with  the |"| character 
+% (\emph{shorthands}) which have a special meaning in Babel. Note
+% that ANTOMEGA always uses translation processes to emulate Babel's
+% behavior, and so it never really makes |"| an active character. The
+% set of supported shorthands differs from language to language, but
+% there is a minimal set available by default. For example, you may 
+% use |"<| and |">| for guillemots. You may turn off support for Babel
+% shorthands by setting `shorthands=off', and, of course, you may explicitly
+% enable it (`shortahnds=on'). Currently this parameter is supported for
+% all languages except Greek.
+%
+% \section{Translation processes}
+%
+% Since the last $\Omega$ versions are suitable only for testing
+% purposes, they don't include many useful files, originally
+% provided by J.~Plaice ang Y.~Haralambous. Particularly some $\Omega$
+% translation processes were removed, and some are incorrect (e. g.
+% don't correspond to the |omlgc| font). That's why \file{antomega}
+% provides its own set of |ocp| and |otp| files, which makes it 
+% rather independent from $\Omega$'s texmf part.
+%
+% For conversion to different encodings I added some new .otp and .ocp
+% files, which (I hope) work correctly. Beginning from v.~0.6 
+% ANTOMEGA includes improved translation processes for conversion from 
+% some standard iso-8859 and windows-125*  codepages to Unicode.
+% However, some original |.ocp| files are still necessary for \file{antomega}
+% to work. There also some rarely used (but still supported in \file{antomega})
+% files, not present neither in \file{antomega} nor in the most recent $\Omega$ 
+% distributions.
+%
+% \section{Selecting fonts with ANTOMEGA}
+%
+% Of course, it is not enough to set an input encoding for your language.
+% You will need also a correct font matching your encoding. With
+% ANTOMEGA you can select a font separately for each script you use. For
+% example, it defines new commands |\westernrm|, |\westernsf| and |\westerntt|.
+% So, if you want to use Computer Modern for English but prefer to
+% keep standard omlgc for Greek, simply put the following
+% line in your preamble:
+%
+% \begin{verbatim}
+% \renewcommand{\westernrm}{cmr}
+% \end{verbatim}
+%
+% In ANTOMEGA's language support files some similar commands for
+% other scripts are defined. For example, \file{omega-russian.ldf}
+% introduces |\russianrm|, and \file{omega-latvian.ldf}~--- 
+% |\balticrm|. Note that there is no need to define specific commands
+% for Central European languages, because not only Unicode, but even
+% T1 covers both Western and Central European character sets.
+%
+% Of course, you can write your own special packages to make selecting 
+% a new font a bit more easy. You can even use standard font selecting 
+% packages, but, in this case, you must load them \emph{after} ANTOMEGA
+% itself and \emph{before} any language-specific commands. For example:
+%
+% \begin{verbatim}
+% \usepackage{antomega}
+% \usepackage{palatino}
+% \background{english}
+% \end{verbatim}
+%
+% \iffalse
+%<*kernel>
+% \fi
+%
+% \section{Using ANTOMEGA with MacKichan software products}
+% 
+% \label{sw}
+% Generally speaking, adapting MacKichan software products (like 
+% Scientific Word or Scientific Workplace) for non-Latin languages
+% represents a not so trivial task. The problem is, that their shell
+% (very powerful by itself) knows nothing about various input encodings,
+% supported by \LaTeX, and so it can't take advantage of multilingual
+% capabilities, provided by Babel. Instead, it represents any national
+% characters, typed by user, in the form |\U{<hexadecimal Unicode index>}|.
+% This representation is hardly legible for standard \LaTeX, because it
+% is Unicode-based. That's why $\Omega$ is traditionally used for preparing
+% multilingual documents with Scientific Word or Scientific Workplace.
+%
+% So, adapting ANTOMEGA (which is already distributed together with
+% these software packages) to MacKichan shell is a very natural solution
+% for those who want to get their text correctly typeset according to
+% typographic rules used in their native languages. Preparing your Scientific
+% products to use ANTOMEGA may be divided into two main stages: 
+% configuring your True\TeX{} installation (which lies in the background
+% of Scientific Word/Scientific Workplace) and configuring the graphical
+% front-end itself.
+%
+% \subsection{Configuring True\TeX}
+%
+% First, ensure you have ANTOMEGA v.~0.8 or above. If necessary,
+% download the latest version from CTAN and copy the contents of 
+% all directories available in the downloaded package into the
+% corresponding directories found in |TCITeX\Omega\|.
+%
+% Second, locate the file
+% |TCITeX\Omega\Lambda\base\languages.dat.sample| and rename it
+% to \file{languages.dat}. Edit this file to enable hyphenation
+% patterns for your language.
+%
+% Now you have to rebuild the Lambda format. This operation is
+% mandatory, because all default format files supplied with
+% Scientific products are built without multilingual extensions
+% provided by Babel, so that using ANTOMEGA with your default
+% \file{lambda.oft} just will cause an error. This is also probably
+% the hardest part, because True\TeX{}, unlike Mik\TeX{} or fp\TeX{},
+% provides no special tools allowing to call \file{iniomega} with
+% desired parameters. However, to simplify this task, you can use the
+% following batch script (call it, say, \file{runinilambda.bat}):
+%
+% \begin{verbatim}
+% echo off
+% setlocal
+% set TEXMF=C:\sw50\TCITeX
+% set TEXINPUTS=.;%TEXMF%/{omega,tex}//
+% %TEXMF%\web2c\iniomega %TEXMF%\omega\lambda\config\lambda.ini
+% endlocal
+% \end{verbatim}
+%
+% Note that you can run this script from any location, but the
+% resulting \file{lambda.oft} file must be placed into your
+% |TCITeX\web2c\| directory.
+%
+% \subsection{Configuring the Scientific Word / Scientific Workplace shell}
+%
+% When you have done with updating Lambda format, you can start Scientific 
+% Word and create a new document (or load an existing one). To make its
+% processing with Lambda possible, you should do the following:
+%
+% \begin{itemize}
+%
+% \item From the main menu bar, select `Typeset'---`Expert Settings'. 
+% The dialog box with several tabs will appear, where you should select 
+% the `DVI Format Settings' page, and then the `TeX Live Lambda' entry 
+% from the drop-down box.
+% 
+% \item Go to the `Typeset'---`Options and packages' menu.
+% Ensure that \file{sw2unicode}, \file{swtimes} and \file{fontenc} are
+% \textbf{not} in the list of loaded packages. These packages are not
+% needed, since their functuionality is completely incorporated by
+% ANTOMEGA.
+%
+% \item From the same dialog box, click the `Go native' button. A dialog
+% box with a multi-line input field will appear. Add the following line
+% to that input field:
+%
+% \begin{verbatim}
+% [input=sw,ffi=ligatures]{antomega}
+% \end{verbatim}
+%
+% Note that the |ffi=ligatures| option is mandatory, since Times New
+% Roman (the only Unicode font which is supported in the Scientific
+% Word/Scientific Workplace distribution by default) hasn't some latin 
+% ligatures at the places ANTOMEGA expects to find them, so that enabling the
+% corresponding translation process will result in missing glyphs in the
+% output. Unfortunately, the default \file{ofm} files for Times New Roman also
+% contain no information about ligature substitution, so that 
+% |ffi=ligatures| practically means `no ligatures at all' in this case.
+%
+% \item Go to `Typeset'---`Preamble' and input any number of |\background|
+% and |\load| commands for the languages you are planning to use.
+%
+% \end{itemize}
+%
+% Now you should be able to compile your document with Lambda.
+%
+% \section{The ANTOMEGA code}
+%
+% \subsection{Handling identification codes for our files}
+%
+% Unlike in Babel, no tests if |\ProvidesFile| is already defined. 
+% Since \LaTeXe\ was released in 1994, and the $\Omega$ project
+% started also in 1994, probably nobody will use $\Omega$ with the 2.09
+% format.
+%
+% \DescribeMacro{\ProvidesFile}
+% We save the original definition of |\ProvidesFile| in
+% |\ant@tempa| and restore it after we have stored the version of
+% the file in |\toks8|.
+%
+%    \begin{macrocode}
+\let\ant@tempa\ProvidesFile
+\def\ProvidesFile#1[#2 #3 #4]{%
+   \toks8{Antomega <#3> and hyphenation patterns for }%
+   \ant@tempa#1[#2 #3 #4]%
+   \let\ProvidesFile\ant@tempa}
+%    \end{macrocode}
+%
+% \DescribeMacro{\ProvidesLanguage}
+% As an alternative for |\ProvidesFile| we define
+% |\ProvidesLanguage| here to be used in the language definition
+% files.
+%
+%    \begin{macrocode}
+\def\ProvidesLanguage#1{%
+   \begingroup
+      \catcode`\ 10 %
+      \@makeother\/%
+      \@ifnextchar[%]
+         {\@provideslanguage{#1}}{\@provideslanguage{#1}[]}}
+\def\@provideslanguage#1[#2]{%
+   \wlog{Language: #1 #2}%
+      \expandafter\xdef\csname ver@#1.ldf\endcsname{#2}%
+      \endgroup}
+\ProvidesFile{hyphen.cfg}
+   [2005/05/07 v0.8
+   Taken from Babel language switching mechanism
+   and modified for Antomega]
+%    \end{macrocode}
+%
+% \iffalse
+%</kernel>
+%<*antomega>
+% \fi
+%
+% \subsection{Handling $\Omega$CP files}
+%
+% \DescribeMacro{\LoadOCPByName}
+% The macro |\LoadOCPByName| takes two arguments: an OCP file name
+% (without extension) and an $\Omega$ command which will be used for
+% loading this file. If the referenced .ocp file doesn't exist in user's
+% system, \file{id.ocp} will be used instead. So it is possible to proceed
+% with document processing, even if some .ocp files were not found.
+%
+%    \begin{macrocode}
+\def\LoadOCPByName#1#2{\IfFileExists{#2.ocp}{\ocp#1=#2}{
+   \PackageWarning{antomega}{#2.ocp not found. 
+      Identity will be used instead.}{}
+   \ocp#1=id}}
+%    \end{macrocode}
+%
+% Now we load some commonly used translation processes, using the
+% macro |\LoadOCPByName|.
+%
+%    \begin{macrocode}
+\ocp\IdOCP=id
+\LoadOCPByName{\BasicIsoUni}{uniutf2uni}
+\LoadOCPByName{\BasicWinUni}{uniutf2uni}
+\LoadOCPByName{\BasicUtfUni}{uniutf2uni}
+\LoadOCPByName{\BasicTexUni}{tex2punct}
+\LoadOCPByName{\BasicBabelUni}{babel2punct}
+\LoadOCPByName{\BasicAccentsUni}{uni2accents}
+\LoadOCPByName{\UniToOmega}{uni2omega}
+\LoadOCPByName{\Oldstyle}{oldstyle}
+\LoadOCPByName{\LatinUniToTex}{uni2t1}
+%    \end{macrocode}
+%
+% \file{uni2lig.ocp} is used for setting up Latin ligatures. However,
+% the standard \TeX\ ligature mechanism should be a better choice, since
+% using OCP for combinations like `fi' or `fl' may break hyphenation. So I
+% provided a special |ffi| option which may be set either to `ocp' or to 
+% `ligatures'. Setting it to `ligatures' simply prevents the translation 
+% process from loading. Note that \file{uni2lig.ocp} is designed for pure 
+% Unicode fonts and it is never used, if |output| is set to `omega'. In this 
+% case you can't turn off processing ligatures via OCP, since the \file{omlgc}
+% font doesn't contain any ligatures at all.
+%
+%    \begin{macrocode}
+\def\opt@ocp{ocp}
+\def\opt@ligatures{ligatures}
+\define@key{antomega}{ffi}[ocp]{%
+   \def\@tmpa{#1}
+   \ifx\@tmpa\opt@ocp%
+      \LoadOCPByName{\LatinUniToLig}{uni2lig}
+   \else\ifx\@tmpa\opt@ligatures%
+      \typeout{Antomega package option: ffi=ligatures}
+      \LoadOCPByName{\LatinUniToLig}{id}
+   \fi\fi
+}
+%    \end{macrocode}
+%
+% The following option is deprecated and preserved for backwards compatibility 
+% only. Use `ffi=ligatures' instead.
+%
+%    \begin{macrocode}
+\DeclareOption{noffi}{\setkeys{antomega}{ffi=ligatures}}
+%    \end{macrocode}
+%
+% By default we use OCP for Latin ligatures in order to prevent MikTeX crashes.
+%
+%    \begin{macrocode}
+\setkeys{antomega}{ffi=ocp}
+%    \end{macrocode}
+%
+% Now we can define some standard OCP lists, useful generally
+% for languages with Latin-based scripts.
+%
+% \DescribeMacro{\BasicTexOCP} This OCP list loads the default translation
+% process for standard TeX ligatures and punctuation characters.
+%
+%    \begin{macrocode}
+\ocplist\BasicTexOCP=
+   \addbeforeocplist 1750 \BasicTexUni
+\nullocplist
+%    \end{macrocode}
+%
+% \DescribeMacro{\BasicBabelOCP} This OCP list loads the default translation
+% process for Babel-like shorthands. If you don't like them, set
+% `shorthands=off' for your language.
+%
+%    \begin{macrocode}
+\ocplist\BasicBabelOCP=
+   \addbeforeocplist 2000 \BasicBabelUni
+\nullocplist
+%    \end{macrocode}
+%
+% \DescribeMacro{\BasicAccentsOCP} This OCP list converts Unicode 
+% combining accents to \TeX-styled |\accent| commands.
+%
+%    \begin{macrocode}
+\ocplist\BasicAccentsOCP=
+   \addbeforeocplist 2250 \BasicAccentsUni
+\nullocplist
+%    \end{macrocode}
+%
+% \DescribeMacro{\BasicInputUcsOCP} This is ANTOMEGA's default OCP
+% list. It doesn't translate text to any other character set
+% (so, sctually, does nothing).
+%
+%    \begin{macrocode}
+\ocplist\BasicInputUcsOCP=
+   \addbeforeocplist 500 \IdOCP
+\nullocplist
+%    \end{macrocode}
+%
+% \DescribeMacro{\BasicInputUtfOCP} This OCP list should be
+% used for utf-8 encoded texts.
+%
+%    \begin{macrocode}
+\ocplist\BasicInputUtfOCP=
+   \addbeforeocplist 500 \BasicUtfUni
+\nullocplist
+%    \end{macrocode}
+%
+% \DescribeMacro{\BasicInputIsoOCP} This OCP list is intended for
+% 8-bit texts using Latin ISO-8859-1 codepage, but note that
+% it doesn't perform any real conversion, since ISO-8859-1 character
+% codes are the same as in Unicode, and $\Omega$ automatically
+% distinguishes 8-bit and 2-byte input.
+%
+%    \begin{macrocode}
+\ocplist\BasicInputIsoOCP=
+   \addbeforeocplist 500 \BasicIsoUni
+\nullocplist
+%    \end{macrocode}
+%
+% \DescribeMacro{\BasicInputWinOCP} This OCP list is intended for
+% 8-bit texts using Latin windows-1252 codepage.
+%
+%    \begin{macrocode}
+\ocplist\BasicInputWinOCP=
+   \addbeforeocplist 500 \BasicWinUni
+\nullocplist
+%    \end{macrocode}
+%
+% The following OCP lists are used to convert a text to an
+% $\Omega$ output.
+%
+% \DescribeMacro{\LatinUniOutOCP} A conversion to a Unicode
+% font. The only operation which may be performed here is setting
+% up the Latin ligatures.
+%
+%    \begin{macrocode}
+\ocplist\LatinUniOutOCP=
+   \addbeforeocplist 3500 \LatinUniToLig
+\nullocplist
+%    \end{macrocode}
+%
+% \DescribeMacro{\LatinOmegaOutOCP} A conversion to the default
+% omlgc font. Its encoding differs from Unicode, and so a
+% special conversion routine is required.
+%
+%    \begin{macrocode}
+\ocplist\LatinOmegaOutOCP=
+   \addbeforeocplist 3500 \UniToOmega
+\nullocplist
+%    \end{macrocode}
+%
+% \DescribeMacro{\LatinTexOutOCP} A conversion from Unicode
+% to the T1 encoding.
+%
+%    \begin{macrocode}
+\ocplist\LatinTexOutOCP=
+   \addbeforeocplist 3500 \LatinUniToTex
+\nullocplist
+%    \end{macrocode}
+%
+% \DescribeMacro{\OldstyleOCP} This OCP list converts ASCII
+% digits to their oldstyle equivalents. Note that it is not 
+% compatible with the |omlgc| font.
+%
+%    \begin{macrocode}
+\ocplist\OldstyleOCP=
+   \addbeforeocplist 4000 \Oldstyle
+\nullocplist
+%    \end{macrocode}
+%
+% The following key allows to set input encoding globally for the whole
+% document instead of setting it separately for each language. Of course,
+% from all the standard codepages only `utf-8' makes a sense in this context. 
+% `ucs-2' is also supported,  but this encoding doesn't require any 
+% translation processes, because $\Omega$ uses it by default anyway.
+%
+% Beginning from ANTOMEGA~v.~0.8 you can also select `sw' to match a
+% specific Unicode character representation, used in files generated
+% by MacKichan software products.
+%
+%    \begin{macrocode}
+\let\BasicInputOCP\BasicInputUcsOCP
+   \define@key{antomega}{input}[ucs-2]{
+      \def\@tmpa{#1}%
+      \ifx\@tmpa\opt@utf%
+         \let\BasicInputOCP\BasicInputUtfOCP%
+         \typeout{Antomega package option: input=utf-8}
+      \else\ifx\@tmpa\opt@sw%
+         \def\U##1{/QQ[##1]}%
+         \def\rmdefault{swtimes}%
+         \let\westernrm\rmdefault%
+         \LoadOCPByName{\BasicSWordUni}{sw2uni}%
+         \ocplist\BasicInputSWordOCP=
+            \addbeforeocplist 500 \BasicSWordUni
+         \nullocplist
+         \let\BasicInputOCP\BasicInputSWordOCP%
+         \typeout{Antomega package option: input=sw}
+      \else%
+         \let\BasicInputOCP\BasicInputUcsOCP%
+         \typeout{Antomega package option: input=ucs-2}
+      \fi}
+%    \end{macrocode}
+%
+% \DescribeMacro{\UppercaseOCP}.
+% ANTOMEGA includes a special translation process, \file{uppercase-dflt.ocp}, 
+% based on the \file{uppercase.ocp} file, available in older $\Omega$ 
+% distribution, which may be used for lowercase to uppercase conversion. 
+% Although standard conversion rules, based on |\lccode| and |\uccode| 
+% settings, usually produce a better result, I have to use the OCP-based 
+% conversion by default, because $\Omega$ incorrectly processes some character 
+% codes in its UTF-8 mode. You can disable this feature by setting 
+% |uppercase=standard|.
+%
+%    \begin{macrocode}
+\LoadOCPByName{\Uppercase}{uppercase-dflt}
+\ocplist\UppercaseOCP=
+   \addbeforeocplist 3000 \Uppercase
+\nullocplist
+\def\MakeUppercase#1{{\pushocplist\UppercaseOCP#1}}
+\def\opt@standard{standard}
+\define@key{antomega}{uppercase}[ocp]{
+   \def\@tmpa{#1}
+   \ifx\@tmpa\opt@standard
+      \let\MakeUppercase\uppercase
+      \typeout{Antomega package option: use character codes}
+      \typeout{for conversion to Uppercase}
+   \fi}
+%    \end{macrocode}
+%
+% \DescribeMacro{\oldstylenums}
+% This command supposes that our text font contains old style
+% numerals and that they are mapped to their places in the 
+% Unicode Private Use area as defined in AGL. Don't use it
+% with the |omlgc| font.
+%
+%    \begin{macrocode}
+\def\oldstylenums#1{{\pushocplist\OldstyleOCP#1}}
+%    \end{macrocode}
+%
+% \subsection{Encoding-independent commands for printing special characters}
+%
+% \DescribeMacro{\noocpchar}
+% After expanding a command, Omega puts the result back into the OCP stack.
+% If the result of expansion contains some characters, which have a 
+% special meaning in the \TeX{} system, they will be processed again,
+% instead of typing into the output. So it is impossible e.~g. to
+% use the |\%| command in order to obtain the percent sign, because the
+% character produced by that command is recognized anyway as a comment mark
+% after processing it via OCP. The same problem affects character codes 
+% less than 0x20 (used in most 8-bit encodings), since these characters
+% usually have no |\catcode| assigned, and so are treated as invalid
+% in the input.
+%
+% Previously some hacks were used to prevent this effect. For example, 
+% in the \file{omlgc} some ASCII characters are reproduced once again 
+% in the 0x80--0x0F range, not used in Unicode, so that e.~g. the |\%| 
+% command could actually refer to a slot different from the `real' percent
+% sign. For 8-bit fonts we had to assign code 12 to some characters
+% in order to make them `valid'. Older ANTOMEGA versions had a special
+% option, |specials|, used to control such situations.
+%
+% However, this option is deprecated (and removed) now. Instead, we 
+% just define a special command which puts |\clearocplists| before 
+% |\char| in order to prevent the result from placing into the OCP
+% stack\ldots
+%
+%    \begin{macrocode}
+\def\noocpchar#1{{\clearocplists\char#1}}
+%    \end{macrocode}
+%
+% \ldots{}and then apply it to the most commonly used special characters.
+%
+%    \begin{macrocode}
+\def\#{\noocpchar{"23}}
+\def\%{\noocpchar{"25}}
+\def\&{\noocpchar{"26}}
+%    \end{macrocode}
+%
+% \subsection{Omega-specific commands to handle \TeX{} font encodings}
+%
+% \DescribeMacro{\uniencoding}
+% It is necessary to declare a special encoding for Omega-specific
+% 2-byte fonts. $\Omega$ developers called it |UT1|.
+%
+%    \begin{macrocode}
+\def\uniencoding{UT1}
+%    \end{macrocode}
+%
+% \DescribeMacro{\ant@load@encoding}
+% The concept of current font encoding doesn't really matter for ANTOMEGA.
+% Although some text commands traditionally used in \LaTeX\ are allowed
+% in the input, they just should be always mapped to the same Unicode
+% codepoints, and it is a task of translation processes to translate
+% them to the current font encoding. 
+%
+% So the only reason why we have to declare font encodings at all is that
+% Omega needs to know the current encoding in order to select an
+% appropriate font. That's why \file{antomega} no longer loads any encoding
+% definition files. Instead, whatever encoding is requested,
+% \file{antomega} always declares it itself, and then loads the same
+% list of mappings between text commands and Unicode codepoints.
+%
+%    \begin{macrocode}
+\def\ant@load@encoding#1{%
+   \edef\ant@encodingfile{%
+      \lowercase{\def\noexpand\ant@encodingfile{#1enc-antomega.def}}}%
+   \ant@encodingfile
+   \InputIfFileExists{\ant@encodingfile}{}{%
+      \DeclareFontEncoding{#1}{}{}
+      \PackageWarning{antomega}{The \ant@encodingfile\ file was not found.
+         The #1 encoding was defined by antomega.}{}
+      }
+   \let\ant@encodingfile\@undefined
+}
+\ant@load@encoding{\uniencoding}
+\def\encodingdefault{\uniencoding}
+%    \end{macrocode}
+%
+% Since T1 is loaded into the Lambda format, we have to redefine it now.
+%
+%    \begin{macrocode}
+\ant@load@encoding{T1}
+%    \end{macrocode}
+%
+% \subsection{Font issues}
+%
+% The omlgc font is not perfect, but it is included into all standard
+% \TeX\ distributions. So, it will be used by default.
+%
+%    \begin{macrocode}
+\def\rmdefault{omlgc}
+%    \end{macrocode}
+%
+% \file{Antomega} stores its default font names in the |\westernrm|,
+% |\westernsf| and |\westerntt| variables, since |\rmdefault|, |\sfdefault|
+% and |\ttdefault| will be redefined each time we switch to a new
+% language.
+%
+%    \begin{macrocode}
+\ifx\westernrm\@undefined\let\westernrm=\rmdefault\fi
+\ifx\westernsf\@undefined\let\westernsf=\sfdefault\fi
+\ifx\westerntt\@undefined\let\westerntt=\ttdefault\fi
+%    \end{macrocode}
+%
+% Generally speaking, with $\Omega$ we should use translation processes 
+% rather than active characters. So I made |textasciitilde| an 
+% `other symbol'.
+%
+%    \begin{macrocode}
+\catcode`\~=12
+%    \end{macrocode}
+%
+% \iffalse
+%</antomega>
+%<*kernel>
+% \fi
+%
+% \subsection{Language-specific commands which should be loaded
+% into the Lambda format}
+%
+% Again, no tests for |\language| and |\newlanguage|, because $\Omega$
+% should be always compatible with \TeX\ version~3.0.
+%
+%    \begin{macrocode}
+\countdef\last@language=19
+%    \end{macrocode}
+%
+% \DescribeMacro{\addlanguage}
+% To add languages to \TeX's memory plain \TeX\ version~3.0
+% supplies |\newlanguage|. However, a new macro is defined here,
+% because the original |\newlanguage| was defined to be |\outer|.
+%
+%    \begin{macrocode}
+\def\addlanguage{\alloc@9\language\chardef\@cclvi}
+%    \end{macrocode}
+%
+% \DescribeMacro{\adddialect}
+% The macro |\adddialect| can be used to add the name of a dialect
+% or variant language, for which an already defined hyphenation
+% table can be used.
+%
+%    \begin{macrocode}
+\def\adddialect#1#2{%
+   \global\chardef#1#2\relax
+   \wlog{\string#1 = a dialect from \string\language#2}}
+%    \end{macrocode}
+%
+% \DescribeMacro{\iflanguage}
+% Users might want to test (in a private package for instance)
+% which language is currently active. For this we provide a test
+% macro, |\iflanguage|, that has three arguments.  It checks
+% whether the first argument is a known language. If so, it
+% compares the first argument with the value of |\language|. Then,
+% depending on the result of the comparison, it executes either the
+% second or the third argument.
+%
+%    \begin{macrocode}
+\def\iflanguage#1{%
+   \expandafter\ifx\csname l@#1\endcsname\relax
+      \PackageWarning{antomega}{#1 is not a known language.}%
+   \else
+      \ifnum\csname l@#1\endcsname=\language
+         \expandafter\@firstoftwo
+      \else
+         \expandafter\@secondoftwo
+      \fi%
+   \fi}
+%    \end{macrocode}
+%
+% \subsection{Handling character codes}
+%
+% \iffalse
+%</kernel>
+%<*kernel|antomega>
+% \fi
+%
+% We can't get correct hyphenation for our 2-byte characters without 
+% setting |\catcode|, |\lccode| and |\uccode| for each of them.
+% The following commands simplify making such definitions.
+%
+% \DescribeMacro{\makeletter} This command takes two arguments, the first
+% being an uppercase character and the second a corresponding lowercase
+% character, and sets |\lccode| and |\uccode| for both characters.
+%
+%    \begin{macrocode}
+\ifx\makeletter\@undefined
+   \def\makeletter#1#2{%
+      \ifnum\catcode#2=11\else\catcode#2=12 \fi
+      \ifnum\catcode#1=11\else\catcode#1=12 \fi
+      \uccode#1=#1 \uccode#2=#1%
+      \lccode#1=#2 \lccode#2=#2}
+\fi
+%    \end{macrocode}
+%
+% \DescribeMacro{\makelcletter} This command takes two arguments, the first
+% being an uppercase character and the second a corresponding lowercase
+% character, and sets |\lccode| and |\uccode| for the lowercase character.
+%
+%    \begin{macrocode}
+\ifx\makelcletter\@undefined
+   \def\makelcletter#1#2{%
+      \ifnum\catcode#2=11\else\catcode#2=12 \fi
+      \uccode#2=#1%
+      \lccode#2=#2}
+\fi
+%    \end{macrocode}
+%
+% \DescribeMacro{\makeucletter} This command takes two arguments, the first
+% being an uppercase character and the second a corresponding lowercase
+% character, and sets |\lccode| and |\uccode| for the uppercase character.
+%
+%    \begin{macrocode}
+\ifx\makeucletter\@undefined
+   \def\makeucletter#1#2{%
+      \ifnum\catcode#1=11\else\catcode#1=12 \fi
+      \uccode#1=#1%
+      \lccode#1=#2}
+\fi
+%    \end{macrocode}
+%
+% \DescribeMacro{\makesameletter} This command takes two arguments, both
+% of them being uppercase or lowercase characters,
+% and sets |\lccode| and |\uccode| for character 1 equal to character 2.
+%
+%    \begin{macrocode}
+\ifx\makesameletter\@undefined
+   \def\makesameletter#1#2{%
+      \ifnum\catcode#1=11\else\catcode#1=12 \fi
+      \uccode#1=\uccode#2%
+      \lccode#1=\lccode#2}
+\fi
+%    \end{macrocode}
+%
+% \iffalse
+%</kernel|antomega>
+%<*config>
+% \fi
+%
+% The following code should be written into \file{antomega.cfg}. You may 
+% edit that file depending from which Unicode ranges you really need.
+%
+%    \begin{macrocode}
+\input{uni0100.def} % Latin Extended-A
+\input{uni0370.def} % Greek Basic
+\input{uni0400.def} % Cyrillic
+\input{uni1f00.def} % Greek Extended
+%    \end{macrocode}
+%
+% \iffalse
+%</config>
+%<*kernel>
+% \fi
+%
+% In \file{hyphen.cfg} first we test if \file{antomega.cfg} exists, and 
+% then load it.
+%
+%    \begin{macrocode}
+\openin1 = antomega.cfg
+\ifeof1
+   \message{I couldn't find the file antomega.cfg.\space
+           Codes for Unicode characters will not be loaded.}
+\else
+   \input{antomega.cfg}
+\fi
+\closein1
+%    \end{macrocode}
+%
+% \iffalse
+%</kernel>
+%<*antomega>
+% \fi
+%
+% \subsection{Warnings and error messages}
+%
+% \DescribeMacro{\ant@nocodes}
+% This command is used to show a warning message if $\Omega$ can't find 
+% a file with lccodes/uccodes for the specified Unicode range.
+%
+%    \begin{macrocode}
+\providecommand*{\ant@nocodes}[3]{%
+   \PackageWarningNoLine{antomega}%
+      {No file was found with symbol codes\MessageBreak
+         for the #2 range #3.\MessageBreak
+         You may proceed, but your #1 texts\MessageBreak
+         probably will not be correctly hyphenated.}}
+%    \end{macrocode}
+%
+% \DescribeMacro{\ant@nopatterns}
+% This macro is based on Babel's |\@nopatterns| command.
+% However I removed test if |\PackageWarningNoLine| is defined,
+% because probably nobody will try to build \LaTeX~2.09 based
+% format for $\Omega$.
+%
+%    \begin{macrocode}
+\providecommand*{\ant@nopatterns}[1]{%
+   \PackageWarningNoLine{antomega}%
+      {No hyphenation patterns were loaded for\MessageBreak
+         the language `#1'\MessageBreak
+         I will use the patterns loaded for \string\language=0
+         instead}}
+%    \end{macrocode}
+%
+% \DescribeMacro{\ant@nolang}
+% This macro defines the error message which will be displayed
+% if the requested language definition file was not found.
+%
+%    \begin{macrocode}
+\providecommand*{\ant@nolang}[1]{%
+   \PackageWarningNoLine{antomega}%
+      {Couldn't find file omega-#1.ldf!!}}
+%    \end{macrocode}
+%
+% \subsection{Different corrections for standard \LaTeX\ commands}
+%
+% With $\Omega$ we usually have to control all commands which print
+% some strings (for example, to headers/footers), so that they always 
+% apply correct translation processes and correct font to the text they 
+% produce. However, modifying these commands may be inconvenient if we 
+% have to use some packages which also try to redefine them. If you
+% want to prevent \file{antomega} from modifying these commands, you
+% may control its behavior by setting the |localmarks| option either 
+% to `on' or to `off'.
+%
+% \DescribeMacro{\local@marks}
+% This command is executed every time we are switching to a new
+% language. It applies all rules specific for this language to
+% the text, which is written to headers/footers.
+%
+%    \begin{macrocode}
+\def\opt@enabled{on}
+\def\opt@disabled{off}
+\def\opt@tex{tex}
+\def\opt@omega{omega}
+\def\opt@unicode{unicode}
+\def\opt@utf{utf-8}
+\def\opt@ucs{ucs-2}
+\def\opt@sw{sw}
+\define@key{antomega}{localmarks}[on]{%
+   \def\@tmpa{#1}
+   \ifx\@tmpa\opt@enabled
+      \def\local@marks##1{%
+         \def\markboth####1####2{%
+            \begingroup%
+               \let\label\relax \let\index\relax \let\glossary\relax%
+               \unrestored@protected@xdef\@themark%
+               {{\foreignlanguage{##1}{####1}}{\foreignlanguage{##1}{####2}}}%
+               \@temptokena \expandafter{\@themark}%
+               \mark{\the\@temptokena}%
+            \endgroup%
+            \if@nobreak\ifvmode\nobreak\fi\fi}%
+            \def\markright####1{%
+               \begingroup%
+                  \let\label\relax \let\index\relax \let\glossary\relax%
+                  \expandafter\@markright\@themark{\foreignlanguage{##1}{####1}}%
+                  \@temptokena \expandafter{\@themark}%
+                  \mark{\the\@temptokena}%
+               \endgroup%
+               \if@nobreak\ifvmode\nobreak\fi\fi}%
+            \def\@markright####1####2####3{\@temptokena{####1}%
+               \unrestored@protected@xdef\@themark{{\the\@temptokena}%
+               {{####3}}}}}
+   \else\ifx\@tmpa\opt@disabled
+      \def\local@marks#1{}
+      \typeout{Antomega package option: localmarks=off}
+   \fi\fi
+}
+%    \end{macrocode}
+%
+% The following option is preserved for backwards compatibility only.
+% Use `localmarks=off' instead.
+%
+%    \begin{macrocode}
+\DeclareOption{nolocalmarks}{\setkeys{antomega}{localmarks=off}}
+%    \end{macrocode}
+%
+% By default string conversion in headers and footers is enabled.
+%
+%    \begin{macrocode}
+\setkeys{antomega}{localmarks=on}
+%    \end{macrocode}
+%
+% \DescribeMacro{\oaddto}
+% This command was taken from the Babel package and renamed in
+% order to avoid conflicts. It is useful for modifying
+% some language-specific commands, predefined in *.lfd files.
+%
+%    \begin{macrocode}
+\def\oaddto#1#2{%
+   \ifx#1\@undefined
+      \def#1{#2}%
+   \else
+      \ifx#1\relax
+         \def#1{#2}%
+      \else
+         {\toks@\expandafter{#1#2}%
+           \xdef#1{\the\toks@}}%
+      \fi
+   \fi
+}
+%    \end{macrocode}
+%
+% \subsection{Loading languages}
+%
+% Standard commands for loading languages
+% (the core of the antomega package).
+%
+% \DescribeMacro{\background} This command requires one arguments which
+% must be a language name and loads it as the first language for 
+% our document.
+%
+% The optional argument is a set of parameters and their values
+% for the given language.
+%
+%    \begin{macrocode}
+\newcommand{\background}[2][]{%
+   \IfFileExists{omega-#2.ldf}%
+   {\input{omega-#2.ldf}%
+      \AtBeginDocument{\selectlanguage[#1]{#2}}%
+   \newenvironment{#2}[1][]{\begin{otherlanguage}[####1]{#2}}%
+      {\end{otherlanguage}}%
+   \expandafter\newcommand\csname local#2\endcsname[2][]{%
+      \foreignlanguage[####1]{#2}{####2}}}%
+   {\ant@nolang{#2}}%
+}
+%    \end{macrocode}
+%
+% \DescribeMacro{\load} This command takes one argument which
+% must be a language name and loads it in addition to the first
+% language.
+%
+% The optional argument is a set of parameters and their values
+% for the given language.
+%
+% Both |\background| and |\load| commands are used to define 
+% a |\local<$language>| command and a |<$language>| environment.
+% Commands and environments with these names were standard way
+% to switch languages in the original \file{omega} package, as well as
+% in \file{antomega} until the version 0.6. Now they are defined
+% in terms of standard babel-like commands.
+%
+%    \begin{macrocode}
+\newcommand{\load}[2][]{\IfFileExists{omega-#2.ldf}
+   {\input{omega-#2.ldf}\setkeys{#2}{#1}%
+   \newenvironment{#2}[1][]{\begin{otherlanguage}[####1]{#2}}%
+      {\end{otherlanguage}}
+   \expandafter\newcommand\csname local#2\endcsname[2][]{%
+      \foreignlanguage[####1]{#2}{####2}}}
+   {\ant@nolang{#2}}}
+%    \end{macrocode}
+%
+% \subsection{Default values for language-specific settings}
+%
+% First we define some standard values for the punctuation
+% commands, used by \file{lat2punct.otp}. The command names
+% are self-explanative.
+%
+%    \begin{macrocode}
+\def\common@punctuation{%
+   \def\InitialThinSpace{\nobreak\hskip.2em\ignorespaces}%
+   \def\ExplicitHyphen{\nobreak\-\nobreak\hskip\z@skip}%
+   \def\AllowHyphenation{\hskip\z@skip}%
+   \def\DisableLigature{\textormath{\nobreak\discretionary{-}{}%
+      {\kern.03em}\allowhyphens}{}}%
+   \def\CompoundWordMarkWithBreakpoint{\nobreak-\hskip\z@skip}%
+   \def\CompoundWordMarkNoBreakpoint{\textormath{\leavevmode\hbox{-}}{-}}%
+   \def\LeftDoubleQuotationMark{^^^^201c}%
+   \def\RightDoubleQuotationMark{^^^^201d}%
+   \def\LeftPointingDoubleAngleQuotationMark{^^^^00ab}%
+   \def\RightPointingDoubleAngleQuotationMark{^^^^00bb}%
+   \def\GermanLeftDoubleQuotationMark{^^^^201e}%
+   \def\GermanRightDoubleQuotationMark{^^^^201c}%
+   \def\QuestionMark{?}%
+   \def\ExclamationMark{!}%
+   \def\InvertedQuestionMark{^^^^00bf}%
+   \def\InvertedExclamationMark{^^^^00a1}%
+   \def\Semicolon{;}%
+   \def\Colon{:}%
+   \def\NonBreakingSpace{\leavevmode\nobreak\ }}
+%    \end{macrocode}
+%
+% \DescribeMacro{\common@font}
+% The |\common@font| macro will be used at the beginning of the
+% document and also each time we should return to the default
+% fonts (e. g. before switching to another language).
+%
+%    \begin{macrocode}
+\def\common@font{\normalfont\fontfamily{\westernrm}%
+   \fontencoding{\uniencoding}\selectfont%
+   \let\rmdefault=\westernrm\let\sfdefault=\westernsf%
+   \let\ttdefault=\westerntt\let\encodingdefault=\uniencoding}
+%    \end{macrocode}
+%
+% \DescribeMacro{\common@language}
+% This macro is used for enabling default hyphenation patterns.
+%
+%    \begin{macrocode}
+\def\common@language{%
+   \protect\language=0%
+   \lefthyphenmin=2\righthyphenmin=3}
+%    \end{macrocode}
+%
+% \DescribeMacro{\noextrascurrent}
+% \DescribeMacro{\originalOmega}
+% The |\originalOmega| macro is used to switch all settings,
+% which could be modified by the language switching commands,
+% to their default values.
+%
+%    \begin{macrocode}
+\def\noextrascurrent#1{\@ifundefined{noextras@#1}{}%
+   {\csname noextras@#1\endcsname}}
+\def\originalOmega{\@ifundefined{languagename}{}%
+   {\noextrascurrent{\languagename}}%
+   \common@language%
+   \common@punctuation%
+   \common@font%
+   \clearocplists%
+   }
+\AtBeginDocument{\originalOmega}
+%    \end{macrocode}
+%
+% \subsection{Language switching commands}
+%
+% In case we have Babel's \file{hyphen.cfg} loaded into format,
+% |\foreignlanguage| is already defined, and so we have to unset 
+% it first.
+%
+%    \begin{macrocode}
+\@ifundefined{foreignlanguage}{}%
+   {\let\foreignlanguage\@undefined}
+%    \end{macrocode}
+%
+% \DescribeMacro{\foreignlanguage}
+% This macro works exactly as Babel's |\foreignlanguage| command,
+% but it takes 3 arguments. The first (optional) argument allows
+% to set any options, defined in the support file for the
+% given language. The second argument is languages's name itself,
+% and the third~--- the piece of text, which should be typeset in
+% this language.
+%
+%    \begin{macrocode}
+\newcommand{\foreignlanguage}[3][]{%
+   \@ifundefined{inlineextras@#2}{\ant@nolang{#2}}{%
+     {\def\languagename{#2}%
+      \setkeys{#2}{#1}%
+      \csname inlineextras@#2\endcsname#3}%
+}}
+%    \end{macrocode}
+%
+% |\selectlanguage| have to be redefined too.
+%
+%    \begin{macrocode}
+\@ifundefined{selectlanguage}{}%
+   {\let\selectlanguage\@undefined}
+%    \end{macrocode}
+%
+% \DescribeMacro{\selectlanguage}
+% This macro works exactly as Babel's |\selectlanguage| command,
+% but it takes 2 arguments. The second argument is languages's name 
+% itself, and the first (optional) allows to set any options, defined 
+% in the support file for the given language. 
+%
+%    \begin{macrocode}
+\newcommand{\selectlanguage}[2][]{%
+   \@ifundefined{blockextras@#2}{\ant@nolang{#2}}{%
+      \def\ant@pop@language{%
+         \ant@set@language{\languagename}%
+         \let\emp@langname\undefined}%
+      \aftergroup\ant@pop@language%
+      \setkeys{#2}{#1}%
+      \ant@set@language{#2}%
+}}
+\newcommand{\ant@set@language}[1]{%
+   \select@language{#1}%
+   \if@filesw%
+      \protected@write\@auxout{}{\protect\select@language{#1}}%
+      \addtocontents{toc}{\protect\select@language{#1}}%
+      \addtocontents{lof}{\protect\select@language{#1}}%
+      \addtocontents{lot}{\protect\select@language{#1}}%
+   \fi%
+}
+\@ifundefined{select@language}{}%
+   {\let\select@language\@undefined}
+\newcommand{\select@language}[1]{%
+   \originalOmega%
+   \edef\languagename{#1}%
+   \csname blockextras@#1\endcsname%
+}
+\let\ant@pop@language\relax
+%    \end{macrocode}
+%
+% We have to redefine the |otherlanguage| environment as well.
+%
+%    \begin{macrocode}
+\@ifundefined{otherlanguage}{}%
+   {\let\otherlanguage\@undefined}
+\@ifundefined{endotherlanguage}{}%
+   {\let\endotherlanguage\@undefined}
+%    \end{macrocode}
+%
+% \DescribeEnv{otherlanguage}
+% This environment works exactly as Babel's |otherlanguage| environment.
+% The only difference is that is has an optional argument allowing
+% to set any options, defined in the .ldf file.
+%
+%    \begin{macrocode}
+\newenvironment{otherlanguage}[2][]{%
+   \selectlanguage[#1]{#2}%
+   }{}
+%    \end{macrocode}
+%
+% \iffalse
+%</antomega>
+%<*patterns>
+% \fi
+%
+% \subsection{Handling hyphenation rules}
+%
+% \DescribeEnv{hyphenrules}
+% The environment \texttt{hyphenrules} can be used to select
+% \emph{just} the hyphenation rules. This environment does
+% \emph{not} change |\languagename| and when the hyphenation rules
+% specified were not loaded it has no effect.
+%
+%    \begin{macrocode}
+\def\hyphenrules#1{%
+   \expandafter\ifx\csname l@#1\endcsname\@undefined
+      \@nolanerr{#1}%
+   \else
+      \language=\csname l@#1\endcsname\relax
+   \fi
+}
+\def\endhyphenrules{}
+%    \end{macrocode}
+%
+% \DescribeMacro{\set@hyphenmins}
+% This macro sets the values of |\lefthyphenmin| and
+% |\righthyphenmin|. It expects two values as its argument.
+%
+%    \begin{macrocode}
+\def\set@hyphenmins#1#2{\lefthyphenmin#1\righthyphenmin#2}
+%    \end{macrocode}
+%
+% \iffalse
+%</patterns>
+%<*antomega>
+% \fi
+%
+% \DescribeMacro{\local@hyphenmins}
+% This macro takes 3 arguments: a language name and default
+% |\lefthyphenmin| and |\righthyphenmin| values for that language.
+% First it tests if |\<language>hyphenmins| is already defined (i.~e.
+% some |\lefthyphenmin| and |\righthyphenmin| values were specified in
+% the hyphenation patterns loaded into format), and either executes this
+% command, or sets both variables to the provided default values.
+%
+%    \begin{macrocode}
+\newcommand{\local@hyphenmins}[3]{%
+   \@ifundefined{#1hyphenmins}%
+      {\lefthyphenmin=#2\righthyphenmin=#3}%
+      {\csname #1hyphenmins\endcsname}%
+}
+%    \end{macrocode}
+%
+% \iffalse
+%</antomega>
+%<*patterns>
+% \fi
+%
+% \subsection{Loading hyphenation rules into format}
+%
+% \DescribeMacro{\process@line}
+% Each line in the file \file{language.dat} is processed by
+% |\process@line| after it is read. The first thing this macro does
+% is to check wether the line starts with \texttt{=}.
+% When the first token of a line is an \texttt{=}, the macro
+% |\process@synonym| is called; otherwise the macro
+% |\process@language| will continue.
+%
+%    \begin{macrocode}
+\def\process@line#1#2 #3/{%
+   \ifx=#1
+      \process@synonym#2 /
+   \else
+      \process@language#1#2 #3/%
+   \fi
+}
+%    \end{macrocode}
+%
+% \DescribeMacro{\process@synonym}
+% This macro takes care of the lines which start with an
+% \texttt{=}. It needs an empty token register to begin with.
+%
+%    \begin{macrocode}
+\toks@{}
+\def\process@synonym#1 /{%
+   \ifnum\last@language=\m@ne
+%    \end{macrocode}
+%
+% When no languages have been loaded yet the name following the
+% \texttt{=} will be a synonym for hyphenation register 0.
+%
+%    \begin{macrocode}
+      \expandafter\chardef\csname l@#1\endcsname0\relax
+      \wlog{\string\l@#1=\string\language0}
+%    \end{macrocode}
+%
+% As no hyphenation patterns are read in yet, we can not yet set
+% the hyphenmin paramaters. Therefor a commands to do so is stored
+% in a token register and executed when the first pattern file has
+% been processed.
+%
+%    \begin{macrocode}
+      \toks@\expandafter{\the\toks@
+         \expandafter\let\csname #1hyphenmins\expandafter\endcsname
+         \csname\languagename hyphenmins\endcsname}%
+   \else
+%    \end{macrocode}
+%
+% Otherwise the name will be a synonym for the language loaded last.
+%
+%    \begin{macrocode}
+      \expandafter\chardef\csname l@#1\endcsname\last@language
+      \wlog{\string\l@#1=\string\language\the\last@language}
+%    \end{macrocode}
+%
+%    We also need to copy the hyphenmin paramaters for the synonym.
+%
+%    \begin{macrocode}
+      \expandafter\let\csname #1hyphenmins\expandafter\endcsname
+      \csname\languagename hyphenmins\endcsname
+   \fi
+  }
+%    \end{macrocode}
+%
+% \DescribeMacro{\process@language}
+% The macro |\process@language| is used to process a non-empty line
+% from the `configuration file'. It has three arguments, each
+% delimited by white space. The third argument is optional,
+% therefore a |/| character is expected to delimit the last
+% argument.  The first argument is the `name' of a language, the
+% second is the name of the file that contains the patterns. The
+% optional third argument is the name of a file containing
+% hyphenation exceptions.
+%
+% The first thing to do is call |\addlanguage| to allocate a
+% pattern register and to make that register `active'.
+%
+%    \begin{macrocode}
+\def\process@language#1 #2 #3/{%
+   \expandafter\addlanguage\csname l@#1\endcsname
+   \expandafter\language\csname l@#1\endcsname
+   \def\languagename{#1}%
+%    \end{macrocode}
+%
+% Then the `name' of the language that will be loaded now is
+% added to the token register |\toks8|. and finally
+% the pattern file is read.
+%
+%    \begin{macrocode}
+   \global\toks8\expandafter{\the\toks8#1, }%
+%    \end{macrocode}
+%
+% For some hyphenation patterns it is needed to load them with a
+% specific font encoding selected. This can be specified in the
+% file \file{language.dat} by adding for instance `\texttt{:T1}' to
+% the name of the language. The macro |\ant@get@enc| extracts the
+% font encoding from the language name and stores it in
+% |\ant@hyph@enc|.
+%
+%    \begin{macrocode}
+   \begingroup
+      \ant@get@enc#1:\@@@
+      \ifx\ant@hyph@enc\@empty
+      \else
+         \fontencoding{\ant@hyph@enc}\selectfont
+      \fi
+%    \end{macrocode}
+%
+% Some pattern files contain assignments to |\lefthyphenmin| and
+% |\righthyphenmin|. \TeX\ does not keep track of these
+% assignments. Therefor we try to detect such assignments and
+% store them in the |\<langvar>hyphenmins| macro. When no
+% assignments were made we provide a default setting.
+%
+%    \begin{macrocode}
+      \lefthyphenmin\m@ne
+%    \end{macrocode}
+%
+% Some pattern files contain changes to the |\lccode| en |\uccode|
+% arrays. Such changes should remain local to the language;
+% therefor we process the pattern file in a group; the |\patterns|
+% command acts globally so it's effect will be remembered.
+%
+%    \begin{macrocode}
+      \input #2\relax
+%    \end{macrocode}
+%
+% Now we globally store the settings of |\lefthyphenmin| and
+% |\righthyphenmin| and close the group.
+%
+%    \begin{macrocode}
+      \ifnum\lefthyphenmin=\m@ne
+      \else
+         \expandafter\xdef\csname #1hyphenmins\endcsname{%
+            \set@hyphenmins{\the\lefthyphenmin}{\the\righthyphenmin}}%
+      \fi
+   \endgroup
+%    \end{macrocode}
+%
+% If the counter |\language| is still equal to zero we set the
+% hyphenmin parameters to the values for the language loaded on
+% pattern register 0.
+%
+%    \begin{macrocode}
+   \ifnum\the\language=\z@
+      \expandafter\ifx\csname #1hyphenmins\endcsname\relax
+         \set@hyphenmins\tw@\thr@@\relax
+      \else
+         \expandafter\expandafter\expandafter\set@hyphenmins
+            \csname #1hyphenmins\endcsname
+      \fi
+%    \end{macrocode}
+%
+% Now execute the contents of token register zero as it may
+% contain commands which set the hyphenmin parameters for synonyms
+% that were defined before the first pattern file is read in.
+%
+%    \begin{macrocode}
+      \the\toks@
+   \fi
+%    \end{macrocode}
+%
+% Empty the token register after use.
+%
+%    \begin{macrocode}
+   \toks@{}%
+%    \end{macrocode}
+%
+% When the hyphenation patterns have been processed we need to see
+% if a file with hyphenation exceptions needs to be read. This is
+% the case when the third argument is not empty and when it does
+% not contain a space token.
+%
+%    \begin{macrocode}
+   \def\ant@tempa{#3}%
+   \ifx\ant@tempa\@empty
+   \else
+      \ifx\ant@tempa\space
+      \else
+         \input #3\relax
+      \fi
+   \fi
+}
+%    \end{macrocode}
+%
+% \DescribeMacro{\ant@get@enc}
+% \DescribeMacro{\ant@hyph@enc}
+% The macro |\ant@get@enc| extracts the font encoding from the
+% language name and stores it in |\ant@hyph@enc|. It uses delimited
+% arguments to acheive this.
+%
+%    \begin{macrocode}
+\def\ant@get@enc#1:#2\@@@{%
+%    \end{macrocode}
+%
+% First store both arguments in temporary macros,
+%
+%    \begin{macrocode}
+  \def\ant@tempa{#1}%
+  \def\ant@tempb{#2}%
+%    \end{macrocode}
+%
+% then, if the second argument was empty, no font encoding was
+% specified and we're done.
+%
+%    \begin{macrocode}
+  \ifx\ant@tempb\@empty
+    \let\ant@hyph@enc\@empty
+  \else
+%    \end{macrocode}
+%
+% But if the second argument was \emph{not} empty it will now have
+% a superfluous colon attached to it which we need to remove. This
+% done by feeding it to |\ant@get@enc|. The string that we are
+% after will then be in the first argument and be stored in
+% |\ant@tempa|.
+%
+%    \begin{macrocode}
+    \ant@get@enc#2\@@@
+    \edef\ant@hyph@enc{\ant@tempa}%
+  \fi}
+%    \end{macrocode}
+%
+% The configuration file can now be opened for reading.
+%
+%    \begin{macrocode}
+\openin1 = language.dat
+%    \end{macrocode}
+%
+% See if the file exists, if not, use the default hyphenation file
+% \file{hyphen.tex}. The user will be informed about this.
+%
+%    \begin{macrocode}
+\ifeof1
+  \message{I couldn't find the file language.dat,\space
+           I will try the file hyphen.tex}
+  \input hyphen.tex\relax
+\else
+%    \end{macrocode}
+%
+% Pattern registers are allocated using count register
+% |\last@language|. Its initial value is~0. The definition of the
+% macro |\newlanguage| is such that it first increments the count
+% register and then defines the language. In order to have the
+% first patterns loaded in pattern register number~0 we initialize
+% |\last@language| with the value~$-1$.
+%
+%    \begin{macrocode}
+  \last@language\m@ne
+%    \end{macrocode}
+%
+% We now read lines from the file untill the end is found
+%
+%    \begin{macrocode}
+  \loop
+%    \end{macrocode}
+%
+% While reading from the input it is useful to switch off
+% recognition of the end-of-line character. This saves us stripping
+% off spaces from the contents of the controlsequence.
+%
+%    \begin{macrocode}
+    \endlinechar\m@ne
+    \read1 to \ant@line
+    \endlinechar`\^^M
+%    \end{macrocode}
+%
+% Empty lines are skipped.
+%
+%    \begin{macrocode}
+    \ifx\ant@line\@empty
+    \else
+%    \end{macrocode}
+%
+% Now we add a space and a |/| character to the end of
+% |\ant@line|. This is needed to be able to recognize the third,
+% optional, argument of |\process@language| later on.
+%
+%    \begin{macrocode}
+      \edef\ant@line{\ant@line\space/}%
+      \expandafter\process@line\ant@line
+    \fi
+%    \end{macrocode}
+%
+% Check for the end of the file.  To avoid a new \texttt{if}
+% control sequence we create the necessary |\iftrue| or |\iffalse|
+% with the help of |\csname|.  But there is one complication with
+% this approach: when skipping the \texttt{loop...repeat} \TeX\ has
+% to read |\if|/|\fi| pairs.  So we have to insert a `dummy'
+% |\iftrue|.
+%
+%    \begin{macrocode}
+    \iftrue \csname fi\endcsname
+    \csname if\ifeof1 false\else true\fi\endcsname
+  \repeat
+%    \end{macrocode}
+%
+% Reactivate the default patterns,
+%
+%    \begin{macrocode}
+  \language=0
+\fi
+%    \end{macrocode}
+%
+% and close the configuration file.
+%
+%    \begin{macrocode}
+\closein1
+%    \end{macrocode}
+%
+% Also remove some macros from memory
+%
+%    \begin{macrocode}
+\let\process@language\@undefined
+\let\process@synonym\@undefined
+\let\process@line\@undefined
+\let\ant@tempa\@undefined
+\let\ant@tempb\@undefined
+\let\ant@eq@\@undefined
+\let\ant@line\@undefined
+\let\ant@get@enc\@undefined
+\ifx\addto@hook\@undefined
+\else
+  \expandafter\addto@hook\expandafter\everyjob\expandafter{%
+    \expandafter\typeout\expandafter{\the\toks8 loaded.}}
+\fi
+%    \end{macrocode}
+%
+% \iffalse
+%</patterns>
+%<*antomega>
+% \fi
+%
+% \subsection{Processing options}
+%
+%    \begin{macrocode}
+\DeclareOption*{%
+   \edef\@temp{\noexpand\setkeys{antomega}{\CurrentOption}}%
+   \@temp%
+}
+\ProcessOptions
+%    \end{macrocode}
+%
+% \iffalse
+%</antomega>
+% \fi
+%
+% \Finale
+%
+\endinput

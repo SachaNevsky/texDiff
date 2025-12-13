@@ -1,0 +1,411 @@
+% \iffalse
+%<*copyright>
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% mi-solns package                                      %%
+%% Copyright (C) 2018  D. P. Story                       %%
+%%   dpstory@uakron.edu                                  %%
+%%                                                       %%
+%% This program can redistributed and/or modified under  %%
+%% the terms of the LaTeX Project Public License         %%
+%% Distributed from CTAN archives in directory           %%
+%% macros/latex/base/lppl.txt; either version 1.2 of the %%
+%% License, or (at your option) any later version.       %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%</copyright>
+%<package>\NeedsTeXFormat{LaTeX2e}
+%<package>\ProvidesPackage{mi-solns}
+%<package> [2018/12/28 v0.6 extract solutions from exerquiz (dps)]
+%<*driver>
+\documentclass{ltxdoc}
+\usepackage[colorlinks,hyperindex=false]{hyperref}
+\OnlyDescription  % comment out for implementation details
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+\InputIfFileExists{aebdocfmt.def}{\PackageInfo{web}{Inputting aebdocfmt.def}}
+    {\def\IndexOpt{\DescribeMacro}\def\IndexKey{\DescribeMacro}\let\setupFullwidth\relax
+     \PackageInfo{web}{aebdocfmt.def cannot be found}}
+\makeatletter
+  \let\@latex@warning\@gobble
+\makeatother
+\begin{document}
+\def\ameta#1{\ensuremath{\langle\textit{\texttt{#1}}\rangle}}
+\def\meta#1{\textsl{\texttt{#1}}}
+\def\darg#1{{\ttfamily\char123\relax#1\char125\relax}}
+\def\CMD#1{\textbackslash#1}
+\let\pkg\textsf
+\let\app\textsf
+\let\opt\texttt
+\let\env\texttt
+  \GetFileInfo{mi-solns.sty}
+  \title{\textsf{mi-solns}: Extract solutions from exercises and quizzes}
+  \author{D. P. Story\\
+    Email: \texttt{dpstory@uakron.edu}}
+  \date{processed \today}
+  \maketitle
+  \tableofcontents
+  \DocInput{mi-solns.dtx}
+\IfFileExists{\jobname.ind}{\newpage\setupFullwidth\par\PrintIndex}{\paragraph*{Index} The index goes here. Execute
+    \begin{quote}\texttt{makeindex -s gind.ist -o\\\null\quad mi-solns.ind mi-solns.idx}\end{quote} on the command line and recompile
+    \texttt{mi-solns.dtx}.}
+\IfFileExists{\jobname.gls}{\PrintChanges}{\paragraph*{Change History} The list of changes goes here. Execute
+    \begin{quote}\texttt{makeindex -s gglo.ist -o\\\null\quad mi-solns.gls mi-solns.glo}\end{quote} on the command line and recompile
+    \texttt{mi-solns.dtx}.}
+\makeatletter
+  \let\@latex@warning\@gobble
+\makeatother
+\end{document}
+%</driver>
+% \fi
+%
+% \MakeShortVerb{|}
+% \DoNotIndex{\w,\x,\y,\z}
+% \InputIfFileExists{aebdonotindex.def}{\PackageInfo{web}{Inputting aebdonotindex.def}}
+%    {\PackageInfo{web}{cannot find aebdonotindex.def}}
+%
+%    \begin{macrocode}
+%<*package>
+%    \end{macrocode}
+%    \section{Introduction}
+%    The \pkg{exerquiz} package is capable of creating questions and solutions to exercises and quizzes.
+%    The purpose of this package is to develop commands for extracting any desired solution, for whatever
+%    reason, and typesetting it anywhere in the body of the document. To accomplish this goal, the
+%    recent version of \pkg{exerquiz} is required (dated 2018/12/13 or later) and the \pkg{shellesc} package.
+%
+%    While the document is being compiled, the solution files (SOL and QSL) are being written to, so we cannot
+%    input them or read them. What we do is to make a copy of the solution files from within the operating system,
+%    and input that back into the body of the document when required. Consequently, it is necessary to activate
+%    the feature of executing an OS script from within the compiling operation. To activate the feature, the document
+%    needs to be compiled with the \texttt{--shell-escape} switch (for \app{latex}, \app{pdflatex}, \app{lualatex}, and \app{xelatex}).
+%
+%    The basic idea is to mark a solution that is to be reproduced elsewhere, \cs{mrkForIns\darg{\ameta{name}}}, just above
+%    the \env{solution} environment. Then elsewhere in the document, input the solution using the command \cs{insExSoln\darg{\ameta{name}}},
+%    \cs{insSqSoln\darg{\ameta{name}}}, or \cs{insQzSoln\darg{\ameta{name}}}, depending on whether the solution came from
+%    the \env{exercise}, \env{shortquiz}, or \env{quiz} environment.
+%    \changes{v0.6}{2018/12/28}{Change package name from \string\pkg{ci-solns} to \string\pkg{mi-solns}; change internal commands
+%    to reflect this renaming}
+%    \section{Preliminaries}
+%    \begin{macrocode}
+\RequirePackage{shellesc}
+\ProcessOptions\relax
+%    \end{macrocode}
+%    We require either \pkg{exerquiz} or \pkg{eqexam} with a minimal publish date, \cs{mi@reqChk} performs the
+%    check, but delays it until \cs{AtBeginDocument}.
+%    \begin{macrocode}
+\def\mi@reqChk{\begingroup\mifoundfalse
+  \@ifpackageloaded{exerquiz}{\mifoundtrue\def\reqDate{2018/12/13}
+    \@ifpackagelater{exerquiz}{\reqDate}
+      {}{\PackageWarning{mi-solns}{exerquiz dated \reqDate\space
+        or later\MessageBreak required}}%
+  }{}%
+  \@ifpackageloaded{eqexam}{\mifoundtrue
+      \def\reqDate{2018/12/13}\@ifpackagelater{eqexam}{\reqDate}
+      {\mi@solutionsonlyfix}{\PackageWarning{mi-solns}
+        {eqexam dated \reqDate\space or\MessageBreak
+         later required}}%
+  }{}%
+  \ifmifound\else
+    \PackageWarning{mi-solns}{For this package to be
+    effective\MessageBreak you need either exerquiz
+    or eqexam, as appropriate}\fi
+\endgroup}
+\AtBeginDocument{\mi@reqChk}
+%    \end{macrocode}
+%    Beginning with \pkg{exerquiz/eqexam} dated 2018/12/13, we can change the name of the
+%    SOL file (from its default of \cs{jobname.sol}. If the \opt{solutionsonly} option of
+%    \pkg{eqexam} is being applied, we made some changes so that option works with
+%    \pkg{mi-solns}.
+%    \begin{macrocode}
+\def\mi@solutionsonlyfix{\ifsolutionsonly
+  \edef\eqExSolFileName{\misolout}\expandafter
+  \global\copySolnsOff\global\notamiopfalse\fi}
+%    \end{macrocode}
+%    \section{Core commands for this package}
+%    \begin{macro}{\copyfileCmdEx}
+%    \begin{macro}{\copyfileCmdQz}
+%    The commands to copy SOL and QSL files, may be redefined as needed in the operating system.
+%    \begin{macrocode}
+\def\declSOLIn#1{\def\misolin{#1}}\def\declSOLOut#1{\def\misolout{#1}}
+\def\misolin{\jobname.sol}\def\misolout{\jobname-cpy.sol}
+\def\declQSLIn#1{\def\miqslin{#1}}\def\declQSLOut#1{\def\miqslout{#1}}
+\def\miqslin{\jobname.qsl}\def\miqslout{\jobname-cpy.qsl}
+\newcommand*{\copyfileCmdEx}{copy \misolin\space\misolout}
+\newcommand*{\copyfileCmdQz}{copy \miqslin\space\miqslout}
+\def\mi@copysolns{%
+  \ShellEscape{\copyfileCmdEx}\ShellEscape{\copyfileCmdQz}}
+%    \end{macrocode}
+%    \end{macro}
+%    \end{macro}
+%    \begin{macro}{\copySolnsOn}
+%    Making a copy of the solution files is the default.
+%    \begin{macro}{\copySolnsOff}
+%    After there are no more changes to the solution files, you can say
+%    \cs{copySolnsOff}, and each compile will not rebuild `\texttt{cpy-}' solution
+%    files.
+%    \begin{macrocode}
+\def\copySolnsOn{\let\mi@copySolns\mi@copysolns}
+\def\copySolnsOff{\let\mi@copySolns\relax}
+\@onlypreamble\copySolnsOn
+\@onlypreamble\copySolnsOff
+\copySolnsOn
+%    \end{macrocode}
+%    \textbf{Copy the solution files.} At the end of the document, we make a copy of the solution files, provided
+%    \cs{copySolnsOn} is in effect.
+%    \begin{macrocode}
+\AtEndDocument{\mi@copySolns}
+%    \end{macrocode}
+%    \end{macro}
+%    \end{macro}
+%    \textbf{Some utility commands}
+%    Below, we define a few useful commands.\medskip\par
+%    \noindent\DescribeMacro\ignoreterminex If \cs{eqterminex} has a special definition,
+%    perhaps created from the \env{cq} environment, you can pass \cs{ignoreterminex} through
+%    the optional argument of \cs{insExSoln} and the question to the problem does not appear.
+%    We also declare \DescribeMacro\ignoreques\cs{ignoreques} as an alias for \cs{ignoreterminex}.\medskip
+%
+%    \noindent We define two switches: \DescribeMacro\ifmifound\cs{ifmifound} is set to true when
+%    a \ameta{name} we are searching for is found; otherwise it remains false. A value of false causes
+%    a warning to be issued. \DescribeMacro\ifnotamiop\cs{ifnotamiop} (not a MI operation) is used to control what is displayed
+%    when one of the \cs{ins...} commands are used. See comments just below.
+%    \begin{macrocode}
+\newif\ifmifound \mifoundfalse
+\newif\ifnotamiop \notamioptrue
+\newif\ifmi@OKtoRead \mi@OKtoReadtrue
+\def\readSolnsOn{\mi@OKtoReadtrue}
+\def\readSolnsOff{\mi@OKtoReadfalse}
+\newcommand*{\miReadOffMsg}{(\textbf{?? read is off ??})}
+%    \end{macrocode}
+%   The document author can can write to the solution files using
+%   \DescribeMacro\writeToExSolns\cs{writeToExSolns}, \DescribeMacro\writeToSolnFile\cs{writeToSolnFile},
+%   or \DescribeMacro\writeToQzSolns. The macros are originally defined in \pkg{exerquiz} and
+%   \pkg{eqexam}, but we redefine them here so their argument is enclosed in
+%   \cs{ifnotamiop}.
+%    \begin{macrocode}
+\newcommand\mi@wrt@fix[1]{\protect\ifnotamiop^^J%
+  #1^^J\protect\fi}
+\renewcommand\writeToExSolns[1]{\writeT@ExSolns{\mi@wrt@fix{#1}}}
+\renewcommand\writeToQzSolns[1]{\writeT@QzSolns{\mi@wrt@fix{#1}}}
+\@ifpackageloaded{eqexam}
+  {\renewcommand\writeToSolnFile[1]{\writeT@SolnFile{\mi@wrt@fix{#1}}}}
+  {\let\writeToSolnFile\writeToExSolns}
+\def\ignoreterminex{\let\eqterminex\relax\let\decleqterminex\@gobble}
+\let\ignoreques\ignoreterminex
+%    \end{macrocode}
+%    Some gobbling macros.
+%    \begin{macrocode}
+\long\def\gobbleiiterminex#1\eqterminex{}
+\long\def\gobbleiiendinput#1\endinput{\endinput}
+\long\def\gobbleiiendgroup#1\endgroup{}
+\long\def\mi@griii#1#2#3{}
+%    \end{macrocode}
+%    \cs{eqgriii} is eventually \cs{let} to\DescribeMacro{\mi@griii}\cs{mi@griii}, while \cs{eqgrii} is
+%    \cs{let} to \cs{@gobbletwo}. In the data structure of
+%    the solution file of an \pkg{eqexam} document. In such a document, \cs{eqgriii} and \cs{eqgrii} appears at the top
+%    and bottom of the file; for example,
+%    \begin{flushleft}\ttfamily\small\let\s\string\let\b\darg\let\t\quad
+%    \t\s\eqgriii\s\noindent\s\begin\b{eqequestions}\\
+%    \t\dots\\
+%    \t\s\eqgrii\s\end\b{eqequestions}
+%    \end{flushleft}
+%    We don't want the \env{eqequestions} environment input as part of the insertion, so we must gobble
+%    them up using \cs{eqgriii} (\cs{let} to \cs{mi@griii}) and \cs{eqgrii} (\cs{let} to \cs{@gobbletwo}).
+%    These are formatting (a list env), which we don't want in the body of our document. We are
+%    just trying to input the \ameta{solution} part of the data structure; everything else needs to be
+%    ignored.
+%    \begin{macrocode}
+%    \end{macrocode}
+%    The next three commands do some internal
+%    work. They are each called by \cs{insExSoln}, \cs{insSqSoln}, and \cs{insQzSoln}, respectively\medskip
+%
+%   \subsection{Internal macros that expand within a solutions file}
+%    There are three macros that are defined and are executed as a solution file is input.
+%
+%   \subsubsection{For exercises}
+%   Exercises are the more difficult case because they are used not only by \pkg{exerquiz},
+%   but also \pkg{eqexam}; in the latter, there are may more `control' commands that are written
+%   to the solution file (SOL) to format how the solutions appear at the end of the document.
+%
+%   Below is a representation of a solution to an exercise. The \cs{insExSoln} command, \cs{let}s
+%   \cs{eqMrkSoln} to \cs{eqMrkSolnCpyEx}\par\medskip\noindent
+%   \textbf{A representative data structure for an exercise (\pkg{exerquiz})}\vadjust{\kern-6pt}
+%   \begin{flushleft}\ttfamily\small\let\s\string\let\b\darg\let\t\quad
+%   \t\s\eqMrkSoln\b{\ameta{name}}\s\eqEXt\b{}\b{}\s\solnItemMngt\\
+%   \t\s\exerSolnHeader\b{\ameta{argi}}\b{\ameta{argii}}{\b{argiii}}\s\eqterminex\\
+%   \t\t\t\ameta{solution}\\
+%   \t\s\ReturnTo\b{\ameta{argi}}\b{\ameta{argii}}\s\endeqEXt\s\par\b{\s\medskip}\%
+%   \end{flushleft}
+%   If a solution to an exercise (or quiz) is \emph{not marked} by \cs{mrkForIns{\ameta{name}}}, then
+%   \cs{eqMrkSoln\darg{\ameta{name}}} \emph{does not appear} in the structure.\par\medskip\noindent
+%   \textbf{A representative data structure for an problem (\pkg{eforms})}\vadjust{\kern-6pt}
+%   \begin{flushleft}\ttfamily\small\let\s\string\let\b\darg\let\t\quad
+%   \t\s\decleqterminex\b{\s\cqFmtPasteQues\b{cq-1.cut}}\%\\
+%   \t\s\eqMrkSoln\b{\ameta{name}}\s\eqEXt\b{}\b{}\s\solnItemMngt\\
+%   \t\s\exerSolnHeader\b{\ameta{argi}}\b{\ameta{argii}}\b{\ameta{argiii}}\s\selectVersion\b{}\b{3}\s\eqterminex\\
+%   \t\t\t\ameta{solution}\\
+%   \t\s\ReturnTo\b{\ameta{argi}}\b{\ameta{argii}}\s\endeqEXt\s\par\b{\b{}}\%
+%   \end{flushleft}
+%   When \cs{selectVersion} \emph{does not appear} prior to the \env{solution} environment, then the \cs{declareterminex}
+%   and \cs{selectVersion} (and args) \emph{do not appear} in the structure.\par\medskip\noindent
+%   \textbf{In general.} When \cs{eqMrkSoln} is expanded, it tests whether
+%   \ameta{name} matches \cs{eqMrkCpyArg}. Referencing the above data structures, \cs{insExSoln} pretty
+%   much sets \cs{eqEXt}, \cs{solnItemMngt}, \cs{exerSolnHeader}, \cs{ReturnTo} to gobble their argument and become noops.
+%   \cs{endeqEXt} gobbles everything up down to \cs{endinput}.\medskip
+%
+%   \noindent\DescribeMacro{\eqMrkSolnCpyEx}\hskip-\marginparsep\texttt{\darg{\ameta{name}}} Process
+%   a marked solution for an exercise. We hunt for \ameta{name}.
+%   \begin{macrocode}
+\def\eqMrkSolnCpyEx#1{\def\eqargi{#1}%
+  \ifx\eqargi\eqMrkCpyArg
+    \mifoundtrue
+    \let\par\par@SAVE
+    \ifmakeExSlLocal
+      \long\def\endeqEXt##1##2##3{##3\gobbleiiendinput}\else
+      \let\endeqEXt\gobbleiiendinput\fi
+      \let\eqEXt\@gobbletwo
+      \let\mi@next\relax
+  \else
+    \long\def\endeqEXt##1##2{}%
+    \let\mi@next\gobbleToEndEXt
+  \fi
+\mi@next}
+%    \end{macrocode}
+%   \subsubsection{For short-quizzes}
+%   \textbf{A representative data structure for a short-quiz (\pkg{exerquiz})}\vadjust{\kern-6pt}
+%   \begin{flushleft}\ttfamily\small\let\s\string\let\b\darg\let\t\quad
+%   \t\s\eqMrkSoln\b{\ameta{name}}\s\eqSQt\b{}\s\quizSolnHeader\b{\ameta{argi}}\b{\ameta{argii}}\s\eqterminex\\
+%   \t\t\t\ameta{solution}\\
+%    \t\s\ReturnTo\b{\ameta{argi}}\b{\ameta{argii}}\s\endeqQt\s\fpAfterSolutionsSkip
+%   \end{flushleft}
+%   As commented above, \cs{eqMrkSoln} may not appear in the data structure.\medskip
+%
+%   \noindent\DescribeMacro{\eqMrkSolnCpySQ}\hskip-\marginparsep\texttt{\darg{\ameta{name}}} Process
+%   a marked solution for an short-quiz (\env{shortquiz} env). We hunt for \ameta{name}.
+%    \begin{macrocode}
+\def\eqMrkSolnCpySQ#1{\def\eqargi{#1}%
+  \ifx\eqargi\eqMrkCpyArg
+    \mifoundtrue
+    \let\par\par@SAVE
+    \ifmakeQzSlLocal
+      \long\def\endeqSQt##1##2{##2\gobbleiiendinput}\else
+      \let\endeqSQt\gobbleiiendinput
+    \fi
+    \let\mi@next\gobbleiiterminex
+  \else
+    \long\def\endeqSQt##1{}%
+    \let\mi@next\gobbleToEndSQt
+  \fi
+\mi@next}
+%    \end{macrocode}
+%   \subsubsection{For quizzes}
+%   \textbf{A representative data structure for a quiz (\pkg{exerquiz})}\vadjust{\kern-6pt}
+%   \begin{flushleft}\ttfamily\small\let\s\string\let\b\darg\let\t\quad
+%   \t\s\eqMrkSoln\b{\ameta{name}}\s\eqQt\b{}\s\quizSolnHeader\b{\ameta{argi}}\b{\ameta{argii}}\s\eqterminex\\
+%   \t\t\t\ameta{solution}\\
+%   \t\s\ReturnTo\b{\ameta{argi}}\b{\ameta{argii}}\s\endeqQt\s\fpAfterSolutionsSkip
+%   \end{flushleft}
+%   As commented above, \cs{eqMrkSoln} may not appear in the data structure.\medskip
+%
+%   \noindent\DescribeMacro{\eqMrkSolnCpyQz}\hskip-\marginparsep\texttt{\darg{\ameta{name}}} Process
+%   a marked solution for an quiz (\env{quiz} env). We hunt for \ameta{name}.
+%    \begin{macrocode}
+\def\eqMrkSolnCpyQz#1{\def\eqargi{#1}%
+  \ifx\eqargi\eqMrkCpyArg
+    \mifoundtrue
+    \let\par\par@SAVE
+    \ifmakeQzSlLocal
+      \long\def\endeqQt##1##2{##2\gobbleiiendinput}\else
+      \let\endeqQt\gobbleiiendinput
+    \fi
+    \let\mi@next\gobbleiiterminex
+  \else
+    \long\def\endeqQt##1{}%
+    \let\mi@next\gobbleToEndSQt
+  \fi
+\mi@next}
+%    \end{macrocode}
+
+%    \section{User commands for inserting a solution}
+%    The main commands are \cs{insExSoln}, \cs{insSqSoln}, and \cs{insQzSoln}.
+%
+%    Preliminary to the definitions, we define a command that is common to all of them.
+%    When inputting a solutions file, we cannot any vertical spaces that are not part of
+%    the solution, not formatting, not list environments, and so on. The
+%    \DescribeMacro\mi@nullify\cs{mi@nullify} is designed to cancel, nullify, or otherwise
+%    neutralize anything that is unwanted. I've added \DescribeMacro\addToMINullify\cs{addToMINullify}
+%    for any unforseen things we don't want to appear or to affect spacing.
+%
+%    \begin{macrocode}
+\let\addToMINullify\relax
+\def\mi@nullify{\let\par@SAVE\par\let\par\relax
+  \let\eqgrii\@gobbletwo\let\eqgriii\mi@griii\let\solnItemMngt\relax
+  \def\exerSolnHeader##1##2##3{}\def\ReturnTo##1##2{\unskip}%
+  \let\eqTopOfSolnPage\relax\let\preExamSolnHead\relax
+  \let\eqTopOfQslPage\relax
+  \let\examSolnHeadFmt\@gobble\let\postExamSolnHead\relax
+  \let\btwnExamSkip\relax\def\quizSolnHeader##1##2{}\addToMINullify}
+%    \end{macrocode}
+%
+%    \subsection{For exercises}
+%
+%    \begin{macro}{\insExSoln}\hskip-\marginparsep\texttt{[\ameta{inserts}]\darg{\ameta{name}}}
+%    Used for displaying the solution to an exercise that has been marked by
+%    \cs{mrkForIns\darg{\ameta{name}}}. The optional argument (\ameta{inserts}) is passed (inserted) into the top of the
+%   \cs{insExSoln}. For exercises, there is a \env{cq} command that copies the question
+%   to the solution. By default, the question \emph{is displayed}; however, by passing
+%   \DescribeMacro{\ignoreterminex}\cs{ignoreterminex} the question \emph{is not displayed}.
+%    \begin{macrocode}
+\newcommand{\insExSoln}[2][]{\begingroup\withinsoldoctrue#1\relax
+  \notamiopfalse\mi@nullify
+  \let\eqMrkSoln\eqMrkSolnCpyEx
+%    \end{macrocode}
+% Setting \cs{useExtFilter} and \cs{filterFor\darg{@NOMATCH@}}; hopefully, no match is ever obtained, which
+% means the already existent function of \cs{useExtFilter} will skip over the entries.
+% When \cs{eqMrkSoln} does not appear in a data structure, the filter will care of the structure entry.
+%    \begin{macrocode}
+  \useEXtFilter\filterFor{@NOMATCH@}\def\eqMrkCpyArg{#2}%
+  \ifmi@OKtoRead\InputIfFileExists{\misolout}{}{}\ifmifound\else
+  \textbf{??}\PackageWarning{mi-solns}{The name '#2' defined by
+    \string\mrkForIns\MessageBreak was not found}\fi\else
+    \miReadOffMsg\fi\endgroup}
+%    \end{macrocode}
+%    \end{macro}
+%
+%    \subsection{For quizzes}
+%    The commands \cs{insSqSoln} and \cs{insQzSoln} are identical, except for
+%    two parameters: \texttt{\#3} is the internal command (\cs{eqMrkSolnCpySQ}
+%    or \cs{eqMrkSolnCpyQz}); while \texttt{\#4} is the normal filter
+%    (\cs{useSQtFilter} or \cs{useQtFilter}).
+%    \begin{macrocode}
+\newcommand\mi@insSQzSoln[4][]{\begingroup\withinqsldoctrue#1\relax
+  \notamiopfalse\mi@nullify
+  \let\eqMrkSoln#3\relax
+  #4\filterFor{@NOMATCH@}\def\eqMrkCpyArg{#2}%
+  \ifmi@OKtoRead\InputIfFileExists{\miqslout}{}{}\ifmifound\else
+  \textbf{??}\PackageWarning{mi-solns}
+  {The name '#2' defined by \string\mrkForIns\MessageBreak
+    was not found}\fi\else\miReadOffMsg\fi\endgroup}
+%    \end{macrocode}
+%    \begin{macro}{\insSqSoln}\hskip-\marginparsep\texttt{[\ameta{inserts}]\darg{\ameta{name}}}
+%    Used for displaying the solution to an short-quiz that has been marked by
+%    \cs{mrkForIns\darg{\ameta{name}}}. The optional argument (\ameta{inserts}) is passed (inserted) into the top of the
+%   \cs{insSqSoln}.
+%    \begin{macrocode}
+\newcommand{\insSqSoln}[2][]{%
+  \mi@insSQzSoln[#1]{#2}{\eqMrkSolnCpySQ}{\useSQtFilter}}
+%    \end{macrocode}
+%    \end{macro}
+%
+%    \begin{macro}{\insQzSoln}\hskip-\marginparsep\texttt{[\ameta{inserts}]\darg{\ameta{name}}}
+%    Used for displaying the solution to an quiz that has been marked by
+%    \cs{mrkForIns\darg{\ameta{name}}}. The optional argument (\ameta{inserts}) is passed (inserted) into the top of the
+%   \cs{insQzSoln}.
+%    \begin{macrocode}
+\newcommand{\insQzSoln}[2][]{%
+  \mi@insSQzSoln[#1]{#2}{\eqMrkSolnCpyQz}{\useQtFilter}}
+%    \end{macrocode}
+%    \end{macro}
+%    \begin{macrocode}
+%</package>
+%    \end{macrocode}
+%  \Finale
+\endinput

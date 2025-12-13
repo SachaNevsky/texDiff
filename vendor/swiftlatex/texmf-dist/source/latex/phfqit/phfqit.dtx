@@ -1,0 +1,2185 @@
+% \iffalse meta-comment
+%
+% Copyright (C) 2016 by Philippe Faist, philippe.faist@bluewin.ch
+% -------------------------------------------------------
+% 
+% This file may be distributed and/or modified under the
+% conditions of the LaTeX Project Public License, either version 1.3
+% of this license or (at your option) any later version.
+% The latest version of this license is in:
+%
+%    http://www.latex-project.org/lppl.txt
+%
+% and version 1.3 or later is part of all distributions of LaTeX 
+% version 2005/12/01 or later.
+%
+% \fi
+%
+% \iffalse
+%<*driver>
+\ProvidesFile{phfqit.dtx}
+%</driver>
+%<package>\NeedsTeXFormat{LaTeX2e}[2005/12/01]
+%<package>\ProvidesPackage{phfqit}
+%<*package>
+    [2017/08/16 v2.0 phfqit package]
+%</package>
+%
+%<*driver>
+\documentclass{ltxdoc}
+\usepackage{xcolor}
+\makeatletter
+\providecommand\phfnote@pkgdoc@setupmainfont{
+  \renewcommand{\rmdefault}{futs}% only rm font, not math
+}\makeatother
+\usepackage[preset=xpkgdoc]{phfnote}
+\usepackage{phfqit}
+\usepackage{needspace}
+\EnableCrossrefs         
+\CodelineIndex
+\RecordChanges
+\begin{document}
+  \DocInput{phfqit.dtx}
+\end{document}
+%</driver>
+% \fi
+%
+% \CheckSum{0}
+%
+% \CharacterTable
+%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%   Digits        \0\1\2\3\4\5\6\7\8\9
+%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%   Dollar        \$     Percent       \%     Ampersand     \&
+%   Acute accent  \'     Left paren    \(     Right paren   \)
+%   Asterisk      \*     Plus          \+     Comma         \,
+%   Minus         \-     Point         \.     Solidus       \/
+%   Colon         \:     Semicolon     \;     Less than     \<
+%   Equals        \=     Greater than  \>     Question mark \?
+%   Commercial at \@     Left bracket  \[     Backslash     \\
+%   Right bracket \]     Circumflex    \^     Underscore    \_
+%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%   Right brace   \}     Tilde         \~}
+%
+%
+% \changes{v1.0}{2016/04/20}{Initial version}
+%
+% \GetFileInfo{phfqit.dtx}
+%
+% \DoNotIndex{\newcommand,\newenvironment,\let,\def,\gdef,\edef,\xdef,\if,\else,\fi,\ifx,\cslet,\csdef,\begingroup,\endgroup,\expandafter,\csname,\endcsname,\appto,\hspace,\mathrm,\notblank,\the,\RequirePackage}
+% 
+% \title{\phfqitltxPkgTitle{phfqit}}
+% \author{Philippe Faist\quad\email{philippe.faist@bluewin.ch}}
+% \date{\pkgfmtdate\filedate}
+% \maketitle
+%
+% \begin{abstract}
+%   \pkgname{phfqit}---Utilities to typeset stuff in Quantum Information Theory
+%   (quite biased towards theory), in particular general mathematical symbols,
+%   operators, and shorthands for entropy measures.
+% \end{abstract}
+%
+% \inlinetoc
+%
+% \section{Introduction}
+%
+% This package provides some useful definitions, mainly for notation of
+% mathematical expressions which are used in quantum information theory (at
+% least by me).
+%
+% Are included utilities for:
+% \begin{itemize}
+% \item General symbols and mathematical expressions (identity operator,
+%   trace, rank, diagonal, \ldots)  (\autoref{sec:symbols})
+% \item Formatting of bits and bit strings (\autoref{sec:bits})
+% \item Formatting of names of logical gates (\autoref{sec:gates})
+% \item Typesetting the names of Lie groups and algebras, for example $\su(N)$
+%   (\autoref{sec:Lie-groups-algebras})
+% \item Bra-ket notation, and delimited expressions such as average, norm,
+%   \ldots (\autoref{sec:delimited})
+% \item Typesetting entropy measures, including the Shannon/von Neumann entropy,
+%   the smooth entropies, relative entropies, as well as my coherent relative
+%   entropy
+% \end{itemize}
+%
+%
+% \section{Basic Usage}
+%
+% \label{sec:pkg-options}
+%
+% This package is straightforward to use:
+% \begin{verbatim}
+% \usepackage{phfqit}
+% \end{verbatim}
+%
+% A single package option controls which entropy measures are defined for you.
+%
+% \begin{pkgoptions}
+% \item[qitobjdef=\meta{\phfverb{stdset} $\mid$ \phfverb{none}}] Load
+%   the predefined set of ``qit objects, '' i.e., entropy measures.  The entropy
+%   measures documented below (and specified as such) will be loaded unless you
+%   set \pkgoptionfmt{qitobjdef=none}.
+% \item[newReIm=\metatruefalsearg] Do not override \LaTeX{}'s default
+%   {\makeatletter $\phfqit@Re$ and $\phfqit@Im$} symbols by $\Re$ and $\Im$.
+%   See \autoref{sec:description-newReIm}.
+% \end{pkgoptions}
+% 
+% \changed[v2.0-pkg-opt-qitobjdef]{v2.0}{2017/08/16}{Added the
+% \phfverb{qitobjdef} package option}
+% \changed[v2.0-pkg-opt-newReIm]{v2.0}{2017/08/16}{Added the \phfverb{newReIm}
+% package option}
+%
+% \subsection{Semantic vs. Syntactic Notation}
+%
+% The macros in this package are meant to represent a \emph{mathematical
+% quantity}, independently of its final \emph{notation}.  For example, |\Hmaxf|
+% indicates corresponds to the ``new-style'' max-entropy defined with the
+% fidelity,\footnote{see Marco Tomamichel, Ph. D., ETH Zurich (2012)
+% \href{https://arxiv.org/abs/1203.2142}{arXiv:1203.2142}} independently of the
+% notation.  Then, if the default notation ``$\Hmaxf{}$'' doesn't suit your
+% taste, you may then simply redefine this command to display whatever you like
+% (see for example instructions in \autoref{sec:entropy-measures}).  This allows
+% to keep better distinction between different measures which may share the same
+% notation in different works of literature.  It also allows to switch notation
+% easily, even in documents which use several quantities whose notation may be
+% potentially conflicting.
+%
+%
+% \subsection{Size Specification}
+% \label{topic:size-specification-backtick}
+%
+% Many of the macros in this package allow their delimiters to be sized
+% according to your taste.  For example, if there is a large symbol in an
+% entropy measure, say
+% \begin{align}
+%  \Hmin{\displaystyle\bigotimes_i A_i}[B]\ ,
+% \end{align}
+% then it may be necessary to tune the size of the parenthesis delimiters.
+%
+% This is done with the optional size specification \meta{size-spec}.  The
+% \meta{size-spec}, whenever it is accepted, is always optional.
+%
+% The \meta{size-spec} starts with the backtick character ``|`|'', and is
+% followed by a single token which may be a star |*| or a size modifier macro
+% such as |\big|, |\Big|, |\bigg| and |\Bigg|.  If the star is specified, then
+% the delimiters are sized with |\left| and |\right|; otherwise the
+% corresponding size modifier is used.  When no size specification is present,
+% then the normal character size is used.
+%
+% For example:
+% \begin{center}
+%   \begin{tabular}{ll}
+%       |\Hmin{\bigotimes_i A_i}[B]|  & gives\quad  $\Hmin{\displaystyle\bigotimes_i A_i}[B]$, \\[1.5em]
+%       |\Hmin`\Big{\bigotimes_i A_i}[B]|  & gives\quad  $\Hmin`\Big{\displaystyle\bigotimes_i A_i}[B]$,~~and \\[1.5em]
+%       |\Hmin`*{\bigotimes_i A_i}[B]|  & gives\quad  $\Hmin`*{\displaystyle\bigotimes_i A_i}[B]$. \\
+%   \end{tabular}
+% \end{center}
+%
+%
+%
+% \section{General Symbols (and Math Operators)}
+% \label{sec:symbols}
+%
+% \DescribeMacro{\Hs}
+% Hilbert space = $\Hs$.
+%
+% \DescribeMacro{\Ident}
+% Identity operator = $\Ident$.
+%
+% \DescribeMacro{\IdentProc}
+% Identity process.  Possible usage syntax is:
+% \begin{center}
+% \begin{tabular}{lc}
+%     |\IdentProc[A][A']{\rho}| &  $\IdentProc[A][A']{\rho}$ \\
+%     |\IdentProc[A]{\rho}| &  $\IdentProc[A]{\rho}$ \\
+%     |\IdentProc[A][A']{}| &  $\IdentProc[A][A']{}$ \\
+%     |\IdentProc[A]{}| &  $\IdentProc[A]{}$ \\
+%     |\IdentProc{}| &  $\IdentProc{}$ \\
+%     |\IdentProc{\rho}| &  $\IdentProc{\rho}$ \\
+%     |\IdentProc`\big[A]{\rho}| &  $\IdentProc`\big[A]{\rho}$ \\
+% \end{tabular}
+% \end{center}
+% This macro accepts a size specification with the backtick (`|`|'), see
+% \autoref{topic:size-specification-backtick}.
+%
+% \begingroup\catcode`\^=12\relax
+% \DescribeMacro{\ee^X}\endgroup A macro for the exponential.  Type the \LaTeX{}
+% code as if |\ee| were just the symbol, i.e.\@ as |\ee^{<ARGUMENT>}|.  The
+% ideas is that this macro may be redefined to change the appearance of the $e$
+% symbol, or even to change the notation to |\exp{<ARGUMENT>}| if needed for
+% inline math.
+%
+%
+% \subsection{Math/Linear Algebra Operators}
+% \label{sec:math-operators}
+% \label{sec:description-newReIm}
+%
+% \needspace{6\baselineskip}
+% \DescribeMacro{\tr} \DescribeMacro{\supp} \DescribeMacro{\rank}
+% \DescribeMacro{\linspan} \DescribeMacro{\spec} \DescribeMacro{\diag} Provide
+% some common math operators.  The trace $\tr$, the support $\supp$, the rank
+% $\rank$, the linear span $\linspan$, the spectrum $\spec$ and the diagonal
+% matrix $\diag$.  (Note that |\span| is already defined by \LaTeX{}, so that we
+% resort to |\linspan|.)  \vspace{1.5cm}
+%
+% \DescribeMacro{\Re} \DescribeMacro{\Im} Also, redefine |\Re| and |\Im| (real
+% and imaginary parts of a complex number), to the more readable $\Re(z)$ and
+% $\Im(z)$.  (The original symbols were {\makeatletter $\phfqit@Re(z)$ and
+% $\phfqit@Im(z)$}.)  Keep the old definitions using the package option
+% \pkgoptionfmt{newReIm=false}.
+%
+% \subsection{Poly symbol}
+%
+% \DescribeMacro{\poly} Can be typeset in $\poly(n)$ time.
+% 
+%
+% \subsection{Bits and Bit Strings}
+% \label{sec:bits}
+%
+% \DescribeMacro{\bit} Format a bit value, for example |\bit{0}| or |\bit0|
+% gives $\bit0$ or $\bit1$.  This command works both in math mode and text mode.
+%
+% \DescribeMacro{\bitstring} Format a bit string.  For example
+% |\bitstring{01100101}| is rendered as \bitstring{01100101}.  This command
+% works both in math mode and text mode.
+%
+% \subsection{Logical Gates}
+% \label{sec:gates}
+%
+% \DescribeMacro{\gate} Format a logical gate.  Essentially, this command
+% typesets its argument in small-caps font.  For example, with |\gate{C-not}|
+% you get \gate{C-not}.  (The default formatting ignores the given
+% capitalization, but if you redefine this command you could exploit this,
+% e.g.\@ by making the ``C'' in ``Cnot'' larger than the ``not''.)
+%
+% This command works both in math mode and in text mode.
+%
+% \needspace{5\baselineskip}
+% \DescribeMacro{\AND} \DescribeMacro{\XOR} \DescribeMacro{\CNOT}
+% \DescribeMacro{\NOT} \DescribeMacro{\NOOP} Some standard gates.  These typeset
+% respectively as \AND, \XOR, \CNOT, \NOT, and \NOOP. \vspace{3\baselineskip}
+%
+%
+% \section{Lie Groups and Algebras}
+% \label{sec:Lie-groups-algebras}
+%
+% \needspace{7\baselineskip}
+% \DescribeMacro{\uu(N)} \DescribeMacro{\UU(N)} \DescribeMacro{\su(N)}
+% \DescribeMacro{\SU(N)} \DescribeMacro{\so(N)} \DescribeMacro{\SO(N)}
+% \DescribeMacro{\SN(N)} Format some common Lie groups and algebras.
+%
+% |\SN(N)| is the symmetric group of $N$ items, and formats by default as
+% $\SN(N)$. \vspace{4\baselineskip}
+%   
+% \section{Bra-Ket Notation and Delimited Expressions}
+% \label{sec:bra-ket} \label{sec:delimited}
+%
+% All commands here work in math mode only.  They all accept an optional
+% argument, which is a size modifier.  Use the starred form to enclose the
+% delimiters with |\left...\right| and have the size determined automatically.
+% Usage for example is:
+% \begin{center}
+%   \begin{tabular}{lc}
+%       |\ket{\psi}|  &  $\ket{\psi}$ \\[1em]
+%       |\ket[\big]{\psi}|  &  $\ket[\big]{\psi}$ \\[1em]
+%       |\ket[\Big]{\psi}|  &  $\ket[\Big]{\psi}$ \\[1em]
+%       |\ket[\bigg]{\psi}|  &  $\ket[\bigg]{\psi}$ \\[1em]
+%       |\ket[\Bigg]{\psi}|  &  $\ket[\Bigg]{\psi}$ \\[1em]
+%       |\ket*{\displaystyle\sum_k \psi_k}|  &  $\ket*{\displaystyle\sum_k \psi_k}$ \\
+%   \end{tabular}
+% \end{center}
+%
+% \DescribeMacro{\ket}
+% Typeset a quantum mechanical ket.  |\ket{\psi}| gives $\ket{\psi}$.
+%
+% \DescribeMacro{\bra}
+% Typeset a bra.  |\bra{\psi}| gives $\bra{\psi}$.
+%
+% \DescribeMacro{\braket}
+% Typeset a bra-ket inner product.  |\braket{\phi}{\psi}| gives $\braket{\phi}{\psi}$.
+%
+% \DescribeMacro{\ketbra}
+% Typeset a ket-bra outer product.  |\ketbra{\phi}{\psi}| gives $\ketbra{\phi}{\psi}$.
+%
+% \DescribeMacro{\proj}
+% Typeset a rank-1 projector determined by a ket.  |\proj{\psi}| gives $\proj{\psi}$.
+%
+% \DescribeMacro{\matrixel} Typeset a matrix element.
+% |\matrixel{\phi}{A}{\psi}| gives $\matrixel{\phi}{A}{\psi}$.
+%
+% \DescribeMacro{\dmatrixel} Typeset a diagonal matrix element of an operator.
+% |\dmatrixel{\phi}{A}| gives $\dmatrixel{\phi}{A}$.
+%
+% \DescribeMacro{\innerprod} Typeset an inner product using the mathematicians' notation.
+% |\innerprod{\phi}{\psi}| gives $\innerprod{\phi}{\psi}$.
+%
+%
+% There are also some further delimited expressions defined, for convenience.
+%
+% \DescribeMacro{\abs} The absolute value of an expression.  |\abs{A}| gives
+% $\abs{A}$.
+%
+% \DescribeMacro{\avg} The average of an expression. |\avg[\big]{\sum_k A_k}|
+% gives $\avg[\big]{\sum_k A_k}$.
+%
+% \DescribeMacro{\norm} The norm of an expression.  |\norm{A_k}| gives
+% $\norm{A_k}$.  (You can add subscripts, e.g.\@ |\norm{A_k}_\infty| is
+% $\norm{A_k}_\infty$.)
+%
+% \DescribeMacro{\intervalc} A closed interval. |\intervalc{x}{y}| gives
+% $\intervalc{x}{y}$.
+%
+% \DescribeMacro{\intervalo} An open interval. |\intervalo{x}{y}| gives
+% $\intervalo{x}{y}$.
+%
+% \DescribeMacro{\intervalco} A semi-open interval, closed on the lower bound
+% and open on the upper bound. |\intervalco{x}{y}| gives $\intervalco{x}{y}$.
+%
+% \DescribeMacro{\intervaloc} A semi-open interval, open on the lower bound
+% and closed on the upper bound. |\intervaloc{x}{y}| gives $\intervaloc{x}{y}$.
+%
+%
+%
+% \section{Entropy Measures and Other ``Qit Objects''}
+%
+% A ``Qit Object'' is any form of quantity which has several parameters and/or
+% arguments which are put together in some notation.  The idea is to use
+% \LaTeX{} macros to represent an actual quantity and not just some set of
+% notational symbols.  For example, for the ``old'' max-entropy
+% $H_\mathrm{max,old}(X)_\rho = \log\rank\rho$, you should use |\Hzero|
+% independently of whether it should be denoted by $H_0$, $H_\mathrm{max}$ or
+% $H_\mathrm{max,old}$.  This allows you to change the notation by redefining
+% the command |\Hzero|, while making sure that the correct quantity is
+% addressed.  (You might have both ``old''-style and ``new''-style max-entropy
+% in the same paper.  Their meaning should never change, even if you change your
+% mind on the notation.)  The macros |\Hmin|, |\Hzero|, |\Hmaxf| and |\HH| may
+% be redefined to change the subscript by using the following code (change
+% ``|\mathrm{max},0|'' to your favorite subscript text):
+% \begin{verbatim}
+% \renewcommand{\Hzero}{\Hbase{\HSym}{\mathrm{max},0}}
+% \end{verbatim}
+%
+% The \pkgname{phfqit} package provides a basic infrastructure allowing to
+% define such ``Qit Object'' implementations.  This package provides the
+% following Qit Objects: entropy measures (|\Hbase|), an entropy function
+% (|\Hfnbase|), relative entropy measures (|\Dbase|), as well as coherent
+% relative entropy measures (|\DCohbase|).  The more specific commands |\Hmin|,
+% |\Hzero|, etc.\@ are then defined based on these ``base commands.''
+%
+% You may also define your own Qit Object implementations. See
+% \autoref{sec:QitObjectImpl} for documentation on that.
+%
+% The actual entropy measure definitions |\Hmin|, |\Hmaxf|, etc., can be
+% disabled by specifying the package option \pkgoptionfmt{qitobjdef=none}.
+%
+%
+% \subsection{Entropy, Conditional Entropy}
+% \label{sec:entropy-measures}
+%
+% These entropy measures all share the same syntax.  This syntax is only
+% described for the min-entropy |\Hmin|, but the other entropy measures enjoy
+% the same features.
+%
+% These commands are robust, meaning they can be used for example in figure
+% captions and section headings.
+%
+% \DescribeMacro{\Hmin} Min-entropy.  The general syntax is
+% |\Hmin|\hspace{0pt}\meta{size-spec}\relax
+% \hspace{0pt}\oarg{state}\hspace{0pt}\oarg{epsilon}\hspace{0pt}\relax
+% \marg{target system}\hspace{0pt}\oarg{conditioning system}.  For example:
+% \begin{center}
+%   \begin{tabular}{lc}
+%       |\Hmin{X}|   & $\Hmin{X}$ \\
+%       |\Hmin[\rho]{X}|   & $\Hmin[\rho]{X}$ \\
+%       |\Hmin[\rho][\epsilon]{X}[Y]|   & $\Hmin[\rho][\epsilon]{X}[Y]$ \\
+%       \verb+\Hmin[\rho|\rho][\epsilon]{X}[Y]+
+%                      & $\Hmin[\rho\mid\rho][\epsilon]{X}[Y]$ \\
+%       |\Hmin[][\epsilon]{X}[Y]|   & $\Hmin[][\epsilon]{X}[Y]$ \\[1ex]
+%       |\Hmin`\Big[\rho]{X}[Y]| & $\Hmin`\Big[\rho][\epsilon]{X}[Y]$ \\[0.5ex]
+%       |\Hmin`*[\rho]{\bigoplus_i X_i}[Y]| &
+%         $\displaystyle\Hmin`*[\rho][\epsilon]{\bigoplus_i X_i}[Y]$
+%   \end{tabular}
+% \end{center}
+%
+% \DescribeMacro{\HH} Shannon/von Neumann entropy.  This macro has the same
+% arguments as for |\Hmin| (even though, of course, there is no real use in
+% smoothing the Shannon/von Neumann entropy\ldots).  For example,
+% |\HH[\rho]{X}[Y]| gives $\HH[\rho]{X}[Y]$.
+%
+% \DescribeMacro{\Hzero} R\'enyi-zero max-entropy.  This macro has the same
+% arguments as for |\Hmin|.  For example, |\Hzero[][\epsilon]{X}[Y]| gives
+% $\Hzero[][\epsilon]{X}[Y]$.
+%
+% \DescribeMacro{\Hmaxf} The max-entropy.  This macro has the same
+% arguments as for |\Hmin|.  For example, |\Hmaxf[][\epsilon]{X}[Y]| gives
+% $\Hmaxf[][\epsilon]{X}[Y]$.
+%
+% The commands |\Hmin|, |\HH|, |\Hzero|, and |\Hmaxf| are defined only if the
+% package option \pkgoptionfmt{qitobjdef=stdset} is set (which is the default).
+%
+% \DescribeMacro{\HSym} You may redefine this macro if you want to change the
+% ``$H$'' symbol of all entropy measures.
+% \begingroup \def\HSym{\spadesuit} For example, with
+% |\renewcommand\HSym{\spadesuit}|, |\Hmin{A}[B]| would give $\Hmin{A}[B]$.
+% \endgroup
+%
+% \paragraph{Appearance and alternative notation.}
+% You may change the notation of any of the above entropy measures by redefining
+% the corresponding commands as follows:
+% \begin{verbatim}
+% \renewcommand{\Hzero}{\Hbase{\HSym}{\mathrm{max}}}
+% \end{verbatim}
+% \begingroup\renewcommand{\Hzero}{\Hbase{\HSym}{\mathrm{max}}}
+% Then, |\Hzero[\rho]{A}[B]| would produce: $\Hzero[\rho]{A}[B]$.\endgroup
+%
+% \paragraph{Base entropy measure macro.}
+% \DescribeMacro{\Hbase} Base macro entropy for an entropy measure.  The general
+% syntax is:
+% |\Hbase|\hspace{0pt}\marg{H-symbol}\hspace{0pt}\marg{subscript}\relax
+% \hspace{0pt}\oarg{state}\hspace{0pt}\oarg{epsilon}\hspace{0pt}\relax
+% \marg{target system}\hspace{0pt}\oarg{conditioning system}
+%
+% Using this macro it is easy to define custom special-purpose entropy measures,
+% for instance:
+% \begin{verbatim}
+% \newcommand\Hxyz{\Hbase{\tilde\HSym}{\mathrm{xyz}}}
+% \end{verbatim}
+% \begingroup\newcommand\Hxyz{\Hbase{\tilde\HSym}{\mathrm{xyz}}}
+% The above code defines the command |\Hxyz[\rho][\epsilon]{A}[B]| $\to$
+% \fbox{$\Hxyz[\rho][\epsilon]{A}[B]$}. \endgroup
+%
+% See also the implementation documentation below for more specific information
+% on how to customize parts of the rendering, for instance.
+% 
+% \subsection{Entropy Function}
+% \label{sec:entropy-function}
+%
+% \DescribeMacro{\Hfn} The entropy, written as a mathematical function.  It is
+% useful to write, e.g., $\Hfunc(p_1\rho_1 + p_2\rho_2)$ as \relax
+% |\Hfunc(p_1\rho_1 + p_2\rho_2)|.  Sizing specifications also work, e.g.\@
+% |\Hfunc`\big(x)| or |\Hfunc`*(x)|.
+%
+% Usage is: |\Hfn|\hspace{0pt}\meta{size-spec}\hspace{0pt}|(|\meta{argument}|)|
+%
+% This macro doesn't allow for any subscript, any epsilon-like superscript nor
+% for any conditioning system.  Define your own macro on top of |\Hfnbase| if
+% you need that.
+%
+% Note that the \meta{argument} may contain matching parentheses, e.g.,
+% |\Hfn`\Big( g(x) + h(y) )| $\to$ \fbox{$\Hfn`\Big(g(x)+h(y))$}.
+%
+% \DescribeMacro{\Hfunc}
+% The alias |\Hfunc| is provided for backwards compatibility; same as |\Hfn|.
+%
+% The commands |\Hfn| and |\Hfunc| are defined only if the package option
+% \pkgoptionfmt{qitobjdef=stdset} is set (which is the default).
+%
+% \DescribeMacro{\Hfnbase} There is also a base macro for this kind of Qit
+% Object, |\Hfnbase|.  It allows you to specify an arbitrary symbol to use for
+% ``$H$'', as well as custom subscripts and superscripts.  The syntax is:
+%
+% |\Hfnbase|\marg{H-symbol}\hspace{0pt}\marg{sub}\hspace{0pt}\relax
+% \marg{sup}\hspace{0pt}\relax
+% \meta{size-spec}\hspace{0pt}|(|\meta{argument}|)|.
+%
+%
+% \subsection{Relative Entropy}
+% \label{sec:relative-entropies}
+%
+% Relative entropies also have a corresponding set of commands.
+%
+% The syntax varies from command to command, but all relative entropies accept
+% the final arguments \meta{size-spec}\marg{state}\marg{relative-to-state}.  The
+% size-spec is as always given using the backtick syntax described in
+% \autoref{topic:size-specification-backtick}.
+%
+% \DescribeMacro{\DD}
+% Generic relative entropy.  The syntax of this command is either of the following:
+% \par
+% |\DD|\hspace{0pt}\meta{size-spec}\hspace{0pt}\marg{state}\hspace{0pt}\marg{relative-to state},\\
+% |\DD_|\marg{subscript}\hspace{0pt}\meta{size-spec}\hspace{0pt}\marg{state}\hspace{0pt}\marg{relative-to state},\\
+% |\DD_|\marg{subscript}|^|\marg{superscript}\hspace{0pt}\meta{size-spec}\relax
+% \hspace{0pt}\marg{state}\hspace{0pt}\marg{relative-to state},\\
+% |\DD^|\marg{superscript}\hspace{0pt}\meta{size-spec}\hspace{0pt}\marg{state}\hspace{0pt}\marg{relative-to state}.
+%
+% In all cases, the argument is typeset as:
+% $\bigl(\meta{state}\big\Vert\meta{relative-to state}\bigr)$.  The size of the
+% delimiters can be set with a size specification using the standard backtick
+% syntax as described in \autoref{topic:size-specification-backtick} (as for the
+% other entropy measures).
+% 
+% Examples:
+% \begin{center}
+%   \begin{tabular}{lc}
+%       |\DD{\rho}{\sigma}|  & $\DD{\rho}{\sigma}$ \\[1ex]
+%       |\DD`*{M_1^\dagger M_1}{\sigma}|  & $\DD`*{M_1^\dagger M_1}{\sigma}$ \\[1ex]
+%       |\DD`\Big{\rho}{\sigma}|  & $\DD`\Big{\rho}{\sigma}$ \\
+%   \end{tabular}
+% \end{center}
+%
+% You can also play around with subscripts and superscripts, but it is
+% recommended to use the macros |\Dminf|, |\Dminz| and |\Dmax| directly.
+% Specifying the subscripts and superscripts to |\DD| should only be done within
+% new custom macros to define new relative entropy measures.
+% \begin{center}
+%   \begin{tabular}{lc}
+%       |\DD_{\mathrm{Rob}}^{\epsilon}{\rho}{\sigma}|  & $\DD_{\mathrm{Rob}}^{\epsilon}{\rho}{\sigma}$ \\
+%       |\DD^{sup}{\rho}{\sigma}|  & $\DD^{sup}{\rho}{\sigma}$ \\
+%   \end{tabular}
+% \end{center}
+%
+% \DescribeMacro{\Dmax} The max-relative entropy.  The syntax is
+% |\Dmax|\hspace{0pt}\oarg{epsilon}\hspace{0pt}\meta{size-spec}\relax
+% \hspace{0pt}\marg{state}\hspace{0pt}\marg{relative-to state}
+%
+% For example |\Dmax[\epsilon]{\rho}{\sigma}| gives
+% $\Dmax[\epsilon]{\rho}{\sigma}$ and |\Dmax[\epsilon]`\big{\rho}{\sigma}| gives
+% $\Dmax[\epsilon]`\big{\rho}{\sigma}$.
+% 
+% \DescribeMacro{\Dminz} The ``old'' min-relative entropy, based on the
+% R\'enyi-zero relative entropy.  The syntax is the same as for
+% |\Dmax|.
+% 
+% \DescribeMacro{\Dminf} The ``new'' min-relative entropy, defined using the
+% fidelity.  The syntax is the same as for |\Dmax|.
+%
+% \DescribeMacro{\Dr} The Rob-relative entropy.  The syntax is the same as for
+% |\Dmax|.
+%
+% \DescribeMacro{\DHyp} The hypothesis testing relative entropy.  The syntax is
+% the same as for |\Dmax|, except that by default the optional argument is
+% |\eta|.  That is, |\DHyp{\rho}{\sigma}| gives $\DHyp{\rho}{\sigma}$.  (This is
+% because this quantity is directly defined with a $\eta$ (or $\epsilon$) built
+% in, and it is not a zero-error quantity which is smoothed with the purified
+% distance.)
+%
+% The commands |\DD|, |\Dmax|, |\Dminz|, |\Dminf|, |\Dr| and |\DHyp| are defined
+% only if the package option \pkgoptionfmt{qitobjdef=stdset} is set (which is
+% the default).
+%
+% \DescribeMacro{\DSym} The symbol to use to denote a relative entropy.  You
+% may redefine this command to change the symbol.  (This works like |\HSym|
+% above.)
+%
+% \paragraph{Appearance and alternative notation}
+% You may change the notation of any of the above relative entropy measures by
+% redefining the corresponding commands as follows:
+% \begin{verbatim}
+% \renewcommand{\Dminz}[1][]{\Dbase{\DSym}_{\mathrm{MIN}}^{#1}}
+% \end{verbatim}
+% \begingroup\renewcommand{\Dminz}[1][]{\Dbase{\DSym}_{\mathrm{MIN}}^{#1}}
+% The above command produces: |\Dminz[\epsilon]{\rho}{\sigma}| $\to$
+% \fbox{$\Dminz[\epsilon]{\rho}{\sigma}$}.\endgroup
+% 
+%
+% \paragraph{Base relative entropy command}
+% As for the $H$-type entropy measures, there is a ``base relative entropy
+% command'' |\Dbase|.  Its syntax is:
+% \par |\Dbase|\marg{D-symbol}\hspace{0pt}\relax
+% [|_|\marg{subscript}][|^|\marg{superscript}]\hspace{0pt}\meta{size-spec}\relax
+% \hspace{0pt}\marg{state}\hspace{0pt}\marg{relative-to state}
+%
+% Example: |\Dbase{\hat\DSym}_{0}^{\eta'}`\Big{\rho}{\sigma}| $\to$
+% \fbox{$\Dbase{\hat\DSym}_{0}^{\eta'}`\Big{\rho}{\sigma}$}
+%
+% The ``|_|\marg{subscript}'' and ``|^|\marg{superscript}'' parts are optional
+% and may be specified in any order.
+%
+% See also the implementation documentation below for more specific information
+% on how to customize parts of the rendering, for instance.
+% 
+%
+% \subsection{Coherent Relative Entropy}
+% \label{sec:coh-rel-entr}
+%
+% A macro for the coherent relative entropy is also available.
+%
+% \DescribeMacro{\DCohx} Typeset a coherent relative entropy using an
+% alternative form for the reference system.  The syntax is:
+% 
+% |\DCohx|\hspace{0pt}\oarg{epsilon}\hspace{0pt}\relax
+% \meta{size-spec}\hspace{0pt}\marg{rho}\hspace{0pt}\relax
+% \marg{X}\hspace{0pt}\marg{X'}\hspace{0pt}\relax
+% \marg{$\Gamma_X$}\hspace{0pt}\marg{$\Gamma_{X'}$}
+%
+% For example, |\DCohx[\epsilon]{\rho}{X}{X'}{\Gamma_X}{\Gamma_{X'}}| gives
+% $\DCohx[\epsilon]{\rho}{X}{X'}{\Gamma_X}{\Gamma_{X'}}$.
+%
+% The subscript $X'R_X$ (or whatever the system names) is automatically added to
+% the \meta{rho} argument.  The `$R$' symbol is used by default for designating
+% the reference system; you may change that by redefining |\DCohxRefSystemName|
+% (see below).  If no subscript should be added to the \meta{rho} argument, then
+% begin the \meta{rho} argument with a star.  For example,
+% |\DCoh{*\sigma_R\otimes\rho_{X'}}{X}{X'}{\Gamma_X}{\Gamma_{X'}}| gives
+% $\DCoh{*\sigma_R\otimes\rho_{X'}}{X}{X'}{\Gamma_X}{\Gamma_{X'}}$.
+% 
+% The \meta{size-spec} is of course optional and follows the same syntax as
+% everywhere else (\autoref{topic:size-specification-backtick}).
+%
+% The command |\DCohx| is defined only if the package option
+% \pkgoptionfmt{qitobjdef=stdset} is set (which is the default).
+%
+% \DescribeMacro{\emptysystem} Use the |\emptysystem| macro to denote a trivial
+% system.  For example, |\DCoh{\rho}{X}{\emptysystem}{\Gamma}{1}| gives
+% $\DCoh{\rho}{X}{\emptysystem}{\Gamma}{1}$.
+% 
+% \DescribeMacro{\DCohxRefSystemName} When using |\DCohx|, the macro
+% |\DCohxRefSystemName| is invoked to produce the reference system name
+% corresponding to the input system name.  By default, this is a $R_\cdot$
+% symbol with subscript the input system name.  You may redefine this macro if
+% you prefer another reference system name:
+% \begin{verbatim}
+% \renewcommand\DCohxRefSystemName[1]{E_{#1}}
+% \end{verbatim}
+% \begin{flushleft}
+% \begingroup\renewcommand\DCohxRefSystemName[1]{E_{#1}}
+% Then: |\DCohx{\rho}{X}{X'}{\Gamma_X}{\Gamma_{X'}}| $\to$
+% $\DCohx{\rho}{X}{X'}{\Gamma_X}{\Gamma_{X'}}$
+% \endgroup
+% \end{flushleft}
+%
+% \DescribeMacro{\DCSym} The symbol to use to denote a coherent relative
+% entropy.  You may redefine this command to change the symbol.  (This works
+% like |\HSym| and |\DSym| above.)
+% 
+% \DescribeMacro{\DCoh}
+% Typeset a coherent relative entropy using the old notation.  The syntax is:
+% 
+% |\DCoh|\hspace{0pt}\oarg{epsilon}\hspace{0pt}\relax
+% \meta{size-spec}\hspace{0pt}\marg{rho}\hspace{0pt}\relax
+% \marg{R}\hspace{0pt}\marg{X'}\hspace{0pt}\relax
+% \marg{$\Gamma_R$}\hspace{0pt}\marg{$\Gamma_{X'}$}
+%
+% For example, |\DCoh[\epsilon]{\rho}{R}{X'}{\Gamma_R}{\Gamma_{X'}}| gives
+% $\DCoh[\epsilon]{\rho}{R}{X'}{\Gamma_R}{\Gamma_{X'}}$.
+%
+% The subscript $X'R$ (or whatever the system names) is automatically added to
+% the \meta{rho} argument.  If this is not desired, then begin the \meta{rho}
+% argument with a star.  For example,
+% |\DCoh{*\sigma_R\otimes\rho_{X'}}{R}{X'}{\Gamma_R}{\Gamma_{X'}}| gives
+% $\DCoh{*\sigma_R\otimes\rho_{X'}}{R}{X'}{\Gamma_R}{\Gamma_{X'}}$.
+% 
+% The \meta{size-spec} is of course optional and follows the same syntax as
+% everywhere else (\autoref{topic:size-specification-backtick}).
+%
+% The command |\DCoh| is defined only if the package option
+% \pkgoptionfmt{qitobjdef=stdset} is set (which is the default).
+%
+%
+% \paragraph{Appearance and alternative notation}
+% You may change the notation of any of the above relative entropy measures by
+% redefining the corresponding commands as follows:
+% \begin{verbatim}
+% \renewcommand{\DCoh}{\DCohbase{\tilde\DSym}}
+% \end{verbatim}
+% \begingroup\renewcommand{\DCoh}{\DCohbase{\tilde\DSym}}
+% Then: |\DCoh[\epsilon]{\rho}{R}{X'}{\Gamma_R}{\Gamma_{X'}}| $\to$
+% \fbox{$\DCoh[\epsilon]{\rho}{R}{X'}{\Gamma_R}{\Gamma_{X'}}$}.\endgroup
+% 
+%
+% \paragraph{Base relative entropy command}
+% As for the other entropy measures, there is a ``base coherent relative entropy
+% command'' |\DCohbase|.  Its syntax is:
+% \par |\DCohbase|\marg{D-symbol}\hspace{0pt}\relax
+% \hspace{0pt}\oarg{epsilon}\hspace{0pt}\relax
+% \meta{size-spec}\hspace{0pt}\marg{rho}\hspace{0pt}\relax
+% \marg{R}\hspace{0pt}\marg{X'}\hspace{0pt}\relax
+% \marg{$\Gamma_R$}\hspace{0pt}\marg{$\Gamma_{X'}$}
+%
+% See also the implementation documentation below for more specific information
+% on how to customize parts of the rendering, for instance.
+% 
+%
+%
+% \subsection{Custom Qit Objects}
+% \label{sec:QitObjectImpl}
+%
+% \changedreftext{v2.0-qit-objects}
+%
+% You can create your own Qit Object Implementation as follows.  You need two
+% components: a \emph{Parse} macro and a \emph{Render} macro.
+%
+% The \emph{Parse} macro is responsible for parsing input \LaTeX{} tokens as
+% necessary, and building an argument list (which will be passed on to the
+% \emph{Render} macro).
+%
+% \DescribeMacro{\qitobjAddArg} \DescribeMacro{\qitobjAddArgx} The \emph{Parse}
+% macro (or any helper macro it calls) should call |\qitobjAddArg| to add
+% arguments for the eventual call to \emph{Render}.  The |\qitobjAddArg| macro
+% does not expand its argument.  The |\qitobjAddArgx| works like
+% |\qitobjAddArg|, but it accepts a single \LaTeX{} command as its only
+% argument, expands it, and adds the contents as a single new argument for the
+% renderer.
+%
+% \DescribeMacro{\qitobjParseDone}
+% Once the parser is finished, it must call |\qitobjParseDone|.
+%
+% The \emph{Render} macro is responsible for displaying the final Qit Object.
+% It should accept mandatory arguments in the exact number as there were calls
+% to |\qitobjAddArg|/|\qitobjAddArgx|.
+%
+% \DescribeMacro{\qitobjDone} The \emph{Render} macro must call |\qitobjDone|
+% after it is finished, to do some cleaning up and to close the local \LaTeX{}
+% group generated by the Qit Ojbect infrastructure.
+%
+% \DescribeMacro{\DefineQitObject} Declare your new Qit Object using the
+% |\DefineQitObject| macro, using the syntax
+% |\DefineQitObject|\marg{name}\marg{ParseCommand}\marg{RenderCommand}.
+% This declares the command |\|\meta{name} as your Qit Object.
+%
+% You may define different Qit Objects (using different names) recycling the
+% same parsers/renderers if needed.  For instance, |\Hfnbase| uses the same
+% renderer as |\Hbase|.
+%
+% \DescribeMacro{\DefineTunedQitObject} The |\DefineTunedQitObject| macro is a
+% bit more powerful.  It allows you to specify some fixed initial arguments to
+% the parser, as well as to provide some local definitions which are in effect
+% only during parsing and rendering of the Qit Object.  This is useful if you
+% would like to declare an alternative type of Qit Object to an existing one,
+% where you just change some aspect of the behavior of the original Qit Object.
+%
+% Usage: |\DefineTunedQitObject|\hspace{0pt}\marg{name}\relax
+% \marg{parse command}\hspace{0pt}\marg{render command}\hspace{0pt}\relax
+% \marg{fixed first argument(s)}\hspace{0pt}\marg{custom definitions}\relax
+%
+% The \marg{first fixed argument(s)} must be a single argument, i.e., a single
+% \LaTeX{} group, which may contain several arguments, for instance: |{{A}{B}}|.
+%
+% For instance, |\DCohx| is defined, using the same parser and renderer as for
+% |\DCoh|, as follows:
+% \begin{verbatim}
+%\def\DCohxRefSystemName#1{R_{#1}}
+%\def\DCohxStateSubscripts#1#2{#2\DCohxRefSystemName{#1}}
+%\DefineTunedQitObject{DCohx}{\DCohbaseParse}{\DCohbaseRender}%
+%{{\DCSym}}% initial args
+%{\let\DCohbaseStateSubscripts\DCohxStateSubscripts}% local defs
+% \end{verbatim}
+% 
+%
+% \paragraph{Useful helpers}
+%
+% There are some useful helpers for both the \emph{Parse} and \emph{Render}
+% macros.  More extensive documentation is available in the ``Implementation''
+% section below.
+%
+% \DescribeMacro{\phfqit@parse@sizesarg} Parse a \meta{size-spec} optional
+% argument.
+%
+% \needspace{3\baselineskip}
+% \DescribeMacro{\phfqitParen} \DescribeMacro{\phfqitSquareBrackets}
+% \DescribeMacro{\phfqitCurlyBrackets} Produce a parenthetic expression (or
+% square or curly brackets) with the appropriate size and with the given
+% contents.
+%
+% \paragraph{Example}
+% Here is a simple example: let's build a work cost of transition Qit Object to
+% display something like ``$W(\sigma\to\rho)$.''
+%
+% The arguments to be given are: they are \meta{$\sigma$} and \meta{$\rho$}.  We
+% would also like to accept an optional size specification \meta{size-spec}. We
+% should decide on a convenient syntax to specify them.  Here, we'll settle for
+% simply |\WorkCostTransition`\Big{\rho}{\sigma}|.
+%
+% We can now write the \emph{Parse} macro.  We use the |\phfqit@parsesizearg|
+% helper, which stores the optional \meta{size-spec} into the
+% |\phfqit@val@sizearg| macro before deferring our second helper macro.  We then
+% add arguments (for an eventual call to the \emph{Render} macro) using
+% |\qitobjAddArg| (or |\qitobjAddArgx|).
+% \begin{verbatim}
+% \makeatletter
+% \newcommand\WorkCostTransitionParse{%
+%   \phfqit@parsesizearg\WorkCostTransitionParse@%
+% }
+% % Helper to parse further input arguments:
+% \newcommand\WorkCostTransitionParse@[2]{% {\rho}{\sigma}
+%   \qitobjAddArgx\phfqit@val@sizearg% size arg
+%   \qitobjAddArg{#1}% rho
+%   \qitobjAddArg{#2}% sigma
+%   \qitobjParseDone%
+% }
+% \makeatother
+% \end{verbatim}
+%
+% The render macro should simply display the quantity, with the arguments given
+% as usual mandatory arguments.  We invoke the |\phfqitParens| helper, which
+% produces the parenthesis at the correct size given the size spec tokens.
+% \begin{verbatim}
+% \newcommand\WorkCostTransitionRender[3]{% {size-spec-tokens}{\rho}{\sigma}
+%   W\phfqitParens#1{#2 \to #3}%
+%    \qitobjDone
+% }
+% \end{verbatim}
+%
+% Now declare the Qit Object:
+% \begin{verbatim}
+% \DefineQitObject{WorkCostTransition}{\WorkCostTransitionParse}{\WorkCostTransitionRender}
+% \end{verbatim}
+% \begingroup\makeatletter
+% \newcommand\WorkCostTransitionParse{\relax
+%   \phfqit@parsesizearg\WorkCostTransitionParse@}
+% \newcommand\WorkCostTransitionParse@[2]{\relax
+%   \qitobjAddArgx\phfqit@val@sizearg\relax
+%   \qitobjAddArg{#1}\relax
+%   \qitobjAddArg{#2}\relax
+%   \qitobjParseDone}
+% \newcommand\WorkCostTransitionRender[3]{W\phfqitParens#1{#2 \to #3}\qitobjDone}
+% \DefineQitObject{WorkCostTransition}{\WorkCostTransitionParse}{\WorkCostTransitionRender}
+% Then: |\WorkCostTransition`\Big{\rho}{\sigma}| $\to$
+% \fbox{$\WorkCostTransition`\Big{\rho}{\sigma}$}
+% \endgroup
+%
+% You might want to check out the implementations of |\HbaseParse| and
+% |\HbaseRender|, or |\DbaseParse| and |\DbaseRender| if you'd like to see some
+% more involved examples.
+%
+%
+%
+%
+%
+% \StopEventually{\clearpage\PrintChanges
+%     \vspace{2cm plus 2cm minus 2cm}\PrintIndex}
+%
+% \section{Implementation}
+%
+% First, load dependent packages.  Toolboxes, fonts and so on.
+%    \begin{macrocode}
+\RequirePackage{calc}
+\RequirePackage{etoolbox}
+\RequirePackage{amsmath}
+\RequirePackage{dsfont}
+\RequirePackage{mathrsfs}
+\RequirePackage{mathtools}
+%    \end{macrocode}
+% 
+% Package \pkgname{xparse} is needed in order to get paren matching right for
+% |\Hfn|.
+%    \begin{macrocode}
+\RequirePackage{xparse}
+%    \end{macrocode}
+%
+% Package options are handled via \pkgname{xkeyval} \& \pkgname{kvoptions} (see
+% implementation doc for \pkgname{phfnote}).
+%    \begin{macrocode}
+\RequirePackage{xkeyval}
+\RequirePackage{kvoptions}
+%    \end{macrocode}
+% 
+% \subsection{Simple Symbols and Shorthands}
+% 
+% 
+% \subsubsection{General Symbols}
+%
+% These symbols are documented in \autoref{sec:symbols}.
+%
+% \begin{macro}{\Hs}
+%   Hilbert space.
+%    \begin{macrocode}
+\newcommand{\Hs}{\mathscr{H}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\Ident}
+%   Identity operator, $\Ident$.
+%    \begin{macrocode}
+\newcommand{\Ident}{\mathds{1}}
+%    \end{macrocode}
+% \end{macro}
+% 
+%
+% \begin{macro}{\IdentProc}
+%   Identity process.
+%
+%   TODO: this could be implemented as a Qit Object.
+%    \begin{macrocode}
+\def\IdentProc{%
+  \phfqit@parsesizearg\phfqit@IdentProc@maybeA%
+}
+\newcommand\phfqit@IdentProc@maybeA[1][]{%
+  \def\phfqit@IdentProc@val@A{#1}%
+  \phfqit@IdentProc@maybeB%
+}
+\newcommand\phfqit@IdentProc@maybeB[1][]{%
+  \def\phfqit@IdentProc@val@B{#1}%
+  \phfqit@IdentProc@arg%
+}
+\def\phfqit@IdentProc@arg#1{%
+  \def\phfqit@IdentProc@val@arg{#1}%
+%    \end{macrocode}
+% 
+% At this point, prepare the three arguments, each expanded exactly as they were when
+% given to these macros, and delegate the formatting to |\phfqit@IdentProc@do|.
+%    \begin{macrocode}
+  \edef\@tmp@args{%
+    {\expandonce{\phfqit@IdentProc@val@A}}%
+    {\expandonce{\phfqit@IdentProc@val@B}}%
+    {\expandonce{\phfqit@IdentProc@val@arg}}%
+  }%
+  \expandafter\phfqit@IdentProc@do\@tmp@args%
+}
+\def\phfqit@IdentProc@do#1#2#3{%
+  \operatorname{id}_{#1\notblank{#2}{\to #2}{}}%
+  \notblank{#3}{\expandafter\phfqitParens\phfqit@val@sizearg{#3}}{}%
+}
+%    \end{macrocode}
+% \end{macro}
+% 
+%
+%
+% \begingroup\catcode`\^=12\relax
+% \begin{macro}{\ee^...}
+%   Macro for the exponential.
+%    \begin{macrocode}
+\def\ee^#1{e^{#1}} % we could imagine that in inlines, we replace this by exp()...
+%    \end{macrocode}
+% \end{macro}
+% \endgroup
+%
+% \subsubsection{Math Operators}
+%
+% See user documentation in \autoref{sec:math-operators}.
+%
+% \needspace{6\baselineskip}
+% \begin{macro}{\tr}
+% \begin{macro}{\supp}
+% \begin{macro}{\rank}
+% \begin{macro}{\linspan}
+% \begin{macro}{\spec}
+% \begin{macro}{\diag}
+%   Some common math operators.  Note that |\span| is already defined by \LaTeX{}, so we
+%   resort to |\linspan| for the linear span of a set of vectors.
+%    \begin{macrocode}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\supp}{supp}
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\linspan}{span}
+\DeclareMathOperator{\spec}{spec}
+\DeclareMathOperator{\diag}{diag}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% 
+% \begin{macro}{\phfqit@Realpart}
+% \begin{macro}{\phfqit@Imagpart}
+%   Provide math operators for $\Re$ and $\Im$.  The aliasing to the actual
+%   commands |\Re| and |\Im| is done later, when we process the package options.
+%    \begin{macrocode}
+\let\phfqit@Re\Re
+\DeclareMathOperator{\phfqit@Realpart}{Re}%
+\let\phfqit@Im\Im
+\DeclareMathOperator{\phfqit@Imagpart}{Im}%
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+%
+% \subsubsection{Poly}
+%
+% \begin{macro}{\poly}
+%   Poly symbol.
+%   \iffalse meta-comment
+%         \changed[v1.0-added-poly-command]{v1.0}{2015/05/22}{Added \phfverb\poly\space command}
+%   \fi
+%    \begin{macrocode}
+\DeclareMathOperator{\poly}{poly}
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Bits and Bit Strings}
+% 
+% See documentation in \autoref{sec:bits}
+%
+% \begin{macro}{\bit}
+% \begin{macro}{\bitstring}
+%   Bits and bit strings.
+%    \begin{macrocode}
+\newcommand\bit[1]{\texttt{#1}}
+\newcommand\bitstring[1]{\phfqit@bitstring{#1}}
+%    \end{macrocode}
+% 
+% The implementation of |\bitstring| needs some auxiliary internal macros.
+%    \begin{macrocode}
+\def\phfqit@bitstring#1{%
+  \begingroup%
+  \setlength{\phfqit@len@bit}{\maxof{\widthof{\bit{0}}}{\widthof{\bit{1}}}}%
+  \phfqitBitstringFormat{\phfqit@bitstring@#1\phfqit@END}%
+  \endgroup%
+}
+%    \end{macrocode}
+% 
+% The internal |\phfqit@bitstring@| macro picks up the next bit, and puts it
+% into a \LaTeX{} |\makebox| on its own with a fixed width.
+%    \begin{macrocode}
+\def\phfqit@bitstring@#1#2\phfqit@END{%
+  \makebox[\phfqit@len@bit][c]{\phfqitBitstringFormatBit{#1}}%
+  \if\relax\detokenize\expandafter{#2}\relax%
+  \else%
+%    \end{macrocode}
+%
+% If there are bits left, then recurse for the rest of the bitstring:
+%    \begin{macrocode}
+    \phfqitBitstringSep\phfqit@bitstring@#2\phfqit@END%
+  \fi%
+}
+\newlength\phfqit@len@bit
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% 
+% \begin{macro}{\phfqitBitstringSep}
+% \begin{macro}{\phfqitBitstringFormat}
+%   Redefine these to customize the bit string appearance.
+%    \begin{macrocode}
+\newcommand\phfqitBitstringSep{\hspace{0.3ex}}
+\newcommand\phfqitBitstringFormat[1]{\ensuremath{\underline{\overline{#1}}}}
+\def\phfqitBitstringFormatBit{\bit}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+%
+% \subsubsection{Logical Gates}
+%
+% See user documentation in \autoref{sec:gates}.
+%
+% \begin{macro}{\gate}
+%   Generic macro to format a gate name.
+%    \begin{macrocode}
+\DeclareRobustCommand\gate[1]{\ifmmode\textsc{\lowercase{#1}}%
+  \else{\rmfamily\textsc{\lowercase{#1}}}\fi}
+%    \end{macrocode}
+% \end{macro}
+% 
+% \needspace{5\baselineskip}
+% \begin{macro}{\AND}
+% \begin{macro}{\XOR}
+% \begin{macro}{\CNOT}
+% \begin{macro}{\NOT}
+% \begin{macro}{\NOOP}
+%   Some common gates.
+%    \begin{macrocode}
+\newcommand{\AND}{\gate{And}}
+\newcommand{\XOR}{\gate{Xor}}
+\newcommand{\CNOT}{\gate{C-Not}}
+\newcommand{\NOT}{\gate{Not}}
+\newcommand{\NOOP}{\gate{No-Op}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% 
+%
+% \subsubsection{Lie Groups \& Algebras}
+%
+% \needspace{7\baselineskip}
+% \begin{macro}{\uu(N)}
+% \begin{macro}{\UU(N)}
+% \begin{macro}{\su(N)}
+% \begin{macro}{\SU(N)}
+% \begin{macro}{\so(N)}
+% \begin{macro}{\SO(N)}
+% \begin{macro}{\SN(N)}
+%   Some Lie Groups \& Algebras.  See \autoref{sec:Lie-groups-algebras}
+%    \begin{macrocode}
+\def\uu(#1){\phfqit@fmtLieAlgebra{u}(#1)}
+\def\UU(#1){\phfqit@fmtGroup{U}(#1)}
+\def\su(#1){\phfqit@fmtLieAlgebra{su}(#1)}
+\def\SU(#1){\phfqit@fmtGroup{SU}(#1)}
+\def\so(#1){\phfqit@fmtLieAlgebra{so}(#1)}
+\def\SO(#1){\phfqit@fmtGroup{SO}(#1)}
+\def\SN(#1){\mathrm{S}_{#1}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% 
+% \begin{macro}{\phfqit@fmtLieAlgebra}
+% \begin{macro}{\phfqit@fmtLieGroup}
+%   Override these to change the appearance of the group names or algebra names.  The
+%   argument is the name of the group or algebra (e.g. |su| or |SU|).
+%    \begin{macrocode}
+\def\phfqit@fmtLieAlgebra#1{\mathrm{#1}}
+\def\phfqit@fmtGroup#1{\mathrm{#1}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+%
+%
+%
+%
+% \subsection{Bra-Ket Notation}
+%
+% 
+% \needspace{8\baselineskip}
+% \begin{macro}{\ket}
+% \begin{macro}{\bra}
+% \begin{macro}{\braket}
+% \begin{macro}{\ketbra}
+% \begin{macro}{\proj}
+% \begin{macro}{\matrixel}
+% \begin{macro}{\dmatrixel}
+% \begin{macro}{\innerprod}
+%   Bras, kets, norms, some delimiter stuff.  User documentation in
+%   \autoref{sec:bra-ket}.  
+%    \begin{macrocode}
+\DeclarePairedDelimiterX\ket[1]{\lvert}{\rangle}{{#1}}
+\DeclarePairedDelimiterX\bra[1]{\langle}{\rvert}{{#1}}
+\DeclarePairedDelimiterX\braket[2]{\langle}{\rangle}{%
+  {#1}\hspace*{0.2ex}\delimsize\vert\hspace*{0.2ex}{#2}%
+}
+\DeclarePairedDelimiterX\ketbra[2]{\lvert}{\rvert}{%
+  {#1}\delimsize\rangle\hspace*{-0.25ex}\delimsize\langle{#2}%
+}
+\DeclarePairedDelimiterX\proj[1]{\lvert}{\rvert}{%
+  {#1}\delimsize\rangle\hspace*{-0.25ex}\delimsize\langle{#1}%
+}
+\DeclarePairedDelimiterX\matrixel[3]{\langle}{\rangle}{%
+  {#1}\hspace*{0.2ex}\delimsize\vert\hspace*{0.2ex}{#2}%
+  \hspace*{0.2ex}\delimsize\vert\hspace*{0.2ex}{#3}%
+}
+\DeclarePairedDelimiterX\dmatrixel[2]{\langle}{\rangle}{%
+  {#1}\hspace*{0.2ex}\delimsize\vert\hspace*{0.2ex}{#2}%
+  \hspace*{0.2ex}\delimsize\vert\hspace*{0.2ex}{#1}%
+}
+\DeclarePairedDelimiterX\innerprod[2]{\langle}{\rangle}{%
+  {#1},\hspace*{0.2ex}{#2}%
+}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+%
+%
+% \subsection{Delimited Expressions}
+% Delimited expressions are documented in \autoref{sec:delimited}.
+% 
+% \begin{macro}{\abs}
+% \begin{macro}{\avg}
+% \begin{macro}{\norm}
+%   Other delimited expressions.
+%    \begin{macrocode}
+\DeclarePairedDelimiterX\abs[1]{\lvert}{\rvert}{{#1}}
+\DeclarePairedDelimiterX\avg[1]{\langle}{\rangle}{{#1}}
+\DeclarePairedDelimiterX\norm[1]{\lVert}{\rVert}{{#1}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% 
+% 
+% \begin{macro}{\phfqit@insideinterval}
+%   Format the contents of an interval.  Utility for defining |\intervalc| and
+%   friends.
+%    \begin{macrocode}
+\def\phfqit@insideinterval#1#2{{#1\mathclose{},\mathopen{}#2}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \needspace{4\baselineskip}
+% \begin{macro}{\intervalc}
+% \begin{macro}{\intervalo}
+% \begin{macro}{\intervalco}
+% \begin{macro}{\intervaloc}
+% Open/Closed/Semi-Open Intervals
+%    \begin{macrocode}
+\DeclarePairedDelimiterX\intervalc[2]{[}{]}{\phfqit@insideinterval{#1}{#2}}
+\DeclarePairedDelimiterX\intervalo[2]{]}{[}{\phfqit@insideinterval{#1}{#2}}
+\DeclarePairedDelimiterX\intervalco[2]{[}{[}{\phfqit@insideinterval{#1}{#2}}
+\DeclarePairedDelimiterX\intervaloc[2]{]}{]}{\phfqit@insideinterval{#1}{#2}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+%
+%
+%
+%
+% \subsection{Entropy Measures and Other Qit Objects}
+%
+% \changed[v2.0-qit-objects]{v2.0}{2017/06/17}{Introduced the Qit Objects infrastructure}
+%
+%
+% \subsubsection{Some Internal Utilities}
+%
+% \begin{macro}{\phfqit@parsesizearg}
+%   Internal utility to parse size argument with the backtick specification
+%   (\autoref{topic:size-specification-backtick}).
+%
+%   Parses a size argument, if any, and stores it into |\phfqit@val@sizearg|.
+%   The value stored can directly be expanded as an optional argument to a
+%   |\DeclarePairedDelimiter|-compatible command (see \pkgname{mathtools} package).
+%
+%   |#1| should be a command token.  It is the next action to take, after
+%   argument has been parsed.
+%    \begin{macrocode}
+\def\phfqit@parsesizearg#1{%
+  \begingroup%
+  \mathcode`\`="0060\relax%
+  \gdef\phfqit@val@sizearg{}%
+  \def\phfqit@tmp@contwithsize{\phfqit@parsesizearg@withsize{#1}}%
+  \@ifnextchar`{\phfqit@tmp@contwithsize}{\endgroup#1}%
+}
+\def\phfqit@parsesizearg@withsize#1`#2{%
+  \def\phfqit@tmp@x{#2}%
+  \def\phfqit@tmp@star{*}%
+  \ifx\phfqit@tmp@x\phfqit@tmp@star%
+    \gdef\phfqit@val@sizearg{*}%
+    \def\phfqit@tmp@cont{\endgroup#1}%
+    \expandafter\phfqit@tmp@cont%
+  \else%
+    \gdef\phfqit@val@sizearg{[#2]}%
+    \def\phfqit@tmp@cont{\endgroup#1}%
+    \expandafter\phfqit@tmp@cont%
+  \fi%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\phfqitParens}
+%   Simple parenthesis-delimited expression, with
+%   |\DeclarePairedDelimiter|-compatible syntax.  For example,
+%   \par |\phfqitParens|\marg{content} \quad$\to$\quad
+%   \fbox{\phfverb( \meta{content} \phfverb)}
+%   \par |\phfqitParens*|\marg{content} \quad$\to$\quad
+%   \fbox{\phfverb\left\phfverb( \meta{content} \phfverb\right\phfverb)}
+%   \par |\phfqitParens[\big]|\marg{content} \quad$\to$\quad
+%   \fbox{\phfverb\bigl\phfverb( \meta{content} \phfverb\bigr\phfverb)}
+%
+%    \begin{macrocode}
+\DeclarePairedDelimiterX\phfqitParens[1]{(}{)}{#1}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\phfqitSquareBrackets}
+%   Simple bracket-delimited expression, with
+%   |\DeclarePairedDelimiter|-compatible syntax.  For example,
+%   \par |\phfqitSquareBrackets|\marg{content} \quad$\to$\quad
+%   \fbox{\phfverb[ \meta{content} \phfverb]}
+%   \par |\phfqitSquareBrackets*|\marg{content} \quad$\to$\quad
+%   \fbox{\phfverb\left\phfverb[ \meta{content} \phfverb\right\phfverb]}
+%   \par |\phfqitSquareBrackets[\big]|\marg{content} \quad$\to$\quad
+%   \fbox{\phfverb\bigl\phfverb[ \meta{content} \phfverb\bigr\phfverb]}
+%
+%    \begin{macrocode}
+\DeclarePairedDelimiterX\phfqitSquareBrackets[1]{[}{]}{#1}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\phfqitCurlyBrackets}
+%   Simple bracket-delimited expression, with
+%   |\DeclarePairedDelimiter|-compatible syntax.  For example,
+%   \par |\phfqitSquareBrackets|\marg{content} \quad$\to$\quad
+%   \fbox{\phfverb\{ \meta{content} \phfverb\}}
+%   \par |\phfqitSquareBrackets*|\marg{content} \quad$\to$\quad
+%   \fbox{\phfverb\left\phfverb\{ \meta{content} \phfverb\right\phfverb\}}
+%   \par |\phfqitSquareBrackets[\big]|\marg{content} \quad$\to$\quad
+%   \fbox{\phfverb\bigl\phfverb\{ \meta{content} \phfverb\bigr\phfverb\}}
+%
+%    \begin{macrocode}
+\DeclarePairedDelimiterX\phfqitCurlyBrackets[1]{\{}{\}}{#1}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+%
+% \subsubsection{Machinery for Qit Objects}
+%
+% See also user documentation in \autoref{sec:QitObjectImpl}.
+%
+% \begin{macro}{\QitObject}
+%   The argument is the entropic quantity type or object kind (or ``entropic
+%   quantity driver''): one of |Hbase|, |Hfnbase|, |Dbase|, |DCbase|, or any
+%   other custom object.
+%    \begin{macrocode}
+\newcommand\QitObject[1]{%
+  \begingroup%
+    \preto\QitObjectDone{\endgroup}%
+    \QitObjectInit%
+    \csname QitObj@reg@#1@initdefs\endcsname%
+%%\message{DEBUG: \detokenize{\QitObject{#1}}}%
+    \def\QitObj@args{}%
+    \def\qitobjParseDone{\QitObj@proceedToRender{#1}}%
+    \def\qitobjDone{\QitObjectDone}%
+    \csname QitObj@reg@#1@parse\endcsname%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\DefineQitObject}
+% \begin{macro}{\DefineTunedQitObject}
+%   Define a new Qit Object implementation with this macro.  A Qit Object
+%   implementation is specified in its simplest form by a \emph{name}, a
+%   \emph{Parser} and a \emph{Renderer} (a single \LaTeX{} macro each).  The
+%   more advanced |\DefineTunedQitObject| allows you in addition to specify
+%   local definitions to override defaults, as well as some initial arguments to
+%   the parser.
+%    \begin{macrocode}
+\def\DefineQitObject#1#2#3{%
+  \DefineTunedQitObject{#1}{#2}{#3}{}{}%
+}%
+\def\DefineTunedQitObject#1#2#3#4#5{%
+  \csdef{#1}{\QitObject{#1}#4}%
+  \expandafter\robustify\csname #1\endcsname%
+  \cslet{QitObj@reg@#1@parse}#2%
+  \cslet{QitObj@reg@#1@render}#3%
+  \csdef{QitObj@reg@#1@initdefs}{#5}%
+}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+%
+% Here are some callbacks meant for Qit Object implementations
+% (``types''/``drivers'').
+% 
+% \begin{macro}{\qitobjAddArg}
+% \begin{macro}{\qitobjAddArgx}
+%   These macros should only be called from within a \emph{Parse} macro of a qit
+%   object type.  Append an argument in preparation for an eventual call to the
+%   corresponding \emph{Render} macro.  |\qitobjAddArg| does not expand its
+%   contents. |\qitobjAddArgx| expects a single command name as argument; it
+%   expands the command once and stores those tokens as a single new argument.
+%    \begin{macrocode}
+\def\qitobjAddArg#1{%
+  \appto\QitObj@args{{#1}}%
+}
+\def\qitobjAddArgx#1{%
+  \expandafter\qitobjAddArg\expandafter{#1}%
+}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% 
+% \begin{macro}{\qitobjParseDone}
+% \begin{macro}{\qitobjDone}
+%   These macros MUST be called at the end of the respective \emph{Parse}
+%   (|\qitobjParseDone|) and \emph{Render} (|\qitobjDone|) implementations
+%   (otherwise processing doesn't proceed, \LaTeX{} groups won't be closed, and
+%   it will be a mess).
+%
+%   These macros are correctly defined in |\QitObject| actually. Here we provide
+%   empty definitions so that the \emph{Render} and \emph{Parse} user
+%   implementation macros can be called stand-alone, too.
+%    \begin{macrocode}
+\def\qitobjParseDone{}
+\def\qitobjDone{}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% 
+% \begin{macro}{\QitObjectDone}
+%   A hook which gets called after a Qit Object is displayed.  This should
+%   really stay empty on the global scope.  However you can locally append or
+%   prepend to it in tuned definitions for |\DeclareTunedQitObject| to perform
+%   additional actions at the end of the Qit Object, for instance to close an
+%   additional \LaTeX{} group.
+%    \begin{macrocode}
+\def\QitObjectDone{}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\QitObjectInit}
+%   A hook which gets called before the parsing phase of a Qit Object.  This
+%   should really stay empty on the global scope.  However you can locally
+%   append or prepend to it in tuned definitions for |\DeclareTunedQitObject| to
+%   perform additional actions before parsing the Qit Object (but which have to
+%   be made within the \LaTeX{} group of the Qit Object).  You can use this to
+%   prepend code to |\QitObjectDone| so that you code gets called \emph{before}
+%   the inner \LaTeX{} group is closed.
+%    \begin{macrocode}
+\def\QitObjectInit{}
+%    \end{macrocode}
+% \end{macro}
+% 
+% An internal helper; it's useful to keep it separate for readability and for
+% debugging.
+%    \begin{macrocode}
+\def\QitObj@proceedToRender#1{%
+%%\message{DEBUG: Rendering #1|\detokenize\expandafter{\QitObj@args}|}%
+  \expandafter\def\expandafter\x\expandafter{%
+    \csname QitObj@reg@#1@render\endcsname}%
+  \expandafter\x\QitObj@args%
+}
+%    \end{macrocode}
+% 
+%
+% \subsubsection{Qit Object Implementation: Entropy, Conditional Entropy}
+%
+% See also the user doc in \autoref{sec:entropy-measures}.
+%
+% \begin{macro}{\HbaseParse}
+%   Base parser macro for usual entropy measures; possibly conditional and/or
+%   smooth.
+%
+%   USAGE:
+%   |\Hbase|\marg{H-symbol}\hspace{0pt}\relax
+%   \marg{subscript}\hspace{0pt}\relax
+%   \meta{size-spec}\hspace{0pt}\oarg{state}\relax
+%   \hspace{0pt}\oarg{epsilon}\hspace{0pt}\marg{target system}\hspace{0pt}\relax
+%   \oarg{conditioning system}
+%
+%   The argument \meta{size-spec} is optional, and is documented in
+%   \autoref{topic:size-specification-backtick}.  For example \meta{size-spec} =
+%   |`*| or |`\Big|.
+%
+%   Examples: 
+%   \par |\Hbase{\hat{H}}{\mathrm{max}}[\rho][\epsilon]{E}[X']|
+%   \quad$\to$\quad
+%   \fbox{$\Hbase{\hat{H}}{\mathrm{max}}[\rho][\epsilon]{E}[X']$}
+%   \par |\Hbase{\hat{H}}{\mathrm{max}}`*[\rho][\epsilon]{\bigotimes_i E}[X']|
+%   \quad$\to$\quad
+%   \fbox{$\Hbase{\hat{H}}{\mathrm{max}}`*[\rho][\epsilon]{\displaystyle\bigotimes_i E}[X']$}
+% 
+%   The |\HbaseParse| macro is responsible for parsing the arguments to
+%   |\Hbase|.  We should parse the arguments using helper macros as needed,
+%   adding rendering arguments with |\qitobjAddArg| or |\qitobjAddArgx|, and
+%   then calling |\qitobjParseDone|.  The arguments are then automatically
+%   provided as arguments to the |\HbaseRender| function.  We just have to make
+%   sure we add the correct number of arguments in the correct order.
+%   
+%    \begin{macrocode}
+\def\HbaseParse#1#2{%
+%    \end{macrocode}
+%
+% The first arguments are the mandatory arguments
+% \marg{H-symbol}\hspace{0pt}\marg{subscript}.  Then defer to helper macros for
+% the rest of the parsing.
+%    \begin{macrocode}
+  \qitobjAddArg{#1}%
+  \qitobjAddArg{#2}%
+  \phfqit@parsesizearg\HbaseParse@%
+}
+%    \end{macrocode}
+% 
+% Store the delimiter size argument which |\phfqit@parsesizearg| has stored into
+% |\phfqit@val@sizearg|, then parse an optional \oarg{state} argument.
+%    \begin{macrocode}
+\newcommand\HbaseParse@[1][]{%
+  \qitobjAddArgx{\phfqit@val@sizearg}%
+  \qitobjAddArg{#1}%
+  \HbaseParse@@%
+}
+%    \end{macrocode}
+% Then parse an optional \oarg{epsilon} argument, as well as a mandatory
+% \marg{target system} argument.
+%    \begin{macrocode}
+\newcommand\HbaseParse@@[2][]{%
+  \qitobjAddArg{#1}%
+  \qitobjAddArg{#2}%
+  \HbaseParse@@@%
+}
+%    \end{macrocode}
+% Finally, parse an optional \oarg{conditioning system}.
+%    \begin{macrocode}
+\newcommand\HbaseParse@@@[1][]{%
+  \qitobjAddArg{#1}%
+  \qitobjParseDone%
+}
+%    \end{macrocode}
+% \end{macro}
+% 
+%
+% \begin{macro}{\HbaseRender}
+%   Render the entropy measure.
+%   \par |#1| = ``$H$'' symbol to use (e.g. |H|)
+%   \par |#2| = subscript (type of entropy, e.g. |\marthrm{min},0|)
+%   \par |#3| = possible size argument to expand in front of parens command (one
+%   of \emph{(empty)}, |*|, or |[\big]| using a standard sizing command)
+%   \par |#4| = the state (e.g. |\rho|), may be left empty
+%   \par |#5| = epsilon argument (superscript to entropy measure), if any, or
+%   leave argument empty
+%   \par |#6| = system to measure entropy of
+%   \par |#7| = conditioning system, if any, or else leave the argument empty
+%    \begin{macrocode}
+\def\HbaseRender#1#2#3#4#5#6#7{%
+%%\message{DEBUG: HbaseRender\detokenize{{#1}{#2}{#3}{#4}{#5}{#6}{#7}}}%
+%    \end{macrocode}
+%
+%   Start with the entropy symbol (`H'), the subscript, and the superscript:
+%    \begin{macrocode}
+  \HbaseRenderSym{#1}_{\HbaseRenderSub{#2}}^{\HbaseRenderSup{#5}}
+%    \end{macrocode}
+% Render the contents of the entropy (parenthetic expression with system \&
+% conditioning system), only if the system or conditioning system or state are
+% not empty:
+%    \begin{macrocode}
+  \notblank{#4#6#7}{%
+    \HbaseRenderContents{#3}{#6}{#7}%
+%    \end{macrocode}
+% Finally, add the state as subscript, if any:
+%    \begin{macrocode}
+    \HbaseRenderTail{#4}%
+  }{}%
+%    \end{macrocode}
+% We're done.
+%    \begin{macrocode}
+  \qitobjDone%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \needspace{5\baselineskip}
+% \begin{macro}{\HbaseRenderSym}
+% \begin{macro}{\HbaseRenderSub}
+% \begin{macro}{\HbaseRenderSup}
+% \begin{macro}{\HbaseRenderTail}
+%   Macros to render different parts of the entropy measure.  By default, don't
+%   do anything special to them (but this might be locally overridden in a tuned
+%   Qit Object, for instance).
+%    \begin{macrocode}
+\def\HbaseRenderSym#1{#1}%
+\def\HbaseRenderSub#1{#1}%
+\def\HbaseRenderSup#1{#1}%
+\def\HbaseRenderTail#1{_{#1}}%
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\HbaseRenderContents}
+% For the main contents rendering macro, we need to do a little more work.
+% First, declare a token register in which we will prepare the contents of the
+% parenthetic expression.
+%    \begin{macrocode}
+\newtoks\Hbase@tmp@toks
+\def\Hbase@addtoks#1\@Hbase@END@ADD@TOKS{%
+  \Hbase@tmp@toks=\expandafter{\the\Hbase@tmp@toks#1}}%
+%    \end{macrocode}
+% Now we need to define the macro which formats the contents of the entropy.
+% The arguments are |#1| = possible sizing argument, |#2| = system name, |#3| =
+% conditioning system if any.
+%    \begin{macrocode}
+\def\HbaseRenderContents#1#2#3{%
+%    \end{macrocode}
+% We need to construct the parenthetic argument to the entropy, which we will
+% store in the token register |\Hbase@tmp@toks|.  Start with system name:
+%    \begin{macrocode}
+    \Hbase@tmp@toks={#2}%
+%    \end{macrocode}
+% \ldots{} add conditional system, if specified:
+%    \begin{macrocode}
+    \notblank{#3}{%
+      \Hbase@addtoks\mathclose{}\,\delimsize\vert\,\mathopen{}%
+          #3%
+          \@Hbase@END@ADD@TOKS%
+    }{}%
+%    \end{macrocode}
+% The tokens are ready now. Prepare the argument to the command
+% |\HbaseRenderContentsInnerParens| (normally just |\phfqitParens|), and go:
+%    \begin{macrocode}
+    \edef\tmp@args{\unexpanded{#1}{\the\Hbase@tmp@toks}}%
+    \expandafter\HbaseRenderContentsInnerParens\tmp@args%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\X}
+%   Macro which expands to the parenthetic expression type macro we would like
+%   to use. By default, this is |\phfqitParens|.
+%    \begin{macrocode}
+\def\HbaseRenderContentsInnerParens{\phfqitParens}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\Hbase}
+%   Finally, we declare our base entropic quantity type:
+%    \begin{macrocode}
+\DefineQitObject{Hbase}{\HbaseParse}{\HbaseRender}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \subsubsection{Qit Object Implementation: Entropy Function}
+%
+% See also the user doc in \autoref{sec:entropy-function}.
+%
+% \begin{macro}{\Hfnbase}
+%   Base implementation of an entropy function.
+%
+%   Usage: |\Hfnbase{H}{1}{2}(x)| $\to$ $\Hfnbase{H}{1}{2}(x)$,
+%   |\Hfnbase{H}{1}{2}`*(x)| $\to$ $\Hfnbase{H}{1}{2}`*(x)$,
+%   |\Hfnbase{H}{1}{2}`\big(x)| $\to$ $\Hfnbase{H}{1}{2}`\big(x)$.
+%
+%   We can use the same renderer as |\Hbase|, we just need a different parser.
+%   The parser first accepts the mandatory arguments
+%   \marg{H-symbol}\hspace{0pt}\marg{subscript}\hspace{0pt}\marg{superscript}.
+%    \begin{macrocode}
+\def\HfnbaseParse#1#2#3{%
+  \qitobjAddArg{#1}% H-sym
+  \qitobjAddArg{#2}% sub
+  \phfqit@parsesizearg{\HfnbaseParse@{#3}}%
+}
+%    \end{macrocode}
+% 
+% Continue to parse a the argument given in parentheses.  The first mandatory
+% argument is simply the subscript passed on from the previous macro.  It might
+% be tempting to do simply |\def\HfnbaseParse@#1(#2){...}|, but this does not
+% allow for recursive use of parenthesis within the entropy argument, for
+% instance |\Hfn(g(x)+h(y))|.  Because of this, we use \pkgname{xparse}'s
+% |\NewDocumentCommand| which can handle this.
+%    \begin{macrocode}
+\NewDocumentCommand{\HfnbaseParse@}{mr()}{%
+  \qitobjAddArgx{\phfqit@val@sizearg}% size-arg
+  \qitobjAddArg{}% state
+  \qitobjAddArg{#1}% epsilon
+  \qitobjAddArg{#2}% system--main arg
+  \qitobjAddArg{}% cond system
+%%\message{DEBUG: Hfnbase args are |\detokenize\expandafter{\QitObj@args}|}%
+  \qitobjParseDone%
+}
+\DefineQitObject{Hfnbase}{\HfnbaseParse}{\HbaseRender}
+%    \end{macrocode}
+% \end{macro}
+% 
+%
+% \subsubsection{Qit Object Implementation: Relative Entropy}
+%
+% User documentation in \autoref{sec:relative-entropies}.
+%
+%
+% \begin{macro}{\DbaseParse}
+%   Base macro for relative entropy macros.
+%
+%   USAGE:
+%   |\Dbase|\marg{D-symbol}\hspace{0pt}\relax
+%   [|_|\meta{subscript}]\hspace{0pt}\relax
+%   [|^|\meta{superscript}]\hspace{0pt}\relax
+%   \meta{size-spec}\hspace{0pt}\marg{state}\hspace{0pt}\marg{relative to state}
+%
+%   The subscript and superscripts are optional and don't have to be specified.
+%   They may be specified in any order.  Repetitions are allowed and
+%   concatenates the arguments, e.g., |^{a}_{x}_{y}^{z}_{w}| is the same as
+%   |_{xyw}^{az}|.
+%   
+%   The \meta{size-spec} is a backtick-style specification as always.
+%
+%    \begin{macrocode}
+\def\DbaseParse#1{%
+  \qitobjAddArg{#1}% D-sym
+  \def\DbaseParse@val@sub{}%
+  \def\DbaseParse@val@sup{}%
+  \DbaseParse@%
+}
+\def\DbaseParse@{%
+  \@ifnextchar_{\DbaseParse@parsesub}{\DbaseParse@@}%
+}
+\def\DbaseParse@@{%
+  \@ifnextchar^{\DbaseParse@parsesup}{\DbaseParse@@@}%
+}
+\def\DbaseParse@parsesub_#1{%
+  \appto\DbaseParse@val@sub{#1}%
+  \DbaseParse@% return to maybe parsing other sub/superscripts
+}
+\def\DbaseParse@parsesup^#1{%
+  \appto\DbaseParse@val@sup{#1}%
+  \DbaseParse@% return to maybe parsing other sub/superscripts
+}
+\def\DbaseParse@@@{%
+  \qitobjAddArgx\DbaseParse@val@sub%
+  \qitobjAddArgx\DbaseParse@val@sup%
+  \phfqit@parsesizearg\DbaseParse@rest%
+}
+\def\DbaseParse@rest#1#2{%
+  \qitobjAddArgx\phfqit@val@sizearg%
+  \qitobjAddArg{#1}% rho
+  \qitobjAddArg{#2}% Gamma
+  \qitobjParseDone%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+%
+%
+%
+% \begin{macro}{\DbaseRender}
+%   Macro which formats a relative entropy of the form
+%   $D_\mathrm{sub}^\mathrm{sup}(A\Vert B)$:
+%   \par |\DbaseRender{D}{\mathrm{min}}{\epsilon}{[\big]}{\rho}{\Gamma}|
+%   \quad$\to$\quad
+%   \fbox{$\DbaseRender{D}{\mathrm{min}}{\epsilon}{[\big]}{\rho}{\Gamma}$}
+%
+%    \begin{macrocode}
+\def\DbaseRender#1#2#3#4#5#6{%
+%%\message{DEBUG: DbaseRender\detokenize{{#1}{#2}{#3}{#4}{#5}{#6}}}%
+%    \end{macrocode}
+%
+%   Start with the entropy symbol (`H'), the subscript, and the superscript:
+%    \begin{macrocode}
+  \DbaseRenderSym{#1}_{\DbaseRenderSub{#2}}^{\DbaseRenderSup{#3}}
+%    \end{macrocode}
+% Render the contents of the entropy (parenthetic expression with the (one or)
+% two states), only if the arguments are non-empty:
+%    \begin{macrocode}
+  \notblank{#5#6}{%
+    \DbaseRenderContents{#4}{#5}{#6}%
+  }{}%
+%    \end{macrocode}
+% We're done.
+%    \begin{macrocode}
+  \qitobjDone%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \needspace{5\baselineskip}
+% \begin{macro}{\DbaseRenderSym}
+% \begin{macro}{\DbaseRenderSub}
+% \begin{macro}{\DbaseRenderSup}
+%   Macros to render different parts of the entropy measure.  By default, don't
+%   do anything special to them (but this might be locally overridden in a
+%   tuned Qit Object).
+%    \begin{macrocode}
+\def\DbaseRenderSym#1{#1}%
+\def\DbaseRenderSub#1{#1}%
+\def\DbaseRenderSup#1{#1}%
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% 
+% \begin{macro}{\DbaseRenderContents}
+% Now we need to define the macro which formats the contents of the entropy.
+% First, define a useful token register.
+%    \begin{macrocode}
+\newtoks\Dbase@tmp@toks
+\def\Dbase@addtoks#1\@Dbase@END@ADD@TOKS{%
+  \Dbase@tmp@toks=\expandafter{\the\Dbase@tmp@toks#1}}%
+%    \end{macrocode}
+%
+% The arguments are |#1| = possible sizing argument, |#2| = first state, |#3| =
+% second state (or operator), if any.
+%    \begin{macrocode}
+\def\DbaseRenderContents#1#2#3{%
+%    \end{macrocode}
+% We need to construct the parenthetic argument to the relative entropy, which
+% we will store in the token register |\Dbase@tmp@toks|.  Start with system
+% name:
+%    \begin{macrocode}
+    \Dbase@tmp@toks={#2}%
+%    \end{macrocode}
+% \ldots{} add conditional system, if specified:
+%    \begin{macrocode}
+    \notblank{#3}{%
+      \Dbase@addtoks\mathclose{}\,\delimsize\Vert\,\mathopen{}%
+          #3%
+          \@Dbase@END@ADD@TOKS%
+    }{}%
+%    \end{macrocode}
+% The tokens are ready now. Prepare the argument to the command
+% |\DbaseRenderContentsInnerParens| (by default just |\phfqitParens|), and go:
+%    \begin{macrocode}
+    \edef\tmp@args{\unexpanded{#1}{\the\Dbase@tmp@toks}}%
+    \expandafter\DbaseRenderContentsInnerParens\tmp@args%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\DbaseRenderContentsInnerParens}
+%   Macro which expands to the parenthetic expression type macro we would like
+%   to use. By default, this is |\phfqitParens|.
+%    \begin{macrocode}
+\def\DbaseRenderContentsInnerParens{\phfqitParens}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\Dbase}
+%   Finally, define the |\Dbase| macro by declaring a new qit object.
+%    \begin{macrocode}
+\DefineQitObject{Dbase}{\DbaseParse}{\DbaseRender}
+%    \end{macrocode}
+% \end{macro}
+% 
+%
+% \subsubsection{Qit Object Type: Coherent Relative Entropy}
+% 
+% See also user documentation in \autoref{sec:coh-rel-entr}.
+%
+% \begin{macro}{\DCohbaseParse}
+%   Base macros for coherent relative entropy-type quantities of the form
+%   ${\bar D}_{X\to X'}^{\epsilon}(\rho_{X'R}\Vert\Gamma_X,\Gamma_{X'})$.
+%
+%   USAGE:
+%   |\DCohbase|\marg{D symbol}\hspace{0pt}\relax
+%   \oarg{epsilon}\hspace{0pt}\relax
+%   \marg{state or \texttt{\textup{*}}fully-decorated-state}\hspace{0pt}\relax
+%   \marg{System In}\hspace{0pt}\relax
+%   \marg{System Out}\hspace{0pt}\relax
+%   \marg{Gamma In}\hspace{0pt}\relax
+%   \marg{Gamma Out}
+%
+%    \begin{macrocode}
+\def\DCohbaseParse#1{%
+  \qitobjAddArg{#1}% D-sym
+  \DCohbaseParse@%
+}
+\newcommand\DCohbaseParse@[1][]{%
+  \qitobjAddArg{#1}% epsilon
+  \phfqit@parsesizearg\DCohbaseParse@rest%
+}
+\def\DCohbaseParse@rest#1#2#3#4#5{%
+  % rho, X, X', \Gamma_X, \Gamma_{X'}
+  \qitobjAddArgx\phfqit@val@sizearg%
+  \DCohbaseParse@parserhosub#1\DCohbaseParse@ENDSTATE{#2}{#3}%
+  \qitobjAddArg{#2}%
+  \qitobjAddArg{#3}%
+  \qitobjAddArg{#4}%
+  \qitobjAddArg{#5}%
+  \qitobjParseDone%
+}
+\def\DCohbaseParse@parserhosub{%
+  \@ifnextchar*\DCohbaseParse@parserhosub@nosub%
+  \DCohbaseParse@parserhosub@wsub%
+}
+\def\DCohbaseParse@parserhosub@nosub*#1\DCohbaseParse@ENDSTATE#2#3{%
+  \qitobjAddArg{#1}% rho
+}
+\def\DCohbaseParse@parserhosub@wsub#1\DCohbaseParse@ENDSTATE#2#3{%
+  \qitobjAddArg{#1_{\begingroup\let\emptysystem\relax%
+      \DCohbaseStateSubscripts{#2}{#3}\endgroup}}% all this for "rho" arg
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\DCohbaseStateSubscripts}
+%   Macro which produces the relevant subscript for the state.  By default,
+%   simply produce ``$X'R$'' (but don't produce an ``empty system''
+%   symbol). This macro may be overridden e.g. locally.
+%    \begin{macrocode}
+\def\DCohbaseStateSubscripts#1#2{%
+  #2#1%
+}
+%    \end{macrocode}
+% \end{macro}
+% 
+% \begin{macro}{\DCohbaseRender}
+%   Render the coherent relative entropy.
+%   \par |#1| = ``$D$'' symbol
+%   \par |#2| = superscript (epsilon)
+%   \par |#3| = possible size argument tokens (i.e., |[\big]|)
+%   \par |#4| = fully decorated state (i.e., with necessary subscripts as required)
+%   \par |#5| = input system name
+%   \par |#6| = output system name
+%   \par |#7| = Gamma-in
+%   \par |#8| = Gamma-out
+%    \begin{macrocode}
+\def\DCohbaseRender#1#2#3#4#5#6#7#8{%
+  % 
+%%\message{DEBUG: DCohbaseRender here, args are |\detokenize{{#1}{#2}{#3}{#4}{#5}{#6}{#7}{#8}|.}}
+  %
+  \DCohbaseRenderSym{#1}%
+  _{\DCohbaseRenderSystems{#5}{#6}}%
+  ^{\DCohbaseRenderSup{#2}}%
+  \notblank{#4#7#8}{%
+    \DCohbaseRenderContents{#3}{#4}{#7}{#8}%
+  }{}%
+%    \end{macrocode}
+% We're done.
+%    \begin{macrocode}
+  \qitobjDone%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \needspace{5\baselineskip}
+% \begin{macro}{\DCohbaseRenderSym}
+% \begin{macro}{\DCohbaseRenderSystems}
+% \begin{macro}{\DCohbaseRenderSup}
+%   Macros to render different parts of the entropy measure.  By default, don't
+%   do anything special to them (but this might be locally overridden in a
+%   tuned Qit Object)
+%    \begin{macrocode}
+\def\DCohbaseRenderSym#1{#1}%
+\def\DCohbaseRenderSystems#1#2{#1\to #2}%
+\def\DCohbaseRenderSup#1{#1}%
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\DCohbaseRenderContents}
+%   Now we define the macro which formats the contents of the entropy.
+%
+%   Define first a useful token register for rendering the contents.
+%    \begin{macrocode}
+\newtoks\DCohbase@tmp@toks
+\def\DCohbase@addtoks#1\@DCohbase@END@ADD@TOKS{%
+  \DCohbase@tmp@toks=\expandafter{\the\DCohbase@tmp@toks#1}}%
+%    \end{macrocode}
+%
+% The arguments are |#1| = possible sizing argument tokens, |#2| = decorated
+% state, |#3| = Gamma-X, |#4| = Gamma-{X'}.
+%    \begin{macrocode}
+\def\DCohbaseRenderContents#1#2#3#4{%
+%    \end{macrocode}
+% We need to construct the parenthetic argument to the coherent relative
+% entropy, which we will prepare in the token register |\DCohbase@tmp@toks|.
+% Start with the state:
+%    \begin{macrocode}
+    \DCohbase@tmp@toks={#2}%
+%    \end{macrocode}
+% \ldots{} add conditional system, if specified:
+%    \begin{macrocode}
+    \notblank{#3#4}{%
+      \DCohbase@addtoks\mathclose{}\,\delimsize\Vert\,\mathopen{}%
+          #3\mathclose{},\mathopen{}#4\@DCohbase@END@ADD@TOKS%
+    }{}%
+%    \end{macrocode}
+% The tokens are ready now. Prepare the argument to the command
+% |\DCohbaseRenderContentsInnerParens| (by default just |\phfqitParens|), and go:
+%    \begin{macrocode}
+    \edef\tmp@args{\unexpanded{#1}{\the\DCohbase@tmp@toks}}%
+    \expandafter\DCohbaseRenderContentsInnerParens\tmp@args%
+}
+%    \end{macrocode}
+% \end{macro}
+% 
+% \begin{macro}{\DCohbaseRenderContentsInnerParens}
+%   Macro which expands to the parenthetic expression type macro we would like
+%   to use.  By default, this is |\phfqitParens|.
+%    \begin{macrocode}
+\def\DCohbaseRenderContentsInnerParens{\phfqitParens}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\DCohbase}
+%   Finally, define the |\DCohbase| macro by declaring a new qit object.
+%    \begin{macrocode}
+\DefineQitObject{DCohbase}{\DCohbaseParse}{\DCohbaseRender}
+%    \end{macrocode}
+% \end{macro}
+% 
+%
+% \subsection{Additional helpers for entropy measures}
+%
+% \begin{macro}{\HSym}
+%   Symbol to use to denote an entropy measure.
+%    \begin{macrocode}
+\def\HSym{H}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\DSym}
+%   Symbol to use to denote a relative entropy measure.
+%    \begin{macrocode}
+\newcommand\DSym{D}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\DCSym}
+%   Symbol to use for the coherent relative entropy measure.
+%    \begin{macrocode}
+\newcommand\DCSym{\bar\DSym}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\emptysystem}
+%   Designates the trivial system (uses symbol for empty set).  It is important
+%   to this, because of the automatic indexes set on the ``rho'' argument.
+%    \begin{macrocode}
+\def\emptysystem{\ensuremath{\emptyset}}
+%    \end{macrocode}
+% \end{macro}
+% 
+% \begin{macro}{\DCohxRefSystemName}
+% \begin{macro}{\DCohxStateSubscripts}
+%   Macros helpful for defining |\DCohx|.
+%    \begin{macrocode}
+\def\DCohxRefSystemName#1{R_{#1}}
+\def\DCohxStateSubscripts#1#2{#2\DCohxRefSystemName{#1}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+%
+% Finally, some macros provided for backwards compatibility:
+%    \begin{macrocode}
+\let\@HHbase\Hbase
+\let\@DDbase\Dbase
+\let\HHSym\HSym
+\let\DDSym\DSym
+%    \end{macrocode}
+%
+%
+% \subsection{Handle package options}
+%
+% \changedreftext{v2.0-pkg-opt-qitobjdef}
+% \changedreftext{v2.0-pkg-opt-newReIm}
+%
+% Initialization code for \pkgname{kvoptions} for our package options.  See
+% \autoref{sec:pkg-options}.
+%    \begin{macrocode}
+\SetupKeyvalOptions{
+   family=phfqit,
+   prefix=phfqit@opt@
+}
+%    \end{macrocode}
+% 
+% Set of predefined qit objects to load. Either |stdset| (standard set, the
+% default) or |none| (none).
+%    \begin{macrocode}
+\DeclareStringOption[stdset]{qitobjdef}
+%    \end{macrocode}
+%
+% Whether to override \LaTeX{}'s default {\makeatletter $\phfqit@Re$ and
+% $\phfqit@Im$} symbols by our more readable $\Re$ and $\Im$.
+%    \begin{macrocode}
+\DeclareBoolOption[true]{newReIm}
+%    \end{macrocode}
+%
+% 
+% Process package options.
+%    \begin{macrocode}
+\ProcessKeyvalOptions*
+%    \end{macrocode}
+%
+%
+% \subsubsection{Re/Im symbols}
+%
+% \begin{macro}{\Re}
+% \begin{macro}{\Im}
+%   Provide |\Re| and |\Im| commands to override \LaTeX{}'s default if the
+%   corresponding package option is set (which is the default).
+%    \begin{macrocode}
+\ifphfqit@opt@newReIm
+  \renewcommand{\Re}{\phfqit@Realpart}
+  \renewcommand{\Im}{\phfqit@Imagpart}
+\fi
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \subsubsection{Standard entropy measures}
+%
+% Load the requested set of qit objects. 
+%    \begin{macrocode}
+\def\phfqit@tmp@str@none{none}
+\def\phfqit@tmp@str@stdset{stdset}
+\ifx\phfqit@opt@qitobjdef\phfqit@tmp@str@none%
+%    \end{macrocode}
+% In this case, do not load any definitions.
+%    \begin{macrocode}
+\else\ifx\phfqit@opt@qitobjdef\phfqit@tmp@str@stdset%
+%    \end{macrocode}
+% In this case, provide our standard set of ``qit objects'' (i.e., entropy
+% measures).
+% 
+% \needspace{4\baselineskip}
+% \begin{macro}{\HH}
+% \begin{macro}{\Hzero}
+% \begin{macro}{\Hmin}
+% \begin{macro}{\Hmaxf}
+%   The definition of individual entropy macros just delegates to |\Hbase|
+%   with the relevant subscript.
+%    \begin{macrocode}
+\def\HH{\Hbase{\HSym}{}}
+\def\Hzero{\Hbase{\HSym}{\mathrm{max},0}}
+\def\Hmin{\Hbase{\HSym}{\mathrm{min}}}
+\def\Hmaxf{\Hbase{\HSym}{\mathrm{max}}}
+\def\Hfn{\Hfnbase{\HSym}{}{}}
+\let\Hfunc\Hfn% backwards compatibility
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+%
+% 
+% \begin{macro}{\DD}
+%   (Usual) quantum relative entropy.  (Actually this is more versatile, because
+%   you can also specify subscript and superscript, so you can make on-the-fly
+%   custom relative entropy measures.)
+%    \begin{macrocode}
+\def\DD{\Dbase{\DSym}}
+%    \end{macrocode}
+% \end{macro}
+% 
+% \begin{macro}{\Dminz}
+%   ``Old'' min-relative entropy, based on the R\'enyi-zero relative entropy.
+%    \begin{macrocode}
+\newcommand\Dminz[1][]{\Dbase{\DSym}_{\mathrm{min,0}}^{#1}}
+%    \end{macrocode}
+% \end{macro}
+% 
+% \begin{macro}{\Dminf}
+%   Min-relative entropy (``new'' version).
+%    \begin{macrocode}
+\newcommand\Dminf[1][]{\Dbase{\DSym}_{\mathrm{min}}^{#1}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\Dmax}
+%   Max-relative entropy.
+%    \begin{macrocode}
+\newcommand\Dmax[1][]{\Dbase{\DSym}_{\mathrm{max}}^{#1}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\Dr}
+%   Rob-relative entropy.
+%    \begin{macrocode}
+\newcommand\Dr[1][]{\Dbase{\DSym}_{\mathrm{r}}^{#1}}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \begin{macro}{\DHyp}
+%   Hypothesis testing relative entropy.
+%    \begin{macrocode}
+\newcommand\DHyp[1][\eta]{\Dbase{\DSym}_{\mathrm{H}}^{#1}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\DCoh}
+%   Coherent relative entropy (old style).
+%    \begin{macrocode}
+\DefineTunedQitObject{DCoh}{\DCohbaseParse}{\DCohbaseRender}{{\DCSym}}{}
+%    \end{macrocode}   
+% \end{macro}
+%
+% \begin{macro}{\DCohx}
+%   Coherent relative entropy (new style).
+%    \begin{macrocode}
+\DefineTunedQitObject{DCohx}{\DCohbaseParse}{\DCohbaseRender}%
+{{\DCSym}}{%
+  \let\DCohbaseStateSubscripts\DCohxStateSubscripts%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% End case |qitobjdef=stdset|.  Last case is the final |\else| branch which is an
+% error, as we have an unknown set of standard definitions to load.
+%    \begin{macrocode}
+\else
+\PackageError{phfqit}{Invalid value `\phfqit@opt@qitobjdef' specified for
+  package option `qitobjdef'.  Please specify one of `stdset' (the default) or
+  `none'}{You specified an invalid value to the `qitobjdef' package option of
+  the `phfqit' package.}
+\fi
+\fi
+%    \end{macrocode}
+%
+% 
+% \Finale
+\endinput
