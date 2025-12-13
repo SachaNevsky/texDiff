@@ -1,0 +1,464 @@
+#! /usr/bin/env perl
+## 'perl -w' is good, but the PERL on the previous line is substituted,
+## by default, by '/usr/bin/env perl', and that doesn't always cope well
+## with multiple arguments, so leave the option off.
+#
+# This software is copyright, 1999, 2005, Norman Gray. 
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+# 
+# Author: Norman Gray, norman@astro.gla.ac.uk.
+# Department of Physics and Astronomy, University of Glasgow, UK
+#
+# See the file LICENCE for a copy of the GPL.
+# You can also find an online copy at http://www.gnu.org/copyleft/gpl.html .
+#
+# $Id$
+#
+# See <http://www.astro.gla.ac.uk/users/norman/distrib/bibhtml.html>
+# for documentation.
+
+use strict;
+
+my $version = 'Bibhtml, version 2.0.2, Norman Gray <norman@astro.gla.ac.uk>, 2013 September 8';
+
+
+# configuration...
+my $rootname = 'bibliography';
+my $bibdata = '';                  # default bibdata is ./bib.bib
+my $bibstyle = '';                 # default, below, is plainhtml
+my $bibconfig = 'bibhtml.config';  # configuration file
+
+my $html3 = 0;
+my $citeall = 0;
+my $verbose = 1;
+my $mergebib = 0;
+my $strippis = 0;               # if true, then strip PIs from output
+
+# configuration variables
+my $endash;
+my $nbsp;
+
+my $bibfilename;                # the name of the .bib file
+my $bblfilename;                # the name of the generated .bbl file
+my $auxfilename;                # the .aux file we generate here
+
+# control flags
+my $phase;
+my $foundslot;                  # true when we're in the gap between
+                                # <?bibhtml start...end?>
+
+# set to 1 to switch on debugging, set > 1 to exit after option parsing
+my $debug = 0;
+
+# normalise progname - part after last slash
+$0 =~ /([^\/]*)$/;
+my $progname = $1;
+
+if ($#ARGV < $[) {
+    print "Usage: $progname filename ...\n[$version]\n";
+    exit 1;
+}
+
+# get directory of first arg (this is where we'll search for bibhtml.config)
+$ARGV[0] =~ /[^\/:]*$/;
+my $defdir = $`;
+#print "defdir $defdir\n";
+
+
+#------
+
+# if -c is present in the argument list, then undefine $bibconfig, 
+# and so don't read it automatically at the beginning
+for (@ARGV) { if (/^-c/) { undef ($bibconfig); last; }}
+if (defined ($bibconfig) && (-r $bibconfig)) {
+    readconfig ($bibconfig);
+}
+
+# Option processing
+while ($_ = $ARGV[0], /^[-+]/)
+{
+    # print "ARGV[0]=$_\n";
+    if (/^([-+])3/ )	{ $html3= ($1 eq '+') }
+    if (/^-v/)		{ $verbose = 1 }
+    if (/^-q/)		{ $verbose = 0 }
+    if (/^-a/)		{ $citeall = 1 }
+    if (/^-V/)		{ print STDERR $version, "\n"; exit }
+    if (/^--version/)	{ print STDERR $version, "\n"; exit }
+    if (/^--merge/)	{ $mergebib = 1 }
+    if (/^--strip/)	{ $strippis = 1 }
+    if (/^--help/)	{ printhelp(); exit }
+
+    shift;
+    last if ($#ARGV < $[);
+    if (/^-r/)		{ $rootname = $ARGV[0]; shift }
+    if (/^-b/)		{ $bibdata = $ARGV[0]; shift }
+    if (/^-s/)		{ $bibstyle = $ARGV[0]; shift }
+    if (/^-c/)		{ my $bibconfig = $ARGV[0];
+			  shift;
+			  readconfig ($bibconfig); }
+    last if ($#ARGV < $[);
+}
+
+
+if ($debug)
+{
+    # debugging arglist...
+    print STDERR "rootname $rootname, bibdata $bibdata\n";
+    if ($html3) { print STDERR "html3\n"; }
+    if ($verbose) { print STDERR "verbose\n"; }
+    if ($citeall) { print STDERR "citeall\n"; }
+    print STDERR "ARGV @ARGV\n";
+    exit if ($debug > 1);
+}
+
+if ($mergebib) {
+    # usage is bibhtml file.bbl file.html - do nothing other than
+    # merge a bbl file into an html file
+    if ($#ARGV < 1) {
+	print "Usage: $progname --merge file.bbl file.html\n";
+	exit;
+    }
+
+    $phase = +1;
+    $bblfilename = $ARGV[0];
+    $bibfilename = $ARGV[1];
+    # Insist that both files have the correct extension
+    # This route will mostly be called by scripts, so this check is
+    # both useful and easily satisfied
+    ($bblfilename =~ /\.bbl$/) && ($bibfilename =~ /\.html$/)
+	|| do {
+	    print STDERR "Usage: $progname --merge file.bbl file.html\n\tfile extensions required!\n";
+	    exit;
+	};
+}
+else
+{
+    if ($#ARGV < $[)
+    {
+	print "Usage: $progname filename ...\n";
+	exit;
+    }
+
+    # If the command name is bibhtml, then do everything.
+    # If it isn't, then use the name of the (first) argument to work out which
+    # phase to perform.  If it's a .bbl file, then merge it with the .html
+    # file, if not, then create the .aux file ready for BibTeX to be
+    # invoked manually.
+    if ($progname eq 'bibhtml')
+    {
+	$phase = 0;
+    }
+    else
+    {
+	if ($ARGV[0] =~ /(.*)\.bbl$/)
+	{
+	    $rootname = $1;
+	    $phase = +1;
+	}
+	else
+	{
+	    $phase = -1;
+	}
+    }
+}
+
+if ($debug)
+{
+  print STDERR "rootname $rootname\nbibdata $bibdata\nphase $phase, html3 $html3\n";
+#exit;
+}
+
+
+my @date = localtime(time);
+my @mname = ("January", "February", "March", "April", "May", "June",
+	  "July", "August", "September", "October", "November", "December");
+
+$bblfilename = "$rootname.bbl"  unless (defined ($bblfilename));
+$bibfilename = "$rootname.html" unless (defined ($bibfilename));
+$auxfilename = "$rootname.aux"  unless (defined ($auxfilename));
+
+print "bibfilename=$bibfilename\nbibdata=$bibdata\n" if $verbose;
+
+########################################
+#
+# Start the scanning phase
+
+if ($phase <= 0)		# -1 or 0
+{
+    print "Creating $auxfilename...\n" if ($verbose);
+
+    open (OUT, ">$auxfilename") || die "can't open $auxfilename to write\n";
+    print OUT "\\relax\n";	# not really necessary, but...
+
+    if ($citeall)
+    {
+	print "Citing all...\n" if ($verbose);
+	print OUT "\\citation{*}\n";
+    }
+    else
+    {
+	foreach my $fn (@ARGV)
+	{
+            my $t;              # temporary string
+	    print "scanning $fn...\n" if ($verbose);
+	    
+	    open (IN, "$fn") || die "can't open $fn to read\n";
+
+	    while (<IN>)
+	    {
+		# Match possibly multiple times on one line
+		# Note bibfilename must be present, even if this is the
+		# bibliography itself.
+		foreach my $m (/$bibfilename#([^\"]+)/g) {
+		    print OUT "\\citation{$m}\n";
+		}
+                if (($t) = /<\?bibhtml\s+bibdata\s+([\w,]*)/) {
+                    # accumulate bibdata
+                    if ($bibdata eq '') {
+                        $bibdata = $t;
+                    } else {
+                        $bibdata .= ',' . $t;
+                    }
+                    print "bibdata=$bibdata\n" if $verbose;
+                }
+                if (($t) = /<\?bibhtml\s+bibstyle\s+(\w*)/) {
+                    # do not override any value specified on the command line
+                    $bibstyle = $t if $bibstyle eq '';
+                    print "bibstyle=$bibstyle\n" if $verbose;
+                }
+	    }
+
+	    close (IN);
+	}
+    }
+
+    $bibdata =  'bib' if ($bibdata eq '');
+    $bibstyle = 'plainhtml' if ($bibstyle eq '');
+
+    print OUT "\\bibstyle{$bibstyle}\n";
+    print OUT "\\bibdata{$bibdata}\n";
+
+    close (OUT);
+}
+  
+########################################
+#
+# Call BibTeX
+
+if ($phase == 0)
+{
+    print "Calling BibTeX...\n" if ($verbose);
+
+    system ("bibtex $rootname")==0 || die "can't bibtex $auxfilename\n";
+}
+
+########################################
+#
+# Substitution phase
+
+if ($phase >= 0 && -r "$bblfilename") 	# $phase +1 or 0
+{
+    print "Merging $bblfilename into $bibfilename...\n" if ($verbose);
+
+    # now merge the new bbl file with the old bibfilename, between the
+    # pattern /<?\s*bibhtml start/ and 'end'
+
+
+    if ($debug)
+    {
+        open (ORIG, "$bibfilename")||die "can't open $bibfilename to read";
+    }
+    else
+    {
+        rename ($bibfilename, "$bibfilename.old")||die "can't rename $bibfilename";
+        open (OUT, ">$bibfilename")    ||die "can't open $bibfilename to write";
+        select (OUT);
+        open (ORIG, "$bibfilename.old")||die "can't open $bibfilename.old to read";
+    }
+    open (BBL, "$bblfilename")    ||die "can't open $bblfilename to read";
+
+
+    $foundslot = 0;		# copy the old to the new up to pattern 
+
+    FINDSLOT: while (<ORIG>)
+    {
+	if (/<\?bibhtml\s+today/ || /<!--\s*bibhtml:today/)
+	{
+            print unless $strippis;
+	    # gobble a line containing the old date
+	    <ORIG>;
+	    print "$date[3] $mname[$date[4]] 19$date[5]\n";
+	}
+	elsif (/<\?bibhtml\s+start/ || /<!--\s*bibhtml:start/)
+	{
+            print unless $strippis;
+	    $foundslot = 1;
+            print STDERR "Found start\n" if $debug;
+	    last FINDSLOT;
+	}
+        elsif (/<\?bibhtml\s+insert/)
+        {
+            # don't print this line
+            $foundslot = 2;
+            print STDERR "Found insertion point\n" if $debug;
+            last FINDSLOT;
+        } else {
+            if ($strippis)
+            {
+                print unless /<\?bibhtml/;
+            } else {
+                print;
+            }
+        }
+    }
+
+    $foundslot || die "couldn't find the insertion point";
+
+    if ($html3)
+    {
+	$nbsp='&nbsp;';
+	$endash='&endash;';
+    }
+    else
+    {
+	$nbsp=' ';
+	$endash='-';
+    }
+
+    while (<BBL>)
+    {
+	# If a line ends with a %, then remove the %\n.  write$ does
+	# a decent job of line breaking, but if it can't break a line
+	# at space, it puts in a %, which is OK in TeX, but messes
+	# up HTML.
+	if (/%$/) {
+            chop; chop;
+            $_ .= <BBL>;
+        }
+
+        # Spot hrefs in the current line: if we find any, emit them and
+        # remove them from $_, so they're escaped as appropriate for URLs,
+        # which is different from the escaping required for text, below.
+        # We lose in principle, if there are any characters which need
+        # escaped before the href, but the output of bibtex is pretty
+        # consistent, and doesn't produce these in fact.
+        my $href;
+        if (($href) = /(.*href[^>]*)/) {
+            $href =~ s/\&/\&amp;/g;
+            $href =~ s/\~/%7e/g;
+            print "$href\n";
+            s{.*href[^>]*}{};
+        } 
+        s/\&/\&amp;/g;
+        s/\~/$nbsp/g ;
+        s/[\{\}]//g ;
+        s/--/$endash/g ;
+	print;
+    }
+
+    if ($foundslot > 1)
+    {
+        # we found <?bibhtml insert?> -- there is no end marker to be found
+        $foundslot = 0;
+    } else {
+        # we found <?bibhtml start?> -- look for the end marker
+        $foundslot = 0;
+
+        # now discard lines of the input file until we find one which 
+        # matches <?bibhtml end?>
+      SKIPGAP: while (<ORIG>)
+        {
+            if (/<\?bibhtml\s+end/ || /--\s*bibhtml:end/)
+            {
+                print unless $strippis;
+                $foundslot = 1;
+                print STDERR "Found end\n" if $debug;
+                last SKIPGAP;
+            }
+        }
+
+        $foundslot || warn "couldn't find end marker";
+    }
+
+    # now copy the remainder of the file to OUT
+    while (<ORIG>)
+    {
+	if (/<\?bibhtml\s+today/ || /--\s*bibhtml:today/)
+	{
+            print unless $strippis;
+	    # gobble a line
+	    <ORIG>;
+	    print "$date[3] $mname[$date[4]] 19$date[5]\n";
+	} else {
+            if ($strippis)
+            {
+                print unless /<\?bibhtml/;
+            } else {
+                print;
+            }
+        }
+    }
+
+    close (ORIG);
+    close (BBL);
+    close (OUT) if (!$debug);
+}
+
+
+sub readconfig {
+    my $bibconfig = shift;
+    if (-r $bibconfig)
+    {
+	print STDERR "reading config $bibconfig\n";
+	open (CONF, $bibconfig);
+	$_ = <CONF>;
+	chop;
+	my @newargs = split (/ +/);
+	close (CONF);
+	unshift (@ARGV, @newargs);
+	print STDERR "readconfig: ARGV[0]=($ARGV[0]), ARGV=@ARGV\n" if ($debug);
+    }
+    else
+    {
+	print STDERR "no config file $bibconfig\n";
+    }
+}
+
+sub printhelp {
+    print STDOUT <<\_EOD;
+This is bibhtml version 2.0.2, 2013 September 8.
+
+Usage:
+    % bibhtml [options...] filename...
+    % bibhtml --merge file.bbl file.html
+
+Options:
+    -3              Opposite of +3 -- do not use these entities
+    +3              Use HTML3 entities (ie, &nbsp and &enspace) as appropriate
+    -a              Produce citations for the entire BibTeX database
+                    (as if \nocite{*} had been included in a LaTeX file)
+    -b bibdata      Specify the name of the BibTeX database file.
+    -c configfile   Specify a configuration file
+    --merge         Merge mode: merge a bbl file into an html file
+    --help          Print this help and exit
+    -q              Be quiet -- opposite of -v
+    -r rootname     Set the root file name: default is 'bibliography'
+    -s bibstyle     Name of the bibliography style file.
+    --strip         Strip the processing instructions out of the file
+    -v              Be verbose (default)
+    -V, --version   Show the version number and exit
+_EOD
+}

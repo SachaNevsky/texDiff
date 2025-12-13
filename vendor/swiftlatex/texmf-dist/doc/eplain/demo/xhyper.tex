@@ -1,0 +1,190 @@
+% (This file is public domain.)
+%
+% This file demonstrates the following features of Eplain:
+%
+%   - explicit and implicit hyperlinks;
+%   - symbolic cross-references;
+%   - inserting external graphics using |\includegraphics| from
+%     the \LaTeX\ package |graphicx.sty|.
+%   - rotating text using |\rotatebox| from |graphicx.sty|.
+%
+% The compiled demo can be downloaded from
+%
+%   http://tug.org/eplain/demo
+%
+% In order to compile this file yourself, you will need the CTAN lion
+% drawing by Duane Bibby from
+%
+%   ftp://tug.ctan.org/ftpmaint/CTAN_lion/ctan_lion_350x350.png
+%
+% (thanks, |www.ctan.org|).  Place the image file in the same
+% directory with this file, and change to that directory.  Now, to
+% produce a PDF, run twice the command
+%
+%   pdftex xhyper.tex
+%
+% During the first run, Eplain will write the information about the
+% cross-references into |xhyper.aux|, and during the second run this
+% information will be read by Eplain to typeset the references.
+%
+% Demo case:
+%
+%   Suppose you are using pdf\TeX, have a figure you want to insert
+%   scaled to $200\,pt$ horizontally, and you want this figure to
+%   completely fill the PDF viewer's window whenever the reader
+%   selects a link pointing to this figure.  Additionally, you want to
+%   typeset some text as live hyperlinks, clicking on which will start
+%   a Web browser and open a URL.
+
+\input eplain
+
+% Load \LaTeX\ packages.
+\beginpackages
+  % |url.sty| provides the |\url| command which we will use to typeset
+  % a URL.  We request that |url.sty| be the version from June~27,
+  % 2005, or later, because earlier versions had problems interacting
+  % with plain \TeX.
+  \usepackage{url}[2005/06/27]
+  % |color.sty| provides support for colored text; all hyperlinks are
+  % automatically colored by Eplain when this package is loaded.  We give
+  % the |dvipsnames| option because we want to use named colors from the
+  % |dvips| graphics driver.
+  \usepackage[dvipsnames]{color}
+  % Finally, we load |graphicx.sty|, for the macros |\includegraphics|
+  % and |\rotatebox|.
+  \usepackage{graphicx}
+\endpackages
+
+% Remember that hyperlinks are off by default.  Therefore, we need to
+% enable them.
+\enablehyperlinks
+
+% Customize some hyperlink options.  First, we set border width to~$0$
+% for all links to get rid of the default boxes around links (we
+% prefer colored links over the boxed links). Next, we say that all
+% links created by the |url| hyperlink group (which means the |\url|
+% command from |url.sty|) must be colored using the named color
+% |BlueViolet|.
+\hlopts{bwidth=0}
+\hlopts[url]{colormodel=named,color=BlueViolet}
+
+% Inhibit page numbering (we have only one page).
+\nopagenumbers
+
+% Define a class word for the cross-reference class |figure|.  This
+% word, when defined, will be automatically prepended by Eplain to the
+% reference created by |\ref| (read on to see its use).
+\def\figureword{fig.}
+
+% Allocate a count register for the figure's number, and a box
+% register which we'll use to measure dimensions of the image.
+\newcount\fignumber
+\newbox\imgbox
+
+% Now comes the fun part--constructing the figure for the image of the
+% \CTAN\ lion.  We define a macro
+%
+%   \fig{LABEL}{FILENAME}{CAPTION}{WIDTH}
+%
+% which creates a figure using LABEL for the cross-reference and
+% hyperlink label, reading the image from file FILENAME, using CAPTION
+% to name the figure, and WIDTH to scale the image horizontally.
+\def\fig#1#2#3#4{%
+  % Leave some space above the figure.  This will also ensure that we
+  % are in the vertical mode before we produce a |\vbox|.
+  \medskip
+  % Advance the figure number.  |\global| ensures that the change to
+  % the count register is global, even when |\fig| is buried inside a
+  % group.
+  \global\advance\fignumber by 1
+  % We use |\includegraphics| (from |graphicx.sty|) to load the image,
+  % scaled to the specified width, into our ``measuring'' box
+  % |\imgbox|.
+  \setbox\imgbox = \hbox{\includegraphics[width=#4]{#2}}%
+  % To make the demo even more exciting, let's put the figure's
+  % caption to the left of the image into the |\indent| space of the
+  % new paragraph, and rotate the caption~$90^\circ$.
+  \textindent{%
+    \rotatebox{90}{F{\sc IGURE}~\the\fignumber.  #3}%
+  }%
+  % Continue the paragraph by constructing a |\vbox| with the image of
+  % the lion.  We use |\definexref| to define the cross-reference
+  % label.
+  \vbox{%
+    % In addition to the cross-reference label, |\definexref| will
+    % create a hyperlink destination with the same label.  Therefore,
+    % we customize this destination to do what we need.  We say that
+    % destination type for the hyperlink group |definexref| (to which
+    % |\definexref| belongs) should be |fitr|.  This destination type
+    % will magnify the rectangle specified by the options |width|,
+    % |height| and |depth| to the PDF viewer's window.  Therefore, we
+    % set those options accordingly with |\hldestopts| (notice the use
+    % of |depth| instead of |height|---we will want the rectangle to
+    % extend {\it downward}, to cover the image which will come
+    % next).  Notice that these settings will be isolated within the
+    % current group (i.e., the |\vbox| we're constructing).
+    \hldesttype[definexref]{fitr}%
+    \hldestopts[definexref]{width=\wd\imgbox,height=0pt,depth=\ht\imgbox}%
+    % We define a symbolic label so that we can later refer
+    % to the figure with |\ref|.  The command |\definexref| does
+    % exactly that.  The last argument to |\definexref| specifies
+    % class of the label, which determines the word used by |\ref| in
+    % front of the reference text (remember that we've defined
+    % |\figureword| above).
+    \definexref{#1}{\the\fignumber}{figure}%
+    % Finally, produce the image which we've been stashing in the box
+    % register |\imgbox|.
+    \box\imgbox
+  }%
+  \medskip
+}
+
+% Create the figure.
+\fig{CTANlion}{ctan_lion_350x350}{Lion in the archives}{200pt}
+
+% Finished with the fun part, we can relax and typeset some
+% hyperlinks.  The easiest way to do that is to use the |\ref|
+% cross-reference command.  We can even pass an optional argument
+% (|the lion in|), which will be placed before the class word (|fig.|)
+% and become part of the link (to make sure the reader does not have
+% to aim too hard).
+Show me \ref[the lion in]{CTANlion}.
+
+% If you are the restless kind, here's another way to create a
+% hyperlink to the image:  we create a link explicitly by using
+% |\hlstart ... \hlend|.  We don't specify the link type, therefore
+% the default type |name| will be used (these are ``named links'',
+% i.e., links pointing to destinations identified by labels).  In the
+% options argument, we specify that the border of the link should be
+% inverted when the user clicks the link (|hlight=O|), and also set
+% special color for this link, overriding the default dark-red.  The
+% label for the destination is the same as the cross-reference label,
+% |CTANlion|.
+Show me
+\hlstart{}{hlight=O,colormodel=named,color=OliveGreen}{CTANlion}
+  the CTAN lion\hlend.
+
+% Let's now point somewhere outside our document.  Eplain homepage is
+% a good target.  In the similar spirit, let's consider two
+% approaches.  The easy one is to use the |\url| command from
+% |url.sty|.  Remember that we have customized the color of |url|
+% hyperlinks, so this one will show up with a different color than the
+% default dark-red.
+Take me to \url{http://tug.org/eplain}.
+
+% The second approach is to create an explicit URL link.  We specify
+% yet another border highlighting mode, |P|, which means that the
+% region underneath the bounding box of the link will be drawn inset
+% into the page.  Also, let's set the color of the hyperlink to an RGB
+% color |0.4,0.1,0.4|.  Since we cannot use commas to separate the
+% color elements inside the options parameter to |\hlstart| (commas
+% there separate options), we have to first create a user-defined
+% color with |\definecolor| from |color.sty|, and use that in
+% |\hlstart|.
+\definecolor{mycolor}{rgb}{0.4,0.1,0.4}
+
+Take me to
+\hlstart{url}{hlight=P,colormodel=,color=mycolor}{http://tug.org/eplain}
+  Eplain homepage\hlend.
+
+\bye

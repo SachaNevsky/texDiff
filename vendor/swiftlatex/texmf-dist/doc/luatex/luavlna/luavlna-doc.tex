@@ -1,0 +1,311 @@
+\documentclass[12pt]{ltxdoc}
+%\documentclass{article}
+%\usepackage[utf8]{luainputenc}
+\usepackage{fontspec}
+\setmainfont[Ligatures=TeX]{Linux Libertine O}
+\usepackage[czech,english]{babel}
+\usepackage{luacode}
+\usepackage{amsfonts}
+%\usepackage[]{polyglossia}
+%\setmainlanguage{english}
+%\setotherlanguage{czech}
+%\usepackage{url}
+\usepackage{hyperref}
+%\input prevent-single
+%\usepackage[]{prevent-single}
+\usepackage[]{luavlna}
+%\input prevent-single
+%\def\preventsingledebugon{}
+\newenvironment{mycode}{
+	%\leavevmode%
+	\medskip%
+	\parindent=0pt%
+}{\medskip}
+
+\ifdefined\version\else
+  \def\version{{{VERSION}}}
+  \let\gitdate\date
+\fi
+
+\begin{document}
+\title{The \verb|luavlna| package}
+\author{Michal Hoftich (\url{michal.h21@gmail.com})\\Miro Hrončok (\url{miro@hroncok.cz})}
+\date{Version \version\\\gitdate}
+\maketitle
+\tableofcontents
+\section{Introduction}
+
+
+This is a small package for plain Lua\TeX and Lua\LaTeX. In some languages, like
+Czech or Polish, there should be no single letter words at the line
+end, according to the typographical norms. There exists some
+external commands (like \verb!vlna!) or packages (\verb!encxvlna!
+for enc\TeX, \verb!xevlna! for Xe\TeX,
+\verb!impnattypo! for Lua\LaTeX). %This package is for plain
+%lua\TeX and for lua\LaTeX.
+
+Another feature is inclusion of a non-breakable space after 
+initials, like in personal names, after or before academic degrees
+and between numbers and units (SI and others).
+
+The code is modified version of Patrick Gundlach's answer on
+TeX.sx\footnote{\url{http://tex.stackexchange.com/a/28128/2891}}.
+The difference is that it is possible to specify which single letters
+should be taken into account for different languages.
+% The support for degrees and units was added as well.
+% The code works also for single letters at the beginning of the brackets.
+
+
+
+\section{Usage}
+
+The usage is simple:
+
+\begin{verbatim}
+\input ucode
+\uselanguage{czech}
+%% in the case of luacsplain, use instead:
+%% \chyph
+\input luavlna
+\preventsingledebugon
+\input luaotfload.sty
+\font\hello={name:Linux Libertine O:+rlig;+clig;+liga;+tlig} at 12pt 
+\hsize=3in
+\hello
+Příliš žluťoučký kůň úpěl ďábelské ódy. 
+Text s krátkými souhláskami a samohláskami i dalšími jevy 
+z nabídky možností (v textu možnými). 
+
+I začátek odstavce je třeba řešit, i když výskyt zalomení 
+není pravděpodobný.
+
+Co třeba í znaky š diakritikou?
+
+Různé možnosti [v závorkách <i jiných znacích
+
+Podpora iniciál a titulů: M. J. Hegel, Ing. Běháková, Ph.D., Ž. Zíbrt.
+
+Podpora jednotek: 100,5 MN\cdot{}s, 100.5 kJ, 200 µA, $-1$ dag, 
+12 MiB, 1 m$^3$/s.
+
+Uvnitř matematiky by mělo být zpracování vypnuté:  $k \in \mathbb N$. 
+Pokračujeme v příkladu.
+
+\preventsingledebugoff
+\bye
+\end{verbatim}
+
+%\noindent\parbox{3in}{%
+
+\noindent
+\begin{minipage}{3in}
+\preventsingledebugon
+\selectlanguage{czech}
+Příliš \textit{žluťoučký kůň} úpěl ďábelské ódy. 
+Text s krátkými souhláskami a samohláskami i dalšími jevy z nabídky možností (v textu možnými). 
+
+I začátek odstavce je třeba řešit, i když výskyt zalomení není pravděpodobný.
+
+Co třeba í znaky š diakritikou?
+
+Různé možnosti [v závorkách \textless i jiných znacích
+
+Podpora iniciál a titulů: M. J. Hegel, Ing. Běháková, Ph.D., Ž. Zíbrt.
+
+Podpora jednotek: 100,5 MN\cdot{}s, 100.5 kJ, 200 µA, $-1$ dag, 12 MiB, 1 m$^3$/s.
+
+Uvnitř matematiky by mělo být zpracování vypnuté:  $k \in \mathbb N$. Pokračujeme v příkladu.
+
+\preventsingledebugoff
+%}
+\end{minipage}
+
+\selectlanguage{english}
+\bigskip
+It is also possible to use the package with Lua\LaTeX, just use
+
+\begin{verbatim}
+	\usepackage{luavlna}
+\end{verbatim}
+
+in the preamble.
+
+\section{Package options}
+The \verb|luavlna| package recognizes the following options
+
+\begin{description}
+  \item[\texttt{noprocess}] -- disable the automatic document processing.
+  \item[\texttt{noinitials}] -- disable processing of the initials.
+  \item[\texttt{nounits}] -- disable processing of the SI units.
+  \item[\texttt{nopredegrees}] -- disable processing of the the academic degrees before names.
+  \item[\texttt{nosufdegrees}] -- disable processing of the the academic degrees after names.
+  \item[\texttt{debug}] -- enable the debugging mode.
+  \item[\texttt{defaults}] -- load default settings. Enabled by default.
+\end{description}
+
+\section{Commands}
+
+\begin{mycode}
+\cmd{\singlechars}\marg{language name}\marg{letters} 
+\end{mycode}
+
+Enable this feature for certain letters in given language. 
+%Language code is internall \TeX\ code for the language, it is $0$ for English, 
+%$16$ for Czech. Please note that in \verb|csplain|, language code for Czech 
+%is $5$ and you will have to set it yourself.
+
+Default values:
+
+\begin{mycode}
+\begin{verbatim}
+%% only Czech and Slovak are supported out of the box
+\singlechars{czech}{AIiVvOoUuSsZzKk}
+\singlechars{slovak}{AIiVvOoUuSsZzKk}
+\end{verbatim}
+\end{mycode}
+
+%By default, all
+%single letters are processed, this command can be used to pass a
+%string of characters, which should be processed only.
+
+\begin{mycode}
+\cmd{\compoundinitials}\marg{language name}\marg{compounds}
+\end{mycode}
+
+Declare compound letters for given language. Second argument should be comma 
+separated list of compound letters, in exact form in which they can appear.
+
+Default values:
+
+\begin{mycode}
+\begin{verbatim}
+\compoundinitials{czech}{Ch,CH}
+\end{verbatim}
+\end{mycode}
+
+
+\subsection{Split hyphens}
+
+The hyphenated words like ``je-li'' should be be hyphenated as ``je-/-li``
+according to the Czech typesetting rules. This behaviour can be enabled or disabled for a particular
+language using the following commands:
+
+\begin{mycode}
+  \cmd{\enablesplithyphens}\marg{language name}\\
+  \cmd{\disablesplithyphens}\marg{language name}
+\end{mycode}
+
+By default, it is enabled for the Czech language.
+
+Example in action:
+
+\begin{minipage}{3in}
+  \selectlanguage{czech}
+   Sedlec-Prčice, modro-zelený,  překladatel-tlumočník, kuchař-číšník, propan-butan,                                                                                          
+   Otýlie Sklenářová-Malá, František Jílek-Oberpfalcer.
+  \selectlanguage{english}
+\end{minipage}
+
+The similar behaviour can be achieved using the \verb|\splithyphens|  command
+provided by Czech langauge definitions for the Babel package, but it's use is
+discouraged. It prevents use ot the hyphen character in many situations. The
+solution provided by Luavlna should be safe.
+
+
+\subsection{Turning off language switching}
+
+By default, language of the nodes is taken into account. If you want to use
+settings for one language for a whole document, you can use following command:
+
+\begin{mycode}
+\cmd{\preventsinglelang}\marg{language name}
+\end{mycode}
+
+\subsection{Turning off processing}
+
+If you want to stop processing of the spaces in the document you can use command
+
+\begin{mycode}
+\cmd{\preventsingleoff}
+\end{mycode}
+
+To resume processing, use
+
+\begin{mycode}
+\cmd{\preventsingleon}
+\end{mycode}
+
+You can also disable initials, units and degrees processing:
+
+\begin{mycode}
+  \cmd{\noinitials}\\
+  \cmd{\nounits}\\
+  \cmd{\nopredegrees}\\
+  \cmd{\nosufdegrees}
+\end{mycode}
+
+
+\subsection{Debugging commands}
+\begin{mycode}
+\cmd{\preventsingledebugon}\par
+\cmd{\preventsingledebugoff}
+\end{mycode}
+
+Insert debugging marks on/off. Default off.
+
+\section{Lua module \texttt{luavlna-langno.lua}}
+
+When we process glyph nodes with Lua\TeX\ callbacks, there are \verb|lang| 
+fields available. These are numerical codes of languages, but no information
+about language names easily accesible from Lua side is available.\footnote{%
+	Language names are stored in \TeX macros like \verb|\string\l@langname|, but 
+	different formats use different naming of these macros}
+These numbers are format dependent, majority of formats like 
+Lua\LaTeX use \verb|language.dat| file provided by \verb|babel| 
+for assign numbers to languages, but for example \verb|csplain| 
+use its own system.
+
+To allow easy setting of language dependent parameters, \verb|langno| module 
+was created. It's purpose is to translate language code to language name and 
+the other way. Lua\LaTeX, Lua\TeX\ and CSplain formats are supported at the moment.
+
+\subsection{Recognized languages}
+\subsubsection{Lua\TeX\ and Lua\LaTeX}
+
+File \verb|language.dat| is processed to load language names, aliases and assigned numbers. These language names are the same as names supported by the \verb|babel| package.
+
+\begin{quotation}
+  \small\noindent
+\begin{luacode*}
+  langno = require "luavlna-langno"
+  function print_format_lang(fmt)
+    local luatex = langno.load_languages(fmt)
+    local t = {}
+    for k, v in pairs(luatex.names) do
+      t[#t+1]=k
+    end
+    table.sort(t)
+    tex.print(table.concat(t,", "))
+  end
+  print_format_lang("luatex")
+\end{luacode*}
+\end{quotation}
+
+\subsubsection{CSplain}
+
+Different method is used with the CSplain format. The \verb|lua-hyphen.lan| file is parsed for the language codes.
+
+\begin{quotation}
+  \small\noindent
+  \begin{luacode*}
+    print_format_lang("csplain")
+  \end{luacode*}
+\end{quotation}
+
+
+\section{License}
+
+Permission is granted to copy, distribute and/or modify this software
+under the terms of the LaTeX Project Public License, version 1.3.
+
+\end{document}

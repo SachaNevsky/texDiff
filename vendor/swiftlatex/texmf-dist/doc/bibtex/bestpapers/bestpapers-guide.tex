@@ -1,0 +1,158 @@
+\documentclass{article}
+\usepackage[numbers]{natbib}
+\usepackage{hyperref,alltt}
+\usepackage[resetlabels]{multibib}
+\newcommand{\BibTeX}{\textsc{Bib}\TeX}
+\newcites{tex}{Books and articles about \TeX}
+\newcites{typography}{Books and articles about typography}
+\begin{document}
+
+\title{User Guide for \texttt{bestpapers.bst} Bibliography Style}
+\author{Boris Veytsman\thanks{This work was commissioned by Consumer
+    Financial Protection Bureau, United States Treasury.  This file
+    and the package are in the public domain}}
+\date{October 2014}
+\maketitle
+
+\section{Introduction}
+\label{sec:intro}
+
+
+
+Many people preparing their r\'esum\'es find the requirement ``please
+list five (or six, or ten) papers authored by you''.  The same
+requirement is often stated for reports prepared by professional
+teams.  The creation of such lists may be a cumbersome task. Even more
+difficult is to support the lists over the time, when one adds new
+papers.  The style \texttt{bestpapers.bst} is intended to make this task
+simpler.  It is based on the idea that it is easier to score than to
+sort: we can assign a score to a paper, and then let the computer to
+select the papers with highest scores.
+
+\section{Simple Usage}
+\label{sec:simple}
+
+The use of the package is simple.  We assume that you keep all your
+publications in a \BibTeX\ file (or files).  Then,
+\begin{enumerate}
+\item Add to each bibliographic entry in the file the field
+  \begin{alltt}
+    score = \itshape SCORE
+  \end{alltt}
+  where \texttt{\itshape SCORE} is an non-negative integer.  The
+  higher the score is, the more you think about the paper.  Since only
+  the relation between scores matter, you may limit yourself to scores
+  between, say, $0$ and $100$.  An absent score is equivalent to
+  \texttt{score=0}.
+\item Add to the preamble of your r\'esum\'e
+\begin{verbatim}
+\usepackage[numbers]{natbib}
+\end{verbatim}
+  and to the document itself
+\begin{verbatim}
+\renewcommand{\refname}{My Best Works}
+\nocite{*}
+\bibliography{myworks}
+\bibliographystyle{bestpapers}
+\end{verbatim}
+\item You document will get the list of five~best works, sorted by
+  decreasing scores.
+\end{enumerate}
+
+
+\section{Customization}
+\label{sec:custom}
+
+
+Sometimes you need to change the number of best papers displayed.  
+The package introduces a new entry type \verb|@SETUP| with the
+field \verb|max.best.papers|, for example,
+\begin{verbatim}
+@SETUP{setup,
+  max.best.papers = 6,
+}
+\end{verbatim}
+
+Normally the score of the papers is not printed.  However, for debug
+purposes you can change this: just define the command
+\verb|\PrintScore|, for example
+\begin{verbatim}
+\newcommand{\PrintScore}[1]{Score: #1}
+\end{verbatim}
+
+\section{Bibexport}
+\label{sec:bibexport}
+
+Sometimes you need to extract your best works from \texttt{.bib} files
+rather than typeset the list of them.  You can use for this the
+program \textsl{bibexport} (\url{http://www.ctan.org/pkg/bibexport}), a
+handy tool for the manipulation of \BibTeX\ databases.  The package
+provides the style \texttt{bestpapers-export.bst} intended for this
+task.  
+
+To extract the best works from the files \texttt{myworks.bib} and
+\texttt{ourworks.bib}  into the file \texttt{result.bib},
+\begin{enumerate}
+\item Create the file \texttt{extract.aux} with the following content:
+\begin{verbatim}
+\citation{*}
+\bibdata{myworks,ourworks}
+\bibstyle{bestpapers-export}
+\end{verbatim}
+
+\item If necessary, add to any of these files \texttt{@SETUP} entry as
+  described in Section~\ref{sec:custom}.
+\item Run
+\begin{verbatim}
+bibexport -b bestpapers-export -o result.bib export.aux
+\end{verbatim}
+
+\end{enumerate}
+
+
+\section{Multiple Bibliographies}
+\label{sec:multiple}
+
+
+
+Sometimes you need to have collective report and provide several
+best papers for each person in the group.  The package
+\texttt{multibib} allows you to do this:
+\begin{verbatim}
+\usepackage{multibib}
+\newcites{chico,harpo,groucho,zeppo}{Chico's Papers,%
+                                     Harpo's Papers,%
+                                     Groucho's Papers,%
+                                     Zeppo's Papers}
+...
+\nocitechico{*}
+\bibliographychico{chico.bib}
+\bibliographystylechico{bestpapers}
+
+\nociteharpo{*}
+\bibliographyharpo{harpo.bib}
+\bibliographystyleharpo{bestpapers}
+
+\nocitegroucho{*}
+\bibliographygroucho{groucho.bib}
+\bibliographystylegroucho{bestpapers}
+
+\nocitezeppo{*}
+\bibliographyzeppo{zeppo.bib}
+\bibliographystylezeppo{bestpapers}
+\end{verbatim}
+
+Note that you may want to use \texttt{resetlabels} option of the
+\texttt{multibib} package if you want all the lists to start from~1.
+
+An example of this usage is the source code of this file, which lists
+6~books about \TeX\ and 5~books about typography separately.  
+
+\nocitetex{*}
+\nocitetypography{*}
+\bibliographytex{tex}
+\bibliographystyletex{bestpapers}
+\bibliographytypography{typography}
+\bibliographystyletypography{bestpapers}
+
+\end{document}

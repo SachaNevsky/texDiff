@@ -1,0 +1,200 @@
+\documentclass{article}
+\usepackage[a4paper,margin=2cm]{geometry}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[garamond]{mathdesign}
+\usepackage{pst-contourplot,pst-plot}
+\usepackage{amsmath}
+\usepackage[colorlinks=true]{hyperref}
+\usepackage{framed}
+\definecolor{Beige} {rgb}{0.93,0.93,0.85}
+\renewcommand{\FrameCommand}{\fcolorbox{Beige}{Beige}}
+
+\title{Ovales de Descartes}
+\date{14 juin - 11 juillet 2018}
+\author{manuel.luque27@gmail.com}
+\begin{document}
+\maketitle
+Henri Bouasse (1866-1953) est l'auteur d'une série d'ouvrages publiés sous l'intitulé ``Bibliothèque scientifique de l'ingénieur et du physicien'' à la librairie Delagrave à Paris entre les années 1900 et 1934. Chaque livre, et parfois deux sont nécessaires, traite d'un sujet particulier comme ``Gyroscopes et projectiles''(1923), ``Phénomènes liés à la symétrie''(1931), ``Vision et reproduction des formes et des couleurs''(1917). Cet ensemble d'ouvrages constitue l'encyclopédie la plus complète de la physique classique qui ait jamais été publiée. Chaque livre s'ouvre sur une préface d'Henri Bouasse dans laquelle celui-ci exprime ses idées sur l'enseignement des sciences. Ses propos y sont d'une telle franchise qu'on peut dire qu'Henri Bouasse n'était pas un adepte de la langue de bois ! J'avais mis en ligne quelques extraits sur le site :
+
+\centerline{\url{http://melusine.eu.org/syracuse/mluque/bouasse/}}
+
+où vous pourrez lire l'opinion d'Henri Bouasse sur le téléphone dans le document :
+
+\centerline{\url{http://melusine.eu.org/syracuse/mluque/bouasse/disqueBouasse.pdf}}
+
+Si on regroupait toutes ces préfaces, on obtiendrait un volume d'un intérêt certain par la qualité de son écriture, la pertinence de ses remarques qui paraissent toujours très actuelles, son humour et l'acidité de ses observations.
+
+Wikipedia donne la liste des ouvrages et le thème des préfaces :
+
+\centerline{\url{https://fr.wikipedia.org/wiki/Henri_Bouasse}}
+
+Deux ouvrages sont consacrés aux mathématiques :
+``Cours de Mathématiques générales''(1911) et, écrit avec Émile Turrière, ``Exercices et compléments de mathématiques générales''(1920). C'est de ce dernier ouvrage que j'extrais quelques exemples des exercices sur les ovales de Descartes afin de les illustrer avec PSTricks\footnote{Sur internet, de nombreux sites traitent des ovales de Descartes d'une manière très complète et avec de magnifiques illustrations comme :\newline
+\centerline{\url{https://www.mathcurve.com/courbes2d/descartes/descartes.shtml}} et \newline
+\centerline{\url{http://debart.pagesperso-orange.fr/geometrie/ovale.html}}}.
+Le paragraphe §426 intitulé ``Ovales de Descartes'' débute ainsi (les auteurs prennent l'origine en $O_1$)~:
+
+\begin{framed}
+<<
+Construire les courbes d'équation bipolaire :
+\[r_1+\alpha r_2=V
+\]
+On supposera $\alpha>0$ : on vérifiera immédiatement que sans diminuer la généralité du problème on peut poser $\alpha >1$. On appellera $a$ la distance $\overline{O_1O_2}$ des pôles. Enfin on n'oubliera pas que les quantités $r_1$ et $r_2$ sont essentiellement positives.>>
+\begin{center}
+\begin{pspicture}[showgrid=false](-2,-3)(6,3)
+\psgrid[subgriddiv=1,gridcolor=lightgray,griddots=10,gridlabels=0pt]
+\pstVerb{/ai 2 def}%
+\psset{unit=2,algebraic,a=0.1}
+\psContourPlot[linecolor=red,function=sqrt(x^2+y^2)+2.25*sqrt((x-ai)^2+y^2)-4](-2,-3)(6,3)
+\pnode(2.25,0.688055){M}\psdot(M)
+\pnode(!ai 0){O2}\pnode(0,0){O1}
+\psline(O1)(M)(O2)
+\uput[ur](M){$M$}
+\pcline[offset=5pt,linestyle=none]{}(O1)(M)
+\ncput[nrot=:U]{$r_1$}
+\pcline[offset=5pt,linestyle=none]{}(O2)(M)
+\ncput[nrot=:U]{$r_2$}
+\pcline[offset=-5pt,linestyle=none]{}(O1)(O2)
+\ncput[nrot=:U]{$a$}
+\psline{<->}(0,1.5)(0,0)(3,0)
+\uput[d](0,0){$O_1$}
+\uput[l](0,1.5){$y$}
+\uput[u](3,0){$x$}
+\psdots(!ai 0)(0,0)
+\uput[d](!ai 0){$O_2$}
+\psline[linecolor=blue](O1)(O2)
+\end{pspicture}
+\end{center}
+%\end{document}
+<< Les pôles étant donnés, entre quelles limites $V$ peut-il varier ?
+\newline
+Montrer ques courbes sont fermées et ne peuvent rencontrer la droite $O_1O_2$ qu'en deux points.
+\newline
+Construire le faisceau pour une valeur donnée de $\alpha$. >>
+\begin{center}
+\begin{pspicture}(-2,-3)(7,4)
+\pstVerb{/ai 2 def
+% macro de Dominique Rodriguez
+% dans pst-eucl
+%% x -> true (if |x| < 1E-6)
+/ZeroEq { abs 1E-6 lt } bind def
+%% x f g -> x y n
+/NewtonSolving {
+    3 dict begin
+  /g exch def /f exch def 0
+  { %%% STACK: x0 n
+    1 add exch %% one more loop
+    dup ZeroEq
+    { dup 0.0005 add fgeval
+      1 index 0.0005 sub fgeval sub .001 div }
+    { dup 1.0005 mul fgeval
+      1 index 0.9995 mul fgeval sub .001 2 index mul div } ifelse  %%% STACK: n x0 fg'(x0)
+    %%% compute x1=x0-fg(x0)/fg'(x0)
+    1 index fgeval exch div dup 4 1 roll sub exch %% stack: dx x0 n
+    3 -1 roll ZeroEq              %% exit if root found
+    1 index 100 eq or { exit } if %% or looping for more than 100 times
+  } loop
+  dup 100 lt { exch dup /x exch def f } { pop 0 0 } ifelse
+  3 -1 roll
+  end
+} def
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+/fgeval { /x exch def f g sub } bind def
+ 0.2 { (sqrt(2.4^2+x^2)+2*sqrt((2.4-ai)^2+x^2)-4.6) AlgParser cvx exec } {0} NewtonSolving pop pop /y0 exch def
+ 0.2 { (sqrt(1.5^2+x^2)+2*sqrt((1.5-ai)^2+x^2)-4.6) AlgParser cvx exec } {0} NewtonSolving pop pop /y1 exch def
+ 0.2 { (sqrt(1.5^2+x^2)+2*sqrt((1.5-ai)^2+x^2)-3.8) AlgParser cvx exec } {0} NewtonSolving pop pop /y2 exch def
+ 0.2 { (sqrt(1.5^2+x^2)+2*sqrt((1.5-ai)^2+x^2)-3.0) AlgParser cvx exec } {0} NewtonSolving pop pop /y3 exch def}
+ %
+\psset{unit=2,a=0.05}% ncell=200 80,algebraic
+% function=sqrt(x^2+y^2)+2*sqrt((x-ai)^2+y^2)-\nV
+\multido{\nV=3.0+0.8}{3}{%
+\psContourPlot[function= x dup mul y dup mul add sqrt
+                         2 x ai sub dup mul y dup mul add sqrt mul add
+                        \nV\space sub](-2,-3)(6,3)}
+\psline{<->}(0,2)(0,0)(3.5,0)
+\uput[d](0,0){$O_1$}
+\uput[l](0,1.9){$y$}
+\uput[u](3.5,0){$x$}
+\pnode(!ai 0){O2}\pnode(0,0){O1}
+\uput[d](!ai 0){$O_2$}
+\pnode(!2.4 y0){A}\psdots(A)(O1)(O2)\uput[ur](A){$A$}
+\psline(O1)(A)(O2)
+\pnode(!1.5 y1){V1}\pnode(!1.5 y2){V2}\pnode(!1.5 y3){V3}
+\uput[u](V1){$V=4.6$}\uput[u](V2){$V=3.8$}\uput[u](V3){$V=3.0$}
+\end{pspicture}
+
+Ovales de Descartes pour $r_1+2r_2=V$.
+\end{center}
+\end{framed}
+
+Cette figure est une reproduction de celle du livre.
+
+Le faisceau suivant est obtenu en faisant varier $\alpha$, pour $V=4$
+\begin{center}
+\begin{pspicture}[showgrid=false](-4,-5)(8,5)
+\psgrid[subgriddiv=1,gridcolor=lightgray,griddots=10,gridlabels=0pt]
+\pstVerb{/ai 2 def}
+\psset{unit=2,a=0.1}%,algebraic
+\multido{\n=3.50+-0.25}{12}{%
+% function=sqrt(x^2+y^2)+\n*sqrt((x-ai)^2+y^2)-4
+\ifnum\multidocount=11\psset{linecolor=red}\else\psset{linecolor=blue}\fi%
+\psContourPlot[function=x dup mul y dup mul add sqrt
+                        \n\space x ai sub dup mul y dup mul add sqrt mul add
+                        4 sub](-2,-3)(6,3)}
+\psline{<->}(0,2.5)(0,0)(4,0)
+\uput[d](0,0){$O_1$}
+\uput[l](0,2.4){$y$}
+\uput[u](3.9,0){$x$}
+\psdots(!ai 0)(0,0)
+\uput[d](!ai 0){$O_2$}
+\end{pspicture}
+\end{center}
+Après un paragraphe sur les ``Applications des ovales de Descartes en optique'', Henri Bouasse et Émile Turrière reviennent aux ovales dans  un nouveau paragraphe intitulé encore ``Ovales de Descartes', avec la définition suivante :
+\begin{framed}
+<<
+\[ -r_1+\alpha r_2=V\]
+On peut supposer encore que $\alpha \geq 1 $, le signe de $V$ restant arbitraire.
+
+Montrer que pour toutes les valeurs de $\alpha>1$, les courbes du faisceau ne peuvent avoir de points à l'infini. Ce sont encore des ovales, comme dans le premier cas.
+
+Le cas $\alpha=1$ est exceptionnel. On retrouve le faisceau d'hyperboles déjà rencontré (§ 423).
+\end{framed}
+
+Dans le paragraphe suivant (§429) les auteurs établissent l'équation cartésienne \textit{entière} des ovales et traitent les particuliers des limaçons de Pascal. Le paragraphe (§430) est consacré aux ovales de Cassini et le suivant(§431) aux courbes orthogonales des ovales de Cassini.
+
+\begin{framed}
+Lieu des points tels que le produit de leurs distances à deux points fixes $O_1$ et $O_2$ soit constant.
+
+Soit $2a$ la distance $\overline{O_1O_2}$.
+
+On trouve immédiatement pour équation des ovales :
+\[
+r_1r_2=k^2, \qquad (a^2+x^2+y^2)^2-4a^2x^2=k^4
+\]
+Pour que l'origine appartienne à une courbe du faisceau, il faut évidemment poser : $k^2=a^2$. L'équation devient :
+\[
+(x^2+y^2)^2=2a^2(x^2-y^2)
+\]
+C'est la lemniscate de Bernouilli.
+\end{framed}
+
+\begin{center}
+\begin{pspicture}[showgrid=false](-4,-4)(5,4)
+\psgrid[subgriddiv=1,gridcolor=lightgray,griddots=10,gridlabels=0pt]
+\pstVerb{/ai 2 def}
+\psset{unit=1,a=0.1}% ,algebraic
+% (ai^2+x^2+y^2)^2-4*ai^2*x^2-(\nk)^4
+\multido{\nk=3.50+-0.25}{10}{%
+\ifnum\multidocount=7\psset{linecolor=red}\else\psset{linecolor=blue}\fi%
+\psContourPlot[function=ai dup mul x dup mul add y dup mul add dup mul
+                        4 ai x mul dup mul mul sub \nk\space 4 exp sub](-6,-3)(6,3)}
+\psline{<->}(0,4)(0,0)(5,0)
+\uput[d](0,0){$O_1$}
+\uput[l](0,4){$y$}
+\uput[u](5,0){$x$}
+\psdots(!ai 0)(0,0)
+\uput[d](!ai 0){$O_2$}
+\end{pspicture}
+\end{center}
+\end{document} 

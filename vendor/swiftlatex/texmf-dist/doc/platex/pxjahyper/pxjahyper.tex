@@ -1,0 +1,143 @@
+% 文字コードは UTF-8
+% platex で組版する
+\documentclass[a4paper]{jsarticle}
+\usepackage{shortvrb}
+\MakeShortVerb{\|}
+\newcommand{\PkgVersion}{0.4}
+\newcommand{\PkgDate}{2019/10/25}
+\newcommand{\Pkg}[1]{\textsf{#1}}
+\newcommand{\Meta}[1]{$\langle$\mbox{}#1\mbox{}$\rangle$}
+\newcommand{\Note}{\par\noindent ※}
+\newcommand{\Means}{~：\quad}
+\providecommand{\pTeX}{p\TeX}
+\providecommand{\upTeX}{u\pTeX}
+\providecommand{\pLaTeX}{p\LaTeX}
+\providecommand{\upLaTeX}{u\pLaTeX}
+%-----------------------------------------------------------
+\begin{document}
+\title{\Pkg{pxjahyper} パッケージ}
+\author{八登崇之\ （Takayuki YATO; aka.~``ZR''）}
+\date{v\PkgVersion\quad[\PkgDate]}
+\maketitle
+
+%===========================================================
+\section{概要}
+
+(u){\pLaTeX} + hyperref + dvipdfmxの組み合わせで
+日本語を含む「しおり」をもつPDF文書を作成する
+場合に必要となる機能を提供する。
+\begin{itemize}
+\item dvipdfmx用の「tounicode special」について、
+  内部漢字コードに応じて適切なものを出力する。
+\item PDF文字列の中でLICR（|\"a| や |\textsection| 等の
+  文字出力の命令）が正しく機能するようにする。
+  ただし、エンジンが {\pTeX} の場合は、out2uni を利用
+  する場合を除き、JIS~X~0208にない文字は出力できない
+  （hyperrefの警告が出る）。
+\item {\TeX} の版面拡大機能が使われている
+  （|\mag| が1000でない；典型的には\Pkg{jsclasses}の
+  文書クラスで基底フォントサイズが10\,pt以外である）
+  場合に、\Pkg{hyperref}が出力するpapersize specialの
+  紙面サイズの値が不正になるが、この場合に |\mag| 値を
+  考慮して求めた正しいサイズによるpapersize specialを
+  改めて出力する。
+\end{itemize}
+
+%===========================================================
+\section{パッケージの読込}
+
+|\usepackage| で読み込む。
+\begin{quote}\small\begin{verbatim}
+\usepackage[オプション,...]{pxjahyper}
+\end{verbatim}\end{quote}
+
+使用可能なオプションは以下の通り。
+\begin{itemize}
+\item |tounicode|（既定）\Means
+  dvipdfmx用の「tounicode special」を出力する。
+\item |notounicode|\Means
+  |tounicode| の否定。
+\item |out2uni|\Means
+  out2uniフィルタ（角藤氏製作）を使うことを前提にした
+  出力を行う。
+  （|tounicode| が無効になる。）
+  {\upLaTeX} では使用不可。
+\item |noout2uni|（既定）\Means
+  |out2uni| の否定。
+\item |otfcid|（既定）\Means
+  \Pkg{japanese-otf}パッケージの |\CID| をPDF文字列中で
+  使えるようにする。
+  具体的には、当該のAJ1のグリフに“対応”するUnicode文字が
+  あればそれを出力し、なければ（警告を出した上で）削除する。
+\item |nootfcid| \Means
+  |otfcid| の否定。
+\item |bigcode|（既定）\Means
+  {\upTeX}でのToUnicode CMapとして既定のUTF8-UCSの代わりに\ 
+  UTF8-UTF16を用いる。
+  （当該のファイルが存在する必要がある。）
+\item |nobigcode|\Means
+  |bigcode| の否定。
+  \Note 0.3a版より既定を |bigcode| に変更した。
+\item |dvipdfmx|\Means
+  dvipdfmxを前提とした動作を行う。
+\item |nodriver|/|none|\Means
+  dvipdfmxを前提とした動作を抑止する。
+  現状では、この場合には本パッケージは実質的に何の動作も行わない。
+\item |auto|（既定）\Means
+  \Pkg{hyperref}のドライバがdvipdfmx用ならば |dvipdfmx|、
+  それ以外は |none| の動作。
+\end{itemize}
+
+%===========================================================
+\section{機能}
+
+「概要」で述べた機能は（オプション設定に応じて）
+自動的に実施される。
+
+\paragraph{Unicode符号値による入力}
+PDF文字列入力中で、|\Ux| が以下の意味になる。
+PDF文字列以外では |\Ux| は以前の定義（または未定義）に戻る。
+
+\begin{itemize}
+\item |\Ux{|Unicode符号値|}|\Means
+  その符号値の文字を出力する。
+\end{itemize}
+
+符号値は16進数で指定する。
+
+なお、\Pkg{japanese-otf}パッケージの |\UTF| 命令は、PDF文字列中では
+out2uni用の出力を行うように設計されているが、
+本パッケージを {\upLaTeX} で用いた場合は、
+|\UTF| も（PDF文字列中では）|\Ux| と同じ動作
+（つまりtounicode用の出力）になるように変更される。
+
+\paragraph{PDF文字列用の文字命令の定義}
+以下の命令が提供される。（プリアンブルでのみ使用可能。）
+
+\begin{itemize}
+\item |\pxDeclarePdfTextCommand{\制御綴}{|\Meta{JIS符号値}|}{|\Meta
+{Unicode符号値}|}|\Means
+  PDF文字列中の |\制御綴| の動作として、
+  指定した符号値の文字を出力することを指定する。
+\item |\pxDeclarePdfTextComposite{\制御綴}{|\Meta{引数}|}{|\Meta
+{JIS符号値}|}{|\Meta{Unicode符号値}|}|\Means
+  PDF文字列中の |\制御綴|（アクセント命令）+ \Meta{引数}の
+  動作として、指定した符号値の文字を出力することを指定する。
+\end{itemize}
+
+これらの命令において、符号値は16進数で指定する。
+「JIS符号値」は {\upLaTeX} では使われないので省略して
+（空にして）もよい
+（或いはそもそも JIS~X~0208 にない文字の場合は省略する）。
+逆に「Unicode符号値」は {\pLaTeX} の動作でかつ「JIS符号値」が
+指定されている場合は省略してよい。
+
+例えば、以下のように定義しておくと、
+PDF文字列中で |\textschwa|（schwa記号）や |\d{t}|（\d{t}）が
+使えるようになる。
+\begin{quote}\small\begin{verbatim}
+\pxDeclarePdfTextCommand{\textschwa}{}{0259}
+\pxDeclarePdfTextComposite{\d}{t}{}{1E6D}
+\end{verbatim}\end{quote}
+
+\end{document}

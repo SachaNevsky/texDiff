@@ -1,0 +1,1954 @@
+\documentclass[12pt]{article}
+
+\usepackage[english,brazil]{babel}
+\usepackage[latin1]{inputenc}
+
+\usepackage{indentfirst}
+\usepackage{graphicx}
+\usepackage{url}
+
+\usepackage[all,knot,arc,import,poly]{xy}
+
+\title{Tutorial de \Xy-pic}
+\author{Carlos A. P. Campani \\ {\tt campani@ufpel.edu.br}}
+
+\begin{document}
+
+\maketitle
+
+\section{Introdução}
+
+\Xy-pic{} é um pacote para tipografar gráficos e diagramas em
+\TeX. O pacote \Xy-pic pode ser usado com \TeX{} e \LaTeX{} e permite
+desenhar diversos tipos diferentes de gráficos e diagramas, incluindo
+polígonos, nós e diagramas em matriz. Ele é implementado em torno de um
+\emph{kernel de linguagem gráfica}, que fornece uma notação
+mnemônica e consistente, baseada na composição lógica de
+componentes visuais.
+
+Este tutorial tem o objetivo de ser uma introdução breve e
+a\-ces\-sí\-vel ao uso do \Xy-pic{}. Estamos longe de pretender apresentar todos os recursos
+disponíveis. Ele complementa o \emph{\Xy-pic{} Reference
+Manual}, de \mbox{Kristoffer} H. Rose e Ross Moore \cite{bib:manual}, e o \emph{\Xy-pic{} User's
+Guide}, de Kristoffer H. Rose \cite{bib:guia}, que podem ser obtidos em
+\url{http://www.tug.org/applications/Xy-pic/}. Ainda há o ótimo livro \emph{The \LaTeX{} Graphics Companion}, de
+Goossens, Rahtz, e Mittelbach \cite{bib:goossens}. Recomendamos a leitura de todos estes textos
+para aqueles que desejam usar intensamente o \Xy-pic.
+
+Para carregar o pacote \Xy-pic{} no \TeX{} usam-se os comandos
+\verb+\input xy+ e \verb+\xyoption{all}+, que carrega todos os
+recursos, o que pode tornar a execução do \TeX{} lenta. Para aumentar
+o desempenho do \TeX{} recomenda-se carregar apenas os recursos que
+serão usados. Da mesma forma que no \TeX{}, para carregar o \Xy-pic{} no
+\LaTeX{} usa-se o comando \verb+\usepackage[all]{xy}+ no cabeçalho do arquivo.
+
+Caso se queira produzir gráficos de nós e arcos, deve-se incluir
+adicionalmente as opções
+\verb+knot+ e \verb+arc+. Também precisamos declarar as opções
+\verb+import+ e \verb+poly+ se quisermos importar imagens
+\emph{postscript} e desenhar polígonos nos diagramas. Para isto basta
+usar, no cabeçalho do arquivo \LaTeX{}, o comando \verb+\usepackage[all,knot,arc,import,poly]{xy}+.
+
+Problemas podem ocorrer devido a flexibilidade do formato de entrada do
+\TeX. Isto causa algumas situações complicadas de conflito. Um exemplo
+é o uso do \Xy-pic{} junto com o pacote \emph{babel}, em português e outras línguas que redefinem
+as aspas, como é o caso também do alemão, o que povoca conflito quando
+se deseja salvar posições em um diagrama. Este problema pode ser
+resolvido ao usarmos \verb+$$ \shorthandoff{"} \xy ... \endxy $$+,
+protegendo os comandos \Xy-pic{} definidos dentro de \verb+\xy ... \endxy+.
+
+
+Outro problema é o conflito do caracter \verb+&+ quando usado em um diagrama
+do \Xy-pic{} dentro de um ambiente \emph{tabular}. Neste caso, é
+possível resolver o problema protegendo os comandos \Xy-pic{} dentro
+de um par \verb+{+ e \verb+}+. 
+
+\section{Conceitos Básicos}
+
+A estrutura geral de uma \Xy-figura é \verb+\xy ... \endxy+,
+que constrói uma caixa (\emph{box}) com uma \Xy-figura (usuários \LaTeX{} podem
+substituir este comando por \verb+\begin{xy} ... \end{xy}+). Nesta
+estrutura podem ser declarados comandos da ``linguagem gráfica'' do
+\Xy-pic.
+
+Não há necessidade de colocar a \Xy-figura explicitamente em modo
+ma\-te\-má\-ti\-co, pois a declaração \verb+\xy ... \endxy+ já o faz. Caso
+haja necessidade de apresentar texto dentro da \Xy-figura, basta
+usar o comando \verb+\txt{ ... }+.
+
+Os elementos que formam a linguagem do \Xy-pic{} são:
+\begin{description}
+\item [Posições] Representam coordenadas de pontos dentro da \emph{caixa} da
+  \Xy-figura;
+\item [Objetos] Um objeto é como uma caixa (\emph{box}) do \TeX{} que pode ser
+  posto em uma posição, exceto que ele possui uma \emph{borda} (\emph{edge});
+\item [Conexões] Junto com a capacidade de colocar objetos em
+  posições, todos os objetos podem ser usados para conectar duas
+  posições;
+\item [Decorações] Sempre que o \Xy-pic{} encontra algo que não pode
+  ser interpretado como uma posição, ele interpreta o que se segue
+  como uma \emph{de\-co\-ra\-ção}, ou seja, um conjunto restrito de
+  comandos a ser adicionado à figura.
+\end{description}
+
+Posições podem ser representadas por pares \verb+(x,y)+, cujos valores
+$x$ crescem da esquerda para a direita, e os valores $y$ de baixo para
+cima. Assim, a origem do sistema de coordenadas é o ponto $(0,0)$
+(também representado como \verb+0+),
+e a \Xy-figura está contida no seguinte retângulo:
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*{}="A"; (40,0)*{}="B"; (0,30)*{}="C"; (40,30)*{}="D";
+"A";"B" **\dir{-};
+"A";"C" **\dir{-};
+"B";"D" **\dir{-};
+"C";"D" **\dir{-};
+{\ar@{<->} (0,10)*{};(40,10)*{}};
+{\ar@{<->} (15,0)*{};(15,30)*{}};
+(15,10)*{\bullet};
+(15,10)*{};(25,14)*{0} **\dir{.};
+(22,25)*{Y_{\mathrm{max}}};
+(22,5)*{Y_{\mathrm{min}}};
+(7,7)*{X_{\mathrm{min}}};
+(32,7)*{X_{\mathrm{max}}};
+(-40,5)*{\txt{ponto de referência \TeX}};
+(-17,6)*{};(0,10)*{} **\dir{.};
+\endxy
+$$
+
+A forma mais simples de colocar coisas em uma \Xy-figura é ``largar''
+um objeto em uma posição. Para definir posições e ``largar'' objetos
+usa-se o operador \verb+*+. Por exemplo,
+\begin{verbatim}
+(0,0)*{A}
+\end{verbatim}
+coloca o rótulo \verb+A+ na posição $(0,0)$.
+
+Além de poder ``largar'' objetos em uma posição da \Xy-figura, podemos
+\emph{conectar} os dois objetos correntes do \emph{estado}, formado
+pelas posições $p$
+(posição prévia) e
+$c$ (posição corrente). Para definir conexões usa-se o operador \verb+**+. Assim,
+\begin{verbatim}
+\xy
+(0,0)*{};(10,0)*{} **\dir{-}
+\endxy
+\end{verbatim}
+define a posição prévia $p=(0,0)$ e a posição corrente $c=(10,0)$ e
+conecta ambas com um \emph{direcional} definido por
+\verb+**\dir{-}+. Qualquer objeto pode ser usado como conector e,
+neste caso, foi usado o \verb+-+, indicando que as duas posições devem
+ser conectadas por uma linha simples. Observe que \verb+(0,0)*{}+ e \verb+(10,0)*{}+
+define as posições prévia e corrente, sem ``largar'' nenhum objeto
+nelas.
+
+O operador \verb+;+ indica que deve-se atualizar as posições
+prévia e corrente, trocando a corrente anterior pela prévia e fazendo
+da última posição inserida a nova corrente. Assim, em
+\begin{verbatim}
+\xy
+(0,0)*{};(10,0)*{} **\dir{-};
+(10,10)*{} **\dir{-}
+\endxy
+\end{verbatim}
+O primeiro \verb+;+ define as posições $p=(0,0)$ e $c=(10,0)$. O
+segundo \verb+;+ atribui a $p$ o valor
+anterior de $c$, $(10,0)$, e faz $c=(10,10)$. Então são traçadas duas
+linhas, uma entre $(0,0)$ e $(10,0)$ e outra entre $(10,0)$ e
+$(10,10)$.
+
+Objetos possuem uma \emph{borda} (\emph{edge}). Assim, um objeto pode
+ser entendido como uma \emph{caixa} (\emph{box}) \TeX{}, com
+uma \emph{forma} (\emph{shape}), e com \emph{dimensões} $L$, $U$, $R$
+e $D$. A forma do objeto força a forma de sua borda. O kernel do
+\Xy-pic fornece três formas (shapes), nomeadas \verb+[.]+, \verb+[]+ e
+\verb+[o]+, correspondendo a:
+$$ 
+  \shorthandoff{"}
+\xy (0,0)*{}; (1,0)*{} **\dir{} *\dir{x} \endxy \qquad , \qquad
+\xy
+(0,-6)*{}="A"; (20,-6)*{}="B"; (0,9)*{}="C"; (20,9)*{}="D";
+"A";"B" **\dir{-};
+"A";"C" **\dir{-};
+"B";"D" **\dir{-};
+"C";"D" **\dir{-};
+{\ar@{.} (0,0)*{};(20,0)*{}};
+{\ar@{.} (7,-6)*{};(7,9)*{}};
+(3,0)*{L};
+(7,4)*{U};
+(13,0)*{R};
+(7,-3)*{D};
+(0,0)*{}; (7,0)*{} **\dir{} ?>* \dir{x}
+\endxy \qquad \mathrm{e} \qquad
+\xy
+{\ar@{.} (0,0)*{};(16,0)*{}};
+{\ar@{.} (8,-8)*{};(8,8)*{}};
+(3,0)*{L};
+(8,4)*{U};
+(13,0)*{R};
+(8,-3)*{D};
+(0,0)*{}; (8,0)*{} **\dir{} ?>* \dir{x};
+(8,0)*{} *\cir<25pt>{}
+\endxy
+$$
+
+A forma (shape) \emph{default} dos objetos é \verb+[]+.
+
+O \Xy-pic fornece um conjunto de \emph{direcionais}, como no exemplo anterior
+o \verb+**\dir{-}+. Os direcionais são
+elementos gráficos que podem
+ser tanto \emph{conectores} quanto \emph{pontas} (que terminam as
+extremidades de uma conexão).
+
+Os conceitos apresentados de forma breve nesta seção serão melhor
+desenvolvidos nas próximas seções. Particularmente a seção seguinte
+tratará dos recursos do kernel do \Xy-pic, e mostrará por meio de
+exemplos o uso de posições, objetos e conexões.
+
+\section{Usando o Kernel do \Xy-pic}
+
+Nesta seção mostraremos o uso do kernel do \Xy-pic{} por meio de
+exemplos comentados. Serão introduzidos os recursos básicos
+disponíveis no kernel, e nas seções seguintes serão explorados
+aspectos mais avançados.
+
+A coisa mais simples que podemos fazer com o \Xy-pic{} é definir duas
+posições e conecta-las. Isto é mostrado no exemplo seguinte, onde é
+produzida uma linha simples conectando as posições $(0,0)$ e $(10,0)$:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{7cm}
+\begin{verbatim}
+\xy
+(0,0)*{};(10,0)*{} **\dir{-}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*{};(10,0)*{} **\dir{-}
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Podemos também ``largar'' objetos nas posições. Isto é feito neste
+outro exemplo, em que definimos dois objetos com rótulos $A$ e $B$, e
+traçamos uma linha na diagonal ligando  estes dois rótulos:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{7cm}
+\begin{verbatim}
+\xy
+(0,0)*+{A};(10,10)*+{B} **\dir{-}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*+{A};(10,10)*+{B} **\dir{-}
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+O operador \verb+*+ é usado para definir posições e ``largar''
+objetos, e o operador \verb+**+ é usado para definir conexões.
+
+Neste último exemplo, observa-se o \emph{modificador} \verb=+= usado
+em \verb=(0,0)*+{A}= e \verb=(10,10)*+{B}=. Este modificador serve
+para obter espaço adicional em torno do objeto, evitando que o
+conector fique muito próximo ao objeto, como seria o caso de:
+\vspace{10pt} 
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{7cm}
+\begin{verbatim}
+\xy
+(0,0)*{A};(10,10)*{B} **\dir{-}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*{A};(10,10)*{B} **\dir{-}
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Podemos usar qualquer objeto como conector, como vemos no exemplo a
+seguir:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{7cm}
+\begin{verbatim}
+\xy
+(0,0)*+{A};(10,10)*+{B} **\dir{>}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*+{A};(10,10)*+{B} **\dir{>}
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Podemos definir três posições em seqüência e conecta-las. Como se
+explicou na seção anterior, o direcional \verb+**\dir{-}+ conecta as
+posições $p$ e $c$ do estado do \Xy-pic{}. O operador \verb+;+ é usado
+para mudar o estado, trocando as posições $p$ e $c$ e atualizando a
+$c$. Mostramos isso no seguinte exemplo:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{7cm}
+\begin{verbatim}
+\xy
+(0,0)*{};(10,0)*{} **\dir{-};
+(10,10)*{} **\dir{-}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*{};(10,0)*{} **\dir{-};
+(10,10)*{} **\dir{-}
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Neste exemplo, a sequência de mudanças de estado e ações do \Xy-pic{},
+associada aos comandos que as executam, é apresentada na Tabela~\ref{tab:seq}.
+\vspace{10pt}
+
+\begin{table}
+\begin{center}
+\begin{tabular}{c|c|c}\hline
+ & Ação & Comando \\ \hline\hline
+1 & $c\leftarrow (0,0)$ & \verb+(0,0)*{}+ \\ \hline
+2 & $p\leftarrow c$ & \verb+;+ \\ \hline
+3 & $c\leftarrow (10,0)$ & \verb+(10,0)*{}+ \\ \hline
+4 & traça linha entre $(0,0)$ e $(10,0)$ & \verb+**\dir{-}+ \\ \hline
+5 & $p\leftarrow c$ & \verb+;+ \\ \hline
+6 & $c\leftarrow (10,10)$ & \verb+(10,10)*{}+ \\ \hline
+7 & traça linha entre $(10,0)$ e $(10,10)$ & \verb+**\dir{-}+ \\ \hline
+\end{tabular}
+\end{center}
+\caption{Exemplo de execução do \Xy-pic{}}\label{tab:seq}
+\end{table}
+
+Textos podem ser postos em uma \Xy-figura usando o comando \verb+\txt+:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{7cm}
+\begin{verbatim}
+\xy
+(5,5)*{A};(15,15)*{B} **\dir{-};
+(0,0)*{\txt{texto qualquer}}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+(5,5)*{A};(15,15)*{B} **\dir{-};
+(0,0)*{\txt{texto qualquer}}
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Este novo exemplo mostra o uso de conexões com \emph{pontas}:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xy
+(0,0)*+{A};(10,10)*+{B} **\dir{-} ?>* \dir{>}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*+{A};(10,10)*+{B} **\dir{-} ?>* \dir{>}
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Direcionais podem ser do tipo \emph{conectores} ou \emph{pontas}. No exemplo dado,
+\verb+**\dir{-}+ é um \emph{direcional conector}, e \verb+\dir{>}+ é
+um \emph{direcional ponta}.
+
+O \verb+?>*+ serve para indicar a posição
+da ponta no conector. O operador \verb+?+
+serve para ``pegar'' o lugar da conexão mais recente definida por um
+\verb+**+. O modificador \verb+>+ move posições, neste caso para o
+extremo final da conexão.
+
+Poderíamos posicionar a ponta no outro extremo do conector usando \verb+?<*+:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xy
+(0,0)*+{A};(10,10)*+{B} **\dir{-} ?<* \dir{>}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*+{A};(10,10)*+{B} **\dir{-} ?<* \dir{>}
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Para melhorar o exemplo anterior poderíamos usar espaço adicional em
+torno dos objetos:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xy
+(0,0)*++{A};(10,10)*++{B} **\dir{-} ?<* \dir{>}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*++{A};(10,10)*++{B} **\dir{-} ?<* \dir{>}
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Cada modificador \verb=+= dobra o valor do espaço em torno de um
+objeto. Assim, ao usar, por exemplo, \verb=(0,0)*++{A}= estamos
+introduzindo um espaço 4 vezes maior.
+
+Agora podemos inverter a ponta, como fazemos no exemplo seguinte:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xy
+(0,0)*+{A};(10,10)*+{B} **\dir{-} ?<* \dir{<}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*+{A};(10,10)*+{B} **\dir{-} ?<* \dir{<}
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+As Figuras~\ref{fig:conectores} e \ref{fig:pontas} apresentam os
+direcionais (conectores e pontas). Observe-se o recurso de fazer o
+conector duplo ou triplo por meio de \verb+\dir2+ e \verb+\dir3+, e
+as variações de pontas usando-se \verb+\dir^+ ou \verb+\dir_+.
+
+\begin{figure}[!tp]
+\begin{center}
+\begin{tabular}{cccccc}
+\verb=\dir{-}= & \xy (0,0)*{};(10,10)*{}; **\dir{-}; \endxy &
+\verb=\dir2{-}= & \xy (0,0)*{};(10,10)*{}; **\dir2{-}; \endxy &
+\verb=\dir3{-}= & \xy (0,0)*{};(10,10)*{}; **\dir3{-}; \endxy \\
+\verb=\dir{.}= & \xy (0,0)*{};(10,10)*{}; **\dir{.}; \endxy &
+\verb=\dir2{.}= & \xy (0,0)*{};(10,10)*{}; **\dir2{.}; \endxy &
+\verb=\dir3{.}= & \xy (0,0)*{};(10,10)*{}; **\dir3{.}; \endxy \\
+\verb=\dir{~}= & \xy (0,0)*{};(10,10)*{}; **\dir{~}; \endxy &
+\verb=\dir2{~}= & \xy (0,0)*{};(10,10)*{}; **\dir2{~}; \endxy &
+\verb=\dir3{~}= & \xy (0,0)*{};(10,10)*{}; **\dir3{~}; \endxy \\
+\verb=\dir{--}= & \xy (0,0)*{};(10,10)*{}; **\dir{--}; \endxy &
+\verb=\dir2{--}= & \xy (0,0)*{};(10,10)*{}; **\dir2{--}; \endxy &
+\verb=\dir3{--}= & \xy (0,0)*{};(10,10)*{}; **\dir3{--}; \endxy \\
+\verb=\dir{~~}= & \xy (0,0)*{};(10,10)*{}; **\dir{~~}; \endxy &
+\verb=\dir2{~~}= & \xy (0,0)*{};(10,10)*{}; **\dir2{~~}; \endxy &
+\verb=\dir3{~~}= & \xy (0,0)*{};(10,10)*{}; **\dir3{~~}; \endxy
+\end{tabular}
+\end{center}
+\caption{Direcionais (conectores)}\label{fig:conectores}
+\end{figure}
+
+\begin{figure}[!tp]
+\begin{center}
+\begin{tabular}{cccccc}
+\verb=\dir{>}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{>} \endxy &
+\verb=\dir^{>}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir^{>} \endxy &
+\verb=\dir_{>}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir_{>} \endxy \\
+\verb=\dir{<}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{<} \endxy &
+\verb=\dir^{<}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir^{<} \endxy &
+\verb=\dir_{<}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir_{<} \endxy \\
+\verb=\dir{|}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{|} \endxy &
+\verb=\dir^{|}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir^{|} \endxy &
+\verb=\dir_{|}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir_{|} \endxy \\
+\verb=\dir{(}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{(} \endxy &
+\verb=\dir^{(}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir^{(} \endxy &
+\verb=\dir_{(}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir_{(} \endxy \\
+\verb=\dir{)}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{)} \endxy &
+\verb=\dir^{)}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir^{)} \endxy &
+\verb=\dir_{)}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir_{)} \endxy \\
+ & &
+\verb=\dir^{`}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir^{`} \endxy &
+\verb=\dir_{`}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir_{`} \endxy \\
+ & &
+\verb=\dir^{'}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir^{'} \endxy &
+\verb=\dir_{'}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir_{'} \endxy \\
+\verb=\dir{>>}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{>>} \endxy &
+\verb=\dir^{>>}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir^{>>} \endxy &
+\verb=\dir_{>>}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir_{>>} \endxy \\
+\verb=\dir{<<}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{<<} \endxy &
+\verb=\dir^{<<}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir^{<<} \endxy &
+\verb=\dir_{<<}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir_{<<} \endxy \\
+\verb=\dir{||}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{||} \endxy &
+\verb=\dir^{||}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir^{||} \endxy &
+\verb=\dir_{||}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir_{||} \endxy \\
+\verb=\dir{|-}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{|-} \endxy &
+\verb=\dir^{|-}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir^{|-} \endxy &
+\verb=\dir_{|-}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir_{|-} \endxy \\
+\verb=\dir{>|}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{>|} \endxy &
+\verb=\dir{>>|}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{>>|} \endxy &
+\verb=\dir{|<}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{|<} \endxy \\
+\verb=\dir{|<<}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{|<<} \endxy &
+\verb=\dir{*}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{*} \endxy &
+\verb=\dir{o}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{o} \endxy \\
+\verb=\dir{+}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{+} \endxy &
+\verb=\dir{x}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{x} \endxy &
+\verb=\dir{/}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{/} \endxy \\
+\verb=\dir{//}= & \xy (0,0)*{};(5,5)*{} **\dir{.} ?>* \dir{//} \endxy &
+ & & & 
+\end{tabular}
+\end{center}
+\caption{Direcionais (pontas)}\label{fig:pontas}
+\end{figure}
+
+Podemos produzir setas com o \Xy-pic. Para isto usamos o comando \verb+\ar+:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{7cm}
+\begin{verbatim}
+\xy
+{\ar (0,0)*+{A}; (10,10)*+{B}}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+{\ar (0,0)*+{A}; (10,10)*+{B}}
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+A Figura~\ref{fig:setas} apresenta as setas que podem ser usadas em
+uma \Xy-figura. De\-ve\-mos observar que \verb+\ar@{=>}+ e \verb+\ar@{:>}+ são
+abreviaturas de \verb+\ar@2{->}+ e \verb+\ar@2{.>}+.
+
+\begin{figure}
+\begin{center}
+\begin{tabular}{cccccc}
+\verb+\ar@{-}+ & \xy {\ar@{-} (0,0)*{}; (10,10)*{}}\endxy &
+\verb+\ar@{->}+ & \xy {\ar@{->} (0,0)*{}; (10,10)*{}} \endxy &
+\verb+\ar@{->>}+ & \xy {\ar@{->>} (0,0)*{}; (10,10)*{}}\endxy \\
+\verb+\ar@{<-}+ & \xy {\ar@{<-} (0,0)*{}; (10,10)*{}} \endxy &
+\verb+\ar@{<->}+ & \xy {\ar@{<->} (0,0)*{}; (10,10)*{}} \endxy &
+\verb+\ar@2{->}+ & \xy {\ar@2{->} (0,0)*{}; (10,10)*{}} \endxy \\
+\verb+\ar@{=>}+ & \xy {\ar@{=>} (0,0)*{}; (10,10)*{}} \endxy &
+\verb+\ar@3{->}+ & \xy {\ar@3{->} (0,0)*{}; (10,10)*{}} \endxy &
+\verb+\ar@{-<}+ & \xy {\ar@{-<} (0,0)*{}; (10,10)*{}} \endxy \\
+\verb+\ar@{-|}+ & \xy {\ar@{-|} (0,0)*{}; (10,10)*{}} \endxy &
+\verb+\ar@{-)}+ & \xy {\ar@{-)} (0,0)*{}; (10,10)*{}} \endxy &
+\verb+\ar@{-o}+ & \xy {\ar@{-o} (0,0)*{}; (10,10)*{}} \endxy \\
+\verb+\ar@^{->}+ & \xy {\ar@^{->} (0,0)*{}; (10,10)*{}} \endxy &
+\verb+\ar@_{->}+ & \xy {\ar@_{->} (0,0)*{}; (10,10)*{}} \endxy &
+\verb+\ar@{|->}+ & \xy {\ar@{|->} (0,0)*{}; (10,10)*{}} \endxy \\
+\verb+\ar@{.>}+ & \xy {\ar@{.>} (0,0)*{}; (10,10)*{}} \endxy &
+\verb+\ar@2{.>}+ & \xy {\ar@2{.>} (0,0)*{}; (10,10)*{}} \endxy &
+\verb+\ar@{:>}+ & \xy {\ar@{:>} (0,0)*{}; (10,10)*{}} \endxy \\
+\verb+\ar@3{.>}+ & \xy {\ar@3{.>} (0,0)*{}; (10,10)*{}} \endxy &
+\verb+\ar@{~>}+ & \xy {\ar@{~>} (0,0)*{}; (10,10)*{}} \endxy &
+\verb+\ar@2{~>}+ & \xy {\ar@2{~>} (0,0)*{}; (10,10)*{}} \endxy \\
+\verb+\ar@3{~>}+ & \xy {\ar@3{~>} (0,0)*{}; (10,10)*{}} \endxy &
+\verb+\ar@{-->}+ & \xy {\ar@{-->} (0,0)*{}; (10,10)*{}} \endxy &
+\verb+\ar@{~~>}+ & \xy {\ar@{~~>} (0,0)*{}; (10,10)*{}} \endxy \\
+
+\end{tabular}
+\end{center}
+\caption{Setas}\label{fig:setas}
+\end{figure}
+
+Podemos curvar uma seta, como por exemplo em:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xy
+{\ar@/^1pc/ (0,0)*+{A}; (10,10)*+{B}}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+{\ar@/^1pc/ (0,0)*+{A}; (10,10)*+{B}}
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+O \verb+/^1pc/+ é um \emph{vetor}, normalmente usado para denotar um
+deslocamento, e que neste caso é usado para especificar a curvatura da seta. A
+curvatura especificada no exemplo é de 1pc=12pt (pontos). Outras unidades de
+medida usadas pelo \TeX{} são \emph{ex} (correspondendo à altura da letra
+``x''), \emph{mm}, \emph{cm} e \emph{in} (polegadas). O \verb+^+
+indica a direção da curvatura (para cima).
+
+Poderíamos curvar a seta para baixo, como em:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xy
+{\ar@/_1pc/ (0,0)*+{A}; (10,10)*+{B}}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+{\ar@/_1pc/ (0,0)*+{A}; (10,10)*+{B}}
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+\Xy-pic{} fornece a facilidade de rótulos para indicar
+posições. Assim, com \verb+(0,0)*{}="A"+ podemos criar o rótulo \verb+A+ para indicar a
+posição $(0,0)$. No seguinte exemplo definimos três rótulos para
+indicar posições dos vértices do triângulo que será traçado:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xy
+(0,0)*{}="A"; (10,0)*{}="B"; (10,10)*{}="C";
+"A";"B" **\dir{-};
+"A";"C" **\dir{-};
+"B";"C" **\dir{-};
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*{}="A"; (10,0)*{}="B"; (10,10)*{}="C";
+"A";"B" **\dir{-};
+"A";"C" **\dir{-};
+"B";"C" **\dir{-};
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+A operação \verb+!{pos1,pos2}+ permite encontrar o ponto em que a última conexão
+intercepta uma linha definida pelas posições \verb+pos1+ e \verb+pos2+. Por exem\-plo:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xy
+(0,5)*{1}="1"; (17,15)*{2}="2" **\dir{.};
+(6,0)*{A}="A"; (13,18)*{B}="B" **\dir{-}
+?!{"1";"2"} *{\bullet}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+(0,5)*{1}="1"; (17,15)*{2}="2" **\dir{.};
+(6,0)*{A}="A"; (13,18)*{B}="B" **\dir{-}
+?!{"1";"2"} *{\bullet}
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+No comando \verb+?!{"1";"2"} *{\bullet}+, o operador \verb+?+ ``pega'' a posição da última conexão definida
+(neste caso a que liga as posições \verb+"A"+ e \verb+"B"+), e a seguir a operação \verb+!{"1";"2"}+ encontra o
+ponto de interceptação desta conexão com a linha que liga as posições
+\verb+"1"+ e \verb+"2"+. Então é posto um $\bullet$ (``bullet'') no ponto de interceptação.
+
+Podemos definir diagramas aninhados, ou seja, diagramas dentro de
+ou\-tros diagramas. Para isto basta usar um diagrama como se fosse um
+objeto ou um direcional. Neste exemplo ilustramos o uso deste recurso:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{9cm}
+\begin{verbatim}
+\xy
+(0,0)*++{
+\xy
+(0,0)*+{A}; (0,10)*+{B} **\dir{-} ?>* \dir{>}
+\endxy
+}="x";
+(20,0)*++{
+\xy
+(0,0)*+{A}; (0,10)*+{B} **\dir{-} ?<* \dir{<}
+\endxy
+}="y";
+{\ar@{=>} "x";"y"};
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*++{
+\xy
+(0,0)*+{A}; (0,10)*+{B} **\dir{-} ?>* \dir{>}
+\endxy
+}="x";
+(20,0)*++{
+\xy
+(0,0)*+{A}; (0,10)*+{B} **\dir{-} ?<* \dir{<}
+\endxy
+}="y";
+{\ar@{=>} "x";"y"};
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Observe que
+\begin{verbatim}
+\xy
+(0,0)*+{A}; (0,10)*+{B} **\dir{-} ?>* \dir{>}
+\endxy
+\end{verbatim}
+é atribuido a \verb+"x"+ e usado como objeto posicionado em $(0,0)$ e
+\begin{verbatim}
+\xy
+(0,0)*+{A}; (0,10)*+{B} **\dir{-} ?<* \dir{<}
+\endxy
+\end{verbatim}
+é atribuido a \verb+"y"+ e usado como objeto posicionado em
+$(20,0)$. Ambos os objetos são conectados pela seta dupla definida por \verb+{\ar@{=>} "x";"y"}+.
+
+Podemos usar macros \TeX{} em \Xy-figuras. Por exemplo:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{9cm}
+\begin{verbatim}
+\def\grafo{\xy (0,10)*+{A}; (0,0)*+{B} **\dir{-}
+?>* \dir{>} \endxy}
+\xy
+{\ar@{=>} (0,0)*{\grafo};(15,0)*{\grafo}}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\def\grafo{\xy (0,10)*+{A}; (0,0)*+{B} **\dir{-}
+?>* \dir{>} \endxy}
+\xy
+{\ar@{=>} (0,0)*{\grafo};(15,0)*{\grafo}}
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Neste diagrama,
+\begin{verbatim}
+\def\grafo{\xy (0,10)*+{A}; (0,0)*+{B} **\dir{-}
+?>* \dir{>} \endxy}
+\end{verbatim}
+define uma macro \TeX, referenciada como \verb+\grafo+, que é usada duas
+vezes a\-ninha\-da no diagrama.
+
+\section{Extensões}
+
+Nesta seção são descritas algumas extensões ao kernel do
+\Xy-pic. Apresentaremos curvas, círculos, frames e
+importação de gráficos externos.
+
+\vspace{10pt}
+Usando-se o comando \verb+\crv+ podemos criar curvas com múltiplos pontos tangentes:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{7cm}
+\begin{verbatim}
+\xy
+(0,0)*{}="A";
+(10,0)*{}="B";
+"A"; "B" **\crv{(5,5)};
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*{}="A";
+(10,0)*{}="B";
+"A"; "B" **\crv{(5,5)};
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Neste exemplo, a curva foi definida tendo apenas um ponto tangente, o $(5,5)$.
+
+Podemos definir curvas com mais pontos tangentes:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xy
+(0,0)*{}="A";
+(25,0)*{}="B";
+"A"; "B" **\crv{(5,-17) & (12,8)};
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*{}="A";
+(25,0)*{}="B";
+"A"; "B" **\crv{(5,-17) & (12,8)};
+\endxy
+$$
+}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Uma facilidade para desenvolver curvas é tornar os pontos tangentes
+visíveis. Para isto usa-se \verb+~pC+:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xy
+(0,0)*{}="A";
+(25,0)*{}="B";
+"A"; "B" **\crv~pC{(5,-17) & (12,8)};
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*{}="A";
+(25,0)*{}="B";
+"A"; "B" **\crv~pC{(5,-17) & (12,8)};
+\endxy
+$$
+}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Para produzir círculos usamos o comando \verb+\cir+. O tamanho
+\emph{default} do círculo é o tamanho do objeto que ele
+envolverá. Este exemplo ilustra isto:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xy
+(0,0)*+{A}; (10,0)*+{B}*\cir{} **\dir{-}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*+{A}; (10,0)*+{B}*\cir{} **\dir{-}
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Podemos especificar um raio para o círculo. Por exemplo, se o círculo
+deve ter \verb+20pt+ de raio, usamos \verb+\cir<20pt>{}+.
+
+Segmentos de círculo podem ser obtidos especificando-se as direções
+dos vetores tangentes e um giro em sentido horário (usando \verb+_+)
+ou sentido anti-horário (usando \verb+^+). As direções que podem ser
+especificadas são:
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*\cir<10pt>{};
+{\ar@{->} (-4,0)*{}; (-14,0)*+{l}};
+{\ar@{->} (4,0)*{}; (14,0)*+{r}};
+{\ar@{->} (0,4)*{}; (0,14)*+{u}};
+{\ar@{->} (0,-4)*{}; (0,-14)*+{d}};
+{\ar@{->} (3,3)*{}; (12,12)*+{ur=ru}};
+{\ar@{->} (-3,3)*{}; (-12,12)*+{ul=lu}};
+{\ar@{->} (-3,-3)*{}; (-12,-12)*+{dl=ld}};
+{\ar@{->} (3,-3)*{}; (12,-12)*+{dr=rd}};
+\endxy
+$$
+
+Exemplos de segmentos de círculo:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\verb+\xy *\cir<5pt>{l^r} \endxy+ & \xy *\cir<5pt>{l^r} \endxy \\
+\verb+\xy *\cir<5pt>{dl_u} \endxy+ & \xy *\cir<5pt>{dl_u} \endxy \\
+\verb+\xy *\cir<5pt>{dr^ur} \endxy+ & \xy *\cir<5pt>{dr^ur} \endxy \\
+\verb+\xy *\cir<5pt>{dr_ur} \endxy+ & \xy *\cir<5pt>{dr_ur} \endxy \\
+\verb+\xy *\cir<5pt>{ur^dr} \endxy+ & \xy *\cir<5pt>{ur^dr} \endxy
+\end{tabular}
+
+\vspace{10pt}
+Se são dadas a mesma diagonal duas vezes, então nada é produzido, como
+em \verb+\xy *\cir<5pt>{d^d} \endxy+, que produz ``\ ''.
+
+No próximo exemplo produziremos um ``\emph{smile}'' usando círculo,
+vetores, e os operadores \verb+?+, \verb+_+ e \verb+!+:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xy
+(0,0)*{};(4,0)*{} **\dir{} ? *_!/3pt/\dir{)}
+*_!/7pt/\dir{:}; (2,2)*\cir<5pt>{};
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*{};(4,0)*{} **\dir{} ? *_!/3pt/\dir{)}
+*_!/7pt/\dir{:}; (2,2)*\cir<5pt>{};
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+O operador \verb+?+, que já explicamos anteriormente, serve para ``pegar'' a posição da
+última conexão. O operador \verb+_+ serve para girar um objeto $90^o$
+em sentido horário (para o sentido anti-horário usaríamos o operador
+\verb+^+). O operador \verb+!+ serve para tornar a direção oblíqua ao
+direcional usado (\emph{skew}). Finalmente, os vetores \verb+/3pt/+ e \verb+/7pt/+
+servem para deslocar os objetos ``\verb+)+'' e ``\verb+:+'' sobre a direção.
+
+Vamos explicar passo a passo a construção do smile do nosso exemplo.
+
+Em primeiro lugar, usamos o operador \verb+?+ para ``pegar'' a
+posição do direcional ``vazio'' (\emph{dummy}) que conecta $(0,0)$ e
+$(4,0)$. Sobre esta direção será posto o ``\verb+)+''. Ilustramos isto,
+mostrando o direcional vazio como uma linha pontilhada para melhor visualização:
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*{}; (4,0)*{} **\dir{.} ?*{)}
+\endxy
+$$
+
+Para produzirmos a boca do smile devemos girar o ``\verb+)+'' em um ângulo de
+$90^o$ em sentido horário, e para isto usamos o operador \verb+_+,
+resultando em:
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*{}; (4,0)*{} **\dir{.} ?*_\dir{)}
+\endxy
+$$
+
+Usamos o operador \verb+!+ para indicar a direção oblíqua ao
+ direcional (para que possamos depois deslocar). Ilustramos com uma
+ seta pontilhada esta nova direção:
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*{}; (4,0)*{} **\dir{.} ?*_\dir{)};
+(2,-3)*{}; (2,5)*{} **\dir{.} ?>* \dir{>}
+\endxy
+$$
+
+As mesmas operações são feitas sobre o ``\verb+:+'', que formará os olhos do smile.
+
+Finalmente, deslocamos o ``\verb+)+'' e o ``\verb+:+'' na nova direção, usando os vetores \verb+/3pt/+ e
+\verb+/7pt/+, res\-pec\-ti\-va\-men\-te:
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*{}; (4,0)*{} **\dir{.} ?*_!/3pt/\dir{)} *_!/7pt/\dir{:};
+\endxy
+$$
+
+O círculo foi usado como ``toque final'' para completar o smile.
+
+Poderíamos também desenhar um smile usando um segmento de círculo, como
+em:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xy
+(0,0)*{};(4,0)*{} **\dir{} ? *_!/7pt/\dir{:};
+(2,2)*\cir<5pt>{};
+(2,2)*\cir<3pt>{dr^ur};
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*{};(4,0)*{} **\dir{} ? *_!/7pt/\dir{:};
+(2,2)*\cir<5pt>{};
+(2,2)*\cir<3pt>{dr^ur};
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Observe que a boca, tendo sido feita com um segmento de círculo,
+resultou em um smile um pouco diferente ao do exemplo anterior.
+
+\emph{Frames} são molduras que podem ser postas em \Xy-figuras. Uma moldura
+(frame) é um objeto \Xy-pic{} na forma \verb+\frm{ ... }+. Na
+Figura~\ref{fig:frames} são mostrados alguns tipos de molduras
+disponíveis (para mais veja o \emph{\Xy-pic{} Reference Manual}).
+
+\begin{figure}[!tp]
+\begin{center}
+\begin{tabular}{ccc}
+\xy (0,0)*{\txt{Usando \\ $\backslash${\tt frm\{\}}}}*\frm{} \endxy &
+\xy (0,0)*{\txt{Usando \\ $\backslash${\tt frm\{.\}}}}*\frm{.} \endxy &
+\xy (0,0)*{\txt{Usando \\ $\backslash${\tt frm<44pt>\{.\}}}}*\frm<44pt>{.} \endxy \\
+ & & \\
+\xy (0,0)*{\txt{Usando \\ $\backslash${\tt frm\{-\}}}}*\frm{-} \endxy &
+\xy (0,0)*{\txt{Usando \\ $\backslash${\tt frm<8pt>\{-\}}}}*\frm<8pt>{-} \endxy &
+\xy (0,0)*{\txt{Usando \\ $\backslash${\tt frm<44pt>\{-\}}}}*\frm<44pt>{-} \endxy \\
+ & & \\
+\xy (0,0)*{\txt{Usando \\ $\backslash${\tt frm\{--\}}}}*\frm{--} \endxy &
+\xy (0,0)*{\txt{Usando \\ $\backslash${\tt frm\{o-\}}}}*\frm{o-} \endxy &
+\xy (0,0)*{\txt{Usando \\ $\backslash${\tt frm<44pt>\{--\}}}}*\frm<44pt>{--} \endxy \\
+ & & \\
+\xy (0,0)*{\txt{Usando \\ $\backslash${\tt frm\{,\}}}}*\frm{,} \endxy &
+\xy (0,0)*{\txt{Usando \\ $\backslash${\tt frm<5pt>\{,\}}}}*\frm<5pt>{,} \endxy &
+\xy (0,0)*{\txt{Usando \\ $\backslash${\tt frm\{-,\}}}}*\frm{-,} \endxy \\
+ & & \\
+\xy (0,0)*{\txt{Usando \\ $\backslash${\tt frm\{o\}}}}*\frm{o} \endxy &
+\xy (0,0)*{\txt{Usando \\ $\backslash${\tt frm<8pt>\{o\}}}}*\frm<8pt>{o} \endxy &
+\xy (0,0)*{\txt{Usando \\ $\backslash${\tt frm\{.o\}}}}*\frm{.o} \endxy \\
+ & & \\
+\xy (0,0)*{\txt{Usando \\ $\backslash${\tt frm\{ee\}}}}*\frm{ee} \endxy &
+\xy (0,0)*{\txt{Usando \\ $\backslash${\tt frm<20pt,8pt>\{ee\}}}}*\frm<20pt,8pt>{ee} \endxy &
+\xy (0,0)*{\txt{Usando \\ $\backslash${\tt frm\{-e\}}}}*\frm<44pt>{-e}
+\endxy 
+\end{tabular}
+\end{center}
+\caption{Molduras (frames)}\label{fig:frames}
+\end{figure}
+
+Podemos agora, usando curvas e molduras (frames), construir o seguinte diagrama:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xy
+(0,0)*++{\txt{Redondo}}*\frm{oo}="r";
+(30,30)*++{\txt{Quadrado}}*\frm{-,}="q";
+"r";"q" **\dir{} ? *++{\txt{Liga}}*\frm{.}="l";
+"r";"l" **\crv{(15,0)};
+"l";"q" **\crv{(15,30)} ?>* \dir{>};
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*++{\txt{Redondo}}*\frm{oo}="r";
+(30,30)*++{\txt{Quadrado}}*\frm{-,}="q";
+"r";"q" **\dir{} ? *++{\txt{Liga}}*\frm{.}="l";
+"r";"l" **\crv{(15,0)};
+"l";"q" **\crv{(15,30)} ?>* \dir{>};
+\endxy
+$$
+\end{minipage}
+\end{tabular}
+
+\vspace{20pt}
+Observe neste exemplo como o \verb+Liga+ é posicionado usando-se o
+operador \verb+?+ para obter a posição da ligação entre \verb+"r"+ e \verb+"q"+.
+
+Para importar imagens \emph{postscript} devemos declarar a opção
+\verb+import+ na declaração
+\verb+\usepackage[all,import]{xy}+. Podemos usar qualquer pacote
+para importar a imagem, como por exemplo, \verb+graphicx+, \verb+graphics+, \verb+epsf+ ou
+\verb+epsfig+. Neste caso, usamos o \verb+graphicx+, e para isto
+devemos declarar o uso do pacote com o comando
+\verb+\usepackage{graphicx}+.
+
+Usamos \verb+\xyimport+ para estabelecer um sistema de coordenadas
+para uma imagem em particular, permitindo que qualquer comando do
+\Xy-pic{} seja u\-sa\-do, com as posições relativas ao sistema de
+coordenadas definido. Para isto, o comando
+\verb+\xyimport(larg,alt){imagem}+ exige que se defina uma largura e uma
+altura, que fornece uma distância em unidades de coordenadas,
+iniciando no canto inferior esquerdo, onde o sistema de coordenadas
+usualmente deve estar localizado.
+
+Assim, usando a imagem apresentada
+na Figura~\ref{fig:semxy}, podemos produzir o que se pode ver na
+Figura~\ref{fig:import}, usando o seguinte código:
+\begin{verbatim}
+\def\grafico{\includegraphics[width=9cm]{grafico.eps}}
+\xy
+\xyimport(100,100){\grafico}
+{\ar (75,85)*+{\txt{Astróide}}; (60,75)*{}}
+{\ar (75,25)*+{\txt{Elipse}}; (80,37)*{}}
+\endxy
+\end{verbatim}
+
+Observe-se que
+\begin{verbatim}
+\def\grafico{\includegraphics[width=9cm]{grafico.eps}}
+\end{verbatim}
+é uma
+macro \TeX{} para definir a imagem a ser importada.
+
+\begin{figure}[!tp]
+\begin{center}
+\includegraphics[width=9cm]{grafico.eps}
+\end{center}
+\caption{Imagem sem comandos \Xy}\label{fig:semxy}
+\end{figure}
+
+\begin{figure}[!tp]
+\[
+\def\grafico{\includegraphics[width=9cm]{grafico.eps}}
+\xy
+\xyimport(100,100){\grafico}
+{\ar (75,85)*+{\txt{Astróide}}; (60,75)*{}}
+{\ar (75,25)*+{\txt{Elipse}}; (80,37)*{}}
+\endxy
+\]
+\caption{Importando uma imagem}\label{fig:import}
+\end{figure}
+
+\section{Usando Polígonos e Elipses}
+
+Para usar polígonos em diagramas é necessário carregar o \Xy-pic declarando a opção
+\verb+poly+, usando o comando \verb+\usepackage[all,poly]{xy}+.
+
+Polígonos podem ser produzidos usando-se o comando
+\verb+\xypolygon+. Por exemplo, podemos criar um hexágono usando:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{7cm}
+\begin{verbatim}
+\xy
+/r4pc/:{\xypolygon6{\circ}}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xy
+/r4pc/:{\xypolygon6{\circ}}
+\endxy
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Observe-se que \verb+/r4pc/+ especifica o tamanho do polígono em 4pc
+(48pt). O número de lados do polígono é declarado por meio de um valor
+inteiro após o comando \verb+\xypolygon+. Assim, especificamos o
+hexágono com \verb+\xypolygon6+. Além disto, o argumento \verb+\circ+ indica que os vértices do
+polígono deverão ser círculos.
+
+Alguns outros exemplos de polígonos são:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xy /r8mm/:
+, 0 ,{\xypolygon6{}}
+,+/r18mm/,{\xypolygon8{@{o}}}
+,+/r18mm/,{*@{o}\xypolygon6{@{*}}}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xy /r8mm/:
+, 0 ,{\xypolygon6{}}
+,+/r18mm/,{\xypolygon8{@{o}}}
+,+/r18mm/,{*@{o}\xypolygon6{@{*}}}
+\endxy
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Nestes exemplos, \verb+0+ (origem) e
+\verb=+/r18mm/= (deslocamento)
+especificam o posicionamento dos três polígonos, e os \verb+@{o}+ e
+\verb+@{*}+ especificam os vértices.
+
+Mais exemplos:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xy /r8mm/:
+, 0 ,{\xypolygon6{~*{\dir{*}}}}
+,+/r18mm/,
+{\xypolygon8{~<{.}~>{}~={45}{\dir{*}}}}
+,+/r18mm/,
+{\xypolygon6{~<{=}~>{:}{\dir{*}}}}
+\endxy
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xy /r8mm/:
+, 0 ,{\xypolygon6{~*{\dir{*}}}}
+,+/r18mm/,
+{\xypolygon8{~<{.}~>{}~={45}{\dir{*}}}}
+,+/r18mm/,
+{\xypolygon6{~<{=}~>{:}{\dir{*}}}}
+\endxy
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Neste exemplo, observamos o uso de \verb+~<+, \verb+~>+ e \verb+~=+
+para indicar conexões entre os vértices do polígono.
+
+Para produzir elipses usamos \verb+xycircle+. Assim,
+\verb+(0,0)*\xycircle(7,2){.}+ produz uma elipse centrada em $(0,0)$,
+com largura $7$ e altura $2$, e pontilhada:
+\[
+\xy
+(0,0)*\xycircle(7,2){.}
+\endxy
+\]
+
+\section{Produzindo Diagramas em Matriz}
+
+O \Xy-pic oferece uma facilidade (\emph{feature}) para tipografar
+diagramas em forma de matriz. Este tipo de diagrama tem
+aplicação em diversas áreas da matemática e de ciência da computação, como por exemplo em teoria dos autômatos e teoria das categorias. Para
+produzir um diagrama deste tipo usamos o comando
+\verb+\xymatrix{ ... }+.
+
+O diagrama será formado pelas entradas de uma matriz, organizadas em
+linhas e colunas. Cada entrada pode conter uma expressão matemática
+(produzida usando o modo matemático).
+
+Usa-se \verb+&+ para separar as colunas e \verb+\\+ para indicar nova
+linha, em uma notação semelhante ao ambiente \emph{array} do modo
+matemático do \LaTeX. Assim, se desejamos produzir uma matriz com duas linhas e duas
+colunas, usamos:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{7cm}
+\begin{verbatim}
+\xymatrix{
+1 & 2 \\
+3 & 4
+}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+1 & 2 \\
+3 & 4
+}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Poderíamos omitir entradas à direita que não fossem necessárias no
+diagrama, como em:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{7cm}
+\begin{verbatim}
+\xymatrix{
+1 & 2 \\
+3
+}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+1 & 2 \\
+3
+}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Também podemos deixar entradas em branco na matriz, como em:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{7cm}
+\begin{verbatim}
+\xymatrix{
+1 & 2 \\
+  & 4
+}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+1 & 2 \\
+  & 4
+}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Para conectar entradas por setas usamos \verb+\ar+. O destino da seta é
+definido de forma relativa à origem por meio de uma seqüência de \verb+u+ (acima), \verb+d+ (abaixo),
+\verb+l+ (esquerda) e \verb+r+ (direita), colocados entre colchetes. Assim, para conectar a
+entrada da primeira linha e coluna com a da segunda linha e coluna usamos \verb+\ar[dr]+:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{7cm}
+\begin{verbatim}
+\xymatrix{
+1 \ar[dr] & 2 \\
+3         & 4    
+}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+1 \ar[dr] & 2 \\
+3         & 4    
+}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+As setas da Figura~\ref{fig:setas} funcionarão também com o
+\verb+\xymatrix+:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xymatrix{
+{\bullet} \ar@{:>}[r] \ar@{-->}[dr] & {\bullet}
+\ar@{=>}[d] \\
+{\bullet} \ar@{-}[u] \ar@{.>}[r] & {\bullet}
+}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+{\bullet} \ar@{:>}[r] \ar@{-->}[dr] & {\bullet}
+\ar@{=>}[d] \\
+{\bullet} \ar@{-}[u] \ar@{.>}[r] & {\bullet}
+}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Este é um exemplo com uma matriz três por três:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xymatrix{
+2\times 4 \ar[ddrr] & \sqrt{2} \ar[ddl]
+& 2^2 \ar[dl] \\
+2 & 4 & 6 \\
+1.414 & 2.7 & 8
+}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+2\times 4 \ar[ddrr] & \sqrt{2} \ar[ddl]
+& 2^2 \ar[dl] \\
+2 & 4 & 6 \\
+1.414 & 2.7 & 8
+}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Observe que a seta que liga $2\times 4$ e $8$ passa sobre o $4$, o que pode ser inconveniente. Para evitar isto podemos
+curvar a seta para cima, usando ``\verb+@/^/+'', ou para baixo, usando
+``\verb+@/_/+''. Neste caso, curvaremos para baixo:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xymatrix{
+2\times 4 \ar@/_/[ddrr] & \sqrt{2} \ar[ddl]
+& 2^2 \ar[dl] \\
+2 & 4 & 6 \\
+1.414 & 2.7 & 8
+}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+2\times 4 \ar@/_/[ddrr] & \sqrt{2} \ar[ddl]
+& 2^2 \ar[dl] \\
+2 & 4 & 6 \\
+1.414 & 2.7 & 8
+}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Para uma curvatura maior poderiamos usar, por exemplo, \verb+@/_1pc/+.
+
+Podemos colocar um rótulo acima (ou abaixo) de uma seta. Para isto
+basta usar ``\verb+^+'' (ou ``\verb+_+''). Neste exemplo mostramos
+isto:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xymatrix{
+A \ar[dr]^{a} \\
+B & C
+}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+A \ar[dr]^{a} \\
+B & C
+}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Observe que ``acima'' pode não significar exatamente acima da seta, se a
+seta está voltada para a esquerda:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xymatrix{
+A & B\ar[dl]^{a} \\
+C
+}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+A & B\ar[dl]^{a} \\
+C
+}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Também podemos posicionar o rótulo da seta sobre a seta, ou no ``meio'', usando
+\verb+|+:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xymatrix{
+A\ar[r]|a & B
+}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+A\ar[r]|a & B
+}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+O ``\verb+|+'' pode ser útil para fazer ``buracos'' nas setas (por
+exemplo, para passar outras setas sem que se cruzem). Para isto usamos
+\verb+\hole+:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xymatrix{
+A\ar[r]|\hole & B
+}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+A\ar[r]|\hole & B
+}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+O seguinte diagrama é a definição de produto fibrado em teoria das
+categorias. Nele usamos vários dos recursos do \verb+\xymatrix+ já apresentados:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xymatrix{
+d\ar@/_/[ddr]_h\ar[dr]|{<h,k>_a}
+\ar@/^/[drr]^k \\
+ & {b\times_a c}\ar[d]^p\ar[r]_q &
+c\ar[d]^g\\
+ & b\ar[r]^f & a
+}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+d\ar@/_/[ddr]_h\ar[dr]|{<h,k>_a}
+\ar@/^/[drr]^k \\
+ & {b\times_a c}\ar[d]^p\ar[r]_q &
+c\ar[d]^g\\
+ & b\ar[r]^f & a
+}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+O comando \verb+\xymatrix+ permite especificar a forma com que
+o diagrama será tipografado. A especificação é uma seqüência de
+\verb+@<especificação>+ que antecedem os comandos dentro do
+\verb+\xymatrix+. Assim, por exemplo, \verb+\xymatrix@1{ ... }+
+especifica que o diagrama deve ser tipografado em uma linha, como em
+\verb+\xymatrix@1{A\ar[r]^f & B}+, que produz \xymatrix@1{A\ar[r]^f &
+  B}. Isto é útil para produzir pequenos diagramas que aparecerão
+dentro do parágrafo do texto.
+
+Da mesma forma podemos modificar o espaçamento das linhas e das colunas por
+meio das especificações \verb+@R<dim>+ e/ou \verb+@C<dim>+, como por
+exemplo em
+\verb+\xymatrix@R10pt@C5pt{ ... }+, que especifica 10pt para o
+espaçamento das linhas e 5pt para o das colunas.
+
+Podemos explicitamente posicionar o rótulo sobre a seta:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\verb+\xymatrix{A\ar[r]^<{f} & B}+ & {\xymatrix{A\ar[r]^<{f} & B}} \\
+\verb+\xymatrix{A\ar[r]^>{f} & B}+ & {\xymatrix{A\ar[r]^>{f} & B}} \\
+\verb+\xymatrix{A\ar[r]^(.4){f} & B}+ & {\xymatrix{A\ar[r]^(.4){f} & B}}
+\end{tabular}
+
+\vspace{10pt}
+Observe-se que, no último caso, podemos usar um valor entre $0$ e $1$
+como fator para posicionar o rótulo (foi usado 0,4 como exemplo). O
+fator $0$ representa o início da seta, e o fator $1$ representa o fim.
+
+Finalmente, outra possibilidade é usar \verb+!{t1;t2}+, que posiciona
+o rótulo no ponto em que a seta cruza a linha que liga os lugares
+\verb+t1+ e \verb+t2+:
+\vspace{10pt} 
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xymatrix{
+A \ar[rr]^f \ar[dr]_(.3)g |!{[d];[rr]}\hole
+& & B \\
+C \ar[rru]_(.7)h \ar[r]_i & D
+}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+A \ar[rr]^f \ar[dr]_(.3)g |!{[d];[rr]}\hole
+& & B \\
+C \ar[rru]_(.7)h \ar[r]_i & D
+}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Neste último exemplo, o \verb+!{[d];[rr]}+ determina o ponto em que a
+seta que liga $A$ e $D$ se cruza com a que liga $C$ e $B$. Neste ponto
+é posto o \verb+\hole+.
+
+Podemos indicar a posição que a seta deve entrar ou sair de uma entrada
+usando as seguintes direções, que já haviam sido mostradas, e
+repetimos aqui para facilitar:
+$$ 
+  \shorthandoff{"}
+\xy
+(0,0)*\cir<10pt>{};
+{\ar@{->} (-4,0)*{}; (-14,0)*+{l}};
+{\ar@{->} (4,0)*{}; (14,0)*+{r}};
+{\ar@{->} (0,4)*{}; (0,14)*+{u}};
+{\ar@{->} (0,-4)*{}; (0,-14)*+{d}};
+{\ar@{->} (3,3)*{}; (12,12)*+{ur=ru}};
+{\ar@{->} (-3,3)*{}; (-12,12)*+{ul=lu}};
+{\ar@{->} (-3,-3)*{}; (-12,-12)*+{dl=ld}};
+{\ar@{->} (3,-3)*{}; (12,-12)*+{dr=rd}};
+\endxy
+$$
+
+Isto nos permite fazer uma seta ``reflexiva'', especificando a seta
+usando o comando
+\verb+\ar@(saída,entrada)[]+. O \verb+[]+ indica que a seta apontará
+para a própria entrada, e a especificação \verb+@(saída,entrada)+
+define as direções de saída e entrada da seta. Assim,
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{7cm}
+\begin{verbatim}
+\xymatrix{
+1 \ar@(ul,ur)[]^{id} \ar[r]_f &
+2 \ar@(ul,ur)[]^{id}
+}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+1 \ar@(ul,ur)[]^{id} \ar[r]_f &
+2 \ar@(ul,ur)[]^{id}
+}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Podemos produzir setas paralelas, usando uma \emph{dimensão} para
+separa-las, definida por \verb+@<dim>+:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{7cm}
+\begin{verbatim}
+\xymatrix{
+A\ar@<1ex>[r]^a_{.} & B\ar@<1ex>[l]^b
+}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+A\ar@<1ex>[r]^a_{.} & B\ar@<1ex>[l]^b
+}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+A dimensão de 1ex, adotada neste caso, é conveniente pois corresponde
+à altura da letra ``x''.
+
+Os recursos de frames (molduras) que podem ser usados nos objetos do diagrama são
+apresentados na Figura~\ref{tab:framematriz}. Os modificadores
+\verb=+= e \verb=-= podem ser usados para aumentar ou diminuir o
+tamanho da moldura.
+
+\begin{figure}[!tp]
+\begin{center}
+\begin{tabular}{cccc}
+\verb+[F]+ & {\xymatrix{*+[F]{\txt{Simples}}}} & \verb+[F=]+ &
+      {\xymatrix{*+[F=]{\txt{Duplo}}}} \\
+ & & & \\
+\verb+[F.]+ & {\xymatrix{*+[F.]{\txt{Pontilhado}}}} & \verb+[F--]+ &
+      {\xymatrix{*+[F--]{\txt{Tracejado}}}} \\
+ & & & \\
+\verb+[F-,]+ & {\xymatrix{*+[F-,]{\txt{Sombra}}}} & \verb+[F-:<3pt>]+ &
+      {\xymatrix{*+[F-:<3pt>]{\txt{Arredondado}}}} \\
+ & & & \\
+\verb+[o][F-]+ & {\xymatrix{*+[o][F-]{\txt{Redondo}}}}
+\end{tabular}
+\end{center}
+\caption{Frames em diagramas em matriz}\label{tab:framematriz}
+\end{figure}
+
+Um exemplo usando frames é:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xymatrix{
+*+[F-,]{\int_{-\infty}^{+\infty}
+f(x)\mathrm{d}x } \ar[dr] \\
+*+[o][F-]{\txt{pi}} & 10
+}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+*+[F-,]{\int_{-\infty}^{+\infty}
+f(x)\mathrm{d}x } \ar[dr] \\
+*+[o][F-]{\txt{pi}} & 10
+}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+O exemplo a seguir é um diagrama que representa um autômato finito:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{8cm}
+\begin{verbatim}
+\xymatrix{
+*++[o][F-]{1} \ar@(ul,ul)[] \ar[r]^{1}
+\ar[d]^{0} & *++[o][F=]{3} \\
+*++[o][F-]{2} \ar[ur]_{1} \ar@(dl,d)[]_{0}}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+*++[o][F-]{1} \ar@(ul,ul)[] \ar[r]^{1}
+\ar[d]^{0} & *++[o][F=]{3} \\
+*++[o][F-]{2} \ar[ur]_{1} \ar@(dl,d)[]_{0}}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Outro exemplo:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{7cm}
+\begin{verbatim}
+\xymatrix{
+{\txt{Oceano}}
+\ar@/^3pc/[rr]^{\txt{evaporação}}
+& *+[F-]{H_2O}
+& {\txt{Atmosfera}}
+\ar@/^3pc/[ll]^{\txt{precipitação}}
+}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+{\txt{Oceano}}
+\ar@/^3pc/[rr]^{\txt{evaporação}}
+& *+[F-]{H_2O}
+& {\txt{Atmosfera}}
+\ar@/^3pc/[ll]^{\txt{precipitação}}
+}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Ainda é possível colocar entradas extras, que estarão fora da matriz,
+usando o comando \verb+\save ... \restore+. Neste caso, o que fica
+dentro do comando não fará parte de nenhuma entrada da matriz:
+\vspace{10pt}
+
+\noindent \begin{tabular}{lr}
+\begin{minipage}{7cm}
+\begin{verbatim}
+\xymatrix{
+A \ar@{-}[dr] &
+\save[]+<3cm,0cm>*\txt<8pc>{
+Este é um longo comentário que
+não ocupará nenhuma entrada
+da matriz}
+\ar[l]\ar[d]
+\restore \\
+ & B\ar@{-}[r] & C
+}
+\end{verbatim}
+\end{minipage} &
+\begin{minipage}{6cm}
+{$$ 
+  \shorthandoff{"}
+\xymatrix{
+A \ar@{-}[dr] &
+\save[]+<3cm,0cm>*\txt<8pc>{
+Este é um longo comentário que
+não ocupará nenhuma entrada
+da matriz}
+\ar[l]\ar[d]
+\restore \\
+ & B\ar@{-}[r] & C
+}
+$$}
+\end{minipage}
+\end{tabular}
+
+\vspace{10pt}
+Observe-se que a seta \verb+\ar[d]+, que parte do comentário, não
+necessariamente é ``para baixo''.
+
+\begin{thebibliography}{1}
+\bibitem {bib:guia} Rose, K. H. \emph{\Xy-pic User's Guide}. Disponível em: \url{http://tug.org/applications/Xy-pic/soft/xyguide.ps.gz}.
+\bibitem {bib:manual} Rose, K. H. \& Moore, R. \emph{\Xy-pic Reference
+  Manual}. Disponível em: \url{http://tug.org/applications/Xy-pic/soft/xyrefer.ps.gz}.
+\bibitem {bib:goossens} Goossens, M. \& Rahtz, S. \& Mittelbach,
+  F. \emph{The \LaTeX{} Graphics Companion}, Addison-Wesley, 1997.
+\end{thebibliography}
+
+\newpage
+
+Copyright \copyright 2006 Carlos A. P. Campani.
+
+É garantida a permissão para copiar, distribuir e/ou modificar este documento sob os termos da Licença de Documentação Livre GNU (GNU Free Documentation License), Versão 1.2 ou qualquer versão posterior publicada pela Free Software Foundation; sem Seções Invariantes, Textos de Capa Frontal, e sem Textos de Quarta Capa. Uma cópia da licença é incluída na seção intitulada ``GNU Free Documentation License''.
+
+veja: \url{http://www.ic.unicamp.br/~norton/fdl.html}.
+
+\end{document}

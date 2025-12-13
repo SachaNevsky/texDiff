@@ -1,0 +1,115 @@
+% This is the master file producing interpreter-doc.pdf. The version of the
+% documentation readable in a text editor is interpreter-doc.txt (input below).
+% 
+% Paul Isambert - zappathustra AT free DOT fr - June 2012
+
+\input pitex
+
+\overfullrule=0pt
+
+\OutputRoutine remove {headers}{shipout}
+
+\setparameter page :
+  hsize  = 25pc
+  left   = 60pt
+  width  = "\dimexpr 25pc + 120pt\relax"
+  lines  = 35
+  height = 20cm
+
+\setparameter section :
+  font = \bf
+  link = true
+  number = none
+  numbercommand = \llap
+  beforeskip = 1
+
+\setparameter navigator :
+  title  = "Interpreter documentation"
+  author = "Paul Isambert"
+  mode   = outlines
+
+\setfont\mainfont:
+  name     = "Chaparral Pro"
+  bold     = Semibold
+  big      = 18pt
+
+\setfont\codefont:
+  name        = "Lucida Console"
+  slant       = 15
+  bold italic = none
+  size        = 8pt
+  features    = "-tlig, -trep, space = mono"
+
+\parfillskip=0pt plus 1fill
+\def\describe#1#2#3{%
+  \unless\ifdim\lastskip=\baselineskip
+    \vskip\baselineskip
+  \fi
+  \needspace{2\baselineskip}%
+  \noindent\color{.8 0 0}{%
+    {\outline{#3}{\directlua{%
+      local t = string.gsub("\luaescapestring{#1}", "[ (].*", "")
+      tex.print(t)}}%
+     \codefont#1}%
+  \reverse\iffemptystring{#2}
+    {\kern1em \hfil\penalty0\hbox{\ital{(#2)}}}}%
+  \par
+  \removenextindent}
+
+\newverbatim\source{}
+                   {\vskip\baselineskip
+                    \hfuzz=1em
+                    \codefont\parindent=0pt
+                    \pdfcolorstack0 push {.8 0 0 rg}
+                    \printverbatim
+                    \pdfcolorstack0 pop
+                    \vskip\baselineskip}
+
+% The verbatim facilities in PiTeX aren't gated yet, so I must rely on
+% this horrible hack!
+\directlua{
+function do_verbatim (name, exec)
+	if exec then
+    tex.print(pitex.verbatims[name])
+  else
+    for n, l in ipairs(pitex.verbatims[name]) do
+      if n == \string#pitex.verbatims[name] then
+        tex.print("\noexpand\\penalty\noexpand\\widowpenalty")
+      end
+      tex.print(pitex.verbatims[name].regime, l)
+      if n == 1 and \string#pitex.verbatims[name] > 2 then
+        tex.print("\noexpand\\penalty\noexpand\\widowpenalty")
+      end
+    end
+  end
+end
+}
+
+\def\arg#1{{\codefont\char"2039 #1\char"203A}}
+\pdfdef\ital#1{#1}
+\pdfdef\verb`#1`{#1}
+
+% Not optimal, but hey, with all the "intepreter.core.classes" stuff...
+\hyphenation{li-nes cla-sses}
+
+\input interpreter
+
+% Title
+\vbox to 3\baselineskip{
+\hbox to \hsize{\big Interpreter\hfil\normalsize Paul Isambert}
+\hbox to \hsize{v.1.2, June 2012 \hfil \tcode{zappathustra AT free DOT fr}}
+\vfil
+}
+
+
+
+% Bulk of the doc.
+\interpretfile{doc}{interpreter-doc.txt}
+\vskip0pt plus 1filll
+\noindent
+\bgroup\it
+Typeset with Lua\TeX\ 0.71 in Chaparral Pro and Lucida Console
+... nonetheless this documentation looks dull, I don't know why.
+\egroup
+
+\bye

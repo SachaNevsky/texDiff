@@ -1,0 +1,396 @@
+%% $Id: pst-lsystem-doc.tex 820 2018-09-26 09:52:39Z herbert $
+\documentclass[fontsize=11pt,english,BCOR=10mm,DIV=12,bibliography=totoc,parskip=false,
+   headings=small, headinclude=false,footinclude=false,oneside,abstract=on]{pst-doc}
+\usepackage{pst-lsystem}
+\let\pstFV\fileversion
+\usepackage{dtk-logos}
+\usepackage{xltabular}
+\renewcommand\bgImage{%
+\begin{pspicture}(-2,-0.5)(3,6) 
+\pslsystem[
+  Start=Y,
+  X={X[-FFF][+FFF]FX},
+  Y={YFX[+Y][-Y]},
+  Angle=25,
+  N=6,
+  Ftype=1,
+  BaseLength=2.5pt,
+  usecolor=2](0,0)
+\psdot(0,0)
+\end{pspicture}
+}
+
+\addbibresource{\jobname.bib}
+
+
+\lstset{language=PSTricks,
+    morekeywords={pslsystem},basicstyle=\footnotesize\ttfamily,
+  literate=%
+    {Ö}{{\"O}}1
+    {Ä}{{\"A}}1
+    {Ü}{{\"U}}1
+    {ß}{{\ss}}1
+    {ü}{{\"u}}1
+    {ä}{{\"a}}1
+    {ö}{{\"o}}1
+    {~}{{\textasciitilde}}1
+}
+\begin{document}
+
+\title{\texttt{pst-lsystem}}
+\subtitle{Creating images, based on the Lindenmayer-system; v.\pstFV}
+\author{Herbert Voß}
+\docauthor{}
+\date{\today}
+\maketitle
+
+\tableofcontents
+
+\begin{abstract}
+\noindent
+\LPack{pst-lsystem} loads by default the following packages:  \LPack{pst-xkey}, and, of course \LPack{pstricks}.
+All should be already part of your local \TeX\ installation. If not, or in case
+of having older versions, go to \url{http://www.CTAN.org/} and load the newest version.
+
+
+
+\vfill\noindent
+Thanks to \\
+Michel Charpentier,
+and last but not least
+    \url{http://mathworld.wolfram.com}.
+
+\end{abstract}
+
+
+\clearpage
+
+
+\section{Introduction}
+A L-system or Lindenmayer system is a parallel rewriting system and a type of 
+formal grammar. An L-system consists of an alphabet of symbols that can be used 
+to make strings, a collection of production rules that expand each symbol into 
+some larger string of symbols, an initial »axiom« string from which to begin construction, 
+and a mechanism for translating the generated strings into geometric structures. 
+L-systems were introduced and developed in 1968 by Aristid Lindenmayer, 
+a Hungarian theoretical biologist and botanist at the University of Utrecht.~\cite{wikipedia}
+
+
+\section{Usage}
+There are no optional arguments for the package:
+\begin{verbatim}
+\usepackage{pst-lsystem}
+\end{verbatim}
+
+There is only one command:
+
+\begin{BDef}
+\Lcs{pslsystem}\OptArgs\Largr{x,y}
+\end{BDef}
+
+If the coordinates for the origin are missing, then $(0,0)$ is assumed. The L-System ist
+defined by the three functions $F$, $X$, and $Y$. At least one function must be given.
+
+\subsection{Optional arguments}
+
+The following optional arguments for the macro are possible:
+
+\begin{xltabular}{\linewidth}{@{} l l X @{}}\toprule
+\emph{name} & \emph{default} & \emph{menaing}\\\midrule 
+\Lkeyword{F} & & Rule $F\rightarrow(F)$\\
+\Lkeyword{X} & & Rule $X\rightarrow(F,X,Y)$\\
+\Lkeyword{Y} & & Rule $Y\rightarrow(F,X,Y)$\\
+\Lkeyword{Start} & & Startrule $S\rightarrow(F,X,Y)$\\
+\Lkeyword{Angle} & 45 & Angle for the drection change\\
+\Lkeyword{N} & 5 & Number of the recursive calls\\
+\Lkeyword{Ftype} & 4 & How the F-rule should be handled\\
+\Lkeyword{BaseLength} & 1mm & The length of a base line, created by the ruke F (Forward)\\
+\Lkeyword{usecolor} & 0 & Which color should be used for the lines.\\
+%\define@key[psset]{pst-lsystem}{order}[5]{\pst@getint{#1}\psk@lsystem@order}
+%\define@key[psset]{pst-lsystem}{factor}[2]{\pst@checknum{#1}\psk@lsystem@factor}
+% Size (the smaller, the bigger), no need to be changed, normally
+%\define@key[psset]{pst-lsystem}{size}[4]{\pst@getint{#1}\psk@lsystem@size}
+%\define@key[psset]{pst-lsystem}{type}[0]{\pst@getint{#1}\psk@lsystem@type}
+\bottomrule
+\end{xltabular}
+
+\bigskip
+If the rules contain square brackets then it must be enclosed by braces:
+\verb|X=F[-X]| is wrong and \verb|X={F[-X]}| is correct.
+
+\subsection{Different types for the F-rule}
+
+It depends to the given rule(s) what kind of the F-type must be used.
+There are five possibilities:
+
+\begin{xltabular}{\linewidth}{@{} >{\ttfamily}l X @{}} 
+0 & $F\rightarrow \textrm{draw line element}$ \\
+  & in PostScript: \verb|/F { D } def|\\
+1 & $F\rightarrow \textrm{If loop variable }=0 \textrm{ then draw line element}$\\
+  & in PostScript: \verb|/F { 0 eq { D } if } def|\\
+2 & $F\rightarrow \textrm{If loop variable }=0 \textrm{ then draw line element and keep variable}$\\
+  & in PostScript: \verb|/F { dup 0 eq { D } if } def|\\
+3 & $F\rightarrow \textrm{draw line element and delete current loop variable}$\\
+  & in PostScript: \verb|/F { pop D } def|\\
+4 & $F\rightarrow \textrm{If loop variable }=0 $ then draw line element! If not $=0$ decrease loop variable, duplicate it
+    $n-1$ times (n is the number of functions in $F$) and put F-rule on stack\\
+  & in PostScript: \verb|/F { dup 0 eq { D }{ 1 sub N 1 sub {dup} repeat F-rule } ifelse pop } def|
+\end{xltabular}
+
+\iffalse
+\begin{verbatim}
+\ifcase\psk@lsystem@Ftype
+  /F { D } def    % type 0
+\or % 1
+  /F { 0 eq { D } if } def 
+\or % 2
+  /F { dup 0 eq { D } if } def 
+\or % 3
+  /F { pop D } def 
+\else % 4
+  /F { dup 0 eq { D }{ 1 sub \psk@lsystem@Fnumber {dup} repeat \psk@lsystem@F } ifelse pop } def
+\fi
+\end{verbatim}
+\fi
+
+The function D does nothing else than drawing a line in the current direction.
+Its length is given by the optional parameter BaseLength.
+
+\subsection{Color}
+There are four predefined color modes, where mode=0 is no color.
+
+
+\psset{linewidth=0.1pt}
+
+\section{Examples}
+\subsection{Dragon}
+\begin{LTXexample}[pos=r]
+\begin{pspicture}[showgrid=true](-2,-1.5)(4,6) 
+\pslsystem[
+  X=-FX++FY-,
+  Y=+FX--FY+,
+  Ftype=1,
+  Start=X,
+  Angle=45,
+  N=9,
+  BaseLength=2mm](0,0)
+\psdot(0,0)
+\end{pspicture}
+\end{LTXexample}
+
+\subsection{Hilbert}
+\begin{LTXexample}[pos=r]
+\begin{pspicture}[showgrid=true](-1,-0.5)(4,4) 
+\pslsystem[
+  X=-YF+XFX+FY-,
+  Y=+XF-YFY-FX+,
+  Ftype=3,
+  Start=X,
+  Angle=90](0,0)
+\psdot(0,0)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\clearpage
+\subsection{Kochflake}
+
+If the rule for \Lkeyword{Start} has more than one function name, one has to repeat
+the number of iterations, which is \Lkeyword{N}, before every following function, but not
+for the first one. That is done already internally:
+
+\begin{LTXexample}[pos=r]
+\begin{pspicture}[showgrid=true](-2,-.5)(5,6) 
+\pslsystem[
+  Start=F--NF--NF,%    repeat number of iterations N
+  F=F+F--F+F,
+  Angle=60,
+  N=4,
+  BaseLength=2pt,
+  linecolor=red](0,0)
+\psdot(0,0)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{Plant 1}
+
+\begin{LTXexample}[pos=r]
+\begin{pspicture}[showgrid=true](-2,-2.3)(4,6) 
+\pslsystem[
+  Start=F,
+  F={FF-[-F+F+F]+[+F-F-F]},
+  Angle=22.5,
+  BaseLength=2pt,
+  usecolor=4](0,-2)
+\psdot(0,-2)
+\end{pspicture}
+\end{LTXexample}
+
+
+\clearpage
+
+\subsection{Plant 2}
+
+
+\begin{LTXexample}[pos=r]
+\begin{pspicture}[showgrid=true](-3,-2.3)(2,6) 
+\pslsystem[
+  Start=X,
+  X={F-[[X]+X]+F[+FX]-X},
+  F=FF,
+  Angle=22.5,
+  N=6,
+  BaseLength=1.25pt,
+  usecolor=3](0,-2)
+\psdot(0,-2)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{Plant 3}
+
+\begin{LTXexample}[pos=r]
+\begin{pspicture}[showgrid=true](-2,-2.5)(2,5) 
+\psset{xunit=3}
+\pslsystem[
+  Start=F,
+  F={F[+F]F[-F][F]},
+  Angle=20,
+  usecolor=3](0,-2)
+\psdot(0,-2)
+\end{pspicture}
+\end{LTXexample}
+
+\clearpage
+
+
+\clearpage
+
+\subsection{Plant 4}
+
+\begin{LTXexample}[pos=r]
+\begin{pspicture}[showgrid=true](-2,-0.5)(3,6) 
+\pslsystem[
+  Start=Y,
+  X={X[-FFF][+FFF]FX},
+  Y={YFX[+Y][-Y]},
+  Angle=25,
+  N=6,
+  Ftype=1,
+  BaseLength=2.5pt,
+  usecolor=2](0,0)
+\psdot(0,0)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{Plant 5}
+
+\begin{LTXexample}[pos=r]
+\begin{pspicture}[showgrid=true](-3,-.5)(3,9) 
+\pslsystem[
+  Start=X,
+  X={F[+X][-X]FX},
+  F={FF},
+  Angle=25,
+  N=7,
+  BaseLength=1pt,
+  usecolor=2](0,0)
+\psdot(0,0)
+\end{pspicture}
+\end{LTXexample}
+
+\clearpage
+
+\clearpage
+
+\subsection{Plant 6}
+
+\begin{LTXexample}[pos=r]
+\begin{pspicture}[showgrid=true](-3,-.5)(3,9) 
+\pslsystem[
+  Start=X,
+  X={F[+X]F[-X]+X},
+  F={FF},
+  Angle=20,
+  N=7,
+  BaseLength=1pt,
+  usecolor=2](0,0)
+\psdot(0,0)
+\end{pspicture}
+\end{LTXexample}
+
+\subsection{Plant 7}
+
+\begin{LTXexample}[pos=r]
+\begin{pspicture}[showgrid=true](-3,-.5)(3,9) 
+\pslsystem[
+  Start=F,
+  F={F[+F]F[-F]F},
+  Angle=25,
+  BaseLength=1pt,
+  usecolor=2](0,0)
+\psdot(0,0)
+\end{pspicture}
+\end{LTXexample}
+
+\clearpage
+
+
+\subsection{Plant 8}
+
+\begin{LTXexample}[pos=r]
+\begin{pspicture}[showgrid=true](-4,-.5)(5,9) 
+\pslsystem[
+  Start=F,
+  F={F[+F[+F][-F]F][-F[+F][-F]F]F[+F][-F]F},
+  Angle=30,
+  BaseLength=1pt,
+  usecolor=4](0,0)
+\psdot(0,0)
+\end{pspicture}
+\end{LTXexample}
+
+\subsection{Special case}
+
+\begin{LTXexample}[pos=r]
+\begin{pspicture}[showgrid=true](-2,-0.5)(1,4) 
+\pslsystem[
+  Start=X,
+  F=FF,
+  X=F+X-F-X+F,
+  Angle=90,
+  N=6,
+  BaseLength=1pt](0,0)
+\psdot(0,0)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\clearpage
+\section{List of all optional arguments for \nxLPack{pst-lsystem}}
+
+\xkvview{family=pst-lsystem,columns={key,type,default}}
+
+
+\bgroup
+\raggedright
+\nocite{*}
+\printbibliography
+\egroup
+
+\printindex
+
+
+
+\end{document}
+
+
+
+%                 F=F+FF-FF-F-F+F+FF-F-F+F+FF+FF-F,

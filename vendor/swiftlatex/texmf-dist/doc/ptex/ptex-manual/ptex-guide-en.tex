@@ -1,0 +1,1019 @@
+%#!make ptex-guide-en.pdf
+\documentclass[a4paper,11pt]{article}
+\usepackage[textwidth=42zw,lines=40,truedimen,centering]{geometry}
+
+%%%%%%%%%%%%%%%%
+% additional packages
+\usepackage{amsmath}
+\usepackage{array}\usepackage[all]{xy}
+\SelectTips{cm}{}
+%\usepackage[dvipdfmx]{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage{booktabs,enumitem,multicol}
+\usepackage[defaultsups]{newpxtext}
+\usepackage[zerostyle=c,straightquotes]{newtxtt}
+\usepackage{newpxmath}
+\usepackage[dvipdfmx,hyperfootnotes=false]{hyperref}
+\usepackage{pxjahyper}
+\usepackage{hologo}
+\usepackage{xspace}
+\usepackage{makeidx}\makeindex
+
+% common
+\usepackage{ptex-manual}
+\let\emph=\origemph
+\makeatletter
+\newlist{simplelist}{description}1
+\setlist[simplelist]{%
+  itemsep=0pt, listparindent=1zw, itemindent=10pt,
+  font=\normalfont\mdseries, leftmargin=2zw,
+  before=\advance\@listdepth\@ne,
+  after=\advance\@listdepth\m@ne
+}
+\makeatother
+
+\def\code#1{\texttt{#1}}
+
+%%%%%%%%%%%%%%%%
+\makeatletter
+\setlist{leftmargin=2zw}
+\setlist[description]{labelwidth=2zw,labelindent=1zw,topsep=\medskipamount}
+
+\def\>{\ifhmode\hskip\xkanjiskip\fi}
+
+\def\tsp{_{\mbox{\fontsize\sf@size\z@\ttfamily \char32}}}
+\def\tpar{_{\mbox{\fontsize\sf@size\z@\ttfamily \string\par}}}
+\def\tign{_{\mbox{\fontsize\sf@size\z@\selectfont --}}}
+
+\usepackage{shortvrb}
+\MakeShortVerb*{|}
+%%%%%%%%%%%%%%%%
+
+% logos
+\def\epTeX{$\varepsilon$-\pTeX}\def\eTeX{$\varepsilon$-\TeX}
+\def\eupTeX{$\varepsilon$-\upTeX}\def\upTeX{u\pTeX}
+\def\pTeX{p\kern-.10em\TeX}
+\def\pLaTeX{p\LaTeX}\def\upLaTeX{u\pLaTeX}
+\def\pdfTeX{pdf\TeX}
+\def\OMEGA{$\Omega$}
+\def\TL{\TeX\ Live\xspace}
+
+\def\_{\leavevmode\vrule width .45em height -.2ex depth .3ex\relax}
+
+\frenchspacing
+\begin{document}
+\catcode`\<=13
+\title{\textsf{\textbf{Guide to \pTeX\ for developers unfamiliar with Japanese}}}
+\author{Japanese \TeX\ Development Community\null
+\thanks{\url{https://texjp.org},\ e-mail: \texttt{issue(at)texjp.org}}}
+\date{version p\the\ptexversion.\the\ptexminorversion\ptexrevision, \today}
+\maketitle
+
+\pTeX\ and its variants, \upTeX, \epTeX\ and \eupTeX, are all \TeX\ engines
+with native Japanese support.
+Its output is always a DVI file, which can be processed by several
+DVI drivers with Japanese support including \emph{dvips} and \emph{dvipdfmx}.
+Formats based on \LaTeX\ is called \pLaTeX\ when running on \pTeX/\epTeX,
+and called \upLaTeX\ when running on \upTeX/\eupTeX.
+
+%%% Target readers of this document: 日本語機能でないパッケージ作者に絞る
+\section*{Purpose of this document}
+
+This document is written for developers of \TeX/\LaTeX, who aim to
+support \pTeX/\pLaTeX\ and its variants \upTeX/\upLaTeX.
+Knowledge of the followings are assumed:
+\begin{itemize}
+  \item Basic knowledge of Western \TeX\ (Knuthian \TeX, \eTeX\ and \pdfTeX),
+  \item ... and its programming conventions.
+\end{itemize}
+
+%%% 日本語（の組版・文字コード）の知識は要らない。その話はできる限り避ける
+Any knowledge of Japanese (characters, encodings, typesetting conventions etc.)
+is not assumed; some explanations are provided in this document when needed.
+We hope that this document helps authors of packages or classes
+to proceed with supporting \pTeX\ family smoothly.
+
+\begin{quotation}
+Note: This English edition (\jobname.pdf) is \emph{not} meant
+to be a complete translation of Japanese edition (ptex-manual.pdf).
+For example, this document does not cover the following aspects of \pTeX:
+\begin{itemize}
+  \item Typesetting conventions of Japanese characters
+  \item Details of vertical writing
+\end{itemize}
+For beginners of writing Japanese texts,
+please refer to the Japanese edition.
+\end{quotation}
+
+\tableofcontents
+
+
+\newpage
+
+
+%%%%%
+\part{Brief introduction}% 概論
+
+%%% pTeX とその仲間
+\section{\pTeX\ and its variants}
+
+% [TODO] \pTeX, \upTeX, \epTeX, \eupTeX を簡単に紹介
+
+%%% e-(u)pTeX の話がメイン
+There is no advantage to choose \pTeX/\upTeX\ over \epTeX/\eupTeX,
+so we focus mainly on \epTeX/\eupTeX.
+
+% [TODO] pLaTeX/upLaTeX も e- で走っていて，これで十分であると付け加える
+% [TODO] 既に pTeX/upTeX が暗に e-pTeX/e-upTeX を指す文献もあることに言及
+
+%%% 欧文 TeX との互換性
+\section{Compatibility with Western \TeX}
+
+%%% pTeX/upTeX は Knuthian TeX に対してほぼ上位互換
+\pTeX/\upTeX\ are almost upward compatible with Knuthian \TeX,
+however, they do not pass the TRIP test.
+%%% 入力の8bitの扱いが異なる。フォントの8bitはそのまま
+In \pTeX/\upTeX, input handling is different from Knuthian \TeX;
+if a pair of two or more 8-bit codes matches Japanese character code,
+it is regarded as one Japanese character.
+There is no difference in handling 8-bit TFM font.
+
+%%% e-pTeX/e-upTeX は e-TeX に対してほぼ上位互換
+\epTeX/\eupTeX\ are almost upward compatible with \eTeX,
+however, input handling is similar to \pTeX/\upTeX.
+It does not pass the e-TRIP test.
+%%% だけど e-TeX はもうなく，pdfTeX の DVI モードがあるだけ
+That said, please note that ``raw \eTeX'' is unavailable anymore
+in \TeX\ Live and derived distributions;
+they provide a command |etex| only as ``DVI mode of \pdfTeX.''
+%%% e-pTeX/e-upTeX は pdfTeX の DVI モードに対して上位互換ではない
+We should note that
+\epTeX/\eupTeX\ are \emph{not} upward compatible with DVI mode of \pdfTeX,
+which will be discussed later in section \ref{dvi-pdftex}.
+
+%%% LaTeX ムニャムニャ
+\section{\LaTeX\ on \pTeX/\upTeX\ --- \pLaTeX/\upLaTeX}
+
+%%% pLaTeX と upLaTeX ムニャムニャ
+Formats based on \LaTeX\ is called \pLaTeX\ when running on \pTeX/\epTeX,
+and called \upLaTeX\ when running on \upTeX/\eupTeX.
+In recent versions (around 2011) of \TeX\ Live and its derivatives,
+the default engines of \pLaTeX\ and \upLaTeX\ are \epTeX\ and \eupTeX.
+That is, the command |platex| starts \epTeX\ (not \pTeX) with
+preloaded format |platex.fmt|.
+
+%%% カーネルが拡張されている
+In the kernel level (|platex.ltx| and |uplatex.ltx|),
+\pLaTeX\ and \upLaTeX\ adds some additional commands
+related to the followings:
+\begin{itemize}
+  \item Selection of Japanese fonts
+  \item Crop marks (called ``tombow'') for printings
+  \item Adjustment for mixing horizontal and vertical texts
+\end{itemize}
+%%% author レベルでは LaTeX とほぼ互換，ただし例外あり
+For authors, \pLaTeX/\upLaTeX\ are almost upward compatible with
+original \LaTeX, except for the followings:
+\begin{itemize}
+  \item Order of float objects; in \pLaTeX/\upLaTeX,
+    <bottom float> is placed above <footnote>.
+    That is, the complete order is
+    <top float> $\rightarrow$ <body text> $\rightarrow$
+    <bottom float> $\rightarrow$ <footnote>.
+  % [TODO] 他にもあるか？
+\end{itemize}
+%%% developer レベルでは pdfTeX 拡張や pLaTeX カーネルでムニャムニャ
+For developers, additional care may be needed,
+for changes in the kernel macros and/or absence of \pdfTeX\ features.
+
+%%% 際立った pTeX 系列の特徴
+\section{Eminent characteristics of \pTeX/\upTeX}
+
+The most important characteristics of \pTeX/\upTeX\ can be
+summarized as follows:
+%%% 欧文と和文が別個に存在する・縦組がある
+\begin{itemize}
+  \item Japanese characters are interpreted and handled completely apart from
+    Western characters.
+  \item Texts can be aligned vertically, called ``tate-gumi'' (縦組).
+    The horizontal alignment of texts is called ``yoko-gumi'' (横組),
+    and both ``tate-gumi'' and ``yoko-gumi'' can be mixed
+    even within a single document.
+\end{itemize}
+
+
+\newpage
+
+
+%%%%%
+\part{Details}% 各論
+
+%%% 出力フォーマット
+\section{Output format --- DVI}
+
+%%% DVI だけ
+The output of \pTeX\ family is always a DVI file.
+This is in contrast to the mainstream of \pdfTeX\ in the Western \TeX\ world.
+
+In case you are not familiar with DVI output processing,
+first we give some general notice on how to get a ``correct'' output
+using \LaTeX\ in DVI mode.
+
+\begin{itemize}
+  \item The DVI format is, as its name suggests, inherently driver-independent.
+    However, some \LaTeX\ packages (\Pkg{graphicx}, \Pkg{color}, \Pkg{hyperref} etc.)
+    embed some \.{special} commands into the DVI, which can be interpreted later
+    by some specific DVI driver.
+    Such a DVI is no longer driver-independent, thus those are called
+    driver-dependent packages.
+  \item In almost all major \TeX\ distributions (of course including \TL),
+    the default DVI driver is set to |dvips|.
+    When you choose to process the resulting DVI file with a driver
+    other than dvips (e.g. dvipdfmx) after running \LaTeX,
+    you need to pass a proper driver option (e.g. |[dvipdfmx]|) to
+    all driver-dependent packages.
+\end{itemize}
+
+%%% 日本の DVI ドライバの状況
+Now, let's move on to the situation in Japan,
+which is slightly complicated due to historical reasons
+but may also apply to other countries:
+\begin{itemize}
+  \item There are two major conventions to pass a proper driver option
+    to all driver-dependent packages:
+    \begin{enumerate}
+      \item To give a driver option to each driver-dependent package:
+\begin{verbatim}
+\documentclass{article}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage[dvipdfmx]{color}
+\end{verbatim}
+      \item To have a driver option as global:
+\begin{verbatim}
+\documentclass[dvipdfmx]{article}
+\usepackage{graphicx}
+\usepackage{color}
+\end{verbatim}
+    \end{enumerate}
+    The former convention has been used for many years since 1990s
+    when the number of driver-dependent packages was limited.
+    But in recent years (around 2010--), there are much more
+    driver-dependent packages available. Thus
+    we (Japanese \TeX\ experts) advise a global driver option
+    rather than individual package options for simplicity,
+    but not yet fully widespread.\footnote{The fact that
+    there had been a mismatch in option names
+    (\code{[dvipdfm]} vs. \code{[dvipdfmx]})
+    between packages may also have been part of it;
+    \Pkg{geometry} did not understand \code{[dvipdfmx]} option until 2018!}
+  \item Many people still see driver options as ``optional'';
+    they do without driver options unless really needed.
+    For example, the convention of having a global driver option
+    does no harm even when no driver-dependent package is used, but
+    some users choose to omit a driver option to avoid a warning\footnote{%
+    Since \LaTeXe~2020-02-02, this warning is effectively gone. This is due
+    to preloading of \Pkg{expl3} into the format, and the driver-dependent
+    code of \Pkg{expl3} interprets the global driver option.}:
+\begin{verbatim}
+LaTeX Warning: Unused global option(s):
+    [dvipdfmx].
+\end{verbatim}
+\end{itemize}
+
+\subsection{Extensions of DVI format in \pTeX\ family}
+
+%%% pTeX の DVI は欧文の横組みだけなら普通。和文が入ると特殊，縦組ならIDも変化
+The DVI format output by \pTeX\ family is fully compatible with
+Knuthian \TeX, as long as the following conditions are met:
+\begin{itemize}
+  \item No Japanese characters are typeset.
+  \item There is no portion of vertical text alignment.
+\end{itemize}
+
+However, some additional DVI commands, which are defined in the
+standard \cite{dvistd0} but never used in \TeX82, can come out.
+\begin{itemize}
+  \item |set2| (129), |put2| (134):
+    Appears in both \pTeX\ and \upTeX\ DVI.
+    Used to typeset a Japanese character with 2-byte code.
+  \item |set3| (130), |put3| (135):
+    Appears in only \upTeX\ DVI.
+    Used to typeset a Japanese character with 3-byte code.
+\end{itemize}
+When \pTeX\ is going to typeset a Japanese character into DVI,
+it is encoded in JIS, which is always a 2-byte code.
+For this purpose, |set2| or |put2| are used.
+When \upTeX\ is going to output a Japanese character into DVI,
+it is encoded in UTF-32.
+If the code is equal to or less than |U+FFFF|,
+the lower 16-bit is used with |set2| or |put2|.
+If the code is equal to or greater than |U+10000|,
+the lower 24-bit is used with |set3| or |put3|.
+
+In addition, \pTeX/\upTeX\ defines one additional DVI command.
+\begin{itemize}
+  \item |dir| (255):
+    Used to change directions of text alignment.
+\end{itemize}
+The DVI format in the preamble is always set to 2, as with \TeX82.
+On the other hand, the DVI ID in the postamble can be special.
+Normally it is set to 2, as with \TeX82; however,
+when |dir| (255) appears at least once in a single \pTeX/\upTeX\ DVI,
+the |post_post| table of postamble contains $\mathrm{ID} = 3$.
+
+\subsection{DVI drivers with Japanese support}
+
+There are some DVI drivers with Japanese support.
+The most eminent drivers are \emph{dvips} and \emph{dvipdfmx}.
+Nowadays most of casual Japanese users are using \emph{dvipdfmx} as a DVI driver.
+On the other hand, users of \emph{dvips} are unignorable, especially those
+working in publishing industry.
+In recent years, most of major driver-dependent packages support
+both two drivers.
+
+\subsubsection{Using \emph{dvipdfmx}}
+
+A DVI file which is output by \pTeX\ can be converted directly to a PDF file
+using dvipdfmx.
+For Japanese fonts to be used in the output PDF, dvipdfmx refers to
+|kanjix.map| generated by the command |updmap|.
+You can use the script |kanji-config-updmap| to change font settings;
+please refer to its help message or documentation.
+
+\subsubsection{Using \emph{dvips}}
+
+A DVI file which is output by \pTeX\ can be converted to a PostScript file
+using dvips.
+For Japanese fonts to be used in the output PostScript, dvips refers to
+\code{psfonts.map} generated by the command \code{updmap}.
+You can use the script |kanji-config-updmap| to change font settings;
+please refer to its help message or documentation.
+
+The resulting PostScript file can then be converted to
+a PDF file using Ghostscript (ps2pdf) or Adobe Distiller.
+When using Ghostscript, a proper setup of Japanese font must be done
+before converting PostScript into PDF.
+An easy solution for the setup is to run a script |cjk-gs-integrate|
+developed by Japanese \TeX\ Development Community.
+
+\section{Programming on \pTeX\ family}
+
+We focus on programming aspects of \pTeX\ and its variants.
+
+%%% レジスタの数
+\subsection{Number of registers and marks}
+
+\pTeX\ and \upTeX\ have exactly the same number ($=256$) of registers
+(count, dimen, skip, muskip, box, and token) as Knuthian \TeX.
+\epTeX\ and \eupTeX\ in extended mode have more registers;
+there are 65536, which is twice as many as 32768 of \eTeX.
+Similarly \epTeX\ and \eupTeX\ have 65536 mark classes,
+which is twice as many as 32768 of \eTeX.
+
+The following code presents an example of detecting the number of
+regsiters and mark classes available:
+\begin{verbatim}
+  \ifx\eTeXversion\undefined
+    % Knuthian TeX, pTeX, upTeX:
+    %   256 registers, 1 mark
+  \else
+    \ifx\omathchar\undefined
+      % e-TeX, pdfTeX (in extended mode):
+      %   32768 registers, 32768 mark classes
+    \else
+      % e-pTeX, e-upTeX (in extended mode):
+      %   65536 registers, 65536 mark classes
+    \fi
+  \fi
+\end{verbatim}
+Here a primitive \.{omathchar}, which is derived from \OMEGA, is used
+as a marker of a change file \code{fam256.ch}.\footnote{%
+There is another \pTeX-derived engine named \pTeX-ng (or Asiatic \pTeX)
+\url{https://github.com/clerkma/ptex-ng}; it is based on
+\eTeX\ and \upTeX, but currently does not adopt \code{fam256.ch}
+so it has the same number of registers and mark classes as \eTeX.}
+
+%%% 数式ファミリの数
+\subsection{Number of math families}
+
+In \pTeX\ and \upTeX,
+the number of math fonts is restricted to 16,
+each of which can contain 256 characters (same as Knuthian \TeX).
+In \epTeX\ and \eupTeX, a change file \code{fam256.ch},
+which is derived from \OMEGA, extends the upper limit to 256.
+As a consequence, \epTeX\ and \eupTeX\ allows 256 math fonts,
+each of which can contain 256 characters.\footnote{\OMEGA\ allows
+256 math fonts, each of which can contain 65536 characters.}
+
+For \pLaTeX/\upLaTeX\ users to use more than 16 math fonts,
+it is necessary to use macros which exploit \OMEGA-derived primitives
+such as \.{omathchar}.
+Recent (u)\pLaTeX\ (since 2016/11/29) partially supports this,
+and the maximum number of math alphabets that can be defined by
+|\DeclareMathAlphabet| is extended to 256 (|\e@mathgroup@top|)
+without needing any extension package.
+However, symbol fonts are restricted to 16 as
+|\DeclareMathSymbol| etc still use the standard \.{mathchar} etc.
+A simple solution to use more symbol fonts as well as math alphabets
+is to load a package \Pkg{mathfam256}\footnote{%
+\url{https://www.ctan.org/pkg/mathfam256}} though it's still preliminary.
+
+%%% 拡張プリミティブ
+\subsection{Additional primitives and keywords}
+% tex -ini: 322 multiletter control sequences
+% ptex -ini: 366 multiletter control sequences
+% uptex -ini: 374 multiletter control sequences
+% eptex -ini: 379 multiletter control sequences
+% eptex -ini -etex: 469 multiletter control sequences
+% euptex -ini: 387 multiletter control sequences
+% euptex -ini -etex: 477 multiletter control sequences
+% etex (pdftex) -ini: 470 multiletter control sequences
+% etex (pdftex) -ini -etex: 539 multiletter control sequences
+
+Here we provide only complete lists of additional primitives
+of \pTeX\ family in alphabetical order.
+The features of each primitive can be found in Japanese edition.
+
+% [TODO] 抜けがないか？
+% [TODO] アルファベット順に正しく並んでいるか？
+% [TODO] 追加されたバージョン情報は正しいか？
+
+\def\New#1{--- New primitive since #1}
+
+\subsubsection{Sync\TeX\ additions (available in \pTeX, \upTeX, \epTeX, \eupTeX)}
+In the standard build of \TL, Sync\TeX\ extension is unavailable in
+Knuthian \TeX; however, it is enabled in \pTeX\ family.
+\begin{simplelist}
+ \csitem[\.{synctex}]
+\end{simplelist}
+
+%%% pTeX のやつ
+\subsubsection{\pTeX\ additions (available in \pTeX, \upTeX, \epTeX, \eupTeX)}
+\begin{simplelist}
+ \csitem[\.{autospacing}]
+ \csitem[\.{autoxspacing}]
+ \csitem[\.{disinhibitglue} \New{p3.8.2 (\TL2019)}]
+ \csitem[\.{dtou}]
+ \csitem[\.{euc}]
+ \csitem[\.{ifdbox} \New{p3.2 (\TL2011)}]
+ \csitem[\.{ifddir} \New{p3.2 (\TL2011)}]
+ \csitem[\.{ifjfont} \New{p3.8.3 (\TL2020)}]
+ \csitem[\.{ifmbox} \New{p3.7.1 (\TL2017)}]
+ \csitem[\.{ifmdir}]
+ \csitem[\.{iftbox}]
+ \csitem[\.{iftdir}]
+ \csitem[\.{iftfont} \New{p3.8.3 (\TL2020)}]
+ \csitem[\.{ifybox}]
+ \csitem[\.{ifydir}]
+ \csitem[\.{inhibitglue}]
+ \csitem[\.{inhibitxspcode}]
+ \csitem[\.{jcharwidowpenalty}]
+ \csitem[\.{jfam}]
+ \csitem[\.{jfont}]
+ \csitem[\.{jis}]
+ \csitem[\.{kanjiskip}]
+ \csitem[\.{kansuji}]
+ \csitem[\.{kansujichar}]
+ \csitem[\.{kcatcode}]
+ \csitem[\.{kuten}]
+ \csitem[\.{noautospacing}]
+ \csitem[\.{noautoxspacing}]
+ \csitem[\.{postbreakpenalty}]
+ \csitem[\.{prebreakpenalty}]
+ \csitem[\.{ptexminorversion} \New{p3.8.0 (\TL2018)}]
+ \csitem[\.{ptexrevision} \New{p3.8.0 (\TL2018)}]
+ \csitem[\.{ptexversion} \New{p3.8.0 (\TL2018)}]
+ \csitem[\.{scriptbaselineshiftfactor} \New{p3.7 (\TL2016)}]
+ \csitem[\.{scriptscriptbaselineshiftfactor} \New{p3.7 (\TL2016)}]
+ \csitem[\.{showmode}]
+ \csitem[\.{sjis}]
+ \csitem[\.{tate}]
+ \csitem[\.{tbaselineshift}]
+ \csitem[\.{textbaselineshiftfactor} \New{p3.7 (\TL2016)}]
+ \csitem[\.{tfont}]
+ \csitem[\.{xkanjiskip}]
+ \csitem[\.{xspcode}]
+ \csitem[\.{ybaselineshift}]
+ \csitem[\.{yoko}]
+ \csitem[\texttt{H}\index{H=\texttt{H}}]
+ \csitem[\texttt{Q}\index{Q=\texttt{Q}}]
+ \csitem[\texttt{zh}\index{zh=\texttt{zh}}]
+ \csitem[\texttt{zw}\index{zw=\texttt{zw}}]
+\end{simplelist}
+
+%%% upTeX のやつ
+\subsubsection{\upTeX\ additions (available in \upTeX, \eupTeX)}
+\begin{simplelist}
+ \csitem[\.{disablecjktoken}]
+ \csitem[\.{enablecjktoken}]
+ \csitem[\.{forcecjktoken}]
+ \csitem[\.{kchar}]
+ \csitem[\.{kchardef}]
+ \csitem[\.{ucs}]
+ \csitem[\.{uptexrevision} \New{u1.23 (\TL2018)}]
+ \csitem[\.{uptexversion} \New{u1.23 (\TL2018)}]
+\end{simplelist}
+
+%%% e-pTeX/e-upTeX の pdfTeX 由来
+%%% e-pTeX/e-upTeX の Omega 由来
+%%% その他の独自拡張
+\subsubsection{\epTeX\ additions (available in \epTeX, \eupTeX)}
+\begin{simplelist}
+ \csitem[\.{currentspacingmode} \New{191112 (\TL2020)}]
+ \csitem[\.{currentxspacingmode} \New{191112 (\TL2020)}]
+ \csitem[\.{epTeXinputencoding} \New{160201 (\TL2016)}]
+ \csitem[\.{epTeXversion} \New{180121 (\TL2018)}]
+ \csitem[\.{expanded} \New{180518 (\TL2019)}]
+ \csitem[\.{hfi}]
+ \csitem[\.{ifincsname} \New{190709 (\TL2020)}]
+ \csitem[\.{ifpdfprimitive} \New{150805 (\TL2016)}]
+ \csitem[\.{lastnodechar} \New{141108 (\TL2015)}]
+ \csitem[\.{lastnodesubtype} \New{180226 (\TL2018)}]
+ \csitem[\.{odelcode}]
+ \csitem[\.{odelimiter}]
+ \csitem[\.{omathaccent}]
+ \csitem[\.{omathchar}]
+ \csitem[\.{omathchardef}]
+ \csitem[\.{omathcode}]
+ \csitem[\.{oradical}]
+ \csitem[\.{pagefistretch}]
+ \csitem[\.{pdfcreationdate} \New{130605 (\TL2014)}]
+ \csitem[\.{pdfelapsedtime} \New{161114 (\TL2017)}]
+ \csitem[\.{pdffiledump} \New{140506 (\TL2015)}]
+ \csitem[\.{pdffilemoddate} \New{130605 (\TL2014)}]
+ \csitem[\.{pdffilesize} \New{130605 (\TL2014)}]
+ \csitem[\.{pdflastxpos}]
+ \csitem[\.{pdflastypos}]
+ \csitem[\.{pdfmdfivesum} \New{150702 (\TL2016)}]
+ \csitem[\.{pdfnormaldeviate} \New{161114 (\TL2017)}]
+ \csitem[\.{pdfpageheight}]
+ \csitem[\.{pdfpagewidth}]
+ \csitem[\.{pdfprimitive} \New{150805 (\TL2016)}]
+ \csitem[\.{pdfrandomseed} \New{161114 (\TL2017)}]
+ \csitem[\.{pdfresettimer} \New{161114 (\TL2017)}]
+ \csitem[\.{pdfsavepos}]
+ \csitem[\.{pdfsetrandomseed} \New{161114 (\TL2017)}]
+ \csitem[\.{pdfshellescape} \New{141108 (\TL2015)}]
+ \csitem[\.{pdfstrcmp}]
+ \csitem[\.{pdfuniformdeviate} \New{161114 (\TL2017)}]
+ \csitem[\.{readpapersizespecial} \New{180901 (\TL2019)}]
+ \csitem[\.{Uchar} \New{191112 (\TL2020)}]
+ \csitem[\.{Ucharcat} \New{191112 (\TL2020)}]
+ \csitem[\.{vfi}]
+ \csitem[\texttt{fi}\index{fi=\texttt{fi}}]
+\end{simplelist}
+
+%%% e-upTeX の独自拡張
+\subsubsection{\eupTeX\ additions (available in \eupTeX)}
+\begin{simplelist}
+ \csitem[\.{currentcjktoken} \New{191112 (\TL2020)}]
+\end{simplelist}
+
+% [TODO] 引数は何で返り値は何か，expandable?
+
+%%% (e-)TeX にあるが (e-)upTeX にないもの
+\subsection{Omitted primitives and unsupported features}
+
+Compared to Knuthian \TeX\ and \eTeX,
+some primitives are omitted due to conflict with Japanese handling.
+%%% encTeX 拡張など
+One is enc\TeX\ extension, such as |\mubyte|.
+The ML\TeX\ extension, such as |\charsubdef|, is included but not well-tested.
+%%% コマンドラインオプションの話
+
+% [TODO] Please also refer to ptex.man1.pdf
+
+\subsection{Behavior of Western \TeX\ primitives}
+
+Here we provide some notes on behavior of Knuthian \TeX\ and \eTeX\ primitives
+when used within \pTeX\ family.
+
+\subsubsection{Primitives with limitations in handling Japanese}
+
+Each of the following primitives allows only character codes 0--255;
+other codes will give an error ``! Bad character code.''
+\begin{quote}
+ |\catcode|,
+ |\sfcode|,
+ |\mathcode|,
+ |\delcode|,
+ |\lccode|,
+ |\uccode|.
+\end{quote}
+
+Each of the following primivies has |\...char| in its name,
+however, the effective values are restricted to 0--255.
+\begin{quote}
+ |\endlinechar|,
+ |\newlinechar|,
+ |\escapechar|,
+ |\defaulthyphenchar|,
+ |\defaultskewchar|.
+\end{quote}
+
+\subsubsection{Primitives capable of handling Japanese}
+
+The following primitives are extended to support Japanese characters:
+\begin{cslist}
+ \csitem[\.{char} <character code>,
+   \.{chardef} <control sequence>=<character code>]
+  In addition to 0--255, internal codes of Japanese characters are allowed.
+  For putting Japanese characters, a Japanese font is chosen.
+  More information can be found in \ref{chardef}.
+
+ \csitem[\.{font}, \.{fontname}, \.{fontdimen}]
+  % [TODO]
+
+ \csitem[\.{accent} <character code>=<character>]
+  % [TODO]
+
+ \csitem[\.{if} <token$_1$> <token$_2$>, \.{ifcat} <token$_1$> <token$_2$>]
+  Japanese character token is also allowed.
+  In that case,
+  \begin{itemize}
+    \item |\if| tests the internal character code of the Japanese character.
+    \item |\ifcat| tests the |\kcatcode| of the Japanese character.
+  \end{itemize}
+\end{cslist}
+
+\begin{dangerous}
+\TeX book describes the behavior of |\if| and |\ifcat| as follows;
+\begin{quote}
+If either token is a control sequence,
+\TeX\ considers it to have character code 256 and category code 16,
+unless the current equivalent of that control sequence
+has been |\let| equal to a non-active character token.
+\end{quote}
+However, this includes a lie; in the real implementation of \code{tex.web},
+a control sequence is considered to have a category code 0.
+\end{dangerous}
+
+\subsection{Case study}
+
+Here we provide some code examples
+which may be useful for package developers.
+% [TODO] 本当は Based on the above knowledge としたいところだが
+% 説明が圧倒的に不足しているので天下り的なコード解説…
+
+%%% pTeX かどうかの判定
+\subsubsection{Detecting \pTeX}
+
+Since the primitive |\ptexversion| is rather new (added in 2018),
+the safer solution for detecting \pTeX\ is
+to test if a primitive |\kanjiskip| is defined.
+\begin{verbatim}
+  \ifx\kanjiskip\undefined
+  \else
+    % pTeX / upTeX / e-pTeX / e-upTeX
+  \fi
+\end{verbatim}
+
+%%% upTeX かどうかの判定
+\subsubsection{Detecting \upTeX}
+
+\upTeX/\eupTeX\ are almost upward compatible
+with \pTeX/\epTeX\ respectively, however,
+there are two major differences:
+\begin{enumerate}
+  \item Improvements in the \.{kcatcode} business,
+    mainly for better handling of Latin-1 characters and CJK tokens.
+  \item Unicode as the default internal kanji encoding,
+    for direct use of its huge character set.
+\end{enumerate}
+
+The first difference can be detected by checking if
+\.{...cjktoken} primitive is defined.
+\begin{verbatim}
+  \ifx\enablecjktoken\undefined
+  \else
+    % upTeX/e-upTeX
+  \fi
+\end{verbatim}
+
+The second difference can be detected by checking if
+the character \code{0x2121} (fullwidth space in JIS encoding)
+is stored as \hex{3000} internally.
+\begin{verbatim}
+  \ifx\kanjiskip\undefined
+  \else
+    \ifnum\jis"2121="3000
+      % upTeX/e-upTeX with internal Unicode
+    \else
+      % pTeX/e-pTeX
+      % or, upTeX/e-upTeX with internal EUC-JP or Shift-JIS
+    \fi
+  \fi
+\end{verbatim}
+Please note that
+the format-build setting of \verb+-kanji-internal=(sjis|euc)+ with
+\upTeX\ makes it effectively \pTeX\ regarding the character set,
+which means that only JIS~X~0208 character set is supported.
+
+%%% pTeX のバージョン判定
+% [TODO] 何が有用？
+
+%%% 大きな定数を定義する話
+\subsubsection{Defining large integer constants}
+\label{chardef}
+
+According to \cite{topic} (Section 3.3),
+\begin{quote}
+A control sequence that has been defined with a \.{chardef} command
+can also be used as a <number>.
+This fact is used in allocation commands such as |\newbox|.
+Tokens defined with \.{mathchardef} can also be used this way.
+\end{quote}
+Here is the list of primitives which can be used for this purpose
+in \pTeX\ family:
+\begin{simplelist}
+ \csitem[\.{chardef} <control sequence>=<character code>]
+  Defines a control sequence to be a synonym for
+  \.{char} <character code>.
+
+ \csitem[\.{kchardef} <control sequence>=<character code> (for \upTeX/\eupTeX)]
+  Defines a control sequence to be a synonym for
+  \.{kchar} <character code>.
+
+ \csitem[\.{mathchardef} <control sequence>=<15-bit number>]
+  Defines a control sequence to be a synonym for
+  \.{mathchar} <15-bit number>.
+
+ \csitem[\.{omathchardef} <control sequence>=<27-bit number> (for \epTeX/\eupTeX)]
+  Defines a control sequence to be a synonym for
+  \.{omathchar} <27-bit number>.
+\end{simplelist}
+
+The first two (\.{chardef} and \.{kchardef}) are usable only when
+the integer being defined is in the range of valid character codes,
+which is not necessarily continuous (see \ref{kanji-internal}).
+The most efficient and convenient way of defining integer constants
+is as follows:
+\begin{itemize}
+ \item 0--255: \.{chardef}
+   % "FF = 255
+ \item 256--32767: \.{mathchardef}
+   % "7FFF = 32767
+ \item 32768--134217727: \.{omathchardef} (only for \epTeX/\eupTeX)
+   % "7FFFFFF = 134217727
+ \item (optional) 256--2147483647: \.{chardef} (only for \upTeX/\eupTeX)
+   % "7FFFFFFF = 2147483647 (+1 => ! Number too big.)
+\end{itemize}
+
+%%% 指定のコードの和文トークンを得る方法
+\subsubsection{Creating a Japanese character token with a specified code}
+
+Short version:
+\begin{itemize}
+ \item With \epTeX~191112 or later (\TL2020),
+   you can use expandable primitives \.{Uchar} and \.{Ucharcat}.
+ \item Otherwise, use the ``\.{kansuji} trick''.
+\end{itemize}
+
+\paragraph{The ``\.{kansuji} trick''}
+This is a modified version of the ``\.{lowercase} trick''
+available in \pTeX\ family.
+
+\begin{dangerous}
+Short note on the ``\.{lowercase} trick'':
+to create a character token with a specified code value between 0--255
+with Knuthian \TeX, the ``\.{lowercase} trick'' can be used; for example,
+\begin{verbatim}
+  \begingroup
+  \lccode`\?=\mycount
+  \lowercase{\endgroup \def\X{?}}
+\end{verbatim}
+defines |\X| which expands to a character number |\mycount|
+while the \.{catcode} of |?| (\the\catcode`\?) is preserved.
+However, the trick cannot be applied to Japanese characters,
+since \pTeX\ family does not support \.{lccode} outside 0--255.
+\end{dangerous}
+
+\.{kansuji} is an expandable primitive like \.{number} or \.{romannumeral},
+and it converts an integer into its corresponding kanji notation
+called ``kansuji'' (漢数字). The important point here is that
+the number-kanji mapping can be altered by \.{kansujichar}.
+
+Example 1: equivalent to |\def\X{あ}| (JIS code \code{0x2422} is ``あ''):
+\begin{verbatim}
+  \begingroup
+    \kansujichar1=\jis"2422 \xdef\X{\kansuji1}
+  \endgroup
+\end{verbatim}
+
+Example 2: equivalent to |\def\日本{Japan}|.
+\begin{verbatim}
+  \begingroup
+    \kansujichar5=\jis"467C\relax
+    \kansujichar6=\jis"4B5C\relax
+    \expandafter\gdef\csname\kansuji56\endcsname{Japan}
+  \endgroup
+\end{verbatim}
+
+Since \.{kansujichar} accepts only Japanese character code,
+the ``\.{kansuji} trick'' and the ``\.{lowercase} trick'' should be
+used complementarily.
+
+\paragraph{\.{Uchar}, \.{Ucharcat}}
+The ``\.{kansuji} trick'' above includes an assignment of \.{kansujichar}
+which is unexpandable.
+\epTeX~191112 or later (\TL2020) provides expandable primitives
+\.{Uchar} and \.{Ucharcat}, which are derived from \hologo{XeTeX}.
+Regardless of their names, and unlike \hologo{XeTeX} or \hologo{LuaTeX},
+these primitives do \emph{not} necessarily take
+a Unicode value as an argument.
+These primitives in \epTeX\ and \eupTeX\ take a valid character code
+(see \ref{kanji-internal}) based on the internal kanji encoding.
+
+\begin{simplelist}
+ \csitem[\.{Uchar} <character code>]
+  Expands to a character token with specified slot <character code>.
+  \begin{itemize}
+   \item When an 8-bit number (0--255) is given,
+     it expands to a Latin character token with category code 12,
+     except for a space character (32) which has category code 10.
+   \item When a Japanese character code greater than 255 is given,
+     it expands to a Japanese character token with its current category code;
+     16--18 for \epTeX, 16--19 for \eupTeX.
+     % [TODO] 本当は pTeX では和文文字トークン自体は \kcatcode を
+     % 持たないが，簡単のためまあいっか．
+  \end{itemize}
+
+ \csitem[\.{Ucharcat} <character code> <category code>]
+  Expands to a character token with slot <character code> and
+  <category code> specified.
+  \begin{itemize}
+   \item With \epTeX:
+     \begin{itemize}
+      \item Only 8-bit number (0--255) are allowed for <character code>;
+        that is, only Latin characters can be generated.
+      \item The values allowed for <category code> are 1--4, 6--8, 10--13.
+     \end{itemize}
+   \item With \eupTeX:
+     \begin{itemize}
+      \item When <character code> is between 0--127,
+        only Latin characters can be generated.
+        Thus, the values allowed for <category code> are
+        1--4, 6--8, 10--13.
+      \item When <character code> is between 128--255,
+        both Latin and Japanese characters can be generated
+        depending on the specified <category code>;
+        1--4, 6--8, 10--13: Latin character,
+        16--19: Japanese character.
+      \item When <character code> is greater than 255,
+        only Japanese characters can be generated.
+        Thus, the values allowed for <category code> are
+        16--19.
+     \end{itemize}
+  \end{itemize}
+\end{simplelist}
+
+%%% pdfTeX と違うところ
+\subsection{Difference from \pdfTeX\ in DVI mode}\label{dvi-pdftex}
+
+As stated above,
+\epTeX/\eupTeX\ are \emph{not} upward compatible with DVI mode of \pdfTeX.
+
+%%% pdfTeX の DVI モードにあって e-(u)pTeX にないプリミティブ
+%%% その他ムニャムニャ
+
+%%% ファイルの文字コードはどうするか
+\subsection{Recommendation for file encoding}
+
+%%% 全部アスキーにしてしまえ
+%%% UTF-8 にしたい場合はムニャムニャ
+%%% \epTeXinputencoding を使う話
+
+%%% e-upTeX の入力解析：euc/sjis を語りたくないので utf8.uptex 前提
+\subsection{Input handling}
+
+For simplicity, first we introduce of input handling of \eupTeX.
+
+%%% 文字の和文扱い・欧文扱い
+%%% 和文カテゴリーコード
+%%% \...cjktoken
+%%% ちなみに e-pTeX では：euc/sjis があることにだけ触れる
+
+%%% e-upTeX の和文トークンの話：和文トークンが混ざっているので注意
+\subsection{Japanese tokens}
+
+%%% 和文組版の厳選トピック
+\section{Basic introduction to Japanese typesetting}
+
+%%% 和文をやり過ごすために注意すべきこと
+This section does not aim to explain Japanese typesetting completely;
+here we provide a minimum requirement for ``getting away'' with Japanese.
+
+%%% 空白・ペナルティ挿入：勝手に入ってくる！
+\subsection{Automatic insertion of glue and penalties}
+
+Sometimes \pTeX\ family automatically inserts glue and penalties
+between characters.
+% [TODO] もう少しだけ詳しく
+
+%%% 和文フォント
+\subsection{Japanese fonts}
+
+%%% 欧文とは別個
+\pTeX\ family can have 3 different ``current'' fonts at the same time;
+a Latin font, a Japanese font for horizontal writing (``yoko-gumi''),
+and a Japanese font for vertical writing (``tate-gumi'').
+The first one is the same as in the Knuthian \TeX,
+which is defined in a standard TFM format.
+The latter two are specific to \pTeX\ family, which are defined
+in a JFM (Japanese \TeX\ font metric) format.\footnote{%
+A JFM is a modified version of the standard TFM.
+It can be created by (u)pPLtoTF, and decoded by (u)pTFtoPL.
+Please also refer to the man pages of these programs
+(\code{ppltotf.man1.pdf} and \code{ptftopl.man1.pdf}).}
+
+While typesetting, \pTeX\ family automatically switches between
+these 3 fonts, depending on the character code and the writing direction:
+\begin{itemize}
+  \item For typesetting Latin characters,
+    the current Latin font shown by |\the\font| is selected.
+  \item For typesetting Japanese characters,
+    the current Japanese font suitable for the current writing direction
+    is selected. It is shown by |\the\jfont| for horizontal writing
+    and |\the\tfont| for vertical writing.
+\end{itemize}
+
+%%% \nullfont しても全部消えない
+%%% 「和文 \nullfont」は和文フォントが一回もグローバルに
+%%% 設定されていないとき = iniTeX 時しかない
+In Knuthian \TeX, the primitive \.{nullfont} refers to an ``empty font''
+in which all characters are undefined.
+However in \pTeX\ family, this is regarded as a Latin font
+and there is no equivalent to ``Japanese \.{nullfont}'' by design.
+To elaborate, it is possible \emph{only} when no Japanese font is
+set globally, i.e. in ini\TeX\ mode.
+Once a valid Japanese font is selected, there is no way of
+selecting ``Japanese \.{nullfont}'' to discard all characters.
+
+Moreover, \pTeX\ and friends assume that each Japanese font
+(except ``Japanese \.{nullfont}'' in ini\TeX\ mode)
+contains all valid Japanese character code.
+In other words, all Japanese fonts share the same character set
+corresponding to the whole valid Japanese character code range.\label{jfont}
+
+\section{Other strange beasts}
+
+%%% 縦組は諦めよう
+
+% [TODO] どこに書くか困ったので最後に：内部コードのアレな話
+\subsection{Internal kanji encodings}\label{kanji-internal}
+
+The <character code> is a union of the following two:
+\begin{itemize}
+ \item Range of numbers between 0--255, and
+ \item Numbers allowed for internal code of Japanese characters.
+\end{itemize}
+The former is the same as Knuthian \TeX, but the latter is a problem.
+In \upTeX/\eupTeX\ with \code{-kanji-internal=uptex} (default on),
+the range is very simple:
+\[ c \ge 0 \]
+However in \pTeX/\epTeX, only legacy encodings (EUC-JP as |euc|,
+or Shift-JIS as |sjis|) are available for \code{-kanji-internal}.
+In this case, the range can be represented as follows:
+\[
+  c = 256c_1+c_2 \; (c_i\in C_i)
+\]
+where
+\[
+  \begin{cases}
+    C_1=C_2=\{\hex{a1},\dots,\hex{fe}\} & (\mathtt{euc}), \\
+    C_1=\{\hex{81},\dots,\hex{9f}\}\cup\{\hex{e0},\dots,\hex{fc}\},
+    C_2=\{\hex{40},\dots,\hex{7e}\}\cup\{\hex{80},\dots,\hex{fc}\} & (\mathtt{sjis}).
+  \end{cases}
+\]
+Therefore, the overall range of <character code> is \emph{not} continuous.
+
+To check whether an integer is a valid Japanese character code or not,
+you can use \.{iffontchar} with \epTeX~190709 or later (\TL2020).
+Suppose a count register |\mycount| stores an integer, you can do it as follows:
+\begin{verbatim}
+  \iffontchar\jfont\mycount
+    % \mycount is a valid Japanese character code
+  \fi
+\end{verbatim}
+Here the primitive \.{jfont} is used merely as
+a representative non-empty\footnote{This assumption is always safe after
+one of the standard \pTeX\ formats (e.g. plain \pTeX, \pLaTeX) is loaded.}
+Japanese font containing all valid Japanese character code (see \ref{jfont}).
+
+
+\newpage
+
+\begin{thebibliography}{99}
+ \bibitem{dvistd0} TUG DVI Standards Working Group,
+  \textit{The DVI Driver Standard, Level 0}.\\
+  \url{https://ctan.org/pkg/dvistd}
+ \bibitem{topic} Victor Eijkhout, \textit{\TeX\ by Topic, A \TeX nician's Reference},
+  Addison-Wesley, 1992.\\
+  \url{https://www.eijkhout.net/texbytopic/texbytopic.html}
+\end{thebibliography}
+
+\newpage
+\printindex
+
+
+\end{document}

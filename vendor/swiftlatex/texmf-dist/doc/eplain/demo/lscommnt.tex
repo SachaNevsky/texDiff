@@ -1,0 +1,47 @@
+% (This file is public domain.)
+% Demonstrate how Eplain can be used to include a TeX source file
+% verbatim, typesetting comments in colored italic typewriter type.
+
+% Load Eplain and LaTeX's color.sty package.
+\input eplain
+\beginpackages \usepackage{color} \endpackages
+\nopagenumbers % Disable page numbers.
+\font\commentfont = cmitt10 % Font for the comments (italic \tt).
+% We'll define some `protected' macros with `@' in their names.
+\makeatletter
+% Define an equivalent of Eplain's \letreturn, to be able to assign
+% various actions to the (active) percent character.
+\begingroup \makeactive\%
+  \gdef\letpercent{\let%}
+\endgroup
+% The listing hook to be called in \setuplistinghook, see below.  It
+% makes `%' active and assigns it a `start comment' action.
+\def\hlightcommentslisting{\makeactive\% \letpercent\start@comment}%
+% This is what `%' is aliased to before a comment is started.
+\def\start@comment{%
+  \leavevmode % Needed in the very first line of the input to process
+              % the new par (possibly inserting line number) before we
+              % kick in with the color and stuff.
+  \begingroup % Isolate color and font changes and the redefinitions.
+    \commentfont
+    \color[cmyk]{0.28,1,1,0.35}%
+    \percentchar            % Produce the actual `%' and
+    \letpercent\percentchar % make all following `%'s do the same.
+    \letreturn\end@comment  % Call \end@comment at end-of-line.
+}
+% \end@comment (alias for ^^M inside a comment) will end the comment
+% started by \start@comment.  We make ^^M active temporarily so that
+% the active version of ^^M gets "frozen" into \end@comment.
+\begingroup \makeactive\^^M % Avoid ^^M's from here on.
+  \gdef\end@comment{\endgroup ^^M}%
+\endgroup
+\resetatcatcode % Make `@' again inaccessible for use in macro names.
+
+% Define \setuplistinghook to setup comments highlighting, line
+% numbering and omitting the last (empty) line of input.
+\def\setuplistinghook{\hlightcommentslisting \linenumberedlisting
+                      \nolastlinelisting}
+% Isn't this fun?  This file typesets itself, with the extra bonus of
+% the pretty-printed comments and numbered source lines!
+\listing{lscommnt}
+\bye

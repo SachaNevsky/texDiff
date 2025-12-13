@@ -1,0 +1,135 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-2">
+<meta http-equiv="Content-language" content="pl">
+<meta name="Author" content="Włodzimierz Macewicz">
+<meta name="Keywords" content="latex, description, Wirtualna Akademia">
+<title>description</title>
+</head>
+<body bgcolor=#a0f0a0>
+<h1>description</h1>
+<p>
+Opisywana lista nie ma zdefiniowanej domyślnej etykiety, zakłada się,
+że każda pozycja jest opatrzona własną etykietą (parametr
+polecenie <tt>\item</tt>). Standardową postać trudno uznać za zadowalającą,
+poniższa struktura 
+<pre>
+\noindent aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+\begin{description}
+\item[i] aqq
+aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+\item[ii] bqq
+aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+\item[iii] bqq
+aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+\end{description}
+aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+</pre>
+będzie wyglądała:<br>
+<img src=desc_p1.gif><br>
+jak widać na przykładzie występują trzy różne wielkości lewego marginesu, 
+stwarza to niemiłe wrażenie, dobrze by było
+gdyby lewy margines w każdym wypadku był jednakowy, dla wszystkich
+linii wykazu, bez względu na długość etykiety.
+<p>Złożoność (i pogmatwanie) środowiska <tt>list</tt> nie pozwala na dużą 
+swobodę, nie mniej jednak, możemy zdefiniować szereg odmian listy 
+<tt>description</tt>.<p>
+<b>Przykład 1:</b> Lista  dająca łatwą możliwość definiowania szerokości
+lewego marginesu<p>
+<pre>
+\newenvironment{Ventry}[1]{%
+    \begin{list}{}
+    		 {\renewcommand{\makelabel}[1]{%
+		 				\textsf{##1:}\hfill}%
+		  \settowidth{\labelwidth}{\textsf{#1:}}%
+		  \leftmargin=\labelwidth%
+		  \advance \leftmargin\labelsep}}%
+    {\end{list}}
+\begin{Ventry}{Rezultat}
+\item[Opis] środowisko pozwala na zdefiniowanie listy o zadanej szerokości 
+marginesu, jego szerokość wyznacza szerokość najdłuższej etykiety,
+którą to należy podać jako argument
+\item[Błędy] brak,
+\item[Rezultat] jest zadowalający
+\end{Ventry}
+</pre>
+daje następujący efekt:<p>
+<img src=desc_p2.gif><p>
+<b>Przykład 2:</b> Lista podobna do wyżej zdefiniowanej, ale zdefiniowano
+dodatkową własność, jeżeli etykieta jest dłuższa od określonej
+szerokości to opis jest umieszczany w następnej linii
+<pre>
+\newlength{\Mylen}
+%
+\newcommand{\entrylabel}[1]{%
+\settowidth{\Mylen}{\textsf{#1:}}%
+\ifthenelse{\lengthtest{\Mylen > \labelwidth}}
+	    {\parbox[b]{\labelwidth}
+	    	{\makebox[0pt][l]{\textsf{#1:}}\\}}%
+		{\textsf{#1:}}%
+		\hfil\relax}
+\newenvironment{entry}[1]%
+    {\begin{list}{}%
+	{\renewcommand{\makelabel}{\entrylabel}%
+			  \settowidth{\labelwidth}{\textsf{#1:}}%
+			  \leftmargin=\labelwidth%
+			  \advance \leftmargin\labelsep}}%
+    {\end{list}}
+%
+\noindent aqq
+aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+\begin{entry}{Błędy}
+\item[Opis] środowisko pozwala na zdefiniowanie listy o zadanej szerokości 
+marginesu, jego szerokość wyznacza szerokość wybranej etykiety,
+którą to należy podać jako argument
+\item[Błędy] brak,
+\item[Rezultat] jest zadowalający
+\end{entry}
+aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+</pre>
+<p>
+<img src=desc_p3.gif><p>
+a oto przykład<br>
+<b>Przykład 3:</b> Lista gdzie etykieta podlega
+procesowi łamania na szerokości wyznaczonej przez długość 
+argumentu
+<p>
+<pre>
+\newcommand{\Myentrylabel}[1]{%
+\raisebox{0pt}[1ex][0pt]{%
+     \makebox[\labelwidth][l]{%
+	 \parbox[t]{\labelwidth}{\hspace{0pt}\textsf{#1:}}}}}%
+\newenvironment{Myentry}[1]%
+	{\begin{list}{}
+	{%
+	  \settowidth{\labelwidth}{\textsf{#1:}}%
+	  \leftmargin=\labelwidth%
+	  \advance \leftmargin\labelsep%
+	 \renewcommand{\makelabel}{\Myentrylabel}}}%
+	{\end{list}}
+%
+\noindent aqq
+aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa 
+\begin{Myentry}{Błędy}
+\item[Opis] środowisko pozwala na zdefiniowanie listy o zadanej szerokości 
+marginesu, jego szerokość wyznacza szerokość wybranej etykiety,
+którą to należy podać jako argument
+\item[Błędy] brak,
+\item[Rezultat] jest zadowalający, a nawet jeszcze bardziej, bowiem 
+zbyt długa etykieta podlega procesowi łamania
+\end{Myentry}
+</pre>
+<img src=desc_p4.gif>
+</body>
+</html>

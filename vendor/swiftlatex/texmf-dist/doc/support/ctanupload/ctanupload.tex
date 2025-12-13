@@ -1,0 +1,217 @@
+\documentclass{ydoc}
+
+\title{The \textsf{ctanupload} script}
+\author{Martin Scharrer}
+\email{martin@scharrer-online.de}
+\date{Version v1.2c -- 2012/05/08}
+\repository{https://bitbucket.org/martin_scharrer/ctanupload/}
+
+
+\providecommand\envvar{\texttt}
+
+\makeatletter
+\define@Macro@handler\DescribeScript{}
+\makeatother
+
+\begin{document}
+\maketitle
+\begin{abstract}
+    This Perl script allows the uploads of a contribution to CTAN from the command line.
+    It is intended to simplify the release process for LaTeX package authors.
+\end{abstract}
+
+\section{Introduction}
+The Comprehensive TeX Archive Network (CTAN) is the place to get materials related to the \TeX\ typesetting system.
+It provides an web form to upload contributions, like \LaTeX\ packages, to one of the main servers
+\url{http://dante.ctan.org/upload} (DANTE server, German TeX users group) or 
+\url{http://www.tex.ac.uk/upload/} (UK-TUG server, UK TeX users group).
+The third main server \url{http://tug.ctan.org/} (TUG, US and International TeX users group) currently does not accept uploads.
+After uploading the contribution to one of these servers it will be distributed to the CTAN mirrors where it can be downloaded by other users.
+
+The \texttt{ctanupload} script allows to automate these uploads which is from benefit for \LaTeX\ package authors which
+write and maintain a larger number of packages. The script is designed to be used from the command line or from a Makefile or other script
+in a full or semi-automatic way. Constant data like the package and author names can be passed automatically to the script while the 
+variable fields like the version number or announcement text can be entered manually.
+
+The script first collects the required data, applies some sanity checks before it is displayed again for confirmation.
+If the data is correct it is uploaded and the status and response from the CTAN upload server is printed.
+
+\clearpage
+\section{Usage}
+\DescribeScript{ctanupload}<options>~'--'<name>'='<value>~!\ldots!
+\DescribeScript{ctanupload}<options>~'--'<name>~<value>~!\ldots!
+\DescribeScript{ctanupload}<options>~'--'<name>'-file='<file with value>~!\ldots!
+\DescribeScript{ctanupload}<options>~'--'<name>'-file'~<file with value>~!\ldots!
+
+The script accepts single letter options and awaits the upload form fields as double slash arguments.
+These fields can also be read from text files or given using environment variables in the form
+\MacroArgs'CTAN_'<NAME>, \MacroArgs'CTAN_'<name>, \MacroArgs<NAME> or \MacroArgs<name>\relax (in this order).
+The support of environment variable simplifies the usage inside Makefiles.
+
+All arguments can also be given using the \envvar{CTANUPLOAD} environment variable which are processed first, so that
+explicit arguments will overwrite them.
+
+\subsubsection*{Options}
+The following options control the behaviour of the script. They can also be grouped together, i.e.\ a single dash
+followed by multiple options.
+
+\par\medskip\par\noindent
+\begin{tabular}{>{\ttfamily}ll}
+\toprule
+ \normalfont Option & Description \\
+\midrule
+  -p        & Prompt for missing values.\\
+  -P        & Do not prompt for missing values. (default)\\
+  -y        & Do not ask for confirmation, but submit immediately.\\
+  -u <URL>  & CTAN URL to upload to.\\
+  -U <name> & CTAN server to upload to, either 'dante' or 'uktug'.\\
+  -F <file> & Read all data from file. (See below)\\
+  -f        & Force upload even if input seems incorrect (unknown license etc.).\\
+  -l        & Write log file. \\
+  -L        & Do not write log file. (default) \\
+  -o <file> & Define log file. (still requires -l) \\
+  -v        & Verbose mode. (Passed to the underlying WWW Perl module)\\
+  -q        & Quiet mode. (Passed to the underlying WWW Perl module)\\
+  -h        & Print help and exit.\\
+  -V        & Print version number.\\
+\bottomrule
+\end{tabular}
+
+\subsubsection*{Fields}
+The following fields exists in the CTAN upload form. At least the ones marked as mandatory must be provided.
+\par\medskip\par\noindent
+\begin{tabular}{>{\ttfamily}llc}
+\toprule
+\normalfont Field & Description & ~~~~~\llap{Mandatory} \\
+\midrule
+    contribution  &  Name of your contribution & * \\
+         version  &  Version number & *\\
+            name  &  Your name & *\\
+           email  &  Your email & *\\
+         summary  &  Summary description & *\\
+       directory  &  Suggested CTAN directory\\
+   DoNotAnnounce  &  No need to announce this update\\
+        announce  &  Short description for announcement\\
+           notes  &  Optional notes to the CTAN maintainers (DANTE only)\\
+         license  &  License type (see below) & *\\
+     freeversion  &  Which free license (see below)\\
+            file  &  File to upload & *\\
+\bottomrule
+\end{tabular}
+
+\subsubsection*{Valid license types}
+The \texttt{license} field can have the following values to indicate the license type:
+\par\medskip\par\noindent
+\begin{tabular}{>{\ttfamily}ll}
+\toprule
+ \normalfont License Type & Description \\
+\midrule
+            free  &  Free\\
+    nocommercial  &  Nocommercial\\
+          nosell  &  Nosell\\
+        nosource  &  Nosource\\
+       shareware  &  Shareware\\
+        artistic  &  Perl Artistic (Clarified or later)\\
+   other-nonfree  &  Other nonfree License\\
+\bottomrule
+\end{tabular}
+
+\subsubsection*{Valid free licenses}
+If a free license was choosen using \texttt{license=free}
+the specific free license can be selected using the \texttt{freeversion} field which
+can have one of the following values:
+
+\par\medskip\par\noindent
+\begin{tabular}{>{\ttfamily}ll}
+\toprule
+ \normalfont License Type & Description \\
+\midrule
+         apache2  &  Apache License v2.0\\
+        artistic  &  Perl Artistic License (version 2)\\
+             fdl  &  GNU Free Documentation License\\
+             gfl  &  GUST Font License\\
+             gpl  &  GNU General Public License\\
+            lgpl  &  Lesser GPL\\
+            lppl  &  LaTeX Project\\
+             ofl  &  Open Font License\\
+              pd  &  Public Domain\\
+      other-free  &  Other Free\\
+\bottomrule
+\end{tabular}
+
+\subsubsection*{File input and output}
+
+The upload fields can also be loaded from a text file using the \texttt{-F} option.
+Such a file needs to hold one field per line in the form `|name = value|'.
+The name should start at the very beginning of a new line. The rest of the line after the equal sign is taken as value.
+The \texttt{announce} and \texttt{notes} field can be followed by additional lines of content.
+These lines should not start with any content similar to the `|name =|' format, where `|name|' is a single word.
+Simply indenting such lines with a space suffices.
+Empty lines and line which start with a `|#|', with or without leading spaces, are ignored.
+
+This format is also used when the upload fields are written to a file. This is done when the edit (`|e|') or save (`|s|') option
+is selected. This allows the direct editing of this file or the later reuse of all or selected fields, respectively.
+
+Using the \texttt{-l} option the upload data and response can be stored in a log file.
+This file is generated in the above format with all extra information starting with `|#|', so that it can be loaded again afterwards.
+The log file name can be given using the \texttt{-o} option or using the \texttt{CTANUPLOAD\_LOGFILE} environment variable.
+Otherwise the log file name defaults to \MacroArgs'ctanupload_'<contribution>'_'<date (YYYY-MM-DD\_HH-mm-SS)>'.log'
+
+
+\section{Examples}
+
+\def\example#1{\par\medskip\par\noindent\textbf{#1}\par}
+\lstset{numbers=none,basicstyle=\ttfamily\small}
+
+\example{Interactive mode (prompt for all values not read from environment variables):}
+\begin{lstlisting}
+ctanupload -p
+\end{lstlisting}
+
+\example{Fill complete form:}
+\begin{lstlisting}
+ctanupload --contribution=somepackage --version=v0.1 \
+    --name "John Doe" --email=john@doe.com \
+    --summary "New package to do something." \
+    --directory=/macros/latex/contrib/somepackage \
+    --DoNotAnnounce=0 \
+    --announce "This package allows to ..." \
+    --notes "Some note to the CTAN admins (if required)" \
+    --license=free --freeversion=lppl
+    --file=somepackage.tar.gz
+\end{lstlisting}
+
+\example{Use of environment variables:}
+\noindent
+The environment variables can be given in the command line or in a user specific configuration file
+which is read by the shell (e.g.\ \texttt{~/.bashrc} for the Bash shell).
+Shown here is the Bash shell syntax, which is the common shell for Linux.
+The static author data is given as environment variables and the contribution name as argument, while
+the script will prompt the user for the rest.
+
+\par\noindent
+\begin{lstlisting}
+export CTAN_NAME="John Doe"
+export CTAN_EMAIL="john@doe.com"
+ctanupload --contribution=somepackage -p
+\end{lstlisting}
+
+\example{Read date from file:}
+\noindent
+Here the announcement text is read from a file \texttt{announcement.txt} while the script will prompt the user
+for the rest of the fields.
+
+\par\noindent
+\begin{lstlisting}
+ctanupload --announce-file announcement.txt -p
+\end{lstlisting}
+
+
+\example{Example Makefile:}
+\noindent
+The following Makefile (see \url{http://www.gnu.org/software/make/manual/make.html}) uses the \texttt{ctanify} script (\url{http://www.ctan.org/pkg/ctanify})
+to create a compressed file for submission using \texttt{ctanupload}.
+
+\lstinputlisting[basicstyle=\ttfamily\scriptsize,frame=lrbt]{Makefile.example}
+
+\end{document}

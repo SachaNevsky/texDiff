@@ -1,0 +1,463 @@
+% This software is licensed to you under the terms of a BSD-style license,
+% see bsdlic.txt for details.
+\input dotnot
+\headline{\ifnum\count0=1\hfil\else\centerline\title\fi}
+\def\title{A Short Program Whose Construction Isn't}
+\def\out{{\it out:\/}}
+\centerline{\bf \title}
+
+\beginsection Introduction
+
+This is a construction of a {\it Simple Program Whose Proof Isn't},
+as D.~E.~Knuth titled his contribution to {\it Beauty Is Our
+Business, A Birthday Salute to Edsger W. Dijkstra}.  Knuth's program
+is module 103 from \TeX. Given integer $n$ it prints a decimal
+fraction that approximates $n/2^{16}$ using just enough digits such
+that the fraction determines $n$ uniquely.  Both David Gries (in
+{\it Binary to Decimal, One More Time}) and Knuth presented proofs
+in the same volume that use unique properties of $2^{16}$. But this
+program provides a nontrivial generalization, it complies to the
+requirements for any $q > n \ge 0$.  We call it ``\out''.
+
+\beginsection Notation
+
+For program construction, that is developing the program {\it and\/} its
+proof hand in hand, Dijkstra proposed both a notation (see EWD
+1300) and a programming language (see {\it A Discipline Of
+Programming}) that we are going to use here---however, slightly
+modified, blocks are deliminated by $[$ and $]$.
+A dot denotes function application, like ``$f.x$'' for ``$f(x)$''.
+Dot and colon have the same precedence and are left associative;
+e.g., ``$d:hiext.i$'' means ``$(d:hiext).i$''.  The precedence is
+higher than that of any other operator, e.g., ``$\neg(d \:= a).R0$''
+means ``$\neg\bigl((d \:= a).R0\bigr)$''.
+
+For expressions $E$, $F$, and $G$ we notate substitution of $E$ by
+$F$ in $G$ as ``$(E \:= F).G$'', e.g.,
+\f (x \:= x+y).(x > 0) \meq x+y > 0\qquad,\hbox{or}\\
+\f \bigl((10+5) \:= 7\bigr).\bigl((10+5) * 2\bigr)\qquad=\qquad 14\qquad.\\
+The last example shows that we don't constraint the
+substituion function to predicates but apply it to any expression,
+in this case to an integer expression, and that we allow any
+expression left of $\:=$, not only program variables.
+
+We denote a conventionally written set $\{t.x \mid r.x\}$ as $\<x :
+r.x : t.x\>$. The three colon separated fields denote the dummy
+variable ($x$), the range of the dummy ($r.x$) and the terms ($t.x$),
+that is the elements of the set.  Quantified operators applied to
+a set are written just after the $\langle$, e. g., $\<\mx i : i <
+10 : i\>$ is the maximum integer exceeded by ten, and $\<\nbr i :
+0 \le i < 10 : i\>$ is the number of naturals exceeded by 10.
+
+Throughout this paper, the type of $m$, $n$, $i$, $j$, and $p$ is
+integer and of $q$ positive integer and of $r$ rational. The
+variables $d$ and $a$ are of type integer array with the lower
+bound of its domain being one.
+
+\beginsection Integer Artithmetic
+
+This construction of \out\ is based on
+\proclaim Theorem 0.
+A half open interval of length $j$ contains exactly $j$ integers.
+
+As programmers we all know this theorem for intervals with integral
+end points but its extension to arbitray end points might come as
+a surprise. We'll use the following corollaries in this paper.
+
+\proclaim Corollary 0.
+$m = \< \mx i : i \le p/q : i\>\meq p/q-1 < m \le p/q$
+
+\proclaim Corollary 1.
+$m = \< \mx i : i < p/q : i\>\meq p/q-1 \le m < p/q$
+
+\proclaim Corollary 2.
+$ p\div q = \< \mx i : i*q \le p : i\>$
+
+\proclaim Corollary 3.
+$(p-1)\div q = \< \mx i : i*q < p : i\>$
+
+\beginsection Specification of \out
+
+Given integers $n$, $q$ with $0 \le n < q$, \out\ computes a decimal
+representation of $n/q$. It stores the digits in an array $d$ with
+$d.lob = 1$. For any integer array $a$ with $a.lob=1$ let $a.s$
+be the sum
+\f a.s = \< \su i : a.lob \le i \le a.hib : a.i/10^i\>\\
+
+{\it d.s is close enough to $n/q$\/}:
+\nf R0:   (n-1/2)/q \le d.s < (n+1/2)/q\\
+
+{\it The length of $d$ is minimal\/}:
+\nf R1:   \< \fa a : a.hib < d.hib : \neg(d \:= a).R0 \>\\ 
+
+{\it
+If there is more than one approximation that is close enough to
+$n/q$ and yielded by an array of minimal length, $d.s$ is the closest one\/}:
+\nf R2: \<\nbr a : (d \:= a).R0 \mand a.hib = d.hib : a.s \> > 1
+\mimpl |n/q - d.s| \le | n/q - a.s|\\
+
+{\it d contains decimal digits\/}:
+\nf R3:   \< \fa i : d.lob \le i \le d.hib : 0 \le d.i < 10\>\\
+
+\beginsection Construction of \out
+
+For brevity, we define expressions that depend implicitly on $d$, the only
+variable in the state space of \out.
+\dnf L: d.hib\\Q: 10^L\!/q\\
+\dnf N: 10^L*d.s\\J: \<r : (n-1/2)*Q \le r < (n+1/2)*Q : r\>\\
+
+We introduced $N$ because it is an integer and $J$ because it is
+a half open interval of length $Q$. They are related to $R0$ by
+\nrf0 R0 \meq N \in J\qquad.\\
+
+For the proof of (0) we observe
+\f R0 \\
+\heq {multiply by $10^L$, definition of $N$ and $Q$}
+\f (n-1/2)*Q \le N < (n+1/2)*Q\\
+\heq {Def. of $J$}
+\f N \in J\\
+
+We construct a loop that starts with an empty array $d$, appends an
+integer to $d$ in each iteration and terminates
+with $R0 \mand R1$.
+
+Applying the Linear Search Theorem to find the minimal length
+we introduce the loop guard
+\nf G0: \< \fa a : a.hib = L : \neg(d \:= a).R0 \>\qquad.\\
+
+Since $N$ is an integer and $J$ depends on $L$ only, not on the entries
+of $d$, (0) lets us conclude
+\f G0 \mff \<\nbr i : i \in J : i\> = 0\qquad.\\
+\filbreak
+To test for $\<\nbr i : i \in J : i\> > 0$, we use a wittness $N$
+that is in $J$ whenever $J$ contains an integer at all. Two candidates for
+$N$ come to mind:
+\df N = \< \mx i : i < (n+1/2)*Q : i\>\\  N = \< \mn i : (n-1/2)*Q\le i : i\>\\ 
+\df \;\mand\\                               \;\mand \\
+\df \<\nbr i : i \in J : i\> = 0\\         \<\nbr i : i \in J : i\> = 0\\
+\dh\eq {arithmetic}                     \eq {arithmetic}
+\df   N < (n-1/2)*Q                 \\    (n+1/2)*Q \le N        \\
+\filbreak
+We decide for the left alternative. It leads to a nondecreasing
+sequence of the intermediate sums $d.s$, and that is equivalent to
+the entries in $d$ being naturals. We take
+
+\nf P0:  N = \< \mx i : i < (n+1/2)*Q : i \> \\
+\unparskip
+as a loop invariant and replace $G0$ by the loop guard
+\nf G1:  N < (n-1/2)*Q\qquad.\\
+\filbreak
+The program reads---with $E$ chosen such that $wp.``d:hiext.E".P0$ holds:
+\bblock
+   d \vir int \array \:= (1) \co{R1; P0}
+   ;\do G1 \-> d:hiext.E \co{R1; P0} \od
+   \cofl{\neg G1; R1; P0}
+\eblock
+We are going to prove that $P0$ and $R1$ are loop invariants.
+\doparskip
+\dnf P0 \hbox{ is established by the initialization}:\\
+     P0 \hbox{ is maintained}:\\
+\df  wp.``d \:= (1)".P0\\
+     wp.``d:hiext.E".P0\\
+\dh\eq   {$N, L \:= 0,0$}
+   \eq   {choice of $E$}
+\df  0 = \<\mx i : i < (n+1/2)/q : i\>\\
+     true\\
+\heq   {Corollary 1}
+\f  (n+1/2)/q - 1 \le 0 < (n + 1/2)/q\\
+\heq   {$0 \le n$ implies the right $<$}
+\f  n+1/2 \le q\\
+\heq   {$n$, $q$ are integers}
+\f  n < q\\
+\heq   {precondition of \out}
+\f  true\\
+\doparskip
+\dnf R1\hbox{ is established by the initialization}:\\
+     R1\hbox{ is maintained}:\\
+\df  wp.``d \:= (1)".R1\\
+     wp.``d:hiext.E".R1\\
+\dh\eq   {$L \:= 0$}
+   \eq   {$L \:= L+1$}
+\df  \<\fa i : 0 \le i < 0 : \neg(L \:= i).R0 \>\\
+     \< \fa i : 0 \le i < L+1 : \neg(L \:= i).R0 \>\\
+\dh\eq   {predicate calculus: empty range of $\fa$}
+   \eq   {predicate calculus: split range}
+\df  true\\
+     \< \fa  i : 0 \le i < L : \neg(L \:= i).R0 \> \mand \neg(L \:= L).R0\\
+\dh {} {} \eq   {Def. of $R1$}
+\df \\ R1 \mand  \neg R0\\
+\dh{} {} \eq   {$R1$ is precondition}
+\df \\ \neg R0\\
+\dh {} {} \ff  {construction of $G1$}
+\df \\ G1\\
+\dh {} {} \eq   {$G1$ is precondition}
+\df \\ true\\
+
+For the termination proof, we note that $L$ is incremented in each iteration
+and bounded from above:
+\f   10^L < q\\
+\heq   {Def. of $Q$, $q > 0$}
+\f   Q < 1\\
+\h\ff  {$J$ is an half open interval of length $Q$; Theorem 0}
+\f   \<\nbr i : i \in J : i\> = 0\\
+\heq   {$G1 \mand P0$}
+\f   true\\
+
+That finishes the proof of the above program and we are ready to turn to
+\nf R2: \<\nbr a : (d \:= a).R0 \mand a.hib = L : a.s \> > 1
+\mimpl |n/q - d.s| \le | n/q - a.s|\qquad.\\
+
+$R2$'s antecedent reduces to $\<\nbr i : i \in J : i\> > 1$, since
+for any $a$ with $a.hib = L$ the number $a.s*10^L$ is an integer,
+which is contained in $J$ precisely when $(d \:= a).R0$ holds.
+
+$R2$'s consequence is equivalent to
+\f n*Q - 1/2 \le N \le n*Q+1/2\qquad.\\
+Since this condition does not always determine a unique solution
+for $N$, we impose the slightly stronger one constraining $N$ to
+a half open interval of length 1.
+
+\nf R2C: n*Q - 1/2 < N \le n*Q+1/2\qquad.\\
+\filbreak
+$R2C$ looks quite different from $P0$. To avoid appending a "wrong"
+digit according to $P0$, we take a further loop invariant that
+implies the negation of $R2$'s antecedent.
+
+\f \<\nbr i : i \in J : i\> \le 1\\
+\h\ff {$J$ is an half open interval of length $Q$; Theorem 0}
+\nf P1: Q \le 1\\
+
+$P1$ is established by initialization:
+\f   wp.``d \:= (1)".P1 \\
+\heq   {$Q \:= 1/q$}
+\f   1 \le q\\
+\heq   {$0 \le n < q$}
+\f   true\\
+
+We calculate guard $G2$ such that $P1$ is maintained:
+\f   wp.``d:hiext.E".P1\\
+\heq   {$Q \:= 10*Q$}
+\nf G2: 10*Q \le 1\\
+
+With $G2$, the loop might terminate while $G1$ is still true, that is without
+reaching $R0$. In that case, we compute the last digit according to $R2C$.
+
+The program now reads---with $E$ chosen such that $wp.``d:hiext.E".P0$ holds
+and $F$ chosen such that $wp.``d:hiext.F".R2C$ holds:
+
+\bblock
+   d \vir int \array \:= (1) \co{P0\and R1\and P1}
+ ; \do G1 \mand G2 \-> d:hiext.E \co{P0\and R1\and P1} \od
+   \cofl{\neg (G1 \and  G2) \and P0 \and R1 \and P1}
+ ; \IF G1 \-> d:hiext.F \co{R2C} \| \neg G1 \-> skip\FI
+   \cofl{R0\and R1\and R2}
+\eblock
+We will prove that the if-statement establishes the postconditions.
+We already have proven that the loop terminates and establishes
+its postconditions. According to the guards of the if-statement,
+our proof takes two cases:
+
+Case zero: The loop terminates with $\neg G1$: 
+
+Here the if-statement selects the skip statement. Its predicate
+transformer, $wp.skip$, is the identity function.
+
+$R0$ is reached:
+\df   (n-1/2)*Q \le N \\      N < (n+1/2)*Q \\
+\dh\eq {$\neg G1$}        \eq  {$P0$}
+\df   true	\\	      true \\
+
+$R1$ is reached: $R1$ is a precondition of the if-statement.
+
+$R2$ is reached: $P1$ implies the negation of $R2$'s antecedent
+and is a precondition of the if-statement.
+ 
+This ends the proof for case zero.
+\filbreak
+Case one: The loop terminates with $G1$:
+
+$R0$ is reached: We show that $R0$ holds in the state after
+``d:hiext.F''.
+\nf R0: (n-1/2)*Q \le N < (n+1/2)*Q\\
+\heq {towards $R2C$}
+\f n*Q -(1/2)*Q \le N < n*Q + (1/2)*Q\\
+\h \ff {$1<Q$, see (**) below; transitiviy of $<$ and $=$}
+\f n*Q -1/2 \le N \le  n*Q + 1/2\\
+\heq {$F$ chosen sucht that $R2C$ holds}
+\f true\\
+
+(**)$1<Q$ holds because
+\f wp.``d:hiext.F".(1<Q)\\
+\heq {$Q \:= 10*Q$}
+\f 1 < 10*Q\\
+\heq {Definition of $G2$}
+\f \neg G2\\
+\heq {$G1 \mand (\neg G1 \mor \neg G2)$}
+\f true\\
+
+$R1$ is reached: The proof for the invariance of $R1$ can be taken
+verbatim, since here we have the same preconditions ($G1; R1; P0$).
+
+$R2$ is reached: Its consequence $R2C$ is established by the choice of $F$.
+
+That finishes the proof for $R0$, $R1$, and $R2$.  So far, we
+ignored $R3$.  In fact, the final value of $d.s$ and $L$ is uniquely
+defined by the other three conditions.  But the intermediate values
+of $d.s$ and---equivalently the entries of $d$---are not. We can
+only hope that \out\ delivers decimal digits.
+
+We show $0 \le E < 10$ in the state before
+``$d:hiext.E$'', where $wp.``d:hiext.E".P0$ holds.
+\f    wp.``d:hiext.E".P0\\
+\heq     {$N, Q \:= 10*N+E, 10*Q$}
+\f    10*N + E = \<\mx i : i < (n+1/2)*10*Q : i \>\\
+\heq     {simplify}
+\f    E = \<\mx i : i < \bigl((n+1/2)*Q - N\bigr)*10 : i \>\\
+\heq    {Corollary 1}
+\f   \bigl((n+1/2)*Q - N\bigr)*10 - 1 \le E < \bigl((n+1/2)*Q-N\bigr)*10 \\
+
+We observe:
+\f     0 \le E \\
+\heq      {trick, 0 and $E$ are integers}
+\df    -1  < E \\
+       E < 10 \\
+\dh\ff   {above, left end}
+   \ff   {above, right end}
+\df   -1 < \bigl((n+1/2)*Q - N\bigr)*10 - 1 \\
+      \bigl((n+1/2)*Q - N\bigr)*10 \le 10 \\
+\dh \eq  {simplify}
+    \eq  {simplify}
+\df   N < (n+1/2)*Q\\
+      (n+1/2)*Q \le N + 1\\
+\dh \eq  {$P0$, right end}
+    \eq  {$P0$, left end}
+\df  true\\
+     true\\
+\filbreak
+So far so good! Now $F$.
+We show $0 \le F < 10$ in the state before
+``$d:hiext.F$'', where $wp.``d:hiext.F".R2C$ holds.
+\f   wp.``d:hiext.F".R2C \\
+\heq   {$N, Q \:= 10*N+F, 10*Q$}
+\f   (n*Q-N)*10 - 1/2 < F \le (n*Q-N)*10 + 1/2\\
+\filbreak
+We observe:
+\df  0 \le F \\
+     F < 10 \\
+\dh \eq  {trick, 0 and $F$ are integers}
+    \ff  {see above, right end}
+\df  -1 < F\\
+    (n*Q-N)*10 + 1/2 < 10\\
+\dh \ff   {see above, left end}
+    \eq   {heading for $P0$, left end}
+\df  -1 \le (n*Q-N)*10 - 1/2\\
+    (n*Q-1)*10 + 1/2 < N*10\\
+\dh \eq  {simplify}
+    \ff  {$P0$, left end}
+\df  -1/2 \le (n*Q-N)*10\\
+  (n*Q-1)*10 + 1/2 < (n+1/2)*Q*10-10\\
+\dh \ff  {arithmetic}
+    \eq  {simplify}
+\df  N < n*Q\\
+     1/2 < (1/2)*Q*10\\
+\dh\eq   {$G1$}
+   \eq   {$\neg G2$}
+\df true\\
+    true\\
+\filbreak
+
+Now that \out\ is proved correct---lucky as we are, $R3$ holds---,
+we reduce the expressions to integer arithmetics. We start with 
+\nf G2: 10*Q \le 1\\
+\heq {$Q=10^L\!/q$}
+\f 10^{L+1} \le q\\
+\heq {new variable $u$ with invariant $u = 10^{L+1}$}
+\f u \le q\\
+
+The invariant of $u$ is established by $u \:= 10$ and maintained
+by $u \:= 10*u$.
+\filbreak
+Next, we reduce
+\nf G1:  N < (n-1/2)*Q \\
+\heq   {expand with $q$, reuse $u$}
+\f   N*q*10 < (n-1/2)*u\\
+\heq   {think positive}
+\f   u/2 < n*u - N*q*10\\
+\heq   {$u = 10^{L+1}$ is even}
+\f   u \div 2 < n*u - N*q*10\\
+\heq   {new variable $v$ with invariant $v=n*u-N*q*10$}
+\f   u \div 2 < v\\
+\filbreak
+The expressions $n*u$ and $N*q*10$ might take large values. To avoid integer
+overflow, we store their difference in $v$. The invariant of $v$ is established
+by $v \:= 10*n$.
+We calculate $V$ such that $v$'s invariant is maintained by $v \:= V$.
+\f   wp.``d:hiext.E; u, v \:= 10*u, V".(v = n*u - N*q*10)\\
+\heq   {semantics of the semicolon}
+\f   wp.``d:hiext.E".\bigl(wp.``u, v \:= 10*u, V".(v = n*u - N*q*10)\bigr)\\
+\heq   {semantics of the assignment}
+\f   wp.``d:hiext.E".(V = n*10*u - N*q*10)\\
+\heq   {array semantics: $N \:= 10*N+E$}
+\f   V = n*10*u - (10*N+E)*q*10\\
+\heq {simplify}
+\f   V = (n*u - 10*N*q-E*q)*10\\
+\heq     {invariant for $v$}
+\f   V = (v-E*q)*10\\
+\filbreak
+Reducing $E$ and $F$ to $\div$ is straight forward by the well
+known Corollary 2 and the slightly less well known Corollary 3.
+
+\dnf E: \<\mx i : i < \bigl((n+1/2)*Q - N\bigr)*10 : i \>\\
+     F: \<\mx i : i \le (n*Q - N)*10 + 1/2 : i \>\\
+\dh=   {expand with $q$}
+   =    {expand with $q$, reuse $u$}
+\df   \<\mx i : i*q < (n+1/2)*10^{L+1} - N*q*10 : i \>\\
+      \<\mx i : i*q \le n*u - N*q*10 + q/2 : i \>\\
+\dh=    {reuse $u$}
+   =    {reuse $v$}
+\df  \<\mx i : i*q < n*u+ u/2 - N*q*10 : i \>\\
+     \<\mx i : i*q \le v + q/2 : i \>\\
+\dh=    {reuse $v$ , $u$ is even}
+   =    {see (*)}
+\df  \<\mx i : i*q < v + u \div 2 : i \>\\
+     \<\mx i : i*q \le v + q \div 2 : i \>\\
+\dh=    {Corollary 3}
+   =    {Corollary 2}
+\df   (v + u \div 2 - 1) \div q\\
+      (v + q \div 2) \div q\\
+\filbreak
+The equation at (*) holds when $q$ is even, since then $q/2 = q \div 2$.
+And when $q$ is odd, we have $q/2 = q \div 2 + 1/2$ and we observe
+\f    i*q \le v + q/2\\
+\heq     {$q$ is odd}
+\f    i*q \le v + q \div 2 + 1/2\\
+\heq     {$i*q$ and $v + q \div 2$ are integers}
+\f    i*q \le v + q \div 2\\
+\filbreak
+This ends the reduction of \out\ to integer arithmetic and the construction
+of our program.
+\bblock
+ \out\; \[\glocon n, q; \virvar d \co {0 \le n < q}
+; \privar u, v
+; d \vir int \array, u \vir int, v \vir int \:= (1), 10, n*10
+; \do u \div 2 < v  \mand  u \le q \->\&%
+     d:hiext.\bigl((v + u \div 2 - 1) \div q\bigr)
+       ; u, v \:= 10*u, (v - d.high*q)*10 \decind
+  \od
+; \IF u \div 2 < v \-> d:hiext.\bigl((v + q \div 2) \div q\bigr)
+  \| u \div 2 \ge v \-> skip
+  \FI
+\] \co {R0 \mand R1 \mand R2 \mand R3}
+\eblock
+That's it. The program is only proved correct, not tested.  The
+proof and/or the program might contain errors. Please don't hesitate
+to contact me if you found one, or if you know a better way to
+apply Dijkstra's technique to a problem that turned out to be
+surprisingly hard.
+\vfill
+\bi
+Wolfgang Helbig\hfill {\tt helbig@lehre.ba-stuttgart.de}\qquad\bi
+Stauferstr. 22\hfill {\tt wwwlehre.ba-stuttgart.de/\~{}helbig/}\qquad\bi
+71334 Waiblingen\hfill October 2008\qquad\hfill
+\eject
+\end

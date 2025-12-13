@@ -1,0 +1,128 @@
+.\" Manpage for pdfxup.
+.\" Contact pdfxup@markey.fr to correct errors or typos.
+.TH man 1 "06 january 2020" "1.51" "pdfxup man page"
+.SH NAME
+pdfxup \- n-up tool with reduced margins
+.SH SYNOPSIS
+pdfxup [OPTIONS] [FILE]
+.SH DESCRIPTION
+pdfxup creates a PDF document where each page is obtained by combining
+several pages of a PDF file given as output. The important feature of
+pdfxup, compared to similar programs, is that it tries to compute the
+(global) bounding box of the input PDF file, in order to remove the
+margins and to keep the text only. Instead of having the font size
+divided by 2 (for the case of 2-up output), in some case you may end up
+with almost the same font size as in the original document (as is the
+case for a default 'article' document produced by LaTeX).
+
+pdfxup uses ghostscript for computing the maximal bounding box of (some
+of) the pages of the document, and then uses pdflatex (with graphicx
+package) in order to produce the new document.
+.SH OPTIONS
+pdfxup accepts numerous options. The most important ones are:
+.\" additional options should be lister here...
+.TP
+\fB\-x\fR n, \fB\-\-columns\fR n
+sets the number of columns in the output file (default 2);
+.TP
+\fB\-y\fR n, \fB\-\-rows\fR n
+sets the number of lines in the output file (default 1);
+.TP
+\fB\-l\fR, \fB\-\-landscape\fR
+sets orientation of paper (of final document) landscape;
+.TP
+\fB\-b\fR (le|se), \fB\-\-booklet\fR (le|se)
+configure for printing as a booklet. Value 'le' (which is the default
+value when \fB\-b\fR is used with no argument) means that two-sided
+printing is in 'long-edge' mode (you turn from one page to the next
+along the long edge of the paper). 'se' is the 'short-edge' option.
+.TP
+\fB\-c\fR, \fB\-\-clip\fR
+clip pages to the computed bounding box. By default, content is not
+clipped, which may result in overlap of neighbouring pages. With this
+option, anything outside the bounding box will not be displayed.
+.TP
+\fB\-o\fR file, \fB\-\-output\fR file
+name of output file;
+.TP
+\fB\-i\fR
+ask before overwriting output file;
+.TP
+\fB\-fw\fR d, \fB\-\-framewidth\fR d
+width of the frame around each page (default 0.4pt). Set to 0pt to have no
+frame at all;
+.TP
+\fB\-im\fR d, \fB\-\-innermargins\fR d
+inner margin between frame and page (default 5pt);
+.TP
+\fB\-m\fR d, \fB\-\-margins\fR d
+margin of pages of the new document (default 5pt);
+.TP
+\fB\-is\fR d, \fB\-\-intspaces\fR d
+space between different pages (default 1pt);
+.TP
+\fB\-p\fR list, \fB\-\-pages\fR list
+only consider sublist of pages of input document. List is a
+comma-separated list of pages or ranges pages of the form a-b; a can
+be omitted to start from first page, and b can be omitted to end at
+the last page. Therefore, "\fB\-p\fR -" (which is the default)
+includes all pages. Also allows modulo, so that "\fB\-p\fR 0%2" would
+include only even-numbered pages.
+.TP
+\fB\-bb\fR list, \fB\-\-bb\fR list
+only consider sublist of pages of input document for computing bounding box;
+.TP
+\fB\-nobb\fR list, \fB\-\-no-bb\fR list
+omit list of pages of input document from computation of bounding box;
+.TP
+\fB\-g\fR, \fB\-\-get-bb\fR
+only compute (and output) bounding box;
+.TP
+\fB\-s\fR x y W H, \fB\-\-set-bb\fR x y W H
+set the bounding box to the given values;
+.TP
+\fB\-w\fR file, \fB\-\-watermark\fR file
+use file as background watermark. file can be any format accepted by
+pdflatex (e.g. png or pdf). If file is a multipage PDF file, page n of
+the watermark file is used with page n of the input file, and the last
+page of the watermark file is repeated if the input file has more pages;
+.TP
+\fB\-wp\fR p, \fB\-\-watermark-period\fR p
+repeat the last p pages of the watermark file instead of only the last one;
+.TP
+\fB\-d\fR, \fB\-\-debug\fR
+debug mode: keep intermediary files;
+.TP
+\fB\-V [0-3]\fR, \fB\-\-verbose\fR [0-3]
+select verbosity (default: 1);
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+run quietly (equiv. '-V=0');
+.TP
+\fB\-v\fR, \fB\-\-version\fR
+print version number and exit;
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+print help message and exit.
+.SH EXAMPLES
+.TP
+\fB# pdfxup file.pdf\fR
+produces 2-up pdf file from file.pdf
+.TP
+\fB# pdfxup -bb 1-4 file.pdf\fR
+same behaviour, but computes the bounding box only using the 
+first 4 pages (this saves time when processing long documents)
+.TP
+\fB# pdfxup -b -o booklet.pdf file.pdf\fR
+same behaviour, but creates a booklet (as booklet.pdf)
+.TP
+\fB# pdfxup -kbb -x1 -y2 -l0 beamer-frames.pdf\fR
+arranges 2 beamer frames per page (not reducing margins)
+.TP
+\fB# pdfxup -kbb -x2 -y2 -l beamer-frames.pdf:1-12,15-19\fR
+arranges 4 beamer frames per page (not reducing margins), including
+only frames 1 to 12 and 15 to 19.
+.SH SEE ALSO
+gs(1), pdflatex(1)
+.SH AUTHOR
+Nicolas Markey (pdfxup@markey.fr)

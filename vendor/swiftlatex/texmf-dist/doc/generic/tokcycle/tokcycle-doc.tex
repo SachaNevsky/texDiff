@@ -1,0 +1,643 @@
+\documentclass{article}
+\usepackage[T1]{fontenc}
+\usepackage{xcolor,tokcycle,verbatimbox,tabstackengine,lipsum}
+\colorlet{bred}{red!90!blue}
+\usepackage{caption}
+\captionsetup{font={sf, footnotesize},labelfont={sf},textfont={footnotesize}}
+\fboxsep=1.5pt\relax
+\makeatletter
+\let\svlt<
+\let\svgt>
+\catcode`>=\active %
+\catcode`<=\active %
+\def\openesc#1{\if\svlt#1\itshape\rmfamily\let\xsvgt\@empty\else
+  \svlt\itshape\rmfamily#1\let\xsvgt\svgt\fi}
+\def\closeesc{\upshape\ttfamily\xsvgt}
+\def\vbdelim{\small\catcode`<=\active\catcode`>=\active 
+\def<{\openesc}
+\def>{\closeesc}}
+\catcode`>=12 %
+\catcode`<=12 %
+\newcommand\TokCycle{\textsf{tokcycle}}
+\newcommand\Character{\textit{Character}}
+\newcommand\Group{\textit{Group}}
+\newcommand\Macro{\textit{Macro}}
+\newcommand\Space{\textit{Space}}
+\newcommand\CGMS{\textit{C-G-M-S}}
+\newcommand\CGMnS{\textit{C}, \textit{G}, \textit{M}, and \textit{S}}
+\newcommand\macname[1]{\texttt{\char92#1}} 
+\newenvironment{specfig}
+{\par\bigskip\vbox\bgroup\small\sffamily\centering}
+{\egroup\medskip\par}
+\newtoks\gtoks
+\newcommand\svgtoks[1]{\global\gtoks\expandafter{\the#1}}
+\frenchspacing
+
+\begin{document}
+
+%%% AGAIN
+
+%%%
+
+\begin{myverbbox}{\argone}#1\end{myverbbox}
+\begin{myverbbox}[\vbdelim\normalsize]{\vbnewcytoks}
+\newcytoks{<new token register>}
+\end{myverbbox}
+
+{\centering{\LARGE Package \TokCycle{} \Large (v\tcver)\par}
+Steven B Segletes
+{\footnotesize $<$steven.b.segletes.civ@mail.mil$>$}
+\\\small{contributor: Christian Tellechea}\footnote{
+{I am extremely grateful to Christian $<$unbonpetit@netc.fr$>$}
+  for his assistance in the development of this package.
+The \macname{addcytoks} macro was provided by him.
+He gave constant reminders on what the parser should be able
+  to achieve, thus motivating me to spend the extra time striving for
+  a generality of application that would not come naturally to me.
+I value highly his collegiality and hold his expertise in the highest 
+  regard.
+}%
+\\\today\par}
+
+\begin{quote}
+The \TokCycle{} package helps one to build tools to process 
+  tokens from an input stream. 
+If a macro to process an arbitrary single 
+  (non-macro, non-space) token can be built, then 
+  \TokCycle{} can provide a wrapper for cycling through an 
+  input stream (including macros, spaces, and groups) 
+  on a token-by-token basis, using the 
+  provided macro on each successive character.
+
+\TokCycle{} characterizes each successive token
+  in the input stream as a \Character, a \Group, a \Macro, or 
+  a \Space.
+Each of these 
+  token categories are processed with a unique directive,
+  to bring about the desired effect of the token cycle.
+\textit{If}-condition flags are provided to identify active,
+  implicit, and catcode-6 tokens as they are digested.
+The package provides a number of options
+  for handling groups.
+\end{quote}
+
+\tableofcontents
+
+\makeatother
+\section{The \TokCycle{} macros and environments}\label{s:intro}
+
+The purpose of the \TokCycle{} package is to provide a tool
+  to assist the user in developing token-processing macros and
+  environments.
+The types of processing are limited only by the creativity of the user,
+  but examples might include letter-case-operations, letter spacing, 
+  dimensional manipulation,
+  simple-ciphering, \{group\} manipulation, macro removal, etc.
+In one sense, it can be thought of as a streaming editor that operates
+  on \LaTeX{} input streams.
+
+The package can be loaded into both plain \TeX{}, by way of the 
+  invocation \verb|\input tokcycle.tex|
+  as well as \LaTeX, via \verb|\usepackage{tokcycle}|.
+It provides a total of 6 macros/pseudo environments, based on
+  three criteria:
+\begin{itemize}
+\item Two pseudo-environments with the phrase ``\texttt{tokencycle}''
+  in the name, and four macros containing the phrase ``\texttt{tokcycle}''.
+The pseudo-\hspace{0pt}environments operate within a group and typeset
+  their result upon completion.
+The macros operate within the document's current scope, but do not typeset the
+  result automatically.
+In the case of both macros and pseudo-environments, the transformed result
+  is available for later use, being stored in the package
+  token register named \macname{cytoks}.
+
+\item Two macros and one pseudo-environment containing the 
+  phrase ``\texttt{xpress}''.
+Without the phrase, the macro/environment requires four
+  \textit{processing directives} to be \textit{explicitly} specified,
+  followed by the input stream.
+With the phrase present, only the input stream is to be provided.  
+In the \texttt{xpress} case, the \textit{processing directives} are 
+  to have been separately specified via external macro and/or are taken 
+  from the most recent \TokCycle{} macro invocation (failing that, 
+  are taken from the package initialization).
+
+\item Two macros containing the phrase ``\texttt{expanded}''.
+When present, the input stream of the token cycle is subject to the
+  new \TeX{} primitive, \macname{expanded}, prior to processing by
+  the \TokCycle{} macro.
+Expansion of specific macros in the input stream can be inhibited 
+  in the input stream with the use of \macname{noexpand}.
+Note that there are no \texttt{expanded} environments in \TokCycle,
+  as \TokCycle{} environments do not pre-tokenize their
+  input stream.
+
+\end{itemize}
+
+The basic approach of all \TokCycle{} macros/environments is to
+  grab each successive token (or group) from the input stream, 
+  decide what category it is, and use the currently active
+  processing directives to make any desired transformation of the 
+  token (or group).
+Generally, with rare exception, the processed tokens should be stored
+  in the token register \macname{cytoks}, using the tools provided
+  by the package.
+The cycle continues until the input stream is terminated.
+
+As tokens/groups are read from the input stream, they are
+  categorized according to four type classifications, and are
+  subjected to the user-specified processing directive associated 
+  with that category of token/group.
+The \TokCycle{} categories by which the input stream
+  is dissected include \Character{}, 
+  \Group{}, \Macro{}, and \Space{}.
+
+Catcode-0 tokens are directed to the \Macro{} directive for processing.
+Catcode-10 tokens are directed to the \Space{} directive.
+When an explicit catcode-1 token is encountered in the \TokCycle{} input
+  stream, the contents of the entire group (sans the grouping) are directed
+  to the \Group{} directive for further processing, which may in turn,
+  redirect the individual tokens to the other categories.
+The handling options of implicit cat-1 and 2 tokens are described later in
+  this document.
+Valid tokens that are neither catcode 0, 1, 2, nor 10, except where noted,
+  are directed to the \Character{} directive for processing.
+
+The syntax of the non-\texttt{xpress} macros/environments is\medskip
+
+\begin{verbbox}[\vbdelim]
+\tokcycle <<or>> \expandedtokcycle
+  {<Character processing directive>}
+  {<Group-content processing directive>}
+  {<Macro processing directive>}
+  {<Space processing directive>}
+  {<token input stream>}
+\end{verbbox}
+\theverbbox\medskip\par\noindent
+or, alternately, for the pseudo-environment,
+
+\begin{verbbox}[\vbdelim]
+\tokencycle
+  {<Character processing directive>}
+  {<Group-content processing directive>}
+  {<Macro processing directive>}
+  {<Space processing directive>}<token input stream>\endtokencycle
+\end{verbbox}
+\medskip\theverbbox\medskip\par\noindent
+For the \texttt{xpress} macros, the syntax is
+
+\begin{verbbox}[\vbdelim]
+\tokcyclexpress <<or>> \expandedtokcyclexpress
+ {<token input stream>}
+\end{verbbox}
+\medskip\theverbbox\medskip\par\noindent\medskip
+or, alternately, for the \texttt{xpress}-pseudo-environment,
+
+\begin{verbbox}[\vbdelim]
+\tokencycleexpress<token input stream>\endtokencyclexpress
+\end{verbbox}
+\theverbbox\medskip
+\begin{sloppypar}
+
+In addition to the above macros/environments, the means is
+  provided to define new \TokCycle{} environments:
+
+\begin{verbbox}[\vbdelim]
+\tokcycleenvironment\environment_name
+  {<Character processing directive>}
+  {<Group-content processing directive>}
+  {<Macro processing directive>}
+  {<Space processing directive>}
+\end{verbbox}
+\medskip\theverbbox\medskip\par\noindent
+This will then permit simplified invocations of the form
+
+\begin{verbbox}[\vbdelim]
+\environment_name<token input stream>\endenvironment_name
+\end{verbbox}
+\medskip\theverbbox\medskip\par\noindent
+
+
+\subsection{Externally specified directives and directive resets}
+
+For use in \texttt{xpress} mode, the directives for the \CGMS{} 
+  categories may be externally pre-specified, respectively,
+  via the four macros \macname{Characterdirective}, 
+  \macname{Groupdirective}, \macname{Macrodirective}, 
+  and \macname{Spacedirective}, each taking an argument containing
+  the particulars of the directive specification.
+
+Each of these directives may be individually reset to the package
+  default with the following argument-free invocations: 
+  \macname{resetCharacterdirective}, \macname{resetGroupdirective}, 
+  \macname{resetMacrodirective}, or \macname{resetSpacedirective}.
+In addition, \macname{resettokcycle} is also provided, which
+  not only resets all four directives collectively, but it also
+  resets, to the default configuration, the manner in which explicit 
+  and implicit group tokens are processed.
+Finally, it resets the \macname{aftertokcycle} macro to empty.
+\end{sloppypar}
+
+The default directives at package outset and upon reset are
+
+\begin{verbbox}[\vbdelim]
+\Characterdirective{\addcytoks{#1}}
+\Groupdirective{\processtoks{#1}}
+\Macrodirective{\addcytoks{#1}}
+\Spacedirective{\addcytoks{#1}}
+\aftertokcycle{}
+\stripgroupingfalse
+\stripimplicitgroupingcase{0}
+\end{verbbox}
+\medskip\theverbbox\medskip\noindent
+
+The interpretation of these directives will be explained in the
+  remainder of this document.
+Let it suffice for now to say that the default directive settings
+  pass through the input stream to the output stream, without
+  change.
+
+
+
+\section{Commands in the \TokCycle{} directives}\label{s:coms}
+
+The command-line token cycling tools provided in the package are 
+  listed in section~\ref{s:intro}.  
+For each of those commands and/or pseudo-environments, the 
+  user must (explicitly or implicitly) detail a set of directives to 
+  specify the manner in which the \Character{}, \Group{}, \Macro{}, 
+  and \Space{} tokens found in the input stream are to be processed.
+The \CGMS{} processing
+  directives consist of normal \TeX/\LaTeX{} commands and user-defined
+  macros to accomplish the desired effect.
+There are, however, several macros provided by the package to assist
+  the user in this endeavor.
+
+The recommended way to apply this package is to collect the
+  \TokCycle-transformed results of the input stream in a token register 
+  provided by the package, named \macname{cytoks}.
+Its contents can then be typeset via \verb|\the\cytoks|.
+The macro for appending things to \macname{cytoks}, to be used in
+  the package directives, is \macname{addcytoks}.
+
+\subsection{Adding tokens to the output stream: \macname{addcytoks}}
+
+The macro provided to append tokens to the \macname{cytoks} token register is
+  named \macname{addcytoks[]\{\}}.
+Its mandatory argument consists of tokens denoting \textit{what} you 
+  would like to append to the \macname{cytoks} register, while the 
+  optional argument denotes \textit{how} you would like them appended (valid 
+  options include positive integers \verb|[<|\textit{n}\verb|>]| and 
+  the letter \texttt{[x]}).
+
+When the optional argument is omitted, the specified tokens are appended
+  \texttt{literally} to the register (without expansion).
+An integer option, call it \textit{n}, takes the  
+  the mandatory argument, and expands it $n$-times, and appends the
+  result to \macname{cytoks}.
+The \texttt{[x]} option employs the \macname{expanded} primitive to maximally
+  expand the argument before appending it to \macname{cytoks}.
+
+The \texttt{[x]} option will prove useful when the \Character{} directive involves
+  a transformation that is fully expandable.
+Its use will allow the expanded
+  result of the transformation to be placed in the token register, rather
+  than the unexpanded transformation instructions.
+
+\subsubsection{\argone}
+
+In the context of the \CGMnS{} processing directives, one may refer to
+  \argone{} (e.g., in the argument to \macname{addcytoks}).
+\TeX{} users know that the first parameter to a \TeX{} macro is denoted
+  as \argone.
+The specification of all \TokCycle{} processing directives is structured 
+  in such a way that ``\argone{}'' may be directly employed to indicate 
+  the current token (or group) under consideration in the input stream.
+
+\subsection{\Group{} directive: \macname{ifstripgrouping}, and \macname{processtoks}}
+
+The \Group{} directive is unique, in that it is the only directive whose
+  argument (\texttt{\#1}) may consist of more than a single token.
+There are two issues to consider when handling the tokens comprising a group:
+  do I retain or remove the grouping (cat-1,2 tokens)? 
+Do I process the group's token content
+  individually through the token cycle, or collectively as a unit?
+
+Grouping in the output stream is determined by the externally set 
+  condition \macname{ifstripgrouping}.
+The package default is \macname{stripgroupingfalse}, such that any 
+  explicit grouping that appears in the input stream will be echoed 
+  in the output stream.
+The alternative, \macname{stripgroupingtrue}, is dangerous 
+  in the sense that it will strip the cat-1,2 grouping from the 
+  group's tokens, thereby 
+  affecting or even breaking code that utilizes such grouping for macro arguments.
+Modify \macname{ifstripgrouping} with care.
+
+The issue of treating the tokens comprising the content of a 
+  group individually or collectively
+  is determined by the choice of macro inside the \Group{} directive.
+Within the \Group{} directive, the argument \texttt{\#1} contains the 
+  collective tokens of the group (absent the outer cat-1,2 grouping).
+The default directive \macname{processtoks\{\#1\}} will recommit the 
+  group's tokens individually to be processed through the token cycle.
+In contrast, the command \macname{addcytoks\{\#1\}} in the \Group{}
+  directive would directly add the collective group
+  of tokens to the \macname{cytoks} register, without being processed
+  individually by \TokCycle.
+
+\subsubsection{Implicit grouping tokens: \macname{stripimplicitgroupingcase}}
+
+Implicit grouping tokens (e.g., \macname{bgroup} \& \macname{egroup})
+  can be handled in one of \textit{three} separate ways.
+Therefore, rather than using an \textit{if}-condition, the external
+  declaration \macname{stripimplicitgroupingcase\{\}} is provided, which takes
+  one of 3 integers as its argument (0, 1, or $-$1).
+The package-default case of ``0'' indicates that the implicit-group tokens
+  will not be stripped, but rather echoed directly into the
+  output stream.
+The case of ``1'' indicates that the implicit-group tokens
+  will be stripped and not placed into the output stream
+  (as with explicit grouping, this is a dangerous case and should be
+  specified with care).
+
+Finally, the special case of $-$1 indicates that the implicit-group
+  tokens should instead be passed to the \Character{} directive for
+  further handling (note that the \macname{implicittoktrue} condition will
+  be set\footnote{as well as the internal condition \macname{tc@implicitgrptrue}}).
+Such a special treatment has limited application---for example,
+  when the intent is to detokenize these tokens.
+
+
+\subsection{Escaping content from \TokCycle{} processing\label{s:escape}}
+
+There are times you may wish to prevent tokens in the \TokCycle{} 
+  input stream from being operated on by \TokCycle.
+Rather, you just want
+  the content passed through unchanged to the output;  that is,
+with the intent to have multi-token content bypass the 
+  \TokCycle{} directives altogether.
+
+\begin{sloppypar}
+The method developed by the package is to enclose the escaped
+  content in the input stream between a set of \TokCycle{} escape 
+  characters, initially set to a vertical rule character found 
+  on the keyboard: ``$|\mkern1mu$''.
+The main proviso is that the escaped content cannot straddle a 
+  group boundary (the complete group may, however, be escaped).
+The escape character can be changed with
+\begin{verbbox}[\vbdelim]
+\settcEscapechar{<escape-token>}\end{verbbox}
+\theverbbox
+$\!\!\!$.
+\end{sloppypar}
+
+\subsection{Flagged tokens}
+
+Certain token types are trapped and flagged via true/false 
+  \textit{if}-conditions.
+These \textit{if}-conditions can be examined within the appropriate 
+  directive (generally the \Character{} directive), to direct the
+  course of action within the directive.
+
+\subsubsection{Active characters}
+
+\paragraph{\macname{ifactivetok}:}
+
+Active (cat-13) tokens that occur in the input stream result in the
+  flag \macname{ifactivetok} being set \macname{activetoktrue}.
+Note that the expansion of the token's active \macname{def}
+  occurs \textit{after} \TokCycle{} processing.
+With active \macname{let}'s, there is no text substitution; however,
+  the assignment is already active at the time of \TokCycle{} processing.
+%
+The only exception to this rule is with pre-expanded input,
+  \macname{expandedtokcycle[xpress]}.
+If an active token's substitution is governed by a \macname{def}, the 
+  text substitution will have occurred before reaching the token cycle.
+
+\paragraph{\macname{ifactivetokunexpandable}:} 
+
+This flag is similar to \macname{ifactivetok}, in that a token must
+  be active for this to be set true.
+However, in addition, it is only
+  true if the active token is \macname{let} to a character or a 
+  primitive, neither of which can be expanded.
+Active characters assigned via \macname{def} or else \macname{let} to a
+  macro will \textit{not} qualify as \macname{activetokunexpandabletrue}.
+
+\paragraph{\macname{ifactivechar}:}
+
+This flag, rather than testing the token, tests the character code of
+  the token, to see if it is set active.  
+Generally, the token and its character code will be syncronized
+  in their \textit{activeness}.
+However, if a token is tokenized when active, but the corresponding character 
+  code is made non-active in the meantime, prior to the token reaching
+  \TokCycle{} processing, this flag will be set \macname{activecharfalse}.
+A similar discrepency will arise if a token is not active when tokenized,
+  but the character code is made active in the interim, prior to
+  \TokCycle{} processing.
+
+\subsubsection{Implicit tokens: \macname{ifimplicittok}}
+
+Implicit tokens, those assigned via \macname{let} to characters\footnote{%
+Some clarification may be needed.
+Control sequences and active characters that are \macname{let} 
+  to something other than a cat-0 control sequence will be flagged 
+  as implicit.
+If implicit, a token will be processed 
+  through the \Character{} directive (exceptions noted).
+On the other hand, if a control sequence or active character is \macname{let} 
+  to a cat-0 control sequence, it will be directed to the \Macro{} 
+  directive for processing, without the implicit flag.
+}%
+  , are flagged with
+  a \texttt{true} setting for \macname{ifimplicittok}.
+Generally, implicit tokens will be directed to the \Character{}
+  directive for processing.
+There are, however, two exceptions:
+i)~implicit grouping tokens (e.g., \macname{bgroup} and \macname{egroup})
+  will not appear in any directive unless the
+  \macname{stripimplicitgroupingcase} has been set to $-$1; and
+ii)~implicit space tokens (e.g., \macname{@sptoken}) will be processed 
+  by the \Space{} directive.
+
+\subsubsection{Parameter (cat-6) tokens (e.g., \texttt{\#}): \macname{ifcatSIX}}
+
+Typically, category-code 6 tokens (like \texttt{\#}) are used to 
+  designate a parameter (e.g., \texttt{\#1}--\texttt{\#9}).
+Since they are unlikely to be used in that capacity inside a 
+  tokcycle input stream, the package behavior is to convert them
+  into something cat-12 and set the \textit{if}-condition \macname{catSIXtrue}.
+In this manner, \macname{ifcatSIX} can be used inside the
+  Character directive to trap and convert cat-6 tokens into something of
+  the user's choosing.
+
+\begin{sloppypar}
+As to the default nature of this conversion (if no special actions are
+  taken), explicit cat-6 characters are converted
+  into the identical character with category code of 12.  
+On the other hand, implicit cat-6 macros (e.g., \verb|\let\myhash#|) 
+  are converted into a fixed-name macro, \macname{implicitsixtok}, 
+  whose cat-12 substitution text is a \macname{string} of the original
+  implicit-macro name.
+\end{sloppypar}
+
+\subsubsection{Parameters (\texttt{\#1}--\texttt{\#9}): 
+\macname{whennotprocessingparameter}}
+
+While, generally, one would not intend to use parameters 
+  in the \TokCycle{} input stream, the package provides, not a flag,
+  but a macro to allow it.
+The macro is to be used \textit{within} the \Character{} directive
+  with the syntax:\smallskip
+
+\begin{verbbox}[\vbdelim]
+\whennotprocessingparameter#1{<non-parameter-processing-directive>}\end{verbbox}
+\theverbbox\smallskip
+
+\noindent Here, the \texttt{\#1} doesn't refer to \texttt{\#1}
+  as it appears in the input stream, but to the sole parameter of
+  the \Character{} directive, referring to the current token being
+  processed.
+With this syntax, when the token under consideration is a 
+  parameter (e.g., \texttt{\#1}--\texttt{\#9}), that parameter is 
+  added to the \macname{cytoks} register.  
+If the token under consideration is not a parameter, the code
+  in the final argument is executed.
+
+\subsection{Misc: general \textit{if}-condition tools}
+
+\TeX{} comes equipped with a variety of \macname{if...} condition
+  primitives.
+When dealing with macros for which the order of expansion is important,
+  the \macname{else} and \macname{fi} can sometimes get in the way
+  of proper expansion and execution.
+These four restructured \textit{if} macros came in handy writing the 
+  package, and may be of use in creating your directives,
+  without \macname{else} and \macname{fi} getting in the way:\medskip
+
+\begin{verbbox}[\vbdelim]
+\tctestifcon{<TeX-if-condition>}{<true-code>}{<false-code>}
+\tctestifx{<\ifx-comparison-toks>}{<true-code>}{<false-code>}
+\tctestifnum{<\ifnum-condition>}{<true-code>}{<false-code>}
+\tctestifcatnx<\ifcat\noexpand-comparison-toks>{<true-code>}{<false-code>}
+\end{verbbox}
+\theverbbox
+  
+
+\subsection{\TokCycle{} macro close-out: \macname{aftertokcycle}}
+
+The \TokCycle{} macros, upon completion, do nothing.
+Unlike \macname{tokencycle} environments, they don't even 
+  output \macname{the}\macname{cytoks} token register.
+A command has been provided, \macname{aftertokcycle}, which takes 
+  an argument to denote the actions to be executed following
+  completion of \textit{all} subsequent \TokCycle{} invocations.
+It might be as simple as \verb|\aftertokcycle{\the\cytoks}|, to
+  have the output stream automatically typeset.
+
+The meaning of \macname{aftertokcycle} can be reset with
+  \macname{aftertokcycle\{\}}, but is also reset as part of
+  \macname{resettokcycle}.
+Unlike macros, the \TokCycle{} environments are unaffected
+  by \macname{aftertokcycle}, as they actually set it locally 
+  (within their scope) to accomplish their own purposes.
+
+\subsection{Accommodating catcode-1,2 changes: \macname{settcGrouping}%
+  \label{s:grouping}}
+
+In order to avoid making the \TokCycle{} parser overly complex, requiring
+  multiple passes of the input stream, the package defaults to using
+  catcode-1,2 braces \texttt{\{~\}} to bring about grouping in the
+  output stream, regardless of what the actual cat-1,2 tokens are in
+  the input stream.
+As long as their sole purpose in the token 
+  cycle is for grouping and scoping, this arrangement will produce
+  the expected output.
+
+However, if the actual character-code of these tokens is important
+  to the result (e.g., when detokenized), there is one other option. 
+The package allows the external specification of which cat-1,2
+  tokens should be used in the \TokCycle{} output stream.
+The syntax is \verb|\settcGrouping{{#1}}|, to use the standard braces
+  for this purpose (default).  
+If angle-brackets \verb|< >| were to be the \textit{new} 
+  grouping tokens, then, after their catcodes were changed, and
+  \macname{bgroup} and \macname{egroup} were reassigned, one would
+  invoke \verb|\settcGrouping<<#1>>|.
+These will then be the grouping tokens in the \TokCycle{} output
+  stream until set to something else.
+
+\section{Usage Examples}
+
+See the adjunct file, \texttt{tokcycle-examples.pdf}, for an 
+  array of \TokCycle{} examples.
+
+\section{Summary of known package limitations}
+
+The goal of this package is not to build the perfect token-stream
+  parser.
+It is, rather, to provide the means for users to build useful 
+  token-processing tools for their \TeX/\LaTeX{} documents.
+
+What follows are the known limitations of the package.
+  which arise, in part, from the single-pass parsing algorithm
+  embedded in the package.
+Surely, there are more cases associated with arcane catcode-changing
+  syntax that are not accounted for; 
+I encourage you to bring them to my attention.
+If I can't fix them, I can at least disclaim and declaim them.
+
+\begin{itemize}
+
+\item One must inform the package (via \macname{settcGrouping}) of 
+  changes to the cat-1,2 tokens \textit{if}
+  there is a need to detokenize the output with the specified
+  bracing group; however, 
+  grouping will still be handled properly (i.e., cat-1,2 tokens will
+  be detected), even if the package is not notified.
+See section~\ref{s:grouping}.
+
+\item Should one need to keep track of the \textit{names} of implicit tokens, 
+  then only one named implicit cat-6 token (e.g., \verb|\let\svhash#|) 
+  may appear in the input 
+  stream (though it can appear multiple times). 
+There is no limit on explicit cat-6 toks.
+This limitation occurs because implicit cat-6 tokens are converted 
+  into the fixed-name implicit macro \macname{implicitsixtok} which 
+  contains the \macname{string} of the most recently used
+  implicit cat-6 token name.
+In any event, all cat-6 tokens are trapped and flag \texttt{true}
+  the \macname{ifcatSIX} condition.
+
+\end{itemize}
+
+\section*{Acknowledgments}
+
+In addition to Christian Tellechea, a contributor to this 
+  package,
+the author would like to thank Dr.\@ David Carlisle for his 
+  assistance in understanding some of the nuances of token
+  registers.
+Likewise, his explanation about how a space token is defined 
+  in \TeX{} (see \verb|https://tex.stackexchange.com|\allowbreak
+  \verb|/questions/64197/|\allowbreak\verb|pgfparser-module-and-blank-spaces/64200#64200|) 
+  proved to be useful here.
+The \texttt{tex.stackexchange} site provides a wonderful
+  opportunity to interact with the leading developers and
+  practitioners of \TeX{} and \LaTeX{}.
+
+\section*{Source Code}
+
+\Large\texttt{tokcycle.sty}
+\verbfilenobox[\footnotesize]{tokcycle.sty}\vspace{2in}
+
+\noindent\texttt{tokcycle.tex}
+\verbfilenobox[\footnotesize]{tokcycle.tex}
+
+
+\end{document}
+

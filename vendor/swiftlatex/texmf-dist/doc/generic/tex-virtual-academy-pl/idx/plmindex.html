@@ -1,0 +1,153 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-2">
+<meta http-equiv="Content-language" content="pl">
+<meta name="Author" content="Włodzimierz Macewicz">
+<title> Program plmindex </title>
+</head>
+<body bgcolor=#F0F0A0>
+Przedstawiam Państwu program <code>plmindex</code>, czyli
+swoją implementację programu <code>makeindx</code> (wersja 2.12).
+Program jest dostępny w postaci pakietu spakowanego (źródła)
+programem <code>zip</code>
+w instalacji TeX Live: 
+<!-- <a href="ftp://ftp.elka.pw.edu.pl/pub/unix/DTP/plmindex.zip"> -->
+<a href="../../../support/gustprog/plmindex.zip">texmf-dist/doc/support/gustprog/plmindex.zip</a><br>
+<!-- i binaria dla dos'a (djgpp) i Windowsów -- domyślna strona kodowa Mazowia<br>
+<a href="ftp://ftp.elka.pw.edu.pl/pub/unix/DTP/djgpp.zip">djgpp.zip</a><br>
+oraz dla Windowsów (MS C++) -- domyślna strona kodowa cp1250<br>
+<a href="ftp://ftp.elka.pw.edu.pl/pub/unix/DTP/msc.zip">msc.zip</a><br> -->
+Pakiety są także dostępne w archiwum GUST, pod adresem:<br>
+<a href=ftp://ftp.gust.org.pl/TeX/GUST/contrib/GUSTPROG/plmindex.zip>plmindex.zip</a> oraz na CTAN-ach
+w katalogu <tt>..../language/polish</tt>
+
+
+<p>Program ten służy do sortowania i grupowania skorowidzów
+utworzonych pakietem LaTeX. Po przetworzeniu zbioru może on
+być dołączony do tekstu jako gotowy skorowidz.
+
+<p>Krótki opis opcji programu można uzyskać po wywołaniu<br>
+plmindex -h
+
+<p>
+Zmiany w programie polegają na dostosowaniu go do pracy
+z dowolnym ośmio-bitowym alfabetem (sposobem kodowania).
+Prezentowana wersja pozwala na opracowanie skorowidzów 
+w języku polskim (kod Mazowii, cp1250, cp852 i ISO-8859-2) oraz angielskim.
+Zdefiniowanie nowego języka polega na zbudowaniu kilku
+tablic określających: porządek leksykograficzny,
+kategorie znaków, odpowiedniki liter małe-duże i
+<b>nie wymaga modyfikacji kodu</b> programu. Wszystkie funkcje 
+odpowiedzialne za operowanie na ciągach znaków (,,stringach'')
+są sterowane tablicami. Są one całkowicie niezależne od 
+implementacji kompilatora <code>C</code>. Program był
+kompilowany następującymi kompilatorami:
+<ul>
+<li> Borland C++ v 4.51 -- po dodaniu kolejnych tablic wielkość programu
+    przerosła możliwości środowiska 16-bitowego
+<li> Watcom C++ v 10.0a
+<li> GNU C++ v 2.8.1 (System MS-DOS) -- uwaga na wersję 2.8.0, czasami 
+	źle obsługuje
+     przesyłanie parametrów do funkcji o niezananej liczbie parametrów
+<li> GNU C++ v 2.8.1 (SunOS 6.5 i Linux)
+<li> MSC C++ 6.0 (Windows 98)
+</ul>
+dla każdego kompilatora zostały napisane odpowiednie
+<code>makefile</code>, łatwo rozróżniane po ostatnim członie
+nazwy (rozszerzeniu): 
+<dl>
+<dd><code>.wcc</code> -- Watcom,
+<dd><code>.djg</code> -- GNU (MS-Dos), 
+<dd><code>.gcc</code> -- GNU (SunOS -- ogólnie Unix)<br>
+<dd><code>.msc</code> -- MSC C++ 6.0 (Windows 98)<br>
+<dd><code>.emx</code> -- GNU (DOS >>implementacja E.Mathesa<< lub OS)
+</dl>
+odpowiedniemu zbiorowi należy zmienić nazwę na <code>makefile</code>
+i uruchomić program <code>make</code> (lub <code>wmake</code> w przypadku
+pakietu Watcom i nmake w przypadku MSC) lub wywłać<br>
+<tt>
+[n|w]make -f makefile.<i>xxx</i>
+</tt>
+
+<hr>
+<center> <h2>Opis tablic i struktur</h2> </center>
+
+
+<p>Została zdefiniowana struktura <code>_multilanguage</code>
+zawierająca tablice opisujące cechy języka.  Odsyłacze przyporządkowane
+nazwom pól wskazują na zbiory zawierające przykładowe
+definicje dla kodu Mazowii. Nazwa przykładowej tablicy
+zawiera prefix określający definiowany język.
+<pre>
+struct _multilanguage
+   { 
+            p_char_u  <a href=day.html>*day_name_ptr</a>;		/* tablica nazw dni tygodnia  */
+            p_char_u  <a href=mon.html>*mon_name_ptr</a>;		/* tablica nazw miesięcy      */
+            int_u     <a href=toascii.html>*toascii_table</a>;		/* tablica konwersji znaków
+	                                           o kodach &gt; 127 na
+						   kod ASCII np. ą --&gt; a   */
+            a_char_u  <a href=lower.html>*lower_table</a>;		/* tablica konwersji małych
+	                                           liter na duże              */
+            a_char_u  <a href=upper.html>*upper_table</a>;		/* tablica konwersji dużych
+	                                           liter na małe              */
+            a_char_u  <a href=typy.html>*char_type</a>;               /* tablica typów znaków       */
+            int_u     <a href=order.html>*order_tbl</a>;               /* tablica definiująca
+	                                           kolejność leksykograficzną */
+            word      <a href=flags.html>flags</a>;                    /* słowo flag                 */
+            char_u    <a href=spec.html>*(*_special)(const long)</a>; /* adres funkcji dodatkowych  */
+            char      <a href=id.html>*id</a>;                      /* identyfikator języka       */
+            char      <a href="name.html">*name</a>;                    /* nazwa języka               */
+     struct decode    <a href=decode.html>*decode</a>;                  /* adres struktury opisującej
+                                                   nazwy liczb                */
+};
+</pre>
+<pre>
+struct decode
+   {
+    p_char_u *<a href=jedn.html>jedn</a>;			/* adres tablicy nazw jednostek */
+    p_char_u *<a href=dies.html>dies</a>;			/* adres tablicy nazw dziesiątek */
+    p_char_u *<a href=setki.html>setki</a>;			/* adres tablicy nazw setek */
+    p_char_u *<a href=tys.html>tys</a>;			/* adres tablicy nazw tysięcy */
+    p_char_u *<a href=mil.html>mil</a>;			/* adres tablicy nazw milionów */
+   };
+</pre>
+
+definicje typów
+<pre>
+typedef unsigned char char_u;
+
+typedef const unsigned char *p_char_u[];
+
+typedef const    unsigned char a_char_u[];
+typedef const    int      int_u[];
+typedef unsigned int      word;
+</pre>
+
+Powyższe definicje znajdują się w zbiorze <code>mkind.h</code>.
+
+<p>W celu podłączenia nowego języka należy utworzyć nowy zbiór
+nagłówkowy zawierający opis języka w postaci tabel.
+
+<p>Utworzony zbiór należy dołączyć poleceniem
+<code>#include</code> do zbioru <code>language.c</code>
+W zbiorze <code>language.c</code> znajdują się funkcje
+odpowiedzialne za operacje na ciągach znaków. Są one
+sterowane zmienną <code>Language</code>, będącą wskazaniem
+na element tablicy <a href=lang.html><code>multilanguage</code></a> zawierającą
+struktury wszystkich zadeklarowanych języków. Początkowa wartość
+zmiennej <code>Language</code> określa domyślny język
+Dopuszczalna wartość zmiennej jest określona przez konstrukcję
+<code>enum _language</code>, tak że w przypadku definiowania
+nowego języka należy zdefiniować nowy element -- będzie
+on identyfikatorem języka.
+
+
+<p>W zbiorze <code>language.c</code> znajduje się deklaracja
+tablicy struktur opisu języków. Ostatnim elementem tablicy
+musi być opis zawierający w polu <code>id</code> wartość
+<code>NULL</code>
+
+<hr>
+<em>Włodzimierz Macewicz</em>
+</body>
+</html>

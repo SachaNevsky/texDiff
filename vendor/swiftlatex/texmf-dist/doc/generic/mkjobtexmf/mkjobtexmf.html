@@ -1,0 +1,474 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>mkjobtexmf</title>
+<link rev="made" href="mailto:feedback@suse.de" />
+</head>
+
+<body style="background-color: white">
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">Name</a></li>
+	<li><a href="#version">Version</a></li>
+	<li><a href="#synopsis">Synopsis</a></li>
+	<li><a href="#description">Description</a></li>
+	<ul>
+
+		<li><a href="#running_the_program">Running the program</a></li>
+		<li><a href="#file_recording">File recording</a></li>
+		<li><a href="#analyze_and_link_copy_found_files">Analyze and link/copy found files</a></li>
+	</ul>
+
+	<li><a href="#options">Options</a></li>
+	<li><a href="#examples">Examples</a></li>
+	<li><a href="#unsolved_issues__caveats__todos">Unsolved issues, caveats, todos</a></li>
+	<li><a href="#files">Files</a></li>
+	<li><a href="#author">Author</a></li>
+	<li><a href="#copyright_and_license">Copyright and license</a></li>
+	<li><a href="#history">History</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">Name</a></h1>
+<p>mkjobtexmf -- Generate a texmf tree for a particular job</p>
+<p>
+</p>
+<hr />
+<h1><a name="version">Version</a></h1>
+<p>2011-11-10 v0.8</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">Synopsis</a></h1>
+<p>The progam <strong>mkjobtexmf</strong> runs a program and tries to
+find the used file names. Two methods are available,
+option <code>-recorder</code> of TeX (Web2C) or the program <strong>strace</strong>.</p>
+<p>Then it generates a directory with a texmf tree. It checks
+the found files and tries sort them in this texmf tree.</p>
+<p>It can be used for archiving purposes or to speed up
+following TeX runs.</p>
+<pre>
+    mkjobtexmf [options]</pre>
+<p>This runs TeX that can be configured by options.
+Both methods for getting the used file names are available.</p>
+<pre>
+    mkjobtexmf [options] -- &lt;cmd&gt; [args]</pre>
+<p>The latter form runs program <em>cmd</em> with arguments <em>args</em>
+instead of TeX. As method only program <strong>strace</strong> is available.</p>
+<p>Options:</p>
+<pre>
+    --jobname &lt;name&gt;       Name of the job (mandatory).
+                              Usually this is the TeX file
+                              without extension
+    --texname &lt;file&gt;       Input file for TeX. Default is the
+                              job name with extension '.tex'
+    --texopt &lt;option&gt;      Option for TeX run
+    --destdir &lt;directory&gt;  Destination directory,
+                              default is `&lt;jobname&gt;.mjt'
+    --output               Add also output files
+    --strace               Use strace instead of TeX's
+                              option -recorder
+    --copy                 Copy files instead of creating
+                              symbol links
+    --flat                 Junk paths, do not make directories
+                              inside the destination directory
+    --(no)texhash          Run texhash, use --notexhash for MiKTeX
+    --exclude-ext &lt;ext&gt;    Exclude files with extension &lt;ext&gt;.
+    --cmd-tex &lt;cmd&gt;        Command for the TeX compiler
+    --cmd-kpsewhich &lt;cmd&gt;  Command for kpsewhich
+    --cmd-texhash &lt;cmd&gt;    Command for texhash
+    --cmd-strace &lt;cmd&gt;     Command for strace
+    --verbose              Verbose output
+    --help                 Brief help message
+    --man                  Full documentation
+    --version              Print version identification</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">Description</a></h1>
+<p>
+</p>
+<h2><a name="running_the_program">Running the program</a></h2>
+<p>First <strong>mkjobtexmf</strong> runs a program, usually TeX. The TeX compiler
+is configured by option <code>--cmd-tex</code>. Option <code>--texname</code> can
+be used, if the file name extension differs from <em>.tex</em>:</p>
+<pre>
+    mkjobtexmf --jobname foo --texname foo.ltx</pre>
+<p>Even more complicate cases are possible:</p>
+<pre>
+    mkjobtexmf --jobname foo --texname '\def\abc{...}\input{foo}'</pre>
+<p>If another program than TeX should be used (dvips, ...),
+then this program can be given after <code>--</code>:</p>
+<pre>
+    mkjobtexmf --jobname foo -- dvips foo</pre>
+<p>
+</p>
+<h2><a name="file_recording">File recording</a></h2>
+<p>Two methods are available to get the used file names:</p>
+<dl>
+<dt><strong><a name="item_recorder_of_tex">Recorder of TeX</a></strong><br />
+</dt>
+<dd>
+Some TeX distributions (e.g. Web2C) support the option <strong>-recorder</strong>
+for its TeX compilers. Then the TeX compiler generates a file with
+extension <em>.fls</em> that records the used input and output files.
+</dd>
+<p></p>
+<dt><strong><a name="item_program_strace">Program strace</a></strong><br />
+</dt>
+<dd>
+This program traces system calls and signals. It is used here
+to log the used files.
+</dd>
+<p></p></dl>
+<p>
+</p>
+<h2><a name="analyze_and_link_copy_found_files">Analyze and link/copy found files</a></h2>
+<p>The result directory <em><em>jobname</em>.mjt</em> is generated. Inside the
+result TEXMF tree is created. Each found file is compared against
+a list of paths of TEXMF trees. If a match is found, the file is
+linked/copied into the TEXMF tree. The list of paths is generated by
+program <strong>kpsewhich</strong>.</p>
+<p>If the file cannot be mapped to a TEXMF tree and the file is
+a relative file name, then it is directly linked/copied into the
+result directory <em><em>jobname</em>.mjt</em>. Absolute file names
+are not supported and neither paths with links to parent directories.</p>
+<p>Symbolic links are created by default. The files are copied
+if option <a href="#item__2d_2dcopy"><code>--copy</code></a> is given or symbolic linking is not available.</p>
+<p>
+</p>
+<hr />
+<h1><a name="options">Options</a></h1>
+<dl>
+<dt><strong><a name="item__2d_2djobname_3d_3cjobname_3e"><strong>-</strong><strong>-jobname</strong>=&lt;<em>jobname</em>&gt;</a></strong><br />
+</dt>
+<dd>
+It is the name of the job. `&lt;<em>jobname</em>&gt;.tex' serves as default for
+the TeX file and &lt;<em>jobname</em>&gt; is used for naming various directories
+and files. See section <a href="#files">Files</a>.
+</dd>
+<p></p>
+<dt><strong><a name="item__2d_2dtexname_3d_3cname_3e"><strong>-</strong><strong>-texname</strong>=&lt;<em>name</em>&gt;</a></strong><br />
+</dt>
+<dd>
+The name of the TeX input file, if it differs from &lt;<em>jobname</em>&gt;.tex.
+</dd>
+<p></p>
+<dt><strong><a name="item__2d_2dtexopt_3d_3copt_3e"><strong>-</strong><strong>-texopt</strong>=&lt;<em>opt</em>&gt;</a></strong><br />
+</dt>
+<dd>
+Additional option for the TeX compiler, examples are <code>--ini</code> or
+<code>--shell-escape</code>. This option can be given more than once.
+</dd>
+<p></p>
+<dt><strong><a name="item__2d_2ddestdir_3d_3cdirectory_3e"><strong>-</strong><strong>-destdir</strong>=&lt;<em>directory</em>&gt;</a></strong><br />
+</dt>
+<dd>
+Specifies the name of the destination directory where the result
+is collected. As default a directory is generated in the current
+directory with the job name and extension `.mjt'.
+</dd>
+<p></p>
+<dt><strong><a name="item__2d_2doutput"><strong>-</strong><strong>-output</strong></a></strong><br />
+</dt>
+<dd>
+Also add output files.
+</dd>
+<p></p>
+<dt><strong><a name="item__2d_2dstrace"><strong>-</strong><strong>-strace</strong></a></strong><br />
+</dt>
+<dd>
+Use method with program <strong>strace</strong>, see <a href="#description">Description</a>.
+</dd>
+<p></p>
+<dt><strong><a name="item__2d_2dcopy"><strong>-</strong><strong>-copy</strong></a></strong><br />
+</dt>
+<dd>
+Files are copied instead of creating symbolic links.
+</dd>
+<p></p>
+<dt><strong><a name="item__2d_2dflat"><strong>-</strong><strong>-flat</strong></a></strong><br />
+</dt>
+<dd>
+Files are linked or copied without path elements.
+The destination directory will contain a flat list of
+files or links without directory.
+</dd>
+<dd>
+<p>The files `ls-R' and `aliases' are ignored.</p>
+</dd>
+<p></p>
+<dt><strong><a name="item__2d_2dexclude_2dext_3d_3cext_3e"><strong>-</strong><strong>-exclude-ext</strong>=&lt;<em>ext</em>&gt;</a></strong><br />
+</dt>
+<dd>
+Files with extension &lt;<em>ext</em>&gt; are excluded. The option can be
+given several times or a comma separated list of extensions
+can be used. Examples:
+</dd>
+<dd>
+<pre>
+    --exclude-ext aux --exclude-ext log --exclude-ext toc</pre>
+</dd>
+<dd>
+<p>is the same as</p>
+</dd>
+<dd>
+<pre>
+    --exclude-ext aux,log,toc</pre>
+</dd>
+<p></p>
+<dt><strong><a name="item__2d_2d_28no_29texhash"><strong>-</strong><strong>-(no)texhash</strong></a></strong><br />
+</dt>
+<dd>
+As default the file `ls-R' is generated in the `texmf' tree,
+because this is the file name database that might be used
+in TeX Live. Because MiKTeX uses a different mechanism, its
+`texhash' does not generate the `ls-R' files and <code>--notexhash</code>
+suppresses the call of `texhash'.
+</dd>
+<p></p>
+<dt><strong><a name="item__2d_2dcmd_2dtex_3d_3ccmd_3e"><strong>-</strong><strong>-cmd-tex</strong>=&lt;<em>cmd</em>&gt;</a></strong><br />
+</dt>
+<dd>
+Command for the TeX compiler. Default is pdflatex.
+</dd>
+<p></p>
+<dt><strong><a name="item__2d_2dcmd_2dkpsewhich_3d_3ccmd_3e"><strong>-</strong><strong>-cmd-kpsewhich</strong>=&lt;<em>cmd</em>&gt;</a></strong><br />
+</dt>
+<dd>
+Command for kpsewhich.
+</dd>
+<p></p>
+<dt><strong><a name="item__2d_2dcmd_2dtexhash_3d_3ccmd_3e"><strong>-</strong><strong>-cmd-texhash</strong>=&lt;<em>cmd</em>&gt;</a></strong><br />
+</dt>
+<dd>
+Command for updating the file name database of the generated
+texmf tree. Default is texmf.
+</dd>
+<p></p>
+<dt><strong><a name="item__2d_2dcmd_2dstrace_3d_3ccmd_3e"><strong>-</strong><strong>-cmd-strace</strong>=&lt;<em>cmd</em>&gt;</a></strong><br />
+</dt>
+<dd>
+Command for strace.
+</dd>
+<p></p>
+<dt><strong><a name="item__2d_2dverbose"><strong>-</strong><strong>-verbose</strong></a></strong><br />
+</dt>
+<dd>
+Verbose messages.
+</dd>
+<p></p>
+<dt><strong><a name="item__2d_2dhelp"><strong>-</strong><strong>-help</strong></a></strong><br />
+</dt>
+<dd>
+Display help screen.
+</dd>
+<p></p>
+<dt><strong><a name="item_b"><strong>-</strong>B(-man&gt;</a></strong><br />
+</dt>
+<dd>
+Print manual page.
+</dd>
+<p></p>
+<dt><strong><a name="item__2d_2dversion"><strong>-</strong><strong>-version</strong></a></strong><br />
+</dt>
+<dd>
+Print version identification and exit.
+</dd>
+<p></p></dl>
+<p>
+</p>
+<hr />
+<h1><a name="examples">Examples</a></h1>
+<p>TeX file <em>test.tex</em> using TeX's recorder method:</p>
+<pre>
+    mkjobtexmf --jobname test</pre>
+<p>TeX file <em>test.tex</em> using LaTeX:</p>
+<pre>
+    mkjobtexmf --jobname test --cmd-tex latex</pre>
+<p>Format generation:</p>
+<pre>
+    mkjobtexmf --jobname test --texopt -ini --texname pdflatex.ini</pre>
+<p>Example, how the new texmf tree (Linux/bash) can be used:</p>
+<pre>
+    TEXMF=!!test.mjt/texmf pdflatex test</pre>
+<p>Example for generating a zip archive (Linux/bash):</p>
+<pre>
+    (cd test.mjt &amp;&amp; zip -9r ../test .)</pre>
+<p>Example for generating a tar archive:</p>
+<pre>
+    tar cjhvf test.tar.bz2 -C test.mjt .</pre>
+<p>
+</p>
+<hr />
+<h1><a name="unsolved_issues__caveats__todos">Unsolved issues, caveats, todos</a></h1>
+<dl>
+<dt><strong><a name="item_experimental_software">Experimental software</a></strong><br />
+</dt>
+<dd>
+Options, defaults, how the program works might change in
+future versions.
+</dd>
+<p></p>
+<dt><strong><a name="item_texmf_2ecnf"><em>texmf.cnf</em></a></strong><br />
+</dt>
+<dd>
+Currently the method with <strong>strace</strong> records this files.
+TeX's recorder does not. Useful are <em>texmf.cnf</em> files for
+variable settings. Because we have just one TEXMF tree,
+the path sections should probably rewritten.
+</dd>
+<p></p>
+<dt><strong><a name="item_settings_in_environment_variables">Settings in environment variables</a></strong><br />
+</dt>
+<dd>
+They are not stored at all.
+</dd>
+<p></p>
+<dt><strong><a name="item_collisions">Collisions</a></strong><br />
+</dt>
+<dd>
+The program uses one destination directory and at most
+one TEXMF tree for the result. However, the source files
+can come from different directories and TEXMF trees.
+Therefore name collisions are possible.
+</dd>
+<dd>
+<p>The program follows the strategy not to delete files
+in the destination directory. That allows to collect files
+from differnt runs. Thus collisions are resolved
+in the manner that the first entry that is made in
+the destination directory wins.</p>
+</dd>
+<p></p>
+<dt><strong><a name="item_configuration_file">Configuration file</a></strong><br />
+</dt>
+<dd>
+It would save the user from retyping the same options again and again.
+</dd>
+<p></p>
+<dt><strong><a name="item_uncomplete_recording">Uncomplete recording</a></strong><br />
+</dt>
+<dd>
+Bugs in TeX's file recording might result in incomplete
+file recording (e.g. pdfTeX 1.40.3 does not record .pfb and
+.pk files).
+</dd>
+<p></p>
+<dt><strong><a name="item__2e_2e_2e">...</a></strong><br />
+</dt>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="files">Files</a></h1>
+<dl>
+<dt><strong><a name="item__3cjobname_3e_2emjt_2f"><em>&lt;jobname&gt;.mjt/</em></a></strong><br />
+</dt>
+<dd>
+Directory where the resulting texmf tree and symbol links
+are stored. It can be changed by option <code>--destdir</code>.
+</dd>
+<p></p>
+<dt><strong><a name="item__3cjobname_3e_2efls"><em>&lt;jobname&gt;.fls</em></a></strong><br />
+</dt>
+<dd>
+Name of TeX's recorder file.
+</dd>
+<p></p>
+<dt><strong><a name="item__3cjobname_3e_2estrace"><em>&lt;jobname&gt;.strace</em></a></strong><br />
+</dt>
+<dd>
+Log file where the result of <strong>strace</strong> is stored.
+</dd>
+<p></p></dl>
+<p>
+</p>
+<hr />
+<h1><a name="author">Author</a></h1>
+<p>Heiko Oberdiek, email: heiko.oberdiek at googlemail.com</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright_and_license">Copyright and license</a></h1>
+<p>Copyright 2007, 2008, 2011 by Heiko Oberdiek.</p>
+<p>This library is free software; you may redistribute it and/or
+modify it under the same terms as Perl itself
+(Perl Artistic License/GNU General Public License, version 2).</p>
+<p>
+</p>
+<hr />
+<h1><a name="history">History</a></h1>
+<ol>
+<li><strong><a name="item__2f04_2f16_v0_2e1"><strong>2007/04/16 v0.1</strong></a></strong><br />
+</li>
+<ul>
+<li><strong><a name="item_first_experimental_version_2e">First experimental version.</a></strong><br />
+</li>
+</ul>
+<li><strong><a name="item__2f05_2f09_v0_2e2"><strong>2007/05/09 v0.2</strong></a></strong><br />
+</li>
+<ul>
+<li><strong><a name="item_typo_in_option_name_fixed_2e">Typo in option name fixed.</a></strong><br />
+</li>
+</ul>
+<li><strong><a name="item__2f09_2f03_v0_2e3"><strong>2007/09/03 v0.3</strong></a></strong><br />
+</li>
+<ul>
+<li><strong><a name="item_new_options_3a__2d_2dcopy_2c__2d_2dflat_2c__2d_2dd">New options: <a href="#item__2d_2dcopy"><code>--copy</code></a>, <a href="#item__2d_2dflat"><code>--flat</code></a>, <code>--destdir</code></a></strong><br />
+</li>
+</ul>
+<li><strong><a name="item__2f09_2f04_v0_2e4"><strong>2007/09/04 v0.4</strong></a></strong><br />
+</li>
+<ul>
+<li><strong><a name="item_bug_fix_in_map_files_texmf_2e">Bug fix in map_files_texmf.</a></strong><br />
+</li>
+</ul>
+<li><strong><a name="item__2f09_2f06_v0_2e5"><strong>2007/09/06 v0.5</strong></a></strong><br />
+</li>
+<ul>
+<li><strong><a name="item_support_for__60configure_27_added_2e__28thanks_to_">Support for `configure' added.
+  (Thanks to Norbert Preining for writing a first version of
+  the configure stuff.)</a></strong><br />
+</li>
+</ul>
+<li><strong><a name="item__2f04_2f05_v0_2e6"><strong>2008/04/05 v0.6</strong></a></strong><br />
+</li>
+<ul>
+<li><strong><a name="item_tiny_fix_in_target__60uninstall_27_in_file__60make">Tiny fix in target `uninstall' in file `Makefile.in'.
+  (Thanks to Karl Berry)</a></strong><br />
+</li>
+</ul>
+<li><strong><a name="item__2f06_2f28_v0_2e7"><strong>2008/06/28 v0.7</strong></a></strong><br />
+</li>
+<ul>
+<li><strong><a name="item_fix_for_unknown_option__60_2d_2dcmd_2dstrace_27_2e">Fix for unknown option `<code>--cmd-strace</code>'.
+  (Thanks to Juho Niemelä)</a></strong><br />
+</li>
+</ul>
+<li><strong><a name="item__2f11_2f10_v0_2e8"><strong>2011/11/10 v0.8</strong></a></strong><br />
+</li>
+<ul>
+<li><strong><a name="item_remove_colon_from_drive_specification_when_making_">Remove colon from drive specification when making directories.</a></strong><br />
+</li>
+<li><strong><a name="item_option__2d_2d_28no_29texhash_added_2e">Option <a href="#item__2d_2d_28no_29texhash"><code>--(no)texhash</code></a> added.</a></strong><br />
+</li>
+<li><strong><a name="item_miktex">Some support for MiKTeX (thanks Ulrike Fischer).</a></strong><br />
+</li>
+<li><strong><a name="item_various_fixes_in_the_generation_of_the_documentati">Various fixes in the generation of the documentation.</a></strong><br />
+</li>
+<li><strong><a name="item_options__2d_2dexclude_2dext_and__2d_2dversion_adde">Options <code>--exclude-ext</code> and <a href="#item__2d_2dversion"><code>--version</code></a> added.</a></strong><br />
+</li>
+</ul>
+</ol>
+
+</body>
+
+</html>

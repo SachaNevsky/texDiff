@@ -1,0 +1,151 @@
+
+                         Inline bibliography style
+                                      
+   I want to have by BiBTeX generated references inlined in footnotes
+   rather than the very terse references BiBTeX generates by default, so
+   I hacked together a BiBTeX style to do that. These macros are not
+   polished or in the form of a proper distribution, but I have used them
+   with succes myself.
+   
+   The following discription have been made in haste. I will document it
+   better when I have the time (RSN :-).
+   
+   There are two files: [1]inlinebib.sty and [2]indexing.bst.
+   
+The idea
+
+   This works just like any other BiBTeX style. It will still generate
+   the bibliography at the end of the document, but it will also store
+   all the entries in the .aux files, so they can be inlined in the
+   following latex run.
+   
+   The first time a citation is made using \cite the complete
+   bibliography entry is inserted. The following citations to the same
+   entry will generate a short form, with only authors last name and a
+   shortened title, followed by a "cit.". If the same bibliography entry
+   is cited several times in a row, the text will only be "ibid.".
+   
+   Citations of this form are designed to be used in footnotes.
+   
+   A little example migth be appropriate (don't we all love
+   screenshots!).
+   
+   Footnotes from page one:
+   [Example 1]
+   
+   Footnotes from page two:
+   [Example 2]
+   
+   (the overstrike problem is courtesy of xdvi(1))
+   
+   It is not possible to avoid having the complete bibliography at the
+   end of the document. The macros simply won't work without it. If you
+   don't need it, just don't print it.
+   
+Usage
+
+  Formalities
+  
+   To use these macros put the file inlinebib.sty in your LaTeX search
+   path and inlinebib.bst in your BiBTeX style search path and then put
+   the line:
+   
+\usepackage{inlinebib}
+
+   in the preamble of your document.
+   
+   Other commands have to be added at the point where you want the
+   bibliography to appear, usually at the end of the document. To tell
+   BiBTeX to use the inlinebib style, you have to use bibliographystyle:
+   
+\bibliographystyle{inlinebib}
+
+   Often I add a leading explanation to the bibliography with the
+   \bibliographycomment macro. That is:
+   
+\bibliographycomment{This bibliography ...}
+
+   The actual index is produced by the \bibliography macro. Here you have
+   to specify which BiBTeX databases you want to use.
+   
+\bibliography{file ...}
+
+   These were all the formalities.
+   
+  Doing citations
+  
+   When writing, just make citations as usual. Remember that these macros
+   can produce very verbose references, and they are intended for
+   footnotes.
+   
+   The default implementation of \cite allows several bibliography
+   entries to be cited. This version allows only one at a time. It still
+   supports the optional argument, which should be a page reference
+   within the cited text.
+   
+   There are a few additional macros available. \fullycite forces a
+   reference in the long form, \shortcite forces the short form, and
+   \noibid disables the generation "ibid." references for the next
+   citation (this can for example be used at the end of each chapter).
+   
+   To force later citations for certain entries to be either long or
+   short, the macros \fullcitenext{} and \shortcitenext{} can be used.
+   The single argument is a comma separated list of BiBTeX labels that
+   should be either long or short the next time they are cited. E.g., the
+   code \fullcitenext{book1, book2} will cause LaTeX to forget that the
+   two references might have been seen earlier and they will be handled
+   as if they haven't be cited yet.
+   
+  The BiBTeX databases
+  
+   This style does not require special changes to the BiBTeX databases.
+   
+   Sometimes the BiBTeX style doesn't manage to calculate the proper
+   short forms of the author and the title. In that case the BiBTeX
+   entries in question can be extended with shortauthor = {shorter author
+   name} and shorttitle = {short form of title}.
+   
+Tips and tricks
+
+   I have some macros to format page ranges, that I use with this BiBTeX
+   style. They should be usable with other styles as well.
+   
+   The macros are here: [3]pageranges.sty
+   
+   This file defined one user visible macro: \pages{}, which will do the
+   following transformations of the single argument:
+   
+   \pages{N}
+          becomes: p.~N
+          
+   \pages{N-}
+          becomes: pp.~N~ff
+          
+   \pages{N-M}
+          becomes: pp.~N--M
+          
+   \pages{N M}
+          becomes: pp.~N M
+          
+   The last version is for cases like \pages{213, 345 and~654} which will
+   become pp.~213, 345 and~654.
+   
+   I often have this little definition in a LaTeX style file. It makes
+   \cite do page ranges automatically and also puts the author in the
+   index (see [4]the indexing macros).
+   
+%% Automatically fix page ranges in citations and index author
+\let\RS@citex\@citex
+\def\@citex[#1]#2{\I@indexonly-{#2}\RS@citex[\pages{#1}]{#2}}
+
+Comments
+
+   If you have comments, please [5]write me.
+
+References
+
+   1. http://www.seindal.dk/rene/software/TeX/inlinebib.sty
+   2. http://www.seindal.dk/rene/software/TeX/inlinebib.bst
+   3. http://www.seindal.dk/rene/software/TeX/pageranges.sty
+   4. http://www.seindal.dk/rene/software/TeX/indexing.htm
+   5. mailto:rene@seindal.dk?Subject=Inlinebibmacros

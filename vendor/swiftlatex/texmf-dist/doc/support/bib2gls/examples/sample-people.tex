@@ -1,0 +1,102 @@
+% This file is public domain. See the "Examples" chapter
+% in the bib2gls user manual for a more detailed description
+% of this file.
+
+\documentclass[12pt,a4paper]{report}
+
+\usepackage[colorlinks]{hyperref}
+\usepackage[record,% using bib2gls
+ index,% create index glossary
+ postdot,% dot after descriptions
+% load glossary-list.sty and glossary-bookindex.sty and patch:
+ stylemods={list,bookindex},
+ style=altlistgroup]{glossaries-extra}
+
+\newglossary*{bybirth}{People (Ordered by Birth)}
+
+\newcommand{\bibglsdategroup}[7]{#1#4#7}
+\newcommand{\bibglsdategrouptitle}[7]{\number#1\ #4}
+
+\newcommand*{\swaptwo}[2]{#2, #1}
+\newcommand*{\swapthree}[3]{#2 #3, #1}
+
+\GlsXtrLoadResources[
+  src=no-interpret-preamble,
+  interpret-preamble=false
+]
+
+\GlsXtrLoadResources[
+  src={interpret-preamble,people},
+  match={entrytype=entry},
+  category={people},
+  replicate-fields={name={first}},
+  field-aliases={born=user1,died=user2,othername=user3},
+  secondary={date:user1:bybirth},
+  secondary-date-sort-format={d MMM YYYY G}
+]
+
+\GlsXtrLoadResources[
+  src={people},
+  type=index,
+  category=people,
+  action={define or copy},
+  copy-action-group-field={indexgroup},
+  selection={recorded and deps and see}
+]
+
+\newcommand*{\glsxtrpostlinkpeople}{%
+ \glsxtrifwasfirstuse
+ {%
+   \ifglshasfield{user3}{\glslabel}%
+   {\space(\glscurrentfieldvalue)}%
+   {}%
+ }%
+ {}%
+}
+
+\newcommand*{\glsxtrpostnamepeople}{%
+ \ifglshasfield{user3}{\glscurrententrylabel}%
+ {\space(\glscurrentfieldvalue)}%
+ {}%
+}
+
+\newcommand*{\glsxtrpostdescpeople}{%
+ \ifglshasfield{user1}{\glscurrententrylabel}
+ {% born
+   \space(\glscurrentfieldvalue\,--\,%
+     \ifglshasfield{user2}{\glscurrententrylabel}
+     {% died
+        \glscurrentfieldvalue
+     }%
+     {}%
+   )%
+ }%
+ {}%
+}
+
+\begin{document}
+\chapter{Sample}
+\section{First Use}
+
+\gls{caesar}, \gls{wellesley}, \gls{bonaparte}, 
+\gls{vonrichthofen} and \gls{alexander}.
+
+\section{Next Use}
+
+\gls{caesar}, \gls{wellesley}, \gls{bonaparte}, 
+\gls{vonrichthofen} and \gls{alexander}.
+
+\printunsrtglossary[title={People (Alphabetical)},nonumberlist]
+
+\printunsrtglossary[type=bybirth,target=false,nonumberlist]
+
+\printunsrtglossary*
+ [type=index,style=bookindex]
+ {%
+   \let\sortname\swaptwo
+   \let\sortart\swaptwo
+   \let\sortvonname\swapthree
+   \renewcommand{\glsxtrgroupfield}{indexgroup}%
+   \renewcommand*{\glolinkprefix}{idx:}%
+ }
+\end{document}

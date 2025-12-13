@@ -1,0 +1,202 @@
+<!DOCTYPE html public "-//w3c//dtd html 4.0 transitional//en">
+<HTML>
+<HEAD>
+<TITLE>René Seindal - Software - Inline bibliography style</TITLE>
+</HEAD>
+<BODY text="#000000" bgcolor="#FFFFFF" link="#0000EE" vlink="#551A8B" alink="#FF0000">
+
+<H1 align=center>Inline bibliography style</H1>
+
+<P>I want to have by BiBTeX generated references inlined in footnotes
+rather than the very terse references BiBTeX generates by default, so I
+hacked together a BiBTeX style to do that.  These macros are not
+polished or in the form of a proper distribution, but I have used them
+with succes myself.</P>
+
+<P>The following discription have been made in haste.  I will document
+it better when I have the time (RSN :-).</P>
+
+<P>There are two files: <A HREF="inlinebib.sty">inlinebib.sty</A> and <A HREF="inlinebib.bst">indexing.bst</A>.</P>
+
+
+<H2>The idea</H2>
+
+<P>This works just like any other BiBTeX style.  It will still generate
+the bibliography at the end of the document, but it will also store all
+the entries in the <CODE>.aux</CODE> files, so they can be inlined in
+the following <CODE>latex</CODE> run.</P>
+
+<P>The first time a citation is made using <CODE>\cite</CODE> the
+complete bibliography entry is inserted.  The following citations to the
+same entry will generate a short form, with only authors last name and a
+shortened title, followed by a "<I>cit.</I>".  If the same bibliography
+entry is cited several times in a row, the text will only be
+"<I>ibid.</I>".</P>
+
+<P>Citations of this form are designed to be used in footnotes.</P>
+
+<P>A little example migth be appropriate (don't we all love
+screenshots!).</P>
+
+<P><TABLE border=2 cellpadding=3>
+<TR>
+<TD>
+<P>Footnotes from page one:</P>
+<IMG SRC="inlinebib1.gif" ALT="[Example 1]">
+</TD>
+</TR>
+<TR>
+<TD>
+<P>Footnotes from page two:</P>
+<IMG SRC="inlinebib2.gif" ALT="[Example 2]">
+</TD>
+</TR>
+</TABLE>
+
+<FONT SIZE="-1">(the overstrike problem is courtesy of xdvi(1))</FONT>
+</P>
+
+<P>It is not possible to avoid having the complete bibliography at the
+end of the document.  The macros simply won't work without it.  If you
+don't need it, just don't print it.</P>
+
+
+
+<H2>Usage</H2>
+
+<H3>Formalities</H3>
+
+<P>To use these macros put the file <CODE>inlinebib.sty</CODE> in your
+LaTeX search path and <CODE>inlinebib.bst</CODE> in your BiBTeX style
+search path and then put the line:</P>
+
+<BLOCKQUOTE>
+<PRE>\usepackage{inlinebib}</PRE>
+</BLOCKQUOTE>
+
+<P>in the preamble of your document.</P>
+
+<P>Other commands have to be added at the point where you want the
+bibliography to appear, usually at the end of the document.  To tell
+BiBTeX to use the <I>inlinebib</I> style, you have to use
+<CODE>bibliographystyle</CODE>:
+
+<BLOCKQUOTE>
+<PRE>
+\bibliographystyle{inlinebib}
+</PRE>
+</BLOCKQUOTE>
+
+<P>Often I add a leading explanation to the bibliography with the
+<CODE>\bibliographycomment</CODE> macro.  That is:</P>
+
+<BLOCKQUOTE>
+<PRE>
+\bibliographycomment{This bibliography ...}
+</PRE>
+</BLOCKQUOTE>
+
+<P>The actual index is produced by the <CODE>\bibliography</CODE>
+macro.  Here you have to specify which BiBTeX databases you want to use.</P>
+
+<BLOCKQUOTE>
+<PRE>
+\bibliography{file ...}
+</PRE>
+</BLOCKQUOTE>
+
+<P>These were all the formalities.</P>
+
+
+<H3>Doing citations</H3>
+
+<P>When writing, just make citations as usual.  Remember that these
+macros can produce very verbose references, and they are intended for
+footnotes.</P>
+
+<P>The default implementation of <CODE>\cite</CODE> allows several
+bibliography entries to be cited.  This version allows only one at a
+time.  It still supports the optional argument, which should be a page
+reference within the cited text.</P>
+
+<P>There are a few additional macros available.  <CODE>\fullycite</CODE>
+forces a reference in the long form, <CODE>\shortcite</CODE> forces
+the short form, and <CODE>\noibid</CODE> disables the generation
+"<I>ibid.</I>" references for the next citation (this can for example be
+used at the end of each chapter).</P>
+
+<P>To force later citations for certain entries to be either long or
+short, the macros <CODE>\fullcitenext{}</CODE> and
+<CODE>\shortcitenext{}</CODE> can be used.  The single argument is a
+comma separated list of BiBTeX labels that should be either long or
+short the next time they are cited.  E.g., the code
+<CITE>\fullcitenext{book1, book2}</CITE> will cause LaTeX to forget that
+the two references might have been seen earlier and they will be handled
+as if they haven't be cited yet.</P>
+
+
+<H3>The BiBTeX databases</H3>
+
+<P>This style does not require special changes to the BiBTeX
+databases.</P>
+
+<P>Sometimes the BiBTeX style doesn't manage to calculate the proper
+short forms of the author and the title.  In that case the BiBTeX
+entries in question can be extended with <CODE>shortauthor = {<I>shorter
+author name</I>}</CODE> and <CODE>shorttitle = {<I>short form of
+title</I>}</CODE>.</P>
+
+
+
+<H2>Tips and tricks</H2>
+
+<P>I have some macros to format page ranges, that I use with this BiBTeX
+style.  They should be usable with other styles as well.</P>
+
+<P>The macros are here: <A HREF="pageranges.sty">pageranges.sty</A></P>
+
+<P>This file defined one user visible macro: <CODE>\pages{}</CODE>,
+which will do the following transformations of the single argument:</P>
+
+<DL>
+<DT><CODE>\pages{N}</CODE>
+<DD>becomes: <CODE>p.~N</CODE>
+<DT><CODE>\pages{N-}</CODE>
+<DD>becomes: <CODE>pp.~N~ff</CODE>
+<DT><CODE>\pages{N-M}</CODE>
+<DD>becomes: <CODE>pp.~N--M</CODE>
+<DT><CODE>\pages{N M}</CODE>
+<DD>becomes: <CODE>pp.~N M</CODE>
+</DL>
+
+<P>The last version is for cases like <CODE>\pages{213, 345
+and~654}</CODE> which will become <CODE>pp.~213, 345 and~654</CODE>.</P>
+
+
+
+<P>I often have this little definition in a LaTeX style file. It makes
+<CODE>\cite</CODE> do page ranges automatically and also puts the author
+in the index (see <A HREF="indexing.htm">the indexing macros</A>).</P>
+
+<BLOCKQUOTE>
+<PRE>
+%% Automatically fix page ranges in citations and index author
+\let\RS@citex\@citex
+\def\@citex[#1]#2{\I@indexonly-{#2}\RS@citex[\pages{#1}]{#2}}
+</PRE>
+</BLOCKQUOTE>
+
+
+
+
+
+<H2>Comments</H2>
+
+
+<P>If you have comments, please <A
+HREF="mailto:rene@seindal.dk?Subject=Inlinebib macros">write me</A>.</P>
+
+
+
+</BODY>
+</HTML>

@@ -1,0 +1,407 @@
+\documentclass{jlreq}
+\usepackage{array}
+\usepackage{multicol}
+\usepackage{ascmac}
+\usepackage{url}
+
+\makeatletter
+%%%%%
+%
+% ptex-fontmaps-data.dat などを読み込んでリストを出力するマクロ
+% -- \unless, \readline を使っているので e-TeX 必須
+%
+% prepare
+\newread\xx@myread
+%
+% main routine
+\def\loaddata#1{%
+  \def\xx@日本語list{}\def\xx@簡体中国語list{}%
+  \def\xx@繁体中国語list{}\def\xx@韓国語list{}%
+  % read database
+  \openin\xx@myread=#1\relax
+  \@whilesw\unless\ifeof\xx@myread\fi{%
+    \readline\xx@myread to \xx@dataline
+    % first: strip trailing LF
+    \expandafter\xx@striplf\xx@dataline\@nil
+    \ifx\xx@dataline\@empty\else
+      % second: strip comments starting from '#'
+      \expandafter\expandafter\expandafter\xx@stripcomment
+        \expandafter\xx@dataline\xx@number\@nil
+      \ifx\xx@dataline\@empty\else
+        % now, only effective database lines
+        \expandafter\xx@parseline\xx@dataline\@nil
+      \fi
+    \fi
+  }%
+  \closein\xx@myread
+  % output result
+  \@for\xx@lang:={日本語,簡体中国語,繁体中国語,韓国語}\do{%
+    \expandafter\let\expandafter\xx@langlist\csname xx@\xx@lang list\endcsname
+    \ifx\xx@langlist\@empty\else
+      \begin{itembox}[l]{\xx@lang}
+      \begin{multicols}{2}
+        \begin{itemize}
+          \@for\xx@item:=\xx@langlist\do{\item \command{\xx@item}}%
+        \end{itemize}
+      \end{multicols}
+      \end{itembox}
+    \fi}
+}%
+%
+% sub
+\begingroup
+  \catcode`\^^M=12 \gdef\xx@lf{^^M}%
+  \catcode`\#=12 \gdef\xx@number{#}%
+\endgroup
+\expandafter\def\expandafter\xx@striplf
+  \expandafter#\expandafter1\xx@lf\@nil{\def\xx@dataline{#1}}
+\expandafter\def\expandafter\xx@stripcomment
+  \expandafter#\expandafter1\xx@number#2\@nil{\def\xx@dataline{#1}}
+\def\xx@parseline#1: #2: #3\@nil{\xx@parselang#1\@nil{#2}}
+%
+% subsub
+\begingroup
+  \escapechar-1
+  \xdef\xx@JA{\string\JA}\xdef\xx@SC{\string\SC}
+  \xdef\xx@TC{\string\TC}\xdef\xx@KO{\string\KO}
+  \xdef\xx@AI{-\string\AI0}
+\endgroup
+\def\xx@parselang#1#2#3\@nil#4{%
+  \def\xx@tempa{#1#2}\def\xx@tempb{#3}%
+  \edef\xx@tempc{#4 \ifx\xx@tempb\xx@AI<AI0>\else#3\fi}%
+  \ifx\xx@tempa\xx@JA \xx@addtolist\xx@日本語list\xx@tempc     \else
+  \ifx\xx@tempa\xx@SC \xx@addtolist\xx@簡体中国語list\xx@tempc \else
+  \ifx\xx@tempa\xx@TC \xx@addtolist\xx@繁体中国語list\xx@tempc \else
+  \ifx\xx@tempa\xx@KO \xx@addtolist\xx@韓国語list\xx@tempc     \else
+    \@latex@error{Unknown language `\xx@tempa' in database}\@ehc
+  \fi\fi\fi\fi}
+\def\xx@addtolist#1#2{%
+  % #1: name of the list, #2: item
+  \ifx#1\@empty
+    \edef#1{#2}%
+  \else
+    \edef#1{#1,#2}%
+  \fi}
+%
+%%%%%
+%
+% ptex-fontmaps の README を読み込んでそのまま出力する
+% -- \unless, \readline を使っているので e-TeX 必須
+%
+% main routine
+\def\loadprint#1{%
+  \openin\xx@myread=#1\relax
+  \@whilesw\unless\ifeof\xx@myread\fi{%
+    \readline\xx@myread to \xx@dataline
+    % first: strip trailing LF
+    \expandafter\xx@striplf\xx@dataline\@nil
+    % empty line and indent should be kept
+    \leavevmode\null\xx@dataline\par
+  }%
+  \closein\xx@myread
+}
+%%%%%
+\makeatother
+
+%% misc
+\def\file#1{\texttt{#1}}
+\def\command#1{\texttt{#1}}
+\def\option#1{\texttt{-{}-#1}}
+\def\codechar#1{\ensuremath{\langle\mbox{\texttt{#1}}\rangle}}
+\def\TL{\TeX\ Live}
+\def\pTeX{p\kern-.15em\TeX}
+\def\upTeX{u\pTeX}
+
+\title{\command{kanji-config-updmap} --- 日本語フォント設定ツール}
+\author{日本語\TeX 開発コミュニティ}
+
+\begin{document}
+\maketitle
+
+\TL に収録されている\file{ptex-fontmaps}パッケージには，
+\command{kanji-config-updmap}というコマンドが付属しています。
+このコマンドは，\pTeX や\upTeX で生成したDVIを扱う下記のドライバが埋め込む
+日本語・中国語・韓国語フォントの設定を統一的に指定したり，
+確認したりできます。
+\begin{itemize}
+  \item dvipdfmx（PDFへの埋め込みフォント）
+  \item dvips（PostScriptで指定するフォント名）
+  %\item pxdvi（画面表示に使うフォント）\footnote{この機能はオプションです。}
+\end{itemize}
+
+\section{はじめに：システム用(\command{-sys})とユーザ用(\command{-user})}
+
+\command{kanji-config-updmap}には2種類のコマンド名があります。
+\begin{itemize}
+  \item \command{kanji-config-updmap-sys}: 全ユーザ向けのシステム共通設定
+  \item \command{kanji-config-updmap-user}: 現在のユーザ用の設定
+\end{itemize}
+これは他の「\command{-sys}」と「\command{-user}」の区別のあるコマンドにも
+言えることですが，特に理由のない限り，\emph{常に}「\command{-sys}」付きの
+コマンド\command{kanji-config-updmap-sys}を使用することをお勧めします。
+これは以下の理由によります。
+\begin{itemize}
+  \item 現在のユーザ用の設定は，システム共通設定より優先する。
+  \item \TL のアップデート時は，システム共通設定は更新されるが，
+        現在のユーザ用の設定は更新されない。
+  \item 結果的に，\emph{たった一度でも}「\command{-user}」付きのコマンドを
+        実行した環境では，\TL のアップデート時に設定更新が反映されない
+        という事故が起こる。
+\end{itemize}
+より詳細には，\url{http://tug.org/texlive/scripts-sys-user.html}を参照してください。
+
+なお，「管理者権限がなくて \command{-sys} 付きのコマンドを実行できない」などの
+理由がある場合は，\command{kanji-config-updmap-user}を使用してください。
+この場合は，\command{tlmgr}で\TL をアップデートすることもない（できない）
+でしょうから，上に述べたような不都合は起きないでしょう。
+
+以下では \command{-sys} の方で説明します。
+また，Windowsでは\command{sudo}（Unixで管理者権限に昇格するコマンド）を
+つける必要はありませんので省いて読んでください。
+
+
+\clearpage
+
+
+\section{現在の埋め込み設定を確認する}
+
+現在の日本語フォントの埋め込み設定を確認するには
+\begin{verbatim}
+    $ sudo kanji-config-updmap-sys --ja status
+\end{verbatim}
+を実行します（オプション \option{ja} は省略可能です）。
+
+同様に，現在の簡体中国語・繁体中国語・韓国語フォントの埋め込み設定はそれぞれ
+\begin{verbatim}
+    $ sudo kanji-config-updmap-sys --sc status
+    $ sudo kanji-config-updmap-sys --tc status
+    $ sudo kanji-config-updmap-sys --ko status
+\end{verbatim}
+で確認できます（オプション \option{sc}, \option{tc}, \option{ko} は省略不可）。
+
+実行例を下に示します。
+\begin{verbatim}
+    $ sudo kanji-config-updmap-sys --ja status
+    CURRENT family for ja: ipaex (variant: <empty>)
+    Standby family : haranoaji
+    Standby family : ipa
+    Standby family : ms
+    Standby family : yu-win10
+\end{verbatim}
+この場合，現在設定されているプリセットは\command{ipaex}であり，
+他に4種類のプリセットが利用可能であることを示します。
+\command{CURRENT family}の末尾の表示されている
+\command{variant}は \command{<empty>} か \command{-04} のいずれかで，
+\textbf{JIS90字形とJIS2004字形の両方がサポートされるプリセットでJIS2004字形が
+選択されている場合}のみ \command{-04} となります
+（第\ref{jis2004}節を参照）。
+% kanji-config-updmap 20200217.0 で status に variant も表示するようにした
+
+なお，\TL を公式インストーラでフルインストールした場合は，デフォルトで
+表\ref{tldefault}の設定が適用された状態になっています。
+それぞれの値が実際にどのフォントに対応しているかは，\file{ptex-fontmaps}の
+\file{README}を参照してください。
+例えば，日本語フォントのデフォルト値\command{ipaex}は
+IPAex明朝・IPAexゴシックに対応しています。
+\begin{table}[h]
+  \centering
+  \caption{\TL の埋め込みフォントのデフォルト値}\label{tldefault}
+  \begin{tabular}{m{12zw}m{8zw}}
+  \hline
+  変数名（言語）                  & デフォルト値      \\ \hline
+  \command{jaEmbed}（日本語）     & \command{ipaex}   \\
+  \command{scEmbed}（簡体中国語） & \command{arphic}  \\
+  \command{tcEmbed}（繁体中国語） & \command{arphic}  \\
+  \command{koEmbed}（韓国語）     & \command{baekmuk} \\ \hline
+\end{tabular}
+\end{table}
+
+
+\clearpage
+
+
+\section{日本語フォントの埋め込み設定を変更する}
+
+日本語フォントの埋め込み設定を変更するには
+\begin{verbatim}
+    $ sudo kanji-config-updmap-sys --ja <family>
+\end{verbatim}
+を実行します（ここでもオプション \option{ja} は省略可能です）。
+
+同様に，現在の簡体中国語・繁体中国語・韓国語フォントの埋め込み設定はそれぞれ
+\begin{verbatim}
+    $ sudo kanji-config-updmap-sys --sc <family>
+    $ sudo kanji-config-updmap-sys --tc <family>
+    $ sudo kanji-config-updmap-sys --ko <family>
+\end{verbatim}
+で変更できます（オプション \option{sc}, \option{tc}, \option{ko} は省略不可）。
+
+なお，オプションの書式は \option{ja <family>} と \option{ja=<family>} のように，
+イコール(\command{=})を付けても付けなくても同じ意味になります。
+
+\subsection{利用可能なプリセット一覧}
+
+利用可能な \command{<family>} は以下のとおりです。
+実際に対応するフォントは，先ほどと同様に
+\file{ptex-fontmaps}の\file{README}を参照してください。
+このリストで，各値の末尾に付いている \command{(番号)} は，次節で説明する
+\command{auto}による自動選択の優先順位を表します。
+番号の前の \command{*} については，第\ref{jis2004}節で後述します。
+また \command{<AI0>} と付いているものは，Adobe-Identity0の
+フォントであることを示し，いくつかの制約事項があります（第\ref{ai0}節）。
+\loaddata{database/ptex-fontmaps-data.dat}
+
+さらに，TLContribリポジトリから\file{ptex-fontmaps-macos}パッケージを
+インストールすると，以下も追加で利用できます。
+\loaddata{database/ptex-fontmaps-macos-data.dat}
+
+複数の言語のフォント埋め込み設定を同時に変更することもできます。例えば
+\begin{verbatim}
+    $ sudo kanji-config-updmap-sys --ja yu-win10 --sc fandol
+\end{verbatim}
+とすると，日本語フォントを\command{yu-win10}に，
+簡体中国語フォントを\command{fandol}に変更します。
+
+設定変更時には，その設定で使われるであろう代表的なフォントファイルが
+\emph{実在するかどうかを予めチェック}します（もし実在しなければ，
+第\ref{special-preset}節で後述する\command{auto}にフォールバックします）。
+オプション \option{force} を付けると，実在するかどうかにかかわらず
+強制的にそのプリセットを設定します（バージョン20190506.0の新機能）。
+
+\subsection{日本語フォントのJIS2004字形の使用}\label{jis2004}
+
+一部のプリセットでは，JIS90字形とJIS2004字形の両方をサポートしています。
+先ほどのリストで番号の前に \command{*} が\emph{付いていない}プリセットが該当し，
+現在すべてのOpenTypeフォントと一部のTrueTypeフォントが含まれます。
+これらのプリセットでは，\textbf{デフォルトではJIS90字形が使われます}が，
+オプション \option{jis2004} を指定するとJIS2004字形を使用する設定になります。例えば
+\begin{verbatim}
+    $ sudo kanji-config-updmap-sys haranoaji
+\end{verbatim}
+ではJIS90字形の「原ノ味フォント」が使われますが，
+\begin{verbatim}
+    $ sudo kanji-config-updmap-sys --jis2004 haranoaji
+\end{verbatim}
+ではJIS2004字形の「原ノ味フォント」が使われます。
+
+一方 \command{*} が\emph{付いている}プリセットでは，
+JIS90字形とJIS2004字形の\textbf{どちらが出力されるかはフォント次第}です。
+このようなプリセットでは，オプション \option{jis2004} が指定されても
+\begin{verbatim}
+    WARNING: No -04 map available, option --jis2004 ignored!
+\end{verbatim}
+と警告して無視します。
+% 以前はオプションを無視せず -04 のマップファイルを使おうとして，
+% 結果的に kanjix.map からマッピングが消えていたが，
+% kanji-config-updmap 20200217.0 で --jis2004 を無視する仕様にした
+例えば
+\begin{verbatim}
+    $ sudo kanji-config-updmap-sys ipaex
+\end{verbatim}
+で使われる「IPAexフォント」はJIS2004字形でデザインされています。
+
+\subsection{特殊なプリセット}\label{special-preset}
+
+\emph{フォントを埋め込まない}場合は引数を\command{nofont}とします。
+例えば
+\begin{verbatim}
+    $ sudo kanji-config-updmap-sys nofont
+\end{verbatim}
+とすれば，日本語フォントが埋め込まれません。
+
+また，引数に\command{auto}を指定すると，上記のリストの中から \command{(番号)} が
+なるべく小さな\emph{実在するフォント}を自動的に選択します。
+ただし，現在設定されている（\command{nofont}以外の）プリセットが
+実在していて利用可能な場合は，現在の設定を維持します。
+例えば
+\begin{verbatim}
+    $ sudo kanji-config-updmap-sys auto
+\end{verbatim}
+では日本語フォントが\command{morisawa-pr6n}→\command{morisawa}→…の順に
+探され，最初に見つかったフォントを埋め込むように自動で設定されることになります。
+\begin{verbatim}
+    $ sudo kanji-config-updmap-sys --ja auto --sc auto --tc auto --ko auto
+\end{verbatim}
+とすれば，4つの言語全てが同様に自動設定されます。
+
+\subsection{カスタムプリセットの利用}
+
+[TODO] 作業中。
+マップファイルを用意すれば\command{kanji-config-updmap}で設定可能。
+
+
+\clearpage
+
+
+\section{特記事項}
+
+まず，一般的な注意点を挙げておきます。
+\begin{itemize}
+  \item 特定の文字が出力されるかどうかは，実際に使われるフォントに依ります。
+        フォントに収録されていない文字は出力されませんし，
+        JIS90字形かJIS2004字形のどちらか一方しか用意されていないフォントもあります。
+  \item 複数のウェイトが利用可能かどうかは，プリセットに依ります。
+        例えば，\command{ipaex}が利用するIPAexフォントは明朝とゴシック
+        各1ウェイトのみ配布されており，細字の明朝や太字のゴシックは利用できません。
+\end{itemize}
+
+その他，いくつかのプリセットには注意点があります。
+
+\subsection{Adobe-Identity0 (AI0)なフォントの制約事項}\label{ai0}
+
+\command{sourcehan}や\command{noto}などを埋め込む設定の注意点です。
+
+[TODO] 作業中。
+
+\begin{itemize}
+  \item \upTeX~+~dvipdfmx専用です。他の経路（\pTeX~+~dvipdfmx，
+        \pTeX~+~dvips，\upTeX~+~dvips）はサポートできないため，
+        \emph{フォントを埋め込まない}設定にフォールバックします。
+  \item \upTeX~+~dvipdfmxの経路でも，Adobe-Japan1などの従来のマッピングに
+        依存する文字出力機能もサポートされません。具体的には以下の機能が該当し，
+        これらの文字も\emph{フォントを埋め込まない}設定にフォールバックします。
+    \begin{itemize}
+      \item \file{otf}パッケージが提供する \verb+\CID+ や
+            \file{ajmacros}（\verb+\aj...+命令など）の大半の命令
+      \item \file{otf}パッケージ使用時のクオート記号，
+            つまり\codechar{“}\codechar{”}\codechar{‘}\codechar{’}の4文字
+    \end{itemize}
+\end{itemize}
+
+\subsection{その他}
+
+その他，既知の注意点です。
+\file{ptex-fontmaps}はあくまで\pTeX や\upTeX が提供する共通のJFM（\file{ptex-fonts}，
+\file{uptex-fonts}に収録）から参照される実フォントを切り替えるだけであり，
+個別のフォントに対する対処は行っていません。
+
+\begin{itemize}
+  \item \command{yu}, \command{yu-win10}はWindowsに付属する
+        TrueType形式の游フォントを埋め込みますが，
+        クオート記号\codechar{“}\codechar{”}\codechar{‘}\codechar{’}が
+        全角幅より狭くデザインされているため，出力が異常になります。\\
+        参考： \url{https://oku.edu.mie-u.ac.jp/tex/mod/forum/discuss.php?d=2017}
+\end{itemize}
+
+
+%\section{内部処理}
+
+%\command{kanji-config-updmap-sys}は内部で\command{updmap-sys}を呼び出し，
+%\command{kanji-config-updmap-user}は内部で\command{updmap-user}を呼び出す。
+
+
+\clearpage
+\appendix
+
+
+\section{\file{ptex-fontmaps}の\file{README}}
+
+% \readline が和文文字をバイト列に変換しない e-pTeX 190908 以降が必要
+% https://github.com/texjporg/tex-jp-build/issues/88
+\ifnum\epTeXversion<190908\relax
+  \errhelp{Update e-pTeX.}\errmessage{e-pTeX 190908 required}
+\else
+  {\frenchspacing\ttfamily\footnotesize\loadprint{README}}
+\fi
+
+\end{document}

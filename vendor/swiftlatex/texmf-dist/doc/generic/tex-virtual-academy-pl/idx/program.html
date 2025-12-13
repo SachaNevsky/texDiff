@@ -1,0 +1,666 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-2">
+<meta http-equiv="Content-language" content="pl">
+<meta name="Author" content="Włodzimierz Macewicz">
+<title> Wszystko o skorowidzach </title>
+</head>
+<body bgcolor=#F0F0A0>
+
+
+<center>
+<h1>(Prawie) wszystko o skorowidzach: plmindex (makeindex)</h1>
+</center>
+
+<h2>Spis treści</h2>
+
+<a href=#wstep>Wstęp</a><br>
+<a href=#schemat>Schemat przetwarzania</a><br>
+<a href=#tworzenie>Tworzenie zbioru haseł</a><br>
+<a href=#przetwarzanie>Przetwarzanie zbioru haseł</a><br>
+	<dd><a href=#poziomy>Skorowidz wielopoziomowy</a>
+	<dd><a href=#kolejnosc>Zmiana kolejności sortowania</a>
+	<dd><a href=#odsylacze>Odsyłacze w skorowidzu, efekty dodatkowe</a>
+	<dd><a href=#grupowanie>Grupowanie numerów stron</a>
+	<dd><a href=#znaki>Znaki specjalne</a><br>
+<a href=#postac>Definiowanie postaci skorowidza</a><br>
+<dd> <a href=#definicje>Używane polecenia</a>
+<dd> <a href=#styl>Definiowanie zbioru poleceń</a>
+<dd> <a href=#opcje>Opcje programu</a>
+<hr>
+
+<a name=wstep><h2>Wstęp</h2></a>
+Każda poważna publikacja o charakterze naukowo-technicznym powinna posiadać 
+skorowidz (indeks), czyli uporządkowany wykaz używanych,
+bądź definiowanych pojęć, zawierający informacje na jakich stronach
+są one używane.
+
+<p>
+Jedną z zalet TeX-a jest możliwość automatycznego tworzenia zbiorów
+dodatkowych, zawierających informacje związane z przetwarzanym tekstem.
+Utworzony zbiór możemy przetworzyć innym programem;
+przy ponownym uruchomieniu TeX-a
+może on zostać dołączony do dokumentu podstawowego.
+
+<p> Do porządkowania zbioru haseł służy program <strong>plmindex</strong>
+(lub <tt>makeindex</tt>).
+Opisując proces tworzenia skorowidza powołuję się na swoją
+implementację; program <strong>plmindex</strong>, czyli
+<i>Polish (Multilanguage) index</i>. Program może być zastosowany
+do budowy skorowidza w polskich publikacjach. Dokładny
+opis własności programu <strong>plmindex</strong> znajduje
+się w <a href="plmindex.html"> następnym artykule tego cyklu</a>.
+
+
+<a name=schemat><h2>Schemat przetwarzania</h2></a>
+
+Tworzenie skorowidza w dokumencie przetwarzanym TeX-em
+zostało zrealizowane według powyższego schematu zilustrowanego
+rysunkiem:<br>
+ 
+<p align=center><img src="tex-idx.gif"
+width=320 height=510><br>
+
+<p>Po pierwszym przetwarzaniu dokumentu otrzymujemy zbiór
+dodatkowy z rozszerzeniem <code>.idx</code> (podstawowy trzon
+nazwy jest identyczny z nazwą dokumentu). Zawiera on wszystkie
+hasła, definiowane w dokumencie źródłowym za pomocą
+polecenia <code>\index</code>. W celu zainicjowania zbioru haseł
+należy wywołać polecenie <code>\plmindex</code>
+
+<p>Podstawową rolą programu <strong>plmindex</strong> jest uporządkowanie i 
+posortowanie zbioru haseł wygenerowanego przez pakiet LaTeX-a.
+Uporządkowany zbiór skorowidza
+dołączamy do dokumentu podstawowego poleceniem <code>\printindex</code>.
+Standardowo zbiór ten ma rozszerzenie <code>.ind</code>.
+
+
+<a name=tworzenie><h2>Tworzenie zbioru haseł</h2></a>
+
+Niezbędny zestaw poleceń w dokumencie umożliwiający utworzenie
+i dołączenie skorowidza:
+<pre>
+\documentclass{article}
+\usepackage{makeidx}
+\makeindex
+\begin{document}
+.
+.
+.
+..... bqq\index{bqq}
+        .... aqq\index{aqq}
+.
+.
+.
+\printindex
+\end{document}
+</pre>
+Po przetworzeniu pakietem LaTeX2e otrzymamy następujący zbiór skorowidza:
+<pre>
+\indexentry{bqq}{1}
+\indexentry{aqq}{1}
+</pre>
+
+<p>
+Poszczególne hasła sa definiowane poleceniem <code>\index{...}</code>. 
+Najwygodniej jest umieszczać polecenia tworzące hasła w momencie
+pisania dokumentu. Trudno sobie wyobrazić automat wprowadzający 
+wskazane słowa do skorowidza, ponieważ hasła powinny występować
+w swojej podstawowej formie (np. rzeczowniki w mianowniku), a nie
+w formie wynikającej z kontekstu; pozostaje ,,ręczne'' definiowanie
+hasła przy okazji jego istotnego wystąpienia. 
+
+<p>W zbiorze haseł
+każde zdefiniowane pojęcie jest umieszczane jako pierwszy argument polecenia
+<code>\indexentry</code>, drugim argumentem jest numer strony na
+której ono wystąpiło (wg. aktualnego formatu pisania numerów stron).
+Należy dbać o to, aby między wystąpieniem danego hasła, a 
+poleceniem wprowadzającym je do skorowidza nie nastąpiło przejście
+do nowej strony.<br>
+
+<center>
+<table border>
+<tr>
+    <td> definicja błędna </td> <td> definicja poprawna </td>
+								   </tr>
+<tr>
+    <td> <code>aqq \index{aqq}
+         </code>               </td> <td> <code>aqq\index{aqq}
+				         </code>               </td>
+								   </tr>
+</table>
+</center>
+
+<a name=przetwarzanie><h2> Przetwarzanie zbioru haseł </h2></a>
+
+Zbiór zawierający listę wszystkich haseł należy przetworzyć programem
+<strong>plmindex</strong>. W najprostszym przypadku linia wywołania programu wygląda następująco:
+<pre>
+<strong>plmindex</strong> <i>zbiór</i>
+</pre>
+Hasła definiowane w zbiorze <i>zbiór</i><code>.idx</code> zostaną 
+pogrupowane (usunięte wielokrotne definicje na tej samej stronie)
+oraz posortowane i zapisane do zbioru <i>zbiór</i><code>.ind</code>. 
+W naszym przykładzie,
+uporządkowany zbiór (rozszerzenie <code>.ind</code>)
+będzie wyglądał następująco:
+<pre>
+\begin{theindex}
+
+  \item aqq, 1
+
+  \indexspace
+
+  \item bqq, 1
+
+\end{theindex}
+</pre>
+Podczas powtórnego przetwarzania dokumentu pakietem LaTeX2e, powyższy zbiór
+zostanie dołączony w miejscu wystąpienia polecenia <code>\printindex</code>.
+
+<a name=poziomy><h3>Skorowidz wielopoziomowy</h3></a>
+
+Program <strong>plmindex</strong> pozwala na zdefiniowanie trójpoziomowej 
+struktury hasła.
+Znakiem odzielającym poziomy jest <code>!</code> (wykrzyknik). Przykładowe
+polecenia:
+<pre>
+krowa\index{ssaki!parzysto-kopytne!krowa}
+koń\index{ssaki!nieparzysto-kopytne!koń}
+tapir\index{ssaki!nieparzysto-kopytne!tapir}
+są ssakami\index{ssaki}
+</pre>
+określenia: <code>parzysto-kopytne</code> i <code>nieparzysto-kopytne</code> 
+są hasłami podrzędnymi hasła <code>ssaki</code> i samodzielnie
+nie wystąpują (nie są definiowane w sposób jawny). Nazwy <code>krowa</code>, 
+<code>koń</code> i <code>tapir</code>
+stanowią najniższy poziom.
+
+<p>
+Po przetworzeniu programem <strong>plmindex</strong> zbiór <code>.ind</code> wygląda następująco:
+<pre>
+\begin{theindex}
+
+  \item ssaki, 1
+    \subitem nieparzysto-kopytne
+      \subsubitem koń, 1
+      \subsubitem tapir, 1
+    \subitem parzysto-kopytne
+      \subsubitem krowa, 1
+
+\end{theindex}
+</pre>
+Numery stron są umieszczane tylko wtedy jeśli hasło jest wprowadzone
+w <b>sposób jawny</b> do indeksu (np. 
+hasło <code>parzysto-kopytne</code> zostanie utworzone automatycznie, 
+i nie zostanie opatrzone numerem strony).
+
+<p>Ostatecznie po wydrukowaniu powyższy fragment skorowidza wygląda 
+następująco:
+<img src="fig1.gif" align="middle">
+
+<a name=kolejnosc><h3>Zmiana kolejności sortowania</h3></a>
+
+Czasami zdarza się, że hasło powinno być umieszczone w innym miejscu
+niż wynika to z porządku leksykograficznego (np. polecenie
+TeX-a poprzedzone znakiem <code>\</code> umieszczamy w miejscu 
+wynikającym z nazwy polecenia, ignorując znak <code>\</code>). W tym wypadku
+polecenie <code>\index</code> ma następującą skladnię:
+<pre>
+\index{hasło do sortowania@hasło do indeksu}
+</pre>
+określenie
+<code>hasło do sortowania</code> służy programowi <strong>plmindex</strong> jako wzorzec do nadania
+porządku leksykograficznego, natomiast <code>hasło do indeksu</code>
+znajdzie się w spisie. W przypadku haseł wielopoziomowych
+polecenie może wyglądać następująco:
+<pre>
+\index{sort@index!sort-1@index-1!sort-2@index-2}
+</pre>
+Innym powodem użycia tej konstrukcji może być chęć zmiany kroju
+pisma jakim składane jest dane hasło (np. wyróżnienie słowa kluczowego):
+<pre>
+\index{alfa@{\itshape alfa}}
+</pre>
+Zbiór <code>.ind</code> wygląda następująco:
+<pre>
+\begin{theindex}
+
+  \item {\itshape alfa}, 1
+
+\end{theindex}
+</pre>
+
+<a name=odsylacze><h3>Odsyłacze w skorowidzu, efekty dodatkowe</h3></a>
+
+Definiując hasło skorowidza, możemy w tym momencie zwrócić
+uwagę czytelnika na inne hasło, służy do tego operator
+<i>encapsulacji</i>, którym jest znak <code>|</code>.<br>
+Przykład:
+<pre>
+\def\seename{p.}
+\def\see#1#2{#2, ({\itshape \seename~#1}\/)}
+
+aqq\index{aqq|see{bqq}}
+</pre>
+da nam następujące hasło w skorowidzu:
+<pre>
+
+  \item aqq, \see{bqq}{1}
+
+</pre>
+które w dokumencie wynikowym, będzie wyglądało następująco:
+<dl>
+<dd>    aqq, 1, (<i>p. bqq</i>)
+</dl>
+Łatwo widać, że napis po znaku <code>|</code> jest traktowany
+jako makropolecenie (jego argumentem aktualnym jest zawsze numer strony).
+W przypadku konstrukcji <code>see</code> definiowany jest własny parametr
+określający hasło podobne -- parametr drugi (numer strony) jest pobierany
+z listy parametrów aktualnych, ale nie jest wykorzystywany 
+(w przeciwnym wypadku pojawiłby się jako blok <code>{1}</code>.
+
+<p>
+Za pomocą <i>enkapsulacji</i> można zrealizować rozróżnianie typu 
+występującego
+hasła, np. miejsce definicji odróżniamy od normalnego wystąpienia użyciem
+innej  czcionki przy podawaniu numeru strony; i tak:
+<dl>
+<dd><i>italic</i> hasło używane w przykładzie
+<dd><b>bold</b> miejsce zdefniowania pojęcia
+<dd> pozostałe składane czcionką standardową
+</dl>
+Przykład:
+<pre>
+\def\italic#1{{\itshape #1}}
+\def\bold#1{{\bfseries #1}}
+
+\def\idxb#1{\index{#1|bold}}
+\def\idxi#1{\index{#1|italic}}
+\let\idx=\index
+
+aqq\idxb{aqq}		%miejsce definicji
+aqq\idx{aqq}		%normalne wystąpienie 
+aqq\idxi{aqq}		%użycie w przykładzie
+</pre>
+i rezultat:
+<pre>
+
+  \item aqq, 1, \bold{1}, \italic{1}
+
+</pre>
+
+<a name="grupowanie"><h3>Grupowanie numerów stron</h3></a>
+
+Używając polecenia <code>\index</code> możemy zadeklarować, że
+dane hasło jest opisywane na kilku stronach. Początek
+opisu hasła zaznaczamy:
+<pre>
+strona 1: aqq\index{aqq|(}
+</pre>
+a kończymy
+<pre>
+strona 3: aqq\index{aqq|)}
+</pre>
+w wyniku działania programu <strong>plmindex</strong> i ponownego przetwarzania LaTeX-em
+otrzymamy:
+<pre>
+    aqq, 1-3
+</pre>
+jeżeli między konstrukcją 
+<code>\index{...|(}</code>, a <code>\index...|)}</code>
+pojawi się normalna definicja tego samego hasła to zostanie
+ona zignorowana (jako zawierająca się w zadanym zakresie). Jeżeli konstrukcja
+zamykająca nie wystąpi, to ostatnia definicja hasła spełni tą rolę. 
+
+<p>Standardowo, jeżeli hasło występuje na kolejnych stronach to
+numery stron są grupowane (efekt taki jak w powyższym przykładzie). 
+Używanie powyższej 
+konstrukcji ma sens, jeśli chcemy uzyskać ten efekt tylko dla wybranych haseł,
+wtedy należy wywołać program <strong>plmindex</strong> z opcją <a href=#optr>
+-r</a>, która wyłączy standardowe grupowanie numerów stron.
+
+<a name=znaki><h3>Znaki specjalne</h3></a>
+
+W wyżej opisywanych konstrukcjach znaki <code>|</code>,
+<code>|</code>,
+<code>!</code> i
+<code>@</code> miały znaczenie specjalne, jeżeli chcemy
+w haśle skorowidza użyć jednego z wyżej wymienionych znaków
+należy poprzedzić go znakiem <code>"</code> np.
+
+<pre>
+aqq!aqq\index{aqq"!aqq}
+</pre>
+wprowadzi do skorowidza hasło:
+<pre>
+aqq!aqq, 1
+</pre>
+
+<a name=postac><h2>Definiowanie postaci skorowidza</h2></a>
+
+Program <strong>plmindex</strong> porządkując zbiór haseł wstawia szereg 
+poleceń. Możemy mieć wpływ zarówno na ich zestaw, jak  i na ich definicję. 
+
+Właściwości programu możemy zmieniać na trzy sposoby:
+
+<dl>
+<dt> <a name=definicje><b>zmienić standardowe definicje używanych poleceń 
+(makroinstrukcji)</b></a>
+
+<dd>Program <strong>plmindex</strong> zanurza zbiór posortowanych i posegregowanych haseł
+w środowisku <code>index</code>. Użycie środowiska powoduje
+zdefiniowanie podrozdziału o nazwie zdefiniowanej przez makroinstrukcję
+<code>\indexname</code>. Standardowo wartością polecenia
+jest napis <code>Index</code>, jeżeli chcemy zmienić napis
+należy zmienić definicję tego polecenia np:
+<pre>
+\renewcommand\indexname{Skorowidz}
+</pre>
+Do definiowania sposobu prezentacji haseł na różnych
+poziomach używane są następujące makroinstrukcje:<br>
+</dl>
+<table border>
+<tr> <th>poziom</th> <th> nazwa</th> <th>standardowa definicja</th> </tr>
+<tr> <td>1</td> <td>\item</td> <td>\par\hangindent 40\p@</td></tr>
+<tr> <td>2</td> <td>\subitem</td> <td>\par\hangindent 40\p@ \hspace*{20\p@}</td></tr>
+<tr> <td>3</td> <td>\subsubitem</td> <td>\par\hangindent 40\p@ \hspace*{30\p@}</td></tr>
+</table><br>
+<dl>
+<dd>między grupy haseł (między hasła zaczynające się od różnych znaków --
+ale tylko na najwyższym poziomie) jest wstawiane polecenie:<br>
+<code>\indexspace</code> o wartości<br>
+<code>\par\vskip10\p@ \@plus5\p@ \@minus 3\p@\relax</code><p>
+
+<dt> <a name=styl><b>zmienić zestaw poleceń (makroinstrukcji)</b></a>
+<dd>
+Możemy utworzyć specjalny zbiór zawierający szereg poleceń
+sterujących programem <strong>plmindex</strong>. Program <strong>plmindex</strong> wczytuje ten zbiór
+jeżeli jest zdefiniowana opcja <code>-s</code> (p. <a href=#style>opcje</a>);
+standardowym rozszerzeniem nazwy jest <code>.mst</code>.
+W zbiorze tym można zdefiniować następujące wartości:<p>
+</dl>
+<table border>
+<tr><th>Nazwa</th><th>Wartość standardowa</th><th>Opis</th></tr>
+<tr><td nowrap><code>preamble</code> <i>string</i>        </td>
+		<td nowrap>"\\begin{theindex}\n"		</td>
+			<td>początek zbioru</td></tr>
+<tr><td nowrap><code>postamble</code> <i>string</i>       </td>
+		<td nowrap>"\n\n\\end{theindex}\n"	</td>
+			<td>koniec zbioru</td></tr>
+<tr><td nowrap><code>setpage_prefix</code> <i>string</i>  </td>
+		<td nowrap>"\n  \\setcounter{page}{" 	</td>
+			<td>początek polecenia
+ 							definiujący
+ 							zmianę wartości numeru
+							strony</td></tr>
+<tr><td nowrap><code>setpage_suffix</code> <i>string</i>  </td>
+		<td nowrap>"}\n"				</td>
+			<td>koniec definicji 
+ 							polecenia zmiany
+							numeru strony</td></tr>
+<tr><td nowrap><code>group_skip</code> <i>string</i>      </td>
+		<td nowrap>"\n\n  \\indexspace\n"</td>
+			  <td> polecenie wstawiane przed rozpoczęciem
+			  grupy haseł</td></tr>
+<tr><td nowrap><code>headings_flag</code> <i>string</i>   </td>
+		<td nowrap>0				</td>
+			<td>flaga aktywująca
+ 							wstawianie poleceń
+							przy zmianie
+							pierwszego znaku 
+							haseł, wartość
+							pozytywna (&gt;0)
+							wstawiany będzie
+							znak w postaci dużej
+							litery, jeśli &lt;0
+							znak małej litery</td></tr>
+<tr><td nowrap><code>heading_prefix</code> <i>string</i>  </td>
+		<td nowrap>""				</td>
+			<td>ciąg znaków, który
+ 							będzie poprzedzał
+							w.m. znak</td></tr>
+<tr><td nowrap><code>symhead_positive</code> <i>string</i> </td>
+		<td nowrap>"Symbols"			</td>
+			<td>nazwa grupy
+ 							haseł nie zaczynających
+							się literą (wstawiany
+							jeśli flaga &gt;0)</td></tr>
+<tr><td nowrap><code>symhead_negative</code> <i>string</i> </td>
+		<td nowrap>"symbols"			</td>
+			<td>nazwa grupy
+ 							haseł nie zaczynających
+							się literą (wstawiany
+							jeśli flaga &lt;0)</td></tr>
+<tr><td nowrap><code>numhead_positive</code> <i>string</i> </td>
+		<td nowrap>"Numbers"			</td>
+			<td>nazwa grupy
+ 							haseł zaczynających
+							się cyfrą (wstawiany
+							jeśli flaga &lt;0)</td></tr>
+<tr><td nowrap><code>numhead_negative</code> <i>string</i> </td>
+		<td nowrap>"numbers"			</td>
+			<td>nazwa grupy
+ 							haseł zaczynających
+							się cyfrą (wstawiany
+							jeśli flaga &lt;0)</td></tr>
+<tr><td nowrap><code>item_0</code> <i>string</i>          </td>
+		<td nowrap>"\n  \\item "		</td>
+			<td>polecenie wstawiane
+ 						między dwie pozycje
+						na poziomie 0</td></tr>
+
+<tr><td nowrap><code>item_1</code> <i>string</i>          </td>
+		<td nowrap>"\n     \\subitem "	</td>
+			<td>polecenie wstawiane między dwie
+ 						pozycje na poziomie 1</td></tr>
+
+<tr><td nowrap><code>item_2</code> <i>string</i>          </td>
+		<td nowrap>"\n       \\subsubitem " </td>
+			<td>polecenie wstawiane
+ 						   między dwie pozycje
+						   na poziomie 2</td></tr>
+<tr><td nowrap><code>item_01</code> <i>string</i>        </td>
+		<td nowrap>"\n    \\subitem "	   </td>
+			<td>polecenie wstawiane między
+ 						   pozycje poziomu 0 i 1</td></tr>
+<tr><td nowrap><code>item_x1</code> <i>string</i>         </td>
+		<td nowrap>"\n    \\subitem "	   </td>
+			<td>polecenie wstawiane między
+ 						   pozycje poziomu 0 i 1, 
+						   jeśli pozycja poziomu 0
+						   nie wystąpiła w sposób
+						   jawny (nie będzie opatrzona
+						   numerem strony)</td></tr>
+<tr><td nowrap><code>item_12</code> <i>string</i>         </td>
+		<td nowrap>"\n    \\subsubitem "	   </td>
+			<td>polecenie wstawiane między
+ 						   pozycje poziomu 1 i 2</td></tr>
+<tr><td nowrap><code>item_x2</code> <i>string</i>         </td>
+		<td nowrap>"\n    \\subsubitem "	   </td>
+			<td>polecenie wstawiane między
+ 						   pozycje poziomu 1 i 2
+						   jeśli pozycja poziomu 1
+						   nie wystąpiła w sposób
+						   jawny (nie będzie opatrzona
+						   numerem strony)</td></tr>
+<tr><td nowrap><code>delim_0</code> <i>string</i>         </td>
+		<td nowrap>", "			   </td>
+			<td>separator między hasłem
+ 						   poziomu 0,
+ 						   a pierwszym numerem strony</td></tr>
+<tr><td nowrap><code>delim_1</code> <i>string</i>         </td>
+		<td nowrap>", "			   </td>
+			<td>separator między hasłem
+ 						   poziomu 1, a pierwszym
+						   numerem strony</td></tr>
+<tr><td nowrap><code>delim_2</code> <i>string</i>         </td>
+		<td nowrap>", "			   </td>
+			<td>separator między hasłem
+ 						   poziomu 2, a pierwszym
+						   numerem strony</td></tr>
+<tr><td nowrap><code>delim_n</code> <i>string</i>         </td>
+		<td nowrap>", "			   </td>
+			<td>separator między 
+ 						   kolejnymi numerami stron
+						   (wszystkie poziomy haseł)</td></tr>
+<tr><td nowrap><code>delim_r</code> <i>string</i>         </td>
+		<td nowrap>"--"			   </td>
+			<td>separator odzielający
+            					   numery zakresów stron
+						   występowania hasła</td></tr>
+<tr><td nowrap><code>delim_t</code> <i>string</i>         </td>
+		<td nowrap>""			   </td>
+			<td>ciąg znaków umieszczany
+ 						   na końcu listy numerów
+						   stron</td></tr>
+<tr><td nowrap><code>encap_prefix</code> <i>string</i>    </td>
+		<td nowrap>"\\"			   </td>
+			<td>pierwsza część ciągu
+ 						   znaków wstawiana 
+						   przy używaniu
+						   znaku sterującego 
+						   enkapsulacji
+						   (<code>|</code>)</td></tr>
+<tr><td nowrap><code>encap_infix</code> <i>string</i>     </td>
+		<td nowrap>"{"		</td>
+			<td>druga część
+ 						   znaków wstawiana 
+						   przy używaniu
+						   znaku sterującego 
+						   enkapsulacji
+						   (<code>|</code>)</td></tr>
+<tr><td nowrap><code>encap_suffix</code> <i>string</i>    </td>
+		<td nowrap>"}"		</td>
+			<td>ciąg znaków zamykający
+ 					polecenie enkapsulacji</td></tr>
+<tr><td nowrap><code>line_max</code> <i>number</i>        </td>
+		<td nowrap>72		</td>
+			<td>maksymalna liczba znakow w linii
+ 					(jeśli definicja hasła będzie
+					 dłuższa, zostanie przeniesiona do 
+					 następnej linii)</td></tr>
+<tr><td nowrap><code>indent_space</code> <i>string</i>    </td>
+		<td nowrap>"\t\t"	</td>
+			<td>ciąg znaków wstawiany na początku
+ 					,,łamanej linii''</td></tr>
+<tr><td nowrap><code>indent_length</code> <i>number</i>   </td>
+		<td nowrap>16		</td>
+			<td>określenie szerokości w.m.
+					 ciągu znaków (potrzebne do
+					 prowadzenia pozycji w bieżącej
+					 linii</td></tr>
+</table>
+<dl>
+<p>Przykład:
+Zawatrość zbioru <code>.mst</code>
+<pre>
+delim_0	"~~"
+delim_1	"~~"
+delim_2	"~~"
+headings_flag 1
+heading_prefix "{\\par\\goodbreak\\vskip2ex\\par\\large\\bf\\noindent "
+heading_suffix "}\\par\\nobreak\\vskip 1.5ex"
+</pre>
+daje następujący efekt:
+<pre>
+\begin{theindex}
+{\par\goodbreak\vskip2ex\par\large\bf\noindent A}\par\nobreak\vskip 1.5ex
+  \item a~~\bold{16}, \see{odsyłacz}{16}, \bold{25}
+    \subitem effect~~\bold{20}
+      \subsubitem new~~\bold{20}
+      \subsubitem overlay~~\bold{20}
+      \subsubitem replace~~\bold{20}
+    \subitem href~~\bold{25}
+      \subsubitem \#~~\bold{19}
+
+.
+.
+.
+
+  \indexspace
+{\par\goodbreak\vskip2ex\par\large\bf\noindent Z}\par\nobreak\vskip 1.5ex
+  \item zlecenie poszukiwania~~54
+  \item zmiana czcionki~~28
+  \item znaki specjalne~~92
+
+\end{theindex}
+</pre>
+makroinstrukcja <code>\bold</code> została zdefiniowana jako:<br>
+<code>\def\bold#1{{\bfseries #1}}</code><p>
+
+
+<dt> <a name=opcje><b>zmienić sposób działania programu <strong>plmindex</strong> definiując parametry
+	wywołania (opcje)</b></a>
+<dd>
+Program <strong>plmindex</strong> posiada szereg parametrów wywołania. Ogólna 
+postać wygląda następująco:
+<pre>
+<strong>plmindex</strong> [&lt;opt&gt;] [&lt;idx0&gt; ...]
+</pre>
+<code>&lt;opt&gt;</code> mogą przyjmować jedną z następujących wartości:<p>
+</dl>
+<table border>
+<tr> <th> opcja</th> <th> opis</th> </tr>
+<tr><td> -l </td><td> podczas sortowania ignoruj spacje między słowami hasła;
+			np. hasło <code>aqq bqq</code> zostanie potraktowane
+			tak jak  <code>aqqbqq</code>
+			</td></tr>
+<tr><td> -i </td><td> jako zbioru haseł użyj standardowego strumienia (stdin)
+			</td></tr>
+<tr><td> -q </td><td> nie wyświetlaj komunikatów
+			</td></tr>
+<tr><td> <a name="optr">-r</a> </td><td> nie grupuj numerów stron; np. 
+			jeżeli hasło wystąpi
+		    na stronie 1, 2 i 3 to w skorowidzu
+		    <b>nie zostanie</b> to przedstawione jako 1-3, natomiast
+		    hasła grupowane w sposób jawny (p. <a href=#grupowanie>
+			grupowanie numerów stron</a>), będą miały pogrupowane
+			numery stron
+			</td></tr>
+<tr><td> -c </td><td> ciąg spacji i tabulatorów jest zamieniany na 
+		jedną spację
+			</td></tr>
+<tr><td nowrap> <a name=optL>-L</a> <i>lang</i> </td><td> wybór języka, determinującego porządek
+                                leksykograficzny
+				<table border=0>
+				<tr><td><i>lang</i> </td><td> <code>english</code></td></tr>
+				<tr><td> </td><td> <code>PL-latin2</code></td></tr>
+			        <tr><td> </td><td> <code>PL-mazowia</code></td></tr>
+			        <tr><td> </td><td> <code>PL-cp1250</code></td></tr>
+			        <tr><td> </td><td> <code>PL-cp852</code></td></tr>
+				</table><td></tr>
+<tr><td nowrap> -s <i>sty</i>  </td><td> 
+<a name="style">nazwa zbioru</a> definicji (standardowe rozszerzenie
+					<code>.mst</code>)
+								</td></tr>
+<tr><td nowrap> -o <i>ind</i>  </td><td> nazwa zbiory wyjściowego (standardowo taka
+					jak zbiór wejściowy z
+					rozszerzeniem <code>.ind</code>)
+								</td></tr>
+<tr><td> -? <br>-h  </td><td> wyświetlenie listy opcji</td></tr>
+<tr><td> <a name=optw>-! </td><td> opcja procedur specjalnych (zależy od 
+		    wybranego języka; dla języka polskiego
+		    oznacza, że liczby (cyfry) będa umieszczane
+		    w miejscu wynikającym z napisu reprezentującego
+		    ich wartości; np. cyfra 1 zostanie potraktowana
+		    tak jak napis <code>jeden</code>) (czywiście
+		    można wymusić inną <a href=#kolejnosc>kolejność</a>
+			sortowania)</td></tr>
+<tr><td nowrap> -t <i>log</i>  </td><td> <i>log</i> zbiór zawierający
+			dodatkowe komunikaty (standardowo nazwa taka jak
+					zbiór wejściowy z  rozszerzeniem 
+					<code>.ilg</code>)
+								</td></tr>
+<tr><td nowrap> -p <i>num</i>  </td><td> <i>num</i> 
+			początkowa wartość licznika stron<br>
+</table>
+<dl>
+<dd>&lt;idx0&gt; - zbiór haseł (standardowe rozszerzenie <code>.idx</code>)<br>
+</dl>
+
+<hr>
+<em>Opracował: Włodzimierz Macewicz; zmiany 05.05.2014 (StaW)</em>
+<hr>
+</body>
+</html>

@@ -1,0 +1,117 @@
+%%
+%% This is file `multiexpand002.lvt',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% multiexpand.dtx  (with options: `lvt,lvt002')
+%% ----------------------------------------------------------------
+%% multiexpand --- trigger multiple expansions in one expansion step.
+%% E-mail: blflatex@gmail.com
+%% Released under the LaTeX Project Public License v1.3c or later
+%% See http://www.latex-project.org/lppl.txt
+%% ----------------------------------------------------------------
+%% 
+ \input regression-test.tex\relax
+ \START
+ \LONGTYPEOUT{Author: Bruno Le Floch}
+ \let\numexpr\relax
+ \input multiexpand.sty\relax
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ % Introduce commands that expand to each other, to count how many times
+ % things were expanded.
+ \OMIT
+ \def\i{}
+ \def\v{\i\i\i\i}
+ \def\x{\i\i\i\i\v}
+ \def\l{\i\i\i\i\v\x\x\x\x}
+ \def\c{\i\i\i\i\v\x\x\x\x\l}
+ \def\d{\i\i\i\i\v\x\x\x\x\l\c\c\c\c}
+ \def\m{\i\i\i\i\v\x\x\x\x\l\c\c\c\c\d}
+ \TIMO
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ % We test |\MultiExpand|, which needs two expansions. In particular, we see
+ % that the implementation is reasonably quick, and we get the $2345$-th
+ % expansion of |\m\m\m\m|.
+ % 4000-2345 = 1655 = mdclv
+ \TEST{MultiExpand many times (vlcdm)}{%
+   \toks0\expandafter\expandafter\expandafter{\MultiExpand{2345}\m\m\m\m}%
+   \TYPE{\the\toks0.}%
+ }
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ % Test |\MultiExpandAfter|, two expansions to get the specified expansion.
+ % The results indirectly show that expansions happen in the expected order.
+ % 100 = c
+ % 100-(27-2) = 75 = lxxv
+ % 100-(14-2) = 88 = lxxxviii
+ % 100-38 = 62 = lxii
+ \TEST{MultiExpandAfter chain (c vxxl iiivxxxl iixl)}{%
+   \toks0\expandafter\expandafter\expandafter{%
+     \MultiExpandAfter{27}\c
+     \MultiExpandAfter{14}\c
+     \MultiExpandAfter{38}\c\c}%
+   \TYPE{\the\toks0.}%
+ }
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ % Test the order of expansion.  The example was given in the original
+ % question that led to writing this package.  For the record, this
+ % package (at some point) used 32 |\expandafter| to do the expansion
+ % in the right order, which was better than other approaches; however
+ % this counting ignores the large overheads due to other primitives.
+ \OMIT
+ \def\a#1.{#1}
+ \def\b#1:{#1.}
+ \def\c#1,{#1:}
+ \def\d{Hello world!,}
+ \TIMO
+ %
+ \TEST{MultiExpandAfter order}{%
+   \toks0\MultiExpandAfter{3}{%
+     \MultiExpandAfter{3}\a
+     \MultiExpandAfter{3}\b
+     \MultiExpandAfter{1}\c
+     \d}%
+   \TYPE{\the\toks0}%
+ }
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ % The other example from the same question (expanding seven tokens once
+ % each in the reverse order) takes 74 \expandafter.
+ \OMIT
+ \def\b.{.b}    \def\c.{.c}    \def\d.{.d}
+ \def\e.{.e}    \def\f.{.f}    \def\g.{.g}
+ \TIMO
+ %
+ \TEST{MultiExpandAfter order (2)}{%
+   \toks0\MultiExpandAfter{2}{%
+     \MultiExpandAfter3\a    \MultiExpandAfter3\b
+     \MultiExpandAfter3\c    \MultiExpandAfter3\d
+     \MultiExpandAfter3\e    \MultiExpandAfter1\f\g.}%
+   \TYPE{\the\toks0}%
+ }
+
+ \END
+%% 
+%% Copyright (C) 2011-2017 by Bruno Le Floch <blflatex@gmail.com>
+%% 
+%% This work may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License (LPPL), either
+%% version 1.3c of this license or (at your option) any later
+%% version.  The latest version of this license is in the file:
+%% 
+%% http://www.latex-project.org/lppl.txt
+%% 
+%% This work is "maintained" (as per LPPL maintenance status) by
+%% Bruno Le Floch.
+%% 
+%% This work consists of the file  multiexpand.dtx
+%% and the derived files           multiexpand.ins,
+%%                                 multiexpand.pdf and
+%%                                 multiexpand.sty.
+%% 
+%%
+%% End of file `multiexpand002.lvt'.

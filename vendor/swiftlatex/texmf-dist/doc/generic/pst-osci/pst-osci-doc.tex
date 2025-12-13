@@ -1,0 +1,553 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -*- Mode: Latex -*- %%%%%%%%%%%%%%%%%%%%%%%%%%
+%% pst-osci.doc --- Documentation for `pst-osci' PSTricks package
+%%
+%% Authors         : Manuel LUQUE <Mluque5130@aol.com>
+%%                   Christophe JORSSEN <Christophe.Jorssen@wanadoo.fr>
+%% Created         : Thu 2 Sept 1999
+%% Last mod. by    : Christophe JORSSEN <Christophe.Jorssen@wanadoo.fr>
+%% Last mod. the   : Wed 17 Nov 1999
+%% Last mod. by    : Herbert Voss
+%% Last mod. the   : Wed 7 Nov 2005
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass{article}
+
+\usepackage{pstricks,pst-osci,multicol}    % PSTricks package for Oscilloscope screen shots
+\usepackage[baw,pstricks]{fvrb-ex} % Example environments with `fancyvrb'
+\usepackage[a4paper,left=1.5cm,right=1.5cm,top=1.5cm,bottom=1.5cm]{geometry}
+\usepackage{fancyhdr}
+
+% Modifications in `fvrb-ex' to use only 7 bits characters as escape ones
+% * will be for comment in place of £, and /() for commands in place of §µ¶
+% (this work here because these four characters are not used in the examples)
+
+\makeatletter
+
+\renewcommand{\Begin@Example}{%
+\parindent=0pt
+\multiply\topsep by 2
+\VerbatimEnvironment
+\begin{VerbatimOut}[codes={\catcode`\*=12\catcode`\/=12\catcode`\(=12%
+                           \catcode`\)=12}]{\jobname.tmp}}
+
+\renewcommand{\Below@Example}[1]{%
+\VerbatimInput[gobble=0,commentchar=*,commandchars=/(),numbersep=3pt]%
+              {\jobname.tmp}
+\catcode`\*=9\relax%
+\NoHighlight@Attributes % To suppress possible highlighting
+\ifFvrbEx@Grid\vspace{5pt}\fi
+#1%
+\ifFvrbEx@Grid\vspace{5pt}\fi
+\par}
+
+\renewcommand{\SideBySide@Example}[1]{%
+\@tempdimb=\FV@XRightMargin
+\advance\@tempdimb -5mm
+\begin{minipage}[c]{\@tempdimb}
+  \fvset{xrightmargin=0pt}
+  \catcode`\*=9\relax%
+  \NoHighlight@Attributes % To suppress possible highlighting
+  #1
+\end{minipage}%
+\@tempdimb=\textwidth
+\advance\@tempdimb -\FV@XRightMargin
+\advance\@tempdimb 5mm
+\begin{minipage}[c]{\@tempdimb}
+  \VerbatimInput[gobble=0,commentchar=*,commandchars=/(),numbersep=3pt,
+                 xleftmargin=5mm,xrightmargin=0pt]{\jobname.tmp}
+\end{minipage}}
+
+% The \NoHighlight@Attributes from `hbaw' and `hcolors' packages
+% must be modified too
+\def\NoHighlight@Attributes{%
+\catcode`\/=0\relax%
+\catcode`\(=1\relax%
+\catcode`\)=2\relax%
+\def\HLa##1{##1}%
+\def\HLb##1{##1}%
+\def\HLc##1{##1}%
+\def\HLd##1{##1}%
+\def\HLe##1{##1}%
+\def\HLf##1{##1}%
+\def\HLBFa##1{##1}%
+\def\HLBFb##1{##1}%
+\def\HLBFc##1{##1}%
+\def\HLBFd##1{##1}%
+\def\HLBFe##1{##1}%
+\def\HLBFf##1{##1}%
+\def\HLITa##1{##1}%
+\def\HLITb##1{##1}%
+\def\HLITc##1{##1}%
+\def\HLITd##1{##1}%
+\def\HLITe##1{##1}%
+\def\HLITf##1{##1}%
+\def\HLCBBa##1{##1}%
+\def\HLCBBb##1{##1}%
+\def\HLCBBc##1{##1}%
+\def\HLCBBd##1{##1}%
+\def\HLCBBe##1{##1}%
+\def\HLCBBf##1{##1}%
+\def\HLCBBz##1{##1}%
+\def\HLCBWa##1{##1}%
+\def\HLCBWb##1{##1}%
+\def\HLCBWc##1{##1}%
+\def\HLCBWd##1{##1}%
+\def\HLCBWe##1{##1}%
+\def\HLCBWf##1{##1}%
+\def\HLCBWz##1{##1}%
+}
+
+\makeatother
+
+% Example environments with numbers, single frame, label on top and margin
+\fvset{numbers=none,frame=single,labelposition=topline}
+
+% For macro names
+\DeclareRobustCommand\cs[1]{\texttt{\char`\\#1}}
+
+\newcommand{\OsciPackage}{\textbf{`pst-osci'}}
+\let\phi\varphi
+
+\lhead{\OsciPackage}\rhead{A PSTricks package for oscilloscopes} \pagestyle{fancy}
+
+\begin{document}
+
+\title{\OsciPackage\thanks{Thanks to Denis \textsc{Girou} for his most valuable
+help and his encouragements.}\\ A PSTricks package for oscilloscopes}
+\author{\shortstack{\makeatletter Manuel \textsc{Luque} \texttt{<Mluque5130@aol.com>}\\
+Christophe \textsc{Jorssen} \texttt{<Christophe.Jorssen@free.fr>}\makeatother}}
+\date{\shortstack{Version 2.82\\ \small Documentation revised November 07, 2005 by hv}}
+
+\maketitle
+
+\begin{center}
+\psframebox[framearc=0.3,framesep=5mm,linewidth=0.7mm]{%
+\parbox{15cm}{%
+{\Large\textbf{Abstract}}: \OsciPackage{} is a PSTricks package to draw easily
+oscilloscope screen shots. Three channels can be used to represent the most common
+signals (damped or not): namely sinusoidal ($y=A\exp (-\lambda t)\sin
+(\frac{2\pi}{T}t+m\cdot\sin(\frac{2\pi}{T_m}t)+\phi) + c$), rectangular, triangular,
+dog's tooth (left and right oriented). The third channel allows you to add, to
+subtract or to multiply the two other signals. \textsc{Lissajous} diagrams (XY-mode)
+can also be obtained.}}
+\end{center}
+
+\setlength{\columnseprule}{0.6pt}
+\begin{multicols}{2}
+{\parskip 0pt \tableofcontents}
+\end{multicols}
+
+\section{Introduction}
+
+\OsciPackage{} offers a unique macro with few parameters to interact on it (it is
+the same approach as in Denis \textsc{Girou}'s \textbf{`pst-poly'} package).
+\par
+The syntax is simply: \fbox{\cs{Oscillo}\texttt{[optional\_parameters]}}.
+\par
+\textbf{As for a real oscilloscope, it is important to choose the correct sensivity
+for each channel in relation to the amplitude of the signal. If you did the wrong
+choice, you will get bad-looking curves.}
+\par
+The style of the curves can be customized using the standard PSTricks parameters.
+
+\section{Usage}
+
+\subsection{Parameters}
+
+There are thirty specific parameters defined to change the way the screen shots are
+drawn.
+\par
+Henceforth, the signals represented on channels A, B and C will be called `SignalA',
+`SignalB' and `SignalC'.
+\begin{description}
+
+\item[\HLTTc{period1} (real):] period $T_1$ (in ms) of SignalA (\emph{default:~20}).
+
+\item[\HLTTc{period2} (real):] period $T_2$ (in ms) of SignalB (\emph{default:~20}).
+
+\item[\HLTTc{amplitude1} (real):] amplitude $A_1$ (in V) of SignalA (\emph{default:~2}).
+
+\item[\HLTTc{amplitude2} (real):] amplitude $A_2$ (in V) of SignalB
+(\emph{default:~0 -- no signal}).
+
+\item[\HLTTc{periodmodulation1} (real):] period $T_{m1}$ (in ms) of SignalA
+(\emph{default:~100}).
+
+\item[\HLTTc{periodmodulation2} (real):] period $T_{m2}$ (in ms) of SignalB
+(\emph{default:~100}).
+
+\item[\HLTTc{freqmod1} (real):] modulation factor $m_1$ of SignalA (\emph{default:~0}).
+
+\item[\HLTTc{freqmod2} (real):] modulation factor $m_2$ of SignalB (\emph{default:~0}).
+
+\item[\HLTTc{phase1} (real):] phase $\phi_1$ (in deg) of SignalA (\emph{default:~0}).
+
+\item[\HLTTc{phase2} (real):] phase $\phi_2$ (in deg) of SignalB (\emph{default:~0}).
+
+\item[\HLTTc{CC1} (real):] continuous component $c_1$ (in V) of SignalA (\emph{default:~0}).
+
+\item[\HLTTc{CC2} (real):] continuous component $c_2$ (in V) of SignalB (\emph{default:~0}).
+
+\item[\HLTTc{damping1} (real):] damping $\lambda_1$ of SignalA
+(\emph{default:~0 -- no damping}).
+
+\item[\HLTTc{damping2} (real):] damping $\lambda_2$ of SignalB
+(\emph{default:~0 -- no damping}).
+
+\item[\HLTTc{wave1}:] type of the SignalA chosen between \cs{SinusA}, \cs{RectangleA},
+\cs{TriangleA}, \cs{LDogToothA}, \cs{RDogToothA} (\emph{default: \cs{SinusA}}).
+
+\item[\HLTTc{wave2}:] type of the SignalB chosen between \cs{SinusB}, \cs{RectangleB},
+\cs{TriangleB}, \cs{LDogToothB}, \cs{RDogToothB} (\emph{default: \cs{SinusB}}).
+
+\item[\HLTTc{timediv} (real):] scale (in ms) of the time axis (\emph{default:~5}).
+
+\item[\HLTTc{Lissajous} (boolean):] switch to XY-mode (true) or not (false)
+(\emph{default: false}).
+
+\item[\HLTTc{sensivity1} (real):] scale (in V) of the channel A vertical axis
+(\emph{default:~1}).
+
+\item[\HLTTc{sensivity2} (real):] scale (in V) of the channel B vertical axis
+(\emph{default:~1}).
+
+\item[\HLTTc{plotstyle1}:] determines what kind of plot you will get for
+channel A (\emph{default: GreenContA}). Note that you can customize the plotstyle
+using the \cs{newpsstyle} macro (see below for examples).
+
+\item[\HLTTc{plotstyle2}:] determines what kind of plot you will get for
+channel B (\emph{default: BlueContB}). Same remark as above.
+
+\item[\HLTTc{plotstyle3}:] determines what kind of plot you will get for
+XY-mode (\emph{default: RedContLissajous}). Same remark as above.
+
+\item[\HLTTc{plotstyle4}:] determines what kind of plot you will get for
+add, sub or mul operation (third channel) (\emph{default: MagentaContAddSub}). Same
+remark as above.
+
+\item[\HLTTc{combine} (boolean):] if true allows to draw combination of SignalA
+and SignalB on channel C (namely addition, subtraction or multiplication)
+(\emph{default: false -- no signal}). See next item.
+
+\item[\HLTTc{operation}:] determines what kind of operation will be applied to
+SignalA and SignalB to get SignalC. The valid parameters are add, sub and mul
+(\emph{default: \cs{relax} -- no operation}).
+
+\item[\HLTTc{Fourier} (integer):] see below (Section \ref{Rectangular})
+(\emph{default:~100}).
+
+\item[\HLTTc{offset1} (real):] offset $c'_1$ (in V) of SignalA (\emph{default:~0}).
+
+\item[\HLTTc{offset2} (real):] offset $c'_2$ (in V) of SignalB (\emph{default:~0}).
+
+\item[\HLTTc{offset3} (real):] offset $c'_2$ (in V) of SignalC (\emph{default:~0}).
+
+
+\end{description}
+
+\subsection{Rectangular, triangular and dog's tooth signals\label{Rectangular}}
+
+The parameter \HLTTc{Fourier} controls the precision of the Fourier transform used to
+draw rectangular, triangular and dog's tooth signals. The number of  terms is fixed to
+100 by default  in order to minimize the computation time. But you can give
+\HLTTc{Fourier} any value you want.
+\par
+Note that those signals can also be damped using the \HLTTc{damping1} and
+\HLTTc{damping2} parameters. By default, there is no damping ($\lambda=1$).
+
+\subsection{\OsciPackage{} and \LaTeX}
+
+\OsciPackage{} defines colors that may interact with the \textbf{`color'} package.
+You should then use the \textbf{`pst-col'} package and load \OsciPackage{} this way:
+\begin{Verbatim}
+  \usepackage{pstcol,pst-osci}
+\end{Verbatim}
+
+\subsection{Reducing the size of the Oscilloscope}
+
+The oscilloscope is put inside a 10\,cm square \HLTTc{pspicture} environment. There
+are two ways to reduce the size of the box, depending on the fonts you use.
+
+\subsubsection{Using PostScript fonts}
+
+We recommend that solution because it allows you to treat fonts like any other
+PostScript object. As a matter of fact, you can, for instance, put your \cs{Oscillo}
+macro inside a PSTricks \cs{psscalebox}. It is very simple and offers good results.
+However, pay attention to the fact that, if you are using non-PS fonts, the result
+will look ugly!
+
+\subsubsection{Using non-PostScript fonts}
+
+If you use non-PS fonts and if you want to reduce the size of the Oscilloscope, you
+should type something like:
+\begin{Verbatim}
+  {\psset{unit=0.5}\footnotesize\Oscillo}
+\end{Verbatim}
+
+\section{Examples}
+
+\subsection{Basic examples}
+
+\begin{CenterExample}[label={The \cs{Oscillo} macro, default parameters}]
+  \psscalebox{0.5}{\Oscillo}
+\end{CenterExample}
+
+\textbf{In order to minimize the size of the file, all the oscilloscopes are drawn
+scaled $\frac{1}{2}$. This reduced scale is not represented.}
+
+\makeatletter
+\let\Oldpst@Oscillo\pst@Oscillo
+\def\pst@Oscillo[#1]{\psscalebox{0.5}{\Oldpst@Oscillo[#1]}}
+\makeatother
+
+\par
+If you only want to see SignalA then set \HLTTc{offset2} in order to have
+$\HLTTc{offset2}\in ]-\infty,-4\times \HLTTc{sensivity2}[ \cup
+]4\times\HLTTc{sensivity2},+\infty[$:
+
+\begin{SideBySideExample}[label=SignalB invisible, xrightmargin=5.5cm]
+  \Oscillo[offset2=/HLCBWz(5)]
+\end{SideBySideExample}
+
+Let's have a look at Channel A:
+
+\begin{CenterExample}[label=The importance of sensivity]
+  % Extrema invisible
+  \psscalebox{0.5}{\Oscillo[offset2=5,/HLCBWz(amplitude1)=5]}
+  % Good sensivity choice
+  \hfill
+  \psscalebox{0.5}{\Oscillo[offset2=5,amplitude1=5,/HLCBWz(sensivity1)=2]}
+\end{CenterExample}
+
+Now, let's have two signals on Channel A and B. By default, the two signals have the
+same period and the same phase:
+
+\begin{CenterExample}
+  % Different amplitude
+  \psscalebox{0.5}{\Oscillo[amplitude1=3,/HLCBWz(amplitude2)=1.5]}
+  % Different period
+  £\hfill
+  \psscalebox{0.5}{\Oscillo[amplitude1=3,amplitude2=1.5,/HLCBWz(period2)=50]}
+  % Different phase
+  £\hfill
+  \psscalebox{0.5}{\Oscillo[amplitude1=3,amplitude2=1.5,/HLCBWz(phase1)=60,/HLCBWz(phase2)=-30]}
+\end{CenterExample}
+
+\begin{SideBySideExample}[label=Damping and amplification,xrightmargin=5.5cm]
+  \psscalebox{0.5}{\Oscillo[amplitude1=3,amplitude2=1.5,
+    /HLCBWz(damping2)=0.005,/HLCBWz(damping1)=-0.005]}
+\end{SideBySideExample}
+
+\begin{SideBySideExample}[label=Changing the time scale,xrightmargin=5.5cm]
+  \psscalebox{0.5}{\Oscillo[amplitude2=1.5,/HLCBWz(timediv)=10]}
+\end{SideBySideExample}
+
+\begin{SideBySideExample}[label=Vertical translations,xrightmargin=5.5cm]
+  \psscalebox{0.5}{\Oscillo[amplitude1=1.5,amplitude2=1.5,
+    /HLCBWz(offset1)=1.5,/HLCBWz(offset2)=-1.5]}
+\end{SideBySideExample}
+
+\begin{CenterExample}[label=Changing the plot style]
+  /HLCBWz(\newpsstyle){BlueDots}{plotstyle=dots,
+    linecolor=blue,linewidth=0.02,plotpoints=50}
+  \psscalebox{0.5}{\Oscillo[amplitude1=3,/HLCBWz(plotstyle2)=BlueDots,amplitude2=2]}
+  /HLCBWz(\newpsstyle){GreenDash}{linestyle=dashed,
+    linecolor=green,linewidth=0.035,plotpoints=50}
+  £\hfill
+  \psscalebox{0.5}{\Oscillo[amplitude1=2,phase1=90,amplitude2=3.8,period1=25,
+    period2=50,phase2=10,/HLCBWz(plotstyle1)=GreenDash]}
+\end{CenterExample}
+
+\subsection{Channel C: operations}
+
+Note that \HLTTc{offset1} and \HLTTc{offset2} are \textbf{not} taken into account in
+the operations when the \HLTTc{combine} parameter is set to true.
+
+\begin{CenterExample}[label=Additions]
+  \psscalebox{0.5}{\Oscillo[amplitude2=1.5,period2=50,period1=10,
+    /HLCBWz(combine)=/HLCBWz(true),/HLCBWz(operation)=/HLCBWz(add)]}
+  £\hfill
+  \psscalebox{0.5}{\Oscillo[amplitude2=1.5,period2=50,period1=10,
+    /HLCBWz(combine)=/HLCBWz(true),/HLCBWz(operation)=/HLCBWz(add),offset1=2,offset2=2]}
+  £\hfill
+  % SignalA and SignalB are invisible
+  \psscalebox{0.5}{\Oscillo[amplitude2=1.5,period2=50,period1=10,
+    /HLCBWz(combine)=/HLCBWz(true),/HLCBWz(operation)=/HLCBWz(add),offset1=6,offset2=6]}
+\end{CenterExample}
+
+\begin{SideBySideExample}[label=Subtraction,xrightmargin=5.5cm]
+  \psscalebox{0.5}{\Oscillo[amplitude2=1.5,period2=50,period1=10,
+    /HLCBWz(combine)=/HLCBWz(true),
+    /HLCBWz(operation)=/HLCBWz(sub)]}
+\end{SideBySideExample}
+
+\begin{CenterExample}[label=Multiplications]
+  \psscalebox{0.5}{\Oscillo[amplitude2=1.5,period2=50,period1=10,
+    /HLCBWz(combine)=/HLCBWz(true),/HLCBWz(operation)=/HLCBWz(mul)]}
+  £\hfill
+  \psscalebox{0.5}{\Oscillo[amplitude1=1,amplitude2=2,
+    period2=50,period1=2,/HLCBWz(combine)=/HLCBWz(true),/HLCBWz(operation)=/HLCBWz(mul)]}
+\end{CenterExample}
+
+\subsection{Channel C: XY-mode}
+
+\begin{SideBySideExample}[label={Basic \textsc{Lissajous} curve},xrightmargin=5.5cm]
+  \psscalebox{0.5}{\Oscillo[/HLCBWz(Lissajous)=/HLCBWz(true),amplitude2=2]}
+\end{SideBySideExample}
+
+\begin{CenterExample}
+  \psscalebox{0.5}{\Oscillo[Lissajous=true,amplitude2=3,phase2=45]}
+  \hfill
+  \psscalebox{0.5}{\Oscillo[Lissajous=true,amplitude2=2,phase2=90]}
+\end{CenterExample}
+
+\begin{CenterExample}
+  \psscalebox{0.5}{\Oscillo[amplitude1=3.5,phase1=90,amplitude2=3.5,
+    period1=20,period2=10,phase2=0,Lissajous=true]}
+  \hfill
+  \psscalebox{0.5}{\Oscillo[amplitude1=3.5,phase1=90,amplitude2=3.5,
+    period1=25,period2=5,phase2=60,Lissajous=true]}
+\end{CenterExample}
+
+\begin{SideBySideExample}[label={A damped \textsc{Lissajous} diagram},xrightmargin=5.5cm]
+  \psscalebox{0.5}{\Oscillo[amplitude1=3.5,phase1=90,
+    amplitude2=3.5,period1=50,period2=50,
+    Lissajous=true,damping1=0.01,damping2=0.01]}
+\end{SideBySideExample}
+
+\subsection{Non sinusoidal signals}
+
+\begin{CenterExample}[label=Exponential signals]
+   \psscalebox{0.5}{\Oscillo[amplitude1=3.5,phase1=90,
+    period1=/HLCBWz(2E30),offset2=5,damping1=0.02]}
+  \hfill
+   \psscalebox{0.5}{\Oscillo[amplitude1=3.5,phase1=90,
+    period1=/HLCBWz(2E30),offset2=3,amplitude2=-3,damping1=0.02,
+    period2=/HLCBWz(2E31),damping2=0.02,phase2=90]}
+\end{CenterExample}
+
+\textbf{Note:} the maximum value for \HLTTc{period1} and \HLTTc{period2} is $\pm$2E31.
+
+\begin{CenterExample}[label={Non-sinusoidal signals}]
+   \psscalebox{0.5}{\Oscillo[/HLCBWz(Wave1)=/HLCBWz(\TriangleA),amplitude2=2,period2=20,period1=25]}
+  \hfill
+   \psscalebox{0.5}{\Oscillo[/HLCBWz(Wave1)=/HLCBWz(\RectangleA),amplitude2=2,period2=20,period1=25]}
+\end{CenterExample}
+
+\begin{CenterExample}[label=Combine examples]
+   \psscalebox{0.5}{\Oscillo[Wave2=\TriangleB,combine=true,operation=mul,amplitude2=2,
+    period2=50,period1=2,amplitude1=1]}
+  \hfill
+   \psscalebox{0.5}{\Oscillo[combine=true,operation=add,amplitude2=1.5,
+    Wave1=\RectangleA,amplitude1=1.5,period2=15]}
+  \hfill
+   \psscalebox{0.5}{\Oscillo[combine=true,operation=add,amplitude2=1.5,
+    Wave1=\RectangleA,amplitude1=1.5,period2=15,Wave2=\TriangleB]}
+\end{CenterExample}
+
+\begin{CenterExample}[label={Dog's tooth signal}]
+   \psscalebox{0.5}{\Oscillo[combine=true,operation=mul,amplitude2=1.5,
+    /HLCBWz(Wave1)=/HLCBWz(\RDogToothA),amplitude1=1.5,period2=15]}
+  £\hfill
+   \psscalebox{0.5}{\Oscillo[amplitude1=3.5,phase1=90,amplitude2=3.5,
+    period1=25,period2=6.25,phase2=0,Lissajous=true,Wave2=\RDogToothB]}
+\end{CenterExample}
+
+\subsection{Frequency modulation examples}
+
+\begin{SideBySideExample}[xrightmargin=5.5cm]
+   \psscalebox{0.5}{\Oscillo[/HLCBWz(periodmodulation1)=200,/HLCBWz(freqmod1)=5,
+    period1=30,
+    timediv=50,plotpoints=1000,amplitude2=2,period2=200]}
+\end{SideBySideExample}
+
+\begin{SideBySideExample}[xrightmargin=5.5cm]
+   \psscalebox{0.5}{\Oscillo[amplitude1=1,amplitude2=1,
+    period2=25,period1=2,combine=true,operation=mul]}
+\end{SideBySideExample}
+
+\begin{SideBySideExample}[xrightmargin=5.5cm]
+   \psscalebox{0.5}{\Oscillo[amplitude1=1,amplitude2=1,/HLCBWz(CC2)=2,
+    period2=25,period1=2,combine=true,operation=mul,offset1=5]}
+\end{SideBySideExample}
+
+\begin{SideBySideExample}[xrightmargin=5.5cm]
+   \psscalebox{0.5}{\Oscillo[amplitude1=1,amplitude2=1,CC2=1.5,
+    Wave2=\TriangleB,
+    period2=25,period1=2,combine=true,operation=mul,offset1=5]}
+\end{SideBySideExample}
+
+\begin{SideBySideExample}[xrightmargin=5.5cm]
+   \psscalebox{0.5}{\Oscillo[amplitude1=1,amplitude2=1,CC2=2,
+    Wave2=\RDogToothB,
+    period2=25,period1=2,combine=true,operation=mul,offset1=5]}
+\end{SideBySideExample}
+
+\begin{SideBySideExample}[xrightmargin=5.5cm]
+   \psscalebox{0.5}{\Oscillo[amplitude1=1,amplitude2=1,CC2=-2,
+    Wave2=\LDogToothB,
+    period2=20,period1=3,combine=true,operation=mul,offset1=5]}
+\end{SideBySideExample}
+
+\begin{SideBySideExample}[xrightmargin=5.5cm]
+   \psscalebox{0.5}{\Oscillo[amplitude1=1,amplitude2=1,CC2=2,
+    Wave2=\RDogToothB,
+    period2=25,period1=2,combine=true,operation=mul,
+    offset1=5,offset3=-1]}
+\end{SideBySideExample}
+
+\begin{SideBySideExample}[xrightmargin=5.5cm]
+   \psscalebox{0.5}{\Oscillo[amplitude1=1,amplitude2=1,CC2=-2,
+    Wave2=\LDogToothB,
+    period2=20,period1=3,combine=true,operation=mul,
+    offset1=5,offset3=1]}
+\end{SideBySideExample}
+
+\subsection{More examples}
+
+\begin{SideBySideExample}[xrightmargin=5.5cm]
+   \psscalebox{0.5}{\Oscillo[amplitude1=3.5,phase1=90,amplitude2=3.5,
+    period1=50,
+    period2=50,phase2=0,Lissajous=true,damping1=0.01,
+    Wave2=\RectangleB]}
+\end{SideBySideExample}
+
+\begin{SideBySideExample}[xrightmargin=5.5cm]
+   \psscalebox{0.5}{\Oscillo[amplitude1=2,amplitude2=1.8,
+    Wave1=\RectangleA,
+    Fourier=500,period1=25,period2=12.5,combine=true,
+    operation=add,Wave2=\RectangleB]}
+\end{SideBySideExample}
+
+\begin{SideBySideExample}[xrightmargin=5.5cm]
+   \psscalebox{0.5}{\Oscillo[amplitude1=4,amplitude2=3,
+    period1=50,
+    period2=5,Lissajous=true,Wave1=\RectangleA]}
+\end{SideBySideExample}
+
+\begin{SideBySideExample}[xrightmargin=5.5cm]
+   \psscalebox{0.5}{\Oscillo[amplitude1=3,phase1=90,
+    amplitude2=3,damping1=0.05,
+    period1=25,period2=12.5,phase2=0,
+    Lissajous=true,Wave2=\RDogToothB]}
+\end{SideBySideExample}
+
+\begin{SideBySideExample}[xrightmargin=5.5cm]
+   \psscalebox{0.5}{\Oscillo[amplitude1=4,amplitude2=3,period1=25,
+    period2=50,Lissajous=true,damping1=0.02,
+    Wave2=\TriangleB]}
+\end{SideBySideExample}
+
+\begin{SideBySideExample}[xrightmargin=5.5cm]
+   \psscalebox{0.5}{\Oscillo[Wave2=\LDogToothB,combine=true,
+    operation=mul,
+    amplitude2=2,period2=50,period1=2,amplitude1=1]}
+\end{SideBySideExample}
+
+\begin{SideBySideExample}[xrightmargin=5.5cm]
+   \psscalebox{0.5}{\Oscillo[amplitude1=3.5,phase1=90,%
+    amplitude2=3.5,period1=50,
+    period2=50,phase2=0,Lissajous=true,damping1=0.01,
+    Wave2=\RectangleB,damping2=0.01]}
+\end{SideBySideExample}
+
+\end{document}

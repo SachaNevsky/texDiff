@@ -1,0 +1,39 @@
+#!/usr/bin/awk -f
+#
+# (This file is public domain.)
+#
+# This file is part of the Eplain macro package.
+#
+# This script filters input lines (which are expected to be a list of
+# `\indexentry' lines for MakeIndex) eliminating matching lines.  The comparison
+# is done without regard to hyperlink label names (in the form `IDX*', where `*'
+# stands for a non-negative integer).
+#
+# This has to be done to avoid terms which differ only in hyperlink label names
+# embedded into them, because MakeIndex will treat these otherwise identical
+# terms as distinct, listing more than once a page number for equivalent terms
+# on the same page.
+#
+# `stripped' array is indexed by `\indexentry' lines stripped off the hyperlink
+# label name.  For each term, we use its stripped version as a key into the
+# `stripped' array to increment its element.  This records the fact that we have
+# seen the term with such key.  Also, we add the (full) `\indexentry' line to
+# the `terms' array, but only if we have not yet seen a term with such key.
+#
+# The idea was borrowed from Edition 3 of `GAWK: Effective AWK Programming: A
+# User's Guide for GNU Awk', which contains the following credit:
+#
+#       histsort.awk --- compact a shell history file
+#       Thanks to Byron Rakitzis for the general idea
+
+{
+  temp = $0
+  sub (/{IDX[[:digit:]]+}/, "", temp)
+  if (stripped[temp]++ == 0)
+    terms[++count] = $0
+}
+
+END {
+  for (i = 1; i <= count; i++)
+    print terms[i]
+}

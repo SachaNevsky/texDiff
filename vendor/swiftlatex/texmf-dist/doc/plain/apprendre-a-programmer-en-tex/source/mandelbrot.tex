@@ -1,0 +1,43 @@
+\documentclass[crop=true,border=5pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{libertine}
+\usepackage[libertine]{newtxmath}
+\input macroperso.tex
+\begin{document}
+\def\mandeltest#1#2{%
+	\def\zx{0}\def\zy{0}%
+	\def\zxx{0}\def\zyy{0}%
+	\def\mandelresult{1}%
+	\for\ii=1to\maxiter\do1{%
+		\advance\count255 by1
+		\edef\zy{\dimtodec\dimexpr\decmul{\decmul2\zx}\zy pt+#2pt\relax}%
+		\edef\zx{\dimtodec\dimexpr\zxx pt-\zyy pt+#1pt\relax}%
+		\edef\zxx{\decmul\zx\zx}%
+		\edef\zyy{\decmul\zy\zy}%
+		\ifdim\dimexpr\zxx pt+\zyy pt\relax>4pt
+			\def\mandelresult{0}%
+ 			\exitfor\ii
+		\fi
+	}%
+}
+\def\mandel#1#2{%
+	\graphzone{-2}[1]{1}[2]{-1}[1]{1}[2]{%
+		\def\maxiter{#2}%
+		\edef\plotstuff{\the\dimexpr\xunit/#1\relax}%
+		\edef\plotstuff{\vrule height\plotstuff width\plotstuff}%
+		\edef\increment{\decdiv{1}{#1}}%
+		\count255=0
+		\FOR\xxx = -2 to 1 \do \increment{%
+			\FOR\yyy = 0 to 1 \do \increment{%
+				\mandeltest\xxx\yyy
+				\ifnum\mandelresult=1
+					\plot(\xxx,\yyy)\plot(\xxx,-\yyy)%
+				\fi
+			}%
+		}%
+	\edef\plotstuff{$\scriptstyle\number\count255 $}%
+	\plot(-1.99,0.92)%
+	}%
+}
+\xunit=3cm \yunit=3cm \mandel{400}{500}
+\end{document}

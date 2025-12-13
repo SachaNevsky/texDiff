@@ -1,0 +1,212 @@
+%% file: TXStags.doc - Tags and Labels - TeXsis version 2.18
+%% @(#) $Id: TXStags.doc,v 18.1 1999/07/30 18:34:24 myers Exp $
+%======================================================================*
+% (C) Copyright 1989, 1992, 1997 by Eric Myers and Frank E. Paige
+% This file is a part of TeXsis.  Distribution and/or modifications
+% are allowed under the terms of the LaTeX Project Public License (LPPL).
+% See the file COPYING or ftp://ftp.texsis.org/texsis/LPPL
+%======================================================================*
+\ifx\undefined\meta \texsis\input TXSdocM.doc\draft\input Manual.aux\fi
+
+
+\section{Labels and Tags                \label{sect.labels}}
+
+One of the most useful features of \TeXsis\ is that it automatically
+numbers things like equations and references and lets you refer to
+these things by means of symbolic names or ``labels.'' 
+This section explains how to get the most use out of this labeling
+mechanism. 
+
+\subsection{Tagging}
+
+ Here is a rough outline of how labeling or ``tagging'' works.
+\TeXsis\ keeps track of numbers for equations, figures, tables,  and
+other useful things in counters.  Whenever you create a new equation,
+figure, table or reference the appropriate counter is incremented.  At
+the same time, a new macro instruction is defined, with the label
+incorporated into the name, and the definition of this macro is
+simply the (new) value of the counter.  Thus if you create a displayed
+equation and label it ``Newton'' then a macro called ``|\Eq.Newton|'' is
+created and it is automatically defined to be whatever the next number
+is for the equation.
+
+      The actual mechanism is somewhat more subtle. Normally you can
+only use letters in macro names, but \TeXsis\ uses \cs{csname} |...|
+\cs{endcsname} to allow numbers and punctuation to be used in
+labels.
+Also, an extra |@| is added at the beginning and end of each macro
+name.
+If this were not done then, for example, using ``|end|'' as a label
+(using \CS{tag}) could redefine \cs{end}, and you would not be able to
+get out of \TeX!
+So the macro containing the equation number for the equation named
+``Newton'' actually ends up being named ``|\@Eq.Newton@|''.
+
+      Once a label macro is defined you can use it to refer to the
+thing it labels, and it will yield the proper number.
+In the case of the equation called ``Newton,'' saying |\Eq{Newton}| is
+really saying |Eq.~(\@Eq.Newton@)|.
+(Again, since punctuation is not allowed in names, \TeXsis\ actually
+uses \cs{csname} |...| \cs{endcsname} in the definition.)
+References, equations, figures, tables, etc., all produce their
+numbers in this way.
+
+      Each of the \TeXsis\ macros which uses labels attaches to
+the label a unique prefix identifying the kind of object labeled.
+These objects and the corresponding prefixes are shown in
+\Tbl{labels}.  
+Because of these prefixes the same label can be used for different
+kinds of objects.
+For example, the name ``Witten'' can be used as a label for an
+equation and as a reference, since their internal labels are
+|Eq.Witten| and |Ref.Witten|, respectively (and in reality the names
+are bracketed by |@| characters).
+The prefixes are automatically inserted by \TeXsis\ macros like
+\cs{Eq} and \cs{cite}.
+
+      At the most primitive level you can always associate a label with
+some value by saying \CS{tag}\arg{label\/}\arg{value}.  You can then
+reference the value, whatever it is, by its name using the command
+\CS{use}\arg{label\/}.  In this case if there is to be a prefix in the
+label you must put it in explicitly.  Thus to say just the number of the
+equation labeled ``Newton'' without any parentheses or anything you
+would say |\use{Eq.Newton}|.  To get the number of the reference labeled
+``Knuth'' you would say |\use{Ref.Knuth}|, which produces
+``\use{Ref.Knuth}'' because ``Knuth'' is the label of the first document
+we referenced in this manual and ``Ref'' is the prefix used for
+references.
+
+\table{labels}
+\caption{Prefixes for labels and the corresponding counters for
+various objects.}
+\def\CS#1{{\tt\char92{#1}}}
+\def\\{\hfill}
+\ruledtable
+Entity        \\| Tag Prefix    | Counter            \CR
+Corollary     \\| {\tt Cor.}    | \CS{corollarynum}  \\\cr
+Definition    \\| {\tt Df.}     | \CS{definitionnum} \\\cr
+Equation      \\| {\tt Eq.}     | \CS{eqnum}         \\\cr
+Figure        \\| {\tt Fg.}     | \CS{fignum}        \\\cr
+Lemma         \\| {\tt Lem.}    | \CS{lemmanum}      \\\cr
+Reference     \\| {\tt Ref.}    | \CS{refnum}        \\\cr
+Table         \\| {\tt Tb.}     | \CS{tabnum}        \\\cr
+Theorem       \\| {\tt Thm.}    | \CS{theoremnum}    \\
+\endruledtable
+\endtable
+
+   One particularly useful way to use \CS{tag} and \CS{use} is to
+refer to a topic which is discussed on some other page in the
+document.
+On the page you want to reference you could define the tag
+``page.cool'' to be the page number by saying
+\CS{tag}|{page.cool}{|\cs{folio}|}|.  
+Then somewhere else in the document if you want to refer to the
+information on that page you could do so with
+\CS{use}|{page.cool}|, as in ``This difficulty is discussed in
+more detail on page |\use{page.cool}|.''
+Then even if the document is rearranged so that the page numbers
+change, the page number you referred to will come out correct.
+
+Here is another useful example.
+Suppose you want to state the number of questions at the begining of
+an examination (or similarly, the number of chapters in a book).
+A count of the questions could be kept in |\Qcount|, but it won't be
+set correctly until the end of the job.
+Even so, when the count is known we can tag it with a name like ``NQ''
+and use it in the text with |\use{NQ}|.
+The first time this is encountered it will display as an undefined tag
+and an error message will appear in the log.
+But at the end of the document we say
+\TeXexample
+\tag{NQ}{\Qcount}
+|endTeXexample to assign the final value of |\Qcount| to the
+tag~``NQ''.
+The next time the job is run saying |\use{NQ}| will be defined as the
+value from the previous run.
+Unless you've recently changed things (by adding or removing a
+question) then this will be the correct count.
+
+
+   Knowing about \CS{use} and the prefixes in \Tbl{labels} also lets you
+change how the macros that refer to these objects work.  For example, to
+refer to figure~\use{Fg.Penguin} in section~\use{sect.figs} you would
+normally say \cs{Fig}|{Penguin}|.  This produces
+``Fig.~\use{Fg.Penguin},'' but suppose you want it to say the full word
+``figure'' instead of just ``Fig.''  You can make this change throughout
+the document simply by changing the definition of \cs{Fig} to:
+\TeXexample
+\def\Fig#1{figure~\use{Fg.#1}}
+|endTeXexample
+\noindent
+Then ``\cs{Fig}|{Penguin}|'' would produce ``figure~\use{Fg.Penguin}.''
+
+
+\bigskip
+
+      Whenever you create any of the objects listed in \Tbl{labels} a
+label is automatically created.  However, chapters, sections, and
+subsections are not automatically labeled because their values are not
+ordinarily changed.  If you want to remember the number of a chapter or
+section of your document to be able to refer to it somewhere else, put
+\CS{label}\arg{label\/} in the text of the title of the chapter or
+section. \CS{label}\arg{label\/} is the same as
+\CS{tag}\arg{label\/}\arg{counter}, where \meta{counter} is the current 
+section or chapter number, as appropriate.  For example you might have:
+\TeXexample 
+\section{Supersymmetry and Supergravity \label{sect.SUSY}}
+|endTeXexample  
+\noindent
+To refer to that section later on you would say |\use{sect.SUSY}|.
+Note that \CS{label} does not insert any prefix in front of the label,
+so you must include it explicitly if you want one.
+We suggest ``sect'' for sections, ``chapt'' for chapters, and so
+forth, but you are free to use whatever you want.
+
+
+%==================================================*
+\pagecheck{0.33\vsize}
+
+\subsection{Forward References}
+
+If you label an equation or a figure or a section you can refer to
+the number of that object later in the text, but what if you want to
+refer to the thing before it has been tagged?  Then the label won't
+exist yet.  This is called making a forward reference. To allow for
+this \TeXsis\ also writes the definition of every label to an auxiliary
+file, which has a name ending in |.aux|. The label will still be
+undefined the first time you make the forward reference, but the next
+time you run the document through \TeXsis\ it will automatically read in
+the auxiliary file at the beginning of the job and define the label.
+Thus on the second pass the label will already be defined when it is
+called for.  Having to make a second pass may sound like extra work, 
+but when you are editing a document and putting the finishing
+touches on it you will find you end up making the extra pass without
+thinking about it. Just don't delete the |.aux| file between runs.
+\index{forward references}
+
+        If you try to reference a label that does not exist you'll be
+told so at the end of the run (when you say \cs{bye}) and another pass
+will be suggested.  Undefined references are also noted in the log file
+when they occur, and the label itself is inserted into the output text
+in boldface to make it easier for you to track down the problem.  In
+\cs{draft} mode the mark ``{\tt UNDEF}''  is also put in the right
+margin to help you find the problem.
+
+% Describe \twopass here, if we ever decide to publicize it
+
+
+
+%==================================================*
+\pagecheck{0.33\vsize}
+
+\subsection{Hypertext \label{sect.hypertext}}
+
+(Documentation for Hypertext linking will go here)
+
+
+
+
+
+
+
+%>>> EOF TXStags.doc <<<

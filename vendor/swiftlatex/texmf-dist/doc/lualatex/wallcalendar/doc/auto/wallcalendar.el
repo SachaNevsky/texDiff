@@ -1,0 +1,71 @@
+(TeX-add-style-hook
+ "wallcalendar"
+ (lambda ()
+   (TeX-add-to-alist 'LaTeX-provided-class-options
+                     '(("memoir-article" "11pt" "oneside") ("wallcalendar" "year=2018" "language=english" "imageFolder=./photos/" "" "language=japanese" "translationsInputFile=frog-japanese.tex" "translationsInputFile=frog-english.tex" "language=hungarian" "translationsInputFile=frog-hungarian.tex" "eventsCsv=./data/holidays.csv" "markDefaultsCsv=./data/mark_defaults.csv")))
+   (TeX-run-style-hooks
+    "latex2e"
+    "frontpage"
+    "./frog"
+    "memoir-article"
+    "memoir-article11"
+    "local"
+    "wallcalendar10"
+    "fontspec"
+    "local-japanese"
+    "local-english"
+    "local-hungarian")
+   (TeX-add-symbols
+    '("ThumbWithCaptionRightSide" 1)
+    '("ThumbWithCaptionLeftSide" 1)
+    "SeptMarks"
+    "plannerYearFmt"
+    "preYearPlannerPageHook"
+    "postYearPlannerPageHook"
+    "printPlannerTitle"
+    "YearPlannerPage"
+    "thumbFmt"
+    "thumbMonthFmt"
+    "thumbCaptionFmt"
+    "ThumbsPage")
+   (LaTeX-add-labels
+    "sec:org9e1c3d1"
+    "sec:orgbba6dea"
+    "sec:org30e28c2"
+    "sec:org6815f95"
+    "sec:orgda955cc"
+    "sec:org522c828"
+    "sec:org80f370d"
+    "sec:org28303a7"
+    "sec:orga8965a9"
+    "sec:org2adcd24"
+    "sec:org736afc3"
+    "sec:org12d351e"
+    "sec:orgba9e3f8"
+    "sec:orgbf5aa37"
+    "sec:orgb56123b"
+    "sec:org24663e1"
+    "sec:org85fac7e"
+    "sec:org0124cf4"
+    "sec:org70f504f"
+    "sec:org0431559"
+    "sec:orgc4970c9"
+    "sec:orge74d943"
+    "sec:org7af4bd6"
+    "sec:org9571a13"
+    "sec:org1bdd209"
+    "sec:org23c0fca"
+    "sec:org5024f18"
+    "sec:org02a2f80"
+    "sec:org2801ae6"
+    "sec:orgc9e6d1d")
+   (LaTeX-add-lengths
+    "plannerNotesSep"
+    "thumbColumnWidth"
+    "thumbColumnHeight"
+    "thumbSep")
+   (LaTeX-add-fontspec-newfontcmds
+    "dejaVuSans"
+    "mincho"))
+ :latex)
+

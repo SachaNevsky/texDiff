@@ -1,0 +1,339 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage{hologo} % used for LuaTeX, PdfTeX and PdfLaTeX logos
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{url}
+\title{pdflatexpicscale}
+\author{Peter Willadt\footnote{willadt at t-online.de}}
+\date{2018-02-12} %version #version
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  \noindent pdflatexpicscale is software that scales bitmap images to be
+  included into Pdf\LaTeX\ documents down to a size sufficient for printing.
+  This document describes installation and usage.
+\end{abstract}
+
+\tableofcontents
+
+\section{Introduction}
+
+Picture size matters. Digital cameras produce unnecessary large images, this
+leads to excessive download times and wasted processing power in the print
+driver, for example. Tuning images by hand is fine, but it costs lots of time
+and there may be situations where you need e.g. low-res pictures for the web
+and high-res pictures for print. When there are requirements that force the
+size of images in our document to change, the fun will probably be gone.
+
+There is a freely accessible article\label{tugboatart} in TUGboat (\url{%
+https://www.tug.org/TUGboat/tb37-3/tb117willadt.pdf}) accompanying
+this package.
+
+
+\subsection{Similiar Work/Prior Art}
+
+There have been prior attempts to do similiar things. I found
+\texttt{degrade.sty}\footnote{see
+  \url{http://mirror.ctan.org/graphics/degrade}} 
+ and an equivalent con\TeX t module, there are at least two threads on
+ stackexchange\footnote{see
+   \texttt{http://tex.stackexchange.com/questions/14429/\\
+pdftex-reduce-pdf-size-reduce-image-quality}
+and 
+\texttt{http://tex.stackexchange.com/\\questions/2198/how-to-create-small-pdf-files-for-the-internet}}
+ and there had been, as
+I have learned, some work by Axel Berger and others, posted 2011-03-31 on
+\texttt{de.comp.text.tex}. 
+
+But what motivated me most to find something better than scaling pictures
+individually was seeing that Adobe InDesign\textregistered\ does
+scale graphics according to the output intent.
+
+\section{Installation}
+
+\subsection{Prerequisites}
+
+You have to install ImageMagick and Perl. If you are using Linux, please use
+the tools of your distribution, if they are not already installed. As a
+windows user, you may probably use the official ImageMagick distribution at
+\url{http://www.imagemagick.org/script/download.php}. For Perl, you got more
+options. I have tested pdflatexpicscale with ActiveState ActivePerl, but other
+distributions should work too.
+
+You also need the following Perl modules:  \texttt{File::Basename}, 
+\texttt{File::Spec}, \texttt{File::Copy}, and \texttt{Getopt::Long}. There are
+several ways to get these modules, if you have not got them already:
+
+\begin{itemize}
+\item use your Linux distribution's software manager
+\item use the Perl CPAN module
+\item use ActiveState's \texttt{ppm} software, if you use ActivePerl.
+\end{itemize}
+
+Detailled description of these procedures is beyond the scope of this
+document. 
+
+There are no special requirements for the versions of the software to install,
+but it may be wise to use recent versions, as there have been security flaws
+with ImageMagick. 
+
+\subsection{Installation}
+
+If the prerequisites have been fulfilled (which is perhaps standard for a
+Linux computer), it is sufficient to move the file
+\texttt{pdflatexpicscale.pl} to a place that is included in your PATH and to
+make it executable. Of course, there are alternatives. You may perhaps
+prefer to type\\
+\texttt{perl /path/to/pdflatexpicscale.pl myarticle}\\
+instead.
+
+\section{Basic usage}
+
+\subsection{Preparing your \LaTeX\ file, Part~1}
+
+I will assume that you use the graphicx package to include images. The most
+important point is \emph{not} to give path names when you use
+\verb|\includegraphics|. You do not have to keep all graphics in the current
+directory, as the graphicx package comes with the
+\verb|\graphicspath| directive.
+
+So, if you have all images in the directory where your \LaTeX\ file resides,
+you are done with this. If not, you should undertake the following steps: 
+
+\begin{enumerate}
+\item List every path to images within the \verb|\graphicspath| directive.
+\item Remove the paths from the \verb|\includegraphics| commands.
+\end{enumerate}
+
+Here is an example: If your \LaTeX\ file looks like this:
+
+\begin{verbatim}
+Some text...
+\includegraphics[size=2in]{/home/fred/photo1} 
+Some other text...
+\includegraphics[size=1in]{/srv/www/htdocs/logo} 
+\end{verbatim}
+
+then you should edit it to the following:
+
+\begin{verbatim}
+\graphicspath{{/home/fred/}{/srv/www/htdocs/}}
+Some text...
+\includegraphics[size=2in]{photo1} 
+Some other text...
+\includegraphics[size=1in]{logo} 
+\end{verbatim}
+
+You hopefully do not have distinct pictures with the same name in the listed
+folders. With \verb|\graphicspath| you have to use double braces, even if you
+use only one directory. 
+
+\subsection{Preparing your \LaTeX\ file, Part~2}
+
+As size and resolution of images will change, you should specify the display
+size of your images by means that are independent of the image, e.g. by using 
+something like\\
+\verb|\includegraphics[width=.3\textwidth]{...}|\\
+or\\
+\verb|\includegraphics[width=2cm]{...}|  
+
+\subsection{A complete example}
+
+The workflow looks like this:
+
+\begin{itemize}
+\item Edit your file.
+\item Run Pdf\LaTeX\ on your file.
+\item Create a directory for your scaled pictures.
+\item Run pdflatexpicscale on your file.
+\item Change the \verb|\graphicspath| directive in your file to use the
+  downscaled images.
+\item Run Pdf\LaTeX\ on your file.
+\end{itemize}
+
+Let us assume that your \LaTeX\ document is called \texttt{myarticle.tex},
+that all images reside in the project directory and that you have done the
+preparation steps described above. Let us further assume that you want to
+produce a PDF file suitable for preview with 72~dpi image resolution.
+
+So you create a subdirectory called \texttt{previewpix} and run Pdf\LaTeX\
+like usual on \texttt{myarticle}. Then you issue\\
+\texttt{pdflatexpicscale --printdpi=72 --destdir=previewpix myarticle}
+
+If you are curious, you may insert \texttt{--verbose} anywhere before your
+project name (and before running it). Then you fire up your editor and add the
+following line near the beginning of your \LaTeX\ file:
+
+\verb|\graphicspath{{previewpix/}}|
+
+You may probably check the size of \texttt{myarticle.pdf}.  Then run Pdf\LaTeX\
+again on \texttt{myarticle}. I have told you to use double braces with
+\verb|\graphicspath|, haven't I?  If you still are curious, you can again
+check the size of \texttt{myarticle.pdf}.
+
+When it gets to preparing a print version, you create a directory for images
+with more detail, say \texttt{printpix}. You reset the  \verb|\graphicspath|,
+run Pdf\LaTeX, issue\\
+\texttt{pdflatexpicscale --printdpi=300 --destdir=printpix myarticle}\\
+and set \verb|\graphicspath{{printpix/}}| before the next Pdf\LaTeX\ run.
+
+\section{Advanced usage}
+
+
+\subsection{Excluding files from scaling}
+
+You will probably exclude files from scaling when you think that scaling will
+do damage. You may achieve this by several means. Before you ask. Enumerating
+files to exclude is not really cool, so this is not supported.
+
+\begin{enumerate}
+\item Use \verb|\includegraphics| for this files with full path names. This is
+  uncool, but can be done.
+\item Pack these files into a special source directory. Read the following
+  explanation. 
+\end{enumerate}
+
+It works like this: you create three directories for pictures:
+
+\begin{itemize}
+\item One for images to stay unscaled. Let's call it \texttt{hires}
+\item One for images to scale. Let's call it \texttt{images}
+\item One for downscaled images. Let's call it \texttt{printimg}
+\end{itemize}
+
+Then you use the feature of \verb|\graphicspath| to include several
+directories. Before the first \LaTeX\ run, you say\\
+\verb|\graphicspath{{hires/}{images/}}|
+and after pdflatexpicscale is through, you change it to\\
+\verb|\graphicspath{{hires/}{printimg/}}|
+
+\subsection{Gory details}
+
+pdflatexpicscale reads the log file, not the \LaTeX\ source. So you have to
+run Pdf\LaTeX\ at least once before something can happen.
+
+Pure black-and-white images will be treated different from other picture
+files: They get four times the resolution, as probably every pixel counts. 
+Images that are only a little larger than ideal will not get scaled, but you
+may change this from the command line.
+If an image will not be scaled, it will be just copied to the destination
+directory. 
+
+pdflatexpicscale looks only for the width of images, so if you intend do do
+anisotropic scaling you will not get best results. 
+
+Clipping will not work with pdflatexpicscale. The \emph{graphicx} package
+devises picture size from the picture file, then applies clipping to it and
+afterwards does scaling, rotation and so on. As pdflatexpicscale changes
+pictures (as well dimensions as nominal resolution), clipping results will
+change too, you will end up with a mess. The same thing happens when you do
+not give the figure dimensions in units relying only on document properties
+(like page width). 
+
+\subsection{Command line options}
+
+All command line options have to be prepended by two minus signs. If they take
+arguments, you should add an equal sign and the argument to your option. All
+command line options are optional, but you have to specify a project name.
+
+\paragraph{destdir} followed by \emph{a directory name relative to the current
+directory} specifies where the scaled pictures should go. The default is
+\texttt{printimg}. The directory has to exist, pdflatexpicscale will not
+create directories.
+
+\paragraph{printdpi} followed by the resolution in dpi lets you change the
+target resolution. Default is 300, for online use you may supply 96, e.g.
+
+\paragraph{srcdir} followed by \emph{the directory where your unscaled
+  pictures are} is normally not required, as pdflatexpicscale gets the path
+names from the log file it reads. You may set this option if you have already
+changed the \verb|\graphicspath| and are too lazy to change it again. The
+default is empty.
+
+\paragraph{tolerance} followed by a number lets you change the range in which
+pictures remain unscaled because they are near the target resolution. Default
+is 20, that means 20~percent. If target resolution is 300~dpi, files up to
+320~dpi get accepted too. Change to 0 if you want no tolerance.
+
+\paragraph{verbose} entertains you by showing what the program is about to
+do. 
+
+\paragraph{version} shows the software version.
+
+Calling pdflatexpicscale without any options and without a project name will
+display a short usage text.
+
+\subsection{Printer testing}
+
+You can---and you should---actually print a file with images scaled to
+distinct resolutions and compare the results. If paper quality matters for you
+(inkjet user?), you should repeat this with different paper.
+
+If you belong to the once-privileged class of people who own a PostScript
+printer, you may copy the file testprinter.ps to your printer. For all other
+folks, this file is useless. Software like Ghostscript will convert the
+rasters to uniform colored areas. Anyway, here is what you should see:
+
+\begin{itemize}
+\item The uppermost part of the page will present squares filled with
+  lines. With my printer, 100~lpi is the best I can get.
+
+\item The middle part of the page shows squares with five levels of gray with
+  dotted raster. The result should be similiar.
+
+\item The bottom of the page is dedicated to the ends of the gray scale. Can
+  you distinguish 94\% gray from white? Or 6\% gray from black?
+
+\end{itemize}
+
+\section{License}
+
+pdflatexpicscale.pl and the accompanying files are subject to the current
+version of the \LaTeX\ project public license.
+
+\section{Bugs, Improvements, and Changes}
+
+Please submit bug reports to the package author (me). I will be glad to make
+the package better.\label{bugs}
+
+The file version dates of all the files in this package shall be kept
+consistent, even if only one of the files changes. pdflatexpicscale.pl,
+however, has also a version number. This number will only be changed when
+there are functional changes to pdflatexpicscale.pl. 
+
+\subsection{Changelog}
+
+\paragraph{2016-07-28} Upload of first public version to CTAN.
+
+\paragraph{2016-07-31} Reformatted \emph{Gory details} section and added
+information about anisotropic scaling and clipping
+
+\paragraph{2016-08-02} Fixed some typos. Corrected handling of lines wrapped
+in the log file. 
+
+\paragraph{2016-10-20} Removed a nagging error message when the program was
+called without arguments. Added the argument \texttt{--help}, both due to
+suggestions by Karl Berry (thanks a lot).
+
+\paragraph{2016-12-12} Section on similiar work and prior art added (on request).
+
+\paragraph{2017-01-22} Added url of TUGboat article.
+
+\paragraph{2017-01-23} Fixed inconsistent version numbers and changed the url
+of degrade.sty on recommendation of CTAN board. Added text on versioning at
+the beginning of section~\ref{bugs}. Thanks a lot to the always quick action
+and helpful and polite hints.
+
+\paragraph{2017-02-01} With very long pathnames in the log file,
+pdflatexpicscale did not find pictures. This is fixed, hopefully.
+
+\paragraph{2018-02-12} Only changes to this document, not to the software: In
+this document, the option \texttt{tolerance} had been listed as
+\texttt{printdpi}. From now on, this is corrected.
+
+As the TUGboat article corresponding to pdflatexpicscale is freely available
+now, the link on page~\pageref{tugboatart} has been adjusted.
+
+% for file version please see line 8
+\end{document}

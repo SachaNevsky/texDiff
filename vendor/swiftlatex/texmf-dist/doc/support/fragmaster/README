@@ -1,0 +1,175 @@
+======================================================================
+Using psfrag with pdflatex
+======================================================================
+
+German (not up to date) version: README.de
+
+psfrag is a LaTeX package which allows to replace text elements in
+included EPS graphics by arbitrary LaTeX output. E.g. you can make fonts
+in your graphics match your document fonts or even include mathematical
+formulae in your graphics. For example:
+
+\psfrag{x}{$x$}
+\psfrag{y}{$y = x^2$}
+\includegraphics{diagram}
+
+When using latex (not pdflatex) the file diagram.eps will be included.
+The extension is appended automatically. While doing this, every
+occurrence of "x" in the diagram is replaced by "x" using math font and
+every "y" is replaced by the LaTeX formula "y = x^2". Partial strings
+are not replaced, only completely matching strings.
+
+Because psfrag uses Postscript for making the replacements, in principle
+you can't use psfrag with pdflatex which doesn't have any interfaces to
+postscript.
+
+The basic idea around the problem is the following:
+
+Produce a new EPS from your original EPS which already contains all
+those psfrag replacements. This new EPS graphic actually can be
+converted to PDF including all replacements. The resulting
+"encapsulated" PDF then can be used with pdflatex.
+
+To make such an EPS which already contains the replacements, it is
+necessary to create a separate LaTeX document for every EPS file you
+use. To simplify that task, I wrote the included fragmaster.pl perl
+script.
+
+This script needs: perl, latex, dvips and the common EPS to PDF
+converter script epstopdf.
+
+To use the script you have to create two files per graphic:
+
+    * <graphics>_fm.eps: the EPS file itself,
+    * <graphics>_fm: a fragmaster control file.
+
+From these files the psfragged graphics will be created:
+
+    * <graphics>.eps,
+    * <graphics>.pdf
+
+The control file is basically a LaTeX file (with optionally special
+comments) and can look like this:
+
+% Just an ordinary comment
+%
+% A special comment:
+% fmopt: width=6cm
+%
+% Another special comment:
+% head:
+% \usepackage{amsmath}
+% end head
+
+% psfrag commands:
+\psfrag{x}{$x$}
+\psfrag{y}{$y = x^2$}
+
+
+The special comment fmopt: will be evaluated such that the following
+text will by passed as optional argument to \includegraphics. This way
+you can e.g. adjust the relation between graphics size and font size
+using something like width=6cm.
+
+The special comment construct "head:"/"end head" causes the lines in
+between to be included in the preamble of the LaTeX temporary document
+after having the leading comment characters "%" stripped off. This way,
+you can include LaTeX packages.
+
+fragmaster.pl will scan the current directory for files which end in _fm
+and their _fm.eps counterparts. Looking at the modification dates, the
+script checks if the output files have to be remade and does so if
+necessary (a little like "make" would do it).
+
+In your LaTeX document you can include the produced graphics using
+
+\includegraphics{<graphics>}
+
+
+conveniently omitting the file extension. latex will choose the EPS,
+pdflatex will choose the PDF.
+
+======================================================================
+Example
+======================================================================
+The following example files are included:
+
+    * parabel_fm.gp
+      gnuplot file to create the following EPS graphics,
+    * parabel_fm.eps
+      raw EPS without psfrag replacements,
+    * parabel_fm
+      fragmaster file with the psfrag commands,
+    * parabel.eps
+      the produced EPS graphics,
+    * parabel.pdf
+      the produced PDF graphics,
+    * document.tex
+      LaTeX example including the graphics,
+    * document.pdf
+      example PDF,
+    * document.ps
+      example PS,
+    * parabel_fm.pdf
+      PDF version of the raw EPS graphics (only necessary for the
+      example!).
+
+
+======================================================================
+Problems and solutions
+======================================================================
+
+In case the EPS will be produced as landscape graphics, i.e. gv shows
+"Landscape" instead of "Portrait" in the menu bar, and the graphic will
+end up turned around 90° in your document, then it is likely that your
+original EPS is wider than it is tall. In this case some (more recent)
+versions of dvips make the "smart" assumption that your graphic is
+landscape, even though the graphic's proportions don't tell anything
+about the orientation of its contents... Anyway, you can make dvips
+behave nicer by specifying the following line in
+
+/usr/share/texmf/dvips/config/config.pdf
+
+(or a local equivalent inside /usr/local/share/texmf):
+
+@ custom 0pt 0pt
+
+
+In the likely case that you're wondering why, I'd recommend the dvipsk
+sources warmly to you...
+
+Have fun with the script! Feedback is very much appreciated.
+
+Tilman Vogel <tilman vogel web de> (fill in: dot at dot)
+
+======================================================================
+Bugs and more info
+======================================================================
+
+For further details, please see "fragmaster -m" in UNIX systems (needs
+perldoc) or fragmaster man page if available. If directly downloaded
+from CTAN or used the one included in a win32 TeX distribution, please
+see fragmaster.pdf if available. Both are derived from fragmaster.pl
+pod section, located at the end of the script. Look there if the other
+formats are not available.
+
+Send bug reports to:
+
+  Agustin Martin <agustin martin hispalinux es> (fill in: dot at dot)
+
+In particular, the use of directory control files is a recent addition
+that still needs extensive checking.
+
+Your feedback is appreciated.
+
+Enjoy.
+
+======================================================================
+Pointers to other solutions
+======================================================================
+
+    * Pdfrack <http://www.enseeiht.fr/~boyer/Pdfrack/>
+    * unpsfrag <http://www.gts.tsc.uvigo.es/~fiz/unpsfrag>
+
+
+Last modified: Thu Mar 19 20:52:45 CET 2009

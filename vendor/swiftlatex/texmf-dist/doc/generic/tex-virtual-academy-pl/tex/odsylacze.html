@@ -1,0 +1,457 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-2">
+<meta http-equiv="Content-language" content="pl">
+<meta name="Author" content="Włodzimierz Macewicz">
+<meta name="Keywords" content="tex, odsyłacze, Wirtualna Akademia">
+</head>
+<body bgcolor=#f0a0f0>
+
+<title>  Odsyłacze </title>
+
+
+<center>
+<h2>  Odsyłacze </h2>
+<i></i><p>
+<i></i><p>
+autor: <i>Tomasz Przechlewski </i>
+</center>
+
+<hr>
+
+<h3> Wstęp </h3>
+
+Istnieją systemy takie jak <strong>LaTeX</strong> (autor: Leslie Lamport),
+<strong>AmSTeX</strong> (Michael Spivak), <strong>ConTeXt</strong> (Hans Hagen) czy <strong>eplain</strong> 
+(Karl Berry) umożliwiające
+automatyczne tworzenie odsyłaczy do różnych elementów dokumentu
+(tabele, rysunki, rozdziały, punkty, itp.). Zawierają one także wiele
+innych, gotowych do wykorzystania funkcji, których nie ma formacie 
+<strong>plain</strong>. Zadaniem tego tekstu nie jest ,,wyważanie drzwi do lasu''
+ale raczej pokazanie w jaki sposób takie ,,zaawansowane'' funkcje są 
+implementowane. Przy okazji okaże się, że wcale nie jest to takie 
+trudne jakby się mogło na początku wydawać.<p>
+
+Prezentowany zestaw makr, z racji swojej prostoty, może być bardzo
+łatwo modyfikowany przez użytkownika w zależności od potrzeb. Jest to
+podstawowa zaleta stosowania prostej TeX-niki a nie gotowych
+formatów. Te ostatnie są skomplikowane, a ich przystosowanie do własnych
+potrzeb jest z reguły bardzo trudne.
+
+<h3> Problem </h3>
+
+Odsyłacz to znak (liczba, cyfra, asteryks), umieszczony w składzie
+przy wyrazie, zwrocie lub fragmencie tekstu, odsyłający do objaśnień
+zawartych w innym miejscu tekstu. Czytelnik może być odesłany do
+takich elementów tekstu jak:
+tabela, rysunek, początek rozdziału, początek punktu, równanie 
+matematyczne, pozycja bibliograficzna, inna strona dokumentu itp. 
+Elementy te są z reguły identyfikowalne poprzez kolejny numer, 
+którym są oznaczone (może to być liczba naturalna, para liczb itp.). 
+Jako odsyłacza używamy wtedy <i>numeru</i> elementu do, którego 
+chcemy odesłać czytelnika. Przykłady użycia odsyłaczy to:
+<em>patrz tabela 6, porównaj punkt 2.5, z równania (4.5) wynika itd</em>. 
+Jeżeli w tekście nie stosuje się odesłań, zbędne jest
+numerowanie jakichkolwiek jego elementów (bo po co?).<p>
+
+Wstawianie do dokumentu TeX-owego numerów rozdziałów, punktów, tabel
+czy równań oraz używanie tych numerów jako odsyłaczy jest złą
+praktyką. Należy przyjąć zasadę, że na etapie tworzenia pliku
+źródłowego <i>ostateczne</i> numery tych elementów i odsyłacze do
+nich <i>są nam nie znane</i>. Elementy dokumentu winny być
+numerowane automatycznie przez TeX-a <b>podczas jego kompilowania</b>
+i w taki sam sposób (tzn. automatycznie) wstawiane odsyłacze. Tylko
+postępując w ten sposób oszczędzimy sobie wiele czasu podczas pracy
+nad kolejnymi wersjami dokumentu.<p>
+
+Ideę automatycznego wstawiania odsyłaczy przedstawimy na prostym
+przykładzie systemu służącego do numerowania równań matematycznych.
+Niech plik <code>fermat.tex</code> zawiera następujący kod:
+
+<blockquote><small><code>
+Równanie~(\ref{eq:fermat}) na 
+s.~\pref{eq:fermat} przedstawia słynne 
+twierdzenie Fermata:<br>
+$$\eqalignno{%<br>
+x^n + y^n &= z^n&\elab{eq:fermat}}$$<br>
+Historia dowodzenia (\ref{eq:fermat})
+ilustruje znaczenie dostatecznie 
+szerokich marginesów...
+</small></code>
+</blockquote>
+
+po kompilacji powinniśmy otrzymać następujący wynik:
+
+
+<blockquote><small>
+Równanie (1) na s. 1 przedstawia słynne twierdzenie Fermata:
+<dd><img src=./fermat.gif width=300 height=25><br>
+Historia dowodzenia (1) ilustruje znaczenie 
+dostatecznie szerokich marginesów...
+</small>
+</blockquote>
+
+Zauważmy, że odnośniki mogą wskazywać ,,w tył'' (do tekstu już 
+przeczytanego) jak i ,,w przód'' (do tekstu nie przeczytanego)
+konieczne jest zatem dwukrotne kompilowanie dokumentu do ich
+prawidłowego wyznaczenia (pierwsza kompilacja) i wstawienia.
+
+Użytkownik posługuje się w tym celu 
+trzema następującymi instrukcjami:<br>
+
+<dl>
+<dt><code>\elab{etykieta}</code>
+<dd>wstawia kolejny numer równania oraz definiuje
+etykietę, której będziemy używać przy odwołaniach 
+do tego równania,
+
+<dt><code>\pref{etykieta}</code>
+<dd>wstawia numer strony na której znajduje się równanie
+oznakowane <i>etykietą</i>.
+
+<dt><code>\ref{etykieta}</code>
+<dd>wstawia numer równania oznakowanego <i>etykietą</i>.
+</dl>
+
+<h3> Rozwiązanie </h3>
+
+Ogólny schemat działania systemu jest następujący: 
+W czasie pierwszej kompilacji instrukcja <code>\elab</code> zwiększa wartość 
+licznika równań o 1, wstawia do dokumentu bieżącą wartość tego licznika 
+oraz przesyła do pliku dodatkowego trzy informacje: bieżący numer strony, 
+numer równania, etykietę. 
+Podczas drugiej kompilacji TeX sprawdza czy ten
+plik dodatkowy istnieje i jeżeli tak to zostaje on wczytany.
+Zawarte tam informacje są wykorzystywane przez instrukcje 
+<code>\ref</code> i <code>\pref</code> do prawidłowego wstawienia odsyłaczy.<p>
+
+Przejdźmy teraz do szczegółów. <p>
+
+Zamiast definować od razu komendę <code>\elab</code> zdefiniujemy najpierw 
+makro <code>\defreference</code>, mające dwa parametry, 
+z których pierwszy będzie etykietą dla odsyłacza, 
+a drugi zawierać będzie sam odsyłacz 
+<i>oraz</i> numer strony, na której
+znajduje się odesłanie.  
+Na przykład jeżeli TeX na 44 stronie 
+dokumentu napotkał definicję 
+<code>\defreference{eq:fermat}{\the\eqnC}</code><sup><a href=#fn1>1</a></sup>
+to jej wykonanie powinno spowodować wysłanie do pliku <code>fermat.crf</code>
+następującej linii (zakładamy, że w chwili wykonywania
+<code>\defreference</code> licznik <code>\eqnC</code> był równy 8):
+<pre>
+\crlab{eq:fermat}{{8}{44}}
+</pre>
+Co ma oznaczać, że odsyłaczem dla etykiety <code>eq:fermat</code> jest 8, a odesłanie
+wskazuje na stronę 44. Niżej przedstawiona definicja  wykonuje zadanie 
+zapisania odpowiedniej linii do pliku <code>fermat.crf</code>.
+<pre>
+1. \def\defreference#1#2{%
+2. \edef\@tmp{\string\crlab
+3. {#1}{{#2}{\noexpand\folio}}}%
+4. \write\crfile\expandafter{\@tmp}}
+</pre>
+Makro to musi sobie poradzić z podstawowym problemem: zapisania
+jednocześnie prawidłowego numeru odnośnika i prawidłowego numeru
+strony na którą ten odnośnik wskazuje. Numer strony nie jest
+znany <i>w momencie napotkania instrukcji</i> <code>\defreference</code>. Jest
+on ustalany <i>w momencie wykonywania procedury wyjścia 
+(output routine)</i>. 
+Z drugiej strony odnośnik jest znany i winien być zapisany <i>natychmiast</i>. 
+Jeżeli jego rozwinięcie zostanie opóźnione to otrzymany numer 
+będzie bieżącym numerem odnośnika <i> w czasie wykonywania
+tej procedury</i>.<p>
+
+
+Problem ten jest rozwiązywany w liniach 2--4 makrodefinicji
+<code>\defreference</code>. Linie 2--3 definiują makro <code>\@tmp</code>. Zamiast
+<code>\def</code> użyto <code>\edef</code> (<i>expanded definition</i>) co gwarantuje, że
+zawartość definicji <code>\@tmp</code> zostanie rozwinięta <i>natychmiast</i>.
+Nie ma to znaczenia gdy piszemy <code>\defreference{foo}{7}</code>, ale 
+gdy odnośnik jest ustalany automatycznie, np. 
+<code>\defreference{foo}{\the\eqnC}</code>, to chodzi nam o bieżącą 
+wartość licznika a nie jego wartość w chwili wykonywania
+<i>output routine</i>.<p>
+
+Sekwencja <code>\noexpand\folio</code> spowoduje, że komenda
+<code>\folio</code> (określająca numer strony), nie zostanie rozwinięta przy
+rozwijaniu zawartości definicji <code>\@tmp</code>. Zostanie to opóźnione do
+czasu rozwijania komendy <code>\write</code> podczas wykonywania <i>output
+routine</i>.<p>
+
+W linii 4 zawartość definicji <code>\@tmp</code> zostaje wysłana do pliku
+dodatkowego za pomocą instrukcji <code>\write</code>. Konstrukcja:
+
+<pre>
+\write\crfile\expandafter{\@tmp}
+</pre>
+jest prostym przykładem zastosowania instrukcji <code>\expandafter</code>
+w celu zmiany porządku rozwinięcia dwóch żetonów (<i>tokens</i>)
+<code>{</code> oraz <code>\@tmp</code>. Kiedy TeX napotka konstrukcję <code>\write\crfile</code>
+oczekuje następnie żetonu <code>{</code> (por. <i>The TeXbook</i> str. 226), a potem
+ciągu żetonów kończącego się <code>}</code>, który zapisuje do pliku. 
+Zapis do pliku jest <i>opóźniony</i>, co oznacza, że cały materiał
+zawarty pomiędzy klamrami <code>{</code> i <code>}</code> <i>nie</i> jest rozwijany
+w chwili napotkania instrukcji <code>\write</code> <i>ale</i> umieszczany
+jako tzw. <i>whatsit</i> na głównej liście pionowej (<i>main
+vertical list</i>) i rozwijany później przy wykonywaniu <i>output 
+routine</i> (por. <i>The TeXbook</i> str. 227).<p>
+
+Jednakże wykonując sekwencję instrukcji z linii 4 TeX napotyka
+<code>\expandafter</code> zamiast <code>{</code>. Powoduje to przeczytanie 
+(czyli rozwinięcie) przez
+TeX-a najpierw makra <code>\@tmp</code> a dopiero potem
+umieszczenie przed rozwiniętym już makrem <code>\@tmp</code> żetonu <code>{</code>.
+W efekcie na główną listę pionową, do późniejszego zapisu do pliku
+<code>fermat.crf</code> wędruje sekwencja żetonów tworząca makro <code>\@tmp</code> a nie
+żeton <code>\@tmp</code>, który jest od tej chwili gotowy do użycia w następnej
+instrukcji <code>\defreference</code>. Gdyby na główną listę pionową trafiał
+żeton <code>\@tmp</code> rozwijany podczas wykonywania <em>output routine</em>
+to zawartość (<em>meaning</em>) wszystkich żetonów byłaby jednakowa
+i równa zawartości ostatniego zdefiniowanego żetonu <code>\@tmp</code> --- rezultat 
+całkowicie różny od poprzedniego i raczej przez nas nie oczekiwany!<p>
+
+Makro <code>\elab</code> można zdefiniować następująco: 
+<pre>
+5. \newcount\eqnC
+6. \def\elab#1{\global\advance\eqnC 1
+7. \defreference{#1}{\the\eqnC}%
+8. (\the\eqnC)}
+</pre>
+Po pierwszej kompilacji plik <code>fermat.crf</code> zawiera informacje o wszystkich 
+odsyłaczach, które wykorzystujemy przy powtórnej kompilacji dokumentu. 
+W tym celu najpierw zdefiniujemy komendę <code>\crlab</code>. Jak widać wyżej, 
+posiada ona dwa parametry, z których pierwszy zawiera etykietę odsyłacza
+a drugi łącznie odsyłacz oraz numer strony, na której 
+odesłanie się znajduje.
+Zarówno odsyłacz, jak i numer strony zawarte są 
+w parze nawiasów klamrowych.
+
+<pre>
+9. \def\crlab#1#2{%
+10.  \global\expandafter
+11.  \def\csname #1\endcsname{#2}}
+</pre>
+Wykonanie makra <code>\crlab{eq:fermat}{{8}{44}}</code> 
+spowoduje utworzenie nowego makra o nazwie <code>eq:fermat</code> 
+rozwijającego się dokładnie do <code>{8}{44}</code>. 
+Wykorzystanie konstrukcji <code>\csname</code>...<code>\endcsname</code> umożliwia definiowanie 
+etykiet zawierających znaki o dowolnych ,,egzotycznych'' kodach, 
+np. <code>&</code>, <code>:</code>, <code>#</code>, itd. Wręcz wskazane jest umieszczenie takich znaków,
+co zapobiegnie niezamierzonej zmianie znaczenia ,,normalnych'' makr
+o przypadkowo identycznej nazwie.
+
+Teraz możemy zdefiniować instrukcję <code>\ref</code>. Makro to powinno
+wstawiać odsyłacz a pomijać numer strony.  Kopiujemy w tym celu
+pomysłowe rozwiązanie tego problemu z formatu {\LaTeX}, w którym
+znowu w roli głównej występuje instrukcja <code>\expandafter</code>:
+
+<pre>
+12. \def\@car#1#2{#1}
+13. \def\ref#1{%
+14.  \edef\@tempa{\csname #1\endcsname}
+15. \expandafter\@car\@tempa}
+</pre>
+Makrodefinicja <code>\ref</code> ma jeden argument --- etykietę odnośnika. W linii 
+14 tworzona jest instrukcja <code>\@tempa</code>, której zawartością jest wykonanie 
+makrodefinicji o nazwie tożsamej z nazwą etykiety. W następnej linii
+najpierw rozwijana jest instrukcja <code>\@tempa</code>, co oznacza rozwinięcie
+jej zawartości do postaci 
+<code>{<em>odnośnik</em>}{<em>strona</em>}</code>. 
+Następnie rozwijane jest makro <code>\@car</code>, które z dwóch swoich
+parametrów wstawia pierwszy a pomija drugi. Proste!<p>
+
+Skonstruowane w analogiczny sposób makro <code>\pref</code> wstawia 
+numer strony a pomija odnośnik:
+
+<pre>
+16. \def\@cdr#1#2{#2}
+17. \def\pref#1{%
+18.  \edef\@tempa{\csname #1\endcsname}
+19.  \expandafter\@cdr\@tempa}
+</pre>
+Teraz określmy wreszcie plik, z którego <em>pobierane</em> 
+będą odnośniki a następnie otwórzmy go do czytania:
+
+<pre>
+20. \newread\crfile
+21. \openin\crfile=\jobname.crf
+22. \input \jobname.crf
+</pre>
+Powyższy kod ma jeden poważny minus. Mianowicie gdyby z jakichś
+względów plik <code>fermat.crf</code> nie istniał (w pierwszej kompilacji
+dokumentu na pewno go nie będzie)
+to wtedy próba wykonania linii
+<code>\input \jobname.crf</code> spowoduje błąd <code>I can't find file fermat.crf</code>. 
+Lepiej zabezpieczyć się na tę okoliczność używając komendy <code>\ifeof</code>. Tak
+więc w powyższym fragmencie kodu ostatnią linię należy zastąpić przez:
+
+<pre>
+22. \ifeof\crfile \else
+23.   \input \jobname.crf \fi
+</pre>
+Wreszcie pozostaje do zdefiniowania plik do którego będą <i>wysyłane</i> 
+informacje o odesłaniach:
+
+<pre>
+24. \newwrite\crfile
+25. \openout\crfile=\jobname.crf
+</pre>
+I te 25 linii kodu pokazane wyżej wystarczą dla TeX-a do prawidłowego 
+wstawienia odpowiednich odsyłaczy.
+Wystarczą TeX-owi ale nie TeX-owcowi, który z pewnością popełniać 
+będzie błędy. Dlatego powyższe makra należy rozbudować o obsługę 
+błędów i ostrzeżeń. W szczególności należy zadbać o ostrzeganie 
+użytkownika o:
+
+<ul>
+<li>odwołaniu się do niezdefiniowanej etykiety. W tym przypadku system 
+powinien wysłać komunikat do pliku <code>.log</code> 
+i na ekran a także
+oznakować brakujące odnośniki w składanym dokumencie,
+<li>dwukrotnym (lub wielokrotnym) zdefiniowanie tej samej etykiety. 
+W tym przypadku system powinien wysłać odpowiedni
+komunikat do pliku <code>.log</code> i na ekran.
+</ul>
+Ponieważ w przedstawionych wyżej makrach używamy znaku <code>@</code>
+w nazwach komend, powinny zostać one zawarte pomiędzy liniami:
+
+<pre>
+\catcode`@=11
+...
+\catcode`@=12
+</pre>
+
+<h3> Makra </h3>
+
+Prezentowany poniżej zestaw makr jest dostępny na serwerze GUST w&nbsp;pliku:
+<a href="ftp://ftp.gust.org.pl/pub/GUST/contrib/GUSTLIB/tp-crf.tex">tp-crf.tex</a>. 
+W&nbsp;porównaniu do
+przedstawionych już makrodefinicji dodano następujące ważniejsze komendy:
+
+<dl>
+<dt><code>\nocrwarns</code>
+<dd>Ostrzeżenia o błędach nie są wyświetlane na ekranie
+(przydatne na wstępnym etapie pracy nad dokumentem),
+
+<dt><code>\nocrfile</code>
+<dd>Dodatkowy plik nie jest odtwarzany,
+
+<dt><code>\makecrfile</code>
+<dd>Dodatkowy plik jest tworzony,
+
+<dt><code>\crstatistics</code>
+<dd>Wyświetlenie sumarycznej informacji o użytych odsyłaczach.
+Przedefiniowana komenda <code>\bye</code> wywołuje to makro.
+</dl>
+
+
+<pre>
+%% --------------------------------
+%% Cross-reference generic macros
+%% Tomasz Przechlewski
+%% Date: 02.01.1995
+%% --------------------------------
+\catcode`@=11
+\def\@crwrn#1{\if@crwrns\immediate
+\write16{#1}\fi}
+\def\@markmissingcr{{\bf ??}\@marginmarker}
+\def\@marginmarker{\vadjust{\vbox to0pt{%
+\kern-.77\normalbaselineskip
+\hbox{{\it\kern\hsize\kern15pt?}}\vss}}}
+
+\newif\if@crwrns 
+\global\@crwrnstrue % default
+\def\nocrfile{\global\@crfilefalse}
+\def\nocrwrns{\global\@crwrnsfalse}
+
+\def\@car#1#2{#1}
+\def\@cdr#1#2{#2}
+
+\long\def\@ifundefined#1#2#3{%
+ \expandafter\ifx\csname
+ #1\endcsname\relax#2\else#3\fi}
+
+\def\namedef#1{\expandafter
+  \def\csname #1\endcsname}
+
+\def\newlabel#1#2{\@ifundefined{#1}{}%
+{\@crwrn{-> WARNING: multiple label #1}}%
+\global\namedef{#1}{#2}}
+\newread\crfile
+
+\openin\crfile=\jobname.crf
+\ifeof\crfile
+  \@crwrn{-> WARNING: CR-FILE UNDEFINED!!}
+ \else
+  \@crwrn{READING REFS FROM \jobname.crf}
+  \input \jobname.crf
+\fi
+\closein\crfile
+
+\def\makecrfile{%
+  \openout\crfile=\jobname.crf}
+\def\nocrfile{\@crwrn{-> WARNING: 
+        CR-FILE not created}
+ \def\crfile{-1}}
+
+\def\ref#1{\@nextcrf\@ifundefined{#1}{%
+ \@markmissingcr
+ \@crwrn{undefined cr -> \string#1}}%
+ {\edef\@tempa{\csname #1\endcsname}
+ \expandafter \@car\@tempa}}
+
+\def\pageref#1{\@nextpcrf
+ \@ifundefined{#1}{\@markmissingcr
+ \@crwrn{undefined cr -> \string#1}}%
+ {\edef\@tempa{\csname #1\endcsname}%
+ \expandafter \@cdr\@tempa}}
+
+\def\defreference#1#2{\@nextdrf%
+ \edef\save{\string\newlabel{#1}%
+ {{#2}{\noexpand\folio}}}%
+ \write\crfile\expandafter{\save}}
+
+\newcount\@crfC\newcount\@pcrfC
+\newcount\@dcrfC
+\def\@nextdrf{\global\advance\@dcrfC1}
+\def\@nextcrf{\global\advance\@crfC1}
+\def\@nextpcrf{\global\advance\@pcrfC1}
+\def\crstatistics{%
+\@crwrn{==============================}
+\@crwrn{= REFERENCE STATISTICS =======}
+\@crwrn{= refs defined.... \the\@dcrfC}
+\@crwrn{= refs used....... \the\@crfC}
+\@crwrn{= page refs used.. \the\@pcrfC}
+\@crwrn{==============================}}
+\outer\def\bye{\crstatistics\end}
+\catcode`@=12
+\endinput
+</pre>
+
+<h3> Bibliografia</h3>
+
+<ol>
+<li>
+Knuth D. E., <i>The TeXbook</i>, Addison-Weley, Reading MA: 1986.
+
+<li>
+Salomon D., Macros for Indexing and Table-of Contents Preparation, 
+<code><i>TUGboat</i></code>, 10(3): s. 394--400.
+</ol>
+
+
+<h3>Przypisy</h3>
+
+<hr align=left width=20%>
+<sup><a name=fn1><b>1</b></a></sup>Występujące w poniższym opisie nazwy i 
+konstrukcje prędzej lub później zostaną wyjaśnione.
+
+
+
+<hr>
+Zredagował:
+<em>Włodzimierz Macewicz (modyfikacja: 15.05.2014)</em>
+<hr>
+</body>
+</html>

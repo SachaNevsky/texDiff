@@ -1,0 +1,255 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+"""Pre-commit hook for LaTeX package developers
+
+
+=== What it is ?
+A pre-commit hook to check basic LaTeX syntax for developer of package.
+
+==== How to install
+Copy pre-commit in the .git/hooks file
+Add execution right (chmod +x)
+Enjoy !
+
+====Checked files
+    - .sty
+    - .dtx
+    - .bbx
+    - .cbx
+    - .lbx
+
+====What are checked
+Only for new line, these properties are checked:
+    - All line must finish by a %, without space before.
+    Empty line are allowed, but not line with blank space.
+    - \begin{macro} and \end{macro} must be paired.
+    - \begin{macrocode} and \end{macrocode} must be paired.
+    - \begin{macro} must have a second argument.
+    - 1 space must be printed between % and \begin{macro} of \end{macro}. % Must be the first line character.
+    - 4 spaces must be printed between % and \begin{macrocode} or \end{macrocode}.
+    - \cs argument must NOT start by an \
+
+=== Licence and copyright
+Maïeul Rouquette 2014-....
+v 1.1.2
+Licence GPl3 https://www.gnu.org/licenses/gpl-3.0.txt
+
+=== Help and github repository
+https://github.com/maieul/git-hooks
+Open an issue for any needs.
+
+
+"""
+
+import os
+import os.path
+import re
+import sys
+
+# Setting
+to_be_checked = ["dtx","sty","bbx","cbx","lbx"]
+commands = {
+        "end_line_percent_signe":"Spurious space",
+        "cs_cmd":"Don't use \ inside \cs command",
+        "macro_env":{
+            "indent":"bad indent before \\begin{macro} or \end{macro}",
+            "pairing":"\\begin{macro} without \end{macro} (or vice-versa)",
+            "#2":"\\begin{macro} without macro name"
+            },
+        "macrocode_env":{
+            "indent":"bad indent before \\begin{macrocode} or \end{macrocode}",
+            "pairing":"\\begin{macrocode} without \end{macrocode} (or vice-versa)",
+        }
+    }
+# General code
+def change_line_number(line_number,line):
+    """Change line number, depending of the current line"""
+    if line[0:2] == "@@": # line number
+        line_number = re.findall("\+(\d+),?",line)
+        line_number = int(line_number[0]) -1
+    elif not line[0] == "-" and not line[0:1] == "\\":
+        line_number = line_number + 1
+    return line_number
+
+lines_results ={}#global, bad, I have to find an other way. Key = filename_linenumber. content : see check_lines
+def check_lines():
+    """ Check all modified lines"""
+    diff = os.popen("git diff  --cached")
+    line_number = 0
+    file_name = ""
+    for line in diff:
+        line_number = change_line_number(line_number,line)
+        # what is the file_name?
+        if  "+++ b/" in line:
+            file_name = line[6:-1]
+            extension = os.path.splitext(file_name)[1][1:]
+            lines_results[file_name] ={}
+        elif  "++ /dev/null" in line:
+            extension = ""
+            file_name = ""
+        elif line[0] == "+" and extension in to_be_checked:
+            check = check_line(line,line_number,file_name)
+            lines_results[file_name][line_number]={
+                 "content":line,
+                 "results":check,
+                 "file_name":file_name
+                 }
+    return lines_results
+
+def check_line(line,line_number,file_name):
+    """Check individual added line"""
+    results = {}
+
+    for cmd in commands: #Use all commands, keep results
+        f = getattr(sys.modules[__name__],"check_"+cmd)
+        check = f(line,line_number,file_name)
+        if check==False:
+            results[cmd] = True
+        elif isinstance(check,list) and not check==[]:
+            results[cmd] = check
+    return results
+# Tests
+
+begin_macro ={} # keys file name, content = list of current \begin{macro} not closed.
+def check_macro_env(line,line_number,file_name):
+    """Check macro environnment:
+        a) only one space between % and \\begin{macro}
+        b) don't forget arg two
+        c) pairing setting : each \begin{macro} must have \end{macro}
+    """
+    line = line[1:]#delete the inital +
+    begin = "\\begin{macro}"
+    end = "\\end{macro}"
+    # only for line concerning macro env
+    errors = []
+    if begin in line:
+
+        # Check only one space after %
+        normal_indent = "% \\begin{macro}"
+        if line[:len(normal_indent)] != normal_indent:
+            errors.append("indent")
+
+        #Check there is second argument
+        if line.count("{") != 2 or line.count("}") != 2:
+            errors.append("#2")
+
+        # we think its not paired before anyone paired
+        errors.append("pairing")
+
+        if file_name in begin_macro:
+            begin_macro[file_name].append(line_number)
+        else:
+            begin_macro[file_name]=[line_number]
+
+        return errors
+    elif end in line:
+
+        #check only
+        normal_indent = "% \end{macro}"
+        if line[:len(normal_indent)] != normal_indent:
+            errors.append("indent")
+
+        #correct pairing
+        try:
+            begin_pairing = begin_macro[file_name].pop()#get the line of the \begin{macro}
+            lines_results[file_name][begin_pairing]["results"]["macro_env"].remove("pairing")
+            if lines_results[file_name][begin_pairing]["results"]["macro_env"] ==[]:
+                del(lines_results[file_name][begin_pairing]["results"]["macro_env"])
+        except:
+            errors.append("pairing")
+        return errors
+    else:
+        return True
+
+begin_macrocode ={} # keys file name, content = list of current \begin{macrocode} not closed.
+def check_macrocode_env(line,line_number,file_name):
+    """Check macrocode environnment:
+        a) only one space between % and \\begin{macrocode}
+        b) don't forget arg two
+        c) pairing setting : each \begin{macrocode} must have \end{macrocode}
+    """
+    line = line[1:]#delete the inital +
+    begin = "\\begin{macrocode}"
+    end = "\\end{macrocode}"
+    # only for line concerning macrocode env
+    errors = []
+    if begin in line:
+
+        # Check only one space after %
+        normal_indent = "%    \\begin{macrocode}"
+        if line[:len(normal_indent)] != normal_indent:
+            errors.append("indent")
+
+        # we think its not paired before anyone paired
+        errors.append("pairing")
+        if file_name in begin_macrocode:
+            begin_macrocode[file_name].append(line_number)
+        else:
+            begin_macrocode[file_name]=[line_number]
+
+        return errors
+    elif end in line:
+
+        #check only
+        normal_indent = "%    \end{macrocode}"
+        if line[:len(normal_indent)] != normal_indent:
+            errors.append("indent")
+
+        #correct pairing
+        try:
+            begin_pairing = begin_macrocode[file_name].pop()#get the line of the \begin{macrocode}
+            lines_results[file_name][begin_pairing]["results"]["macrocode_env"].remove("pairing")
+            if lines_results[file_name][begin_pairing]["results"]["macrocode_env"] ==[]:
+                del(lines_results[file_name][begin_pairing]["results"]["macrocode_env"])
+        except:
+            errors.append("pairing")
+        return errors
+    else:
+        return True
+
+
+def check_cs_cmd(line,line_number,file_name):
+    """Check we don't start \cs argument by a \\"""
+    return "\cs{\\" not in line
+
+def check_end_line_percent_signe(line,line_number,file_name):
+    """"Check line finish by %"""
+
+    line = line.replace("\%","")    # Don't look for protected %
+
+    if line == "+\n":             # Allow empty line
+        return True
+
+    elif "%" not in line:         # If not % -> problem
+        return False
+
+    elif re.search ("\s+%",line): # Spaces before % -> problem
+        return False
+    else:
+        return True
+
+# Main function
+def __main__():
+    """Main function: calls the check to bad line, print them if need, and return exit if error"""
+    lines_results = check_lines()
+    exit = 0 #Set to 1 if we have ONE bad line.
+    for file_name in lines_results:
+        print (file_name)
+        for line_number in sorted(lines_results[file_name].keys()):
+            line = lines_results[file_name][line_number]
+            if line["results"]!={}: #there is some error
+                exit=1
+                print ("\x1b[31m\tl."+ str(line_number) + ": " + line["content"][:-1])
+
+                results = line["results"]
+                for error in line["results"]:
+                    if results[error] == True:
+                        print ("\t\t " + commands[error])
+                    else:
+                        for e in results[error]:
+                            print ("\t\t " + commands[error][e])
+                print("\x1b[0m")
+    sys.exit(exit)
+
+
+__main__()

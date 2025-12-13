@@ -1,0 +1,1810 @@
+\PassOptionsToPackage{dvipsnames}{xcolor}
+\PassOptionsToPackage{distiller}{pstricks}
+\documentclass[11pt,english,BCOR10mm,DIV12,bibliography=totoc,parskip=false,
+   smallheadings, headexclude,footexclude,oneside]{pst-doc}
+\usepackage[utf8]{inputenc}
+\usepackage[dvipsnames]{xcolor} %% Farben sind im Dokument xcolor.pdf definiert
+\usepackage{multido,pst-grad,pst-eucl,pst-3dplot,pstricks-add}
+\usepackage{pst-perspective}
+
+
+\def\fileversion{1.05}
+\let\pstPerspectiveFV\fileversion
+\renewcommand\bgImage{\psscalebox{0.85}{%
+\begin{pspicture}[showgrid=false](0.5,-0.5)(11.5,8.5)
+\begin{psclip}%
+{\psframe[linestyle=none](0.25,-0.25)(11.35,8.35)}
+\psgrid[subgriddiv=2,gridlabels=0,gridwidth=0.7pt,gridcolor=black!70,subgridwidth=0.6pt,subgridcolor=black!40](-1,-1)(13,10)
+\end{psclip}
+{\psset{translineA=true,translineB=true,linestyle=dashed,dash=5pt 3pt,linecolor=blue,linejoin=2}
+%------ Vertices of the octagon -------------
+\pstransTS(3,0){A}{A'}
+\pstransTS(7,0){B}{B'}
+\pstransTS(9,2){C}{C'}
+\pstransTS(9,6){D}{D'}
+\pstransTS(7,8){E}{E'}
+\pstransTS(3,8){F}{F'}
+\pstransTS(1,6){G}{G'}
+\pstransTS(1,2){H}{H'}
+%---------------------------------------------
+}
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.4,linecolor=blue](A')(B')(C')(D')(E')(F')(G')(H')
+\pspolygon[fillstyle=solid,fillcolor=yellow!40,opacity=0.2,linewidth=0.9pt,linecolor=red](A)(B)(C)(D)(E)(F)(G)(H)
+\pcline[linewidth=1.3pt](0,0|O)(11,0|O)
+\psset{toplinewidth=0.5pt,opacity=0.3,vkf=0.4,phi=33,topfillcolor=cyan}
+\psboxTS[linewidth=0.5pt,opacity=0.2,linejoin=1,hideline=true,dash=2pt 2pt,hidelinewidth=0.3pt](-2,8,1){4}{4}{4}{green}
+\rput(10,1){\psZylinderTS[opacity=0.6,linewidth=0.5pt,fillstyle=gradient,gradbegin=black!90!blue!80,%
+gradend=black!40!blue!30,gradangle=90,gradmidpoint=0.25]{2}{4}}
+\psboxTS[linewidth=0.5pt,opacity=0.1,linejoin=1](-2,8,1){4}{4}{4}{green}
+\end{pspicture}
+}}
+
+\parindent0pt
+
+\lstset{explpreset={pos=l,width=-99pt,overhang=0pt,hsep=\columnsep,vsep=\bigskipamount,rframe={}},language=PSTricks,
+morekeywords={pstransTSK,pstransTSX,pstransTS,pstMarkAngle,psIntersectionPoint,psboxTS,pstThreeDPlaneGrid,psZylinderTS,psCircleTS,psCircleTSX,
+psArcTS,psArcTSX}, escapechar=?}
+
+%\lstset{language=PSTricks,morekeywords={pst-perspective},basicstyle=\footnotesize\ttfamily}
+%
+\begin{document}
+
+\title{\texttt{pst-perspective}}
+\subtitle{Plotting the perspective view of a point; v.\pstPerspectiveFV}
+\author{Thomas S\"{o}ll}
+\docauthor{}
+\date{\today}
+\maketitle
+
+\tableofcontents
+\psset{unit=1cm}
+
+\clearpage
+
+\begin{abstract}
+\noindent
+\LPack{pst-perspective} loads by default the following packages: \LPack{pst-xkey}, and, of course \LPack{pstricks}.
+All should be already part of your local \TeX\ installation. If not, or in case of having older versions, go to \url{http://www.CTAN.org/} and load the latest version.
+
+\vfill\noindent
+Thanks to: \\
+J\"{u}rgen Gilg \\
+Herbert Vo{\ss}
+\end{abstract}
+
+\clearpage
+\section{Introduction}
+
+On the research to draw perspectives of geometrical objects for my classes with PSTricks, I couldn't find a package that fitted all my needs.
+
+For my needs, it should be possible to draw the perspective (an orthogonal parallel projection) with an arbitrarily chosen angle and a variable shortening factor. The setup for the points should alternatively be possible with cartesian or polar coordinates in two dimensions.
+
+The package \texttt{pst-solides3d} wasn't useful, cause it uses central projection.
+
+The package \texttt{pst-3dplot} allows parallel projection, and a shortening factor in one of the dimensions can eventually be chosen, e.\,g. with xThreeDunit, but all points need to be setup with three coordinates. I am not sure about an easy handling of setting up polar coordinates or giving an independent angle for the projection.
+
+With the macro \Lcs{ThreeDput} from the package \texttt{pst-3d}, only planes and lines in three dimensions are realizable---a third coordinate is needed. For my needs, this didn't seem to be too practicable.
+
+I think that with some of the already existing PSTricks packages a realisation of perspectives in the wanted form could have surely been managed. I couldn't see this however and wanted some simple macros, without loading mighty packages.
+
+To make a long story short: I decided to write a small PSTricks package, that will fit all my needs. This package contains only four small macros, so unwanted crashes with other PSTricks packages are not awaited.
+
+
+\section{General}
+
+The described macros should help you to easily draw a perspective of a geometrical object like often used in school.
+
+There are three macros, the first two called \Lcs{pstransTS} and \Lcs{pstransTSX} are used to draw a perspective of a geometrical object laying in the $x,y$-plane and transforms every vertex. The points first get projected orthogonally to the base line (parameter \Lkeyword{base}), parallel  to the $x$-axis, and therefrom they get transformed with an arbitrarily chosen angle measured from the positive $x$-axis (parameter \Lkeyword{phi}) and shortened (multiplied with the shortening factor \Lkeyword{vkf}). You then can use these transformed points with its given node names. It is similar with \Lcs{pstransTSX}, but the difference is, that the points are projected orthogonally onto a base line (Parameter \Lkeyword{base}) parallel to the $y$-axis, and therefrom they get transformed with an arbitrarily chosen angle (parameter \Lkeyword{phi}) and shortened (multiplied with the shortening factor \Lkeyword{vkf}). These two cases correspond to a projection of an object of the drawing plane into the $x$-$y$-plane or $x$-$z$-plane.
+
+The third macro \Lcs{pstransTSK} only shifts the points under a given angle \Lkeyword{phi} and shortens the initial distance to the base line with the factor \Lkeyword{vkf}. This macro is perfect, if the edges that need to be transformed, lay in the $x,y$-plane and the transformed edges lead to the back, orthogonal to the $x,y$-plane. Typical examples are the perspectives of a cuboid, square or an upright prism, where the base is in the $x,y$-plane.
+
+Both macros only generate the nodes for the transformed points, but the points itselves are neither drawn nor labeled. This must be done e.\,g. with \Lcs{psdot} and \Lcs{uput}. With booleans we can visualize the subsidiary lines, which show the orthogonal projection onto the base line and from there to the calculated transformed point.
+
+The subsidiary lines can be drawn in different colors, line styles and line widths with some additional optional parameters.
+
+
+\section{The macro \nxLcs{pstransTS}}
+\begin{BDef}
+\Lcs{pstransTS}\OptArgs\Largr{$x_{\rm{A}},y_{\rm{A}}$}\Largb{\rm{A}}\Largb{\rm{A}'}
+\end{BDef}
+
+The macro \Lcs{pstransTS}\OptArgs$(x_{\rm{A}},y_{\rm{A}})$\Largb{\rm{A}}\Largb{\rm{A}'} uses parentheses for the coordinates of the point. These coordinates can be setup in the usual PSTricks ways. The second argument in curly braces is the node name that is now given for this point. The new calculated point gets the node name to be entered as third argument and is needed to be enclosed in curly braces as well.
+
+In the following example the point $\text{A}(1|4)$ is firstly mapped onto the $x$-axis (visualized by the green dashed line) and from there a node named $\text{A}'$ is generated with a projection angle $\varphi=45^{\circ}$ and with half of its initial length \Largr{\rm{vkf}=0.5}.
+
+\begin{LTXexample}[wide,width=3cm]
+\begin{pspicture}[showgrid=true,shift=-4.9](0.5,-0.5)(3,4.4)
+{\psset{translineA=true,translineB=true}
+\pnode(0,\ba){O}%                       \ba gives the y-value of the base line
+\pstransTS(1,4){A}{A'}
+}
+\pcline[linewidth=1.3pt](0,0|O)(3,0|O)% draw base line
+\psdot(A)%                              draw point A
+\uput{4pt}[135]{0}(A){$\text{A}$} %     label point A
+\psdot[linecolor=brown](A')%            draw point A'
+\uput{4pt}[45]{0}(A'){$\text{A}'$}%     label point A'
+\pstMarkAngle[LabelSep=1.5,MarkAngleRadius=0.7,linecolor=blue,arrows=->]{3,\ba}{A|O}{A'}{$\varphi=45^{\circ}$}% draw and label the angle
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+\subsection{Choice of the base line}
+\begin{BDef}
+\Lcs{pstransTS}[\OptArg*{\Lkeyset{base=\dots}}]
+\end{BDef}
+
+We can define the $y$-value of the base line with \Lcs{pstransTS}[\OptArg*{\Lkeyset{base=\dots}}]. The default value is \Lkeyset{base=0}. Using \Lkeyset{base=1} we achieve, that the point is projected to a parallel to the $x$-axis with the equation $y=1$. This case is shown in the following example.
+
+\begin{LTXexample}[wide,width=3cm]
+\begin{pspicture}[showgrid=true,shift=-4.9](0.5,-0.5)(3,4.4)
+{\psset{translineA=true,translineB=true,base=1}
+\pstransTS[base=1](1,4){A}{A'}
+\pnode(0,\ba){O}
+}
+\pcline[linewidth=1.3pt](0,0|O)(3,0|O)% draw base line
+\psdot(A)%                              draw point A
+\uput{4pt}[135]{0}(A){$\text{A}$} %     label point A
+\psdot[linecolor=brown](A')%            draw point A'
+\uput{4pt}[45]{0}(A'){$\text{A}'$}%     label point A'
+\end{pspicture}
+\end{LTXexample}
+
+Is the point to be projected below the base line, as shown in the example below ($\text{A}(1|0.5)$ with \Lkeyset{base=3}; \ $3>0.5$), it is not projected with the angle $\varphi$ but with the angle $180^{\circ}+\varphi$. If the angle $\varphi=45^{\circ}$ is chosen, then we get a resulting angle of $225^{\circ}$.
+
+\begin{LTXexample}[wide,width=4cm]
+\begin{pspicture}[showgrid=true,shift=-4.9](-1.5,-0.5)(2,4.4)
+{\psset{base=3,translineA=true,translineB=true,linestyle=dashed,transAcolor=red,transBcolor=blue,dash=5pt 4pt}
+\pnode(0,\ba){O}
+\pstransTS(1,0.5){A}{A'}
+}
+\pcline[linewidth=1.3pt](-2,0|O)(2,0|O)
+\psdot(A)
+\uput{4pt}[-30]{0}(A){$\text{A}$}
+\psdot[linecolor=brown](A')
+\uput{4pt}[180]{0}(A'){$\text{A}'$}
+\pstMarkAngle[LabelSep=1.2,MarkAngleRadius=0.7,linecolor=blue,arrows=->]{3,\ba}{A|O}{A'}{$\varphi=225^{\circ}$}
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+\subsection{Shifting the origin}
+\begin{BDef}
+\Lcs{pstransTS}[\OptArg*{\Lkeyset{originT=\{point\}}}]
+\end{BDef}
+
+If we like to give points relative to a certain point, we can setup this point with \Lkeyset{originT=\{Z\}}. The syntax of this point is the usual PSTricks syntax, but it needs to be enclosed in curly braces and the parentheses are omitted. Especially with the usage of polar coordinates this can be profitable. A typical example is the drawing of a regular polygon. The vertices are mostly setup in polar coordinates so that we can rotate the polygon quite easily. For radius and angle we choose $\text{Z}$ as reference point. As shown in later example, it is no big deal to generate an upright prism as well as an oblique prism.
+
+Note, that the base line is shifted as well when shifting of the origin. With \Lkeyset{originT=\{2,3\}} we get the base line $y=3$. With the additional setting of \Lkeyset{base=-2} we additionally shift the base line two units down and finally get $y=1$.
+
+In the following example, we start from $\text{Z}(0|1)$ with a radius of $3$ and an angle of $60^{\circ}$ and a node named $\text{A}$ will be generated. The point $\text{A}$ will now be mapped onto the $x$-axis (\Lkeyset{base=-1}, due to the base was already shifted with the choice of $\text{Z}$ which itself was shifted one unit upwards, see red line) and from there a node named $\text{A}'$ is generated with the angle $\varphi=45^{\circ}$ and with half of its initial length (\Lkeyset{vkf=0.5}).
+
+\begin{LTXexample}[wide,width=3cm]
+\begin{pspicture}[showgrid=true,shift=-4.9](0.5,-0.5)(3,4.4)
+{\psset{base=-1,translineA=true,translineB=true,transAcolor=red,transBcolor=blue}
+\pnode(0,0){O}%                       \ba gives the y-value of the base line
+\pnode(0,1){Z}%
+\pnode(4,0|Z){W1}%
+\pstransTS[originT={Z}](3;60){A}{A'}}
+\pcline[linewidth=1.3pt](0,0|O)(3,0|O)% draw base line
+\psdot(A)%                              draw point A
+\uput{4pt}[90]{0}(A){$\text{A}$} %      label point A
+\psdot[linecolor=brown](A')%            draw point A'
+\uput{4pt}[45]{0}(A'){$\text{A}'$}%     label point A'
+\psdot(Z)%                              draw point Z
+\uput{4pt}[225]{0}(Z){$\text{Z}$}%      label point Z
+\psarc[linestyle=dashed,linecolor=cyan](Z){3}{15}{100}
+\pcline[linecolor=cyan,linestyle=dashed](Z)(A)
+\naput[nrot=:U]{$r=3$}
+\pstMarkAngle[LabelSep=0.8,MarkAngleRadius=1.2,linecolor=cyan,arrows=->]{W1}{Z}{A}{$60^{\circ}$}% draw and label angle
+\pstMarkAngle[LabelSep=1.5,MarkAngleRadius=0.7,linecolor=blue,arrows=->]{3,0}{A|O}{A'}{$\varphi=45^{\circ}$}% draw and label angle
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+\subsection{The base given by a point}
+\begin{BDef}
+\Lcs{pstransTS}[\OptArg*{\Lkeyset{LowPoint=true},\Lkeyset{LowP=\{point\}}}]
+\end{BDef}
+
+There might arise some difficulties in polar coordinates concerning the $y$-value of the point through which the base line should go, cause it is not explicitly known. This value for the base however can be calculated easily in most cases using RPN.
+
+For more complex points, the described way might be quite complicated. With the options \Lkeyset{LowPoint=true} and \Lkeyset{LowP=point} the base is setup through this point and an explicitly given base is ignored.
+
+Some examples will be visualized in the following examples. Starting from point $\text{Z}(4|4)$ we setup a point relatively to $\text{Z}$ in polar coordinates.  Should the base now go through this point (the transformed point matches with this point), some trigonometrical relations might help. We get however the same result when using the options \Lkeyset{LowPoint=true} and \Lkeyset{LowP=point}.
+
+\OptArg*{\Lkeyset{base=292.5 360 sub sin 3 mul}}
+\begin{LTXexample}[wide,pos=t]
+\begin{pspicture}[showgrid=true](1,0.8)(8.5,7)
+%------ Vertices of the octagon -------------
+{\pnode(4,4){Z}
+\psset{originT=Z,base=292.5 360 sub sin 3 mul,translineA=true,translineB=true}
+\pstransTS(3;292.5){A}{A'}
+\pstransTS(3;67.5){B}{B'}
+\psdot(A)%                              draw point A
+\uput{4pt}[0]{0}(A){$\text{A}$} %       label point A
+\psdot(B)%                              draw point B
+\uput{4pt}[90]{0}(B){$\text{B}$} %      label point B
+\psdot(B')%                             draw point B'
+\uput{4pt}[90]{0}(B'){$\text{B}'$} %    label point B'
+\psdot(Z)%                              draw point Z
+\uput{4pt}[225]{0}(Z){$\text{Z}$}%      label point Z
+}
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+\OptArg*{\Lkeyset{LowPoint=true},\Lkeyset{LowP=\{3;292.5\}}}
+\begin{LTXexample}[wide,pos=t]
+\begin{pspicture}[showgrid=true](1,0.8)(8.5,7)
+%------ Vertices of the octagon -------------
+{\pnode(4,4){Z}
+\psset{originT=Z,LowPoint=true,LowP={3;292.5},translineA=true,translineB=true}
+\pstransTS(3;292.5){A}{A'}
+\pstransTS(3;67.5){B}{B'}
+\psdot(A)%                              draw point A
+\uput{4pt}[0]{0}(A){$\text{A}$} %       label point A
+\psdot(B)%                              draw point B
+\uput{4pt}[90]{0}(B){$\text{B}$} %      label point B
+\psdot(B')%                             draw point B'
+\uput{4pt}[90]{0}(B'){$\text{B}'$} %    label point B'
+\psdot(Z)%                              draw point Z
+\uput{4pt}[225]{0}(Z){$\text{Z}$}%      label point Z
+}
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+It must be pointed out, that with the definition of \Lcs{pnode(r;phi)\{point\}} followed by \Lkeyset{LowP=point}, the base is not shifted, which however only becomes noticeable, when the origin was shifted. In this case we write \Lcs{rput(origin)\{}\Lcs{pnode(r;phi)\{point\}}\}.
+
+Referring to the previous example, this looks as follows.
+
+\Lcs{pnode(4,4){Z}} \Lcs{rput(Z)\{}\Lcs{pnode(3;292.5)\{LP\}}\}
+\OptArg*{\Lkeyset{originT=Z},\Lkeyset{LowPoint=true},\Lkeyset{LowP=\{LP\}}}
+\begin{LTXexample}[wide,pos=t]
+\begin{pspicture}[showgrid=true](1,0.8)(8.5,7)
+%------ Vertices of the octagon -------------
+{\pnode(4,4){Z}
+\rput(Z){\pnode(3;292.5){LP}}
+\psset{originT=Z,LowPoint=true,LowP={LP},translineA=true,translineB=true}
+\pstransTS(3;292.5){A}{A'}
+\pstransTS(3;67.5){B}{B'}
+\psdot(A)%                              draw point A
+\uput{4pt}[0]{0}(A){$\text{A}$} %       label point A
+\psdot(B)%                              draw point B
+\uput{4pt}[90]{0}(B){$\text{B}$} %      label point B
+\psdot(B')%                             draw point B'
+\uput{4pt}[90]{0}(B'){$\text{B}'$} %    label point B'
+\psdot(Z)%                              draw point Z
+\uput{4pt}[225]{0}(Z){$\text{Z}$}%      label point Z
+}
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+
+A typical example is the regular octagon, where the vertices can easily be given in polar coordinates. Without changing the base explicitly, it goes through the center.
+
+\begin{LTXexample}[wide,pos=t]
+\begin{pspicture}[showgrid=true](1,0.8)(8.5,7)
+\psset{linejoin=2}
+%------ Vertices of the octagon -------------
+{\pnode(4,4){Z}
+\psset{originT=Z,translineA=true,translineB=true}
+\pstransTS(3;22.5){A}{A'}
+\pstransTS(3;67.5){B}{B'}
+\pstransTS(3;112.5){C}{C'}
+\pstransTS(3;157.5){D}{D'}
+\pstransTS(3;202.5){E}{E'}
+\pstransTS(3;247.5){F}{F'}
+\pstransTS(3;292.5){G}{G'}
+\pstransTS(3;337.5){H}{H'}
+}
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue](A')(B')(C')(D')(E')(F')(G')(H')
+\pspolygon[fillstyle=solid,fillcolor=yellow!40,opacity=0.1,linewidth=0.9pt,linecolor=red](A)(B)(C)(D)(E)(F)(G)(H)
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+If we want to have the base through the lower points, we can calculate the base or use a suitable option.
+
+\begin{LTXexample}[wide,pos=t]
+\begin{pspicture}[showgrid=true](1,0.8)(8.5,7)
+\psset{linejoin=2}
+%------ Vertices of the octagon -------------
+{\pnode(4,4){Z}
+\rput(Z){\pnode(3;292.5){LP}}
+\psset{originT=Z,LowPoint=true,LowP={LP},translineA=true,translineB=true}
+\pstransTS(3;22.5){A}{A'}
+\pstransTS(3;67.5){B}{B'}
+\pstransTS(3;112.5){C}{C'}
+\pstransTS(3;157.5){D}{D'}
+\pstransTS(3;202.5){E}{E'}
+\pstransTS(3;247.5){F}{F'}
+\pstransTS(3;292.5){G}{G'}
+\pstransTS(3;337.5){H}{H'}
+}
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue](A')(B')(C')(D')(E')(F')(G')(H')
+\pspolygon[fillstyle=solid,fillcolor=yellow!40,opacity=0.1,linewidth=0.9pt,linecolor=red](A)(B)(C)(D)(E)(F)(G)(H)
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+\subsection{Angle of projection}
+\begin{BDef}
+\Lcs{pstransTS}[\OptArg*{\nxLkeyword{phi=30}}].
+\end{BDef}
+
+The angle of projection is $45^{\circ}$ by default. If you like another angle e.\,g. $30^{\circ}$, use the optional argument \Lcs{pstransTS}[\OptArg*{\nxLkeyword{phi=30}}].
+
+\begin{LTXexample}[wide,width=3cm]
+\begin{pspicture}[showgrid=true,shift=-4.6](0.5,-0.5)(3,4.1)
+{\psset{phi=30,base=0,translineA=true,translineB=true,transAcolor=red,transBcolor=blue}
+\pnode(0,\ba){O}%                       \ba gives the y-value of the base line
+\pstransTS(1,4){A}{A'}
+}
+\pcline[linewidth=1.3pt](0,0|O)(3,0|O)% draw base line
+\psdot(A)%                              draw point A
+\uput{4pt}[135]{0}(A){$\text{A}$} %     label point A
+\psdot[linecolor=brown](A')%            draw point A'
+\uput{4pt}[45]{0}(A'){$\text{A}'$}%     label point A'
+\pstMarkAngle[LabelSep=1.5,MarkAngleRadius=0.7,linecolor=blue,arrows=->]{3,\ba}{A|O}{A'}{$\varphi=30^{\circ}$}% draw and label angle
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[wide,width=3cm]
+\begin{pspicture}[showgrid=true,shift=-4.6](0.5,-0.5)(3,4.1)
+{\psset{phi=60,base=0,translineA=true,translineB=true,transAcolor=red,transBcolor=blue}
+\pnode(0,\ba){O}%                       \ba gives the y-value of the base line
+\pstransTS(1,4){A}{A'}
+}
+\pcline[linewidth=1.3pt](0,0|O)(3,0|O)% draw base line
+\psdot(A)%                              draw point A
+\uput{4pt}[135]{0}(A){$\text{A}$} %     label point A
+\psdot[linecolor=brown](A')%            draw point A'
+\uput{4pt}[45]{0}(A'){$\text{A}'$}%     label point A'
+\pstMarkAngle[LabelSep=1.5,MarkAngleRadius=0.7,linecolor=blue,arrows=->]{3,\ba}{A|O}{A'}{$\varphi=60^{\circ}$}% draw and label angle
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\newpage
+\subsection{Shortening factor}
+\begin{BDef}
+\Lcs{pstransTS}[\OptArg*{\nxLkeyword{vkf=0.5}}].
+\end{BDef}
+
+The shortening factor is \Lkeyset{vkf=0.5} by default. This means that the distance from the orthogal projected point to the calculated point only has half the length. A possible example is \Lcs{pstransTS}[\OptArg*{\nxLkeyword{vkf=1.2}}]. We are allowed to calculate the shortening factor in RPN as in the following example:
+
+\Lcs{pstransTS}[\OptArg*{\Lkeyset{vkf=2 sqrt 2 div}}]. The shortening factor is then approximately $0.707$.
+
+\begin{LTXexample}[wide,width=4.5cm]
+\begin{pspicture}[showgrid=true,shift=-4.9](0.5,-0.5)(5,4.4)
+{\psset{vkf=1.2,translineA=true,translineB=true,transAcolor=red,transBcolor=blue}
+\pnode(0,\ba){O}%                       \ba gives the y-value of the base line
+\pstransTS(1,4){A}{A'}
+}
+\pcline[linewidth=1.3pt](0,0|O)(5,0|O)% draw base line
+\psdot(A)%                              draw point A
+\uput{4pt}[135]{0}(A){$\text{A}$} %     label point A
+\psdot[linecolor=brown](A')%            draw point A'
+\uput{4pt}[45]{0}(A'){$\text{A}'$}%     label point A'
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[wide,width=3cm]
+\begin{pspicture}[showgrid=true,shift=-4.9](0.5,-0.5)(3,4.4)
+{\psset{vkf=0.5 sqrt,base=0,translineA=true,translineB=true,transAcolor=red,transBcolor=blue}
+\pnode(0,\ba){O}%                       \ba gives the y-value of the base line
+\pstransTS(1,4){A}{A'}
+}
+\pcline[linewidth=1.3pt](0,0|O)(3,0|O)% draw base line
+\psdot(A)%                              draw point A
+\uput{4pt}[135]{0}(A){$\text{A}$} %     label point A
+\psdot[linecolor=brown](A')%            draw point A'
+\uput{4pt}[45]{0}(A'){$\text{A}'$}%     label point A'
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+\subsection{Subsidiary lines and their options}
+
+With the two booleans \Lkeyset{translineA=true/false} and \Lkeyset{translineB=true/false} the subsidiary lines can be shown or not. Their defaults are \Lkeyset{translineA=false} and \Lkeyset{translineB=false}.
+
+\begin{LTXexample}[wide,width=3.5cm]
+\begin{pspicture}[showgrid=true,shift=-4.6](0.5,-0.5)(3,4.1)
+\pstransTS(1,4){A}{A'}
+\psdot(A)%                              draw point A
+\uput{4pt}[135]{0}(A){$\text{A}$} %     label point A
+\psdot[linecolor=brown](A')%            draw point A'
+\uput{4pt}[45]{0}(A'){$\text{A}'$}%     label point A'
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[wide,width=3.5cm]
+\begin{pspicture}[showgrid=true,shift=-4.6](0.5,-0.5)(3,4.1)
+{\psset{translineA=true,translineB=false,transAcolor=red,transBcolor=blue}
+\pnode(0,\ba){O}%                       \ba gives the y-value of the base line
+\pstransTS(1,4){A}{A'}
+}
+\pcline[linewidth=1.3pt](0,0|O)(3,0|O)% draw base line
+\psdot(A)%                              draw point A
+\uput{4pt}[135]{0}(A){$\text{A}$} %     label point A
+\psdot[linecolor=brown](A')%            draw point A'
+\uput{4pt}[45]{0}(A'){$\text{A}'$}%     label point A'
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[wide,width=3.5cm]
+\begin{pspicture}[showgrid=true,shift=-4.6](0.5,-0.5)(3,4.1)
+{\psset{translineA=false,translineB=true,transAcolor=red,transBcolor=blue}
+\pnode(0,\ba){O}%                       \ba gives the y-value of the base line
+\pstransTS(1,4){A}{A'}
+}
+\pcline[linewidth=1.3pt](0,0|O)(3,0|O)% draw base line
+\psdot(A)%                              draw point A
+\uput{4pt}[135]{0}(A){$\text{A}$} %     label point A
+\psdot[linecolor=brown](A')%            draw point A'
+\uput{4pt}[45]{0}(A'){$\text{A}'$}%     label point A'
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+Every of the subsidiary lines can individually be setup with three properties: line width, line color and line style. Therefore we define the following options with its defaults.
+
+\begin{BDef}
+\Lcs{pstransTS}[\OptArg*{\nxLkeyword{transAlinewidth=0.7pt}}],\\
+\Lcs{pstransTS}[\OptArg*{\nxLkeyword{transAcolor=green}}],\\
+\Lcs{pstransTS}[\OptArg*{\nxLkeyword{transAlinestyle=dashed}}],\\
+\Lcs{pstransTS}[\OptArg*{\nxLkeyword{transBlinewidth=0.7pt}}],\\
+\Lcs{pstransTS}[\OptArg*{\nxLkeyword{transBcolor=blue}}],\\
+\Lcs{pstransTS}[\OptArg*{\nxLkeyword{transBlinestyle=dashed}}]
+\end{BDef}
+
+\begin{LTXexample}[wide,width=3.5cm]
+\begin{pspicture}[showgrid=true,shift=-4.6](0.5,-0.5)(3,4.1)
+\pstransTS[translineA=true,translineB=true,transAlinestyle=solid,transBlinestyle=dotted](1,4){A}{A'}
+\psdot(A)%                              draw point A
+\uput{4pt}[135]{0}(A){$\text{A}$} %     label point A
+\psdot[linecolor=brown](A')%            draw point A'
+\uput{4pt}[45]{0}(A'){$\text{A}'$}%     label point A'
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[wide,width=3.5cm]
+\begin{pspicture}[showgrid=true,shift=-4.6](0.5,-0.5)(3,4.1)
+{\psset{translineA=true,translineB=true,transAcolor=brown,transBcolor=cyan}
+\pnode(0,\ba){O}%                       \ba gives the y-value of the base line
+\pstransTS(1,4){A}{A'}
+}
+\pcline[linewidth=1.3pt](0,0|O)(3,0|O)% draw base line
+\psdot(A)%                              draw point A
+\uput{4pt}[135]{0}(A){$\text{A}$} %     label point A
+\psdot[linecolor=brown](A')%            draw point A'
+\uput{4pt}[45]{0}(A'){$\text{A}'$}%     label point A'
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[wide,width=3.5cm]
+\begin{pspicture}[showgrid=true,shift=-4.6](0.5,-0.5)(3,4.1)
+{\psset{translineA=true,translineB=true,transAlinewidth=1.2pt,transBlinewidth=2.5pt}
+\pnode(0,\ba){O}%                       \ba gives the y-value of the base line
+\pstransTS(1,4){A}{A'}
+}
+\pcline[linewidth=1.3pt](0,0|O)(3,0|O)% draw base line
+\psdot(A)%                              draw point A
+\uput{4pt}[135]{0}(A){$\text{A}$} %     label point A
+\psdot[linecolor=brown](A')%            draw point A'
+\uput{4pt}[45]{0}(A'){$\text{A}'$}%     label point A'
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+
+\section{The macro \nxLcs{pstransTSX}}
+\begin{BDef}
+\Lcs{pstransTSX}\OptArgs\Largr{$x_{\rm{A}},y_{\rm{A}}$}\Largb{\rm{A}}\Largb{\rm{A}'}
+\end{BDef}
+
+The macro \Lcs{pstransTSX}\OptArgs$(x_{\rm{A}},y_{\rm{A}})$\Largb{\rm{A}}\Largb{\rm{A}'} is used like \Lcs{pstransTS}. Also the parameters have the same names.
+The only difference is, that the points are projected on a line parallel to the $y$-axis.
+
+This case we use, when we want to transform points on the lateral face of the perspective. Therefore, the lateral face needs to spread orthogonally backwards related to the $x,y$-plane.
+
+In the following example, the point $\text{A}(0.5|2)$ is projected orthogonally on the line $x=2$ (see green dashed line) und from there with an angle of $\varphi=45^{\circ}$ and with a shortening factor of a \Largr{\rm{vkf}=0.5} a node named $\text{A}'$ is generated.
+
+\begin{LTXexample}[wide,width=3cm]
+\begin{pspicture}[showgrid=true](0.5,-0.5)(3,4.4)
+{\psset{translineA=true,translineB=true,base=2,symline=0,symX=false}
+\pnode(2,0.5){O}%
+\pstransTSX(0.5,2){A}{A'}
+\pstransTSX(1,1.5){B}{B'}
+\pstransTSX(0,0.5){C}{C'}
+}%
+\pcline[linewidth=1.3pt](2,0)(2,4)% draw base line
+\psdot(A)%                              draw point A
+\uput{4pt}[135]{0}(A){$\text{A}$} %     label point A
+\psdot[linecolor=brown](A')%            draw point A'
+\psdot[linecolor=blue](B')%             draw point B'
+\psdot[linecolor=red](C')%              draw point C'
+\uput{4pt}[90]{0}(A'){$\text{A}'$}%     label point A'
+\pnode(3,0.5){P}%
+\pstMarkAngle[LabelSep=1.0,MarkAngleRadius=0.65,linecolor=blue,arrows=->]{P}{O}{C'}{$\scriptstyle 45^{\circ}$}% draw and label angle
+\pcline[linestyle=dashed](O)(P)
+\end{pspicture}
+\end{LTXexample}
+
+
+\subsection{Symmetry of the transformation}
+
+As shown in the example above the points laying in the object left to the base are transformed further away than those laying right. This might disturb, if we want to transform points onto the lateral face. The following example will discuss this problem. It is three o'clock, after the transformation onto the lateral face it is nine o'clock. (Note: \Lkeyset{base=1} means, that the base is $x=2$, cause \Lkeyset{originT=\{1,2\}} shifts the origin, from which the base is counted positive to the right.)
+
+\begin{LTXexample}[wide,width=3cm]
+\begin{pspicture}[showgrid=true](0.5,-0.5)(3,4.4)
+\pnode(1,2){UZ}
+{\psset{originT={UZ},base=1,symX=false}
+\pstransTSX(0,0){U1}{U1'}
+\pstransTSX[translineA=true,translineB=true](0.3;0){zg1}{zg1'}
+\pstransTSX[translineA=true,translineB=true](0.5;90){zg2}{zg2'}
+%-----------------------------------------------------
+\pscircle(UZ){0.5}
+\psline[linecolor=yellow!90!black!70]{c-c}(U1)(zg1)
+\psline[linecolor=yellow!90!black!70]{c-c}(U1)(zg2)
+%-----------------------------------------------------
+\psline[linecolor=red]{c-c}(U1')(zg1')
+\psline[linecolor=orange]{c-c}(U1')(zg2')
+\multido{\i=0+5,\n=5+5}{72}{%
+\pstransTSX(0.5;\i){A\i}{A'\i}
+\pstransTSX(0.5;\n){B\n}{B'\n}
+\psline(A'\i)(B'\n)}
+}
+\end{pspicture}
+\end{LTXexample}
+
+A corresponding symmetrical transformation we get with \Lkeyset{symX=true,symline=0} which is the default. (Note as well, that \Lkeyset{symline=0} gives the symmetry axis relatively to \Lkeyset{originT=\{UZ\}}. Thus, the symmetry axis is $x=1$.)
+
+\begin{LTXexample}[wide,width=3cm]
+\begin{pspicture}[showgrid=true](0.5,-0.5)(3,4.4)
+\pnode(1,2){UZ}
+{\psset{originT={UZ},base=1,symX=true,symline=0}
+\pstransTSX(0,0){U1}{U1'}
+\pstransTSX[translineA=true,translineB=true](0.3;0){zg1}{zg1'}
+\pstransTSX[translineA=true,translineB=true](0.5;90){zg2}{zg2'}
+%-----------------------------------------------------
+\pscircle(UZ){0.5}
+\psline[linecolor=yellow!90!black!70]{c-c}(U1)(zg1)
+\psline[linecolor=yellow!90!black!70]{c-c}(U1)(zg2)
+%-----------------------------------------------------
+\psline[linecolor=red]{c-c}(U1')(zg1')
+\psline[linecolor=orange]{c-c}(U1')(zg2')
+\multido{\i=0+5,\n=5+5}{72}{%
+\pstransTSX(0.5;\i){A\i}{A'\i}
+\pstransTSX(0.5;\n){B\n}{B'\n}
+\psline(A'\i)(B'\n)}
+}
+\end{pspicture}
+\end{LTXexample}
+
+Another effect with the macro  \Lcs{pstransTSX} can be achieved by the parameter \Lkeyset{deltaphi=\ldots} with which we can increase or decrease the projection angle for some objects locally and leaving the setting of \Lkeyset{phi=\ldots} globally. \Lkeyset{deltaphi=\ldots} adds/subtracts the given projection angle by that value. The result looks like an object swinging out the lateral face.
+
+\begin{LTXexample}[wide,width=3cm]
+\begin{pspicture}[showgrid=true](0.5,-0.5)(3,4.4)
+\pnode(1,2){UZ}
+{\psset{originT={UZ},base=1,phi=15,symX=true,symline=0}
+\pstransTSX(0,0){U1}{U1'}
+\pstransTSX[translineA=true,translineB=true](0.3;0){zg1}{zg1'}
+\pstransTSX[translineA=true,translineB=true](0.5;90){zg2}{zg2'}
+%-----------------------------------------------------
+\pscircle(UZ){0.5}
+\psline[linecolor=yellow!90!black!70]{c-c}(U1)(zg1)
+\psline[linecolor=yellow!90!black!70]{c-c}(U1)(zg2)
+%-----------------------------------------------------
+\psline[linecolor=red]{c-c}(U1')(zg1')
+\psline[linecolor=orange]{c-c}(U1')(zg2')
+\multido{\i=0+5,\n=5+5}{72}{%
+\pstransTSX(0.5;\i){A\i}{A'\i}
+\pstransTSX(0.5;\n){B\n}{B'\n}
+\psline(A'\i)(B'\n)}
+{\psset{deltaphi=45}
+\pstransTSX(0,0){U1}{U1'}
+\pstransTSX[translineA=true,translineB=true](0.3;0){zg1}{zg1'}
+\pstransTSX[translineA=true,translineB=true](0.5;90){zg2}{zg2'}
+%-----------------------------------------------------
+\psline[linecolor=red]{c-c}(U1')(zg1')
+\psline[linecolor=orange]{c-c}(U1')(zg2')
+\multido{\i=0+5,\n=5+5}{72}{%
+\pstransTSX(0.5;\i){A\i}{A'\i}
+\pstransTSX(0.5;\n){B\n}{B'\n}
+\psline(A'\i)(B'\n)}
+}
+}
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+\section{The macro \nxLcs{pstransTSK}}
+\begin{BDef}
+\Lcs{pstransTSK}\OptArgs$(x_{\rm{A}},y_{\rm{A}})$\Largb{\rm{length}}\Largb{\rm{A}}\Largb{\rm{A}'}
+\end{BDef}
+
+If the edges that should be transformed run vertically in the $x,y$-plane, they are projected orthogonally to the base line and from there transformed by a chosen angle and eventually by a shortening factor. The orthogonal projection of all points of a vertical edge end in the intersection point of this edge with the base line. Choosing a proper base, the intersection point of the vertical edge with the base line is a vertex of the geometrical object. In that special case it is sufficient to only project one of the vertices of the vertical line---such as doing it, constructing a perspective of the edges vertical to the $x,y$-plane (leading to the back) of a three-dimensional body with a given projection angle and a choden shortening factor. Thus, the projection can be reduced, cause only half of the vertices need to be transformed by a simple shifting.
+
+The macro \Lcs{pstransTSK} shifts a point to be setup in parentheses. The length of the shift is calculated by the value given after it in curly braces multiplied with the shortening factor that is \Lkeyset{vkf=0.5} by default. The angle of the shifting in relation to the horizontal ($x$-axis), $45^{\circ}$ by default, can be varied by \Lkeyset{phi=\ldots}. The subsidiary lines can be shown or hidden. The options of the subsidiary lines can be varied.
+
+The following set of examples will make this clearer.
+
+First we setup the points of a square that lays in $x,y$-plane. These points we give the node names $\text{A}$, $\text{B}$, $\text{C}$ and $\text{D}$. The transformed points are shifted by two units (the length $4$ is multiplied by the shortening factor $0.5$) and the transformed nodes names $\text{A}'$, $\text{B}'$, $\text{C}'$ and $\text{D}'$ are calculated and stored under that names.
+
+\begin{LTXexample}[wide,width=5.5cm]
+\begin{pspicture}[showgrid=false,shift=-5.0](0.7,-0.4)(7,5.8)
+%---- Vertices of the square ---
+\pstransTSK(1,0){4}{A}{A'}
+\pstransTSK(5,0){4}{B}{B'}
+\pstransTSK(5,4){4}{C}{C'}
+\pstransTSK(1,4){4}{D}{D'}
+\pspolygon[linewidth=0.9pt,linecolor=black](A)(B)(C)(D)
+\pspolygon[linewidth=0.9pt,linecolor=black](A')(B')(C')(D')
+\end{pspicture}
+\end{LTXexample}
+
+With some other angles this looks as follows:
+
+\begin{LTXexample}[wide,width=6.5cm]
+\begin{pspicture}[showgrid=false,shift=-5.0](0.7,-0.4)(7,5.8)
+%---- Vertices of the square ---
+\pstransTSK[phi=30](1,0){4}{A}{A'}
+\pstransTSK[phi=30](5,0){4}{B}{B'}
+\pstransTSK[phi=30](5,4){4}{C}{C'}
+\pstransTSK[phi=30](1,4){4}{D}{D'}
+\pspolygon[linewidth=0.9pt,linecolor=black](A)(B)(C)(D)
+\pspolygon[linewidth=0.9pt,linecolor=black](A')(B')(C')(D')
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[wide,width=5.5cm]
+\begin{pspicture}[showgrid=false,shift=-5.0](0.7,-0.4)(7,5.8)
+%---- Vertices of the square ---
+\psset{phi=60}
+\pstransTSK(1,0){4}{A}{A'}
+\pstransTSK(5,0){4}{B}{B'}
+\pstransTSK(5,4){4}{C}{C'}
+\pstransTSK(1,4){4}{D}{D'}
+\pspolygon[linewidth=0.9pt,linecolor=black](A)(B)(C)(D)
+\pspolygon[linewidth=0.9pt,linecolor=black](A')(B')(C')(D')
+\end{pspicture}
+\end{LTXexample}
+
+A change of the shortening factor leads to the following designs.
+
+\begin{LTXexample}[wide,width=5.5cm]
+\begin{pspicture}[showgrid=false,shift=-5.0](0.7,-0.4)(7,5.8)
+%---- Vertices of the square ---
+\psset{vkf=0.25}
+\pstransTSK(1,0){4}{A}{A'}
+\pstransTSK(5,0){4}{B}{B'}
+\pstransTSK(5,4){4}{C}{C'}
+\pstransTSK(1,4){4}{D}{D'}
+\pspolygon[linewidth=0.9pt,linecolor=black](A)(B)(C)(D)
+\pspolygon[linewidth=0.9pt,linecolor=black](A')(B')(C')(D')
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[wide,width=6.5cm]
+\begin{pspicture}[showgrid=false,shift=-5.0](0.7,-0.4)(7,5.8)
+%---- Vertices of the square ---
+\psset{vkf=0.75}
+\pstransTSK(1,0){4}{A}{A'}
+\pstransTSK(5,0){4}{B}{B'}
+\pstransTSK(5,4){4}{C}{C'}
+\pstransTSK(1,4){4}{D}{D'}
+\pspolygon[linewidth=0.9pt,linecolor=black](A)(B)(C)(D)
+\pspolygon[linewidth=0.9pt,linecolor=black](A')(B')(C')(D')
+\end{pspicture}
+\end{LTXexample}
+
+
+\newpage
+
+
+\section{The macro \nxLcs{psboxTS}}
+\begin{BDef}
+\Lcs{psboxTS}\OptArgs$(x,y,z)$\Largb{\rm{length in }x}\Largb{\rm{width in }y}\Largb{\rm{height in }z}\Largb{\rm{color}}
+\end{BDef}
+
+
+With the macro \Lcs{psboxTS} we can easily draw cuboids. For its three coordinates we use the left, bottom vertex in the back and put them in parentheses separated by commas, followed by its length, width and height and last by its color---all these four arguments are put in curly braces.
+
+With the option \Lkeyset{hideline=true} the hidden lines are shown with the keys \Lkeyset{hidelinewidth=}, \Lkeyset{hidelinestyle=} and \Lkeyset{hidecolor=}.
+
+With the option \Lkeyset{differentcol=true} we can give the three visible faces different colors. The color of the right side can changed with \Lkeyset{facecolorR=}, the color of the top can changed with \Lkeyset{facecolorT=}. The frontcolor is the color in curly braces.
+
+This macro and the others as well can be used in combination with the pst-3dplot package with the settings: \Lkeyset{coorType=1}, \Lkeyset{xThreeDunit=vkf} and \Lkeyset{phi = 180 Alpha sub}.
+
+\begin{LTXexample}[pos=t]
+\begin{pspicture}[showgrid=false](-2,-2.5)(6,6)
+\psset{xMin=0,yMin=0,zMin=0,xMax=11,yMax=11,zMax=4,Alpha=155,Beta=20,Dx=1,Dy=1,Dz=1,arrowsize=.2,arrowinset=0.1,coorType=1,xThreeDunit=0.5,phi=180 155 sub}%
+\pstThreeDPlaneGrid[planeGrid=xy,linewidth=0.3pt,linecolor=gray!70,xsubticks=7,ysubticks=7](0,0)(7,7)%
+\pstThreeDPlaneGrid[planeGrid=xz,linewidth=0.3pt,linecolor=gray!70,xsubticks=7,ysubticks=5](0,0)(7,5)%
+\pstThreeDPlaneGrid[planeGrid=yz,linewidth=0.3pt,linecolor=gray!70,xsubticks=7,ysubticks=5](0,0)(7,5)%
+%--------------------------------------
+\psboxTS(0,2,3){3}{4}{1}{blue}
+\psboxTS[hideline=true,dash=2pt 2pt,hidelinewidth=0.5pt](4,0,0){2}{1}{4}{yellow}
+\psboxTS[opacity=0.75,hideline=true,hidelinewidth=1.2pt,hidelinestyle=dotted,hidecolor=green,dotsep=1.5pt](3,4,0){4}{2}{1}{brown}
+\psboxTS[differentcol=true,facecolorR=blue,facecolorT=orange](0,0,1){1}{2}{0.5}{green}
+%--------------------------------------
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+
+\section{Macros for circles and arcs}
+
+\begin{BDef}
+\Lcs{psCircleTS}\OptArgs\Largb{\rm{Radius}},\\
+\Lcs{psCircleTSX}\OptArgs\Largb{\rm{Radius}}
+\end{BDef}
+
+\begin{BDef}
+\Lcs{psArcTS}\OptArgs\Largb{\rm{Radius}}\Largb{\rm{Startwinkel}}\Largb{\rm{\"{u}berstrichener Winkel}},\\
+\Lcs{psArcTSX}\OptArgs\Largb{\rm{Radius}}\Largb{\rm{Startwinkel}}\Largb{\rm{\"{u}berstrichener Winkel}}
+\end{BDef}
+
+%\nxLcs{psCircleTS}, \nxLcs{psCircleTSX}, \nxLcs{psarcTS}, \nxLcs{psarcTSX}, \nxLcs{psZylinderTS}}
+
+\begin{LTXexample}[pos=t]
+\begin{pspicture}[showgrid=true,shift=-4.9](0.5,-0.5)(14,7.3)
+\rput(2,4){\psCircleTS[fillstyle=solid,fillcolor=blue,opacity=0.5]{2}}
+\rput(10,2){\psCircleTSX[fillstyle=solid,fillcolor=red,opacity=0.5]{2}}
+\rput(5,2){\psArcTS[linecolor=green,linewidth=0.5pt]{2}{0}{90}}
+\psArcTSX[linecolor=magenta,linewidth=0.5pt,originT={6,4},symX=false]{1.5}{0}{120}
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+
+\section{Macro for cylinder}
+
+\begin{BDef}
+\Lcs{psZylinderTS}\OptArgs\Largb{\rm{Radius}}\Largb{\rm{H\"{o}he}}
+\end{BDef}
+
+\begin{LTXexample}[pos=t]
+\begin{pspicture}[showgrid=true,shift=-4.9](0.5,-0.5)(14,8.8)
+\psset{toplinewidth=0.3pt,toplinecolor=cyan}
+\rput(10,1){%
+\psZylinderTS[opacity=0.6,fillstyle=gradient,gradbegin=black!90!blue!80,gradend=black!40!blue!30,gradangle=90,%
+gradmidpoint=0.3,linecolor=cyan,linewidth=0.8pt]{2.5}{6}}
+{\psset{phi=30,vkf=2 sqrt 2 div,opacity=0.2}
+\psboxTS[hideline=true](-1,2,2){2}{2}{4}{green}
+\rput(3,2){%
+\psZylinderTS[opacity=0.6,fillstyle=gradient,gradbegin=black!90!blue!80,gradend=black!40!blue!30,gradangle=90,%
+gradmidpoint=0.3,linecolor=cyan,linewidth=0.8pt]{1}{4}}
+\psboxTS[hideline=false](-1,2,2){2}{2}{4}{green}
+}
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+
+The following additional options are possible for the cylinder so that the top surface of the cylinder can be designed independently.
+
+\begin{BDef}
+\Lcs{pstransTS}[\OptArg*{\nxLkeyword{topfillstyle}}],\\
+\Lcs{pstransTS}[\OptArg*{\nxLkeyword{topmidpoint}}],\\
+\Lcs{pstransTS}[\OptArg*{\nxLkeyword{topangle}}],\\
+\Lcs{pstransTS}[\OptArg*{\nxLkeyword{toplinecolor}}],\\
+\Lcs{pstransTS}[\OptArg*{\nxLkeyword{topfillcolor}}],\\
+\Lcs{pstransTS}[\OptArg*{\nxLkeyword{toplinewidth}}]
+\end{BDef}
+
+
+In addition, with \Lkeyset{hideline=true}, \Lkeyset{hidelinewidth=}, \Lkeyset{hidelinestyle=} and \Lkeyset{hidecolor=} covert line of the cylinder with different attributes are displayed.
+
+\begin{LTXexample}[pos=t]
+\begin{pspicture}[showgrid=true](1,-0.3)(16,6)
+\psset{toplinewidth=0.5pt,opacity=0.3}
+{\psset{vkf=0.4,phi=33,topfillcolor=red}
+\psboxTS[linewidth=0.5pt,opacity=0.2,linejoin=1,hideline=true,dash=2pt 2pt,hidelinewidth=0.3pt](-2,2,1){4}{4}{4}{green}
+\rput(4,1){\psZylinderTS[opacity=0.6,linewidth=0.5pt,fillstyle=gradient,gradbegin=black!90!blue!80,%
+gradend=black!40!blue!30,gradangle=90,gradmidpoint=0.25]{2}{4}}
+\psboxTS[linewidth=0.5pt,opacity=0.1,linejoin=1](-2,2,1){4}{4}{4}{green}}
+{\psset{vkf=0.7,phi=60,topfillstyle=gradient,topmidpoint=0.4,topangle=90}
+\psboxTS[linewidth=0.5pt,opacity=0.2,linejoin=1,hideline=true,dash=2pt 2pt,hidelinewidth=0.3pt](-2,8,1){4}{4}{4}{cyan}
+\rput(10,1){\psZylinderTS[hideline=true,hidecolor=orange,dash=2pt 2pt,%
+hidelinewidth=0.3pt,opacity=0.6,linewidth=0.5pt,fillstyle=gradient,gradbegin=black!90!blue!80,%
+gradend=black!40!blue!30,gradangle=90,gradmidpoint=0.25]{2}{4}}
+\psboxTS[linewidth=0.5pt,opacity=0.1,linejoin=1](-2,8,1){4}{4}{4}{cyan}}
+\rput{-90}(13,1){\psZylinderTS[phi=-30,linewidth=0.5pt,fillstyle=gradient,gradbegin=black!90!green!80,%
+gradend=black!40!green!30,gradangle=90,gradmidpoint=0.25,topfillstyle=gradient,topmidpoint=0.5,topangle=35]{1}{3}}
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+
+\section{Examples}
+
+\begin{LTXexample}[pos=t]
+\begin{pspicture}[showgrid=true](0.5,-0.5)(11.5,8.0)
+{\psset{phi=40,translineA=true,translineB=true}
+%------ Vertices of the octagon -------------
+\pstransTS(3,0){A}{A'}
+\pstransTS(7,0){B}{B'}
+\pstransTS(9,2){C}{C'}
+\pstransTS(9,6){D}{D'}
+\pstransTS(7,8){E}{E'}
+\pstransTS(3,8){F}{F'}
+\pstransTS(1,6){G}{G'}
+\pstransTS(1,2){H}{H'}
+%---------------------------------------------
+}
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.4,linecolor=blue](A')(B')(C')(D')(E')(F')(G')(H')
+\pspolygon[fillstyle=solid,fillcolor=yellow!40,opacity=0.2,linewidth=0.9pt,linecolor=red](A)(B)(C)(D)(E)(F)(G)(H)
+\pcline[linewidth=1.3pt](0,0|O)(12,0|O)
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+\begin{LTXexample}[pos=t]
+\begin{pspicture}[showgrid=true](0.5,-0.5)(10,8.4)
+{\psset{base=0,translineA,translineB,linecolor=blue,linestyle=dashed,transAcolor=blue,transBcolor=orange,dash=5pt 5pt}
+\pnode(0,\ba){O}% \ba gives the y-value of the base line
+%------ Vertices of the "X"  -------------
+\pstransTS(1,0){A}{A'}
+\pstransTS(2,0){B}{B'}
+\pstransTS(4,3){C}{C'}
+\pstransTS(6,0){D}{D'}
+\pstransTS(7,0){E}{E'}
+\pstransTS[transAlinestyle=solid,transAcolor=red,transAlinewidth=2pt](4.5,4){F}{F'}
+\pstransTS[linestyle=solid,linecolor=green](7,8){G}{G'}
+\pstransTS[transAcolor=red,transBcolor=black,transBlinewidth=1.4pt](6,8){H}{H'}
+\pstransTS(4,5){I}{I'}
+\pstransTS(2,8){J}{J'}
+\pstransTS[linecolor=red](1,8){K}{K'}
+\pstransTS(3.5,4){L}{L'}
+%-------------------------------------
+}
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue](A')(B')(C')(D')(E')(F')(G')(H')(I')(J')(K')(L')
+\pspolygon[fillstyle=solid,fillcolor=yellow!30,opacity=0.5,linewidth=0.9pt,linecolor=red](A)(B)(C)(D)(E)(F)(G)(H)(I)(J)(K)(L)
+\pcline[linewidth=1.3pt](0,0|O)(10,0|O)
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+\begin{LTXexample}[pos=t]
+\psscalebox{0.7}{%
+\begin{pspicture}[showgrid=false](0.5,-0.5)(10,9.4)
+\def\lange{2 sqrt 2 mul}
+{\psset{phi=30,base=0,translineK,translinestyle=dashed,linecolor=blue,linejoin=2,fillstyle=solid,opacity=0.5}
+%------ Vertices of the "X" -------------
+\pstransTSK(1,0){\lange}{A}{A'}
+\pstransTSK(2,0){\lange}{B}{B'}
+\pstransTSK(4,3){\lange}{C}{C'}
+\pstransTSK(6,0){\lange}{D}{D'}
+\pstransTSK(7,0){\lange}{E}{E'}
+\pstransTSK(4.5,4){\lange}{F}{F'}
+\pstransTSK(7,8){\lange}{G}{G'}
+\pstransTSK(6,8){\lange}{H}{H'}
+\pstransTSK(4,5){\lange}{I}{I'}
+\pstransTSK(2,8){\lange}{J}{J'}
+\pstransTSK(1,8){\lange}{K}{K'}
+\pstransTSK(3.5,4){\lange}{L}{L'}
+%-------------------------------------
+\pspolygon[linestyle=dashed](A')(B')(C')(D')(E')(F')(G')(H')(I')(J')(K')(L')
+\pspolygon[fillcolor=cyan!30,linestyle=none](B)(B')(C')(C)
+}
+\psIntersectionPoint(C')(B')(C)(D){S1}
+\psline(B)(B')(S1)
+\psIntersectionPoint(H)(I)(I')(J'){S2}
+\psline(J')(S2)
+{\psset{phi=30,base=0,translineK,translinestyle=dashed,linecolor=blue,linejoin=2,fillstyle=solid,opacity=0.5}
+\pspolygon[fillcolor=cyan!30](E)(E')(F')(F)
+\pspolygon[fillcolor=cyan!30](F)(F')(G')(G)
+\pspolygon[fillcolor=cyan!30](G)(G')(H')(H)
+\pspolygon[fillcolor=cyan!30,linestyle=none](I)(I')(J')(J)
+\pspolygon[fillcolor=cyan!30](J)(J')(K')(K)
+\pspolygon[fillcolor=orange!60](A)(B)(C)(D)(E)(F)(G)(H)(I)(J)(K)(L)}
+\end{pspicture}}
+\end{LTXexample}
+
+\newpage
+\begin{LTXexample}[wide,pos=t]
+\psscalebox{0.5}{%
+\begin{pspicture}[showgrid=false](0.5,0)(10,5.7)
+{\psset{base=0,linecolor=blue,linestyle=dashed,dash=5pt 4pt}
+%------ Vertices of the lower "X" -------------
+\pstransTS(1,0){A}{A'}
+\pstransTS(2,0){B}{B'}
+\pstransTS(4,3){C}{C'}
+\pstransTS(6,0){D}{D'}
+\pstransTS(7,0){E}{E'}
+\pstransTS(4.5,4){F}{F'}
+\pstransTS(7,8){G}{G'}
+\pstransTS(6,8){H}{H'}
+\pstransTS(4,5){I}{I'}
+\pstransTS(2,8){J}{J'}
+\pstransTS(1,8){K}{K'}
+\pstransTS(3.5,4){L}{L'}
+%------ Vertices of the upper "X" -------------
+\rput(0,3){% The same "X" shifted 3 units upwards
+\pstransTS(1,0){A1}{A1'}
+\pstransTS(2,0){B1}{B1'}
+\pstransTS(4,3){C1}{C1'}
+\pstransTS(6,0){D1}{D1'}
+\pstransTS(7,0){E1}{E1'}
+\pstransTS(4.5,4){F1}{F1'}
+\pstransTS(7,8){G1}{G1'}
+\pstransTS(6,8){H1}{H1'}
+\pstransTS(4,5){I1}{I1'}
+\pstransTS(2,8){J1}{J1'}
+\pstransTS(1,8){K1}{K1'}
+\pstransTS(3.5,4){L1}{L1'}}
+%-------------------------------------
+\pcline(F')(F1')
+\pcline(H')(H1')
+\pcline(I')(I1')
+\pcline(J')(J1')
+\pcline(K')(K1')
+\pcline(L')(L1')
+}
+\psIntersectionPoint(K')(K1')(A1')(L1'){S1}
+\psline[linestyle=solid,linecolor=blue](K1')(S1)
+\psIntersectionPoint(E')(E1')(F')(G'){S2}
+\psline[linestyle=solid,linecolor=blue](S2)(G')(G1')%(F1')(E1')(E')
+{%
+\psset{linejoin=2,fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue}
+\pspolygon[linestyle=none](K')(L')(L1')(K1')
+\pspolygon[linestyle=dashed](A')(B')(C')(D')(E')(F')(G')(H')(I')(J')(K')(L')
+\pspolygon(A')(B')(B1')(A1')
+\pspolygon(B')(C')(C1')(B1')
+\pspolygon(C')(D')(D1')(C1')
+\pspolygon(D')(E')(E1')(D1')
+\pspolygon[linestyle=none](F')(G')(G1')(F1')
+\pspolygon[opacity=0.5](A1')(B1')(C1')(D1')(E1')(F1')(G1')(H1')(I1')(J1')(K1')(L1')
+}
+\end{pspicture}}
+\end{LTXexample}
+
+\newpage
+\begin{LTXexample}[pos=t,wide]
+\begin{pspicture}[showgrid=false,shift=-5.0](0.7,-0.4)(7,6)
+{\psset{phi=30}
+%------ Eckpunkte vom Aufriss --------------
+\pstransTSK(1,0){4}{A}{A'}
+\pstransTSK(5,0){4}{B}{B'}
+\pstransTSK(5,5){4}{C}{C'}
+\pstransTSK(1,5){4}{D}{D'}
+%--------------------------------------------
+}
+\psIntersectionPoint(A)(B')(B)(A'){S1}
+\psIntersectionPoint(C)(D')(D)(C'){S2}
+\pspolygon[linewidth=0.9pt,linecolor=black](A)(B)(C)(D)
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.5,linestyle=none](A)(B)(B')(A')
+{\psset{linestyle=dashed,dash=4pt 2pt,linewidth=0.9pt,linecolor=black}
+\pcline(A')(B')
+\pcline(A')(D')
+\pcline(A)(A')
+\pcline(A)(B')
+\pcline(B)(A')
+\pcline(D)(C')
+\pcline(C)(D')
+\pcline(S1)(S2)
+}
+\pcline(B)(B')
+\pcline(C)(C')
+\pcline(D)(D')
+\pcline(B')(C')
+\pcline(C')(D')
+\pcline(A)(S2)
+\pcline(B)(S2)
+\pcline(B')(S2)
+\pcline(A')(S2)
+\qdisk(S2){2pt}\uput{0.3}[90](S2){S}
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[width=6cm]
+\begin{pspicture}[showgrid=true](1,-0.3)(7,6)
+\pnode(4,3){M}
+{\psset{originT={M}}
+\multido{\i=0+10}{36}{\psset{phi=45,vkf=0.5,translineA=true,translineB=true}
+\pstransTS[linecolor=blue,linewidth=0.5pt,linestyle=dashed](2.5;\i){A\i}{A'\i}
+\psdot[dotsize=1.8pt,linecolor=blue](A\i)\psdot[dotsize=1.8pt,linecolor=red](A'\i)
+}
+}
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[width=6cm]
+\begin{pspicture}[showgrid=false](1,-0.3)(7,6)
+\pnode(4,3){M}
+{\psset{originT={M}}
+\multido{\i=0+5,\n=5+5}{72}{%
+\pstransTS[linecolor=blue,linewidth=0.5pt,linestyle=dashed](2.5;\i){A\i}{A'\i}
+\pstransTS(2.5;\n){B\n}{B'\n}
+\psdot[dotsize=1.8pt,linecolor=blue](A\i)\psdot[dotsize=1.8pt,linecolor=red](A'\i)\psline(A\i)(B\n)\psline[linecolor=orange!50](A'\i)(B'\n)
+}
+}
+\rput(M){\pnode(2.665;7){C'}}
+\rput(M){\pnode(2.665;187){D'}}
+\pcline[linecolor=cyan](C')(D')
+\rput(M){\pnode(0.83;97){E'}}
+\rput(M){\pnode(0.83;277){F'}}
+\pcline[linecolor=magenta](E')(F')
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[pos=t]
+\begin{pspicture}[showgrid=false](-2,0)(8,6)
+\pnode(4.5,1){Z}\psset{originT={Z}}
+\pstransTS(2;-60){A'}{A}
+\pstransTS(2;0){B'}{B}
+\pstransTS(2;60){C'}{C}
+\pstransTS(2;120){D'}{D}
+\pstransTS(2;180){E'}{E}
+\pstransTS(2;240){F'}{F}
+\pspolygon[fillstyle=solid,fillcolor=yellow!30,opacity=0.5,linewidth=0.9pt,linecolor=blue,linestyle=none](A)(B)(C)(D)(E)(F)%(G)(H)(I)(J)(K)(L)
+%\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue](A')(B')(C')(D')(E')(F')%(G')(H')
+\psline[linewidth=0.9pt,linecolor=blue](E)(F)(A)(B)
+\psline[linewidth=0.9pt,linecolor=blue,linestyle=dashed](D)(E)
+
+\pnode(4.5,5){Z}\psset{originT={Z}}
+\pstransTS(2;-60){I'}{I}
+\pstransTS(2;0){J'}{J}
+\pstransTS(2;60){K'}{K}
+\pstransTS(2;120){L'}{L}
+\pstransTS(2;180){M'}{M}
+\pstransTS(2;240){N'}{N}
+\pspolygon[fillstyle=solid,fillcolor=cyan!60,opacity=0.6,linecolor=blue](A)(B)(J)(I)%(E')(F')%(G')(H')
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue,linestyle=dashed](B)(C)(K)(J)%
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue,linestyle=dashed](C)(D)(L)(K)%
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue,linestyle=none](D)(E)(M)(L)%
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue](E)(F)(N)(M)%
+\pspolygon[fillstyle=solid,fillcolor=cyan!50,opacity=0.4,linecolor=blue](F)(A)(I)(N)%
+\pspolygon[fillstyle=solid,fillcolor=yellow!30,opacity=0.5,linewidth=0.9pt,linecolor=blue](I)(J)(K)(L)(M)(N)%(G)(H)(I)(J)(K)(L)
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[pos=t,wide]
+\begin{pspicture}[showgrid=false](-0.5,0.2)(7,5.6)
+\psset{linejoin=2}
+\pnode(2.5,1){Z}\psset{originT={Z}}
+\pstransTS(2;-90){A'}{A}
+\pstransTS(2;-30){B'}{B}
+\pstransTS(2;30){C'}{C}
+\pstransTS(2;90){D'}{D}
+\pstransTS(2;150){E'}{E}
+\pstransTS(2;210){F'}{F}
+\pspolygon[fillstyle=solid,fillcolor=yellow!30,opacity=0.5,linewidth=0.9pt,linecolor=blue,linestyle=none](A)(B)(C)(D)(E)(F)%(G)(H)(I)(J)(K)(L)
+\psline[linewidth=0.9pt,linecolor=blue](B)(C)
+\psline[linewidth=0.9pt,linecolor=blue,linestyle=dashed](D)(E)
+\pnode(2.5,5){Z}\psset{originT={Z}}
+\pstransTS(2;-60){I'}{I}
+\pstransTS(2;0){J'}{J}
+\pstransTS(2;60){K'}{K}
+\pstransTS(2;120){L'}{L}
+\pstransTS(2;180){M'}{M}
+\pstransTS(2;240){N'}{N}
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue](A)(B)(J)(I)%(E')(F')%(G')(H')
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue,linestyle=dashed](B)(C)(K)(J)%
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue,linestyle=dashed](C)(D)(L)(K)%
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue,linestyle=none](D)(E)(M)(L)%
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue,linestyle=dashed](E)(F)(N)(M)%
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue](F)(A)(I)(N)%
+\pspolygon[fillstyle=solid,fillcolor=yellow!30,opacity=0.5,linewidth=0.9pt,linecolor=blue](I)(J)(K)(L)(M)(N)%(G)(H)(I)(J)(K)(L)
+\psIntersectionPoint(C)(K)(B)(J){SBJ}
+\psIntersectionPoint(E)(M)(F)(N){SFN}
+\psline[linewidth=0.9pt,linecolor=blue](C)(SBJ)
+\psline[linewidth=0.9pt,linecolor=blue](SFN)(M)
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[pos=t,wide]
+\begin{pspicture}[showgrid=false](0,0)(6,6)
+\pnode(3.5,1){Z}\psset{originT={Z}}
+\pstransTS(2;-60){A'}{A}
+\pstransTS(2;0){B'}{B}
+\pstransTS(2;60){C'}{C}
+\pstransTS(2;120){D'}{D}
+\pstransTS(2;180){E'}{E}
+\pstransTS(2;240){F'}{F}
+\pspolygon[fillstyle=solid,fillcolor=yellow!30,opacity=0.5,linewidth=0.9pt,linecolor=blue,linestyle=none](A)(B)(C)(D)(E)(F)%(G)(H)(I)(J)(K)(L)
+\psline[linewidth=0.9pt,linecolor=blue](E)(F)(A)(B)
+\psline[linewidth=0.9pt,linecolor=blue,linestyle=dashed](D)(E)
+\pnode(3.5,5){Z}\psset{originT={Z}}
+\pstransTS(1;-60){I'}{I}
+\pstransTS(1;0){J'}{J}
+\pstransTS(1;60){K'}{K}
+\pstransTS(1;120){L'}{L}
+\pstransTS(1;180){M'}{M}
+\pstransTS(1;240){N'}{N}
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue](A)(B)(J)(I)%(E')(F')%(G')(H')
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue,linestyle=dashed](B)(C)(K)(J)%
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue,linestyle=none](C)(D)(L)(K)%
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue,linestyle=none](D)(E)(M)(L)%
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue](E)(F)(N)(M)%
+\pspolygon[fillstyle=solid,fillcolor=cyan!30,opacity=0.3,linecolor=blue](F)(A)(I)(N)%
+\pspolygon[fillstyle=solid,fillcolor=yellow!30,opacity=0.5,linewidth=0.9pt,linecolor=blue](I)(J)(K)(L)(M)(N)%(G)(H)(I)(J)(K)(L)
+\psline[linewidth=0.9pt,linecolor=blue,linestyle=dashed](C)(D)(L)
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[pos=t,wide]
+\begin{pspicture}[showgrid=false](0,0)(13,3.5)
+\psset{linejoin=2,linewidth=1pt}
+\psset{transcolor=black,translinestyle=solid}%
+\pstransTSK(0,0){3}{A}{A'}%
+\pstransTSK(6,0){3}{B}{B'}%
+\pstransTSK(5,3){3}{C}{C'}%
+\psline[linestyle=dashed](A')(B')%
+\pspolygon[fillstyle=solid,fillcolor=yellow!40,opacity=0.3,linewidth=0.9pt,linecolor=black](A)(B)(C)%
+\pspolygon[fillstyle=solid,fillcolor=cyan!40,opacity=0.3,linestyle=none](A')(A)(C)(C')
+\pspolygon[fillstyle=solid,fillcolor=cyan!40,opacity=0.3,linestyle=none](B)(B')(C')(C)
+\psline(A')(C')(B')%
+\pcline[linecolor=red](C)(C|A)
+\pstransTS(8,3){A}{A'}
+\pstransTS(14,3){B}{B'}
+\pstransTS(13,0){C}{C'}
+\pspolygon[fillstyle=solid,fillcolor=yellow!40,opacity=0.3,linestyle=none](A')(B')(C')
+\psline[linestyle=dashed](A')(B')
+\psline(A')(C')(B')
+{\psset{base=0,originT={0,2}}
+\pstransTS(8,3){D}{D'}
+\pstransTS(14,3){E}{E'}
+\pstransTS(13,0){F}{F'}
+\pstransTS(F|D){K}{K'}
+\pspolygon[fillstyle=solid,fillcolor=yellow!40,opacity=0.3](D')(E')(F')
+\pspolygon[fillstyle=solid,fillcolor=cyan!40,opacity=0.3,linestyle=none](A')(C')(F')(D')
+\pspolygon[fillstyle=solid,fillcolor=cyan!40,opacity=0.3,linestyle=none](C')(B')(E')(F')
+\psline[linestyle=dashed](D')(E')
+\psline(D')(F')(E')
+\psline(C')(F')
+}
+{\psset{phi=-135,transcolor=black}
+\pstransTSK(A'){3}{G'}{G}
+\pstransTSK(B'){3}{H'}{H}
+\pstransTSK(D'){3}{I'}{I}
+\pstransTSK(E'){3}{J'}{J}
+\pspolygon(G)(H)(J)(I)
+}
+\pspolygon(B')(H)(J)(E')
+\pspolygon(A')(G)(I)(D')
+\pcline[linecolor=red](F')(K')
+%}
+\end{pspicture}
+\end{LTXexample}
+
+
+\begin{LTXexample}[pos=t,wide]
+\psscalebox{0.6}{%
+\begin{pspicture}[showgrid=false](-0.5,0)(17,10.4)
+\psset{linejoin=2,phi=30,vkf=0.7}
+
+{\psset{base=-3}
+\multido{\i=0+1,\n=1+1,\ra=-67.5+22.5,\rb=-45+22.5}{14}{%
+\pstransTS[originT={4,3}](6;\ra){D\i}{E\i}
+\pstransTS[originT={4,3}](6;\rb){F\n}{G\n}
+\pstransTS[originT={4,5}](6;\ra){H\i}{I\i}
+\pstransTS[originT={4,5}](6;\rb){J\n}{K\n}
+\psline[linecolor=orange!50](E\i)(G\n)
+\psline[linecolor=orange!50](I\i)(K\n)
+\pspolygon[fillstyle=solid,fillcolor=orange,opacity=1](E\i)(G\n)(K\n)(I\i)
+}}
+
+{\psset{translineK=false}%
+\pstransTSK(0,0){1}{A1}{B1}
+\pstransTSK(2,0){1}{A2}{B2}
+\pstransTSK(2,3){1}{A3}{B3}
+\pstransTSK(0,2){1}{A4}{B4}
+%----------------------------
+\pstransTSK(0,0){6}{A1}{C1}
+\pstransTSK(2,0){6}{A2}{C2}
+\pstransTSK(2,3){6}{A3}{C3}
+\pstransTSK(0,2){6}{A4}{C4}
+}
+\psline[linestyle=dashed](C1)(C4)
+\psline[linestyle=dashed](B1)(C1)(C2)
+\pspolygon[fillstyle=solid,fillcolor=green!30,opacity=0.7](B1)(B2)(B3)(B4)
+\pspolygon[fillstyle=solid,fillcolor=green!30,opacity=0.7](B2)(C2)(C3)(B3)
+\pspolygon[fillstyle=vlines*,fillcolor=BrickRed,opacity=0.7,hatchangle=120,hatchsep=1.5pt](B4)(B3)(C3)(C4)
+%----------------------------
+\pstransTSK(2,0){6}{A5}{C5}
+\pstransTSK(6,0){6}{A6}{C6}
+\pstransTSK(6,4){6}{A7}{C7}
+\pstransTSK(4,6){6}{A8}{C8}
+\pstransTSK(2,4){6}{A9}{C9}
+%----------------------------
+\pspolygon[fillstyle=solid,fillcolor=yellow!50,opacity=0.2](C5)(C6)(C7)(C9)
+\pspolygon[fillstyle=solid,fillcolor=yellow!50,opacity=0.2](C7)(C8)(C9)
+\pspolygon[fillstyle=solid,fillcolor=yellow!50,opacity=0.7](A5)(A6)(A7)(A9)
+\pspolygon[fillstyle=solid,fillcolor=yellow!50,opacity=0.7](A7)(A8)(A9)
+\pspolygon[fillstyle=solid,fillcolor=yellow!50,opacity=0.7](A6)(C6)(C7)(A7)
+\pspolygon[fillstyle=vlines*,fillcolor=BrickRed,opacity=0.7,hatchangle=45,hatchsep=1.5pt](A7)(C7)(C8)(A8)
+\pspolygon[fillstyle=vlines*,fillcolor=BrickRed,opacity=0.7,hatchangle=135,hatchsep=1.5pt](A9)(A8)(C8)(C9)
+%----------------------------
+\pstransTSK(6,0){2}{A10}{C10}
+\pstransTSK(8,0){2}{A11}{C11}
+\pstransTSK(8,8){2}{A12}{C12}
+\pstransTSK(6,8){2}{A13}{C13}
+\pstransTSK(8.2,8){-0.2}{A14}{B14}
+\pstransTSK(5.8,8){-0.2}{A15}{B15}
+\pstransTSK(8.2,8){2.2}{A14}{C14}
+\pstransTSK(5.8,8){2.2}{A15}{C15}
+\pstransTSK[translineK=false](8,10){2}{A16}{C16}
+\pstransTSK[translineK=false](6,10){2}{A17}{C17}
+\psIntersectionPoint(A16)(C17)(A17)(C16){SB1}
+%----------------------------
+\pspolygon[fillstyle=solid,fillcolor=cyan!50,opacity=0.2](C10)(C11)(C12)(C13)
+\pspolygon[fillstyle=solid,fillcolor=cyan!50,opacity=0.7](A10)(A11)(A12)(A13)
+\pspolygon[fillstyle=solid,fillcolor=cyan!50,opacity=0.7](A11)(C11)(C12)(A12)
+\pspolygon[fillstyle=vlines*,fillcolor=BrickRed,opacity=0.2,hatchangle=45,hatchsep=1.5pt](C14)(C15)(SB1)
+\pspolygon[fillstyle=vlines*,fillcolor=BrickRed,opacity=0.2,hatchangle=45,hatchsep=1.5pt](B15)(C15)(SB1)
+\pspolygon[fillstyle=vlines*,fillcolor=BrickRed,opacity=0.7,hatchangle=45,hatchsep=1.5pt](B14)(B15)(SB1)
+\pspolygon[fillstyle=vlines*,fillcolor=BrickRed,opacity=0.7,hatchangle=45,hatchsep=1.5pt](B14)(C14)(SB1)
+
+{\psset{base=-3}
+\multido{\i=0+1,\n=1+1,\ra=-67.5+22.5,\rb=-45+22.5}{4}{%
+\pstransTS[originT={4,3}](6;\ra){D\i}{E\i}
+\pstransTS[originT={4,3}](6;\rb){F\n}{G\n}
+\pstransTS[originT={4,5}](6;\ra){H\i}{I\i}
+\pstransTS[originT={4,5}](6;\rb){J\n}{K\n}
+\psline[linecolor=orange!50](E\i)(G\n)
+\psline[linecolor=orange!50](I\i)(K\n)
+\pspolygon[fillstyle=solid,fillcolor=orange,opacity=1](E\i)(G\n)(K\n)(I\i)
+}}
+\end{pspicture}}
+\end{LTXexample}
+
+
+\newpage
+
+\begin{LTXexample}[pos=t,wide]
+\psscalebox{0.6}{%
+\begin{pspicture}[showgrid=false](-2,-2.5)(6,6)
+\psset{xMin=0,yMin=0,zMin=0,xMax=11,yMax=11,zMax=4,Alpha=155,Beta=20,Dx=1,Dy=1,Dz=1,arrowsize=.2,arrowinset=0.1,coorType=1,xThreeDunit=0.5,phi=180 155 sub}%
+\pstThreeDPlaneGrid[planeGrid=xy,linewidth=0.3pt,linecolor=gray!70,xsubticks=7,ysubticks=7](0,0)(7,7)%
+%--------------------------------------
+\multido{\i=0+1}{5}{%
+\multido{\n=0+1}{5}{%
+\multido{\r=0+1}{2}{%
+\psboxTS(\i,\n,\r){1}{1}{1}{blue}}}}
+%--------------------------------------
+\multido{\i=0+1}{2}{%
+\multido{\n=0+1}{5}{%
+\multido{\r=2+1}{3}{%
+\psboxTS(\i,\n,\r){1}{1}{1}{blue}}}}
+%--------------------------------------
+\multido{\i=2+1}{3}{%
+\multido{\n=0+1}{2}{%
+\multido{\r=2+1}{3}{%
+\psboxTS(\i,\n,\r){1}{1}{1}{blue}}}}
+%\pstPlanePut[plane=xy](6,1,0){\fbox{\Huge\red xy plane}}
+\end{pspicture}
+}
+\end{LTXexample}
+
+\newpage
+
+\begin{LTXexample}[pos=t,wide]
+\psscalebox{0.6}{%
+\begin{pspicture}[showgrid=false](-2,-2.5)(6,6)
+\psset{xMin=0,yMin=0,zMin=0,xMax=11,yMax=11,zMax=4,Alpha=135,Beta=20,Dx=1,Dy=1,Dz=1,arrowsize=.2,arrowinset=0.1,coorType=1,xThreeDunit=0.5,opacity=0.4,hideline=true}%\
+\pstThreeDPlaneGrid[planeGrid=xy,linewidth=0.3pt,linecolor=gray!70,xsubticks=7,ysubticks=7](0,0)(7,7)%
+%--------------------------------------
+\multido{\i=0+1}{6}{%
+\multido{\n=0+1}{6}{%
+\multido{\r=0+1}{2}{%
+\psboxTS(\i,\n,\r){1}{1}{1}{green}}}}
+%--------------------------------------
+\multido{\i=1+1}{4}{%
+\multido{\n=1+1}{4}{%
+\multido{\r=2+1}{2}{%
+\psboxTS(\i,\n,\r){1}{1}{1}{green}}}}
+%--------------------------------------
+\multido{\i=2+1}{2}{%
+\multido{\n=2+1}{2}{%
+\multido{\r=4+1}{2}{%
+\psboxTS(\i,\n,\r){1}{1}{1}{green}}}}
+\end{pspicture}
+}
+\end{LTXexample}
+
+\newpage
+
+\pstVerb{/radiusT 2 22.5 cos mul def}
+\pstVerb{/deltaDach 10 2 22.5 sin mul sub def}
+\pstVerb{/deltaDachT 10 2 22.5 sin mul dup 2 sqrt div add sub def}
+
+\psscalebox{0.6}{%
+\begin{pspicture}[showgrid=true](0,-1)(24,20)
+\psset{linejoin=2,phi=25,vkf=0.7,opacity=1}
+
+\pstransTS(4,0){E01'}{E01}
+\pstransTS(12,0){E02'}{E02}
+\pstransTS(12,5){E03'}{E03}
+\pstransTS(16,5){E04'}{E04}
+\pstransTS(16,11){E05'}{E05}
+\pstransTS(12,11){E06'}{E06}
+\pstransTS(12,12){E07'}{E07}
+\pstransTS(4,12){E08'}{E08}
+\pstransTS(4,11){E09'}{E09}
+\pstransTS(0,11){E10'}{E010}
+\pstransTS(0,5){E011'}{E011}
+\pstransTS(4,5){E012'}{E012}
+\rput(0,7){%
+\pstransTS(4,0){E11'}{E11}
+\pstransTS(12,0){E12'}{E12}
+\pstransTS(12,5){E13'}{E13}
+\pstransTS(16,5){E14'}{E14}
+\pstransTS(16,11){E15'}{E15}
+\pstransTS(12,11){E16'}{E16}
+\pstransTS(12,12){E17'}{E17}
+\pstransTS(4,12){E18'}{E18}
+\pstransTS(4,11){E19'}{E19}
+\pstransTS(0,11){E110'}{E110}
+\pstransTS(0,5){E111'}{E111}
+\pstransTS(4,5){E112'}{E112}
+}
+\multido{\i=1+1,\n=2+1}{11}{%
+\pspolygon[fillstyle=solid,fillcolor=brown!30](E0\i)(E0\n)(E1\n)(E1\i)
+}
+\pspolygon[fillstyle=solid,fillcolor=brown!30](E012)(E01)(E11)(E112)
+
+\rput(0,15){%
+\pstransTS[originT={8,8},base=-8](0,0){T'3}{T3}
+}
+\rput(0,19){%
+\pstransTS[originT={8,1},base=-1](0,0){TV'3}{TV3}
+}
+
+\rput(0,10){%
+\multido{\i=0+1,\r=-90+90}{4}{%
+\pstransTS[originT={8,8},base=-8](!radiusT \r\space PtoC){DM'\i}{DM\i}
+}
+\pstransTS(16,8){DMa1'}{DMa1}
+\pstransTS(8,12){DMa2'}{DMa2}
+\pstransTS(0,8){DMa3'}{DMa3}
+\pstransTS(8,0){DMa4'}{DMa4}
+}
+
+\rput(!0 deltaDach){%
+\multido{\i=1+1,\r=-22.5+45}{8}{%
+\pstransTS[originT={8,8},base=-8](2;\r){DMb\i'}{DMb\i}
+}
+}
+\rput(!0 deltaDachT){%
+\multido{\i=1+1,\r=-45+90}{4}{%
+\pstransTS[originT={8,8},base=-8](! radiusT \r\space PtoC){DMc\i'}{DMc\i}
+}
+}
+\pspolygon[fillstyle=solid,fillcolor=BrickRed](DMa3)(E110)(E19)(DMc3)(DMb5)(DM3)% hinters Dach linkes Seitenschiff
+\pspolygon[fillstyle=solid,fillcolor=BrickRed](DMa2)(E18)(E19)(DMc3)(DMb4)(DM2)% hinters Dach links
+\pspolygon[fillstyle=solid,fillcolor=BrickRed](DMa2)(E17)(E16)(DMc2)(DMb3)(DM2)% hinters Dach rechts
+\pspolygon[fillstyle=solid,fillcolor=BrickRed](DMa1)(E15)(E16)(DMc2)(DMb2)(DM1)% hinters Dach rechtes Seitenschiff
+
+%--- Hinterer Turm -----------------------------------
+\multido{\i=0+1,\n=1+1,\ra=22.5+45,\rb=67.5+45}{8}{%
+\rput(0,7){%
+\pstransTS[originT={8,8},base=-8](2;\ra){T1'\i}{T1\i}
+\pstransTS[originT={8,8},base=-8](2;\rb){Tb1'\n}{Tb1\n}
+}
+%-------------------------------------------------
+\rput(0,13){%
+\pstransTS[originT={8,8},base=-8](2;\ra){T2'\i}{T2\i}
+\pstransTS[originT={8,8},base=-8](2;\rb){Tb2'\n}{Tb2\n}
+\pstransTS[originT={8,8},base=-8](2.1;\ra){E'\i}{E\i}
+\pstransTS[originT={8,8},base=-8](2.1;\rb){F'\n}{F\n}
+}
+%\psline(T2\i)(Tb2\n)
+\pspolygon[fillstyle=solid,fillcolor=brown!30](T1\i)(Tb1\n)(Tb2\n)(T2\i) % Seitenteile des hinteren Turms
+\pspolygon[fillstyle=solid,fillcolor=BrickRed](T3)(E\i)(F\n)%   Dach des hinteren Turms
+}
+%--------------------------------------------------------------
+\pspolygon[fillstyle=solid,fillcolor=BrickRed,opacity=1](T3)(E6)(F7)% Letztes Dachteil des hinteren Turms
+
+\pspolygon[fillstyle=solid,fillcolor=BrickRed](DMa3)(E111)(E112)(DMc4)(DMb6)(DM3)% vorderes Dach linkes Seitenschiff
+\pspolygon[fillstyle=solid,fillcolor=BrickRed](DMa1)(E14)(E13)(DMc1)(DMb1)(DM1)% vorderes Dach rechtes Seitenschiff
+
+
+
+%--- Vorderer Turm -----------------------------------
+\multido{\i=0+1,\n=1+1,\rA=22.5+45,\rB=67.5+45}{8}{%
+\pstransTS[originT={8,1},base=-1](2;\rA){A'\i}{A\i}
+\pstransTS[originT={8,1},base=-1](2;\rB){B'\n}{B\n}
+\rput(0,13){%
+\pstransTS[originT={8,1},base=-1](2;\rA){C'\i}{C\i}
+\pstransTS[originT={8,1},base=-1](2;\rB){D'\n}{D\n}
+\pstransTS[originT={8,1},base=-1](2.1;\rA){E'\i}{E\i}
+\pstransTS[originT={8,1},base=-1](2.1;\rB){F'\n}{F\n}
+}
+\pspolygon[fillstyle=solid,fillcolor=brown!30](A\i)(B\n)(D\n)(C\i) % Seitenteile des vorderen Turms
+\pspolygon[fillstyle=solid,fillcolor=BrickRed](TV3)(E\i)(F\n) %   Dach des vorderen Turms
+}
+\pspolygon[fillstyle=solid,fillcolor=BrickRed,opacity=1](TV3)(E6)(F7)% Letztes Dachteil des vorderen Turms
+
+\psIntersectionPoint(A4)(A5)(E01)(E02){SP01}%linker unterer Schnittpunkt der Au{\ss}enwand mit dem vorderen Turm
+\psIntersectionPoint(A6)(A7)(E01)(E02){SP02}%rechter unterer Schnittpunkt der Au{\ss}enwand mit dem vorderen Turm
+\pspolygon[fillstyle=solid,fillcolor=brown!30](E01)(SP01)(SP01|0,9.4)(E11)
+\pspolygon[fillstyle=solid,fillcolor=brown!30](E02)(E12)(SP02|0,9.4)(SP02)
+\pspolygon[fillstyle=solid,fillcolor=brown!30](E02)(E03)(E13)(E12)
+\pspolygon[fillstyle=solid,fillcolor=brown!30](E03)(E04)(E14)(E13)
+\pspolygon[fillstyle=solid,fillcolor=brown!30](E04)(E05)(E15)(DMa1)(E14)
+
+\pspolygon[fillstyle=solid,fillcolor=BrickRed](C7|0,10)(SP02|0,9.4)(E12)(E13)(DMc1)(DMb8)%(DM0)% vorderes Dach rechts
+\end{pspicture}
+}
+
+
+
+\psscalebox{1}{%
+\begin{pspicture}[showgrid=false](-0.5,-3)(12,14.4)
+\psset{linejoin=2,phi=35,vkf=0.5}
+\pstransTSK[translineK=false](-3,0){11}{GR1}{GR1'}
+\pstransTSK[translineK=false](11,0){11}{GR2}{GR2'}
+\pstransTSK[translineK=false](-3,0){-8}{GR3}{GR3'}
+\pstransTSK[translineK=false](11,0){-8}{GR4}{GR4'}
+\pspolygon[fillstyle=solid,fillcolor=green!60!black!80,linestyle=none](GR1')(GR2')(GR4')(GR3')
+
+{\psset{base=-3}
+\multido{\i=0+1,\n=1+1,\ra=-45+22.5,\rb=-22.5+22.5}{12}{%
+\pstransTS[originT={4,3}](6;\ra){D\i}{E\i}
+\pstransTS[originT={4,3}](6;\rb){F\n}{G\n}
+\pstransTS[originT={4,4}](6;\ra){H\i}{I\i}
+\pstransTS[originT={4,4}](6;\rb){J\n}{K\n}
+\psline(E\i)(G\n)
+\psline(I\i)(K\n)
+\pspolygon[fillstyle=solid,fillcolor=gray,opacity=1](E\i)(G\n)(K\n)(I\i)
+}}
+
+{\psset{translineK=false}%
+\pstransTSK(0,0){1}{A1}{B1}
+\pstransTSK(2,0){1}{A2}{B2}
+\pstransTSK(2,3){1}{A3}{B3}
+\pstransTSK(0,2){1}{A4}{B4}
+%----------------------------
+\pstransTSK(0,0){6}{A1}{C1}
+\pstransTSK(2,0){6}{A2}{C2}
+\pstransTSK(2,3){6}{A3}{C3}
+\pstransTSK(0,2){6}{A4}{C4}
+}
+\psline[linestyle=dashed](C1)(C4)
+\psline[linestyle=dashed](B1)(C1)(C2)
+\pspolygon[fillstyle=solid,fillcolor=green!30,opacity=1](B1)(B2)(B3)(B4)
+\pspolygon[fillstyle=solid,fillcolor=green!30,opacity=1](B2)(C2)(C3)(B3)
+\pspolygon[fillstyle=vlines*,fillcolor=BrickRed,opacity=1,hatchangle=-63.5,hatchsep=1.5pt](B4)(B3)(C3)(C4)
+%----------------------------
+\pstransTSK(2,0){6}{A5}{C5}
+\pstransTSK(6,0){6}{A6}{C6}
+\pstransTSK(6,4){6}{A7}{C7}
+\pstransTSK(4,6){6}{A8}{C8}
+\pstransTSK(2,4){6}{A9}{C9}
+%----------------------------
+\pspolygon[fillstyle=solid,fillcolor=yellow!50,opacity=1](C5)(C6)(C7)(C9)
+\pspolygon[fillstyle=solid,fillcolor=yellow!50,opacity=1](C7)(C8)(C9)
+\pspolygon[fillstyle=solid,fillcolor=yellow!50,opacity=1](A6)(C6)(C7)(A7)
+\pspolygon[fillstyle=vlines*,fillcolor=BrickRed,opacity=1,hatchangle=135,hatchsep=1.5pt](A9)(A8)(C8)(C9)
+\pspolygon[fillstyle=vlines*,fillcolor=BrickRed,opacity=1,hatchangle=45,hatchsep=1.5pt](A7)(C7)(C8)(A8)
+\pspolygon[fillstyle=solid,fillcolor=yellow!50,opacity=1](A5)(A6)(A7)(A8)(A9)
+%\pspolygon[fillstyle=solid,fillcolor=yellow!50,opacity=1](A7)(A8)(A9)
+%----------------------------
+\pstransTSK(6,0){2}{A10}{C10}
+\pstransTSK(8,0){2}{A11}{C11}
+\pstransTSK(8,10){2}{A12}{C12}
+\pstransTSK(6,10){2}{A13}{C13}
+\pstransTSK(8.1,10){-0.1}{A14}{B14}
+\pstransTSK(5.9,10){-0.1}{A15}{B15}
+\pstransTSK(8.1,10){2.1}{A14}{C14}
+\pstransTSK(5.9,10){2.1}{A15}{C15}
+\pstransTSK[translineK=false](8,11.5){2}{A16}{C16}
+\pstransTSK[translineK=false](6,11.5){2}{A17}{C17}
+\psIntersectionPoint(A16)(C17)(A17)(C16){SB1}
+%----------------------------
+\pspolygon[fillstyle=solid,fillcolor=cyan!50,opacity=1](C10)(C11)(C12)(C13)
+\pspolygon[fillstyle=solid,fillcolor=cyan!50,opacity=1](A10)(A11)(A12)(A13)
+\pspolygon[fillstyle=solid,fillcolor=cyan!50,opacity=1](A11)(C11)(C12)(A12)
+\pspolygon[fillstyle=vlines*,fillcolor=BrickRed,opacity=1,hatchangle=45,hatchsep=1.5pt](C14)(C15)(SB1)
+\pspolygon[fillstyle=vlines*,fillcolor=BrickRed,opacity=1,hatchangle=45,hatchsep=1.5pt](B15)(C15)(SB1)
+\pspolygon[fillstyle=vlines*,fillcolor=BrickRed,opacity=1,hatchangle=45,hatchsep=1.5pt](B14)(B15)(SB1)
+\pspolygon[fillstyle=vlines*,fillcolor=BrickRed,opacity=1,hatchangle=45,hatchsep=1.5pt](B14)(C14)(SB1)
+
+{\psset{base=-3,opacity=1}
+\multido{\i=0+1,\n=1+1,\ra=-45+22.5,\rb=-22.5+22.5}{3}{%
+\pstransTS[originT={4,3}](6;\ra){D\i}{E\i}
+\pstransTS[originT={4,3}](6;\rb){F\n}{G\n}
+\pstransTS[originT={4,4}](6;\ra){H\i}{I\i}
+\pstransTS[originT={4,4}](6;\rb){J\n}{K\n}
+\psline(E\i)(G\n)
+\psline(I\i)(K\n)
+\pspolygon[fillstyle=solid,fillcolor=gray](E\i)(G\n)(K\n)(I\i)
+}}
+
+%----------- T\"{u}r Nebengeb\"{a}ude -------------------------
+\pstransTSK[translineK=false](1,0){1}{TL}{TL'}
+\rput(TL'){%
+\pscustom[fillstyle=solid,fillcolor=brown]{%
+\psline(0.2,0)(-0.2,0)(-0.2,0.4)
+\psarcn(0.2,0.4){0.4}{180}{120}
+\psarcn(-0.2,0.4){0.4}{60}{0}
+\closepath%
+}
+\psline[linewidth=0.5pt](0,0)(0,0.75)
+\pscircle[linewidth=0.25pt](0.04,0.35){0.025}
+\pscircle[linewidth=0.25pt](-0.04,0.35){0.025}
+}
+%----------- Haupt-T\"{u}r ---------------------------------
+\rput(4,0){%
+\psscalebox{2.5 2}%
+{%\psset{unit=2}%
+\psset{linewidth=0.25pt}
+\pscustom[fillstyle=solid,fillcolor=brown]{%
+\psline(0.2,0)(-0.2,0)(-0.2,0.4)
+\psarcn(0.2,0.4){0.4}{180}{120}
+\psarcn(-0.2,0.4){0.4}{60}{0}
+\closepath%
+}
+\psline[linewidth=0.25pt](0,0)(0,0.75)
+\pscircle[linewidth=0.25pt](0.04,0.35){0.025}
+\pscircle[linewidth=0.25pt](-0.04,0.35){0.025}
+}}
+
+%------- Uhr -------------------------
+\pnode(7,7.8){UZ}
+
+{\psset{originT={UZ},base=1,deltaphi=0}
+\pstransTSX(0,0){U1}{U1'}
+\pstransTSX(0.3;50){zg1}{zg1'}
+\pstransTSX(0.5;-36){zg2}{zg2'}
+
+\multido{\i=0+5,\n=5+5}{72}{%
+\pstransTSX(0.5;\i){A\i}{A'\i}
+\pstransTSX(0.5;\n){B\n}{B'\n}
+\psline(A'\i)(B'\n)}
+\psline[linecolor=yellow!90!black!70]{c-c}(U1')(zg1')
+\psline[linecolor=yellow!90!black!70]{c-c}(U1')(zg2')
+
+\multido{\i=0+30,\n=0+30}{12}{%
+%\psset{translineA=true,translineB=true}
+\pstransTSX(0.43;\i){A\i}{A'\i}
+\pstransTSX(0.57;\n){B\n}{B'\n}
+\psline(A'\i)(B'\n)
+\psline(A\i)(B\n)}
+
+\pscircle(UZ){0.5}
+\rput(UZ){%
+\psline[linecolor=yellow!90!black!70]{c-c}(U1)(zg1)
+\psline[linecolor=yellow!90!black!70]{c-c}(U1)(zg2)
+}
+
+%------- Turmfenster und \"{O}ffnungen oben ------------------------
+
+\pstransTSX(-0.15,0.75){FU1}{FU1'}
+\pstransTSX(0.15,0.75){FU2}{FU2'}
+\pstransTSX(0.15,1.5){FU3}{FU3'}
+\pstransTSX(-0.15,1.5){FU4}{FU4'}
+\pspolygon[fillstyle=solid,fillcolor=black!80](FU1)(FU2)(FU3)(FU4)
+\pspolygon[fillstyle=solid,fillcolor=black!80](FU1')(FU2')(FU3')(FU4')
+
+\pstransTSX(-0.65,0.75){FUL1}{FUL1'}
+\pstransTSX(-0.35,0.75){FUL2}{FUL2'}
+\pstransTSX(-0.35,1.5){FUL3}{FUL3'}
+\pstransTSX(-0.65,1.5){FUL4}{FUL4'}
+\pspolygon[fillstyle=solid,fillcolor=black!80](FUL1)(FUL2)(FUL3)(FUL4)
+\pspolygon[fillstyle=solid,fillcolor=black!80](FUL1')(FUL2')(FUL3')(FUL4')
+
+\pstransTSX(0.65,0.75){FUR1}{FUR1'}
+\pstransTSX(0.35,0.75){FUR2}{FUR2'}
+\pstransTSX(0.35,1.5){FUR3}{FUR3'}
+\pstransTSX(0.65,1.5){FUR4}{FUR4'}
+\pspolygon[fillstyle=solid,fillcolor=black!80](FUR1)(FUR2)(FUR3)(FUR4)
+\pspolygon[fillstyle=solid,fillcolor=black!80](FUR1')(FUR2')(FUR3')(FUR4')
+
+\pstransTSX(-0.05,-2){FU1}{FU1'}
+\pstransTSX(0.05,-2){FU2}{FU2'}
+\pstransTSX(0.05,-2.3){FU3}{FU3'}
+\pstransTSX(-0.05,-2.3){FU4}{FU4'}
+\pspolygon[fillstyle=solid,fillcolor=black!80](FU1)(FU2)(FU3)(FU4)
+\pspolygon[fillstyle=solid,fillcolor=black!80](FU1')(FU2')(FU3')(FU4')
+
+\pstransTSX(-0.05,-4){FU1}{FU1'}
+\pstransTSX(0.05,-4){FU2}{FU2'}
+\pstransTSX(0.05,-4.3){FU3}{FU3'}
+\pstransTSX(-0.05,-4.3){FU4}{FU4'}
+\pspolygon[fillstyle=solid,fillcolor=black!80](FU1)(FU2)(FU3)(FU4)
+\pspolygon[fillstyle=solid,fillcolor=black!80](FU1')(FU2')(FU3')(FU4')
+
+\pstransTSX(-0.05,-6){FU1}{FU1'}
+\pstransTSX(0.05,-6){FU2}{FU2'}
+\pstransTSX(0.05,-6.3){FU3}{FU3'}
+\pstransTSX(-0.05,-6.3){FU4}{FU4'}
+\pspolygon[fillstyle=solid,fillcolor=black!80](FU1)(FU2)(FU3)(FU4)
+\pspolygon[fillstyle=solid,fillcolor=black!80](FU1')(FU2')(FU3')(FU4')
+
+}
+
+%------- Turm-T\"{u}r ---------------------------
+\rput(7,0){%
+\pscustom[fillstyle=solid,fillcolor=brown]{%
+\psline(0.2,0)(-0.2,0)(-0.2,0.4)
+\psarcn(0.2,0.4){0.4}{180}{120}
+\psarcn(-0.2,0.4){0.4}{60}{0}
+\closepath%
+}
+\psline[linewidth=0.5pt](0,0)(0,0.75)
+\pscircle[linewidth=0.25pt](0.04,0.35){0.025}
+\pscircle[linewidth=0.25pt](-0.04,0.35){0.025}
+}
+
+
+%---------- rundes Haupt-Fenster ----------------------
+\pscircle[fillstyle=solid,fillcolor=black!70](4,2.7){0.45}
+
+%------- Kreuz -----------------------------------------
+\psline[linewidth=2.5pt]{c-c}(4,3.5)(4,5)
+\psline[linewidth=2.5pt]{c-c}(3.58,4.5)(4.42,4.5)
+
+%---------- Weg -----------------------------------------
+\pstransTSK[translineK=false](3.5,0){-8}{W1}{W1'}
+\pstransTSK[translineK=false](4.5,0){-8}{W2}{W2'}
+\pspolygon[fillstyle=solid,fillcolor=gray!50,linestyle=none](W1)(W1')(W2')(W2)
+
+
+{\psset{translineK=false,linestyle=none}
+\multido{\i=1+1,\n=1+1}{8}{%
+\pstransTSK(3.5,0){1 \i\space sub}{WM1a\i}{WM1a'\i}
+\pstransTSK(3.5,0){0.5 \i\space sub}{WM1\i}{WM1'\i}
+\pstransTSK(3.75,0){1 \i\space sub}{WM2a\i}{WM2a'\i}
+\pstransTSK(3.75,0){0.7 \i\space sub}{WM2\i}{WM2'\i}
+\pstransTSK(4.0,0){1 \i\space sub}{WM3a\i}{WM3a'\i}
+\pstransTSK(4.0,0){0.5 \i\space sub}{WM3\i}{WM3'\i}
+\pspolygon[fillstyle=solid,fillcolor=green!50,opacity=1](WM1a'\i)(WM1'\i)(WM2'\i)(WM2a'\i)
+\pspolygon[fillstyle=solid,fillcolor=black!60,opacity=1](WM1'\i)(WM2'\i)(WM3'\i)
+\pspolygon[fillstyle=solid,fillcolor=blue!50,opacity=1](WM2a'\i)(WM2'\i)(WM3'\i)(WM3a'\i)
+\pstransTSK(4,0){0.5 \n\space sub}{WM4a\n}{WM4a'\n}
+\pstransTSK(4,0){-\n}{WM4\n}{WM4'\n}
+\pstransTSK(4.25,0){0.5 \n\space sub}{WM5a\n}{WM5a'\n}
+\pstransTSK(4.25,0){.2 \n\space sub}{WM5\n}{WM5'\n}
+\pstransTSK(4.5,0){0.5 \n\space sub}{WM6a\n}{WM6a'\n}
+\pstransTSK(4.5,0){-\n}{WM6\n}{WM6'\n}
+\pspolygon[fillstyle=solid,fillcolor=green!50,opacity=1](WM4a'\n)(WM4'\n)(WM5'\n)(WM5a'\n)
+\pspolygon[fillstyle=solid,fillcolor=black!60,opacity=1](WM4'\n)(WM5'\n)(WM6'\n)
+\pspolygon[fillstyle=solid,fillcolor=blue!50,opacity=1](WM5a'\n)(WM5'\n)(WM6'\n)(WM6a'\n)
+}}
+\end{pspicture}
+}
+
+
+\def\colA{black!20}
+\def\colB{black!50}
+\def\colC{black!30}
+\def\Pfeiler{%
+%--------- Pfeiler -------------
+\pstransTSK(4,0){8}{A}{A'}
+\pstransTSK(10,0){8}{B}{B'}
+\pstransTSK(9,10){8}{C}{C'}
+\pstransTSK(5,10){8}{D}{D'}
+\pstransTSK(5,13){8}{E}{E'}
+\pstransTSK(9,13){8}{F}{F'}
+\pstransTSK(14,18){8}{G}{G'}
+\pstransTSK(14,21){8}{H}{H'}
+\pstransTSK(0,21){8}{I}{I'}
+\pstransTSK(0,18){8}{J}{J'}
+\pstransTSK(0,13){8}{M1}{M1'}
+\pstransTSK(14,13){8}{M2}{M2'}
+%----------------------------------------
+\pspolygon[fillcolor=\colA](A)(B)(C)(D)
+\pspolygon[fillcolor=\colB](B)(B')(C')(C)
+\pspolygon[fillcolor=\colA](D)(C)(F)(E)
+\pspolygon[fillcolor=\colB](C)(C')(F')(F)
+%----------------------------------------
+\pscustom[fillcolor=\colB]{%
+\psarcn(M2'){5}{180}{90}
+\psline(F|G')(F)(F')
+}
+%----------------------------------------
+\pscustom[fillcolor=\colA]{%
+\psarc(M2){5}{90}{180}
+\psarc(M1){5}{0}{90}
+\psline(I)(H)
+}
+%----------------------------------------
+\pspolygon[fillcolor=\colB](G)(G')(H')(H)
+\pspolygon[fillcolor=\colC](I)(H)(H')(I')
+}
+
+\begin{pspicture}[showgrid=false](0,-.5)(19,14)
+\psset{linejoin=2,transcolor=black,translineK=false,arrowlength=2,arrowsize=0.15,arrowinset=0.02,fillstyle=solid,unit=0.6}
+\Pfeiler
+\psdot(M2)
+\rput(M2){\pnode(5;30){R}}
+\pcline{->}(M2)(R)
+\naput[nrot=:U,labelsep=1pt]{$r=5,0\,\text{m}$}
+\pcline[linestyle=dashed]([nodesep=-1.1]J)(J)
+\pcline[linestyle=dashed]([nodesep=-1.1]I)(I)
+\pcline[linestyle=dashed]([nodesep=-1.8]E)(E)
+\pcline[linestyle=dashed]([nodesep=-1.8]D)(D)
+\pcline[linestyle=dashed]([nodesep=-0.8]A)(A)
+\pcline[linestyle=dashed]([offset=-0.8]A)(A)
+\pcline[linestyle=dashed]([offset=-0.8]B)(B)
+\pcline[linestyle=dashed]([nodesep=0.8]B)(B)
+\pcline[linestyle=dashed]([nodesep=0.8]B')(B')
+\pcline[linestyle=dashed]([nodesep=0.8]C)(C)
+\pcline[linestyle=dashed]([nodesep=0.8]C')(C')
+\pcline[offset=-0.7]{<->}(I)(J)
+\ncput*{$3\,\text{m}$}
+\pcline[offset=1.5]{<->}(D)(E)
+\ncput*{$3\,\text{m}$}
+\pcline[offset=.5]{<->}(A)([nodesep=-1]D)
+\ncput*{$10\,\text{m}$}
+\pcline[offset=-.5]{<->}(A)(B)
+\ncput*{$6,0\,\text{m}$}
+\pcline{<->}([nodesep=0.7]B)([nodesep=0.7]B')
+\ncput*[nrot=:U]{$8,0\,\text{m}$}
+\pcline{<->}([nodesep=0.7]C)([nodesep=0.7]C')
+\ncput*[nrot=:U,fillcolor=black!50]{$8,0\,\text{m}$}
+\pcline[offset=0.5]{<->}(D)(C)
+\ncput*[fillcolor=black!20]{$4,0\,\text{m}$}
+%----------------------------------------
+\def\colA{white}
+\def\colB{white}
+\def\colC{white}
+\rput(14,0){%
+\Pfeiler
+\pcline[linestyle=dashed]([nodesep=0.8]G)(G)
+\pcline[linestyle=dashed]([nodesep=0.8]G')(G')
+\pcline{<->}([nodesep=0.7]G)([nodesep=0.7]G')
+\ncput*[nrot=:U]{$8,0\,\text{m}$}
+}
+\end{pspicture}
+
+
+
+\begin{pspicture}[showgrid=false](-0.5,-0.5)(15,11)
+\psset{linejoin=2,transcolor=black}
+%--------- Torbogen -------------
+\pstransTSK(0,0){5}{A}{A'}
+\pstransTSK(1.5,0){5}{B}{B'}
+\pstransTSK[translineK=false](6.5,2.5){5}{C}{C'}
+\pstransTSK(11.5,0){5}{D}{D'}
+\pstransTSK(13,0){5}{E}{E'}
+\pstransTSK(0,9){5}{F}{F'}
+\pstransTSK(13,9){5}{G}{G'}
+\pscustom[fillstyle=solid,fillcolor=brown!90]{%
+\psline(A)(B)(B')
+\psarcn(C'){5}{180}{110}
+\psline(F)(A)
+}
+\pscustom[fillstyle=solid,fillcolor=brown!60]{%
+\psline(A)(B)
+\psarcn(C){5}{180}{0}
+\psline(D)(E)(G)(F)(A)
+}
+\psdot[dotstyle=o,dotsize=5pt](C)
+\psdot[dotstyle=o,dotsize=5pt](C')
+\pspolygon[fillstyle=solid,fillcolor=brown!90](E)(E')(G')(G)
+\pspolygon[fillstyle=solid,fillcolor=brown!40](F)(G)(G')(F')
+\psline(B|C)([nodesep=0.3]B|C)
+\psline(D|C)([nodesep=-0.3]D|C)
+\psline(B'|C')([nodesep=0.3]B'|C')
+\end{pspicture}
+
+\begin{pspicture}[showgrid=false](0.75,-.5)(19,5)
+\psscalebox{0.2}{%
+\psset{linejoin=2,transcolor=black,translineK=false,arrowlength=2,arrowsize=0.15,arrowinset=0.02,fillstyle=solid,linecolor=black!60}
+\rput(0,0){\Pfeiler}\rput(14,0){\Pfeiler}\rput(28,0){\Pfeiler}\rput(42,0){\Pfeiler}\rput(56,0){\Pfeiler}\rput(70,0){\Pfeiler}\rput(84,0){\Pfeiler}
+}
+\end{pspicture}
+
+
+\clearpage
+\section{List of all optional arguments for \texttt{pst-perspective}}
+
+\xkvview{family=pst-perspective,columns={key,type,default}}
+
+\bgroup
+\raggedright
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{pst-perspective-doc}
+\egroup
+
+\printindex
+\end{document}

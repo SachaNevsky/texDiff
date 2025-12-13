@@ -1,0 +1,135 @@
+%OZT%&frtex / This is a TeX code to test if french words are well hyphenated
+% tstcoup.tex                     Copyright Bernard Gaulle as in french_doc.pdf
+%
+% This code was developped for MlTeX and TeX V3                --bg 03/27/92
+% with CMR or EC fonts.
+%                                                          last mods 2005/03/08
+%
+%%
+%%      checksum        = "32747 135 375 5425"
+%%
+% Here are included LaTeX compatible definitions.               
+%\scrollmode
+\catcode`@=11
+\ifx\@gobble\undefined\let\@gobble#1{}\fi% .......................... \@gobble
+%
+%For testing purposes ........................................  \CheckSevenBits
+\def\STOP{}% non stop...
+\def\CheckSevenBits/#1{\def\@tempa##1##2/##3{}%
+                        \expandafter\@tempa#1}%
+%
+\ifx\DOinput\undefined\let\DOinput\input\fi%
+\gdef\newwrite{\alloc@7\write\chardef\sixt@@n}% not an outer def
+\gdef\newread{\alloc@6\read\chardef\sixt@@n}% not an outer def
+\newwrite\@unused%..............................................\@unused
+\long\gdef\@ifundefined#1#2#3{\expandafter\ifx\csname%......... \@ifundefined 
+  #1\endcsname\relax#2\else#3\fi}
+\ifx\protect\undefined\let\protect\relax\fi%....................\protect
+\@ifundefined{typeout}{%........................................\typeout
+  \global\newlinechar`\^^J%
+  \gdef\typeout#1{{\let\protect\string\immediate\write\@unused{#1}}}%
+                      }{}%
+\typeout{^^J Test de validite des cesures sur le jeu de plus de 500 mots}
+%
+%---------------
+\newif\ifnewhyph\newhyphfalse
+%\hyphenchar\font='177 % for tests of DC v1.2 
+\edef\LeHC{\the\hyphenchar\font}\edef\DConePOINTtwo{127}
+\ifx\LeHC\DConePOINTtwo\newhyphtrue\fi
+\message{Le caract\`ere de c\'esure (hyphen char) est \string'\LeHC}
+%---------------
+%
+% creation fichier .idx
+%
+\def\cleanit#1#2/{\ifx #2\empty#1\else #1#2\fi}%
+\def\IeC#1{\cleanit #1/}% remove any superfluous {}
+\newwrite\@mainidx
+\immediate\openout\@mainidx\jobname.idx %
+\begingroup%[[
+\catcode`\]=13\def]{}
+\let\bidon\relax
+\catcode`,=\active
+\def,{^^J}%
+\def\DmyDeF#1{\immediate\write\@mainidx{#1}}%
+%[
+\def\Dmydef#1,#2]{\DmyDeF#1%[
+                  \def\temp{#2}\ifx\temp\empty\let\Dmydef\relax\fi%
+                  \Dmydef#2]}%
+\def\dummydef[{\Dmydef}%]
+\ifx\documentclass\undefined\def\tempa{T1}
+  \ifx\encodingdefault\tempa\def\oe{^^f7}
+  \else\def\oe{\string\oe\space\string{\string}}% 
+  \fi%
+\else%
+\expandafter\def\csname OT\string 1\string\oe\endcsname% for 2e
+                     {\string\oe\space\string{\string}}% for 2e
+\expandafter\def\csname T\string 1\string\oe\endcsname% No better follow. way?
+                     {\string ^^f7\@gobble}% go back to original char.
+% (i've not found a correct way for reverse engeneering)
+\fi%
+\edef\mots{\@@input TSIv5n4 %}
+\dummydef[\mots,]
+\endgroup
+\closeout\@mainidx%
+Jeu reduit : (voir page suivante)\vfill\eject
+\@@input \jobname.idx\vfill\eject
+%
+% Relecture et comparaison
+%
+\newread\@lidx
+\immediate\openin\@lidx \jobname.idx %
+\newcount\NB\NB=0
+\catcode`[=\active\catcode`-=\active\def-{\string-}%]
+\catcode`\^^7f=\active\ifnewhyph\def^^7f{\string-}\fi%
+\def\@MSG#1#2{\typeout{^^J /\the\NB/ Le mot #1 (\site)
+                           devrait etre coupe #2\space!}}
+\def\ATsite#1#2/{\edef\site{#2}%
+                 \def-{}\ifnewhyph\def^^7f{}\fi%
+                        \xdef\ENTIER{#2}%
+                 \def-{\string-}\ifnewhyph\def^^7f{\string-}\fi%
+                 \immediate\read\@lidx to\Mustbe%
+    \def\Tobe##1 /{\edef\mustbe{##1}}\expandafter\Tobe\Mustbe /%
+    \ifx \site \mustbe \else\def-{\string-}\ifnewhyph\def^^7f{\string-}\fi%
+                            \global\advance\NB by 1
+             \bgroup\def\accent ##1 ##2{##2}\@MSG{.\ENTIER.}{.\mustbe.}\egroup%
+%\expandafter\show\site\show\Mustbe\expandafter\show\mustbe
+                            \fi\let\hbox\hboxDUM}
+%
+% A adapter eventuellement a votre site :
+          \long\def[]    []#1 \par{\ATsite#1/}   % for TeX V3 
+%OZT         \long\def[]      #1 \par{\ATsite#1/}   %OZT for OzTeX 3.0
+%STD          \long\def[]    []#1 \par{\ATsite#1/}   %STD for TeX V3 
+%%%\ifx\undefined\new@fontshape\else% 
+%%%          \long\def\ATsitE#1 #2/{\ATsite{}#2/}
+%%%          \long\def[]#1/10 #2 \par{\ATsitE#2/}\fi% for NFSS
+\ifx\documentclass\undefined\else% for LaTeX2e
+          \long\def\ATsitE#1/{\ATsite{}#1/%
+           \long\def\ATsitE##1 ##2/{\ATsite{}##2/}}%
+          \long\def[]#1/10 #2 \par{\ATsite{}#2/}% 
+          \let\mathbf\relax\let\mathsf\relax% 
+          \let\mathtt\relax\let\mathit\relax% 
+          \let\lgroup\relax\let\rgroup\relax\let\bracevert\relax%
+\fi%
+%
+\catcode`&=\active\def&{}\catcode`(=1\catcode`)=2
+\let\hboxORI\hbox
+\def\hboxDUM#1[]{\let\hbox\hboxORI}
+%%%%%%%%%% 7bits defs %%%%%%%%%%%%%%%%%
+\ifnewhyph% `127 is the hyphenchar
+\else\catcode`\^^?=\active\global\def^^?{\"}
+\fi
+\catcode`\^^S=\active\global\def^^S{\'}
+\catcode`\^^R=\active\global\def^^R{\`}
+\catcode`\^^P=\active\global\def^^P{\i}
+\catcode`\^^[=\active\global\def^^[{\oe{}{}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\@@input myhyph.log }% log previously produced
+}% otherwise msg: end occured inside a group at level 1
+\typeout{^^J             ******************}
+\typeout{^^J F I N\space\space du\space\space T E S T}
+\typeout{^^J (\the\NB\space mots en erreur)}
+\typeout{^^J             ******************}
+\typeout{^^J }
+\bye
+\endinput
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

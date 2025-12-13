@@ -1,0 +1,217 @@
+% !Mode:: "TeX:DE:UTF-8:Main"
+\documentclass[parskip=half-,egregdoesnotlikesansseriftitles]{scrartcl}
+\usepackage{combofont}
+\usepackage{ydoc-code,ydoc-desc}
+\usepackage[english]{babel}
+\usepackage[autostyle]{csquotes}
+\usepackage{fontspec}
+
+\usepackage{xcolor}
+
+
+\setupcombofont{combotest-regular}
+ {
+  {file:lmroman10-regular.otf:\combodefaultfeat} at #1pt,
+  {file:lmsans10-regular.otf} at \fpeval{#1/10*15}pt,
+  {file:cmunrm.otf}           at #1pt
+ }
+ {
+   {} ,
+   0x41-0x5A*0x21*0x3F,
+   fallback
+ }
+
+\setupcombofont{combotest-bold}
+ {
+  {file:lmroman10-bold.otf:\combodefaultfeat} at #1pt,
+  {file:lmsans10-bold.otf} at \fpeval{#1/10*15}pt,
+  {file:cmunbbx.otf}       at #1pt
+ }
+ {
+   {} ,
+   0x41-0x5A*0x21*0x3F,
+   fallback
+ }
+
+
+
+\DeclareFontFamily{TU}{combotest}{}
+\DeclareFontShape{TU} {combotest}{m}{n}{<->combo*combotest-regular}{}
+\DeclareFontShape{TU} {combotest}{bx}{n}{<->combo*combotest-bold}{}
+
+\title{The \texttt{combofont} package \\
+{\normalsize Version \csname UlrikeFischer@package@ufcombofont@version\endcsname\
+from \csname UlrikeFischer@package@ufcombofont@date\endcsname}}
+\author{Ulrike Fischer\thanks{fischer@troubleshooting-tex.de}}
+\newcommand\package[1]{\texttt{#1}}
+\begin{document}
+\maketitle
+
+\section{Status: EXPERIMENTAL}
+
+This is an EXPERIMENTAL package.
+
+It can disappear without notice e.\,g. if the \package{luaotfload} changes so that it no longer works, or if luatex changes, or if \package{fontspec} includes the code.
+
+It is also possible that syntax and commands change in an incompatible way. So if you use it in a production environment: \textbf{You have been warned}.
+
+\section{Introduction}
+In version 2.7 \package{luaotfload} supports combining characters from multiple fonts into a single virtualized one.
+
+That means that one can build a font that takes e.g. the capital letters from a sans serif font and the lowercase letters from a serif font. Or a font that pulls in missing greek or cyrillic glyphs from another font.
+
+The method pulls in \emph{only} glyphs. It is not suitable for every imaginable font combination -- some drawbacks are described below -- and one should use it with care. Nevertheless it is a quite neat extension of the tools to manipulate fonts.
+
+The main problem with the examples in the \package{luaotfload} manual is that they create fonts of a fix size. This means that they don't respond to command like \verb+\large+ or \verb+\footnotesize+.
+
+After trying around a bit and then asking a question (https://tex.stackexchange.com/questions/371647/call-a-luatex-combo-font-through-nfss) I got from David Carlisle the idea to use a \texttt{size}-Funktion which one defines with \verb+\DeclareSizeFunction+ to inject the needed code to size the combo-font in a nfss-\verb+\DeclareFontShape+-command.
+
+\package{combofont.sty} is the result.
+
+It is not meant as a production package but as package that helps to exploit the use of combo fonts.
+
+\section{Requirements}
+You need at least an up-to-date TeXLive 2016. TeXLive 2017 with luatex 1.0.4 or a current miktex is better.
+
+\textbf{Change Version 0.2, 3.7.2017}: The style no longer loads the now obsolete \texttt{l3regex}, it assumes that it is loaded by \texttt{expl3}. In older \TeX-systems you will have to load the package.
+
+
+\section{Using combo fonts}
+
+To be able to use a combo font with standard \LaTeX\ font commands you have to do two things (the source code of this documentation is a complete example):
+
+\begin{enumerate}
+\item Setup and describe the building of the combo font with \verb+\setupcombofont+
+
+\item Write \texttt{nfss}-declarations
+\end{enumerate}
+
+\subsection{Setup the combo font}
+
+\DescribeMacro\setupcombofont{<name>}{<comma list of basefonts>}{<comma list of ranges and code-points>}
+
+\begin{description}
+  \item[\marg{name}] is the name of the font. It should be some unique ascii-string without spaces. If you intend to define lots of fonts it would be a good idea to think about a sensible naming sheme. In the example here I simply used \texttt{combotest-regular} and \texttt{combotest-bold}.
+
+  \item[\marg{comma list of basefonts}] This should be a list of font declarations you want to use to build your combo font. The syntax used is described in the \package{luaotfload} manual. Example:
+
+\begin{verbatim}
+{
+ {file:lmroman10-regular.otf:\combodefaultfeat} at #1pt,
+ {file:lmsans10-regular.otf} at \fpeval{#1/10*15}pt,
+ {file:cmunrm.otf}           at #1pt
+}
+\end{verbatim}
+
+\minisec{Important points are:}
+\begin{description}
+\item[Order of the fonts] The first font is the main font which will receive the glyphs. So think carefully which font is should be and setup its font features correctly. \package{combofont} defines as a helper command \verb+\combodefaultfeat+ which sets \texttt{mode=node;script=latn;language=DFLT;+tlig;}.
+
+\item[Size declaration] The font description should end with a size declaration line \verb+at #1pt+. When processing the font \verb+#1+ will be replaced by the current font size. As you can see in the second font you can do calculations. \emph{Don't forget the size declaration!}
+
+\item Be careful with the commas: there shouldn't be one after the last font.
+\end{description}
+
+\item[\marg{comma list of ranges and code-points}] This is a comma list of settings which describe which glyphs are taken from the respective font. Example:
+
+\begin{verbatim}
+{
+   {} ,
+   0x41-0x5A*0x21*0x3F,
+   fallback
+}
+\end{verbatim}
+
+\minisec{Important points:}
+\begin{enumerate}
+\item There should be as many settings as there are fonts.
+\item Empty entries should be marked with a pair of braces (normally the first entry is empty).
+\item You can add ranges of code points and single code points. Blocks are separated by an asterix \verb+*+. The example set the uppercase letters and the exclamation and the question mark.
+\item The keyword \texttt{fallback} means that this font is used for \enquote{missing glyphs} (in the example for the cyrillic glyphs).
+\end{enumerate}
+\end{description}
+
+\subsection{Write \texttt{nfss}-declarations}
+
+After all the fonts you need have been setup, you can write suitable \texttt{nfss}-declarations which make it possible to call the font by family and other font commands. Example:
+
+\begin{verbatim}
+\DeclareFontFamily{TU}{combotest}{}
+\DeclareFontShape {TU}{combotest}{m}{n} {<->combo*combotest-regular}{}
+\DeclareFontShape {TU}{combotest}{bx}{n}{<->combo*combotest-bold}{}
+\end{verbatim}
+
+The important point is the size-function \verb+combo*+ which does all the work.
+
+
+\section{Demonstration}
+
+
+\verb+\fontfamily{combotest}\selectfont+:
+\fontfamily{combotest}\selectfont
+Some Text with Capital Words!
+Eh bien, mon prince. Gênes et Lueques ne sont plus que des
+apanages, des поместья, de la famille Buonaparte?
+%
+
+\verb+\large+\large:
+Some Text with Capital Words!
+Eh bien, mon prince. Gênes et Lueques ne sont plus que des
+apanages, des поместья, de la famille Buonaparte?
+
+\verb+\tiny+\tiny:
+Some Text with Capital Words!
+Eh bien, mon prince. Gênes et Lueques ne sont plus que des
+apanages, des поместья, de la famille Buonaparte?
+
+\verb+\bfseries\normalsize+\bfseries
+\normalsize:
+Some Text with Capital Words!
+Eh bien, mon prince. Gênes et Lueques ne sont plus que des
+apanages, des поместья, de la famille Buonaparte?
+
+
+\verb+\tiny+\tiny:
+Some Text with Capital Words!
+Eh bien, mon prince. Gênes et Lueques ne sont plus que des
+apanages, des поместья, de la famille Buonaparte?
+%
+
+\normalfont\normalsize
+
+\section{About Math (new in version 0.2)}\enlargethispage{2\baselineskip}
+
+Combofonts can also be used in math. There is a test file called \texttt{combofont-test-fira-math.tex} which shows how one can combine \textsf{TeX Gyre Pagella Math} with the \textsf{Fira Sans} textfont. It also shows how one can patch the font to adjust values of the math table.
+
+\minisec{Important points:}
+\begin{enumerate}
+\item  This a first try to get something working in math. It is in no way finished or complete, I'm rather certain that something  will be missing or even faulty.
+\item  Start with a real math font with a math constants table.
+\item  Don't expect to get a perfect sans serif math font this way without work. It can take quite some time to adjust everything. Also a text font is not really meant to be used as math font.
+\item  The lua-code for the font patch compares \texttt{fontdata.psname} with the string \\\texttt{TeXGyrePagellaMath-Regular} to restrict the patch to the specific font.
+
+       The font name database of luaotfload-names.lua contains for \textsf{TeX Gyre Pagella Math} these entries:
+
+       \begin{verbatim}
+       ["plainname"]="TeXGyrePagellaMath-Regular",
+       ["psname"]="texgyrepagellamathregular",
+       \end{verbatim}
+
+  As you can see the correct string for the comparision with  \texttt{fontdata.psname}  is in \verb+["plainname"]+ and not in \verb+["psname"]+. Don't ask me why. \texttt{luaotfload} seems to copy the infos around quite a lot. So when adapting the code to other fonts, test with various font names if it seems not to work.
+\end{enumerate}
+
+
+\section{Remarks and open questions}
+
+As mentioned in the introduction a combo font only pulls in glyphs. This has a lot of (not all yet understood or seen) side effects. Here a few things that should be considered when building a combo font:
+
+\begin{description}
+  \item[Kerning] Obviously some kerning works (see e.g. the large W before the o in the demonstration). But it is quite unclear which values are used, how bad it can get and if one can correct it.
+  \item[Font features] Only font features of the first font are taken into account. E.g. adding a color setting has an effect only if applied to the first font and then colors all glyphs. \verb!+smcp! (the open type small caps feature) only has an effect if the first font knows it. Mixing scripts and languages is probably not possible (but I didn't try yet).
+  \item[Speed] I didn't try to optimize the loading of the fonts.
+  \item[Pulling glyphs in other positions] One interesting question would if it is possible to switch glyph positions before or after the pull. E.g. if one could move the chars a-z from a sans serif text font to the math sans serif positions.
+  \item[Side effects] I naturally directly found a side-effect of such a combo font declaration: https://github.com/lualatex/luaotfload/issues/414. So the question is if there are more.
+\end{description}
+\end{document}
+
+

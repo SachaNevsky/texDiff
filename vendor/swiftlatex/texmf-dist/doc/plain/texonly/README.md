@@ -1,0 +1,1 @@
+ Title: TeXonly Part: 2 Author: Matthias Borck-Elsner Date: 18.04.2019 Version: 2 License: LPPL Ver­sion 1.3c 2008-05-04 Description: A file written with TeX , not using any packgages or sty-files, to be compiled with TeX or pdfTeX only, not with Latex et al. The text ist written in german, maybe people join in and create similar files in their lanquages. 

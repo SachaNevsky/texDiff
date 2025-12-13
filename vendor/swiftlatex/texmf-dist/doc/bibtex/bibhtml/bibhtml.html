@@ -1,0 +1,580 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Bibhtml documentation</title>
+    <meta name="keywords" content="bibhtml, bibtex, HTML" />
+    <link href="http://nxg.me.uk" rev="author" />
+    <link type="text/css" rel="stylesheet" href="style.css" />
+  </head>
+
+<body>
+
+<h1>Bibhtml</h1>
+
+<div class="abstract">
+<p><em>Bibhtml</em> consists of a set of BibTeX style files, which
+allow you to use BibTeX to produce bibliographies in HTML.  These are
+modelled closely on the standard BibTeX style files.</p>
+
+<p>To accompany them, this package includes a pair of XSLT scripts
+which illustrate how you might integrate these generated
+bibliographies into an XML/HTML workflow.</p>
+
+<p>The long-term URL for this package is <code>http://purl.org/nxg/dist/bibhtml</code></p>
+
+<p>This documentation describes
+bibhtml version 2.0.2, released 2013 September 8.</p>
+</div>
+
+<h3>Contents</h3>
+<ul>
+<li><a href="#bst-files">BibTeX style files</a></li>
+<li><a href="#xslt">XSLT scripts</a></li>
+<li><a href="#postprocess">Postprocessing HTML bibliographies</a></li>
+<li><a href="#install">Installation</a></li>
+<li><a href="#usage">The <em>bibhtml</em> script</a></li>
+<li><a href="#example">Example</a></li>
+<li><a href="#refs">References</a></li>
+<li><a href="#dist">Distribution, licence and source code</a></li>
+</ul>
+
+<p><em>Bibhtml</em> consists of a set of BibTeX style files, which
+allow you to use BibTeX to produce bibliographies in HTML.  These are
+modelled closely on the standard BibTeX style files.  For sample output,
+see <a href="#refs">the reference section below</a>.</p>
+
+<p>To accompany them, this package includes a pair of XSLT scripts
+which illustrate how you might integrate these generated
+bibliographies into an XML/HTML workflow.</p>
+
+<p>The output of these style files is usable as-is, but it benefits
+from some post-processing, to remove TeX-isms.  There’s a <em>sed</em>
+script in the distribution which does exactly that, called
+<code>detex.sed</code>.  If you want to make a version of that in some
+other regexp-supporting language, let me know and I can include it in
+the distribution.</p>
+
+<p>As well,
+the package includes a Perl script which orchestrates the various steps
+required to manage such a bibliography for one or more HTML files.
+The references in the text are linked directly to the corresponding
+bibliography entry, and if a URL is defined in the entry within the
+BibTeX database file, then the generated bibliography entry is linked
+to this.</p>
+    
+<p>The BibTeX style files are
+<code>abbrvhtml.bst</code>,
+<code>alphahtml.bst</code>,
+<code>plainhtml.bst</code> and
+<code>unsrthtml.bst</code>.
+As well, there are
+<code>.bst</code> files which produce their output in date order.  To
+use them, you should generate an <code>.aux</code> file by some
+appropriate means, and include the line
+<code>\bibstyle{plainhtml}</code>.  Run BibTeX, and the result is a
+<code>.bbl</code> file, in broadly the same style as the corresponding
+traditional BibTeX one, but formatted
+using HTML rather than LaTeX.  This might form a useful component of a
+XSLT-based workflow.  For further details, see the discussion of the
+style files <a href="#bst-files">below</a>.</p>
+
+<p>There is also a Perl script, <em>bibhtml</em>, which can orchestrate generating and using
+this <code>.aux</code> file.  This script isn’t really maintained any
+more, but it is still distributed, and documented <a href="#usage">below</a>.</p>
+
+<p><em>Bibhtml</em> works with a standard BibTeX database – it is
+intended to be compatible with a database used in the standard way
+with LaTeX.  The <a href="#bst-files">BibTeX style files</a>
+distributed with this package define an additional
+<code>url</code> field: if this is present, then the generated entry
+will contain a link to this URL.  They also define an
+<code>eprint</code> field – if you do not use the LANL preprint
+archive, this will be of no interest to you.</p>
+
+<h2><a name="bst-files" id="bst-files">BibTeX style files</a></h2>
+
+<p>The package includes several BibTeX style files.  As well as the
+ones directly derived from the standard styles, there are also
+<code>plainhtmldate.bst</code>,
+<code>plainhtmldater.bst</code>,
+<code>alphahtmldate.bst</code> and
+<code>alphahtmldater.bst</code> styles,
+which are derived from the standard
+<code>plain.bst</code> and <code>alpha.bst</code> styles,
+which sort the
+output by date and reverse date, rather than by author.</p>
+
+<p>In version 2 of the <em>bibhtml</em> package, the
+<code>*html.bst</code> files are derived from the traditional files
+using the <a href="http://purl.org/nxg/dist/urlbst">urlbst</a>
+package, and then minimally adjusted so as to produce HTML rather than
+LaTeX.</p>
+
+<p>Since they are derived via the <em>urlbst</em> package, these style
+files support an additional entry type, <code>@webpage</code>, and two
+additional fields on all entry types, <code>url</code> and
+<code>lastchecked</code>, which give the URL associated with the
+reference, and the date at which the URL was last verified to be still
+present.</p>
+
+<p>The distributed <code>.bst</code> files have two configurable
+parameters, which you might want to adjust for your installation:</p>
+
+<p>The variable <code>'xxxmirror</code> gives the host name of the arXiv mirror which will be used
+when generating links to eprints.  The default setting in the
+<code>.bst</code> files is:</p>
+<pre>
+"xxx.arxiv.org" 'xxxmirror :=
+</pre>
+
+<p>By default, the style files generate link targets in the
+bibliography with the same name as the citation key.  Thus a BibTeX
+entry with key <code>surname99</code>, say, would appear in the
+generated HTML <code>.bbl</code> file wrapped in <code>&lt;a
+name="surname99"&gt;...&lt;/a&gt;</code>.  If this is inconvenient,
+perhaps because it conflicts with other links within the file,
+then you can adjust the <code>'hrefprefix</code> variable within the
+style file, to specify a prefix which should appear in the link key.
+Thus setting</p>
+<pre>
+"ref:" 'hrefprefix :=
+</pre>
+<p>in the <code>.bst</code> file would produce links like <code>&lt;a
+name="ref:surname99"&gt;...&lt;/a&gt;</code> in the <code>.bbl</code>
+file.</p>
+
+<h2><a name="xslt" id="xslt">XSLT scripts</a></h2>
+
+<p>The distribution includes a pair of sample XSLT scripts:</p>
+<ul>
+<li><code>bibhtml-extract-aux.xslt</code> shows how you might use XSLT to
+extract citations from a source file into an <code>.aux</code>
+file, for processing into a <code>.bbl</code> file;</li>
+<li><code>bibhtml-insert-bib.xslt</code> shows how you might use XSLT
+to insert the resulting <code>.bbl</code> file into the original
+file.</li>
+</ul>
+
+<p>The scripts assume that a source file is in XHTML, and has
+citations marked up as</p>
+<pre>
+&lt;span class='cite'&gt;ref99&lt;/span&gt;
+</pre>
+<p>and that the bibliography is indicated with</p>
+<pre>
+&lt;?bibliography <em>bibdata</em> <em>bibstyle</em>?&gt;
+</pre>
+<p>A suitable workflow, taking as an example the source file for the
+page you are reading, is:</p>
+<pre>
+% xsltproc bibhtml-extract-aux.xslt bibhtml.html &gt;bibhtml.aux                    
+% bibtex bibhtml
+This is BibTeX, Version 0.99c (Web2C 7.5.7)
+The top-level auxiliary file: bibhtml.aux
+The style file: unsrthtml.bst
+Database file #1: bibrefs.bib
+% sed -f detex.sed bibhtml.bbl &gt;bibhtml.bbl.tmp
+% mv bibhtml.bbl.tmp bibhtml.bbl
+% xsltproc --stringparam bibfile-name bibhtml \
+    bibhtml-insert-bib.xslt bibhtml.html &gt;bibhtml-new.html
+</pre>
+
+<p>The <code>bibhtml.xslt</code> script, when run over a source file,
+generates a <code>.aux</code> suitable for processing with BibTeX.
+The resulting <code>.bbl</code> file, possibly after
+<a href="#postprocessing">post-processing</a>, can be included in the
+source XHTML with an XSLT script which includes something like:</p>
+<pre>
+&lt;xsl:template select="processing-instruction('bibliography')"&gt;
+  &lt;xsl:copy-of select="document('mybib.bbl')"/&gt;
+&lt;/xsl:template&gt;
+</pre>
+
+<h2><a name="postprocess" id="postprocess">Postprocessing HTML bibliographies</a></h2>
+
+<p>The output of the BibTeX styles is designed so that it is generally
+reasonably usable without any post-processing.  However it is not
+ideal, since there are occasionaly TeX-isms such as backslash-escaped
+characters and the like, depending on what is in the source
+<code>.bib</code> file.  Also, without post-processing any DOIs in
+the source file aren’t formed into links.</p>
+
+<p>The distribution includes a <code>sed</code> file,
+<code>detex.sed</code>, which can do appropriate post-processing.
+Thus the normal workflow is:</p>
+<pre>
+% bibtex mydoc
+% sed -f detex.sed mydoc.bbl &gt;mydoc.bbl.tmp
+% mv mydoc.bbl.tmp mydoc.bbl
+</pre>
+<p>Since it uses <code>sed</code>, this is fairly obviously
+unix-specific, but if anyone would like to contribute a script with
+similar functionality (it’s just a few moderately tortuous regular
+expressions), I’d be delighted to include it in the distribution.</p>
+
+<h2><a name="install" id="install">Installation</a></h2>
+
+<p>The <code>.bst</code> files have to be installed 
+<a href="http://www.tex.ac.uk/cgi-bin/texfaq2html?label=inst-wlcf">‘somewhere where LaTeX can find them’</a>.  If you give the command
+<code>kpsepath bst</code> you can see the list of directories that
+BibTeX searches for <code>.bst</code> files – on my system, I’d put
+them into <code>/usr/local/texlive/texmf-local/bibtex/bst</code>,
+which is a directory for system-wide local additions.</p>
+
+<p>If you wish, you may change the distributed BibTeX style files (see 
+<a href="#bst-files">above</a>) to the extent of changing the
+‘eprint’ mirror site from the master <code>xxx.arxiv.org</code> to a
+more local mirror.  If you don’t use the LANL preprint archive, this
+will be of no interest to you.</p>
+
+<h2><a name="usage" id="usage">The <em>bibhtml</em> script</a></h2>
+
+<p>As noted above, <strong>this script should still work and is distributed on
+that basis, but it’s no longer maintained, and won’t be further developed.</strong>
+The XSLT-based mechanism described above is probably more robust;
+also, the interface described in this section is not the same as the interface
+of the <a href="#xslt">XSLT scripts</a> section above.</p>
+
+<h3>The BibTeX database</h3>
+
+<p>TeX features such as <code>~</code> and <code>--</code> are translated to
+corresponding HTML entities (controlled with the <code>+3</code>
+switch, see below), but other TeX constructions will make their way
+into the generated HTML, and look a little odd.  I might try to deal
+with these in future versions.  </p>
+
+<h3>Preparing the text</h3>
+
+<p>You prepare your text simply by including links to the bibliography file
+(the default is <code>bibliography.html</code>), followed by a fragment
+composed of the BibTeX citation key.  Thus, you might cite [grendel89]
+with</p>
+<pre>&lt;a href="bibliography.html#grendel89"&gt;(Grendel, 1989)&lt;/a&gt;</pre>
+<p>(of course, the link text can be anything you like).  That’s all there is to
+it.  When you run <em>bibhtml</em>, it generates an
+<code>.aux</code> file which makes BibTeX produce references for exactly those
+keys which appear in this way. </p>
+
+<h3><a name="pis" id="pis">Preparing the bibliography file – processing
+instructions supported</a></h3>
+
+<p>The bibliography file is an ordinary HTML document (which may
+itself have citations within it), distinguished only by having two
+processing instructions within it.
+<em>Bibhtml</em> replaces everything between
+<code>&lt;?bibhtml start ?&gt;</code>
+and
+<code>&lt;?bibhtml end ?&gt;</code> 
+(which should be on lines by themselves) with the formatted
+bibliography. It leaves those instructions in place, naturally, so once
+this file is set up, you shouldn’t have to touch it again.  Older
+versions of bibhtml used the magic comments <code>&lt;-- bibhtml start
+--&gt;</code> and <code>&lt;-- bibhtml end --&gt;</code>: these are
+still supported, but are deprecated and may disappear in a future version.</p>
+
+<p>Alternatively, you may include the processing instruction
+<code>&lt;?bibhtml insert?&gt;</code>.  This acts broadly like the
+<code>start</code> and <code>end</code> processing instructions,
+except that the line is completely replaced by the inserted
+bibliography.  This is useful if the file being processed is a
+generated file (perhaps the output of a separate XML tool-chain, for
+example), which will not therefore have to be rescanned in future.</p>
+
+<p>You can specify the bibliography database and style file either on
+the command line (see <a href="#options">below</a>) or using the
+<code>&lt;?bibhtml bibdata </code><em>bibfile</em><code>?&gt;</code>
+and <code>&lt;?bibhtml bibstyle</code><em>stylefile</em><code>?&gt;</code> instructions.  The
+value of ‘bibdata’ is cumulative, and appends to any value specified
+on the command line.  A value of ‘bibstyle’ specified on the command
+line, in contrast, overrides any value in the file.</p>
+
+<p>As a special case, <em>bibhtml</em> also replaces the line <em>after</em> a
+comment <code>&lt;?bibhtml today ?&gt;</code> with today’s date.</p>
+
+<p>Summary of processing instructions:</p>
+
+<dl>
+<dt><code>&lt;?bibhtml start?&gt;</code> and <code>&lt;?bibhtml
+stop?&gt;</code></dt>
+<dd>Bracket the bibliography – any text between these PIs is replaced
+when <em>bibhtml</em> is next run.</dd>
+
+<dt><code>&lt;?bibhtml insert?&gt;</code></dt>
+<dd>This PI is replaced by the bibliography when <em>bibhtml</em> is
+next run.  This PI is always removed, irrespective of the presence or
+absence of the <code>--strip</code> option.</dd>
+
+<dt><code>&lt;?bibhtml bibdata </code><em>bibfile</em><code>?&gt;</code></dt>
+<dd>Specify the bibliography database to be used.  This is the
+analogue of a
+<code>\bibliography{</code><em>bibfile</em><code>}</code> command in a
+LaTeX file; see also the <code>-b</code> command-line option.</dd>
+
+<dt><code>&lt;?bibhtml bibstyle </code><em>stylefile</em><code>?&gt;</code></dt>
+<dd>Specify the bibliography style to be used.  This is the analogue
+of <code>\bibliographystyle{</code><em>stylefile</em><code>}</code>
+command in a LaTex file; see also the <code>-s</code> command-line option.</dd>
+
+<dt><code>&lt;?bibhtml today?&gt;</code></dt>
+<dd>Replace the <em>following</em> line by today’s date.</dd>
+</dl>
+
+<h3><a name="options" id="options">Supported options</a></h3>
+
+<p><em>Usage</em></p>
+<pre>
+% bibhtml [options...] filename...
+% bibhtml --merge file.bbl file.html
+</pre>
+
+<p>The <code>filename</code> argument is the name of a file to be scanned.</p>
+
+<p><em>Bibhtml</em> takes a list of HTML files as argument (though see
+<a href="#two-pass">below</a> for a two-pass variant).  It creates an
+<code>.aux</code> file, runs BibTeX, and merges the resulting
+<code>.bbl</code> file (if it exists) into <code>bibliography.html</code>, or
+whatever has been specified as the bibliography file name. </p>
+
+<p>There are several options:</p>
+<dl>
+<dt>-3, +3</dt>
+<dd>Set this to +3 if you want <code>~</code> translated to
+<code>&amp;nbsp;</code>, and <code>--</code> to
+<code>&amp;enspace;</code>. Or set it to -3 (the default) if you
+don’t.</dd>
+
+<dt>-a</dt>
+<dd>If this option is set, <em>bibhtml</em> won’t bother scanning any
+files at all, and will generate references for all the entries in your
+database.  This is equivalent to <code>\nocite{*}</code> in LaTeX.</dd>
+
+<dt>-b bibdata</dt>
+<dd>The name of your BibTeX database file, as it would be specified in a
+<code>\bibliography{}</code> command in LaTeX.  Unless <em>you</em> happen to
+keep all your references in a file called <code>bib.bib</code>, you’ll
+probably want to change this.  Or you can use the <code>&lt;?bibhtml
+bibdata xxx?&gt;</code> <a href="#pis">processing instruction</a>.</dd>
+
+<dt>-c configfile</dt>
+<dd>Specifies a configuration file which contains a single line of
+options, which are inserted in the command line at that point.</dd>
+
+<dt><a name="merge" id="merge">--merge</a></dt>
+<dd>In this special case, <em>bibhtml</em> takes two arguments, a
+<code>.bbl</code> file and an <code>.html</code> file, 
+merges the first into the second, and nothing else.  It’s
+intended to be used when you have generated a
+<code>.bbl</code> file by a separate run of BibTeX, and simply
+wish to merge the results into your bibliography file.  As
+such, it will most likely be useful as part of a script, or
+other post-processing system.</dd>
+
+<dt>-r rootname</dt>
+<dd>Specify this and you’ll create <code>rootname.html</code>,
+<code>rootname.aux</code> and so on.  Why not just stick with the default
+‘bibliography’...? </dd>
+
+<dt><a name="opt-s" id="opt-s">-s bibstyle</a></dt>
+<dd>The name of the BibTeX bibliography style you want to use, as it
+would be specified for the <code>\bibstyle</code> command in
+LaTeX.  If you want to have a different layout for your HTML
+bibliographies, please don’t change the file plainhtml.bst
+distributed with bibhtml.  Instead, make a <em>copy</em> of
+plainhtml.bst under a different name, edit it as much as you
+like, and use this option of bibhtml to use the modified
+version instead of the default.  Or you can use the <code>&lt;?bibhtml
+bibstyle xxx?&gt;</code> <a href="#pis">processing instruction</a>.</dd>
+
+<dt><a name="strip" id="strip">--strip</a></dt>
+<dd>If this option is set, then strip all processing-instruction lines
+from the output file.  This means that the resulting file cannot be
+processed again by <em>bibhtml</em>, and so is appropriate when the
+file is the output of a separate tool-chain.</dd>
+
+<dt>-V, --version</dt>
+<dd>Bibhtml prints the version information and exits.</dd>
+
+<dt>-v, -q</dt>
+<dd>Do you want the program to be verbose or quiet? The default is -v,
+verbose.</dd>
+
+</dl> 
+
+<p>The defaults for the various parameters are unlikely to be helpful,
+so you’re likely to want to set one or more of them every time you run
+the program. It is for this reason, and because you’re likely to want
+the same set of options every time you create the bibliography for a
+set of files in a directory, that you can put a collection of options
+in a configuration file.  This can be specified on the command line
+with the option <code>-c configfilename</code>.  If this option
+is not given, then <em>bibhtml</em> looks for a file named
+<code>bibhtml.config</code>.  For example, the configuration
+file  might contain:</p>
+
+<pre>
+-b mybib +3 -r refs
+</pre>
+
+<h3><a name="two-pass" id="two-pass">Two-pass bibhtml</a></h3>
+
+<p>You might sometimes have a need to invoke the
+two phases separately.  If you make a symbolic link to the program via
+<code>ln -s bibhtml bibhtml2</code>, then you can generate an
+aux-file alone by giving the command <code>bibhtml2 *.html</code>,
+say; and you can merge a bbl-file into the bibliography file with the
+command <code>bibhtml2 bibliography.bbl</code>.  The command line option
+<code>--merge</code> <a href="#merge">above</a> may be more suitable
+if you are calling this code from a script, as it requires you to
+specify both the <code>.bbl</code> and the <code>.html</code> file it
+is being merged with, (and so it is more robust, and more flexible).</p>
+
+<p>On Unix, this works because the program is able to
+detect the name it was invoked under.  This may be more difficult on other
+platforms.  If so, please get in touch, with suggestions. </p>
+
+<h2><a name="example" id="example">Example</a></h2>
+
+<p>There are multiple sources of advice for how to cite electronic
+documents.  The most formal are an ISO standard <a href="#url:iso690">url:iso690</a>, and the American Psychological
+Association’s guidance in Sect. 6.31 of <a href="#apastyle">apastyle</a>.  As well, there are older but still
+useful discussions in <a href="#walker06">walker06</a> and
+<a href="#emory95">emory95</a>.</p>
+
+<h2><a name="refs" id="refs">References</a></h2>
+
+<dl xmlns="">
+
+<dt><a name="url:iso690" id="url:iso690">[url:iso690]
+International Standards Organisation.</a></dt>
+<dd><a href="http://en.wikipedia.org/wiki/ISO_690">ISO 690-2</a> [online,
+  cited 9 August 2009].</dd>
+
+<dt><a name="apastyle" id="apastyle">[apastyle]
+American Psychological Association.</a></dt>
+<dd><a href="http://www.apastyle.org/manual/index.aspx"><em>Publication Manual
+  of the American Psychological Association</em></a>, 6th edition, 2009 [cited
+  9 August 2009].</dd>
+
+<dt><a name="walker06" id="walker06">[walker06]
+Janice R. Walker and Todd Taylor.</a></dt>
+<dd><a href="http://cup.columbia.edu/book/978-0-231-13210-7/the-columbia-guide-to-online-style"><em>The
+  Columbia Guide to Online Style</em></a>.
+Columbia University Press, 2nd edition, 2006 [cited 9 August 2009].</dd>
+
+<dt><a name="emory95" id="emory95">[emory95]
+Goizueta Business Library.</a></dt>
+<dd><a href="http://business.library.emory.edu/eresources/citing.html">Citation
+  formats</a> [online, cited 9 August 2009].</dd>
+
+</dl>
+
+<p>See also the documentation for the <a href="http://purl.org/nxg/dist/urlbst"><code>urlbst</code>
+package</a>, which generates BibTeX style files for ordinary LaTeX
+output (which also supports a <code>@webpage</code> entry type, and
+<code>url</code> and <code>lastchecked</code> fields), and which
+contains a similar list of references concerned with citing online
+sources.</p>
+
+<h2><a name="dist" id="dist">Distribution</a></h2>
+
+<h3><a name="get" id="get">Obtaining <em>bibhtml</em></a></h3>
+
+<p>Bibhtml is available on CTAN at
+<a href="http://www.ctan.org/tex-archive/biblio/bibtex/contrib/bibhtml/"><code>biblio/bibtex/contrib/bibhtml/</code></a>,
+and at
+<a href="http://purl.org/nxg/dist/bibhtml"><code>http://purl.org/nxg/dist/bibhtml</code></a>.</p>
+
+<p>Download the distribution:
+<a href="bibhtml-2.0.2.tar.gz">bibhtml-2.0.2.tar.gz</a> or
+<a href="bibhtml-2.0.2.zip">bibhtml-2.0.2.zip</a>.</p>
+
+<p>Do <a href="mailto:norman@astro.gla.ac.uk">let me know</a> if
+you use this stuff.  I’d be grateful for any bug reports,
+and bug fixes, and also for any comments on the clarity or
+otherwise of this documentation.</p>
+
+<p>The project source code is
+<a href="http://bitbucket.org/nxg/bibhtml/">hosted at bitbucket.org</a>.
+You can check out the source code from there, and you are welcome to
+add issues to the bugparade.</p>
+
+<h3><a name="licence" id="licence">Licence</a></h3>
+
+<p>This software is copyright, 1999, 2005, 2006, 2009, 2013 Norman Gray.
+It is released under the terms of the GNU General Public Licence.
+See the copyright declaration at the top of file <code>bibhtml</code>,
+and the file <code>LICENCE</code> for the licence conditions.
+You can find an online copy of the GPL at
+<code><a href="http://www.gnu.org/copyleft/gpl.html">http://www.gnu.org/copyleft/gpl.html</a></code>.</p>
+
+<p>If this licence is a problem for you,
+get in touch and we can work something out.</p>
+
+<h3><a name="changes" id="changes">Changes</a></h3>
+
+<dl>
+<dt>2.0.2, 2013 September 8</dt>
+<dd>Minor bugfixes: XSLT namespace fixes, and DOI formatting.</dd>
+
+<dt>2.0.1, 2009 November 2</dt>
+<dd>The *date.bst and *dater.bst styles now work again.</dd>
+
+<dt>2.0, 2009 August 9</dt>
+<dd>First real release of v2.0, after mild use elsewhere.</dd>
+
+<dt>2.0b1, 2009 August 9</dt>
+<dd>Substantial rewrite, taking the style files from the urlbst
+package (thus there are more styles than before), adding more XSLT
+scripts, and de-emphasising the Perl script.  The code is now
+<a href="http://bitbucket.org/nxg/bibhtml/">hosted at bitbucket.org</a>.</dd>
+
+<dt>1.3, 2006 October 31</dt>
+<dd><ul>
+<li>Add <code>hrefprefix</code> parameterisation to style files.</li>
+<li><code>xxx.arxiv.org</code> is now the default e-prints host.</li>
+<li>Some improvements to documentation.</li>
+</ul>
+</dd>
+
+<dt>1.2, 2005 September 19</dt>
+<dd><ul>
+<li>Changes to <code>.bst</code> style files, adding
+<code>@webpage</code> entry type, and <code>lastchecked</code> field
+to all entry types.</li>
+<li>Updates to documentation, fixing broken links to online references
+discussing how to cite online sources.</li>
+<li>No reports of breakage from beta releases below.</li>
+</ul>
+</dd>
+
+<dt>1.2b2, 2005 August 30</dt>
+<dd><ul>
+<li>Bugfix – correctly escape characters in .bbl hrefs</li>
+<li>Portability fix – use <code>/usr/bin/env perl</code> at the top of the
+script, rather than <code>/usr/bin/perl</code>; this should be more
+portable.</li>
+</ul>
+</dd>
+
+<dt>1.2b1, 2005 August 19</dt>
+<dd><ul>
+<li>Use processing instructions such as
+<code>&lt;?bibhtml start?&gt;</code>, rather than magic comments (the
+old behaviour is still temporarily supported).</li>
+<li>Add a new directive – <code>&lt;?bibhtml insert?&gt;</code>
+inserts the bibliography in-place.</li>
+<li>Debugging output is now written to stderr rather than stdout.</li>
+<li>Add <code>--help</code> and <code>--strip</code> options.</li>
+<li>Documentation improvements.</li>
+<li>Bugfix – URLs are now properly escaped in the bibliography.</li>
+</ul>
+</dd>
+</dl>
+
+<div class="signature">
+<a href="http://nxg.me.uk">Norman</a><br />
+2013 September 8
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1400 @@
+\documentclass[11pt,a4paper,twoside]{article}
+\usepackage[T1]{fontenc}
+  % \usepackage[applemac]{inputenc}
+\usepackage[latin9]{inputenc}
+\usepackage[dvips,lmargin=2cm,rmargin=2cm,bmargin=2cm,tmargin=2.5cm]{geometry}
+\raggedbottom
+\usepackage{pst-uml}
+
+% LA SUITE NE MARCHE PAS CAR "fvrb-ex" cherche "fancyvrb", meme
+% si celui-ci est deja chargé !
+% 
+\usepackage{fancyvrb}
+% pour les environnement CenterExample...
+\usepackage[pstricks]{fvrb-ex}
+\fvset{frame=single,numbers=left,fontsize=\footnotesize}
+  % 
+\providecommand{\showgrid}{\psgrid[subgriddiv=0, griddots=10]}
+\psset{subgriddiv=0, griddots=10}
+  
+\DefineShortVerb{\|}
+% \UndefineShortVerb{\|}  % pour annuler 
+
+\pagestyle{headings}
+  
+\usepackage{calc}
+\usepackage{ifthen}
+\newcounter{hours}\newcounter{minutes}
+\newcommand{\printtime}{%
+  \setcounter{hours}{\time/60}%
+  \setcounter{minutes}{\time-\value{hours}*60}%
+  \thehours h%
+ % on veut obtenir 15h03mn et non 15h3mn...
+  \ifthenelse{\theminutes<10}{0}{}\theminutes mn}
+ 
+\newcommand{\Stabilo}[1]{\colorbox[rgb]{1,1,0.2}{#1}}
+\newcommand{\fStabilo}[1]{\fcolorbox[rgb]{1,0,0}{1,1,0.2}{#1}}
+  
+% Quelques abbreviations
+  
+% Conventions g\'{e}n\'{e}rales pour les formats de pr\'{e}sentation
+  \newcommand{\strong}[1]{\textbf{\emph{#1}}} % plus fort que \emph
+  \newcommand{\tech}[1]{\textsf{#1}}          % terme technique
+  \newcommand{\file}[1]{\texttt{#1}} % noms de fichiers et de r\'{e}pertoires
+  \newcommand{\menu}[1]{\fbox{#1}}       % nom d'un menu/sous-menu
+  \newcommand{\key}[1]{\fbox{\textbf{#1}}}  % touche du clavier
+  
+  % abreviations locales a ce document :
+  \newcommand{\uml}{\textsc{uml}} 
+  \newcommand{\pstricks}{\texttt{PSTricks}} 
+  \newcommand{\postscript}{\texttt{PostScript}} 
+  \newcommand{\pstuml}{\texttt{pst-uml}} 
+  % \newcommand{\bs}{\backslash}
+  
+  % Pour les noms de commande TeX
+  % Exemple : \cs{fbox} => \fbox
+  \DeclareRobustCommand\cs[1]{\texttt{\char`\\#1}}
+
+\usepackage[colorlinks,linktocpage]{hyperref}
+%  \usepackage{french}
+\usepackage[francais]{babel} % idem frenchb mais PAS french !
+% La suite evite que Babel impose un espace devant ":" mais n'est
+% pas disponible sur les vielles versions de Babel (comme à l'ENSTA).
+\NoAutoSpaceBeforeFDP
+      
+\begin{document}
+
+\title{Interface utilisateur du package \pstuml}
+\author{%
+   Maurice \textsc{Diamantini}%
+   \thanks{avec l'aide précieuse de Denis \textsc{Girou}} %
+   (email : \texttt{diam@ensta.fr})
+}
+\date{%
+   modif package : 27/08/06  \\
+   modif doc\ \ \  : 27/08/06\\
+   \pageref{verylast}~pages compilées le \today{} à \printtime{}.
+}
+
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+\subsection{Présentation}
+
+Ce document présente l'utilisation d'un certain nombre de macro 
+destinées à faciliter le dessin de diagramme de type \uml{} (Unified 
+Modeling Langage) en utilisant le package \pstricks{} de 
+Van Zandt \textsc{Timothy}, dont l'usage est supposé connu.
+
+Ce package est en cours de développement et n'est diffusé pour
+l'instant que à titre d'information.  En particulier, la
+\strong{stabilité} des noms de commandes proposées, leurs paramètres
+ainsi que leur comportement même \strong{ne sont pas garantis}.  Il en
+est de même que le nom et la fonction des options. 
+
+
+Dans le cas de diagrammes \uml{} complexes, on peut augmenter la
+lisibilité du source, et donc faciliter les modifications du diagrammes
+en cours d'élaboration en divisant le travail en trois phases
+séparées~: 
+
+\begin{enumerate}
+    \item  définir graphiquement le dessin des différents éléments du 
+    schémas, en particulier pour les objets complexes (nombreux 
+    paramètres ou text important, ...) ;
+
+    \item  placer%
+    \footnotemark{} %
+    ces boites grâce à \texttt{psmatrix} ou à des 
+    \cs{rput} dans un environnement \texttt{pspicture}
+    Les objets positionnés sont alors associé à un nom de node (au 
+    sens \pstricks). On peut également dans cette phase placer les labels
+    ou autres dessins complémentaires liés aux graphismes des objets
+    eux-mêmes (et non des connecteurs entre objets) ; 
+    
+    \item router%
+       \addtocounter{footnote}{-1}\footnotemark{} %
+       ces boites à l'aide des différentes commandes de connexion et
+       coller les labels ou autres fleches \uml{}. 
+\end{enumerate}
+% \footnotetext[1]{désolé : déformation professionnelle !}
+\footnotetext{désolé : déformation professionnelle !}
+% \stepcounter{footnote}
+
+
+Les macro proposées tendent à suivre les conventions \pstricks{} et
+\texttt{graphicx} pour le passage des options : à savoir l'utilisation
+de couple de la forme \texttt{Key=value}. Cette fonctionnalité
+nécessite l'utilisation du package \texttt{pst-key} qui est proposée
+dans la distribution de \pstuml{} (en attendant une diffusion plus
+générale). Un des intérêts du package \texttt{pst-key} est de pouvoir
+rajouter des options sans changer la syntaxe de la commande de base.
+D'une manière générales, le nombre d'options de toutes les commandes
+complexes est appelé à croitre. 
+
+
+\noindent Voici la syntaxe générale des commandes proposées : 
+
+\begin{verbatim}
+    \umlCommand[option1=value1,option2=value2,...]{param1}{param2}...
+\end{verbatim}
+
+La valeur par défaut de chacune de ces options peut être redéfinie par 
+la commande |\psset{...}| (comme toutes toutes les options de \pstricks).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Dépendances }
+
+Les packages suivants sont appelés par \pstuml{} (par la 
+commande \cs{RequirePackage}): 
+\begin{itemize}
+    \item  \texttt{pstricks}
+
+    \item  \texttt{pst-node}
+
+    \item  \texttt{pst-tree}
+
+    \item  \texttt{multido}
+
+    \item  \texttt{calc}
+
+    \item  \texttt{ifthenelse}
+
+    \item  \texttt{pst-xkey.tex} (par \cs{input} car en \TeX{})
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Les macros de création d'objet}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{\cs{umlClass}}
+
+
+
+\begin{description}
+    
+\item[Syntaxe]  \mbox{}
+
+    \begin{verbatim}
+        \umlClass[keyOptions]{title}{body}
+    \end{verbatim}
+    
+    Permet de dessiner une classe. 
+
+\item[Paramètres]  \mbox{}
+
+% % \subsubsection*{Paramètres}
+
+    \begin{description}
+        
+        \item[\texttt{title} :] nom de la classe, celui-ci sera centré 
+        et écrit en gras.  Il peut tenir sur plusieurs lignes.
+    
+        \item[\texttt{body} :]  corps de la classe propremment dit. En 
+        particulier contient les attributs et méthodes justifiées à gauche.
+        Les différentes lignes sont séparées par |\\| et éventuellement 
+        des |\hline|.     
+    \end{description}
+
+\item[Options]  \mbox{}
+
+
+    \begin{description}
+            
+        \item[\texttt{umlDoubleRuleSep} (dim : 2mm)] : distance%
+        \footnote{% protect car dans \item[xxx]
+          Comme pour toutes les dimensions passées à \pstricks{}, la
+          spécification de l'unité utilisée est facultative et vaut
+          \texttt{cm} par défaut,  contrairement à \LaTeX{} ou il est
+          nécessaire de préciser une unité (même pour 0pt !).
+        } %
+        entre deux |\hline| (dans la zone |title| ou |body|).
+        
+        \item[\texttt{umlShadow} (boolean : true)] :  
+        si vrai, un cadre ombré de fond gris entoure la classe \\
+        sinon, un cadre simple sur fond blanc est utilisé.
+        
+        \item[\texttt{umlParameter} (string : "")] :  
+        si non vide, dessine un rectangle en pointillé 
+        contenant la valeur sur le coin supérieur droit de la classe 
+        (utilisé pour les classes paramétriques ou "Templates" en C++).
+                
+    \end{description}
+
+\item[Exemples 1]  \mbox{}
+
+    Les illustations suivantes présente une utilisation directe (i.e. 
+    sans utilisation dans une boite ou par une commande) de la 
+    commande de création d'une classe.  Ces classes sont entourées par 
+    un tiret pour montrer le positionnement vertical par rapport à la 
+    ligne de base.
+    
+    \bigskip\noindent
+    Exemples de classes standards
+    \begin{SideBySideExample}[xrightmargin=6cm]
+       --\umlClass{standard 1}{%
+         attrib 1 \\
+         attrib 2 \\
+         attrib 3 \\
+         \hline
+         meth 1 \\
+         meth 2
+      }--
+    \end{SideBySideExample}
+    
+    \bigskip\noindent
+    \begin{SideBySideExample}[xrightmargin=6cm]
+       --\umlClass{standard 2}{%
+         attrib 1 \\
+         attrib 2 \\
+         attrib 3 \\
+         \hline
+         \hline
+      }-- 
+    \end{SideBySideExample}
+        
+    \bigskip\noindent
+    \begin{SideBySideExample}[xrightmargin=6cm]
+       --%
+       \umlClass[umlShadow=false,umlParameter=\ T\ ]{%
+         standard 3%
+       }{%
+         \hline
+         meth 1 \\
+         meth 2
+      }--
+    \end{SideBySideExample}
+    
+    \bigskip\noindent
+    \begin{SideBySideExample}[xrightmargin=6cm]
+      --\umlClass{standard 4}{}--
+    \end{SideBySideExample}
+      
+    \bigskip\noindent
+    \begin{SideBySideExample}[xrightmargin=6cm]
+      --\umlClass{standard 5}{%
+        \hline
+        \hline
+      }--
+    \end{SideBySideExample}
+
+
+\item[Exemples 2]  \mbox{}
+
+    \bigskip\noindent On peut mettre plusieurs sauts de ligne dans 
+    chaque paramètre de la commande.  Pour le premier paramètre : 
+    toutes les lignes sont centrées et en gras~:
+    \begin{SideBySideExample}[xrightmargin=7.5cm]
+       --%
+       \umlClass{Exemple 1 \\ avec \\ 
+                         plusieurs lignes}{%
+         Champs r\'eserv\'e aux attributs\\ 
+         \hline 
+         Champs r\'eserv\'e\\ aux m\'ethodes\\ 
+         \hline\hline
+         Champs bidon%
+      }--
+    \end{SideBySideExample}
+
+\item[Exemples 3]  \mbox{}
+
+    \bigskip\noindent On peut souhaiter imposer une largeur minimale à 
+    une classe, par exemple pour donner à plusieurs classes une 
+    apparance identique.  On met alors le titre dans une \cs{makebox} 
+    (s'il n'y a qu'une seule ligne).
+    
+    \begin{SideBySideExample}[xrightmargin=6cm]
+      --%
+      \umlClass{\makebox[3.5cm]{Voici la classe 1}}{%
+        Largeur mini 3.5cm \\ \hline
+        M\'ethode1\\
+        M\'ethode2%
+      }--
+      
+      \vspace{10mm}
+      --%
+      \umlClass{\makebox[3.5cm]{Classe 2}}{%
+        Les attributs \\ \hline
+        M\'ethode1\\
+        M\'ethode2%
+      }--
+      
+      \vspace{10mm}
+      --%
+      \umlClass{\makebox[3.5cm]{Classe 3}}{%
+        \hline \hline
+      }--
+      
+      \vspace{10mm}
+      --%
+      \umlClass{\makebox[3.5cm]{Classe 4}}{%
+        Cela peut m\^eme d\'epasser ! \\ \hline
+        M\'ethode1\\
+        M\'ethode2%
+      }--
+      
+    \end{SideBySideExample}
+
+
+    \item[Bug] \mbox{} --
+
+    \item[\`A faire]  \mbox{} --
+\end{description}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \subsection{\cs{umlSaveClass} et \cs{umlUseBox}}
+% 
+% \begin{description}
+% 
+% \item[\`A faire]  \mbox{}
+% 
+%     Utilisation des commandes de classes complémentaires :
+%     \cs{umlSaveClass} s'utilise comme \cs{umlClass}, mais au lieu de
+%     dessiner une classe, celle-ci est sauvée dans une boite (au sens
+%     \LaTeX{}) et doit être utilisé ultérieurement. Le titre de la
+%     classe sert pour nommer la boite. Ce titre pouvant contenir des
+%     espaces, il n'est pas possible d'utiliser simplement un \cs{usebox}
+%     pour utiliser cette boite : d'où l'existance de la commande
+%     \cs{umlUseBox}. Les caractéristiques de l'objet créé sont fixées
+%     lors de la \emph{création} de la boîte par \cs{umlSaveClass}. Ceci
+%     est trés important pour savoir quels sont les paramètres par défaut
+%     qui seront pris en compte. 
+%     
+%     \strong{Attention :} Ce nom contenant des espaces, il ne peut pas être
+%     utilisé comme nom de node (sous peine d'erreurs \postscript). 
+%     
+% \item[Exemples 1]  \mbox{}
+% 
+%     
+%     \bigskip\noindent A vérifier : Les blocs ainsi définis en \LaTeX{}
+%     sont globales même si elle sont définie à l'intérieur d'un
+%     environnement ou d'un bloc |{}|. 
+%      
+%     \begin{SideBySideExample}[xrightmargin=7cm]
+%       % On cree et m\'emorise la classe
+%       \umlSaveClass{Classe 1 bis}{%
+%        mes attributs \\\hline
+%        M\'ethode 2 \\ 
+%        M\'ethode 2%
+%       }
+%       % On utilise la classe (en instanciant la boite
+%       \rnode{Classe1bis}{\umlUseBox{Classe 1 bis}}
+%     \end{SideBySideExample}
+% 
+% 
+% \item[Bug]  \mbox{}
+% 
+% 
+%     La boîte porte toujours le nom |#| et non pas le contenu de |#2| ou
+%     |#1| suivant le cas. D'où l'écriture des caractères |2|  et |21|
+%     entourant les boites placées. 
+%     
+%     Pour les volontaires, voici le code de la commande
+%     \cs{umlSaveClass}: 
+%     
+%     \begin{Verbatim}
+%       % CECI FONCTIONNE MAL (la boite cree s'appelle "#" )
+%       % Je n'ai pas reussi en jonglant aves les \csname et autre \@nameuse
+%       \newcommand{\umlSaveClass}[3][]{%
+%         \newsavebox{\#2}%
+%         \savebox{\#2}{%
+%           \umlClass[#1]{#2}{#3}%
+%         }%
+%       }
+%       % Pas de \umlUseClass car sera aussi utilisée pour les acteurs, ...
+%       \newcommand{\umlUseBox}[1]{\usebox{\#1}}
+%     \end{Verbatim}
+%     
+% \end{description}
+% 
+% 
+% 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \subsection{\cs{umlDefClass} et \cs{umlRunCmd}}
+% 
+% \begin{description}
+% 
+% \item[\`A faire]  \mbox{}
+%     
+%     Une autre façon de prédéfinir les classes est de créer des
+%     commandes dont le nom correspond au titre de la classe (malgré les
+%     espaces et sauts de ligne). Contrairement à l'utilisation de la
+%     commande \cs{umlSaveClass}, Les caractéristiques de l'objet créé
+%     sont fixées au moment de l'utilisation de la commande par
+%     \cs{umlRunCmd}. 
+%     
+%     \bigskip\noindent A vérifier : de plus, la commande définie est
+%     local à son environnement ou à son bloc |{}|. 
+%     
+% \item[Bug]  \mbox{}
+%     
+%     A FAIRE (j'appréhende les mêmes problèmes que précédement)
+% 
+% \end{description}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{\cs{umlActor}}
+
+\begin{description}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Syntaxe]  \mbox{}
+
+    \begin{verbatim}
+       \umlClass[keyOptions]{title}
+    \end{verbatim}
+    Permet de dessiner un acteur représenté par un bonhomme avec un 
+    nom.  Le titre du bonhomme est vu comme une boîte vide par 
+    \LaTeX{}, cela rend les liens dans les diagrammes des cas 
+    d'utilisation (qui sont la principale utilisation des Acteurs) plus 
+    agréable (les flèches sont positionnées par rapport au bonhomme et 
+    non pas au texte qui peut occuper plusieurs lignes.
+    
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Paramètres (un seul)]  \mbox{}
+
+    \begin{description}
+        
+        \item[\texttt{title} :] nom de l'acteur.  Il peut contenir 
+        plusieurs lignes séparées par |\\| et éventuellement des 
+        \cs{hline}
+        
+    \end{description}
+    
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Options]  \mbox{}
+
+    \begin{description}
+        
+        \item[\texttt{umlActorLineWidth} (dimension : 0.6mm )] : 
+        Epaisseur de ligne pour le dessin de l'acteur.
+    
+        \item[\texttt{unit} (dimension : 1 ou 1cm )] : option standard
+        de \pstricks{} permet de modifier la taille de l'Acteur. Les
+        options \texttt{xunit}, \texttt{yunit} sont également
+        utilisable mais déconseillés. 
+    
+    \end{description}
+    
+    D'autres option standard à \pstricks{} telle que \texttt{unit} 
+    (ainsi que xunit et yunit) peuvent être utilisées.
+    
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Bug]  \mbox{}
+
+    
+    Un agrandissement par un \texttt{yunit} $> 1$, a pour effet de 
+    décaler la tête vers le haut : il faut donc utiliser la commande 
+    \cs{resizebox} pour assurer un agrandissement correct.
+    
+    L'utilisation de \texttt{unit} pour le changement de taille semble 
+    ne pas modifier pas la taille de la boite crée : d'ou l'encombre 
+    pour les petites taille (on compense par un |\resizebox{}[][]{}| 
+    approprié).
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[\`A faire]  \mbox{}
+    
+    Option : pour concerver la taille de la boîte correspondant au 
+    Titre de l'acteur.
+    
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Exemples 1]  \mbox{}
+    
+    Ces commandes étant courtes, on peut les créer au moment même de 
+    placement qui se fait ici dans le corps du texte dans cet exemple 
+    (en mode LR au sens \LaTeX{}).
+    
+    \begin{CenterExample}
+      \umlActor{Client}--%
+      \umlActor[unit=0.5,umlActorLineWidth=1mm]{Minus 1}--%
+      \umlActor[unit=0.5,umlActorLineWidth=1mm]{Minus 2}--%
+      \umlActor[xunit=0.6,yunit=1.5, umlActorLineWidth=1pt]{Le Chef}--%
+      \umlActor{}--%
+      \psframebox{\umlActor{sur\\trois\\ligne}}--%
+    \end{CenterExample}
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Exemples 2]  \mbox{}
+    
+    On peut séparer la création et le dessin du placement.  Le 
+    placement se fait également dans le texte même.
+    
+    \begin{CenterExample}
+      % Actor2 : 
+      \newcommand{\drawActorii}{%
+      \umlActor[umlActorLineWidth=1pt]{Act2 (1pt)}}
+      % Actor3 : 
+      \newcommand{\drawActoriii}{%
+      \umlActor{Act3 \\ (par defaut)}}
+      % Actor4 : 
+      \newcommand{\drawActoriv}{%
+      \umlActor[umlActorLineWidth=1mm,unit=0.5]{Act4 (1mm)\\unit=0.5}}
+      % Actor5 : (changement local d'une valeur par defaut)
+      \newcommand{\drawActorv}{%
+      \umlActor[umlActorLineWidth=2mm]{%
+          N'importe quoi\\sur trois lignes\\Act5 (2mm)}}
+      % 
+      % utilisation des acteurs precedements definis  :
+      --\drawActorii%
+      --\drawActoriii%
+      --\drawActoriv%
+      --\drawActorv%
+    \end{CenterExample}
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Exemples 3]  \mbox{}
+    
+    
+    On peut composer les objets Class et Actor (illustation du 
+    stéréotype de l'acteur).
+    
+    \begin{SideBySideExample}[xrightmargin=5cm]
+      +%
+      \umlClass{\umlStereoType{Actor} %
+          \umlActor[unit=0.5]{}}{%
+      }+%
+    \end{SideBySideExample}
+    
+    \begin{SideBySideExample}[xrightmargin=5cm]
+      +%
+      \umlClass{<<Actor>> %
+          %\raisebox{<raisedlift>}[<height>][<depth>]{<text>}
+          \raisebox{-0.3\height}[3ex][2ex]{%
+             \umlActor[unit=0.5]{}%
+          }%
+         }{%
+      }+%
+    \end{SideBySideExample}
+    
+    
+\end{description}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{\cs{umlState}, \cs{umlPutStateIn} et \cs{umlPutStateOut} }
+
+\begin{description}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Syntaxe]  \mbox{}
+
+    Les commandes suivantes permettent de dessiner à l'emplacement
+    courant respectivement un état, ou les pseudo-états d'entrée et de
+    sortie : 
+    
+    \begin{verbatim}
+        \umlState[keyOptions]{title}{body}
+        \umlStateIn
+        \umlStateOut
+    \end{verbatim}
+    
+    \`A l'usage, les commandes de dessin de pseudo-état décrites
+    ci-dessus sont avantageusement remplacée par les deux commandes
+    suivantes : 
+
+    \begin{verbatim}
+        \umlPutStateIn{coord}{nodeName}
+        \umlPutStateOut{coord}{nodeName}
+    \end{verbatim}
+    
+    Elles permettent de dessiner et surtout de placer et connecter les
+    pseudo-états d'entrée et de sortie. Ces pseudo-état sont mis dans
+    un \cs{cnode} au moment de leur création, ce qui permet aux
+    connexions de toucher ces états même si le connecteur arrive à 45
+    degrés ; ce qui n'est pas le cas si on met la boite (donc de forme
+    carrée) créée par \cs{umlStateIn} à \emph{posteriori} dans un
+    \cs{cnode} ! 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Paramètres]  \mbox{}
+
+    \begin{description}
+        
+        \item[\texttt{title} :] nom de l'état, peut-être vide.
+        Celui-ci sera centré et écrit en gras.  Il peut tenir sur
+        plusieurs lignes (toutes seront en gras. 
+    
+        \item[\texttt{body} :] corps de l'état, peut-être vide.
+        Il peut contenir plusieurs lignes séparées par |\\| et
+        éventuellement des \cs{hline}.  Il peut également contenir des
+        environnements |pspicture| ou d'autres \cs{umlState}. 
+        
+    \end{description}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[options]  \mbox{}
+
+    \begin{description}
+        
+        \item[\texttt{umlStateWidth} (dimension: 0 )]~: (NON
+        IMPL\'EMENT\'E) largeur de l'état.  La valeur 0 représente la
+        dimension naturelle de cette boite. 
+    
+        \item[\texttt{umlStateHeight} (dimension: 0 )]~: (NON
+        IMPL\'EMENT\'E) hauteur du corps de l'état l'état.  La valeur 0
+        représente la dimension naturelle de cette boite. 
+        
+    \end{description}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Bug]  \mbox{}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[\`A faire]  \mbox{}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Exemples 1]  \mbox{}
+
+
+
+    Les états d'entrée et de sortie
+    
+    \bigskip
+    \begin{SideBySideExample}[xrightmargin=6cm]
+      +\umlStateIn+ : Input State
+      
+      +\umlStateOut+ : Output State
+    \end{SideBySideExample}
+    
+    \bigskip
+    Exemples simples avec champs vides ou non
+    
+    \bigskip
+    \begin{SideBySideExample}[xrightmargin=6cm]
+      +%
+      \umlState{}{Body only}+%
+      \umlState{}{}+% Vide
+      \umlState{Title only}{}+
+    \end{SideBySideExample}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Exemples 2]  \mbox{}
+
+    On peut mettre titre ou corps sur plusieurs lignes. Toutes les
+    lignes du titre sont en gras : 
+    
+    \begin{SideBySideExample}[xrightmargin=6cm]
+      +%
+      \umlState{Title A\\Title B}{}+%
+      \umlState{}{Body A \\ Body B}+%
+    \end{SideBySideExample}
+    
+    \begin{SideBySideExample}[xrightmargin=6cm]
+      +\umlState{Title A\\ Title B}{%
+          Voici le corps de l'état \\
+          avec les diff\'erentes\\
+          lignes\\
+          et d'autres...%
+      }+%
+    \end{SideBySideExample}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Exemples 3]  \mbox{}
+
+    Il y a différents moyens pour réserver une place blanche de taille
+    arbitraire (en attendant l'implantation d'options spécialisées pour
+    ce besoin). 
+    
+    \bigskip\noindent On peut rajouter un \texttt{strut} (règle
+    invisible) pour agrandir un des champs, ainsi que pour créer un
+    champ vide.  La \cs{fbox} n'est là que pour indiquer la place
+    qu'occupe les \texttt{struts}, de même l'épaisseur du \cs{strut} de
+    1 cm (au lieu de 0 cm normalement) permet de le visualiser : 
+    
+    \begin{SideBySideExample}[xrightmargin=6cm]
+      +%
+      \umlState{%
+         Utilis. de \cs{strut}\rule[-2ex]{1mm}{6ex}%
+      }{%
+         \fbox{\rule{0cm}{2cm}\rule{4cm}{0cm}}%
+      }+
+    \end{SideBySideExample}
+    
+    \noindent Une commande \cs{umlEmptyBox} est proposée pour créer
+    une boite vide (mais est-elle bien utiles ??) 
+    
+    \begin{SideBySideExample}[xrightmargin=6cm]
+      +%
+      \umlState{Utilis. de  \cs{umlEmptyBox}}{%
+         \fbox{\umlEmptyBox{4cm}{2cm}}%
+      }+
+    \end{SideBySideExample}
+    
+    
+    \bigskip\noindent
+    On peut spécifier une boite "paragraphe" de largeur 4 cm et 
+    optionnellement de hauteur 2 cm dans le corps. Il faut mettre 
+    un espace forcé pour que le paragraphe ne soit pas vide.
+    
+    \begin{SideBySideExample}[xrightmargin=6cm]
+      +%
+      \umlState{%
+         etat vide par \cs{parbox}%
+      }{%
+         \parbox[c][2cm]{4cm}{\ }%
+      }+
+    \end{SideBySideExample}
+    
+    \bigskip\noindent
+    On peut utiliser \cs{hspace*} et  \cs{vspace*}, c'est la solution la
+    plus précise. 
+    
+    \begin{SideBySideExample}[xrightmargin=6cm]
+      +%
+      \umlState{\cs{hspace*} et \cs{vspace*}}{%
+          \hspace*{4cm}\vspace*{2cm}%
+      }%
+      +
+    \end{SideBySideExample}
+    
+    On pourrait encore utiliser le saut de ligne paramétré |\\[2cm]|
+    (moins précis, mais pratique dans les tableaux. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\iffalse
+\item[Exemples 4]  \mbox{}
+
+    Un état dans une pspicture. L'option |[shidt=0.5\psyunit]| de pspicture permet de
+    positionner la ligne de base de la boîte \texttt{pspicture} à 50\%
+    de la hauteur total (si on met |[]|, la ligne de base passera par
+    l'origine (0,0)). 
+    
+    \bigskip\noindent
+    \begin{CenterExample}
+      \begin{pspicture}[shift=6.5](-7,-5)(6,5)\psgrid
+         \rput(0,3.5){\textbf{pspicture 1}}
+         \rput(0,-0.5){\umlState{Etat interne vide}{%
+               \rule{0cm}{5cm}\rule{6cm}{0cm}%
+         }}%
+         \rput(-1,-1){\umlState{Etat 1}{%
+               Contenu 1\\contenu 2%
+         }}%
+         \rput(-1,1){\umlStateIn}%
+         \rput(1,1){\umlStateOut}%
+      \end{pspicture}+%
+    \end{CenterExample}
+\fi
+       
+\end{description}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{\cs{umlCase} et \cs{umlCasePut}}
+
+\begin{description}
+  \item[Syntaxe]  \mbox{}
+
+    \begin{verbatim}
+        \umlCase[keyOptions]{body}
+    \end{verbatim}
+    
+    Permet un bloc de texte dans un oval. Cependant la boite \LaTeX{}
+    résultante est forcément rectangulaire (comme toute boite \LaTeX{}
+    : il n'est plus possible alors de créer simplement un ovalnode par
+    la suite, d'où la quasi-inutilité de cette commande.
+
+    \begin{verbatim}
+        \umlCasePut[keyOptions]{coord}{nodeName}{body}
+    \end{verbatim}
+    
+    Permet un bloc de texte dans un ovalnode. Personnellement je n'ai
+    utilisé que cette commande pour créer (et surtout connecté) des
+    \textsf{use-case)}. 
+
+  \item[Paramètres]  \mbox{}
+
+    \begin{description}
+        
+        \item[\texttt{coord} :] coordonnées du centre de la boite à
+        positionner. 
+    
+        \item[\texttt{nodeName} :]  nom du node (au sens \pstricks{}).
+        Celui-ci sera utilsaé pour les connexions ultérieures.     
+    
+        \item[\texttt{body} :]  texte éventuellement sur plusieurs
+        lignes séparées par des |\\| (utilisation en interne de la
+        commande \cs{umlStack}).
+        
+    \end{description}
+
+  \item[Options]  \mbox{} : pas d'option spécifique pour l'instant
+
+
+  \item[Bug]  \mbox{}
+
+  \item[\`A faire]  \mbox{}
+  
+  \item[Exemples 1]  \mbox{}
+      
+      Voir fichier séparé
+      
+\end{description}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{\cs{umlNote}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{description}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Syntaxe] \mbox{}
+    
+    \begin{verbatim}
+        \umlNote[keyOptions]{noteBody}
+    \end{verbatim}
+    Permet de dessiner une note dans un ardre au coin corné.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Paramètres] \mbox{}
+    
+    \begin{description}
+        
+        \item[\texttt{noteBody} :] corps de la note.  Il 
+        peut contenir plusieurs lignes séparées par |\\|.
+        
+    \end{description}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Options] \mbox{}
+    
+    \begin{description}
+        
+        \item[\texttt{umlNoteCoin} (dimension: 1.5ex )]~: (NON 
+        IMPL\'EMENT\'E) coin du petit carré replié.
+    
+    \end{description}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Bug] \mbox{}
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[\`A faire] \mbox{}
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Exemples 1] \mbox{}
+    
+    \begin{SideBySideExample}[xrightmargin=6cm]
+      +%
+      \umlNote{Ceci est \\ un \\ exemple de note}%
+      +
+    \end{SideBySideExample}
+
+    \begin{SideBySideExample}[xrightmargin=6cm]
+      +%
+      \umlNote[linewidth=2pt,umlAlign=c]{%
+          Ceci est \\ autre exemple \\ de note%
+      }%
+      +
+    \end{SideBySideExample}
+
+
+\end{description}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Les commandes auxiliaires de \pstuml{}}
+
+Ces commandes ne permettent pas de  créer des boites 
+au sens \uml{}, mais simplifient la vie lors du dessin des différents 
+type de diagrammes.
+
+\subsection{\cs{umlStack}}
+
+\begin{description}
+\item[Syntaxe]  \mbox{}
+
+   \begin{verbatim}
+       \umlStack[keyOptions]{stackBody}
+   \end{verbatim}
+
+    permet de mettre du texte sur plusieurs lignes dans un boite sans 
+    avoir d'espace supplémentaire en utilisant un environnememt 
+    \texttt{tabular}. Par rapport à la commande \LaTeX{} \cs{shortstack},
+    l'espacement entre ligne n'est pas nul et est régulier.
+
+\item[Paramètres (un seul)]  \mbox{}
+
+    \begin{description}
+        
+        \item[\texttt{stackBody} :] corps de la boite.  Il 
+        peut contenir plusieurs lignes séparées par |\\|.
+        
+    \end{description}
+
+\item[Options]  \mbox{}
+
+    \begin{description}
+        
+        \item[\texttt{umlStackSep} (dim : 0)] : distance de séparation 
+        entre le contenu de la boite et le bord (pour une frame 
+        éventuelle).  
+        
+        Cette option utilise d'une part l'option \texttt{tabcolsep} de 
+        \texttt{tabular} pour régler l'espacement sur les bords 
+        verticaux, et d'autre part des \texttt{strut} pour rajouter 
+        des espacements horizontaux avant la première ligne et après la 
+        dernière ligne.
+        
+        \item[\texttt{umlStackWidth} (dim : 0)] : largeur de la boite.
+        La valeur 0 indique une largeur automatique en fonction du contenu.
+        
+        \item[\texttt{umlStackLinesStretch} (réel : 0.85)] : écart 
+        relatif de l'espace interligne par rapport à un tableau normal.
+        La valeur par défaut de 0.85 permet de tasser suffisamment tout en 
+        permettant une marge pour absorber les différences de profondeur ou 
+        de hauteur des différentes 
+        lettres (x, g, j, h, t, ...)
+        
+        \item[\texttt{umlAlign} (l, c, r : c)] : alignement horizontal 
+        du texte à l'intérieur de la boite.
+        
+        \item[\texttt{umlPos} (t, c, b : c)] : alignement vertical 
+        de la boite par rapport à la ligne de base.
+        
+    \end{description}
+        
+\item[Bug]  \mbox{}
+
+\item[\`A faire]  \mbox{}
+
+
+\item[Exemples 1 : comparaison de \cs{umlStack}, \cs{shortstack} 
+      et \texttt{tabular}]  \mbox{}
+
+    Dans les exemples suivants, les \cs{umlStack} utilsée sont 
+    entourée d'une \cs{fbox} ayant une \cs{fboxsep} nulle de façon à 
+    bien visualiser les limites réelles de la boite produite.
+
+    \begin{SideBySideExample}[xrightmargin=6cm]
+     +%
+     \setlength{\fboxsep}{0pt}\fbox{%
+        \umlStack{Ceci est \\ un \\ exemple \\ 
+           de stack}%
+     }+%
+    \end{SideBySideExample}
+     
+    \begin{SideBySideExample}[xrightmargin=6cm]
+     +%
+     \setlength{\fboxsep}{0pt}\fbox{%
+        \shortstack{Ceci est \\ un \\ exemple \\ 
+           de stack}%
+     }+%
+    \end{SideBySideExample}
+     
+    \begin{SideBySideExample}[xrightmargin=6cm]
+     +%
+     \setlength{\fboxsep}{0pt}\fbox{%
+        \begin{tabular}{c}  
+           Ceci est \\ un \\ exemple \\ 
+              de stack
+        \end{tabular}%
+     }+%
+     
+    \end{SideBySideExample}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Exemples 2 : utilisation des options] \mbox{}
+    
+    \begin{SideBySideExample}[xrightmargin=6cm]
+      +\setlength{\fboxsep}{0pt}\fbox{%
+      \umlStack[
+               umlStackSep=1.5ex,
+               umlAlign=r,
+               umlPos=t,
+               umlStackLinesStretch=.9,
+               ]%
+         {Ceci est \\ un \\ autre \\
+            exemple \\ de stack}%
+      }+
+    \end{SideBySideExample}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\item[Exemples 3 : bug avec alignement à droite et 
+       largeur imposée] \mbox{}
+    
+    \begin{SideBySideExample}[xrightmargin=6cm]
+      +\setlength{\fboxsep}{0pt}\fbox{%
+      \umlStack[
+               umlStackWidth=4,
+               umlStackSep=1.5ex,
+               umlAlign=r,
+               ]%
+         {Ceci est \\ un \\ autre \\
+            exemple \\ de stack}%
+      }+
+    \end{SideBySideExample}
+
+\end{description}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Positionnement des objets}
+
+
+Le placement des différents objets peut se faire selon quatre méthodes :
+\begin{itemize}
+
+\item soit en utilisant les positions absolues dans un environnememnt
+|psgraphics| à l'aide de la commande \cs{rput} pour placer les objets et
+\cs{rnode} pour leur affecter un nom de noeud (en vue d'une future
+référence pour les connexions) ;
+
+\item soit à l'aide des commandes de haut niveau fournie par \pstricks{}
+à savoir l'environnement |psmatrix| et la commande \cs{pstree} ;
+
+\item soit à l'aide de commandes de placement relatif fournies par
+\pstuml{} (Merci à Denis \textsc{Girou}) ; 
+
+
+\item soit tout simplement dans le texte comme dans certains exemples
+montrés précédement (en mode LR au sens \LaTeX{}).
+
+\end{itemize}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Utilisation de \texttt{psgraphics} et \cs{rput}}
+
+
+Il consiste à plasser les boîtes (précédemment créés ou non) dans un
+environnement \texttt{pspicture} à l'aide des commandes \cs{rput}.  La
+macro \cs{psgrid} (compte tenu des options prédéfinies par le package
+\pstuml{}) permet de visualiser une grille de 1cm de coté.  Cette grille
+pourra être commentée une fois la mise au point de la figure terminée.
+Dans cet exemple, les objets sont créés au moment du placement car il
+sont simples. On remarque la création (par \cs{psdot})d'un noeud
+ponctuel "pnode1" invisible sur le graphique, mais qui pourra être
+utilisé comme point de connexion intermédiaire (le petit cercle n'est
+là que pour sa visualisation). 
+
+\begin{CenterExample}
+  % positionnement des classes
+  \begin{pspicture}(17,5)\psgrid
+    \rput(3,3){\rnode{Objet1}{\umlClass{Objet 1}{}}}
+    \pnode(16.5,4.5){pnode1}\psdot(pnode1)% pour visu
+    \rput(9,4){\rnode{Objet2}{\umlClass{Objet 2}{}}}
+    \rput(2,1){\rnode{Objet3}{\umlClass{Objet 3}{}}}
+    \rput(12,1){\rnode{Objet4}{\umlClass{Objet 4}{}}}
+    \rput(5.5,1.5){\rnode{Objet5}{\umlClass{Objet 5}{}}}
+    %
+    \rput(15,2.5){\rnode{Objet6}{\umlActor{Objet6}}}
+  \end{pspicture}
+  %
+\end{CenterExample}
+
+% \clearpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Utilisation de \texttt{psmatrix}}
+
+% % Ceci est un paragraphe avant psmatrix.
+% % 
+Les boites précédemment définies peuvent être positionnées à l'aide 
+des macros de haut niveau de \pstricks{} telles que les environnements
+\texttt{psmatrix} ou \texttt{psTree}.
+
+Ces macro sont plus simples à utiliser, mais sont moins souple au 
+niveau du placement.  Voici un exemple de placement utilisant 
+l'environnement \texttt{psmatrix}.  On peut remarquer l'utilisation 
+d'une longueur négative pour la séparation des colonnes, ainsi que le 
+changement possible de la longueur d'une seule colonne. De même, un 
+changement d'espacement pour une ligne particulière peut se faire par 
+\verb:\\[2cm]: ou même \verb:\\[-1cm]:.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{CenterExample}
+  \psshadowbox[framesep=0]{
+    \begin{psmatrix}[rowsep=0.3,colsep=-0.5,mnode=r]
+       % Dessin de classes predefinies
+       [name=Chose1] Chose 1 & & & [colsep=2,name=P1] \\
+          & [name=Chose2] \pscirclebox{Chose 2} \\[2cm]
+       [name=Chose3] \umlClass{Chose 3}{} & & [name=Chose4] Chose 4 
+    \end{psmatrix}
+    % Visualisation d'un moeud ponctuel invisible par un X :
+    \ncput{pnode1}{$\times$}
+  }
+\end{CenterExample}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Utilisation des commandes de placement relatif}
+
+
+Les lettre E, N, W et S sont utilisés à la place de Right, Left, ...
+pour des raisons de cohérence avec les commandes de connexion du style
+\cs{ncNE} vues plus loin.  Les commandes de gestion du placement
+relatif sont les suivantes : 
+
+\begin{itemize}
+    \item affectation en absolu du point courant par rapport à l'origine
+    (fixée à (0,0) pour l'instant) : \cs{ResetXY}, \cs{SetX},
+    \cs{SetY}, \cs{SetXY} en cours) ; 
+ 
+    \item accés au point courant par \cs{X} et \cs{Y} ;
+
+    \item les commandes de base : \cs{incrX}, \cs{incrY}
+    (sont utilisées par les quatre suivantes) ;
+
+    \item les déplacements relatifs \cs{moveE}, 
+    \cs{moveN}, \cs{moveW}, \cs{moveS} ;
+
+    \item positionnement d'un objet au point courant \cs{rputXY}.
+
+    \item A FAIRE \cs{SetXY} pour l'affectation absolue du
+    point courant à partir d'une cordonnée d'un nom de node mémorisé.
+    Je n'ai pas trouvé la commande interne à \pstricks{} permettant de
+    convertir les coordonnées à partir d'un nom d'un node en
+    coordonnées X ou Y pour le point courant : (help) ; 
+    
+    \item A FAIRE \cs{setOri} pour changer la position de l'origine. Cela
+    affecte donc les commandes de positionnement absolues telles que
+    \cs{resetXY}. Le but est d'affecter l'origine à un noeud précédement
+    créé par un \cs{pnode} ou autre \cs{rnode} ;
+    
+    Note : vérifier si l'option \texttt{origin=\{coor\}} de \pstricks{}
+    ne conviendrait pas !
+     
+
+    \item A FAIRE \cs{move} (vers une direction incrémentale 
+    arbitraire pouvant utiliser les coordonnées polaires ; 
+\end{itemize}
+
+\begin{SideBySideExample}[xrightmargin=7cm]
+  \begin{pspicture}(-3,-3)(3,3)\psgrid
+    \ResetXY % X and Y are rest at startup
+              \rputXY{\pscirclebox{1}}
+    \moveE{2} \rputXY{\pscirclebox{2}}
+    \moveN{2} \rputXY{\pscirclebox{3}}
+    \moveW{2} \rputXY{\pscirclebox{4}}
+    \moveW{2} \rputXY{\pscirclebox{5}}
+    \moveS{2} \rputXY{\pscirclebox{6}}
+    \moveS{2} \rputXY{\pscirclebox{7}}
+    \moveE{2} \rputXY{\pscirclebox{8}}
+    \moveE{2} \rputXY{\pscirclebox{9}}
+  \end{pspicture}
+\end{SideBySideExample}
+
+\begin{SideBySideExample}[xrightmargin=7cm]
+  \begin{pspicture}(-3,-5)(3,5)\psgrid
+    %
+    \ResetXY % Don't forget !
+    %
+    \rputXY{\psovalbox{1: start}}
+    %
+    % mixing absolute and relative coords
+    \SetX{2}\SetY{2}\moveN{2}
+    \rputXY{\psframebox[linewidth=2pt]{Pos2}}
+    %
+    % use of negative coord, and coord with 
+    % explicit units (10mm)
+    \moveW{4}\moveS{4}\moveE{-10mm}\moveE{1}
+    \rputXY{\Large 3}
+    % use of current coord X and Y as params 
+    % for not using "\rputXY"
+    % (or for calcul : to be tested) :
+    \pscircle(\X,\Y){0.5}
+    %
+    % memorisation par un node
+    \moveE{4}\moveN{2}
+    \rputXY{\pnode{P4}}
+    \rputXY{P4}
+    \rputXY{\pscircle{0.5}}
+    % 
+    % mixing absolute (SetX) and relative (moveN)
+    \SetX{-1.5}\moveN{1.5}
+    \rputXY{\pscirclebox{UN CERCLE}}
+    %
+    % use of current coord X and Y in calcul 
+    % (doesn't work yet) :
+    \SetX{-2}\SetY{-2.5}
+    % \pssetlength allows \X+2 insteed of \X+2cm
+    \newlength{\tmpX}\setlength{\tmpX}{\X}
+    \newlength{\tmpY}\setlength{\tmpY}{\Y}
+    \psaddtolength{\tmpX}{5}
+    \psaddtolength{\tmpY}{1}
+    \rputXY{\pscircle{0.1}} % at curent point
+    \rputXY{%
+        \psframe(0,0)(\tmpX,\tmpY)%
+    }
+    %
+    % acces direct to a memorised point 
+    % NOT YET DONE
+    % \SetXY{P4}
+    % \rputXY{\pscirclebox{UN CERCLE}}
+    %
+  \end{pspicture}
+\end{SideBySideExample}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Les connecteurs orthogonaux}
+
+
+En plus des divers connecteurs proposés par \pstricks{} tels que
+\cs{ncline}, \cs{ncbar}, \cs{ncdiag}, \cs{ncdiagg}, \cs{ncangle},
+\cs{ncangles} et \cs{nccurve} ; \pstuml{} propose un certain nombre de
+connecteurs basés sur les précédents (par \cs{newpsobject}). 
+
+Le but est de simplifier le tracé des liens en se restreingnant aux 
+directions horizontales et verticales. Le principe est d'indiquer 
+dans le nom même de la commande le nombre de segments à tracer et 
+leur direction.\\
+Par exemple, la première lettre (\texttt{E} dans \cs{ncEVW}) indique
+que le segment part vers l'Est, tourne verticalement (\texttt{V} : vers
+le haut ou vers le bas) puis tourne vers l'Ouest \texttt{W} pour se
+connecter. 
+
+\begin{itemize}
+
+\item E, W, N, S pour Est, West, North, Sud,
+\item H, V pour Horizontal et Vertical,
+\item D pour diagonal,
+\item X pour indifférent.
+
+\end{itemize}
+
+\bigskip\noindent
+Les commandes suivantes sont proposées :
+
+\begin{itemize}
+
+\item un seul segment : \cs{ncE} \cs{ncW} \cs{ncN} \cs{ncS}
+ 
+\item deux segments : \cs{ncEN} \cs{ncES} \cs{ncWN} \cs{ncWS} \cs{ncNE}
+      \cs{ncNW} \cs{ncSE} \cs{ncSW} 
+      
+\item trois segment en U : \cs{ncEVW} \cs{ncWVE} \cs{ncSHN} \cs{ncNHS}
+ 
+\item trois segments en Z : \cs{ncEVE} \cs{ncWVW} \cs{ncNHN} \cs{ncSHS}
+
+\item trois segments en diagonale : \cs{ncEDE} \cs{ncWDW} \cs{ncNDN}
+      \cs{ncSDS} 
+      
+\item quatre segments (voir trois) : \cs{ncSXE} \cs{ncSXW} \cs{ncEXS}
+      \cs{ncEXN} \cs{ncWXS} \cs{ncWXN} \cs{ncNXE} \cs{ncNXW} 
+
+\end{itemize}
+
+\subsubsection*{Bug}
+
+La position par défaut  des labels (utilisée par des \cs{naput}...) 
+peut être affectée : dans ce cas imposer le positionnement explicitement 
+par :
+
+   |\ncE{nodeA}{nodeB}\naput[npos=0.5]{myLabel}|
+
+
+De même, dans les commandes à trois segments, quatre segments sont
+réellement dessinés : en cas de problème de positionnement des labels,
+il peut être utile d'imposer |armB=0|  (en attendant un raffinement de
+ces commandes orthogonales). 
+
+\subsection*{Exemples 1}
+
+A FAIRE (voir listing de dessin de classe ci-aprés)
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Essais d'icones "flèches" sur des courbes}
+
+Après des tentatives infructueuses (pour l'instant) de définir de
+nouvelle vraie flèche au sens \pstricks{} (sans passer par postscript :
+en n'utilisant que des commande \TeX{}), je propose une commande
+\cs{ncputicon} basée sur la command \cs{ncput}. Par défaut, l'icone est
+positionnée en début de connecteur (cf. Bug ci-dessous) 
+
+\subsection*{Bug}
+
+\subsection*{\`A faire}
+
+Je souhairais que par défaut l'icone soit positionnée en fin de
+connecteur en mettant par exemple |\psset{npos=5}|. Cela ne marche pas
+pour tous les connecteurs (les \cs{ncline} et les \cs{nccurve}). C'est
+pour cette raison que la position par défaut est en début de connecteur
+(peut-être existe-t-il une variable \pstricks\ qui indique le nombre
+total de segments présents dans le dernier connecteur utilisé ??). 
+
+\subsection*{Exemples 1}
+
+\begin{SideBySideExample}[xrightmargin=6cm]
+  \begin{pspicture}(0,0)(5,5)\psgrid
+     \rput[bl]{30}(0.5,0){\rnode{Node1}{%
+        \psframebox{\Large Node1}}}
+     \rput[tr]{45}(4.5,4){\rnode{Node2}{%
+        \psframebox{\Large Node2}}}
+     
+     \nccurve[angleA=-45,angleB=135]{Node1}{Node2}
+     \ncput[nrot=:U,npos=0.8]{mylabel}
+     \ncputicon{umlHerit}
+  
+     \nccurve[angleA=-30,angleB=-90]{Node2}{Node1}
+     \ncputicon{umlAgreg}
+     
+     \nccurve[angleA=135,angleB=-135]{Node1}{Node2}
+     \ncputicon{umlCompos}
+     \ncputicon[nrot=:U,npos=0.7]{umlV}
+  
+  \end{pspicture}
+\end{SideBySideExample}
+
+% \subsection*{Exemples 2}
+% A FAIRE (voir listing de dessin de classe ci-aprés)
+% 
+% 
+
+\section{Principales commandes \pstricks{} utilisées (A FAIRE)}
+
+\appendix
+\section{Exemple de diagramme de classe}
+
+\input{diagClass.tex}
+\VerbatimInput[gobble=0]{diagClass.tex}
+
+% % % % % % % % % \end{document}
+\section{Exemple de diagramme des cas d'utilisation}
+
+
+\input{diagCase.tex}
+\VerbatimInput[gobble=0]{diagCase.tex}
+
+\section{Exemple de diagramme de séquences}
+
+
+\input{diagSeq.tex}
+\VerbatimInput[gobble=0]{diagSeq.tex}
+
+\section{Exemple de diagramme d'états}
+
+
+\input{diagState.tex}
+\VerbatimInput[gobble=0]{diagState.tex}
+
+\section{Listing du package \texttt{pst-uml.sty}}
+
+\VerbatimInput[baselinestretch=0.9,fontsize=\small,
+    gobble=0]{pst-uml.sty}\label{verylast}
+%\small
+%\VerbatimInput{test.sty}\label{verylast}
+\mbox{}
+
+\end{document}
+

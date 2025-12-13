@@ -1,0 +1,109 @@
+\def\Status{1}
+
+% Settings specific for Serbian translation and its LuaLaTeX code
+% ---------------------------------------------------------------------
+
+% Extra packages.
+% A text with a lot of technical, hard-to-hyphenate strings looks
+% *much* better with microtype:
+\RequirePackage{microtype}
+\RequirePackage{polyglossia}
+% Import the original tex-live.sty from texlive-en; this must be done
+%   after fontspec (fontspec is loaded by polyglossia).
+\RequirePackage{tex-live}
+%   ... and:
+\RequirePackage{metalogo}
+\RequirePackage[center,it,small]{caption}
+\RequirePackage{relsize}
+\RequirePackage{fancyhdr}
+\RequirePackage{titling}
+\RequirePackage[toc]{multitoc}
+\RequirePackage{etoolbox}
+\RequirePackage{grffile}
+
+% Load the default and all other languages.
+%   For the sake of simplicity, we enclose non-Serbian text in
+%   appropriate \textLL{} only if we need hyphenation.
+\setdefaultlanguage[Script=Cyrillic]{serbian}
+\setotherlanguage{english}
+\setotherlanguage{russian}
+\setotherlanguage{german}
+\setotherlanguage{french}
+\setotherlanguage{italian}
+\setotherlanguage{polish}
+\setotherlanguage{czech}
+\setotherlanguage{slovak}
+\setotherlanguage{dutch}
+\setotherlanguage{finnish}
+\setotherlanguage{slovenian}
+\setotherlanguage{spanish}
+
+% OTF fonts we use; cf. README-SR.txt.
+% We need '-ccmp' since the presence of combining diacritics inside 
+% words breaks luatex with this font; cf. 
+% http://tug.org/pipermail/luatex/2017-May/006502.html
+% and solution by U. Fischer:
+% http://tug.org/pipermail/luatex/2017-May/006511.html
+\setmainfont[RawFeature={+ss11,+ss12,-ccmp},Ligatures=TeX]{Old Standard}
+\setsansfont{CMU Sans Serif}
+\setmonofont{CMU Typewriter Text Light}
+\newfontfamily\cyrillicfonttt{CMU Typewriter Text Light}
+\newfontfamily\tthyphenfont[HyphenChar={-}]{CMU Typewriter Text Light}
+
+% A bit more tuning:
+% "Windows" is a very frequent word so let's get it properly
+%   hyphenated. The same for Kpathsea:
+\newcommand{\Windows}{\textenglish{Windows}}
+\def\KPS{\textenglish{Kpathsea}}
+% We need different quotes for Serbian.
+\renewcommand{\samp}[1]{\char"201E\texttt{#1}\char"201C{}}
+% There is no slanted Old Standard.
+\newfontfamily\slantfont[FakeSlant=.2]{Old Standard}
+\newfontfamily\cmutt{CMU Typewriter Text}
+\renewcommand{\var}[1]{{\slantfont#1}}
+\renewcommand{\textsl}[1]{{\slantfont#1}}
+\def\Ucom#1{{\cmutt\bfseries#1}}
+\renewcommand{\BibTeX}{B{\smaller IB}\TeX{}}
+% Redefine running headers.
+\pagestyle{fancyplain}
+\fancyhf{}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+\lhead{\fancyplain{}{\emph{\MakeUppercase\leftmark}}}
+\rhead{\fancyplain{}{\thepage}}
+\setlength{\headheight}{12.22003pt}
+\renewcommand{\headrulewidth}{0pt}
+% We need left aligned hyphenated two-column TOC:
+\patchcmd{\@dottedtocline}
+  {\rightskip\@tocrmarg}
+  {\rightskip\@tocrmarg plus 4em}
+  {}{}
+\renewcommand*{\multicolumntoc}{2}
+\setlength{\columnseprule}{0.4pt}
+
+% Enable hyphenation of long command names:
+\DeclareRobustCommand{\cs}[1]{{\tthyphenfont\char`\\#1}}
+% We don't want to hyphenate program names:
+\renewcommand{\prog}[1]{\mbox{\textsf{#1}}}
+
+% A hack to disable French spacing after punctuation,
+% which remains enabled after every usage of \textfrench{}
+% (a possible polyglossia + lualatex bug):
+\newcommand{\textfrenchp}[1]{%
+  \textfrench{#1}%
+  \directlua{polyglossia.desactivate_frpt()}%
+}
+% A hack to prevent combining diacritics inside a word
+% to break luatex. '-ccmp' solves the problem (see a comment
+% above), but we keep this command for now.
+\newcommand{\tmpbox}[1]{%
+  %\textenglish{#1}%
+  #1%
+}
+
+% Finally:
+\widowpenalty=4000
+\clubpenalty=4000
+\frenchspacing
+\flushbottom
+
+\endinput

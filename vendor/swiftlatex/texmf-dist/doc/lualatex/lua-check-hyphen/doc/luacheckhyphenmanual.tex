@@ -1,0 +1,173 @@
+\documentclass{ltxdockit}
+\usepackage{csquotes,graphicx}
+\newcommand\pkgversion{0.7a}
+
+\titlepage{%
+  title={The lua-check-hyphen package},
+  subtitle={Checking your hyphenated words},
+  url={https://github.com/pgundlach/lua-check-hyphen},
+  author={Patrick Gundlach},
+  email={patrick@gundla.ch},
+  revision={\pkgversion},
+  date={\today}}
+
+\hypersetup{%
+  pdftitle={The lua-check-hyphen package},
+  pdfsubject={Checking your hyphenated words},
+  pdfauthor={Patrick Gundlach},
+  pdfkeywords={tex, latex, hyphenation}}
+
+
+
+
+\begin{document}
+\printtitlepage
+\tableofcontents
+
+\section{Introduction}
+
+\TeX\ is pretty good at hyphenating words. But a computer algorithm is not perfect, sometimes we wish to manually check all used hyphenations in a document. This package helps you on this task.
+
+\section{Usage}
+
+This package only works with Lua\TeX. To activate it a
+
+\begin{verbatim}
+	\usepackage{lua-check-hyphen}
+\end{verbatim}
+is enough.
+
+When you process your document with Lua\LaTeX, a file with the suffix \verb|.uhy| is created with that contains every hyphenated word. You can check that file for hyphenation errors. With the package option \texttt{nofile}, you can tell the package not to write the external file. In any case the list is written to the log file.
+
+\section{Advanced usage}
+\label{sec:advanced_usage}
+
+With longer documents it becomes tedious checking for the same hyphenated words over and over. Therefore this package allows you to create a whitelist of \emph{accepted hyphenation}. This whitelist is a simple textfile where the words are separated by whitespace and the allowed hyphenation is marked with a dash (-). You can use the output file \texttt{.uhy} as an input for the whitelist file. You load the file in your document with
+
+\begin{verbatim}
+	\LuaCheckHyphen{whitelist=myfile.txt}
+\end{verbatim}
+
+and a sample file looks like this:
+
+\begin{verbatim}
+seren-ity
+morn-ings
+posses-sion
+\end{verbatim}
+
+or
+
+\begin{verbatim}
+seren-ity morn-ings posses-sion
+\end{verbatim}
+
+The format is not important, the entries must be separated by whitespace.
+
+Words in this whitelist won't be reported. \sty{lua-check-hyphen} assumes that these are valid break points.
+
+You can have more than one whitelist file by giving the filenames separated by comma:
+
+\begin{verbatim}
+\LuaCheckHyphen{whitelist={file1.txt,file2.txt,file3.txt}}
+\end{verbatim}
+
+\section{Visual marker}
+
+You might want to use the PDF viewer to check for incorrectly hyphenated words. To enable visual feedback, just pass the \texttt{mark} option to the \cmd{usepackage} or to the \cmd{LuaCheckHyphen} command:
+
+\begin{verbatim}
+\usepackage[mark]{lua-check-hyphen}
+% or:
+\LuaCheckHyphen{mark}
+\end{verbatim}
+
+This marks all non-whitelisted used hyphenation points in the document with a black square (not to be confused with overfull boxes):
+
+\includegraphics{sample-crop}
+
+\section{Options to \cmd{LuaCheckHyphen}}
+
+For the true/false options you don't need to write the \texttt{=true} part. All options except for the \texttt{whitelist} can be passed directly to the package:
+
+\begin{verbatim}
+\usepackage[mark,nofile]{lua-check-hyphen}
+\end{verbatim}
+
+\noindent All options can be set in \cmd{LuaCheckHyphen}.
+
+\begin{verbatim}
+\LuaCheckHyphen{mark,nofile,whitelist=myfile.txt}
+\end{verbatim}
+
+
+\begin{optionlist}
+  \boolitem[true]{compact}{Words with different hyphenation occurrences are listed only once.}
+  \boolitem[false]{mark}{Create visual markers when an unknown hyphenation encountered.}
+  \boolitem[false]{nofile}{Don't write to an external file (\texttt{.uhy}).}
+  \boolitem[false]{file}{Don't do anything. This is for the last document run, no marks will be generated.}
+  \valitem{whitelist}{files}{List of files, separated by \enquote{\texttt{,}}. You need to wrap the filenames in braces \texttt{\textbraceleft...\textbraceright} so that the comma won't be seen as a option separator.}
+\end{optionlist}
+
+\section{Final document}
+
+When you pass the Option \opt{final} to the \cmd{documentclass}, the \cmd{usepackage} or the \cmd{LuaCheckHyphen} command, all processing is disabled.
+
+\section{Changes}
+\begin{changelog}
+\begin{release}{0.7a}{2018-04-19}
+  \item Bugfix for \texttt{--output-directory} with argument separated by = instead of whitespace.
+\end{release}
+\begin{release}{0.7}{2018-04-16}
+  \item Take \texttt{--output-directory} into account.
+\end{release}
+\begin{release}{0.6}{2018-02-07}
+  \item Remove dependencies and update package to a modern LuaTeX. Thanks to Christian Stadelmann.
+\end{release}
+\begin{release}{0.5}{2017-07-31}
+  \item Fix error where I can't find a whitelist file, but the io.open() call does not return an error message.
+\end{release}
+\begin{release}{0.4}{2016-04-01}
+  \item Compact representation of hyphenated words that occur more than once with different hyphenation positions (option copmact=true).
+  \item Sort uhy entries alphabetically and only use lowercase words in the file.
+\end{release}
+ \begin{release}{0.2}{2012-06-22}
+  \item Fix ligature counting error (github issue \#1)
+  \item Add nofile option
+  \item No hyphenation list in the terminal output (log only)
+  \item License details added
+ \end{release}
+\end{changelog}
+
+\section{Bugs}
+
+\begin{itemize}
+  \item Paragraphs that end with \verb+\end{document}+ are ignored. Inserting an empty line or
+        \cmd{par} helps.
+\end{itemize}
+
+\section{License}
+
+This file (documentation and the package) is released under the terms of the MIT License. See the file \texttt{mit-license.txt} in the distribution.
+
+% Copyright (c) 2012 Patrick Gundlach
+
+% Permission is hereby granted, free of charge, to any person obtaining a copy
+% of this software and associated documentation files (the \enquote{Software}), to deal
+% in the Software without restriction, including without limitation the rights
+% to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+% copies of the Software, and to permit persons to whom the Software is
+% furnished to do so, subject to the following conditions:
+
+% The above copyright notice and this permission notice shall be included in all
+% copies or substantial portions of the Software.
+
+% THE SOFTWARE IS PROVIDED \enquote{AS IS}, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+% IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+% FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+% AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+% LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+% OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+% SOFTWARE.
+
+\end{document}

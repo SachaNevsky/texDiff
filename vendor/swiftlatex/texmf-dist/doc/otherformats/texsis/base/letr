@@ -1,0 +1,230 @@
+#!/bin/sh 
+#
+# letr -  a Unix shell script for printing a letter with an addressed
+# envelope, using TeXsis (the TeX macros for physicists).  The syntax is: 
+#
+#  	letr [ -q ][ -Pprinter ] [ dvips flags ] [ filename ]
+#
+# where "filename" is the name for your TeX job.  The TeX instructions
+# for creating your letter will be put in the file filename.tex, while
+# the instructions for creating the printed envelope will be in the
+# file filename.env.   If no name is given the default is "TeXletter".
+#
+# You first edit your letter with your default EDITOR, then it is run
+# through TeXsis.  You can preview the letter, and then choose whether
+# or not to print it, and whether or not to print the addressed envelope.
+#
+# Use the -q flag to bypass the editor, and -P to specify an alternate
+# printer.  All other flags are passed to dvips.  So, for example, if
+# you give the -m flag it will go to dvips and the letter (not just the
+# envelope) will be printed in manual feed mode, so you can put your own
+# paper in the printer for it.
+#
+# To get the envelope to print in landscape mode and with manual feed
+# we call dvips explicitly.  If you need to, change the DVIPS command 
+# and ENVFLAGS below to match your local site configuration.
+#
+# Eric Myers <myers@umich.edu> 	- 27 January 1996
+# Department of Physics, University of Michigan, Ann Arbor
+# @(#) $Id: letr,v 1.7 2000/06/01 20:02:30 myers Exp $
+######################################################################
+# Local Customization: 
+
+EDITOR=${EDITOR-"emacs"}   	# editor (default to emacs)
+DVIVIEW=${DVIVIEW-"xdvi"}	# dvi file viewer (dviview is more general)
+DVIPS=${DVIPS-"dvips -q"}	# general dvips command
+ENVLFLAGS="-m -t landscape"	# dvips flags for the envelope
+
+#====================(end of customization)====================*
+
+##  Parse command line arguments.  Unrecognized ones are saved for dvips 
+
+FNAME=${FNAME-"TeXletter"}   	# name of file to process
+FLAGS=" "                  	# flags to pass on to dvips
+NOEDIT=""
+
+while [ $# != 0 ]
+do      case "$1" in
+	-P*)    PRINTER=`echo $1 | tail +3c`    # strip off the -P
+		LPDEST=$PRINTER		;; 
+	-q)	NOEDIT="NOEDIT" 	;;
+        -*)     FLAGS="$FLAGS $1" 	;;
+         *)     FNAME="$1" 		;;
+        esac
+        shift
+done
+
+PROG=`basename $0` 
+
+###############
+# Determine which printer we shall use, and how.  In NeXTStep the lpr
+# command ignores the $PRINTER variable, so we will correct for that
+# here by always using `lpr -P$PRINTER`, with "Local_Printer" as the
+# default.  For other Unix change default printer to 'lp'.  For SYSV
+# we need to use "lp -d$LPDEST" instead.
+
+if [ -x /usr/ucb/lpr ]; then
+  if [ -x /sdmach ]; then		# NeXTStep
+    PRINTER=${PRINTER-"Local_Printer"}	
+  else					# other BSD 
+    PRINTER=${PRINTER-"lp"}
+  fi
+  # The -h option suppresses the banner page
+  LPR="/usr/ucb/lpr -h -P$PRINTER"
+fi
+  
+if [ -x /usr/bin/lpr ]; then		# BSD (Linux, Solaris)
+    PRINTER=${PRINTER-"lp"}
+    # The -h option suppresses the banner page
+    LPR="/usr/bin/lpr -h -P$PRINTER"
+fi
+
+if [ -x /usr/bin/lp ]; then		# SYSV (eg. HP-UX)
+  LPDEST=${LPDEST-"lp"}			
+  # The -onb option suppresses the banner page on HP LaserJet3/4 (and 5?)
+  LPR="/usr/bin/lp -onb -d${LPDEST} "	
+fi
+
+if [ ! $?LPR ]; then
+  echo "Cannot determine lpr/lp command."
+  exit 2
+fi
+
+## Figure out line end suppression for BSD or SYSV
+
+if [ "`echo 'EC\c'; echo HO`"  =  "ECHO" ]; then
+  SYSVNL="\c"; BSDNL="" # System V line control
+else
+  BSDNL="-n"; SYSVNL="" # BSD line control
+fi
+
+##  the function `ask_def default text` asks a question and returns 
+##    the user's answer, using the default if just <cr> is pressed.
+
+ask_def () {
+    DEFAULT=$1 ;     shift
+    echo ${BSDNL} "$* [${DEFAULT}] ${SYSVNL}" 
+    read ANS
+    if [ -z "$ANS" ]; then ANS=$DEFAULT ; fi
+    export ANS; }
+
+
+##  Strip off .tex from the filename, if it is included. 
+##    Any trailing . is also removed (helps for tcsh filename completion).
+
+FNAME=`basename $FNAME .tex`           # get just the file name, strip .tex
+FNAME=`basename $FNAME .`              # get just the file name, strip "."
+
+##  If the named TeX file does not exist, create it with a simple
+##  TeXsis \letter template 
+
+if [ ! -f ${FNAME}.tex ]; then 
+cat >${FNAME}.tex <<End-of-Text
+\\texsis
+\\letter
+\\withEnvelope	% if you also want to print an envelope
+\\def\\Email{}% <-- set e-mail address if you want it in the letterhead
+\\letterhead{}% <-- phone number or extension goes here
+\\address
+NAME OF ADDRESSEE HERE
+ADDRESS GOES HERE
+AS MANY LINES AS YOU NEED
+   
+\\body
+Dear WHOEVER,
+
+BODY OF LETTER GOES HERE.
+
+AS MANY PARAGRAPHS AS YOU WANT.
+
+\\closing
+Sincerely,
+YOUR NAME HERE
+
+\bye
+End-of-Text
+fi
+
+
+##  Edit the file with EDITOR, unless -q flag was given
+
+if [ -z "$NOEDIT" ]; then
+  if $EDITOR ${FNAME}.tex 
+  then   echo " "
+  else
+    echo "${PROG}: ${EDITOR} editing error ($?).  Bailing out..."
+    exit 1
+  fi
+fi
+
+if [ ! -f ${FNAME}.tex ]; then exit 0 ; fi
+
+##  Process through TeXsis 
+
+if [ -z "$NOEDIT" ]; then
+  ask_def yes "Process file ${FNAME}.tex through TeXsis? "
+else
+  ANS="yes"
+fi
+
+case $ANS in
+  yes|Y|y|YES|Yes) 
+     if texsis ${FNAME}.tex  
+     then   
+        echo " "
+     else
+       echo "${PROG}: TeXsis error ($?).  Bailing out..."
+       exit 1
+     fi ;;
+  *) exit 0
+esac
+
+
+##  Preview the .dvi file, if desired 
+
+if [ -f ${FNAME}.dvi ]; then
+
+  ask_def yes "Do you want to preview the letter? "
+  case $ANS in
+      yes|Y|y|YES|Yes)	echo " " 
+	$DVIVIEW ${FNAME} #>/dev/null 2>&1   
+	sleep 1 ;;
+  esac
+
+  echo " "
+  echo "Default printer is '${PRINTER}'."
+  ask_def yes "Do you want to print this now? "
+  case $ANS in
+      yes|Y|y|YES|Yes) 
+	${DVIPS} ${FLAGS} ${FNAME}.dvi	# >/dev/null 2>&1   
+	echo "Printing the letter..."
+        ${LPR} ${FNAME}.ps ;;
+      *);;
+  esac
+
+fi
+
+
+##  Process envelope, if desired and it exists 
+
+if [ -f ${FNAME}.env ]; then
+
+  ask_def yes "Do you want to print the envelope? "
+  case $ANS in
+      yes|Y|y|YES|Yes) 
+        /bin/rm -rf ${FNAME}.dvi ${FNAME}.ps
+	texsis ${FNAME}.env 	
+        $DVIPS ${FLAGS} ${ENVLFLAGS}  ${FNAME}.dvi	## >/dev/null 2>&1   
+	echo "Printing the envelope...   Please feed the printer. " 
+        ${LPR}  ${FNAME}.ps 
+  esac
+
+else
+  echo "No envelope file ${FNAME}.env was found."
+fi
+ 
+# Clean up: remove .dvi file, .ps file, and .log file (but keep .env file).
+
+/bin/rm -f ${FNAME}.dvi ${FNAME}.log ${FNAME}.ps
+
+exit 0

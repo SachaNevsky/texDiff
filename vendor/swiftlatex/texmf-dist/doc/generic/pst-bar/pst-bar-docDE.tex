@@ -1,0 +1,736 @@
+%% $Id: pst-bar-doc.tex 63 2008-11-26 18:00:46Z herbert $
+%% geaendert am 7.2.09 ch. roemer
+\documentclass[11pt,ngerman,BCOR10mm,DIV12,bibliography=totoc,parskip=false,smallheadings
+    headexclude,footexclude,oneside]{pst-doc}
+\listfiles
+
+\usepackage[T1]{fontenc}
+\usepackage[ansinew]{inputenc}
+\usepackage{babel}
+
+\usepackage{pst-bar}%
+\let\pstBarVersion\fileversion
+\usepackage{booktabs}%
+\usepackage{filecontents}%
+\usepackage{verbatim}%
+\makeatletter
+\def\kernhack#1#2{%
+    \begingroup
+	\setbox\z@\hbox{#1#2}%
+	\dimen@\wd\z@
+	\setbox\z@\hbox{#1{}#2}\advance\dimen@-\wd\z@
+	\ifdim\dimen@=\z@\else\kern\dimen@\fi
+    \endgroup
+}
+\def\switch#1#2{%
+    \begingroup
+	\def\@switch##1#1##2\@nil#1##3\@stop{%
+	    \def\reserved@a{##3}%
+	    \ifx\reserved@a\@empty#2\else
+		\setbox\z@\hbox{##1#1}%
+		\setbox\tw@\hbox{\kernhack{#1}{##2}\switch{#1}{##2}}%
+		\dimen@\wd\tw@\advance\dimen@\wd\z@%
+		\wd\z@\dimen@%
+		\rlap{\hb@xt@\dimen@{\hfil\unhbox\tw@}}%
+		\box\z@
+	    \fi
+	}%
+	\@switch#2\@nil#1\@nil#1\@stop
+    \endgroup
+}
+% Given an e-mail address of the form abc@def.ghi.jkl, reverses it to be jkl
+% ghi. def. abc@
+\def\switchemail#1{\expandafter\@switchemail#1\@stop}
+% Helper function for \switchemail. Note the \copy, because \kernhack will
+% destroy the box otherwise. Need to do some funky stuff because of catcodes.
+\begingroup
+\makeatother
+\def\tmp#1#2#3{%
+    \gdef#1##1@##2#2{%
+	\begingroup
+	\setbox#3\hbox{\switch{.}{##2}}%
+	\switch{@}{##1@\copy#3}%
+	\endgroup
+    }%
+}
+\makeatletter
+\tmp\@switchemail\@stop\@tempboxa
+\endgroup
+\makeatother
+
+\usepackage[T1]{fontenc}%
+
+\begin{filecontents*}{example1.csv}
+    Set 1, Set 2, Set 3
+    1, 2, 3
+    1, 2, 3
+\end{filecontents*}
+
+\begin{filecontents*}{example2.csv}
+    Set 1, Set 2, Set 3
+    1, 2, 3
+    0.5, 1.5, 1
+\end{filecontents*}
+
+\begin{filecontents*}{example3.csv}
+    Set 1, Set 2, Set 3
+    1, 2, 3
+    0.5, 1.5, 1
+    0.75, 1.6, 0.9
+    0.9, 2.2, 2.5
+\end{filecontents*}
+
+\begin{filecontents*}{example4.csv}
+    Set 1, Set 2, Set 3
+    1, 0, 3
+\end{filecontents*}
+
+\begin{filecontents*}{example5.csv}
+    0, 2, 0
+\end{filecontents*}
+
+\begin{filecontents*}{example6.csv}
+    Set 1, Set 2, Set 3
+    1.3, 2.5, 0.9
+\end{filecontents*}
+
+\begin{filecontents*}{example7.csv}
+    0.7, 1.9, 0.4
+    1.2, 2.7, 1.4
+\end{filecontents*}
+
+\begin{document}
+\title{\texttt{pst-bar}\\ Balken- und Säulendiagramme mit \texttt{pstricks}\\
+    {\small v.\pstBarVersion}}
+\author{Alan Ristow}
+\docauthor{Alan Ristow\\Herbert Vo\ss\\Juliane Horn (\"Ubersetzung)}
+\date{\today}
+\maketitle
+
+  \begin{abstract}
+    Mithilfe von \LPack{pst-bar} kann man \LPack{pstricks} verwenden, um Balkendiagramme 
+    direkt aus einer Daten-Datei zu erzeugen. Dieses Paket befindet sich allerdings noch im 
+    Beta-Stadium -- die üblichen Warnungen bezüglich Beta-Software treffen 
+    daher zu. Es wird zusätzliche Merkmale und verbesserte Dokumentationen (den Inhalt 
+    sowie die Ausstattung betreffend) geben, wenn sich der Code stabilisiert.
+  \end{abstract}
+
+\section{Einführung}
+ Aufgrund der Leistung und Flexibilität von \LPack{pstricks} [1] ist es möglich, mit 
+ \LPack{pst-bar} Balkendiagramme zu erstellen, deren Einzelheiten in einer
+ mit Komma abgetrennten Datei gespeichert sind. 
+ Es gibt mehrere Lösungen, um Säulendiagramme in \TeX\ und \LaTeX\ -
+ Dokumenten zu "`zeichnen"'. 
+ Die offensichtliche Lösung ist, ein externes Programm wie \Index{gnuplot}
+ oder \Index{Matlab} zu verwenden, das Balkendiagramme in einem Format speichert, welches 
+ direkt von \TeX\ oder \LaTeX\ gelesen werden kann. Diese Methode hat den Nachteil, dass 
+ zusätzlicher Aufwand nötig ist, um den Diagrammen ein einheitliches Erscheinungsbild zu 
+ geben, welches zu anderen Grafiken im Dokument passt. In vielen Fällen kann der Diagrammtext 
+ von \LaTeX\ mithilfe der Pakete \LPack{psfrag} oder \verb|psfragx| eingefügt werden 
+ (das Matlab-Programm \Index{LaPrint} kann diesen Prozess bei Matlab-Diagrammen 
+ beschleunigen, da es speziell für diesen Zweck entwickelt wurde [2]). Jedoch schreiben 
+ einige Programme die Textelemente in EPS (Encapsulated Postscript)-Dateien, sodass die 
+ Optionen von \LPack{psfrag} nicht funktionieren.
+
+Balkendiagramme können aber auch mit den eingebauten Zeichenwerkzeugen in 
+\TeX\ und \LaTeX\ gezeichnet werden. Dafür wird das \LPack{histogr} Paket [3] verwendet,
+welches neben Histogrammen auch sehr einfache Balkendiagramme erstellen kann. Es scheint eine 
+Annäherung an das \LPack{bar} Paket [4] für \LaTeX\ 2.09 zu sein, da es eine neue Umgebung 
+für das Zeichnen von Säulendiagrammen definiert. Allerdings sind die eingebauten 
+Zeichenwerkzeuge begrenzt und die Arbeit am \LPack{bar} Paket wurde wohl nach 1994 beendet.
+
+Es wurden technisch verfeinerte Zeichenwerkzeuge für \TeX\ und
+\LaTeX\ entwickelt; die bekanntesten sind \verb|eepic|, \verb|texdraw| und \verb|latexdraw|,
+\verb|LaTeXPiX|, MetaPost, \LPack{mfpic}, und \LPack{pstricks}. Mit jedem dieser Mittel 
+können Balkendiagramme gesetzt werden; jedoch besitzt keines eine eingebaute Unterstützung 
+für diese, sodass die Diagramme mit der "`Brachialgewalt"'--Methode angefertigt werden 
+müssen, das 
+bedeutet ein manuelles Einzeichnen von Kästen, welche die Balken im Diagramm 
+darstellen. Je nach Werkzeug kann es sein, dass auch die Achsen manuell eingezeichnet
+werden müssen. Das \LPack{pst-bar} Paket soll den Prozess des Zeichnens von Balken- und 
+Säulendiagrammen unter Verwendung von \LPack{pstricks} automatisieren.
+
+Derzeit gibt es zwei Möglichkeiten für die Erstellung von Balkendiagrammen mit 
+\verb|pstricks|. Die Erste ist die oben genannte Brachialgewalt-Methode, bei der eine Reihe 
+von 
+\Lcs{psframe}s mit passenden Höhen, Breiten und Farben gezeichnet werden, um zum gewünschten 
+Ergebnis zu gelangen [5]. Zwar ist diese Möglichkeit vortrefflich und bietet den größten 
+Spielraum, allerdings ist sie mühsam und arbeitsintensiv. Die zweite Option ist das 
+\LPack{bardiag} Paket; es automatisiert im Wesentlichen [6] die Vorgehensweise mit brachialer 
+Gewalt im.
+Dieser Ansatz ist wirkungsvoll, jedoch benötigt \LPack{bardiag} zahlreiche externe Pakete. 
+Weiterhin verwendet es \LaTeX\ , um mathematische Befehle durchzuführen und es ist nicht 
+kompatibel mit dem normalen \TeX.
+
+Durch \LPack{pst-bar} werden diese Probleme vermieden. Es beruft sich ausschließlich auf 
+Pakete der \verb|pstricks|-Familie, stellt umfassende Anpassungsfunktionen zur Verfügung, 
+baut auf Postscript für fast alle mathematischen Operationen und sollte mit dem einfachen 
+\TeX\ kompatibel sein (bisher ungetestet). Damit Balkendiagramme angefertigt und beschriftet 
+werden können, benutzt \verb|pst-bar| Befehle, um die Angaben der durch Komma 
+abgegrenzten Datei zu lesen. Vielfache Datenreihen können dabei entweder gesammelt oder 
+gestapelt grafisch dargestellt werden; die Balken können horizontal oder vertikal 
+eingezeichnet werden. Eine zusätzliche Option ermöglicht es, Blockdiagramme zu erzeugen, 
+welche die Unterschiede zwischen den nachfolgenden Reihen von Daten in der Datendatei zeigen 
+(siehe auch Kapitel ~\ref{sec:block}).
+
+Zu diesem Zeitpunkt sollte \verb|pst-bar| noch als Beta-Software betrachtet werden. Es wird 
+nicht garantiert, dass die Änderungen am Code, welche zwischen dieser Ausgabe und der ersten 
+dauerhaften Ausgabe auftreten, auch rückwärts kompatibel sind.
+
+\section{Erstellen von Balken- und Säulendiagrammen}
+Das Zeichnen von Balkendiagrammen mit \verb|pst-bar| erfolgt in drei Schritten: 
+(i) Lesen der Datendatei, (ii) Zeichnen der Balken und (iii) Einzeichnen der Achsen. Die 
+ersten beiden Schritte erfolgen direkt durch \verb|pst-bar|. Für den dritten ist das 
+\LPack{pst-plot} Paket notwendig, das fester Bestandteil von \verb|pstricks| ist.
+
+Die folgenden Abschnitte befassen sich mit dem Format der Datendatei, mit dem Laden von Daten 
+aus der Datei und mit dem Erstellen eines Balkendiagramms mithilfe dieser Daten.
+
+\subsection{Format der Datendatei}
+Die Datei mit den Daten muss durch Komma begrenzt sein und jede Reihe muss die gleiche Anzahl 
+an Einträgen enthalten. Eine Kopfzeile ist erlaubt, aber kein Eintrag in dieser Zeile darf 
+Kommas oder \Lcs{par} Befehle beinhalten (gilt ebenso für \verb|\\|). Eine der Dateien, 
+welche für diese Dokumentation benutzt werden, sieht so aus: \verbatiminput{example1.csv}%
+In diesem Fall sind \verb|Set 1|, \verb|Set 2|, und \verb|Set 3| die Kopfzeilen. Die 
+nachfolgenden Reihen, später als \emph{data rows} gekennzeichnet, umfassen die Daten, die mit
+den Überschriften verknüpft werden. Die Datei wird in einem säulenähnlichen Stil angeordnet, 
+sodass man mit \verb|Set 1| die Daten \verb|1| und \verb|1| verbindet, mit \verb|Set 2| die 
+Daten \verb|2| und \verb|2| und so weiter. Zuerst werden die Daten grafisch dargestellt und 
+anschließend mit dem Text der Kopfzeile beschriftet.
+
+\emph{Achtung!} Es gibt zwei sehr wichtige Bedingungen für die Daten innerhalb der Datei:
+\begin{itemize}
+  \item Alle Daten außerhalb der Kopfzeile müssen numerisch sein. Falls keine Kopfzeile 
+  vorhanden ist, müssen alle Daten der Datei numerisch sein.
+  \item Jede Zeile muss dieselbe Anzahl von Einträgen haben.
+\end{itemize}
+Werden diese Bedingungen nicht eingehalten, können Postscript-Fehler oder (seltener) falsch 
+beschriftete oder gezeichnete Balkendiagramme die Folge sein.
+      
+Wie diese Dateien grafisch dargestellt werden, hängt von der Art des gewünschten Diagramms 
+ab. Siehe dazu Kapitel ~\ref{sec:cluster} -- \ref{sec:block} und die Beispiele in 
+Kapitel~\ref{sec:examples}.
+
+\subsection{Lesen der Datendatei}
+Der Befehl \verb|\readpsbardata| liest die Datei:
+\begin{verbatim}
+    \readpsbardata[<options>]{<data>}{<filename>}
+\end{verbatim}
+Geben Sie für die Daten einen Makro-Namen an, den Sie noch nicht benutzen. 
+
+Die verfügbaren Optionen sind:
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Parameter & Definition\\
+\midrule
+\Lkeyword{header} & \verb|true|, wenn die erste Zeile der Datei eine Kopfzeile ist\\
+                  & \verb|false|, wenn \verb|true| nicht zutrifft\\
+                  & Standard: \verb|true|\\
+\bottomrule
+\end{tabular}
+\end{center}
+      
+Setzt man \verb|header| auf \verb|false|, so geht \verb|pst-bar| davon aus, dass kein 
+header (Kopfzeile) existiert und die erste Zeile wird als Daten-Zeile angesehen. 
+
+\subsection{Einzeichnen der Balken}
+\label{sec:drawing_bars}%
+Der Befehl \verb|\psbarchart| zeichnet die Balken für das Diagramm.
+\begin{verbatim}
+    \psbarchart[<options>]{<data>}
+\end{verbatim}
+Für \verb|<data>| verwenden Sie bitte den Makro-Namen, den Sie bei \Lcs{readpsbardata} 
+ausgewählt hatten.
+Die Säulen werden in Spalten eingeteilt, die eine \Lcs{psxunit} breit sind. Die Anzahl der 
+Säulen in einer Spalte entspricht dabei der Zahl der Datenreihen in einer Datei. Die 
+Unterseite jeder Spalte wird mit den Überschriften (header) der Datei beschriftet, wenn man 
+bei \Lcs{readpsbardata} für \Lkeyword{header} \verb|true| angegeben hat. Allerdings 
+wird nur die Balken- und Säulenbeschriftung erstellt -- der Rahmen und die Achsen müssen extra 
+bestimmt werden.
+
+Die verfügbaren Optionen sind:
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Parameter           & Definition\\
+\midrule
+\Lkeyword{chartstyle}   & \Lkeyval{cluster} erzeugt eine Gruppe von Balken\\
+                        & \Lkeyval{stack} sammelt die Gruppen in einer Einzelspalte\\
+                   & \Lkeyval{block} erstellt einen schwebenden Balken (Minimum ist nicht 0)\\
+                                & Standard: \Lkeyval{cluster}\\
+            \Lkeyword{barstyle}     & Name(n) des Balken-Stils für jeden Balken\\
+                    & Standard: \verb|{black,darkgray,gray,lightgray,white,red,green,blue}|\\
+            \Lkeyword{barcolsep}    & beeinflusst den Zwischenraum zwischen den Spalten\\
+                                & Standard: \verb|0.4|\\
+            \Lkeyword{barsep}       & beeinflusst den Zwischenraum zwischen den Balken \\
+                                & (\Lkeyval{cluster} und \Lkeyval{block} Diagramme)\\
+                                & Standard: \verb|0.0|\\
+            \Lkeyword{barlabelrot}  & Drehwinkel der Spaltenbeschriftung\\
+                                & Standard: \verb|0|\\
+            \Lkeyword{orientation}  & \Lkeyval{vertical} für vertikal gezeichnete Balken\\
+                                & \Lkeyval{horizontal} für horizontal gezeichnete Balken\\
+                                & Standard: \Lkeyval{vertical}\\
+\bottomrule%
+\end{tabular}
+\end{center}
+
+Die Anzahl der angegebenen \verb|barstyle|s muss der Anzahl von Balken in jeder Spalte 
+entsprechen oder größer als diese sein. Andernfalls entsteht ein Postcript-Fehler. Bei den 
+\Lkeyval{cluster} und \Lkeyval{stack} \verb|chartstyle|s entspricht dies den Datenreihen in 
+der Datei; beim \Lkeyval{block} \verb|chartstyle| entspricht es der halben Anzahl 
+der Datenreihen. Außerdem ist bei der Angabe der \verb|barstyle|s darauf zu achten, dass die 
+Stile in geschweiften Klammern angegeben werden, wie z.\,B.:
+\begin{BDef}
+\Lcs{psbarchart}\OptArgs\Largb{\ldots}
+\end{BDef}
+
+Die verfügbaren \Lkeyword{barstyle}s sind standardmäßig \Lkeyval{red}, \Lkeyval{green},
+\Lkeyval{blue}, \Lkeyval{black}, \Lkeyval{white}, \Lkeyval{gray}, \Lkeyval{lightgray},
+und \Lkeyval{darkgray}. Jeder davon erzeugt einen Balken in der angegebenen Farbe mit 
+rechtwinkligen Ecken und schwarzem Umriss. Mit dem Befehl \Lcs{newpsbarstyle} können 
+zusätzlich neue \Lkeyword{barstyle}s definiert werden, siehe dazu 
+Kapitel ~\ref{sec:customizing}.
+
+Abbildung ~\ref{fig:bar_layout} zeigt, wie \Lcs{psbarchart} die Balken im 
+Standard-\Lkeyword{chartstyle}, \Lkeyval{cluster}, anlegt. Beim \Lkeyval{stack} 
+\Lkeyword{chartstyle} wird die \Lkeyword{barsep} Option nicht berücksichtigt.
+
+\begin{figure}[t]
+        \centering%
+        \begin{pspicture}(0,0)(4in,2in)%
+          \psframe[linestyle=dashed](0,0)(4in,2in)%
+          \psframe[linestyle=none,fillstyle=hlines,hatchangle=45,%
+            hatchcolor=lightgray,hatchwidth=0.4pt,hatchsep=8pt](0,0)(1in,2in)%
+          \psframe[fillcolor=darkgray,fillstyle=solid](0.2in,0in)(0.45in,0.8in)%
+          \psframe[fillcolor=lightgray,fillstyle=solid](0.55in,0in)(0.8in,1.1in)%
+          \psline[linestyle=dotted](1in,0in)(1in,2in)%
+          \psframe[fillcolor=darkgray,fillstyle=solid](1.2in,0in)(1.45in,0.6in)%
+          \psframe[fillcolor=lightgray,fillstyle=solid](1.55in,0in)(1.8in,0.4in)%
+          \psline[linestyle=dotted](2in,0in)(2in,2in)%
+          \psframe[fillcolor=darkgray,fillstyle=solid](2.2in,0in)(2.45in,0.4in)%
+          \psframe[fillcolor=lightgray,fillstyle=solid](2.55in,0in)(2.8in,0.3in)%
+          \psline[linestyle=dotted](3in,0in)(3in,2in)%
+          \psframe[fillcolor=darkgray,fillstyle=solid](3.2in,0in)(3.45in,1.1in)%
+          \psframe[fillcolor=lightgray,fillstyle=solid](3.55in,0in)(3.8in,0.9in)%
+          \rput[b](0.5in,1.8in){\small$\mathtt{\backslash psxunit}$}%
+          \psline{->}(0.2in,1.87in)(0in,1.87in)%
+          \psline{->}(0.8in,1.87in)(1in,1.87in)%
+          \psline(0.45in,0.85in)(0.45in,1.3in)%
+          \psline(0.55in,1.15in)(0.55in,1.3in)%
+          \rput[l](0.8in,1.25in){\small$\mathtt{barsep} \times
+            \mathtt{\backslash psxunit}$}%
+          \psline{->}(0.75in,1.25in)(0.55in,1.25in)%
+          \psline{->}(0.25in,1.25in)(0.45in,1.25in)%
+          \psline{->}(0.6in,0.9in)(0.8in,0.9in)%
+          \psline{->}(1.2in,0.9in)(1in,0.9in)%
+          \rput[l](1.25in,0.9in){\small$0.5 \times \mathtt{barcolsep} \times
+            \mathtt{\backslash psxunit}$}%
+        \end{pspicture}
+        \caption{\label{fig:bar_layout}%
+Schematische Darstellung für das Layout des Balkendiagramms. Die schraffierte Fläche markiert 
+den Bereich, in dem die Daten der ersten Spalte der Datei dargestellt sind. Die Breite der 
+Balken entspricht $[(1 - \mathtt{barsep} - 0.5 \times \mathtt{barcolsep}) \times 
+\mathtt{\backslash psxunit}] / N$, wobei $N$ für die Anzahl der Balken in einer Spalte 
+steht.}%
+\end{figure}
+
+\subsection{Anpassung des Diagramms}\label{sec:customizing}%
+Um einen angefertigten Balkentyp hinzuzufügen, ist der Befehl \Lcs{newpsbarstyle} zu 
+verwenden:
+\begin{BDef}
+\Lcs{newpsbarstyle}\Largb{<name>}\Largb{<definition>}
+\end{BDef}
+Diese Bezeichnung ist eine Textfolge, die derzeitig von keinem anderen \Lkeyword{barstyle} 
+verwendet wird. Die Definition kann sich aus jedem \LPack{pstricks} Schlüssel bzw. aus jeder 
+Gruppe von Schlüsseln ergeben, die mit \Lcs{psframe} anwendbar sind. Zum Beispiel wird 
+\Lkeyval{red} \Lkeyword{barstyle} wie folgt definiert:
+\begin{BDef}
+\Lcs{newpsbarstyle}\Largb{red}\Largb{\Lkeyset{fillcolor=red},\Lkeyset{fillstyle=solid},
+\Lkeyword{framearc}=0}
+\end{BDef}
+
+Um den Typ, mit dem die Spaltenbezeichnungen festgelegt werden, anzupassen, wird 
+\Lcs{psbarlabel} neu definiert. Wenn die Beschriftung aus kleinen Kursivbuchstaben bestehen 
+soll, sieht diese so aus:
+\begin{BDef}
+\LcsStar{renewcommand}\Lcs{psbarlabel}\Largb{\small\itshape}
+\end{BDef}
+Üblicherweise erstellt \Lcs{psbarlabel} die Spaltenbeschriftung in der aktuellen Schriftart.
+      
+Um den Abstand zwischen den Säulen und der Spaltenbeschriftung zu regulieren, wird 
+\Lcs{psbarlabelsep} neu definiert. Dabei ist es als Befehl, nicht als Umfang, definiert und
+muss daher mit \Lcs{renewcommand*} wiederdefiniert werden. Als Standard benutzt man \verb|0pt|.
+
+Am Ende ist es möglich, die Daten der Datei mit \Lcs{psbarscale} anzupassen und zu 
+manipulieren, wie z.\,B.
+\begin{BDef}
+\Lcs{psbarscale}\Largr{<scale>}\Largb{<Postscript code>}
+\end{BDef}
+welches von Herbert Vo\ss' \verb|\pstScale| aus \LPack{pstricks-add} beeinflusst wurde [7]. 
+Die Daten werden durch den Wert in Klammern eingestuft und können im Weiteren mit dem 
+Postscript Code gesteuert werden. Für den Fall, dass man den Logarithmus der eingegebenen 
+Daten grafisch darstellen will, würde man \Lcs{psbarscale}\Largr{1}\Largb{log} benutzen. 
+Der Postscript Code bezieht sich auf die Daten vor der Skalierung. 
+
+\section{Die Arten von Diagrammen}
+Wie bereits in ~\ref{sec:drawing_bars} beschrieben, gibt es drei verschiedene Möglichkeiten 
+für den Parameter \Lkeyword{chartstyle}. Der Standard-Typ \Lkeyval{cluster} ist ein 
+allgemeines Balkendiagramm, bei dem die Balken aufgrund ähnlicher Daten gruppiert werden. Die 
+zweite Option, \Lkeyval{stack}, zeichnet eine Reihe von Säulen aufeinander gestapelt, statt 
+sie nebeneinander in einer Gruppe anzuordnen. Benutzt man \Lkeyval{block}, die dritte 
+Alternative, so werden angehäufte Balken zwischen zwei Datenpunkten eingezeichnet und somit 
+eine Spanne von Werten anstelle eines einzelnen Wertes veranschaulicht. 
+
+Die folgenden Abschnitte beschreiben jeden \Lkeyword{chartstyle} im Detail und erklären, wie 
+die Eingabedaten verwendet werden. Zusätzlich werden für jeden Fall Muster
+gezeigt. Im Kapitel ~\ref{sec:examples} sind vollständige Beispiele einschließlich der Achsen 
+aufgezeigt.
+
+\subsection{\texttt{cluster}}\label{sec:cluster}%
+In einem \Lkeyval{cluster} Diagramm wird jede Variable in einer Reihe, die durch Kommas 
+getrennt ist, als ein Balken in einer einzelnen Spalte dargestellt. Jede Reihe steht daher 
+für eine neue Balkeneinheit. Die Datei
+\verbatiminput{example1.csv}%
+erzeugt nachstehendes Diagramm: 
+
+      \hfill%
+      \begin{minipage}[b]{1.5in}%
+        \psset{unit=0.5in}%
+        \begin{pspicture}(0,-0.5)(3,3)%
+          \readpsbardata{\data}{example1.csv}%
+          \psbarchart[barstyle={red,blue}]{\data}%
+        \end{pspicture}
+      \end{minipage}%
+      \hfill%
+      \begin{minipage}[b][1.75in][c]{3.5in}%
+        \begin{verbatim}
+\psset{unit=0.5in}%
+\begin{pspicture}(0,-0.5)(3,3)%
+  \readpsbardata{\data}{example1.csv}%
+  \psbarchart[barstyle={red,blue}]{\data}%
+\end{pspicture}\end{verbatim}
+      \end{minipage}%
+      \hfill%
+
+\subsection{\texttt{stack}}
+Bei einem \Lkeyval{stack} Diagramm befindet sich in jeder Spalte lediglich ein Balken. Dieser 
+eine Balken besteht aus so vielen Abschnitten, wie die Datendatei Reihen hat. Jede Reihe wird 
+auf die Oberkante der Vorigen "`gestapelt"'. Die Datei
+\verbatiminput{example2.csv}%
+erzeugt folgendes Diagramm:\\
+\vspace*{.5cm}\\
+      \hfill%
+      \begin{minipage}[b]{1.5in}%
+        \psset{unit=0.5in}%
+        \begin{pspicture}(0,-0.5)(3,4)%
+          \readpsbardata{\data}{example2.csv}%
+          \psbarchart[barstyle={red,blue},chartstyle=stack]{\data}%
+        \end{pspicture}
+      \end{minipage}
+      \hfill%
+      \begin{minipage}[b][2.25in][c]{3.5in}%
+        \begin{verbatim}
+\psset{unit=0.5in}%
+\begin{pspicture}(0,-0.5)(3,4)%
+  \readpsbardata{\data}{example2.csv}%
+  \psbarchart[barstyle={red,blue},%
+    chartstyle=stack]{\data}%
+\end{pspicture}\end{verbatim}
+      \end{minipage}
+      \hfill%
+
+Beachten Sie, dass diese Säulen hier breiter sind als bei 
+\Lkeyset{chartstyle=cluster}, da sie bei \Lkeyval{stack} vertikal aufeinander gestapelt 
+werden, bei \Lkeyval{cluster} allerdings horizontal nebeneinander auf der x-Achse angeordnet 
+sind. Um eine ähnliche Balkenbreite wie im \Lkeyval{cluster} - Diagramm zu erhalten, stellt 
+man \Lkeyword{xunit}\verb|=0.25in| ein.
+
+\subsection{\texttt{block}}\label{sec:block}%
+In einem \verb|block| Diagramm kann an jedem Balken eine Reihe von Werten abgelesen werden. 
+Daher benötigt jede Säule zwei Datenlinien aus der Datei, eine für die Markierung der oberen 
+und eine für die Markierung der unteren Grenze. Gibt es mehrere Paare von Datenlinien, werden 
+sie gesammelt dargestellt. Existiert eine ungerade Anzahl von Datenreihen, so wird die letzte 
+nicht beachtet. 
+\vspace*{.5cm}
+
+Aus: \verbatiminput{example3.csv}%
+entsteht dieses Diagramm:
+
+      \hfill%
+      \begin{minipage}[b]{1.5in}%
+        \psset{unit=0.5in}%
+        \begin{pspicture}(0,-0.5)(3,3.5)%
+          \readpsbardata{\data}{example3.csv}%
+          \psbarchart[barstyle={red,blue},chartstyle=block]{\data}%
+        \end{pspicture}
+      \end{minipage}%
+      \hfill%
+      \begin{minipage}[b][1.5in][c]{3.5in}%
+        \begin{verbatim}
+\psset{unit=0.5in}%
+\begin{pspicture}(0,-0.5)(3,3.5)%
+  \readpsbardata{\data}{example3.csv}%
+  \psbarchart[barstyle={red,blue},%
+    chartstyle=block]{\data}%
+\end{pspicture}\end{verbatim}
+      \end{minipage}
+
+\section{Beispiele}\label{sec:examples}%
+Grundlegende Beispiele für jeden Typ einschließlich Achsen und Gitternetzlinien:
+
+    \begin{verbatim}
+\begin{filecontents*}{example2.csv}
+  Set 1, Set 2, Set 3
+  1, 2, 3
+  0.5, 1.5, 1
+\end{filecontents*}\end{verbatim}
+
+    \hfill%
+    \begin{minipage}[b]{1.5in}%
+      \psset{unit=0.5in}%
+      \begin{pspicture}(0,-0.5)(3,4.5)%
+        \psgrid[xunit=1.5in,gridlabels=0,subgriddiv=0,griddots=30](0,0)(1,4)%
+        \psaxes[axesstyle=frame,Ox=0,Dx=1,labels=y,ticks=y](0,0)(3,4)%
+        \readpsbardata{\data}{example2.csv}%
+        \psbarchart[barstyle={red,blue}]{\data}%
+      \end{pspicture}
+    \end{minipage}%
+    \hfill%
+    \begin{minipage}[b][2.25in][c]{3.5in}%
+      \begin{verbatim}
+\psset{unit=0.5in}%
+\begin{pspicture}(0,-0.5)(3,4.5)%
+  \psgrid[xunit=1.5in,gridlabels=0,%
+    subgriddiv=0,griddots=30](0,0)(1,4)%
+  \psaxes[axesstyle=frame,Ox=0,Dx=1,labels=y,%
+    ticks=y](0,0)(3,4)%
+  \readpsbardata{\data}{example2.csv}%
+  \psbarchart[barstyle={red,blue}]{\data}%
+\end{pspicture}\end{verbatim}
+    \end{minipage}
+
+    \hfill%
+    \begin{minipage}[b]{1.5in}%
+      \psset{unit=0.5in}%
+      \begin{pspicture}(0,-0.5)(3,4.5)%
+        \psgrid[xunit=1.5in,gridlabels=0,subgriddiv=0,griddots=30](0,0)(1,4)%
+        \psaxes[axesstyle=frame,Ox=0,Dx=1,labels=y,ticks=y](0,0)(3,4)%
+        \readpsbardata{\data}{example2.csv}%
+        \psbarchart[barstyle={red,blue},chartstyle=stack]{\data}%
+      \end{pspicture}
+    \end{minipage}%
+    \hfill%
+    \begin{minipage}[b][2.25in][c]{3.5in}%
+      \begin{verbatim}
+\psset{unit=0.5in}%
+\begin{pspicture}(0,-0.5)(3,4.5)%
+  \psgrid[xunit=1.5in,gridlabels=0,%
+    subgriddiv=0,griddots=30](0,0)(1,4)%
+  \psaxes[axesstyle=frame,Ox=0,Dx=1,labels=y,%
+    ticks=y](0,0)(3,4)%
+  \readpsbardata{\data}{example2.csv}%
+  \psbarchart[barstyle={red,blue},%
+    chartstyle=stack]{\data}%
+\end{pspicture}\end{verbatim}
+    \end{minipage}
+
+    \hfill%
+    \begin{minipage}[b]{1.5in}%
+      \psset{unit=0.5in}%
+      \begin{pspicture}(0,-0.5)(3,4.5)%
+        \psgrid[xunit=1.5in,gridlabels=0,subgriddiv=0,griddots=30](0,0)(1,4)%
+        \psaxes[axesstyle=frame,Ox=0,Dx=1,labels=y,ticks=y](0,0)(3,4)%
+        \readpsbardata{\data}{example2.csv}%
+        \psbarchart[barstyle={red,blue},chartstyle=block]{\data}%
+      \end{pspicture}
+    \end{minipage}%
+    \hfill%
+    \begin{minipage}[b][2.25in][c]{3.5in}%
+      \begin{verbatim}
+\psset{unit=0.5in}%
+\begin{pspicture}(0,-0.5)(3,4.5)%
+  \psgrid[xunit=1.5in,gridlabels=0,%
+    subgriddiv=0,griddots=30](0,0)(1,4)%
+  \psaxes[axesstyle=frame,Ox=0,Dx=1,labels=y,%
+    ticks=y](0,0)(3,4)%
+  \readpsbardata{\data}{example2.csv}%
+  \psbarchart[barstyle={red,blue},%
+    chartstyle=block]{\data}%
+\end{pspicture}\end{verbatim}
+    \end{minipage}
+
+Verwendung von \verb|\newpsbarstyle|:
+
+    \hfill%
+    \begin{minipage}[b]{1.5in}%
+      \psset{unit=0.5in}%
+      \newpsbarstyle{yellowhatch}{framearc=0.5,fillstyle=hlines*,rot=45,fillcolor=yellow}%
+      \newpsbarstyle{redoutline}{framearc=0.5,fillcolor=black,linecolor=red,linewidth=1.5pt}%
+      \begin{pspicture}(0,-0.5)(3,4.5)%
+        \psgrid[xunit=1.5in,gridlabels=0,subgriddiv=0,griddots=30](0,0)(1,4)%
+        \psaxes[axesstyle=frame,Ox=0,Dx=1,labels=y,ticks=y](0,0)(3,4)%
+        \readpsbardata{\data}{example2.csv}%
+        \psbarchart[barstyle={yellowhatch,redoutline}]{\data}%
+      \end{pspicture}
+    \end{minipage}%
+    \hfill%
+    \begin{minipage}[b][2.75in][c]{3.5in}%
+      \begin{verbatim}
+\psset{unit=0.5in}%
+\newpsbarstyle{yellowhatch}{framearc=0.5,%
+  fillstyle=hlines*,rot=45,fillcolor=yellow}%
+\newpsbarstyle{redoutline}{framearc=0.5,%
+  fillcolor=black,linecolor=red,%
+  linewidth=1.5pt}%
+\begin{pspicture}(0,-0.5)(3,4.5)%
+  \psgrid[xunit=1.5in,gridlabels=0,%
+    subgriddiv=0,griddots=30](0,0)(1,4)%
+  \psaxes[axesstyle=frame,Ox=0,Dx=1,labels=y,%
+    ticks=y](0,0)(3,4)%
+  \readpsbardata{\data}{example2.csv}%
+  \psbarchart[barstyle={yellowhatch,%
+    redoutline}]{\data}%
+\end{pspicture}\end{verbatim}
+    \end{minipage}
+    
+\vspace*{2cm}
+
+Verwendung von \verb|[orientation=horizontal]|:\\
+    
+    \hfill%
+    \begin{minipage}[b]{2in}%
+      \psset{unit=0.5in}%
+      \newpsbarstyle{yellowhatch}{framearc=0.5,fillstyle=hlines*,rot=45,fillcolor=yellow}%
+      \newpsbarstyle{redoutline}{framearc=0.5,fillcolor=black,linecolor=red,linewidth=1.5pt}%
+      \begin{pspicture}(0,-0.5)(4,3.5)%
+        \psgrid[yunit=1.5in,gridlabels=0,subgriddiv=0,griddots=30](0,0)(3,1)%
+        \psaxes[axesstyle=frame,Ox=0,Dx=1,labels=x,ticks=x](0,0)(3,3)%
+        \readpsbardata{\data}{example2.csv}%
+        \psbarchart[barstyle={yellowhatch,redoutline},orientation=horizontal]{\data}%
+      \end{pspicture}
+    \end{minipage}%
+    \hfill%
+    \begin{minipage}[b][2.75in][c]{3.5in}%
+      \begin{verbatim}
+\psset{unit=0.5in}%
+\newpsbarstyle{yellowhatch}{framearc=0.5,%
+  fillstyle=hlines*,rot=45,fillcolor=yellow}%
+\newpsbarstyle{redoutline}{framearc=0.5,%
+  fillcolor=black,linecolor=red,%
+  linewidth=1.5pt}%
+\begin{pspicture}(0,-0.5)(3,4.5)%
+  \psgrid[xunit=1.5in,gridlabels=0,%
+    subgriddiv=0,griddots=30](0,0)(1,4)%
+  \psaxes[axesstyle=frame,Ox=0,Dx=1,labels=y,%
+    ticks=y](0,0)(3,4)%
+  \readpsbardata{\data}{example2.csv}%
+  \psbarchart[barstyle={yellowhatch,%
+    redoutline}]{\data}%
+\end{pspicture}\end{verbatim}
+    \end{minipage}\\
+
+Komplexe Effekte sind unter mehrfacher Benennung von \Lcs{psbarchart} in einem einzelnen 
+Diagramm möglich. Zum Beispiel kann ein besonders wichtiger Balken in grün hervorgehoben 
+werden, indem man die Daten in zwei Dateien aufgespaltet. Eine 	enthält eine Null für den 
+Datenwert, der hervorgehoben werden soll und die andere enthält Nullen für alle anderen 
+Daten \emph{außer} der Hervorzuhebenden.
+    
+\vspace*{2ex}%
+
+Datei 1 (\verb|example4.csv|): \verbatiminput{example4.csv}%
+
+Datei 2 (\verb|example5.csv|): \verbatiminput{example5.csv}%
+Beachten Sie, dass die zweite Datei keine Kopfzeile hat, damit die Balkenbeschriftung nicht 
+doppelt erfolgt.
+
+    \hfill%
+    \begin{minipage}[b]{1.5in}%
+      \psset{unit=0.5in}%
+      \begin{pspicture}(0,-0.5)(3,4.5)%
+        \psgrid[xunit=1.5in,gridlabels=0,subgriddiv=0,griddots=30](0,0)(1,4)%
+        \psaxes[axesstyle=frame,Ox=0,Dx=1,labels=y,ticks=y](0,0)(3,4)%
+        \readpsbardata{\data}{example4.csv}%
+        \psbarchart[barstyle={blue}]{\data}%
+        \readpsbardata[header=false]{\data}{example5.csv}%
+        \psbarchart[barstyle={green}]{\data}%
+      \end{pspicture}
+    \end{minipage}%
+    \hfill%
+    \begin{minipage}[b][2.25in][c]{3.5in}%
+      \begin{verbatim}
+\psset{unit=0.5in}%
+\begin{pspicture}(0,-0.5)(3,4.5)%
+  \psgrid[xunit=1.5in,gridlabels=0,%
+    subgriddiv=0,griddots=30](0,0)(1,4)%
+  \psaxes[axesstyle=frame,Ox=0,Dx=1,labels=y,%
+    ticks=y](0,0)(3,4)%
+  \readpsbardata{\data}{example4.csv}%
+  \psbarchart[barstyle={blue}]{\data}%
+  \readpsbardata[header=false]{\data}%
+    {example5.csv}%
+  \psbarchart[barstyle={green}]{\data}%
+\end{pspicture}\end{verbatim}
+    \end{minipage}
+
+Verschiedene Diagrammarten können auch in einem Balkendiagramm kombiniert werden.
+
+\vspace*{.5cm}%
+
+Datei 1 (\verb|example6.csv|): \verbatiminput{example6.csv}%
+
+Datei 2 (\verb|example7.csv|): \verbatiminput{example7.csv}%
+
+    \hfill%
+    \begin{minipage}[b]{1.5in}%
+      \psset{unit=0.5in}%
+      \begin{pspicture}(0,-0.5)(3,4.5)%
+        \psgrid[xunit=1.5in,gridlabels=0,subgriddiv=0,griddots=30](0,0)(1,4)%
+        \psaxes[axesstyle=frame,Ox=0,Dx=1,labels=y,ticks=y](0,0)(3,4)%
+        \readpsbardata{\data}{example6.csv}%
+        \psbarchart[barstyle={black}]{\data}%
+        \readpsbardata[header=false]{\data}{example7.csv}%
+        \psbarchart[barstyle={red},chartstyle=block,barcolsep=0.8]{\data}%
+      \end{pspicture}
+    \end{minipage}%
+    \hfill%
+    \begin{minipage}[b][2.25in][c]{3.5in}%
+      \begin{verbatim}
+\psset{unit=0.5in}%
+\begin{pspicture}(0,-0.5)(3,4.5)%
+  \psgrid[xunit=1.5in,gridlabels=0,%
+    subgriddiv=0,griddots=30](0,0)(1,4)%
+  \psaxes[axesstyle=frame,Ox=0,Dx=1,labels=y,%
+    ticks=y](0,0)(3,4)%
+  \readpsbardata{\data}{example6.csv}%
+  \psbarchart[barstyle={black}]{\data}%
+  \readpsbardata[header=false]{\data}%
+    {example7.csv}%
+  \psbarchart[barstyle={red},chartstyle=block,%
+    barcolsep=0.8]{\data}%
+\end{pspicture}
+\end{pspicture}\end{verbatim}
+    \end{minipage}
+
+\section{Tipps}
+\begin{itemize}
+   \item Informieren Sie sich über Befehle, um die Erstellung und Platzierung der 
+   Beschriftung zu erleichtern.
+   \item Erlauben Sie die automatische Beschriftung der Balken mit den Werten der Datendatei.
+   \item Erlauben Sie die automatische Beschriftung der Balken nach Ihrer Wahl.
+   \item Verbessern Sie die Syntaxanalyse der Überschrift, um Kommas zwischen den Einträgen 
+   der Kopfzeile zu erlauben.
+   \item Fügen Sie eine Fehler-Überprüfung hinzu, um sicherzustellen, dass jede Reihe der 
+   Datei dieselbe Anzahl an Einträgen enthält; falls nicht, wird der Fehler in \TeX\ 
+   oder \LaTeX\ übertragen.
+   \item Verbessern Sie die Dokumentation.
+\end{itemize}
+
+\nocite*
+\bibliographystyle{plain}%
+\bibliography{pst-bar-doc}%
+
+\printindex
+
+
+\end{document}

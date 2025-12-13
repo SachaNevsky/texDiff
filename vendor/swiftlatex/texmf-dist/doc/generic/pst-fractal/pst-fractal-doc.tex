@@ -1,0 +1,1591 @@
+%% $Id: pst-fractal-doc.tex 1162 2020-03-16 19:18:15Z herbert $
+\documentclass[fontsize=11pt,english,BCOR=10mm,DIV=13,toc=bibliography,parskip=false,
+   headings=small, headinclude=false,footinclude=false,oneside]{pst-doc}
+
+\usepackage{pst-fractal}
+\let\pstFV\fileversion
+\renewcommand\bgImage{\includegraphics[scale=0.75]{images/demo}}
+\def\PSLenv{\Lenv{pspicture}}
+\usepackage{animate}
+
+
+\def\pSTilingsFibonacci#1#2#3{% #1=n #2=nbre de lignes #3=type 1 ou 2
+  \pstFPDiv\Nbr{#2}{2}%
+  \psset[pst-fractal]{n=#1}%
+  \pstVerb{/n0 #1 def /tabPell [0 1 2 5 12 29 70 169 408] def
+    /Type #3 def
+    Type 2 gt {/Type 1 def} if
+    Type 2 eq {
+% (-1)^2P(n),(P(n+1)
+         /Y1 tabPell n0 1 add get def
+         /X1 -1 n0 exp tabPell n0 get mul def
+    }{
+% (P(n+1),(-1)^2P(n)
+         /X1 tabPell n0 1 add get def
+         /Y1 -1 n0 exp tabPell n0 get mul def
+    } ifelse
+    % le déplacement perpendiculaire
+    /X2 Y1 neg def
+    /Y2 X1 def
+}%
+\pstVerb{/ListColors [0 0 1] def}%
+\multido{\I=-\Nbr+1}{#2}{5 \rput(!X2 \I\space mul Y2 \I\space mul){%
+    \multido{\i=-\Nbr+1}{#2}{%
+%\definecolor[ps]{Couleur}{rgb}{ListColors aload pop}%
+      \definecolor[ps]{Couleur}{cmyk}{ListColors aload pop 0}%
+      \rput(!X1 \i\space mul Y1 \i\space mul){\psFibonacciPolyominoes[fillcolor=Couleur]}%
+      \pstVerb{/ListColors [ListColors aload pop 3 1 roll] def}%
+}}}}%
+
+
+\usepackage[swpl]{pst-exa}
+%\usepackage{auto-pst-pdf}
+
+\addbibresource{\jobname.bib}
+\lstset{language=PSTricks,basicstyle=\footnotesize\ttfamily}
+
+
+\begin{document}
+
+\title{\texttt{pst-fractal}}
+\subtitle{Plotting fractals; v.\pstFV}
+\author{Herbert Vo\ss}
+\docauthor{}
+\date{\today}
+\maketitle
+
+\tableofcontents
+
+\vspace{3cm}
+
+
+\begin{abstract}
+\noindent
+The well known \LPack{pstricks} package offers excellent macros to insert more or less complex 
+graphics into a document. \LPack{pstricks} itself is the base for several other additional packages, 
+which are mostly named \verb+pst-xxxx+, like \LPack{pst-fractal}.
+
+This version uses the extended keyval package \LPack{xkeyval}, so be sure that you have installed
+this package together with the spcecial one \LPack{pst-xkey} for PSTricks. The \LPack{xkeyval}
+package is available at \url{CTAN:/macros/latex/contrib/xkeyval/}.
+It is also important that after \LPack{pst-fractal} no package is loaded, which uses the old keyval interface.
+
+The fractals are really big, which is the reason why this document is about 15 MByte
+when you run it without using the external png-images.
+\end{abstract}%
+
+All images in this documentation were converted to the \Lext{jpg} format to get
+a small pdf file size. When using the pdf format for the images the file size will be
+more than 20 MBytes. However, having a small file size will lead into a bad image
+resolution. Run the examples as single documents to see how it will be in
+high quality.
+
+
+\section{Cantor set}
+
+The set is always plotted from the origin down to into negative $y$ values.
+
+\begin{BDef}
+\Lcs{psCantor}\OptArgs\\
+\end{BDef}
+
+Possible optional arguments are \Lkeyword{linewidth}, \Lkeyword{linecolor},
+\Lkeyword{n} (recursion depth), \Lkeyword{xWidth}, and \Lkeyword{yWidth} (vertical increment).
+The defaults are 2mm, black, 5, 10cm, and 5mm.
+
+\begin{LTXexample}[pos=t]
+\begin{pspicture}(10,-2)
+  \psCantor
+\end{pspicture}
+\end{LTXexample}
+
+
+\begin{LTXexample}[pos=t]
+\begin{pspicture}(10,-2)
+  \psCantor[linewidth=3mm,linecolor=red,n=7,xWidth=11,yWidth=4mm]
+\end{pspicture}
+\end{LTXexample}
+
+
+\section{Sierpinski triangle and curve}
+
+The triangle must be given by three mandatory arguments. Depending to the kind of
+arguments it is one of the two possible versions:
+
+\begin{BDef}
+\Lcs{psSier}\OptArgs\coord0\coord1\coord2\\
+\Lcs{psSier}\OptArgs\coord0\Largb{Base}\Largb{Recursion}\\
+\Lcs{psSier}\OptArgs
+\end{BDef}
+
+\subsection{Triangle}
+In difference to \Lcs{psfractal} it doesn't reserve any space, this is the
+reason why it should be part of a \PSLenv{} environment.
+
+\begin{LTXexample}[pos=l]
+\begin{pspicture}(5,5)
+  \psSier(0,0)(2,5)(5,0)
+\end{pspicture}
+\end{LTXexample}
+
+
+\begin{LTXexample}[pos=t]
+\multido{\iA=1+1}{6}{%
+\begin{pspicture}(2,1.7)
+\psSier[linecolor=blue!70,
+   fillcolor=red!40](0,0){2cm}{\iA} 
+\end{pspicture} }
+\end{LTXexample}
+
+\subsection{Curve}
+
+There are four special optional arguments for the Siepinski curve:
+\begin{itemize}
+  \item \texttt{[n=4]} : number of iterations
+  \item \texttt{[N=all]} : number of placed points (only of interest for an animation)
+  \item \texttt{[dotcolor=red]} :  in difference to linecolor for standard PSTricks
+  \item \texttt{[showpoints=false]} : show calculated points
+\end{itemize}
+
+\begin{LTXexample}[pos=t]
+\begin{pspicture}(-4,-4)(4,4)
+\psframe*[linecolor=cyan](-4,-4)(4,4)
+\psSier[unit=0.25,n=4,fillstyle=solid,fillcolor=yellow,linecolor=blue]
+\psgrid[subgriddiv=0,gridcolor=blue,griddots=5,gridlabels=0pt,unit=0.5](-8,-8)(8,8)
+\end{pspicture}
+\end{LTXexample}
+
+
+\begin{LTXexample}[pos=t]
+\begin{pspicture}[showgrid](-4,-4)(4,4)
+\psset{unit=0.25}
+% n=4 => Nmax=4^(n+1)=1024
+% ici on marque la moitie des points
+\psSier[n=4,N=512]
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\begin{LTXexample}[pos=t]
+\begin{pspicture}(-4,-4)(4,4)
+\psframe*[linecolor=-yellow](-4,-4)(4,4)
+\psSier[n=5,unit=0.125,fillstyle=solid,fillcolor=-cyan,linecolor=-blue]
+\end{pspicture}
+\end{LTXexample}
+
+
+\begin{animateinline}[controls,% palindrome,
+                     begin={\begin{pspicture}(-4,-4)(4,4)},
+                     end={\end{pspicture}}]{5}% 5 image/s
+\multiframe{256}{i=1+1}{%
+  \psframe*[linecolor=yellow!20](-4,-4)(4,4)
+  \psgrid[subgriddiv=0,gridcolor=blue,griddots=5,gridlabels=0pt,unit=0.5](-8,-8)(8,8)
+% n=3 => Nmax=4^(n+1)=256 points
+  \psSier[linecolor=blue,linewidth=0.05,n=3,showpoints,dotsize=0.1,N=\i,unit=0.5]}
+\end{animateinline}
+
+
+\begin{verbatim}
+\begin{animateinline}[controls,% palindrome,
+                     begin={\begin{pspicture}(-4,-4)(4,4)},
+                     end={\end{pspicture}}]{5}% 5 image/s
+\multiframe{256}{i=1+1}{%
+\psframe*[linecolor=yellow!20](-4,-4)(4,4)
+\psgrid[subgriddiv=0,gridcolor=blue,griddots=5,gridlabels=0pt,unit=0.5](-8,-8)(8,8)
+% n=3 => Nmax=4^(n+1)=256 points
+\psSierpinskyCurve[linecolor=blue,linewidth=0.05,n=3,showpoints,dotsize=0.1,N=\i,unit=0.5]}
+\end{animateinline}
+\end{verbatim}
+
+
+
+\section{Julia and Mandelbrot sets}
+
+The syntax of the \Lcs{psfractal} macro is simple
+%
+\begin{BDef}
+\Lcs{psfractal}\OptArgs\coord0\coord1
+\end{BDef}
+
+
+All Arguments are optional, \Lcs{psfractal} is the same as \Lcs{psfractal}\verb+(-1,-1)(1,1)+.
+The Julia and Mandelbrot sets are a graphical representation of the following sequence
+$x$ is the real and $y$ the imaginary part of the complex number $z$. $C(x,y)$ is a complex constant
+and preset by $(0,0)$.
+\begin{align}
+z_{n+1}(x,y) &= (z_n(x,y))^2 +C(x,y)
+\end{align}
+
+\subsection{Julia sets}
+
+A Julia set is given with
+
+\begin{align}
+z_{n+1}(x,y) &= (z_n(x,y))^2 +C(x,y)\\
+z_0 	     &= (x_0;y_0)
+\end{align}
+$(x_0;y_0)$ is the starting value.
+
+\psset{unit=1cm,opacity=0}
+
+
+
+\begin{LTXexample}[pos=l]
+\psfractal
+\end{LTXexample}
+
+\begin{LTXexample}[pos=l]
+\psfractal[xWidth=4cm,yWidth=4cm, baseColor=white, dIter=20](-2,-2)(2,2)
+\end{LTXexample}
+
+
+\subsection{Mandelbrot sets}
+
+A Mandelbrot set is given with
+
+\begin{align}
+z_{n+1}(x,y) &= (z_n(x,y))^2 +C(x,y)\\
+z_0 	     &= (0;0)\\
+C(x,y) 	     &= (x_0;y_0)
+\end{align}
+
+$(x_0;y_0)$ is the starting value.
+
+\begin{LTXexample}[pos=l]
+\psfractal[type=Mandel]
+\end{LTXexample}
+
+
+\begin{LTXexample}[pos=l]
+\psfractal[type=Mandel, xWidth=6cm, 
+  yWidth=4.8cm, baseColor=white, 
+  dIter=10](-2,-1.2)(1,1.2)
+\end{LTXexample}
+
+\subsection{The options}
+
+
+\subsection{\texttt{type}}
+\Lkeyword{txpe} can be of \Lkeyval{Julia} (default) or \Lkeyval{Mandel}.
+
+
+\begin{LTXexample}[pos=l]
+\psfractal  \qquad
+\psfractal[type=Mandel]
+\end{LTXexample}
+
+\subsection{\texttt{baseColor}}
+The color for the convergent part is set by \Lkeyword{baseColor}.
+
+\begin{LTXexample}
+\psfractal[xWidth=4cm,yWidth=4cm,dIter=30](-2,-2)(2,2)  \qquad
+\psfractal[xWidth=4cm,yWidth=4cm,baseColor=yellow,dIter=30](-2,-2)(2,2)
+\end{LTXexample}
+
+
+\subsection{\texttt{xWidth} and \texttt{yWidth}}
+\Lkeyword{xWidth} and \Lkeyword{yWidth} 
+ define the physical width of the fractal.
+
+\begin{LTXexample}
+\psfractal[type=Mandel,xWidth=12.8cm,yWidth=10.8cm,dIter=5](-2.5,-1.3)(0.7,1.3)
+\end{LTXexample}
+
+
+\clearpage%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\subsection{\texttt{cx} and \texttt{cy}}\xLkeyword{cx}\xLkeyword{cy}
+Define the starting value for the complex constant number $C$.
+
+\begin{LTXexample}
+\psset{xWidth=5cm,yWidth=5cm}
+\psfractal[dIter=2](-2,-2)(2,2) \qquad 
+\psfractal[dIter=2,cx=-1.3,cy=0](-2,-2)(2,2)
+\end{LTXexample}
+
+
+\subsection{\texttt{dIter}}
+The color is set by \Index{wavelength} to RGB conversion of the iteration number, where
+\Lkeyword{dIter} is the step, predefined by 1. The wavelength is given by
+the value of \Lps{iter} added by 400.
+
+\begin{LTXexample}
+\psset{xWidth=5cm,yWidth=5cm}
+\psfractal[dIter=30](-2,-2)(2,2)  \qquad
+\psfractal[dIter=10,cx=-1.3,cy=0](-2,-2)(2,2)
+\end{LTXexample}
+
+
+\clearpage%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\subsection{\texttt{maxIter}}
+\Lkeyword{maxIter} is the number of the maximum iteration until it leaves the loop.
+It is predefined by 255, but internally multiplied by \Lkeyword{dIter}.
+
+\begin{LTXexample}
+\psset{xWidth=5cm,yWidth=5cm}
+\psfractal[maxIter=50,dIter=3](-2,-2)(2,2)  \qquad
+\psfractal[maxIter=30,cx=-1.3,cy=0](-2,-2)(2,2)
+\end{LTXexample}
+
+\subsection{\texttt{maxRadius}}
+If the square of distance of $z_n$ to the origin of the complex coordinate system
+is greater as \Lkeyword{maxRadius} then the algorithm  leaves the loop
+and sets the point. \Lkeyword{maxRadius} should always be the square of the "`real"'
+value, it is preset by 100.  
+
+\begin{LTXexample}
+\psset{xWidth=5cm,yWidth=5cm}
+\psfractal[maxRadius=30,dIter=10](-2,-2)(2,2)   \qquad
+\psfractal[maxRadius=30,dIter=30,cx=-1.3,cy=0](-2,-2)(2,2)
+\end{LTXexample}
+
+
+\clearpage%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{\texttt{plotpoints}}\xLkeyword{plotpoints}
+This option is only valid for the Sierpinski triangle and preset by 2000.
+
+\begin{LTXexample}
+\begin{pspicture}(5,5)
+  \psSier(0,0)(2.5,5)(5,0)
+\end{pspicture} \quad
+\begin{pspicture}(5,5)
+  \psSier[plotpoints=10000](0,0)(2.5,5)(5,0)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\section{Phyllotaxis}
+The beautiful arrangement of leaves in some plants, called phyllotaxis, 
+obeys a number of subtle mathematical relationships. For instance, the florets 
+in the head of a sunflower form two oppositely directed spirals: 55 of them clockwise 
+and 34 counterclockwise. Surprisingly, these numbers are consecutive Fibonacci numbers. 
+The Phyllotaxis is like a Lindenmayer system.
+
+\begin{BDef}
+\Lcs{psPhyllotaxis}\OptArgs\Largr{\CAny}
+\end{BDef}
+
+The coordinates of the center are optional, if they are missing, then $(0,0)$
+is assumed.
+
+
+\begin{LTXexample}[pos=l]
+\psframebox{%
+\begin{pspicture}(-3,-3)(3,3)
+  \psPhyllotaxis
+\end{pspicture}}
+\end{LTXexample}
+
+
+
+\begin{LTXexample}[pos=l]
+\psframebox{%
+\begin{pspicture}(-3,-3)(4,4)
+  \psPhyllotaxis(1,1)
+\end{pspicture}}
+\end{LTXexample}
+
+\subsection{\texttt{angle}}\xLkeyword{angle}
+
+\begin{LTXexample}[pos=l]
+\psframebox{%
+\begin{pspicture}(-2.5,-2.5)(2.5,2.5)
+  \psPhyllotaxis[angle=99]
+\end{pspicture}}
+\end{LTXexample}
+
+
+\clearpage%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\subsection{\texttt{c}}\xLkeyword{c}
+This is the length of one element in the unit pt.
+
+\begin{LTXexample}
+\psframebox{%
+\begin{pspicture}(8,8)
+  \psPhyllotaxis[c=7](4,4)
+\end{pspicture}}
+\end{LTXexample}
+
+\begin{LTXexample}
+\psframebox{%
+\begin{pspicture}(-3,-3)(3,3)
+  \psPhyllotaxis[c=4,angle=111]
+\end{pspicture}}
+\end{LTXexample}
+
+\clearpage%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\subsection{\texttt{maxIter}}\xLkeyword{maxIter}
+This is the number for the iterations.
+
+\begin{LTXexample}
+\psframebox{%
+\begin{pspicture}(-3,-3)(3,3)
+  \psPhyllotaxis[c=6,angle=111,maxIter=100]
+\end{pspicture}}
+\end{LTXexample}
+
+
+
+\section{Fern}
+
+\begin{BDef}
+\Lcs{psFern}\OptArgs\Largr{\CAny}
+\end{BDef}
+
+The coordinates of the starting point are optional, if they are missing, then $(0,0)$
+is assumed. The default \Lkeyword{scale} is set to 10.
+
+\begin{LTXexample}
+\psframebox{%
+\begin{pspicture}(-1,0)(1,4)
+  \psFern
+\end{pspicture}}
+\end{LTXexample}
+
+\begin{LTXexample}
+\psframebox{%
+\begin{pspicture}(-1,0)(2,5)
+  \psFern(1,1)
+\end{pspicture}}
+\end{LTXexample}
+
+\begin{LTXexample}
+\psframebox{%
+\begin{pspicture}(-3,0)(3,11)
+  \psFern[scale=30,maxIter=100000,linecolor=green]
+\end{pspicture}}
+\end{LTXexample}
+
+
+\clearpage%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\section{Koch flake}
+
+\begin{BDef}
+\Lcs{psKochflake}\OptArgs\Largr{\CAny}
+\end{BDef}
+
+The coordinates of the starting point are optional, if they are missing, then $(0,0)$
+is assumed. The origin is the lower left point of the flake, marked as red 
+or black point
+in the following example:
+
+\begin{LTXexample}
+\begin{pspicture}[showgrid=true](-2.4,-0.4)(5,5)
+  \psKochflake[scale=10]
+  \psdot[linecolor=red,dotstyle=*](0,0)
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}
+\begin{pspicture}(-0.4,-0.4)(12,4)
+  \psset{fillcolor=lime,fillstyle=solid}
+  \multido{\iA=0+1,\iB=0+2}{6}{%
+    \psKochflake[angle=-30,scale=3,maxIter=\iA](\iB,2.5)\psdot*(\iB,2.5)
+    \psKochflake[scale=3,maxIter=\iA](\iB,0)\psdot*(\iB,0)}
+\end{pspicture}
+\end{LTXexample}
+
+Optional arguments are \Lkeyword{scale}, \Lkeyword{maxIter} (iteration depth) and \Lkeyword{angle}
+for the first rotation angle.
+
+
+\clearpage%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Apollonius circles}
+
+\begin{BDef}
+\Lcs{psAppolonius}\OptArgs\Largr{\CAny}
+\end{BDef}
+
+The coordinates of the starting point are optional, if they are missing, then $(0,0)$
+is assumed. The origin is the center of the circle:
+
+\begin{LTXexample}
+\begin{pspicture}[showgrid=true](-4,-4)(4,4)
+  \psAppolonius[Radius=4cm]
+\end{pspicture}
+\end{LTXexample}
+
+
+\begin{LTXexample}
+\begin{pspicture}(-5,-5)(5,5)
+  \psAppolonius[Radius=5cm,Color]
+\end{pspicture}
+\end{LTXexample}
+
+
+\section{Trees}
+
+\begin{BDef}
+\Lcs{psPTree}\OptArgs\Largr{\CAny}
+\Lcs{psFArrow}\OptArgs\Largr{\CAny}\Largb{fraction}
+\end{BDef}
+
+The coordinates of the starting point are optional, if they are missing, then $(0,0)$
+is assumed. The origin is the center of the lower line, shown in the following examples
+by the dot. Special parameters are the width of the lower basic line for the tree and the
+height and angle for the arrow and for both the color option. The color step is given by \Lkeyword{dIter}
+and the depth by \Lkeyword{maxIter}. Valid optional arguments are
+
+\medskip
+\begin{center}
+\begin{tabular}{@{}>{\ttfamily}lll@{}}\hline
+\emph{Name} & \emph{Meaning} & \emph{default}\\\hline
+\Lkeyword{xWidth}   & first base width & 1cm\\
+\Lkeyword{minWidth} & last base width  & 1pt\\
+\Lkeyword{c}	    & factor for unbalanced trees (0<c<1) & 0.5\\
+\Lkeyword{Color}    & colored tree     & false\\\hline
+\end{tabular}
+\end{center}
+
+\bigskip
+\begin{LTXexample}
+\begin{pspicture}[showgrid=true](-3,0)(3,4)
+  \psPTree   
+  \psdot*(0,0)
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}
+\begin{pspicture}[showgrid=true](-6,0)(6,7)
+  \psPTree[xWidth=1.75cm,Color=true]
+  \psdot*[linecolor=white](0,0)
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}
+\begin{pspicture}(-7,-1)(6,8)
+  \psPTree[xWidth=1.75cm,c=0.35]
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}
+\begin{pspicture}(-5,-1)(7,8)
+  \psPTree[xWidth=1.75cm,Color=true,c=0.65]
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}
+\begin{pspicture}[showgrid=true](-1,0)(1,3)
+  \psFArrow{0.5}
+\end{pspicture}
+\quad
+\begin{pspicture}[showgrid=true](-2,0)(2,3)
+  \psFArrow{0.6}
+\end{pspicture}
+\quad
+\begin{pspicture*}[showgrid=true](-3,0)(3,3.5)
+  \psFArrow[linewidth=3pt]{0.65}
+\end{pspicture*}
+\end{LTXexample}
+
+
+\begin{LTXexample}
+\begin{pspicture}(-1,0)(1,3)
+  \psFArrow[Color]{0.5}
+\end{pspicture}
+\quad
+\begin{pspicture}(-2,0)(2,3)
+  \psFArrow[Color]{0.6}
+\end{pspicture}
+\quad
+\begin{pspicture*}(-3,0)(3,3.5)
+  \psFArrow[Color]{0.65}
+\end{pspicture*}
+\end{LTXexample}
+
+
+\begin{LTXexample}
+\begin{pspicture}(-3,-3)(2,3)
+  \psFArrow[Color]{0.6}
+  \psFArrow[angle=90,Color]{0.6}
+\end{pspicture}
+\quad
+\begin{pspicture*}(-4,-3)(3,3)
+  \psFArrow[Color]{0.7}
+  \psFArrow[angle=90,Color]{0.7}
+\end{pspicture*}
+\end{LTXexample}
+
+
+\section{Fibonacci fractals}
+There are seven different commands which are all defined by Manuel Luque (for more informations see 
+\url{http://pstricks.blogspot.de}):
+
+\begin{BDef}
+\Lcs{psFibonacciWord}\OptArgs\Largr{\CAny}\\
+\Lcs{psFibonacci}\OptArgs\\
+\Lcs{psNewFibonacci}\OptArgs\\
+\Lcs{psiFibonacci}\OptArgs\\
+\Lcs{pskFibonacci}\OptArgs\Largr{\CAny}\\
+\Lcs{psBiperiodicFibonacci}\OptArgs\Largr{\CAny}\\
+\Lcs{psFibonacciPolyominoes}\OptArgs\Largr{\CAny}
+\end{BDef}
+
+
+\begin{itemize}
+  \item \Lcs{psFibonacciWord} A Fibonacci word after n iterations
+  \item \Lcs{psFibonacci} Draw the fractal curve of a Fibonacci word
+  \item \Lcs{psNewFibonacci} Draw a bunch of curves obtained from the ``Dense Fibonacci Word'' 
+  (DFW) by substitutions.
+  \item \Lcs{psiFibonacci} In the article \cite{ramirez} a new family of curves in a row is called
+   ``\texttt{i-Fibonacci Word Fractal}''.
+  \item \Lcs{pskFibonacci} study the
+  following k-Fibonacci and the curves associated with words in the article ``\textit{On the 
+  k-Fibonacci
+  	words}\footnote{\ url{http://www.acta.sapientia.ro/acta-info/C5-2/info52-4.pdf}}'', this 
+  	command allows to represent these curves.
+  \item \Lcs{psBiperiodicFibonacci} it is still José L. Ramírez and Gustavo N. Rubiano who in the 
+  article ``\textit{Biperiodic Fibonacci Word and Its Fractal Curve}''%
+  \footnote{\url{https://www.researchgate.net/publication/276406650_Biperiodic_Fibonacci_word_and_its_fractal_curve}}
+  extend the notion of Fibonacci sequence with 2 parameters (a, b). This command draws the 
+  associated fractal curves.
+  \item \Lcs{psFibonacciPolyominoes} this command draws a Fibonacci tile, also called a Fibonacci 
+  flake and allows you to pave the plane in two ways, following the rules established by A. 
+  Blondin-Massé, S. Labbé, S. Brlek and M. Mendès-France in their article ``\textit{Fibonacci 
+  snowflakes}\footnote{\url{www.slabbe.org/Publications/2011-fibo-snowflakes.pdf}}''.
+\end{itemize}
+
+The valid optional arguments with its default values:
+
+
+\begin{enumerate}
+  \item \texttt{[n=10]} : number of iterations;
+  \item \texttt{[k=5]} : k-Fibonacci series;
+  \item \texttt{[a=5,b=5]} : Biperiodic-Fibonacci series;
+  \item \texttt{[angle=90]} : turn right (-) or left (+) an angle of this value (see examples in 
+  the article of José L. Ramírez et Gustavo N. Rubiano.
+  \item \texttt{[i=6]} : sets the follow-up nature of generalized Fibonacci;
+  \item \texttt{morphism=(0) (1) (2)} : for the command \Lcs{psNewFibonacci}, we will write 
+  in the 3 pairs of parentheses the substitutions to be performed (see section~\ref{dfw})).
+  \item \texttt{[PSfont=Times-Roman]} : PostScript font;
+  \item \texttt{[fontscale=8} : fontscale;
+  \item \texttt{[colorF]} : curve color \verb+n-1+ for construction by juxtaposition;
+  \item \texttt{[juxtaposition=false]} allows the juxtaposition of the \texttt{n} and 
+  \texttt{n-1} curves to bring up the \texttt{n+1} curve by simply writing 
+  \texttt{[juxtaposition]} in the options.
+ \item \texttt{[DFW=false]} to display the ``\textit{Dense Fibonacci Word}'' (DFW) with 
+ \verb+\psFibonacciWord[DFW]+~;
+  \item \texttt{[iFibonacci=false]} to display the word ``\textit{i-Fibonacci}'' with 
+  \verb+\psiFibonacciWord[iFibonacci]+, obtained with the \texttt{[i]} parameter after 
+  \texttt{[n]} iterations.
+\end{enumerate}
+
+The color and the thickness of the line of the fractal curve \texttt{n} are fixed with the usual 
+parameters of PSTricks: \texttt{linewidth} and \texttt{linecolor}. The starting point of the curve 
+is in $(0,0)$ and the unit is set by the PSTricks \texttt{unit =} option.
+
+This package does not pretend to exhaust the subject on the continuation of Fibonacci, the word of 
+Fibonacci and the various fractals which are inspired by it. The subject is very vast and the 
+studies very numerous. For those who discover the subject here are some tracks.
+
+The number 478 of the August 2017 issue of \textit{Pour la Science} contains an article by 
+Jean-Paul Delahaye ``\textit {The following of Fibonacci \ldots\ and its consequences}'' whose 
+title sums up the content of the article with, as usual, detailed explanations and beautiful 
+illustrations.
+
+Concerning all the variations on the fractal curve of the Fibonacci word, Alexis Monnerot-Dumaine's 
+article entitled ``\textit{The Fibonacci Word fractal}'' is the 
+reference\footnote{\url{https://hal.archives-ouvertes.fr/hal-00367972}}.
+
+The site \url{https://fr.wikipedia.org/wiki/Fractale_du_mot_de_Fibonacci} is also very rich in 
+information.
+
+The command \verb+\pSTilingsFibonacci+ allows the tiling of the 
+plane with the n order Fibonacci tile.
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid=false](-1,-1)(1,3)
+\psgrid[style=gridstyleA]
+\psFibonacci[unit=0.2,linecolor={[rgb]{0 0 0.5}},linewidth=0.05cm,n=5]
+\rput(0,-0.45){$F_{5}=$}
+\psFibonacciWord[n=5](0.5,-0.5)
+\end{pspicture}
+\begin{pspicture}[showgrid=false](-1,-1)(2,3)
+\psgrid[style=gridstyleA]
+\psFibonacci[unit=0.2,linecolor={[rgb]{0 0 0.5}},linewidth=0.05cm,n=6]
+\rput(0,-0.45){$F_{6}=$}
+\psFibonacciWord[n=6](0.5,-0.5)
+\end{pspicture}
+\begin{pspicture}[showgrid=false](-1,-1)(2,3)
+\psgrid[style=gridstyleA]
+\psFibonacci[unit=0.2,linecolor={[rgb]{0 0 0.5}},linewidth=0.05cm,n=7]
+\rput(-0.5,-0.45){$F_{7}=$}
+\psFibonacciWord[n=7](0,-0.5)
+\end{pspicture}
+\begin{pspicture}[showgrid=false](-1,-1)(2,3)
+\psgrid[style=gridstyleA]
+\psFibonacci[unit=0.2,linecolor={[rgb]{0 0 0.5}},linewidth=0.05cm,n=8]
+\rput(-0.4,-0.45){$F_{8}=$}
+\psFibonacciWord[n=8](0,-0.5)
+\end{pspicture}
+\begin{pspicture}[showgrid=false](-1,-1)(2,3)
+\psgrid[style=gridstyleA]
+\psFibonacci[unit=0.2,linecolor={[rgb]{0 0 0.5}},linewidth=0.05cm,n=9]
+\psFibonacciWord[n=9](-0.5,-0.75)
+\rput(-1,-0.75){$F_{9}=$}
+\end{pspicture}
+\end{LTXexample}
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid=false](-1,-1)(6,3)
+\psgrid[style=gridstyleA]
+\psFibonacci[unit=0.2,linecolor={[rgb]{0 0 0.5}},linewidth=0.05cm,n=10]
+\psFibonacciWord[n=10](-0.5,-0.5)
+\rput(-1,-0.45){$F_{10}=$}
+\end{pspicture}
+\end{LTXexample}
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](0,0)(12,8)
+\psFibonacci[unit=0.02,linecolor={[rgb]{0.5 0 0}},n=23,linewidth=0.015cm]
+\rput(5.5,4){n=23}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\clearpage%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\subsection{Fractal curves with juxtaposition}
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](0,0)(7,7)
+\psFibonacci[unit=0.1,linecolor=blue,n=15,linewidth=0.04cm,juxtaposition]
+\rput(4,2.25){$F_{15}$}
+\rput(5.25,3){$F_{14}$}
+\psline[arrowinset=0.1,arrowsize=0.2]{->}(4.8,2)(3,2)
+\psline[arrowinset=0.1,arrowsize=0.2]{->}(5,2.5)(5,4)
+\end{pspicture}
+\hfill
+\begin{pspicture}[showgrid](0,0)(7,7)
+\psFibonacci[unit=0.1,linecolor=blue,n=16,linewidth=0.04cm]
+\rput(5,2){$F_{16}$}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](0,0)(8,5)
+\psFibonacci[unit=0.05,linecolor=blue,n=17,linewidth=0.02cm,juxtaposition]
+\rput(2.5,4){\blue$F_{17}$}
+\rput(6,4){\red$F_{16}$}
+\end{pspicture}
+\hfill
+\begin{pspicture}[showgrid](0,0)(8,5)
+\psFibonacci[unit=0.05,n=18,linewidth=0.02cm]
+\rput(4,4){$F_{18}$}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](0,0)(10,7)
+\psFibonacci[unit=0.1,linecolor=blue,n=16,linewidth=0.03cm,juxtaposition]
+\rput(5,2){\blue$F_{16}$}
+\rput(9,2){\red$F_{15}$}
+\end{pspicture}
+\end{LTXexample}
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](0,0)(10,7)
+\psFibonacci[unit=0.1,n=17,linewidth=0.03cm]
+\rput(5,2){$F_{17}$}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](0,0)(13,12)
+\psFibonacci[unit=0.03,linecolor=blue,n=21,linewidth=0.02cm,juxtaposition]
+\rput(1.5,3.5){\blue$F_{21}$}
+\rput(8.5,10.5){\red$F_{20}$}
+\end{pspicture}
+\end{LTXexample}
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](0,0)(13,12)
+\psFibonacci[unit=0.03,n=22,linewidth=0.025cm]
+\rput(9,4){$F_{22}$}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](0,0)(14,6)
+\psFibonacci[unit=0.015,linecolor=blue,n=23,linewidth=0.01cm,juxtaposition]
+\rput(4,2){\blue$F_{23}$}
+\rput(10.5,4){\red$F_{22}$}
+\end{pspicture}
+\end{LTXexample}
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](0,0)(14,6)
+\psFibonacci[unit=0.015,n=24,linewidth=0.01cm]
+\rput(7,6.5){$F_{24}$}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{Curves with a big number of iterations}
+With \texttt{n=30} it takes a long time and the number is not readable.
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](0,0)(14,6)
+\psFibonacci[unit=0.0025,n=30,linewidth=0.001cm]
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\clearpage%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\subsection{Double color curves}
+
+Superposition of two curves are possible by choosing diffrent color and line thickness.
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}(-1,-1)(15,12)
+\psgrid[style=gridstyleA]
+\psFibonacci[unit=0.4,linecolor=blue,n=13,linewidth=0.2cm]%
+\psFibonacci[unit=0.4,linecolor=red,n=13,linewidth=0.05cm]%
+\end{pspicture}
+\end{LTXexample}
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-1,-1)(14,6)
+\psFibonacci[unit=0.5,linecolor=red,n=12,linewidth=0.2cm]%
+\psFibonacci[unit=0.5,linecolor=yellow,n=12,linewidth=0.05cm]%
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\section{``Dense Fibonacci Word'' and the command \Lcs{psNewFibonacci}}\label{dfw}
+
+In the chapter ``The dense Fibonacci word: a whole family of curves'', Alexis Monnerot-Dumaine
+wrote:
+
+\begin{quote}
+The odd-even design rule is not easy to manage and we can change to
+a more practical rule. As Jean-Paul Allouche suggested, we can create a word of 3
+letters with \{0; 1; 2\} that can draw the Fibonacci fractal with the simplest drawing rules
+following:
+
+\begin{itemize}
+\item 0, draw a segment in line with the previous one
+\item 1, draw a segment by turning to the right
+\item 2, draw a segment by turning to the left
+\end{itemize}
+\end{quote}
+
+
+By replacing in the Fibonacci word 00$\rightarrow$0, 01$\rightarrow$1 and 10$\rightarrow$2. Alexis Monnerot-Dumaine
+defines the ``Dense Fibonacci Word'' (DFW).
+From the DFW, we get a whole family of curves by doing, for example, substitutions
+following:
+
+\begin{itemize}
+  \item $\mu_1$ : $1 \longrightarrow  10$ ; $0 \longrightarrow  12$ ; $2 \longrightarrow  02$
+  \item $\mu_2$ : $1 \longrightarrow  010$ ; $0 \longrightarrow  0102$ ; $2 \longrightarrow  002$
+  \item $\mu_3$ : $1 \longrightarrow  02$ ; $0 \longrightarrow  21$ ; $2 \longrightarrow  10$
+  \item $\mu_4$ : $1 \longrightarrow  02$ ; $0 \longrightarrow  00$ ; $2 \longrightarrow  10$
+\end{itemize}
+
+We will find all these families of curves with explanations and references in the article
+Alexis Monnerot-Dumaine. These are just brief explanations for using the commands
+PSTricks to draw these families of curves. In their article "Properties and Gener-
+Fractal Exploring Fractal Curves ``alizations of the Fibonacci'' \cite{ramirez} illustrate this 
+family of curves with Mathematica by designating them under the name of 
+New-Fibonacci. This name seems to me sensible the PSTricks command will be called \Lcs{psNewFibonacci}.
+
+
+\subsection{``Dense Fibonacci Word''}
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid=false](-1,-0.2)(10,2)
+\uput[r](-0.5,1){FW=}%
+\psFibonacciWord[n=10,fontscale=12](0.5,0.9)
+\uput[r](-0.75,0){DFW=}%
+\psFibonacciWord[n=10,DFW,fontscale=12](0.5,-0.1)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{Fractal of ``\textit{Dense Fibonacci Word}''}
+
+The curve can be created with \verb+\psNewFibonacci+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-3,0)(10,11)
+\psNewFibonacci[unit=0.2,linecolor={[rgb]{0.5 0 0}},n=17,linewidth=0.03cm]
+\rput(4,4){n=17}
+\end{pspicture}
+\end{LTXexample}
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-4,0)(6,10)
+\psNewFibonacci[unit=0.2,linecolor={[rgb]{0.5 0 0}},n=17,linewidth=0.03cm,morphism=() (1) (2)]
+\rput(2,4){n=17}
+\end{pspicture}
+\end{LTXexample}
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-1,0)(15,6)
+\psNewFibonacci[unit=0.2,linecolor={[rgb]{0.5 0 0}},n=18,linewidth=0.03cm,morphism=(12) (1) (2)]
+\rput(4,2){n=18}
+\end{pspicture}
+\end{LTXexample}
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-7,0)(5,10)
+\psNewFibonacci[unit=0.1,linecolor={[rgb]{0.5 0 0}},n=17,linewidth=0.03cm,morphism=(102) (2) (1)]
+\rput(-2,4){n=17}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-7,0)(4,10)
+\psNewFibonacci[unit=0.1,linecolor={[rgb]{0.5 0 0}},n=17,linewidth=0.03cm,morphism=(210) (02) (10)]
+\rput(-2,4){n=17}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-5,0)(4,9)
+\psNewFibonacci[unit=0.1,linecolor={[rgb]{0.5 0 0}},n=17,linewidth=0.03cm,morphism=(21) (02) (10)]
+\rput(-1,4){n=17}
+\end{pspicture}
+\end{LTXexample}
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-10,0)(4,12)
+\psNewFibonacci[unit=0.1,linecolor={[rgb]{0.5 0 0}},n=17,linewidth=0.03cm,morphism=(210) (020) (10)]
+\rput(-4,4){n=17}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-10,0)(4,11)
+\psNewFibonacci[unit=0.075,linecolor={[rgb]{0.5 0 0}},n=18,linewidth=0.025cm,morphism=(102) (2) (1)]
+\rput(-4,2){n=18}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\section{The command \Lcs{psiFibonacci}}
+
+\subsection{How it works}
+Briefly, (read the article \cite{ramirez} for more details) more
+``I-Fibonacci Word'' depends on the parameter i and the number of iterations n with the following rules,
+according to the authors' notations. More informations and the original code are available from
+\url{https://pstricks.blogspot.com/2017/09/fractale-du-mot-de-fibonacci.html}.
+
+\begin{itemize}
+  \item $f_0^{[i]}$ =0
+  \item $f_1^{[i]} =0^{i-1}1$ : this notation means that it is necessary to put (i-1) 0 before the 1
+  \item $f_n^{[i]}= f_{n -1}^{[i]} f_{n -2}^{[i]}$ pour $n\geq 2$ et $i \geq 1$.
+\end{itemize}
+
+The construction of the associated fractal curves follows the ``even-odd'' rule as for the fractal
+of the word Fibonacci.
+
+
+
+\clearpage%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\subsection{Examples}
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-7,0)(3,9)
+\psiFibonacci[unit=0.2,linecolor={[rgb]{0.5 0 0}},n=10,linewidth=0.025cm,i=3]
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](0,0)(9,9.5)
+\psiFibonacci[unit=0.2,linecolor={[rgb]{0.5 0 0}},n=10,linewidth=0.025cm,i=4]
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-7,0)(3,9)
+\psiFibonacci[unit=0.15,linecolor={[rgb]{0.5 0 0}},n=10,linewidth=0.025cm,i=5]
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](0,0)(9,9.5)
+\psiFibonacci[unit=0.15,linecolor={[rgb]{0.5 0 0}},n=10,linewidth=0.025cm,i=6]
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-6,0)(3,8)
+\psiFibonacci[unit=0.1,linecolor={[rgb]{0.5 0 0}},n=10,linewidth=0.025cm,i=7]
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-8,0)(3,12)
+\psiFibonacci[unit=0.1,linecolor={[rgb]{0.5 0 0}},n=10,linewidth=0.025cm,i=11]
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](0,0)(6,14)
+\psiFibonacci[unit=0.05,linecolor={[rgb]{0.5 0 0}},n=12,linewidth=0.025cm,i=12]
+\end{pspicture}
+\end{LTXexample}
+
+
+\clearpage%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\section{The command \Lcs{pskFibonacci}}
+The 2 mandatory parameters are n and k. The following coordinates are optional but
+put, possibly, to center the curve at the origin of the mark.
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}(-4,-4)(4,4)
+\psgrid[gridlabels=0pt,subgriddiv=0,gridcolor=red,griddots=10]
+\pskFibonacci[unit=0.02,linecolor={[rgb]{0 0 0.5}},linewidth=0.02cm,n=6,k=5](-2.3,-3.2)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}(-4,-4)(4,4)
+\psgrid[gridlabels=0pt,subgriddiv=0,gridcolor=red,griddots=10]
+\pskFibonacci[unit=0.4,linecolor={[rgb]{0 0 0.5}},n=3,k=5](2.8,-3.6)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}(-4,-4)(4,4)
+\psgrid[gridlabels=0pt,subgriddiv=0,gridcolor=red,griddots=10]
+\pskFibonacci[unit=0.025,linecolor={[rgb]{0 0 0.5}},linewidth=0.02cm,n=6,k=6](3,0.5)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}(-4,-4)(4,4)
+\psgrid[gridlabels=0pt,subgriddiv=0,gridcolor={[rgb]{0 0 0.5}},griddots=10]
+\pskFibonacci[unit=0.2,linecolor={[rgb]{0 0 0.5}},n=4,k=6,angle=60](-2,0)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}(-4,-4)(2,1)
+\psgrid[gridlabels=0pt,subgriddiv=0,gridcolor=red,griddots=10]
+\pskFibonacci[unit=0.1,linecolor={[rgb]{0 0 0.5}},n=4,k=4,angle=60](0,0)
+\end{pspicture}
+\end{LTXexample}
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}(-8,-8)(8,8)
+\psgrid[gridlabels=0pt,subgriddiv=0,gridcolor={[rgb]{0 0 0.5}},griddots=10]
+\pskFibonacci[unit=0.02,linecolor={[rgb]{0.5 0 0}},linewidth=0.02cm,n=6,k=7](6,-4)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\clearpage%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{The command \Lcs{psBiperiodicFibonacci}}
+The 3 mandatory parameters are n, a and b. As for the previous command, the coordinates
+following are optional but allow, eventually, to center the curve at the origin of the
+mark.
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid=false](-4,-4)(4,4)
+\psgrid[gridlabels=0pt,subgriddiv=0,gridcolor=red,griddots=10]
+\psBiperiodicFibonacci[unit=0.2,linecolor={[rgb]{0 0.5 0}},linewidth=0.1cm,n=5,a=6,b=6,angle=60](0,2.1)
+\psBiperiodicFibonacci[unit=0.2,linecolor=white,n=5,a=6,b=6,angle=60](0,2.1)
+\end{pspicture}
+\end{LTXexample}
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid=false](-4,-4)(4,4)
+\psgrid[gridlabels=0pt,subgriddiv=0,gridcolor=red,griddots=10]
+\psBiperiodicFibonacci[unit=0.5,linecolor={[rgb]{0 0.5 0}},n=5,a=3,b=4,angle=120](-1.5,3.5)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid=false](-4,-4)(4,4)
+\psgrid[gridlabels=0pt,subgriddiv=0,gridcolor=red,griddots=10]
+\psBiperiodicFibonacci[unit=0.2,linecolor=black,linewidth=0.1cm,n=7,a=2,b=6,angle=72](2.62,2)
+\psBiperiodicFibonacci[unit=0.2,linecolor=yellow,n=7,a=2,b=6,angle=72](2.62,2)
+\end{pspicture}
+\end{LTXexample}
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid=false](-5,-4)(5,4)
+\psgrid[gridlabels=0pt,subgriddiv=0,gridcolor=red,griddots=10]
+\psBiperiodicFibonacci[unit=0.1,linecolor=red,linewidth=0.1cm,n=10,a=2,b=5](3.5,-1.5)
+\psBiperiodicFibonacci[unit=0.1,linecolor=yellow,n=10,a=2,b=5](3.5,-1.5)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}(-5,-5)(5,5)
+\psgrid[gridlabels=0pt,subgriddiv=0,gridcolor=red,griddots=10]
+\psBiperiodicFibonacci[unit=0.15,linecolor={[rgb]{0 0.5 0}},n=9,a=2,b=5](3.15,-1.35)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}(-5,-5)(5,5)
+\psBiperiodicFibonacci[unit=0.8,linecolor=black,linewidth=0.1cm,,n=8,a=2,b=3,angle=120](-1,1)
+\psBiperiodicFibonacci[unit=0.8,linecolor=white,n=8,a=2,b=3,angle=120](-1,1)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\section{The command \Lcs{psFibonacciPolyominoes}}
+
+
+The only mandatory parameter is the order of the tile: n. Coordinates are optional, but
+they will be used for paving the plan.
+
+
+
+\subsection{The order 0, 1, 2, 3, and 4}
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\psset{linecolor={[rgb]{0 0.5 0}},fillstyle=solid,fillcolor=red}
+\begin{pspicture}[showgrid](0,-1)(1,4)
+\psFibonacciPolyominoes[n=0,unit=0.5]
+\end{pspicture}
+\quad
+\begin{pspicture}[showgrid](-2,-1)(1,4)
+\psFibonacciPolyominoes[n=1,unit=0.5]
+\end{pspicture}
+\quad
+\begin{pspicture}[showgrid](-3,-1)(2,4)
+\psFibonacciPolyominoes[unit=0.5,n=2]
+\end{pspicture}
+\quad
+\begin{pspicture}[showgrid](-3,-1)(2,4)
+\psFibonacciPolyominoes[unit=0.2cm,n=3]
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-7,-2)(4,10)
+\psFibonacciPolyominoes[unit=0.2,n=4,fillcolor=cyan,linecolor=blue,fillstyle=solid]
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\iffalse
+
+
+\subsection{Paving the plan with Fibonacci tiles}
+This tiling is done with the \Lcs{pSTilingsFibonacci}\Largb{n}\Largb{N}\Largb{T} command which has 3 arguments: the
+first is the order of the tile (n = 0, 1, 2 etc.), the second the number of tiles per side of the square,
+preferably it must be odd and T = 1 or 2 defines the type of paving. For tiles to be
+colored, activate the \texttt{fillstyle=solid} option in a pre-command.
+
+
+\begin{verbatim}
+\def\pSTilingsFibonacci#1#2#3{% #1=n #2=nbre de lignes #3=type 1 ou 2
+  \pstFPDiv\Nbr{#2}{2}%
+  \psset[pst-fractal]{n=#1}%
+  \pstVerb{/n0 #1 def /tabPell [0 1 2 5 12 29 70 169 408] def
+    /Type #3 def
+    Type 2 gt {/Type 1 def} if
+    Type 2 eq {
+	% (-1)^2P(n),(P(n+1)
+         /Y1 tabPell n0 1 add get def
+         /X1 -1 n0 exp tabPell n0 get mul def
+    }{
+	% (P(n+1),(-1)^2P(n)
+         /X1 tabPell n0 1 add get def
+         /Y1 -1 n0 exp tabPell n0 get mul def
+    } ifelse
+    % le déplacement perpendiculaire
+    /X2 Y1 neg def
+    /Y2 X1 def
+}%
+\pstVerb{/ListColors [0 0 1] def}%
+\multido{\I=-\Nbr+1}{#2}{5
+  \rput(!X2 \I\space mul Y2 \I\space mul){%
+    \multido{\i=-\Nbr+1}{#2}{%
+%\definecolor[ps]{Couleur}{rgb}{ListColors aload pop}%
+      \definecolor[ps]{Couleur}{cmyk}{ListColors aload pop 0}%
+      \rput(!X1 \i\space mul Y1 \i\space mul){\psFibonacciPolyominoes[fillcolor=Couleur]}
+      \pstVerb{/ListColors [ListColors aload pop 3 1 roll] def}%
+}}}}%
+\end{verbatim}
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture*}(-9,-7)(8,9)
+\psset{unit=0.125,linestyle=solid}
+\pSTilingsFibonacci{3}{13}{1}%
+\psset{fillstyle=solid,linecolor=blue}%
+\pSTilingsFibonacci{3}{7}{1}%
+\end{pspicture*}
+\end{LTXexample}
+
+
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture*}(-9,-7)(8,9)
+\psset{unit=0.125,linestyle=solid}
+\pSTilingsFibonacci{3}{13}{2}%
+\psset{fillstyle=solid,linecolor=blue}%
+\pSTilingsFibonacci{3}{7}{2}%
+\end{pspicture*}
+\end{LTXexample}
+
+
+\clearpage%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\fi
+
+
+\section{The command \Lcs{psFibonacciWord}}
+
+\psset{unit=1cm}
+\begin{LTXexample}
+\begin{pspicture}(-1,0)(10,5)
+\rput(0.15,5){\small$F_{1}=1$}
+\rput(0.15,4.5){\small$F_{2}=0$}
+\multido{\i=3+1,\I=3+1,\n=4.0+-0.5}{8}{%
+  \psFibonacciWord[n=\i](0.5,\n)
+  \rput(0,\n){$F_{\I}=$}}
+\end{pspicture}
+\end{LTXexample}
+
+
+\begin{LTXexample}
+\begin{pspicture}(-1,0)(10,6)
+\psset{n=5}
+\multido{\i=1+1,\I=1+1,\n=3.5+-0.5}{6}{%
+\psFibonacciWord[i=\i,iFibonacci](0.5,\n\space 0.1 sub)
+\rput(0,\n){$F_{5}^{[\i]}=$}
+}
+\end{pspicture}
+\end{LTXexample}
+
+
+\section{The Hilbert fractal}
+For more informations see \url{https://pstricks.blogspot.com/2018/08/lattracteur-de-henon-mise-jour.html}.
+
+\begin{BDef}
+\Lcs{psHilbert}\OptArgs\\
+\end{BDef}
+
+
+
+\begin{itemize}
+  \item \texttt{n=4} : Number of iterations;
+  \item \Lkeyset{N=all} : number of points to place, by default all. This option allows you to create an animation in
+placing and connecting the successive points to the indicated number.
+  \item \Lkeyset{dotcolor=red} :  color of the points, the size of the points is fixed with the option 
+	\Lkeyword{dotsize} of PSTricks;
+  \item \Lkeyset{showpoints=false} :  boolean of PSTricks to display the points.
+\end{itemize}
+
+The color and the thickness of the lines are adjusted with the usual PSTricks options:
+ \Lkeyword{linecolor} and \Lkeyword{linewidth}.
+The scale of the drawing is defined with the unit option. We can use the option \Lkeyset{linestyle=none}, as well as
+\Lkeyset{fillstyle=solid}, \Lkeyword{fillcolor} but, in the latter case only, if all the points are kept
+(\Lkeyset{N=all}).
+
+
+\clearpage
+
+
+\subsection{Examples}
+\begin{LTXexample}
+\begin{pspicture}(0,-1)(1,1)
+\psgrid[subgriddiv=0,gridcolor=lightgray,griddots=10,gridlabels=0pt](1,1)
+\psHilbert[linecolor=red,n=0,linejoin=1,fillstyle=solid,fillcolor=blue]
+\rput(0.5,-0.5){n=0}
+\end{pspicture}
+\qquad
+\begin{pspicture}(0,-1)(3,3)
+\psgrid[subgriddiv=0,gridcolor=lightgray,griddots=10,gridlabels=0pt](3,3)
+\psHilbert[linecolor=red,n=1,linejoin=1,fillstyle=solid,fillcolor=blue]
+\rput(1.5,-0.5){n=1}
+\end{pspicture}
+\qquad
+\begin{pspicture}(0,-1)(7,7)
+\psgrid[subgriddiv=0,gridcolor=lightgray,griddots=10,gridlabels=0pt](7,7)
+\psHilbert[linecolor=blue,n=2,showpoints=false,dotsize=0.2,fillstyle=solid,fillcolor=red]
+\rput(3.5,-0.5){n=2}
+\end{pspicture}
+\end{LTXexample}
+
+
+Draw the first 220 of 256 points (n=3):
+
+
+\begin{LTXexample}
+\begin{pspicture}(0,0)(15,16)
+% 4^(n+1)=4^4=256
+\psgrid[subgriddiv=0,gridcolor=lightgray,griddots=10,gridlabels=0pt](15,15)
+\psHilbert[unit=1,linecolor=blue,linewidth=0.1,n=3,showpoints=true,dotsize=0.25,N=220]
+\end{pspicture}
+\end{LTXexample}
+
+
+\begin{LTXexample}
+\begin{pspicture}(0,0)(16,16)
+\psgrid[subgriddiv=0,gridcolor=lightgray,griddots=10,gridlabels=0pt](16,16)
+\psHilbert[unit=0.5,linecolor=red,linewidth=0.1,showpoints]
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\begin{LTXexample}
+\begin{pspicture}(0,0)(16,16)
+\psframe*(0,0)(15.75,15.75)
+\psHilbert[unit=0.25,linecolor=-red,n=5,linewidth=0.2,linejoin=1,fillstyle=solid,fillcolor=-blue]
+\end{pspicture}
+\end{LTXexample}
+
+\newpage
+
+\section{The Henon Sttractor}
+
+\begin{LTXexample}
+\begin{pspicture}(-5,-6)(5,6)
+\psclip{\psframe(-5,-5)(5,5)}
+\psHenon
+\endpsclip
+\psgrid[unit=5,subgriddiv=10](-1,-1)(1,1)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\subsection{En noir et blanc}
+\begin{minipage}{10cm}
+\begin{pspicture}(-5,-5)(5,5)
+\psclip{\psframe(-5,-5)(5,5)}
+\psHenon[pixelscolor=false]
+\endpsclip
+\psgrid[unit=5,subgriddiv=10](-1,-1)(1,1)
+\end{pspicture}
+\end{minipage}
+\begin{minipage}{6cm}
+\begin{verbatim}
+\begin{pspicture}(-5,-5)(5,5)
+\psclip{\psframe(-5,-5)(5,5)}
+\psHenon[pixelscolor=false]
+\endpsclip
+\psgrid[unit=5,subgriddiv=10](-1,-1)(1,1)
+\end{pspicture}
+\end{verbatim}
+\end{minipage}
+\section{Animation pour illustrer le principe de l'attracteur de Hénon}
+En fonction du tableau des points initiaux, la figure obtenue dépend de l'angle $a$. 
+Les commentaires de Robert Dony correspondent à la premiére figure pour $a=1.32837$ rd, les voici :
+\begin{center}
+\begin{pspicture}(-5,-5)(5,5)
+\psclip{\psframe(-5,-5)(5,5)}
+\psHenon[pixelscolor=false]
+\endpsclip
+%\psgrid[unit=5,subgriddiv=10](-1,-1)(1,1)
+\psline{->}(-1,4)(-0.1,3)\uput[ul](-1,4){$S_1$}
+\psline{->}(4,3.5)(3,2.5)\uput[ur](4,3.5){$S_2$}
+\psline{->}(4,-1.5)(3,-.75)\uput[dr](4,-1.5){$S_3$}
+\psline{->}(1.25,-3.75)(0.5,-3)\uput[dr](1.25,-3.75){$S_4$}
+\psline{->}(-4,0.75)(-3,0.75)\uput[l](-4,0.75){$S_5$}
+\psline{->}(2,4)(1.5,2.6)\uput[ur](2,4){$C_1$}
+\psline{->}(4,1)(3,0.8)\uput[ur](4,1){$C_2$}
+\psline{->}(2.5,-3)(1.5,-2.25)\uput[dr](2.5,-3){$C_3$}
+\psline{->}(-3,-2)(-1.75,-1.4)\uput[l](-3,-2){$C_4$}
+\psline{->}(-2.5,3)(-1.75,2)\uput[ul](-2.5,3){$C_5$}
+\end{pspicture}
+\end{center}
+
+
+\subsection{Animation}
+
+\begin{center}
+\begin{animateinline}[controls,palindrome,
+                     begin={\begin{pspicture}(-1,-1)(16,16)},
+                     end={\end{pspicture}}]{5}% 5 image/s
+\multiframe{256}{i=1+1}{%
+\psframe*[linecolor=yellow!20](0,0)(15,15)
+\psgrid[subgriddiv=1,gridcolor=red!30,gridlabels=0pt](0,0)(15,15)
+\psHilbert[linecolor=blue,linewidth=0.05,n=3,showpoints,dotsize=0.2,N=\i]}
+\end{animateinline}
+\end{center}
+\begin{verbatim}
+\begin{animateinline}[controls,palindrome,
+                     begin={\begin{pspicture}(-1,-1)(16,16)},
+                     end={\end{pspicture}}]{5}% 5 image/s
+\multiframe{256}{i=1+1}{%
+\psframe*[linecolor=yellow!20](0,0)(15,15)
+\psgrid[subgriddiv=1,gridcolor=red!30,gridlabels=0pt](0,0)(15,15)
+\psHilbert[linecolor=blue,linewidth=0.05,n=3,showpoints,dotsize=0.2,N=\i]}
+\end{animateinline}
+\end{verbatim}
+
+\clearpage%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{List of all optional arguments for \texttt{pst-fractal}}
+
+
+\xkvview{family=pst-fractal,columns={key,type,default}}
+
+\nocite{*}
+\printbibliography
+
+\printindex
+
+\end{document}

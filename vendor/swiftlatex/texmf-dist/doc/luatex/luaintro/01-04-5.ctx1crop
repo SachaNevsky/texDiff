@@ -1,0 +1,60 @@
+%% 
+%%  Ein Beispiel der DANTE-Edition
+%%  
+%%  1. Auflage
+%% 
+%% 
+%%  Copyright (C) 2013 Herbert Voss
+%% 
+%%  It may be distributed and/or modified under the conditions
+%%  of the LaTeX Project Public License, either version 1.3
+%%  of this license or (at your option) any later version.
+%% 
+%%  See http://www.latex-project.org/lppl.txt for details.
+%% 
+%% 
+%% ==== 
+% Show page(s) 1
+%% 
+\input CTdefault.tex
+%StartShownPreambleCommands
+\startluacode
+local format = string.format
+local concat = table.concat
+function document.TestBitmap(nx,ny)
+  nx = math.round(nx/65536)
+  ny = math.round(ny/65536)
+  nx = 2 * math.round(nx/2)
+  ny = 2 * math.round(ny/2)
+  local r = { }
+  local dx = 255/nx
+  local dy = 255/ny
+  for i=1,ny/2 do
+    local n = i*dy
+    local c = { }
+    for j=1,nx/2 do    c[#c+1] = format("%02x",j*dx+n) end
+    for j=nx/2,1,-1 do c[#c+1] = format("%02x",j*dx+n) end
+    c = concat(c,"",1,nx)
+    r[#r+1] = c
+  end
+  for i=ny/2,1,-1 do
+    local n = i*dy
+    local c = { }
+    for j=1,nx/2 do    c[#c+1] = format("%02x",j*dx+n) end
+    for j=nx/2,1,-1 do c[#c+1] = format("%02x",j*dx+n) end
+            c = concat(c,"",1,nx)
+    r[#r+1] = c
+  end
+  r = concat(r,"\r",1,ny)
+  figures.bitmapimage {data=r,xresolution=nx,yresolution=ny}
+end
+\stopluacode
+%StopShownPreambleCommands
+\starttext
+\defineoverlay[BitMess][{\scale[width=\dimexpr\overlaywidth+2ex,
+                                height=\dimexpr\overlayheight+2ex]{\ctxlua{%
+  document.TestBitmap(\number\dimexpr\overlaywidth,
+                      \number\dimexpr\overlayheight)}}}]
+\framed[width=10cm,height=10cm,frame=off,
+        background={BitMess,color},backgroundcolor=white]{test}
+\stoptext

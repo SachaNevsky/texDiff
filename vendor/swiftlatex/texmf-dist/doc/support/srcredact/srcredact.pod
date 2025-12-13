@@ -1,0 +1,185 @@
+=head1 NAME
+
+srcredact - a program for redaction of text files
+
+=head1 SYNOPSIS
+
+srcredact [I<OPTIONS>] B<-e> I<audience> [I<full_file>]
+
+srcredact [I<OPTIONS>] B<-u> I<audience> I<full_file> [I<redacted_file>]
+
+srcredact B<-l> [I<full_file>]
+
+srcredact B<-h|-v> 
+
+=head1  DESCRIPTION
+
+B<srcredact> is the program to extract ``redacted versions'' of the
+master file (option B<-e>) or to incorporate the changes in the
+redacted versions into the master file (``unredact'', option B<-u>). 
+
+The master file consists of I<chunks> intended for different
+audiences.  Each audience has a I<name>, e.g. C<classified>,
+C<unclssified>, C<expert> etc.  Chunks are started and stopped by
+I<guard lines>.  Each guard line has the format (for the default TeX
+syntax)
+
+  %<*name1|name2|...>
+  
+or
+
+  %</name1|name2|...>
+
+In the first cases the text following the guard is I<included> for the
+audiences C<name1>, C<name2>, ....  In the second case it is
+I<excluded> for these audiences.  
+
+THere is a special audience C<ALL>: a wild card for all audiences.
+Thus the idiom 
+
+  %</ALL>
+  %<*classified>
+
+means that the chunk is excluded for all audiences but C<classified>
+
+Exactly one of the options  B<-e> (extract) or B<-u> (unextract) must be
+present.  In  the extract mode the  non-option argument is  the name of
+the full file.   If it is absent, or is C<->,  standard input is used.
+In the unextract mode the first non-option argument 
+
+=head1 OPTIONS
+
+=over 4
+
+
+=item B<-c> I<list of comment patterns>
+
+Use the given pattern for comment lines to search for guards instead
+of the default C<TeX> pattern.  The recognized patterns are:
+
+=over 4
+
+=item B<c>
+
+  /*<guard>*/
+
+=item B<cpp>
+
+  //<guard>
+
+=item B<fortran>
+
+  C<guard>
+
+=item B<shell>
+
+  #<guard>
+
+=item B<TeX>
+
+  %<guard>
+
+=back
+
+The pattern names should be separated by commas, and the list may be
+enclosed in quotes to prevent shell expansion, e.g 
+
+  -c "TeX, c, shell"
+
+=item B<-d>
+
+Debug mode on.
+
+=item B<-e> I<audience>
+
+Extract the contents for the current audience into the file I<file>.
+The cuurent audience is guessed from the I<file> name, if the latter
+has the structure I<base>-I<audience>.I<extension>,
+e.g. C<report-unclassified.tex>.  The key B<-a> overrides this guess
+and should be used if the file name does not follow this pattern.  The
+file name C<-> means the standard output.  
+
+=item B<-h>
+
+Print help information and exit.
+
+=item B<-l>
+
+List all audiences set in the file (one per line) and exit.
+
+
+=item B<-u> I<audience>
+
+Take a edited file intended for the I<audience> (the second
+non-option argument) and incorporate the changes in it into the full
+file (the first non-option argument).  If the second argument is
+missing, standard input is used instead.  As usual, C<-> also means
+standard input.  Note that only one of the two file arguments in this
+case can be standard input.
+
+=item B<-v>
+
+Print version information and exit.
+
+=item B<-w> I<on|off|1|0|true|false>
+
+If C<on>, C<1> or C<true> (the deafult), implicitly wrap the full
+document into the guards
+
+ %<*ALL>
+ ...
+ %</ALL>
+
+=back
+
+=head1 RETURN VALUE
+
+The program returns 0 if successful, 1 if conflicts were found in the
+C<unextract> mode and 2 in case of problems.
+
+=head1 CONFLICTS IN UNEXTRACT MODE
+
+Like the standard L<diff3(1)> tool, the program may find conflicts
+between the full version and the edited one in the B<-u> mode.  Then
+the resulting file brackets the conflicts in the usual manner, e.g.
+
+  <<<<<<< /tmp/BrjXo0hMOB/full
+  %</nobonds>
+  Forty-five tons best old dry government bonds, suitable for furnace, gold
+  7 per cents., 1864, preferred.
+  %<*nobonds>
+  ||||||| /tmp/BrjXo0hMOB/extracted
+  Forty-five tons best old dry government bonds, suitable for furnace, gold
+  7 per cents., 1864, preferred.
+  =======
+  >>>>>>> /tmp/BrjXo0hMOB/new
+
+Here C<full> is the full document, C<extracted> is the extracted file
+for the given audience, C<new> is the edited file. 
+
+=head1 AUTHOR
+
+Boris Veytsman, borisv@lk.net
+
+This work was commissioned by Consumer Financial Protection Bureau,
+United States Treasury.
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (C) 2015 Boris Veytsman.  Version 1.0
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or (at
+your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+02110-1301, USA
+

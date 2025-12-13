@@ -1,0 +1,947 @@
+%% $Id: pst-pers-doc.tex  2017-04-05 Jürgen, Thomas $
+\documentclass[11pt,english,BCOR10mm,DIV12,bibliography=totoc,parskip=false,fleqn,
+   smallheadings, headexclude,footexclude,oneside,dvipsnames,svgnames,x11names]{pst-doc}
+%\documentclass[11pt,english,BCOR10mm,DIV12,bibliography=totoc,parskip=false,smallheadings
+%    headexclude,footexclude,oneside,dvipsnames,svgnames,distiller]{pst-doc}
+\usepackage[utf8]{inputenc}
+\listfiles
+\usepackage[autostyle]{csquotes}
+\usepackage{biblatex}%\usepackage[style=dtk]{biblatex}
+\addbibresource{pst-vehicle-doc.bib}
+\usepackage[utf8]{inputenc}
+%\let\pstpersFV\fileversion
+\usepackage[e]{esvect} % für schönere Vektorpfeile
+\usepackage{pst-vehicle,pst-eucl,pstricks-add,animate}
+\let\belowcaptionskip\abovecaptionskip
+
+\usepackage{etex}             % um die Anzahl der Register zu erhöhen (sonst nur 256)
+
+
+\newcommand{\qrq}{\ensuremath{\quad \Rightarrow \quad}}
+\newcommand{\envert}[1]{\left\lvert#1\right\rvert}
+\let\abs=\envert
+\newcommand{\BM}[1]{\ensuremath{\text{\boldmath $#1$\unboldmath}}}
+\newcommand{\Anf}[1]{\glqq{}#1\grqq{}}
+
+\def\bgImage{%
+\begin{pspicture}(0,0)(14,8)
+\def\FuncA{0.5*cos(1.5*x)+0.25*x}
+\psplot[plotpoints=500]{0}{16}{\FuncA}
+\psVehicle[vehicle=\HighWheeler,showSlope=false,linecolor=Gold]{0.35}{1.2}{\FuncA}%
+\psVehicle[vehicle=\Bike,style=bike,showSlope=false,linecolor=green!70]{0.5}{6}{\FuncA}%
+\psVehicle[vehicle=\Truck,style=truck,showSlope=false]{0.35}{12.2}{\FuncA}%
+\end{pspicture}
+}
+
+\lstset{language=PSTricks,morekeywords={psVehicle}\footnotesize\ttfamily}
+%
+\psset{labelFontSize=\scriptstyle}% for mathmode
+\psset{algebraic=true}
+\newpsstyle{quadrillage}{subgriddiv=2,gridlabels=5pt,gridwidth=0.3pt,gridcolor=black!50,subgridwidth=0.2pt,subgridcolor=black}
+
+\newcommand{\Epkt}[3]{\ensuremath{{\text{#1}}\left(\,#2\;\vline\;#3\,\right)}}
+
+\makeatletter
+\def\curveVal{\def\pst@par{}\pst@object{curveVal}}%
+\def\curveVal@i#1#2{\@ifnextchar[%
+{\curveVal@ii{#1}{#2}}%
+{\curveVal@ii{#1}{#2}[1]}}%
+\def\curveVal@ii#1#2[#3]{%
+\pst@killglue%
+\begingroup%
+\use@par%
+\begin@SpecialObj%
+\pst@Verb{%
+          /Pi 3.1415926 def
+          /rpn {tx@AlgToPs begin AlgToPs end cvx} def
+          /x0 #1 def
+          /rW #3 def
+          /func (#2) rpn def
+          /Diff (Derive(1,#2)) rpn def
+          /DiffI (Derive(2,#2)) rpn def
+          /dAB (sqrt(1+Diff^2)) rpn def
+          /dABdiff (Derive(1,sqrt(1+(Derive(1,#2))^2))) rpn def
+          /x x0 def func /funcx0 exch def % ----- f(x0)
+          /x x0 def Diff /Diffx0 exch def % ----- f'(x0)
+          /x x0 def DiffI /DiffIx0 exch def % --- f''(x0)
+          /KWRho {DiffI 1 Diff dup mul add 3 exp sqrt div} def
+          /x x0 def KWRho /KWRhox0 exch def % --- f''(x0)
+          /tA 1 1 Diffx0 dup mul add sqrt div def %
+          /deltax0 tA Diffx0 mul neg KWRhox0 div def
+          /deltay0 tA KWRhox0 div def
+          /deltaxW tA Diffx0 mul neg rW mul def
+          /deltayW tA rW mul def
+          /Rho {1 KWRho div} def
+          /x x0 def Rho abs /Rhox0 exch def
+          /alpha deltax0 deltay0 atan def
+          /beta Diffx0 1 atan def
+          /tex beta cos def
+          /tey beta sin def
+          /gamma 90 beta add def
+          /nex gamma cos def
+          /ney gamma sin def
+}%
+\pnode(!x0 funcx0){PC}%
+\pnode(!x0 deltaxW 2 mul add funcx0 deltayW 2 mul add){QC}%
+\pnode(!x0 deltax0 add funcx0 deltay0 add){MC}%
+\pnode(!x0 deltaxW add funcx0 deltayW add){MW}%
+\showpointsfalse%
+\end@SpecialObj%
+\endgroup\ignorespaces%
+}%
+\makeatother
+
+
+\begin{document}
+
+\title{pst-vehicle v 1.0}
+%\subtitle{A PSTricks package for slipping/rolling vehicles on curves of any kind of mathematical functions}
+\subtitle{Un package PSTricks pour faire rouler sans glisser des véhicules sur des courbes définies par une fonction mathématique}
+\author{Thomas \textsc{Söll}\\
+avec la collaboration de\\
+Jürgen \textsc{Gilg}  et Manuel \textsc{Luque}}
+\date{\today}
+
+\maketitle
+
+\tableofcontents
+\psset{unit=1cm}
+
+
+\clearpage
+
+
+\begin{abstract}
+Ce package a été créé pour illustrer la notion de pente, le coefficient directeur de la tangente en un point d'une courbe. Sur la route, une côte difficile ou une descente dangereuse à cause de leur déclivité sont signalées par un panneau 
+indiquant la pente de ce tron\c{a}on de route, par exemple 10\%. C'est donc tout naturellement qu'est venue l'idée de représenter un véhicule roulant sans glissement sur une courbe en y incluant la possibilité de visualiser la pente.
+\newline
+Les véhicules sont des engins à 2 roues (tout au moins vus de profil) et à une roue. Ces engins peuvent rouler sans glissement sur une courbe définie par sa fonction \textit{y=f(x)}.
+Une option permet de tracer la droite joignant les points de contact des roues avec la courbe ou la tangente au point de contact s'il s'agit d'un monocycle.
+Une autre particularité est la possibilité d'afficher un inclinomètre (Slope-o-Meter).
+6 véhicules sont prédéfinis, mais peuvent être personnalisés par le choix de la couleur ou des roues dont 12 types sont prédéfinies.
+Il est également possible de dessiner son propre véhicule.
+\end{abstract}
+\clearpage
+
+\section{\protectÉtude théorique du roulement sans glissement, d'une roue sur une courbe}
+Dans cette première partie, nous établissons les résultats nécessaires permettant de déterminer suivant la position choisie pour le véhicule sur la courbe (l'abscisse du point de contact de roue arrière), les éléments suivants :
+\begin{itemize}
+  \item la position du point de contact de la roue avant ;
+  \item les angles de rotation de chacune des roues depuis l'origine du mouvement.
+\end{itemize}
+Thomas Söll a rédigé une théorie plus complète sur ce type de mouvement.
+
+\subsection{Les roues ont des rayons égaux}
+
+\psset{saveNodeCoors,NodeCoorPrefix=n,algebraic}
+\def\myFunk{2-0.25*x^2}
+\def\abl{Derive(1,\myFunk)}
+\begin{pspicture}(-10,-1)(8,3.5)
+\psplot{-3.8}{3.8}{\myFunk}
+\pnode(*-3 {\myFunk}){A}
+\pnode(*nAx {\abl}){A_St}
+\pnode(*-1 {\myFunk}){B}
+\pnode(*nBx {\abl}){B_St}
+\psdot(A)
+\psdot(B)
+\uput*[-90](A){\small$\Epkt{}{x_0}{f(x_0)}$}
+\uput*[-90](B){\small$\Epkt{}{x}{f(x)}$}
+
+\pnode(!nAx nA_Sty 1 nA_Sty dup mul add sqrt div sub nAy 1 1 nA_Sty dup mul add sqrt div add){H}
+\pnode(!nBx nB_Sty 1 nB_Sty dup mul add sqrt div sub nBy 1 1 nB_Sty dup mul add sqrt div add){V}
+\psdot[linecolor=red](H)
+\psdot[linecolor=red](V)
+\pscircle[dimen=outer,linecolor=gray](H){1}
+\pscircle[dimen=outer,linecolor=gray](V){1}
+
+\pcline[linecolor=red](H)(V)\naput*{$R$}
+\pcline[linecolor=blue](H)(A)\naput{$r$}
+\pcline[linecolor=blue](V)(B)\naput{$r$}
+
+\psplotTangent[linestyle=dashed,linecolor=Green]{nAx}{1.5}{\myFunk}
+\psplotTangent[linestyle=dashed,linecolor=Green]{nBx}{1.5}{\myFunk}
+\end{pspicture}
+
+Soit $x_0$ l'abscisse du point de contact de la roue arrière (de rayon $r$) avec la courbe :
+\begin{equation*}
+\vec{x}_0=
+\begin{pmatrix}
+x_0\\
+f(x_0)
+\end{pmatrix}
+\end{equation*}
+La tangente en ce point a pour vecteur directeur :
+\begin{equation*}
+\vec{t}_0=
+\begin{pmatrix}
+1\\
+f'(x_0)
+\end{pmatrix}
+\end{equation*}
+Le vecteur unitaire normal en $x_0$ s'écrit :
+\begin{equation*}
+\vec{n}_{0x_0}=\frac{1}{\sqrt{1+f'(x_0)^2}}
+\begin{pmatrix}
+-f'(x_0)\\
+1
+\end{pmatrix}
+\end{equation*}
+Appelons $H$ l'axe de la roue arrière, son vecteur position a pour coordonnées :
+\begin{align*}
+\overrightarrow{OH}&=\vec{x}_0+r\cdot \vec{n}_{0x_0}\\
+&=\begin{pmatrix}
+x_0-r\frac{f'(x_0)}{\sqrt{1+f'(x_0)^2}}\\
+f(x_0)+r\frac{1}{\sqrt{1+f'(x_0)^2}}
+\end{pmatrix}
+\end{align*}
+$x$ est l'abscisse du point de contact de la roue avant avec la courbe.
+Le vecteur unitaire normal en ce point est :
+\begin{equation*}
+\vec{n}_{0x}=\frac{1}{\sqrt{1+f'(x)^2}}
+\begin{pmatrix}
+-f'(x)\\
+1
+\end{pmatrix}
+\end{equation*}
+Soit $V$ l'axe de la roue avant, son vecteur position a pour coordonnées :
+\begin{align*}
+\overrightarrow{OV}&=\vec{x}+r\cdot \vec{n}_{0x}\\
+&=\begin{pmatrix}
+x-r\frac{f'(x)}{\sqrt{1+f'(x)^2}}\\
+f(x)+r\frac{1}{\sqrt{1+f'(x)^2}}
+\end{pmatrix}
+\end{align*}
+Si $R$ est la distance entre les 2 axes :
+\begin{align*}
+|\overrightarrow{OV}-\overrightarrow{OH}|&=R\\
+\left|
+\begin{pmatrix}
+x-r\frac{f'(x)}{\sqrt{1+f'(x)^2}}-\left(x_0-r\frac{f'(x_0)}{\sqrt{1+f'(x_0)^2}}\right)\\
+f(x)+r\frac{1}{\sqrt{1+f'(x)^2}}-\left(f(x_0)+r\frac{1}{\sqrt{1+f'(x_0)^2}}\right)
+\end{pmatrix}
+\right|&=R\\
+\left|\begin{pmatrix}
+x-x_0+r\left(\frac{f'(x_0)}{\sqrt{1+f'(x_0)^2}}-\frac{f'(x)}{\sqrt{1+f'(x)^2}}\right)\\
+f(x)-f(x_0)+r\left(\frac{1}{\sqrt{1+f'(x)^2}}-\frac{1}{\sqrt{1+f'(x_0)^2}}\right)
+\end{pmatrix}
+\right|&=R
+\end{align*}
+Nous obtenons une équation en $x$, où $x$ est l'abscisse du point de tangence de la roue avant avec la courbe. La résolution de cette équation fixera la position de la roue avant.
+\begin{equation*}
+\left(x-x_0+r\left(\frac{f'(x_0)}{\sqrt{1+f'(x_0)^2}}-\frac{f'(x)}{\sqrt{1+f'(x)^2}}\right)\right)^2+\left(f(x)-f(x_0)+r\left(\frac{1}{%
+\sqrt{1+f'(x)^2}}-\frac{1}{\sqrt{1+f'(x_0)^2}}\right)\right)^2=R^2
+\end{equation*}
+
+
+\subsection{Les roues ont des rayons différents}
+\psset{saveNodeCoors,NodeCoorPrefix=n,algebraic}
+\def\myFunk{2-0.25*x^2}
+\def\abl{Derive(1,\myFunk)}
+\begin{pspicture}(-10,-2)(8,3)
+\psplot{-4}{4}{\myFunk}
+\pnode(*-3 {\myFunk}){A}
+\pnode(*nAx {\abl}){A_St}
+\pnode(*-1 {\myFunk}){B}
+\pnode(*nBx {\abl}){B_St}
+\psdot(A)
+\psdot(B)
+\uput*[-90](A){\small$\Epkt{}{x_0}{f(x_0)}$}
+\uput*[-90](B){\small$\Epkt{}{x}{f(x)}$}
+
+\pnode(!nAx nA_Sty 1 nA_Sty dup mul add sqrt div sub nAy 1 1 nA_Sty dup mul add sqrt div add){H}
+\pnode(!nBx nB_Sty 1 nB_Sty dup mul add sqrt div 0.7 mul sub nBy 1 1 nB_Sty dup mul add sqrt div 0.7 mul add){V}
+\psdot[linecolor=red](H)
+\psdot[linecolor=red](V)
+\pscircle[dimen=outer,linecolor=gray](H){1}
+\pscircle[dimen=outer,linecolor=gray](V){0.7}
+
+\pcline[linecolor=red](H)(V)\naput*{$R$}
+\pcline[linecolor=blue](H)(A)\naput{$r_1$}
+\pcline[linecolor=blue](V)(B)\naput{$r_2$}
+
+\psplotTangent[linestyle=dashed,linecolor=Green]{nAx}{1.5}{\myFunk}
+\psplotTangent[linestyle=dashed,linecolor=Green]{nBx}{1.5}{\myFunk}
+\end{pspicture}
+
+Les coordonnées du point de contact de la roue arrière de rayon $r_1$ avec la courbe sont :
+\begin{equation*}
+\vec{x}_0=
+\begin{pmatrix}
+x_0\\
+f(x_0)
+\end{pmatrix}
+\end{equation*}
+En ce point, le vecteur directeur de la tangente est :
+\begin{equation*}
+\vec{t}_0=
+\begin{pmatrix}
+1\\
+f'(x_0)
+\end{pmatrix}
+\end{equation*}
+et le vecteur unitaire normal :
+\begin{equation*}
+\vec{n}_{0x_0}=\frac{1}{\sqrt{1+f'(x_0)^2}}
+\begin{pmatrix}
+-f'(x_0)\\
+1
+\end{pmatrix}
+\end{equation*}
+Le vecteur position du point $H$ (axe de la roue arrière) a pour coordonnées :
+\begin{align*}
+\overrightarrow{OH}&=\vec{x}_0+r_1\cdot \vec{n}_{0x_0}\\
+&=\begin{pmatrix}
+x_0-r_1\frac{f'(x_0)}{\sqrt{1+f'(x_0)^2}}\\
+f(x_0)+r_1\frac{1}{\sqrt{1+f'(x_0)^2}}
+\end{pmatrix}
+\end{align*}
+$x$ est l'abscisse du point de contact de la roue avant avec la courbe.
+Le vecteur unitaire normal en ce point est :
+\begin{equation*}
+\vec{n}_{0x}=\frac{1}{\sqrt{1+f'(x)^2}}
+\begin{pmatrix}
+-f'(x)\\
+1
+\end{pmatrix}
+\end{equation*}
+$r_2$ est le rayon de la roue avant, les coordonnées du point $V$ (axe de la roue avant)  sont :
+\begin{align*}
+\overrightarrow{OV}&=\vec{x}+r_2\cdot \vec{n}_{0x}\\
+&=\begin{pmatrix}
+x-r_2\frac{f'(x)}{\sqrt{1+f'(x)^2}}\\
+f(x)+r_2\frac{1}{\sqrt{1+f'(x)^2}}
+\end{pmatrix}
+\end{align*}
+la distance entre les 2 axes vaut $R$, on en déduit :
+\begin{align*}
+|\overrightarrow{OV}-\overrightarrow{OH}|&=R\\
+\left|
+\begin{pmatrix}
+x-r_2\frac{f'(x)}{\sqrt{1+f'(x)^2}}-\left(x_0-r_1\frac{f'(x_0)}{\sqrt{1+f'(x_0)^2}}\right)\\
+f(x)+r_2\frac{1}{\sqrt{1+f'(x)^2}}-\left(f(x_0)+r_2\frac{1}{\sqrt{1+f'(x_0)^2}}\right)
+\end{pmatrix}
+\right|&=R\\
+\end{align*}
+Nous obtenons une équation en $x$, où $x$ est l'abscisse du point de tangence de la roue avant avec la courbe.
+\begin{equation*}
+\left(x-x_0+r_1\frac{f'(x_0)}{\sqrt{1+f'(x_0)^2}}-r_2\frac{f'(x)}{\sqrt{1+f'(x)^2}}\right)^2+
+\left(f(x)-f(x_0)+r_2\frac{1}{\sqrt{1+f'(x)^2}}-r_1\frac{1}{\sqrt{1+f'(x_0)^2}}\right)^2=R^2
+\end{equation*}
+
+\subsection{Angle d'inclinaison de la droite joignant les axes des roues arrière et avant}
+
+Les 2 roues sont posées sur le plan horizontal.
+\psset{saveNodeCoors,NodeCoorPrefix=n,algebraic}
+\def\myFunk{0}
+\def\abl{Derive(1,\myFunk)}
+
+\begin{pspicture}(-10,-0.5)(8,4)
+\psplot{-8}{4}{\myFunk}
+\pnode(*-5 {\myFunk}){A}
+\pnode(*nAx {\abl}){A_St}
+\pnode(*1 {\myFunk}){B}
+\pnode(*nBx {\abl}){B_St}
+
+%\uput*[-90](A){\small$\Epkt{}{x_0}{f(x_0)}$}
+%\uput*[-90](B){\small$\Epkt{}{x}{f(x)}$}
+
+\pnode(!nAx nA_Sty 1 nA_Sty dup mul add sqrt div 2 mul sub nAy 1 1 nA_Sty dup mul add sqrt div 2 mul add){H}
+\pnode(!nBx nB_Sty 1 nB_Sty dup mul add sqrt div 1.4 mul sub nBy 1 1 nB_Sty dup mul add sqrt div 1.4 mul add){V}
+\psdot[linecolor=red](H)
+\psdot[linecolor=red](V)
+\uput[90](H){H}
+\uput[90](V){V}
+\pscircle[dimen=outer,linecolor=gray](H){2}
+\pscircle[dimen=outer,linecolor=gray](V){1.4}
+
+\pcline[linecolor=red](H)(V)\naput{$R$}
+\pcline[linecolor=blue](H)(A)\naput{$r_1$}
+\pcline[linecolor=blue](V)(B)\naput{$r_2$}
+
+\pcline[linecolor=gray,linestyle=dashed](H)(!nHx nVy)\nbput{$r_1-r_2$}
+\pcline[linecolor=gray,linestyle=dashed](!nHx nVy)(!nVx nVy)\nbput{$\sqrt{R^2-(r_1-r_2)^2}$}
+
+\pnode(!nHx nVy){X}
+
+\pstMarkAngle[linecolor=red,arrows=->,MarkAngleRadius=4.5,LabelSep=3.6]{H}{V}{X}{\color{red}$\alpha$}
+\end{pspicture}
+:
+L'angle d'inclinaison initial $\alpha$ entre la droite joignant les 2 axes et l'horizontale est:
+\begin{equation*}
+  \alpha=\arctan\left(\frac{r_1-r_2}{\sqrt{R^2-(r_1-r_2)^2}}\right)
+\end{equation*}
+%If the plane is not horizontal, there is an additional angle $\beta$ given by the function $f(x)$:
+Si le plan n'est pas horizontal, il faut ajouter un angle $\beta$ que l'on obtient grâce à la fonction $f(x)$ :
+\psset{saveNodeCoors,NodeCoorPrefix=n,algebraic}
+\def\myFunk{0}
+\def\abl{Derive(1,\myFunk)}
+\begin{pspicture}(-10,0)(8,5.5)
+\rput{-20}{
+\psplot{-8}{4}{\myFunk}
+\pnode(*-5 {\myFunk}){A}
+\pnode(*nAx {\abl}){A_St}
+\pnode(*1 {\myFunk}){B}
+\pnode(*nBx {\abl}){B_St}
+\psdot(A)
+\psdot(B)
+\uput*[-90](A){\small$\Epkt{}{x_0}{f(x_0)}$}
+\uput*[-90](B){\small$\Epkt{}{x}{f(x)}$}
+
+\pnode(!nAx nA_Sty 1 nA_Sty dup mul add sqrt div 2 mul sub nAy 1 1 nA_Sty dup mul add sqrt div 2 mul add){H}
+\pnode(!nBx nB_Sty 1 nB_Sty dup mul add sqrt div 1.4 mul sub nBy 1 1 nB_Sty dup mul add sqrt div 1.4 mul add){V}
+\psdot[linecolor=red](H)
+\psdot[linecolor=red](V)
+\uput[90](H){H}
+\uput[90](V){V}
+\pscircle[dimen=outer,linecolor=gray](H){2}
+\pscircle[dimen=outer,linecolor=gray](V){1.4}
+
+\pcline[linecolor=red](H)(V)\naput{$R$}
+\pcline[linecolor=blue](H)(A)\naput{$r_1$}
+\pcline[linecolor=blue](V)(B)\naput{$r_2$}
+
+\pcline[linecolor=gray,linestyle=dashed](H)(!nHx nVy)\nbput{$r_1-r_2$}
+\pcline[linecolor=gray,linestyle=dashed](!nHx nVy)(!nVx nVy)\nbput{$\sqrt{R^2-(r_1-r_2)^2}$}
+
+\pnode(!nHx nVy){X}
+
+\pstMarkAngle[linecolor=red,arrows=->,MarkAngleRadius=4.5,LabelSep=3.6]{H}{V}{X}{\color{red}$\alpha$}
+}
+
+\rput(H){%
+\pcline[linestyle=dashed](0,0)(5.5,0)\naput{$x_V-x_H$}
+\pcline[linestyle=dashed](5.5,0)(V)\naput{$y_V-y_H$}
+}
+\uput{1cm}[-13](H){\color{blue}$\beta$}
+\end{pspicture}
+
+Les coordonnées de l'axe $V$ de la roue avant sont :
+\begin{equation*}
+\overrightarrow{OV}=\vec{x}+r_2\cdot \vec{n}_{0x}
+=\begin{pmatrix}
+x-r_2\frac{f'(x)}{\sqrt{1+f'(x)^2}}\\
+f(x)+r_2\frac{1}{\sqrt{1+f'(x)^2}}
+\end{pmatrix}
+=\begin{pmatrix}
+x_V\\y_V
+\end{pmatrix}
+\end{equation*}
+Celles du point $H$ axe de la roue avant :
+\begin{equation*}
+\overrightarrow{OH}=\vec{x}_0+r_1\cdot \vec{n}_{0x_0}
+=\begin{pmatrix}
+x_0-r_1\frac{f'(x_0)}{\sqrt{1+f'(x_0)^2}}\\
+f(x_0)+r_1\frac{1}{\sqrt{1+f'(x_0)^2}}
+\end{pmatrix}
+=\begin{pmatrix}
+x_H\\y_H
+\end{pmatrix}
+\end{equation*}
+L'angle $\beta$ vaut :
+\begin{equation*}
+\beta=\arctan\left(\frac{y_V-y_H}{x_V-x_H}\right)
+\end{equation*}
+On obtient ainsi l'angle total $\gamma$
+\begin{equation*}
+  \gamma=-(\alpha+\beta)
+\end{equation*}
+
+\subsection{Détermination du rayon de courbure}
+Une courbe peut être imaginée comme une suite de nombreux petits arcs circulaires. Le rayon des cercles associés respectifs est appelé rayon de courbure. Plus la courbure d'une courbe est accentuée, plus les intervalles doivent être choisis 
+petits afin de pouvoir les assimiler avec la meilleure approximation possible à des arcs de cercle.
+
+Pour trouver le rayon d'un tel arc et donc le rayon de la courbure de la courbe au point $x_{0}$, la normale en $x_{0}$ devrait couper la normale en $x_ {0} + \epsilon $. Ceci donne la valeur $x$ du centre du cercle de courbure M de la courbe. 
+Le dessin suivant illustre cette notion.
+
+\begin{pspicture}[showgrid=false,shift=0,saveNodeCoors,NodeCoorPrefix=n](0,-0.6)(18,9.2)
+\def\funkg{0.4*(x-3)*sin(0.2*(x-5))}
+\curveVal{5}{\funkg}[5]
+
+\psplot[algebraic=true,plotpoints=500,linecolor=black,linewidth=2pt,yMaxValue=25,yMinValue=-15]{0}{18}{\funkg}
+%\psplot[algebraic=false,plotpoints=500,linecolor=red,linewidth=2pt,yMaxValue=25,yMinValue=-15]{0}{18}{Rho}
+\pcline[linewidth=1.5pt,nodesepB=-2.6,linecolor=BrickRed](!x0 funcx0)(!x0 deltax0 add funcx0 deltay0 add)
+\pcline[linewidth=1.5pt,nodesepB=-2.6,linecolor=Green](*{x0 0.5 add} {\funkg})(!x0 deltax0 add funcx0 deltay0 add)
+\psdot[dotsize=5pt](!x0 funcx0)
+\psdot[dotsize=5pt](*{x0 0.5 add} {\funkg})
+\psdot[dotsize=5pt](!x0 deltax0 add funcx0 deltay0 add)
+\uput{0.25}[150]{0}(!x0 deltax0 add funcx0 deltay0 add){M}
+\psarc[linewidth=1.5pt,linestyle=dashed,linecolor=cyan](!x0 deltax0 add funcx0 deltay0 add){!1 KWRhox0 div}{230}{380}
+\pcline[offset=-30pt,tbarsize=20pt,linewidth=1.5pt,linecolor=BrickRed]{|<->|}(!x0 funcx0)(!x0 deltax0 add funcx0 deltay0 add)
+\ncput*{\color{BrickRed}$\rho$}
+%\pcline[offset=20pt,tbarsize=20pt,linewidth=1.5pt]{|<->|}(!x0 deltax0 add  funcx0)(!x0 deltax0 add funcx0 deltay0 add)
+%\ncput*{$\Delta y_{m}$}
+\pcline[linecolor=orange,linewidth=1.2pt]{<->}(!x0 deltax0 add  funcx0)(!x0 deltax0 add funcx0 deltay0 add)
+\naput[nrot=:U]{\color{orange}$\Delta y_{m}$}
+\pcline[linecolor=orange,linewidth=1.2pt]{<->}(!x0 deltax0 add  funcx0)(!x0 funcx0)
+\nbput[nrot=:U]{\color{orange}$\Delta x_{m}$}
+\end{pspicture}
+
+\makebox[7cm][l]{\textbf{Normale en \BM{x_{0}}:}} $ n(x)=-\frac{1}{f'(x_{0})}\cdot (x-x_{0})+f(x_{0})$
+
+\makebox[7cm][l]{\textbf{Normale en \BM{x_{0}+\epsilon}:}} $ n_{\epsilon}(x)=-\frac{1}{f'(x_{0}+\epsilon)}\cdot (x-x_{0}-\epsilon)+f(x_{0}+\epsilon)$
+
+\makebox[7cm][l]{\textbf{Point d'intersection des normales:}} $n_{\epsilon}(x) - n(x) = 0$
+\begin{alignat*}{2}
+- \frac{x}{f'(x_{0}+\epsilon)} + \frac{x_{0}}{f'(x_{0}+\epsilon)} + \frac{\epsilon}{f'(x_{0}+\epsilon)} + f(x_{0}+\epsilon) + \frac{x}{f'(x_{0})} - \frac{x_{0}}{f'(x_{0})} - f(x_{0}) & = 0&\qquad& \\[4pt]
+\frac{x\cdot \left[f'(x_{0}+\epsilon) - f'(x_{0})\right]}{f'(x_{0}+\epsilon)\cdot f'(x_{0})} - \frac{x_{0}\cdot \left[f'(x_{0}+\epsilon) - f'(x_{0})\right]}{f'(x_{0}+\epsilon)\cdot f'(x_{0})} + \frac{\epsilon}{f'(x_{0}+\epsilon)} + f(x_{0}+\epsilon) - f(x_{0}) & = 
+0&\qquad& |:\epsilon\\[4pt]
+\frac{x\cdot \frac{f'(x_{0}+\epsilon) - f'(x_{0})}{\epsilon}}{f'(x_{0}+\epsilon)\cdot f'(x_{0})} - \frac{x_{0}\cdot \frac{f'(x_{0}+\epsilon) - f'(x_{0})}{\epsilon}}{f'(x_{0}+\epsilon)\cdot f'(x_{0})} + \frac{1}{f'(x_{0}+\epsilon)} + \frac{f(x_{0}+\epsilon) - 
+f(x_{0})}{\epsilon} & = 0&\qquad&| \lim_{\epsilon\to 0}\\[4pt]
+\frac{x\cdot f''(x_{0})}{f'(x_{0})\cdot f'(x_{0})} - \frac{x_{0}\cdot f''(x_{0})}{f'(x_{0})\cdot f'(x_{0})} + \frac{1}{f'(x_{0})} + f'(x_{0}) & = 0&&
+\end{alignat*}
+En résolvant par rapport à $x$ :
+\begin{equation*}
+ x = x_{0} - \frac{f'(x_{0})}{f''(x_{0})} - \frac{\left[f'(x_{0})\right]^{3}}{f''(x_{0})} = x_{0} + \underbrace{\left[-\frac{f'(x_{0})}{f''(x_{0})}\cdot \left\{ 1 + \left[f'(x_{0})\right]^{2} \right\}\right]}_{\Delta x_{m}}
+\end{equation*}
+Pour le changement correspondant  $\Delta y_{m}$ de l'ordonnée $y$,  nous multiplions la pente de la normale par $\Delta x_{m}$ :
+\begin{equation*}
+  \Delta y_{m} = -\frac{1}{f'(x_{0})} \cdot \Delta x_{m} =\frac{1}{f''(x_{0})}\cdot \left\{ 1 + \left[f'(x_{0})\right]^{2} \right\}
+\end{equation*}
+Avec le théorème de Pythagore, on obtient le rayon de courbure :
+\begin{equation*}
+  \rho = \sqrt{(\Delta x_{m})^{2} + (\Delta y_{m})^{2}} = \sqrt{(\Delta x_{m})^{2} + \left[-\frac{1}{f'(x_{0})} \cdot \Delta x_{m}\right]^{2}} = \abs{\frac{\Delta x_{m}}{f'(x_{0})}} \cdot \sqrt{\left[f'(x_{0})\right]^{2} + 1}
+\end{equation*}
+En utilisant $\Delta x_{m} = -\frac{f'(x_{0})}{f''(x_{0})}\cdot \left\{ 1 + \left[f'(x_{0})\right]^{2} \right\}$--- on obtient :
+\begin{equation*}
+  \rho = \abs{\frac{\frac{f'(x_{0})}{f''(x_{0})}\cdot \left\{ 1 + \left[f'(x_{0})\right]^{2} \right\}}{f'(x_{0})}} \cdot \sqrt{\left[f'(x_{0}\right]^{2} + 1} =
+  \frac{\sqrt{\left\{1 + \left[f'(x_{0})\right]^{2}\right\}^{3}}}{\abs{f''(x_{0})}}
+\end{equation*}
+
+
+
+\subsection{Roulement sans glissement}
+
+\begin{pspicture}[showgrid=false,shift=0,saveNodeCoors,NodeCoorPrefix=n](0,-0.8)(18,11)
+\def\funkg{0.4*(x-3)*sin(0.2*(x-5))}
+\curveVal{7}{\funkg}[3]
+%\psplot[algebraic=true,plotpoints=500,linecolor=black,linewidth=2pt,yMaxValue=25,yMinValue=-15]{0}{18}{\funkg}
+\pcline[linewidth=1.5pt,nodesepB=0,linecolor=BrickRed](PC)(MC)
+\psdot[dotsize=5pt](MC)
+\uput{0.2}[40]{0}(MC){M$_{\text{c}}$}
+\psarc[linewidth=1.5pt,linecolor=cyan](MC){!Rhox0}{255}{340}
+\psdot[dotsize=5pt](PC)
+\uput{0.25}[-60]{0}(PC){P}
+\uput{0.25}[60]{0}(QC){Q}
+\uput{0.3}[-100]{0}(MW){M$_{\text{w}}$}
+\pnode([offset=1.3cm]{MC}PC){PCO}
+\pnode([offset=-1.3cm]{PC}MC){MCO}
+\pnode([offset=-1.3cm]{PC}MW){MWO}
+\psline[linewidth=1.5pt](MWO)(MW)
+\psline[linewidth=1.5pt](MCO)(MC)
+\pcline[offset=-5pt,linewidth=1.5pt,linecolor=BrickRed]{<->}(MWO)(MCO)
+\ncput*{\color{BrickRed}$R=\rho - r$}
+\psdot[dotsize=5pt](QC)
+\psdot[dotsize=5pt](MW)
+\pscircle[linewidth=1.5pt](MW){!rW}
+\psarcn[linewidth=1.5pt,linecolor=BrickRed]{->}(MW){!rW 0.5 add}{180}{150}
+\uput{3.65}[165]{0}(MW){$\omega=\dot{\varphi}$}
+%\multido{\iC=0+1}{11}{%
+%\definecolor[ps]{rainbow}{hsb}{0.9 \iC\space 15 div sub 0.95 0.7 }%
+%\rput{!-90 \iC\space 0.5 mul 180 mul Pi div rW div sub alpha sub}(MW){\psline[linewidth=1.5pt,linecolor=rainbow](!rW 0)(!rW 0.2 sub 0)}
+%\rput{!-90 \iC\space 0.5 mul 180 mul Pi div Rhox0 div sub alpha sub}(MC){\psline[linewidth=1.5pt,linecolor=rainbow](!Rhox0 0)(!Rhox0 0.2 add 0)}
+%}
+%%\rput(MW){\psline[linewidth=1.5pt]{->}(0,0)(!tex 4 mul tey 4 mul)}
+\rput{!beta}(MW){\pcline[linewidth=1.2pt,linecolor=BrickRed]{->}(0,0)(2,0)\nbput[npos=0.7]{\color{BrickRed}$\vv{v_{\text{c}}}$}}
+\rput{0}(MC){\uput{!Rho}[-19]{0}(0,0){\color{cyan}G$_{f}$}}
+\rput{-40}(MC){\pnode(!Rho rW sub 0){MWI}}
+\rput{-40}(MC){\pnode(!Rho 0){PCI}}
+\pscircle[linewidth=1.2pt,linecolor=gray,linestyle=dashed](MWI){!rW}
+\psarc[linewidth=1.5pt,linecolor=gray,linestyle=dashed](MC){!Rhox0 rW sub}{290}{330}
+\pcline[linewidth=1pt,nodesepB=0,linecolor=cyan!60,linestyle=dashed](PCI)(MC)
+\pcline[linewidth=1.5pt,nodesepB=0,linecolor=gray,linestyle=dashed](MWI)(MC)
+\psdot[dotsize=5pt,linecolor=gray](MWI)
+\psdot[dotsize=5pt,linecolor=gray](PCI)
+\uput{0.3}[-20]{0}(PCI){$\text{P}'$}
+\uput{0.3}[0]{0}(MWI){$\text{M}_{\text{w}}'$}
+\multido{\iC=0+1}{11}{%
+\definecolor[ps]{rainbow}{hsb}{0.9 \iC\space 15 div sub 1 \iC\space 11 div sub 0.7 }%
+\rput{!-90 \iC\space 0.5 mul 180 mul Pi div rW div sub -50 sub}(MWI){\psline[linewidth=1.5pt,linecolor=rainbow](!rW 0)(!rW 0.2 sub 0)}
+\rput{!-90 \iC\space 0.5 mul 180 mul Pi div Rhox0 div sub -50 sub}(MC){\psline[linewidth=1.5pt,linecolor=rainbow](!Rhox0 0)(!Rhox0 0.2 add 0)}
+}
+%\multido{\iC=0+1}{11}{%
+%\rput{!-90 \iC\space 0.5 mul 180 mul Pi div rW div sub alpha sub 50 gamma sub Rhox0 mul rW div sub}(MWI){\psline[linewidth=1.5pt,linecolor=gray!50](!rW 0)(!rW 0.2 sub 0)}
+%}
+\rput{!beta}(PC){\pcline[linewidth=2pt,linecolor=Green]{->}(0,0)(1.5,0)\nbput[npos=0.7,nrot={!beta neg}]{\color{Green}$\vv{e_{\text{t}}}$}}
+\rput{!gamma}(PC){\pcline[linewidth=2pt,linecolor=Green]{->}(0,0)(1.5,0)\nbput[npos=0.7,nrot={!gamma neg}]{\color{Green}$\vv{e_{\text{n}}}$}}
+\end{pspicture}
+
+La condition de roulement d'une roue sans force de glissement, est que le centre de la roue doit faire une rotation autour du point P. Par conséquent, le centre se déplace avec la vitesse:
+\begin{equation*}
+  \vv{v_{\text{c}}} = r\cdot \dot{\varphi}\cdot \vv{e_{\text{t}}} \qquad  \text{avec } \vv{e_{\text{t}}} \text{ le vecteur unitaire tangent }
+\end{equation*}
+Parce que le centre de la roue se déplace également le long du cercle de centre de M$_{\text {c}}$ et de rayon $\rho - r$ et donc que le point P se déplace d'une distance $\Delta s $ au point $\text{P}'$ --- les vitesses en  M$_\text{w}$ et en P se 
+comportent comme leurs rayons correspondants :
+\begin{equation*}
+  \vv{v_{\text{c}}} = \frac{\rho - r}{\rho}\cdot \frac{\Delta s}{\Delta t}  \cdot \vv{e_{\text{t}}} \qquad \text{avec des intervalles très petits, on a }\quad \frac{\Delta s}{\Delta t} = \dot{s}
+\end{equation*}
+En égalant les membres de droite des 2 équations de la vitesse,  on obtient finalement :
+\begin{equation*}
+  r\cdot \dot{\varphi} = \frac{\rho - r}{\rho}\cdot \dot{s} \qrq \frac{\text{d}\varphi}{\text{d}t} = \frac{\rho - r}{\rho \cdot r}\cdot \frac{\text{d}s}{\text{d}t} \qrq  \text{d}\varphi = \frac{\rho - r}{\rho \cdot r}\cdot \text{d}s =  \frac{\rho - r}{\rho 
+  \cdot r}\cdot \sqrt{1+[f'(x)]^{2}} \cdot \text{d}x
+\end{equation*}
+
+
+\section{Les véhicules prédéfinis}
+
+
+Ce package contient un certain nombre de véhicules prédéfinis, comme \emph{Bike}, \emph{Tractor}, \emph{Highwheeler}, \emph{Truck}, \emph{Segway}, \emph{Unicycle}. Les deux derniers véhicules ont un seul axe, les autres 2 axes.
+
+
+Sauf pour les mono-cycles, un véhicule est défini par le rayon de chaque roue, [\texttt{rB}] pour la roue arrière et [\texttt{rF}] pour la roue avant et la distance [\texttt{d}] entre les axes des deux roues. Leurs valeurs doivent être données dans 
+les options de la commande \texttt{\textbackslash psVehicle[options]}. Le design d'un véhicule, la carrosserie ou le cadre de bicyclette doivent évidemment être adaptés aux dimensions indiquées ci-dessus. Un certain nombre de types de roues 
+ont aussi été prédéfinies.
+
+Nous avons également configuré certains \verb+\newpsstyle+ pour chacun des véhicules, où les dimensions et le choix des roues sont fixés.
+\begin{lstlisting}
+\newpsstyle{segway}{rB=1.4,backwheel=\segWheel}%MonoAxis
+\newpsstyle{unicycle}{rB=1.6,backwheel=\SpokesWheelB}%MonoAxis
+\newpsstyle{tractor}{d=4,rB=1.4,rF=1.0}
+\newpsstyle{truck}{backwheel=\TruckWheel,frontwheel=\TruckWheel,d=6.28,rB=1.9,rF=1.9}
+\newpsstyle{bike}{backwheel=\SpokesWheelB,frontwheel=\SpokesWheelB,d=5.8,rB=1.6,rF=1.6}
+\end{lstlisting}
+Voici une liste des véhicules qui accompagnent ce package :
+
+
+\subsection{\textbackslash Bike}
+
+\begin{LTXexample}[pos=l,width=4cm]
+\begin{pspicture}(0,0)(4,3)
+\def\FuncA{1*cos(x)+1}
+\psframe*[linecolor=yellow!10](0,0)(4,3)
+\psgrid[style=quadrillage](0,0)(4,3)
+\psplot{0}{4}{\FuncA}
+\psVehicle[vehicle=\Bike,showSlope]{0.25}{1.2}{\FuncA}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash Tractor}
+
+\begin{LTXexample}[pos=l,width=4cm]
+\begin{pspicture}(-1,4)(3,7)
+\def\funkg{sqrt(-x^2+2*x*10+1)}
+\psframe*[linecolor=yellow!10](-1,4)(3,7)
+\psgrid[style=quadrillage](-1,4)(3,7)
+\psplot[plotpoints=500,algebraic]{0.5}{4}{\funkg}
+\psVehicle[vehicle=\Tractor,showSlope=false]{0.5}{1}{\funkg}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash HighWheeler}
+
+\begin{LTXexample}[pos=l,width=4cm]
+\begin{pspicture}(0,-1)(4,3)
+\def\FuncA{-0.25*(x-2)^2+0.5}
+\psframe*[linecolor=yellow!10](0,-1)(4,3)
+\psgrid[style=quadrillage](0,-1)(4,3)
+\psplot[yMinValue=0]{0}{4}{\FuncA}
+\psVehicle[vehicle=\HighWheeler]{0.25}{1.2}{\FuncA}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash Truck}
+
+\begin{LTXexample}[pos=l,width=4cm]
+\begin{pspicture}(0,-1)(4,3)
+\def\FuncA{0.3*1.6^x}
+\psframe*[linecolor=yellow!10](0,-1)(4,3)
+\psgrid[style=quadrillage](0,-1)(4,3)
+\psplot{0}{4}{\FuncA}
+\psVehicle[vehicle=\Truck,style=truck]{0.3}{1.2}{\FuncA}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash Segway}
+
+\begin{LTXexample}[pos=l,width=4cm]
+\begin{pspicture}(0,-1)(4,4)
+\def\FuncA{(x-3)*sin(0.2*(x-1))+1}
+\psframe*[linecolor=yellow!10](0,-1)(4,4)
+\psgrid[style=quadrillage](0,-1)(4,4)
+\psplot{0}{4}{\FuncA}
+\psVehicle[vehicle=\Segway,style=segway]{0.25}{1.2}{\FuncA}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash UniCycle}
+
+\begin{LTXexample}[pos=l,width=4cm]
+\begin{pspicture}(0,0)(4,4)
+\def\FuncA{(x-3)*sin(0.2*(x-1))+1}
+\psframe*[linecolor=yellow!10](0,0)(4,4)
+\psgrid[style=quadrillage](0,0)(4,4)
+\psplot{0}{4}{\FuncA}
+\psVehicle[vehicle=\UniCycle,style=unicycle,showSlope=false]{0.5}{2.2}{\FuncA}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\section{Roue prédéfinies}
+Voici les roues prédéfinies pouvant être utilisées pour les roues avant ou arrière.
+
+
+\subsection{\textbackslash wheelA}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\wheelA}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash{}wheelB}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\wheelB}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash wheelC}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\wheelC}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash wheelD}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\wheelD}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash arrowWheel}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\arrowWheel}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash TruckWheel}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\TruckWheel}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash segWheel}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\segWheel}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash SpokesWheelCrossed}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\SpokesWheelCrossed}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash SpokesWheelA}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\SpokesWheelA}
+\end{pspicture}
+\end{LTXexample}
+
+\subsection{\textbackslash SpokesWheelB}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\SpokesWheelB}
+\end{pspicture}
+\end{LTXexample}
+
+\subsection{\textbackslash TractorFrontWheel}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rF 1 def 0 0){\TractorFrontWheel}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash TractorRearWheel}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\TractorRearWheel}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\section{Comment utiliser la commande}
+Cette commande s'écrit :
+\begin{BDef}
+\Lcs{psVehicle}\OptArgs\Largb{scaling factor}\Largb{abscissa back wheel}\Largb{equation function}
+\end{BDef}
+
+\textbf{Note important :} Cette fonction doit être donnée en notation algébrique en non en RPN.
+
+\LPack{pst-vehicle} contient les options \nxLkeyword{epsilon=}, \nxLkeyword{rB=}, \nxLkeyword{rF=}, \nxLkeyword{d=}, \nxLkeyword{gang=}, \nxLkeyword{vehicle=}, \nxLkeyword{ownvehicle=}, \nxLkeyword{backwheel=}, 
+\nxLkeyword{frontwheel=}, \nxLkeyword{MonoAxis=}, \nxLkeyword{showSlope=} et \nxLkeyword{startPos=}.
+\begin{quote}
+\begin{tabularx}{\linewidth}{ @{} l >{\ttfamily}l X @{} }\toprule
+\emph{Name}           & \emph{Default} & \emph{Meaning} \\\midrule
+\Lkeyword{epsilon}     & 1e-6          & Incrément\\
+\Lkeyword{rB}    & 1.6             & rayon de la roue arrière\\
+\Lkeyword{rF}  & 1.6   & rayon de la roue avant\\
+\Lkeyword{d}  & 5.8   &distance entre les axes de 2 roues\\
+\Lkeyword{gang}  & 1   &rapport de transmission entre le pédalier et la roue arrièrel\\
+\Lkeyword{vehicle}  & \texttt{\textbackslash Bike}   & Bike choisi par défaut\\
+\Lkeyword{ownvehicle}  &   & Utilisé pour créer un véhicule personnalisé\\
+\Lkeyword{backwheel}  & \texttt{\textbackslash wheelA}   & wheelA est choisi par défaut\\
+\Lkeyword{frontwheel}  & \texttt{\textbackslash wheelA}   & wheelA est choisi par défaut\\
+\Lkeyword{MonoAxis}  & false   & Si le véhicule a un axe\\
+\Lkeyword{showSlope}  & true   & Affiche la pente du véhicule et son signe\\
+\Lkeyword{startPos}  & 0  & Synchronise la rotation initiale des roues au point de départ\\
+\bottomrule
+\end{tabularx}
+\end{quote}
+
+
+
+\section{Le Slope-o-Meter}
+
+Un indicateur de pente pour afficher l'angle de la pente de la droite joignant les points de contact du véhicule avec la courbe. l'effet est très spectaculaire dans le cas d'une animations.
+Cette commande possède deux arguments permettant de la personnaliser avec \emph{couleur} et \emph{angle de l'aiguille}.
+
+%\textbf{Note :} Le nom \emph{Slope-o-Meter} n'est pas du tout une dénomination officielle, mais nous avons eu beaucoup de plaisir à lui donner ce nom spécial.
+\textbf{Note:} The name \emph{Slope-o-Meter} is not at all an academically correct notation, but we all together had great fun to give it that special name.
+\begin{LTXexample}[pos=l,width=5cm]
+\begin{pspicture}(-2.5,-2.5)(2.5,2.5)
+\pstVerb{/omega 30 def}
+\rput(0,0){\SlopeoMeter{cyan!90}{omega}}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\section{Exemples}
+
+\subsection{Véhicule prédéfini avec roues personnalisées}
+
+\begin{LTXexample}[pos=l,width=7cm]
+\begin{pspicture}(1,1)(8,6)
+\def\FuncA{0.5*cos(x)+2}
+\psframe*[linecolor=yellow!10](1,1)(8,6)
+\psgrid[style=quadrillage](1,1)(8,6)
+\psplot{1}{8}{\FuncA}
+\psVehicle[vehicle=\Truck,showSlope=false,frontwheel=\wheelC,backwheel=\arrowWheel,rB=1,rF=1]{0.5}{3.2}{\FuncA}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{Personnaliser ou créer un véhicule}
+
+Pour concevoir votre propre véhicule, il n'y a que quelques règles à suivre :
+\begin{itemize}
+\item Choisir \nxLkeyword{vehicle=\textbackslash SelfDefinedVehicle}
+\item Vous pouvez choisir les roues prédéfinies ou bien dessiner vos propres roues avec les options \nxLkeyword{backwheel=} and \nxLkeyword{frontwheel=}
+\item \textbf{Note important :} L'axe de la roue arrière est placé en : \Epkt{O}{0}{0}
+\item La position de la roue avant est calculée automatiquement en fonction de la distance donnée entre les deux axes \nxLkeyword{d=}
+\item Dessinez votre véhicule comme s'il se trouvait sur un plan horizontal, puis définissez-le et réglez-le avec i.\,e. \nxLkeyword{ownwheel=\textbackslash myVeh} comme indiqué dans l'exemple ci-dessous.
+\end{itemize}
+\begin{LTXexample}[pos=l,width=5cm]
+\def\myVeh{\psframe*[linecolor=red](-1,-0.25)(5,2)}
+\begin{pspicture}(2,1)(7,4)
+\def\FuncA{0.5*sin(x)+2}
+\psframe*[linecolor=yellow!10](2,1)(7,4)
+\psgrid[style=quadrillage](2,1)(7,4)
+\psplot{2}{7}{\FuncA}
+\psVehicle[vehicle=\SelfDefinedVehicle,ownvehicle=\myVeh,showSlope=false,frontwheel=\wheelA,backwheel=\wheelB,rB=1,rF=1,d=4]{0.5}{3.2}{\FuncA}
+\end{pspicture}
+\end{LTXexample}
+
+Le même type de véhicule est choisi celui de l'exemple précédent, mais la roue avant a un rayon plus petit.
+
+\begin{LTXexample}[pos=l,width=5cm]
+\def\myVeh{\psframe*[linecolor=red](-1,-0.25)(5,2)}
+\begin{pspicture}(2,1)(7,4)
+\def\FuncA{0.5*sin(x)+2}
+\psframe*[linecolor=yellow!10](2,1)(7,4)
+\psgrid[style=quadrillage](2,1)(7,4)
+\psplot{2}{7}{\FuncA}
+\psVehicle[vehicle=\SelfDefinedVehicle,ownvehicle=\myVeh,showSlope=false,frontwheel=\wheelA,backwheel=\wheelB,rB=1,rF=0.7,d=4]{0.5}{3.2}{\FuncA}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\section{Animation}
+
+\begin{LTXexample}[pos=t,width=15cm]
+\def\funkg{0.25*(x-3)*sin(0.2*(x-2))-1}
+\begin{animateinline}[controls,palindrome,
+    begin={\begin{pspicture}(-2,-2)(13,3)},
+    end={\end{pspicture}}]{20}% 20 frames/s (velocity of the animation)
+\multiframe{100}{rB=0+0.05}{% number of frames
+\psframe*[linecolor=cyan!20](-2,-2)(13,4)
+\pscustom[fillstyle=solid,fillcolor={[RGB]{174 137 100}},linestyle=none]{
+\psplot[plotpoints=500,algebraic]{-2}{13}{\funkg}
+\psline(13,-2)(-2,-2)
+\closepath}
+\psplot[plotpoints=500,algebraic]{-2}{13}{\funkg}
+\psVehicle[vehicle=\Bike,style=bike,linecolor=DodgerBlue4]{0.4}{\rB}{\funkg}
+\rput(10.5,0.5){\SlopeoMeter{cyan!90}{omega}}
+}
+\end{animateinline}
+\end{LTXexample}
+
+
+\clearpage
+
+\section{Liste des options de \texttt{pst-vehicle}}
+\xkvview{family=pst-vehicle,columns={key,type,default}}
+
+
+\clearpage
+
+
+\nocite{*}
+\bgroup
+\RaggedRight
+\printbibliography
+\egroup
+
+
+\printindex
+\end{document}

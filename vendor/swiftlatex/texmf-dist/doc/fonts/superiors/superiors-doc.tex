@@ -1,0 +1,161 @@
+% !TEX TS-program = pdflatexmk
+\documentclass[11pt]{amsart}
+\usepackage[margin=.75in]{geometry} 
+\usepackage[parfill]{parskip}%\usepackage{graphicx}
+\usepackage{graphicx}
+%SetFonts
+% libertine text and newtxmath
+\usepackage{libertine}
+\usepackage[TS1,T1]{fontenc}
+\usepackage{textcomp}
+\usepackage[scaled=.85]{beramono} 
+\usepackage[libertine]{newtxmath}
+\makeatletter
+\def\libertine@figurestyle{OsF}
+\makeatother
+%\def\libertine{\fontfamily{fxlj}\selectfont}
+%SetFonts
+\usepackage[supstfm=libertinesups,%
+  supscaled=1.2,%
+  raised=-.13em]{superiors}
+\title{Superior Figures}
+\author{Michael Sharpe}
+\date{\today}  % Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+\section{Briefly}
+The default behavior of footnote and endnote markers in \LaTeX\ is to print the number as if it were a mathematical superscript. In most cases, this means the size is about 70\% of the normal lining figure and the top is somewhat above the tops of capital letters. In many cases, the superscript figure is simply reduced in all dimensions by about 70\%, making them appear rather slight, though overly tall. (The \textsf{libertine} package used for preparing this document has a custom footnote illustrated below.)
+
+As an alternative, one may use superior figures---small figures, usually 50\% to 60\% of the height of lining figures, like \textsu{1234567890}. Commonly, they are designed so that the tops of the numbers are aligned with the tops of the capital letters in the font, though sometimes a little higher, corresponding to the ascender height. PostScript fonts have for a long time mostly contained just a small subset $\{1,2,3\}$ of the possible superior digits, and most OpenType fonts in the Adobe portfolio, other than the most popular and the most recent, contain the same small subset. Moreover, the \textsf{TS1} encoding includes slots for only those three superior figures. Even the recent STIX collection contains just the basic three, at least in its original distribution.
+
+
+This package allows you to add a full set of superior figures to a font family that lacks one. It uses two predefined collections---the default is {\tt ntxsups-Regular-t1}, drawn from TeX Gyre Termes, while the second, {\tt libertinesups}, is taken from Libertine-Legacy. (The standard \textsf{libertine} package provides no access to these glyphs other than through footnote markers.) In addition, you may specify any \TeX\ tfm whose figure slots contain superior figures. The package also allows you to scale the size of the imported figures, to take into account your general font scaling,  and to specify an amount by which to raise the imported, rescaled figures. You may also specify a spacing to apply before the footnote marker, using the option {\tt supspaced}. The package should be loaded \textbf{after} your Roman text font package\footnote{The {\tt newtxtext} package uses the {\tt ntxsups-*} superiors contained in the newtx package by default for footnote markers.} so that it overwrites any existing definitions of \verb|\sustyle| (a switch to turn on superior letters and figures, usually employed within braces to limit its effect, \verb|\textsu| (a macro that applies the \verb|\sustyle| switch to its argument) and the footnote style macros. 
+
+\textsc{Important Notes:} \\
+\begin{itemize}
+\item
+\verb|\sustyle| is a simple text switch---the value of the parameter {\tt raised} is ignored;
+\item \verb|\textsu| is a macro that reads the value of {\tt raised} and, if it is non-zero, created an \verb|\hbox| from its argument and raises it by the specified amount. In the latter case, the argument must be short as line breaks will not happen. If on the other hand {\tt raised} has a zero value, \verb|\textsu| acts like \verb|\sustyle|, permitting line breaks to occur.
+\item This package is not compatible with KOMA classes or packages and will stop loading if one is detected, leaving only a line in the log file.
+
+\end{itemize}
+
+\textsc{Sample Invocations:}
+
+\begin{itemize}
+\item Times-like, no rescaling or raising, but with $.03${\tt em} space before footnote markers:
+\begin{verbatim}
+\usepackage[supspaced=.03em]{superiors} % default value is .04em
+\end{verbatim}
+\item Libertine superiors scaled up by 20\%, then lowered:
+\begin{verbatim}
+\usepackage{libertine}
+\usepackage[supstfm=libertinesups,%
+  supscaled=1.2,%
+  raised=-.13em]% match XHeight of libertine
+{superiors}
+\end{verbatim}
+\item Use MinionPro\footnote{Assumes you have installed MinionPro according to the directions in the \textsf{minion2newtx} package.}
+ superiors at default size, lowered a bit:
+\begin{verbatim}
+\usepackage[supstfm=T1-Minion2Pro-Regular-sups-kern-liga,%
+  raised=-.05em]%
+{superiors}
+\end{verbatim}
+\end{itemize}
+
+It is best to specify a relative unit for the {\tt raised} and {\tt supspaced} parameters so that they change with the font size. (Recall that for a $10${\tt pt} font, {\tt 1em} is usually {\tt 10pt}, but the actual size of {\tt 1em} is defined relative to font size.)
+
+The following example compares libertine with its default footnote markers against libertine with the superiors package as described in the second example above:
+
+\[\includegraphics{libfoot0-crop} \qquad\includegraphics{libfoot1-crop}\]
+
+There is another parameter named {\tt scaled} that should be used only if you loaded your text font with a scale parameter different from $1.0$, and in this case, you should use the same scale parameter. For example:
+\begin{verbatim}
+\usepackage[lining,scaled=1.05]{bembo}
+\usepackage[scaled=1.05,%
+  supstfm=libertinesups,% libertine
+  supscaled=1.2,%
+  raised=-.13em]%
+{superiors}
+\end{verbatim}
+\section{Issues with superior figures}
+If a number of figure styles are available, many packages make use of \textsf{nfssext} (or its further extension \textsf{nfssext-cfr}) to access those special forms. For superior figures, two macros are defined by \textsf{nfssext}: \verb|\sustyle| and \verb|\textsu|, the first of which changes the text font to a font with superior figures (and is usually called with action confined to a group), while the second is a macro called like \verb|\textsu{123}| which applies \verb|\sustyle| to just its argument. In packages generated by {\tt otfinst} and {\tt autoinst}, if superior figures are available (even if only three of them), \verb|\sustyle| and \verb|\textsu| are defined and refer to the superior figures. Moreover, \verb|otfinst| redefines \verb|\@makefnmark|:
+\begin{verbatim}
+\def\@makefnmark{\hbox{\sustyle\@thefnmark}}
+\end{verbatim}
+so that it uses figures in \verb|\sustyle|. That leads to problems if you use footnote markers greater than three. For example, in Stempel Garamond, where there are only three superior figures available, the first graphic shows the default footnote markers provided by \textsf{otfinst}, the second shows the document processed with libertine footnote markers using 
+\begin{verbatim}
+\usepackage[supstfm=libertinesups,%
+  supscaled=1.2,%
+  raised=-.04em
+]{superiors}
+\end{verbatim}
+
+\[\includegraphics{stempelfoot0-crop} \qquad\includegraphics{stempelfoot1-crop}\]
+This package redefines these macros so that \verb|\sustyle| changes the font and applies the scaling changes, while changes due to the {\tt raised} parameter are applied only within \verb|\textsu|. For this reason, we have to modify the definition of \verb|\@makefnmark| as essentially as follows, when not in a minipage:
+\begin{verbatim}
+\def\@makefnmark{\raisebox{\superiors@raised}{\hbox%
+        {\sustyle\hspace*{\superiors@spaced}\@thefnmark%
+        \hspace*{.03em}}}}
+\end{verbatim}
+
+Relatively few Opentype text font families have a complete set of superior figures that can be accessed after running \textsf{otfinst}. Other than those listed above, the following have a complete set of superior figures:
+\begin{verbatim}
+newtxtext
+newpxtext
+libertine
+TeXGyre Termes
+TeXGyre Pagella
+Erewhon
+Heuristica
+Baskervaldx
+garamondx
+XCharter
+baskervillef
+cochineal
+stickstoo
+fbb
+Adobe Bembo Std
+Adobe Caslon Pro
+Adobe Warnock Pro
+Monotype Dante Std
+Monotype Bell Std
+Monotype Perpetua Std
+Adobe Garamond Premier Pro
+Adobe Brioso Pro
+Adobe Arno Pro
+Adobe Kinesis Std
+Adobe Jenson Pro
+Adobe Kepler Std
+\end{verbatim}
+(Those listed without a vendor name are free, and mostly available through \TeX Live.)
+
+You may, as of version 1.05, refer to a font to use for superior figures by using an abbreviated form. The following abbreviations are known to {\tt superiors} and may be activated by setting the option {\tt supsfam} to one of:
+\begin{verbatim}
+newtx   ---ntxsups-Regular-t1,%
+newtxtext   ---ntxsups-Regular-t1,%
+newpx   ---zplsups-Regular-t1,%
+newpxtext  ---zplsups-Regular-t1,%
+libertine  ---libertinesups,%
+garamondx  ---NewG8-sups,%
+zgm        ---NewG8-sups,%
+erewhon    ---Erewhon-Regular-sup-t1,%
+xcharter   ---XCharter-Roman-sup-t1,%
+baskervaldx   ---Baskervaldx-Reg-sup-t1
+baskervillef   ---BaskervilleF-Regular-sup-t1
+cochineal    ---Cochineal-Roman-sup-t1
+stickstoo    ---SticksToo-Regular-sup-t1
+fbb      ---fbb-Regular-sup-t1
+\end{verbatim}
+For example, loading {\tt superiors} with the line
+\begin{verbatim}
+\usepackage[supsfam=newpx]{superiors}
+\end{verbatim}
+has the same effect as
+\begin{verbatim}
+\usepackage[supstfm=zplsups-Regular-t1]{superiors}
+\end{verbatim}
+but may be easier to remember.
+\end{document}  

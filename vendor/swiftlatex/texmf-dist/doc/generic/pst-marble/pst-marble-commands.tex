@@ -1,0 +1,394 @@
+% pdflatex -interaction nonstopmode pst-marble-commands-v1.6.tex
+\documentclass{article}
+\usepackage[margin=1cm]{geometry}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+%\documentclass[
+%    11pt,
+%    english,
+%    BCOR10mm,
+%    DIV12,
+%    bibliography=totoc,
+%    parskip=false,
+%    fleqn,
+%    smallheadings,
+%    headexclude,
+%    footexclude,
+%    oneside,
+%    dvipsnames,
+%    svgnames,
+%    x11names,
+%]{pst-doc}
+
+\pagestyle{empty}
+
+\newcommand\mycmd[2]{
+  \smallskip
+      \qquad {#1} \texttt{#2}
+}
+
+\newcommand\myparam[2]{
+  \smallskip
+      \qquad \texttt{#1=} \texttt{#2}
+}
+\newcommand\myparamb[2]{
+  \smallskip
+      \qquad \texttt{#1=} \texttt{{\char`\{}#2{\char`\}}}
+}
+
+\definecolor{Mycolor2}{HTML}{008000}
+\newcommand\rgb{\textit{\textcolor{red}{r}\textcolor{Mycolor2}{g}\textcolor{blue}{b}}
+}
+\newcommand\rgbs{\texttt{[}\rgb~...\texttt{]} }
+\newcommand\Rs{\texttt{[}$R$~...\texttt{]} }
+
+%% \parskip5pt
+\parindent0pt
+
+\begin{document}
+
+\url{http://people.csail.mit.edu/jaffer/Marbling/pst-marble-commands-v1.6.pdf}
+
+\section*{PST-marble Commands and Parameters}
+
+\subsection*{Colors}
+
+RGB colors can be specified in three formats:
+
+\mycmd{\texttt{[ 0.906 0.8 0.608 ]}}{}
+
+Red, green, and blue color components between 0 and 1 in square
+brackets.
+
+\mycmd{\texttt{[ 231 204 155 ]}}{}
+
+Red, green, and blue color components between 0 and 255 in square
+brackets.
+
+\mycmd{\texttt{(e7cc9b)}}{}
+
+Red, green, and blue
+(\textcolor{red}{Rr}\textcolor{Mycolor2}{Gg}\textcolor{blue}{Bb})
+hexadecimal color components between \texttt{00} and \texttt{FF} (or
+\texttt{ff}) in parentheses.
+
+In the command arguments \rgbs indicates a bracketed sequence of
+colors. For example:
+
+\mycmd{\texttt{[(c28847) [231 204 155] [0.635 0.008 0.094]]}}{}
+
+\mycmd{\rgb $\gamma$}{tint}
+
+Returns the \rgb color as modified by $\gamma$.  $0<\gamma<1$ darkens
+the color; $1<\gamma$ lightens the color; and $\gamma=1$ leaves it
+unchanged.
+%% The original color is returned by ``\rgb~$\gamma${\tt~tint}~$2-\gamma${\tt~tint}''.
+
+\mycmd{\rgb $\gamma$}{shade}
+
+Returns the \rgb color as modified by $\gamma$.  $0<\gamma<1$ lightens
+the color; $1<\gamma$ darkens the color; and $\gamma=1$ leaves it
+unchanged.
+
+\mycmd{\rgb $\zeta$}{edgy-color}
+
+Returns the \rgb color flagged so that in raster rendering the
+boundary of each drop of that color is lightened while its center is
+darkened.  Where $a$ is the point's initial distance from the drop
+center and $r$ is the drop's initial radius, the effective
+$\gamma~=~\exp\left(\zeta\,a^2/r^2\right)\,{(\exp(\zeta)-1)/(\zeta\exp(\zeta))}$.
+When $\zeta=0$, $\gamma=1$ and the drop has uniformly tone.
+
+\subsection*{Parameters}
+
+\texttt{{\char`\\}psMarble[}
+  \textit{parameter-assignment}\texttt{,}
+  \dots{}\texttt{,}
+  \textit{parameter-assignment}
+  \texttt{](}\textit{width}\texttt{,}\textit{height}\texttt{)}
+
+\texttt{{\char`\\}psMarble[}
+  \textit{parameter-assignment}\texttt{,}
+  \dots{}\texttt{,}
+  \textit{parameter-assignment}
+  \texttt{]($x-$,$y-$)($x+$,$y+$)}
+
+\medskip
+The comma separated parameter assignments are part of the
+\texttt{{\char`\\}psMarble} command.  In the list below, the default
+value for each parameter is shown to the right of the parameter name.
+Note that the values assigned to \texttt{background=},
+\texttt{colors=}, \texttt{seed=}, \texttt{actions=}, and
+\texttt{spractions=} must be enclosed in curly braces
+\texttt{{\char`\{}{\char`\}}}.
+
+\myparamb{background}{[0~0~0]}
+
+Specifies the color for regions where paint has not been dropped (or
+moved to).
+
+\myparam{bckg}{true}
+
+When \texttt{bckg=false} the background color is not shown.
+
+\myparamb{paper}{[1~1~1]}
+
+Specifies whether tinting (brightening) or shading (darkening) occurs
+when shading due to paper movement occurs from the {\tt jiggle-shade}
+or {\tt wriggle-shade} commands.  Default is white (brightening).
+
+\myparamb{colors}{[0.275~0.569~0.796]
+[0.965~0.882~0.302]
+[0.176~0.353~0.129]
+[0.635~0.008~0.094]
+[0.078~0.165~0.518]
+[0.824~0.592~0.031]
+[0.059~0.522~0.392]
+[0.816~0.333~0.475]
+[0.365~0.153~0.435]
+[0.624~0.588~0.439]}
+
+Specifies a color sequence accessible in paint-dropping commands as
+\texttt{colors}.
+
+\myparam{drawcontours}{false}
+
+When \texttt{drawcontours=true} paint contours are drawn with lines;
+when \texttt{drawcontours=false} contours are filled;
+
+\myparam{oversample}{0}
+
+When \texttt{oversample=0} a resolution-independent image is produced
+using contour-rendering.  When the number of drops gets too large
+($>150$) triangular artifacts start to appear.  Changing to
+\texttt{oversample=1} employs raster-rendering to more quickly compute
+each image pixel individually.  When \texttt{oversample=2} the
+rendering takes four times as long, but each pixel is the averaged
+over its four quarters, producing an image nearly as good as
+\texttt{oversample=0}.  When \texttt{oversample} is between 0 and
+1, the rendering is on a coarser grid than \texttt{oversample=1},
+speeding image production.
+
+\myparam{overscan}{1}
+
+When the \texttt{overscan} value is greater than 1, proportionally
+more image (outside of the specified area) is shown, and the specified
+area is outlined with a dashed rectangular border.  This is a utility
+for developing marblings.
+
+\myparamb{seed}{Mathematical Marbling}
+
+Specifies the random seed used for \texttt{normal-drops},
+\texttt{uniform-drops}, \texttt{normal-spray}, and
+\texttt{uniform-spray} commands.  Changing the \texttt{seed} value
+changes the positions of all drops from the \texttt{normal-drops},
+\texttt{uniform-drops}, \texttt{normal-spray}, and
+\texttt{uniform-spray} commands.
+
+\myparam{viscosity}{1000}
+
+Specifies the overall kinetic viscosity of the virtual tank fluid.
+Its units are $\rm{mm^2/s}$; the default value of 1000, which is 1000
+times more viscous than water, is a typical value for marbling.
+Increasing \texttt{viscosity} reduces the fluid movement far from the
+tines.
+
+\myparamb{actions}{0 0 36 colors 35 concentric-rings}
+
+Specifies the sequence of marbling commands to perform.  The default
+is a single command dropping 35 colors in the \texttt{colors}
+sequence.  The available commands are listed below.
+
+\myparamb{shadings}{}
+
+When \texttt{oversample}$>0$, specifies the sequence of shading
+commands to perform after all marbling \texttt{actions} and
+\texttt{spractions} are performed.
+
+\myparamb{spractions}{}
+
+Specifies the sequence of spray commands to perform.  Spray commands
+are performed after marbling and before shading.
+
+%% \newpage
+
+\subsection*{Dropping Paint}
+
+\mycmd{$x$ $y$ $R_d$ \rgb}{drop}
+
+Places a drop of color \rgb and radius $R_d$ centered at location
+$x,y$.
+
+\mycmd{$x$ $y$ $R_i$ \rgbs $n$}{concentric-rings}
+
+Places $n$ rings in color sequence \rgbs centered at location $x,y$,
+each ring having thickness $R_i$.
+
+\mycmd{$x$ $y$ $\theta$ \Rs \rgbs $R_d$}{line-drops}
+
+Places drops of colors \rgbs (in sequence) of radius $R_d$ in
+a line through $x,y$ at $\theta$ degrees clockwise from upward
+at distances \Rs from $x,y$.
+
+\mycmd{$x$ $y$ {\texttt{[}$\Omega_\perp$~...\texttt{]} } {\texttt{[}$\Omega_\parallel$~...\texttt{]} } $\theta$ \rgbs $R_d$}{serpentine-drops}
+
+Places drops of colors \rgbs of radius $R_d$ in a serpentine pattern
+(starting lower left to right; right to left; left to right...)  at
+offsets $\Omega_\perp \times \Omega_\parallel$ centered at location
+$x,y$ and rotated by $\theta$ degrees clockwise from upward.  The
+sequences $\Omega_\perp$ and $\Omega_\parallel$ control the serpentine
+sequence.
+
+\mycmd{$x$ $y$ $R$ $\theta$ $S$ $\delta$ \rgbs $n$ $R_d$}{coil-drops}
+
+Places $n$ drops of colors \rgbs (in sequence) of radius
+$R_d$ in an arc or spiral centered at $x,y$ starting at radius $R$
+and $\theta$ degrees clockwise from upward,
+moving $S$ along the arc and incrementing the arc radius
+by $\delta$ after each drop.
+
+\mycmd{$x$ $y$ $L_\perp$ $L_\parallel$ $\theta$ \rgbs $n$ $R_d$}{normal-drops}
+
+Places $n$ drops of colors \rgbs of radius $R_d$ randomly in a
+circular or elliptical disk centered at $x,y$ having diameters
+$L_\perp$ and $L_\parallel$ respectively perpendicular and parallel to
+$\theta$ degrees clockwise from upward.  For a circular disk
+($R=L_\parallel/2=L_\perp/2$), 63\,\% of drops are within radius $R$,
+87\,\% of drops are within $R\,\sqrt{2}$, and 98\,\% of drops are
+within radius $2\,R$.
+
+\mycmd{$x$ $y$ $L_\perp$ $L_\parallel$ $\theta$ \rgbs $n$ $R_d$}{uniform-drops}
+
+Places $n$ drops of colors \rgbs of radius $R_d$ randomly in a $L_\perp$
+by $L_\parallel$ rectangle centered at location $x,y$ and rotated by $\theta$
+degrees clockwise from upward.
+
+\subsection*{Deformations}
+
+\mycmd{$\theta$ \Rs $V$ $S$ $D$}{rake}
+
+Pulls tines of diameter $D$ at $\theta$ degrees from the y-axis
+through the virtual tank at velocity $V$, moving fluid on the tine
+path a distance $S$.  The tine paths are spaced \Rs from the tank
+center at their nearest points.
+
+\mycmd{$x_b$ $y_b$ $x_e$ $y_e$ $V$ $D$}{stylus}
+
+Pulls a single tine of diameter $D$ from $x_b,y_b$ to $x_e,y_e$ at
+velocity $V$.
+
+\mycmd{$x$ $y$ \Rs $\omega$ $\theta$ $D$}{stir}
+
+Pulls tines of diameter $D$ in circular tracks of radii \Rs (positive
+$R$ is clockwise) around location $x,y$ at angular velocity $\omega$.
+The maximum angle through which fluid is moved is $\theta$ degrees.
+
+\mycmd{$x$ $y$ $\Gamma$ $t$}{vortex}
+
+Rotates fluid clockwise around location $x,y$ as would result from an
+impulse of circulation $\Gamma$ after time $t$.  At small $t$ the
+rotational shear is concentrated close to the center. As time passes
+the shear propagates outward.
+
+%% \mycmd{$\theta$ $\lambda$ $\Omega$ $S$}{wiggle}
+
+%% Applies sinsusoidal wiggle with period $\lambda$ and maximum
+%% displacement $S$ to whole tank. With $\theta=0$, a point at $x,y$ is
+%% moved to $x+S\,\sin(360\,y/\lambda+\Omega),y$.
+
+\mycmd{$\theta$ $\lambda$ $\Omega$ $A$ $B$}{jiggle}
+
+Consider the tank as split into parallel infinitesimal strips
+perpendicular to direction $\theta$ (degrees clockwise from upward).
+Where $a$ is the distance in the $\theta$ direction, the strips are
+displaced along their lengths by $0.5\,B\,\cos(360\,(a+\Omega)/\lambda)$
+and in the $\theta$ direction by $0.5\,A\,\sin(360\,(a+\Omega)/\lambda)$.
+Displacements in the $\theta$ direction squeeze and expand distances
+between the strips.  To prevent tears and tunnels $|\pi\,A|<|\lambda|$.
+For area-preserving {\tt jiggle}s, use $A=0$.
+
+\mycmd{$x$ $y$ $\lambda$ $A$ $B$}{wriggle}
+
+{\tt wriggle} is to {\tt jiggle} as {\tt stir} is to {\tt rake}.
+Consider the tank as split into concentric rings around $x,y$.  Where
+$r$ is the radial distance from $x,y$, rings are rotated by
+$0.5\,B\,\cos(360\,r/\lambda)$, and expanded and contracted
+$0.5\,A\,\sin(360\,r/\lambda)$.  To prevent overlap
+$|\pi\,A|<|\lambda|$.  There is no offset parameter.  When
+$A/\lambda>0$, maximum compression is at $r$ equal to odd multiples of
+$0.5\,\lambda$; otherwise maximum compression is at integer multiples
+of $\lambda$.
+
+\mycmd{$\theta$ $\Omega$}{shift}
+
+Shifts tank by distance $\Omega$ in direction $\theta$ degrees
+clockwise from upward.
+
+\mycmd{$x$ $y$ $\theta$}{turn}
+
+Turns tank around $x,y$ by $\theta$ degrees clockwise.
+
+\mycmd{\texttt{[} $n$ $S$ $\Omega$}{tines} \texttt{]}
+
+The {\tt tines} command and its arguments are replaced by a sequence
+of $n$ numbers. The difference between adjacent numbers is $S$ and the
+center number is $\Omega$ when $n$ is odd and $S/2-\Omega$ when $n$ is
+even.
+
+\subsection*{Spray Actions}
+
+Spray actions are intended for drops small enough that they don't
+noticeably move paint contours.  The radii of spray droplets are the
+cube roots of log-normal distributed values with mean $R_d$.
+
+\mycmd{$x$ $y$ $L_\perp$ $L_\parallel$ $\theta$ \rgbs $n$ $R_d$}{normal-spray}
+
+Places $n$ drops of colors \rgbs of radius $R_d$ randomly in a
+circular or elliptical disk centered at $x,y$ having diameters
+$L_\perp$ and $L_\parallel$ respectively perpendicular and parallel to
+$\theta$ degrees clockwise from upward.  For a circular disk
+($R=L_\parallel/2=L_\perp/2$), 63\,\% of drops are within radius $R$,
+87\,\% of drops are within $R\,\sqrt{2}$, and 98\,\% of drops are
+within radius $2\,R$.
+
+\mycmd{$x$ $y$ $L_\perp$ $L_\parallel$ $\theta$ \rgbs $n$ $R_d$}{uniform-spray}
+
+Places $n$ drops of colors \rgbs of radius $R_d$ randomly in a $L_\perp$
+by $L_\parallel$ rectangle centered at location $x,y$ and rotated by $\theta$
+degrees clockwise from upward.
+
+\subsection*{Shadings}
+
+Shadings commands simulate the lightening and darkening of paint
+transferred to paper caused by pulling the paper from the bath at
+uneven rates.  Shading is always performed for \texttt{spractions},
+but only when \texttt{oversample}$>0$ for \texttt{actions}.  Shading
+commands are placed within the braces of the \texttt{shadings=\{\}}
+parameter.
+
+\mycmd{$\theta$ $\lambda$ $\Omega$ $A_s$}{jiggle-shade}
+
+Applies darkening and lightening resulting from the squeezing and
+expansion of a {\tt jiggle} command sharing its first four arguments:
+``$\theta~\lambda~\Omega~A~B$~{\tt jiggle}''.
+$A_s$ does not need to equal $A$ from the {\tt jiggle} command.  When
+$A_s$ is closer to zero, shading will be softer; when $A_s$ is further
+from zero, shading will be darker.  As with $A$ in the {\tt jiggle}
+command, realistic shading requires $|\pi\,A_s|<|\lambda|$.
+
+\mycmd{$x$ $y$ $\lambda$ $\Omega$ $A_s$}{wriggle-shade}
+
+Applies darkening and lightening resulting from the squeezing and
+expansion of a {\tt wriggle} command sharing its first three
+arguments.  Unlike {\tt wriggle}, {\tt wriggle-shade} takes an offset
+argument $\Omega$.  $A_s$ does not need to equal $A$ from the {\tt
+  wriggle} command.  When $A_s$ is closer to zero, shading will be
+softer; when $A_s$ is further from zero, shading will be darker.  As
+with $A$ in the {\tt wriggle} command, realistic shading requires
+$|\pi\,A_s|<|\lambda|$.  When $A/\lambda>0$ and $\Omega=0$, the
+darkest rings are at $r$ equal to odd multiples of $0.5\,\lambda$;
+otherwise the darkest rings are at integer multiples of $\lambda$ and
+there is a dark spot at $x,y$.
+
+\end{document}

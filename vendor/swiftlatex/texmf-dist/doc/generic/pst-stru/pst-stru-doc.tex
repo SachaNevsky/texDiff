@@ -1,0 +1,634 @@
+\documentclass[english,11pt]{article}
+%
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\listfiles
+\usepackage[scaled=0.85]{luximono}
+\usepackage{lmodern}
+\usepackage{xspace}
+\usepackage[bottom]{footmisc}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage[NewCommands,NewParameters]{ragged2e}
+\usepackage[dvipsnames]{pstricks}
+\usepackage{pst-stru,multido,fp}
+\definecolor{hellgelb}{rgb}{1,1,0.8}
+%
+\def\PST{{\texttt{PSTricks}}\xspace}
+\def\PDF{{\texttt{PDF}}\xspace}
+\def\pst{{\texttt{pstricks}}\xspace}
+\def\PS{PostScript\xspace}
+\newcommand*\CMD[1]{{\UrlFont\texttt{\textbackslash #1}}}
+%
+\def\tIndex#1{\index{#1@{\UrlFont\texttt{#1}}}}
+\def\cIndex#1{\index{#1@\CMD{#1}}}
+\def\pIndex#1{\index{Parameter@\textbf{Parameter}!{\UrlFont\texttt{#1}}}}
+\def\ppIndex#1{\index{Parameter@\textbf{Parameter}!{#1}}}
+\def\sIndex#1{\index{Syntax@\textbf{Syntax}!\CMD{#1}}}
+\def\csIndex#1{\sIndex{#1}\cIndex{#1}}
+\def\PIndex#1{\index{Paket@\textbf{Paket}!\texttt{#1}}}
+\def\mIndex#1{\texttt{#1}\tIndex{#1}\pIndex{#1}}
+%
+\pretolerance=500
+\tolerance=1000 
+\hbadness=3000
+\vbadness=3000
+\hyphenpenalty=400
+
+\usepackage{showexpl}% not a real PSTricks package
+\usepackage{babel}
+\usepackage{makeidx,luximono}
+\makeindex
+\usepackage[dvips,colorlinks,linktocpage]{hyperref} % PDF-support
+%
+\lstset{explpreset={numbers=left,numberstyle=\tiny,numbersep=.3em,
+  xleftmargin=1em,columns=flexible,language=PSTricks,keywordstyle=\small\ttfamily\bfseries,
+  moredelim=**[is][\bf\color{blue}]},
+  pos=t,width=-99pt,
+  overhang=0pt,hsep=\columnsep,vsep=\bigskipamount,basicstyle=\ttfamily\small}
+%
+
+\begin{document}
+%
+\title{\texttt{pst-stru}:\newline Structural schemes v0.12}
+\author{Giuseppe Matarazzo\thanks{%
+Thanks to Manuel Luque who inspired and initially supported this work.\newline
+Documentation revised by Herbert Voß\newline
+This program can be redistributed and/or modified under the terms
+of the LaTeX Project Public License Distributed from CTAN archives
+in directory macros/latex/base/lppl.txt.}}
+\maketitle
+
+
+\begin{abstract}
+\texttt{pst-stru} is a PSTricks package to draw structural schemes in
+civil engineering analysis (beams, portals, archs, piles).
+\end{abstract}
+
+\tableofcontents
+
+\clearpage
+\section{Simple example}
+\lstset{pos=t,language=PSTricks}
+
+\begin{LTXexample}
+\psset{arrowsize=0.8mm,arrowinset=0}
+\begin{pspicture}(-5,-1)(5,5)
+  \pnode(0,2.4){OO}\pnode(-4,0){A}\pnode(4,0){B}
+  \node(A)\node(B)
+  \psplot[linecolor=red,linewidth=2pt]{-4}{4}{x neg x mul 0.15 mul 2.4 add}
+  \rput{-39.8}(A){\hinge}\rput{39.8}(B){\hinge}\rput{0}(OO){\interhinge}
+  \rput{-5}(OO){\clockCouple}\rput{5}(OO){\noclockCouple}
+  \rput(0,3.2){\Large M}
+  \pcline [offset=-7mm,linecolor=blue]{|-|}(-4,0)(0,0)
+  \lput*{:U}{\large 4.00 m}
+  \pcline[offset=-7mm,linecolor=blue]{|-|}(0,0)(4,0)
+  \lput*{:U}{\large 4.00 m}
+  \pcline[offset=0pt,linecolor=blue]{|-|}(-4.4,0)(-4.4,2.4)
+ \lput*{:U}{2.40 m}
+\end{pspicture}
+\end{LTXexample}
+
+
+\section[Elastic line]{Elastic Line of a simple beam loaded with
+concentrated load P at the center line}
+
+\noindent
+{\emph Bernoulli's Equation}: $EJ\eta''=-M$ \\
+\noindent
+The {\bf elastic curve} of the assigned beam AB (P loaded at mid-span) is
+obtained by computing the Bending Moment of the auxiliary beam A'B'
+to which is applied the BM of AB (EJ=const)
+\[
+   EJ\cdot \eta = \frac{Pl^2}{16}x - \frac{P}{12}x^3
+   \quad \quad 0 \leq x \leq l/2
+\]
+
+\begin{LTXexample}[wide=true]
+\begin{pspicture}(-1,-2.4)(9,4.5)
+  \pnode(0,3){A}\pnode(8,3){B}\pnode(0,0){A1}\pnode(8,0){B1}\pnode(4,0){M}  
+  \psline[linewidth=1.5pt](0,3)(8,3)  % Beam AB
+  \psArrowCivil[RotArrows=0,length=1.5,start=0.5,%
+    linecolor=blue,arrowsize=1.8mm,OffsetLabel=0.2,linewidth=1pt](A)(B){\rput{90}{P}}
+  \rput{0}(A){\hinge}  \rput{0}(B){\roller}
+  \psline[linecolor=red,fillcolor=yellow,fillstyle=solid](0,0)(4,1)(8,0)
+  \rput(0,2){\Large A} \rput(8,2){\Large B}
+  %% 1st half load
+  \multido{\nStart=1.00+0.05}{-19}{%
+   \psArrowCivil[RotArrows=0,length=\nStart,start=\nStart,linecolor=magenta](A1)(M){}}
+  %% 2nd half load
+  \multido{\nStart=1.00+0.05}{-19}{%
+    \psArrowCivil[RotArrows=180,length=\nStart,start=\nStart,linecolor=magenta](B1)(M){}}
+  \pcline{<->}(4,0)(4,1)\lput*{:R}{\bf d}
+  \rput(6,1){$d=P\frac{l}{2}$} \rput(0,0.5){\Large A'} \rput(8,0.5){\Large B'}
+  \pcline[linecolor=blue]{|-|}(0,-2)(8,-2)\lput*{:U}{\bf $l$}
+  % Paramenters #1 P = 6  #2 l=8 #3 scale factor =0.02
+  %----------- Elastic curve of beam AB ----------------------
+  \def\ElasticAB#1#2#3{#1 16.0 div #2 #2 x mul mul mul
+                     #1 -12.0 div x x x mul mul mul add #3 mul neg}
+  \pscustom[linecolor=blue,linewidth=1pt,fillstyle=solid,fillcolor=lightgray]{%
+    \psplot[]{0.0}{4.0}{\ElasticAB{6}{8}{0.02}}
+  \psline(4,0)(0,0)}
+  \psline[linewidth=1.5pt](0,0)(8,0)  % Beam A'B'
+\end{pspicture}
+\end{LTXexample}
+
+
+\clearpage
+\section{Antisymmetric distributed load}
+\begin{LTXexample}[wide=true]
+\begin{pspicture}(-3,-0.5)(4,2)
+  \pnode(0,1.5){OO}\pnode(1.5,1.5){C}\pnode(-1.5,1.5){D}\pnode(-1.5,0) {A}\pnode(1.5,0){B}
+  \node(A)\node(B)
+  \psline[linecolor=red](A)(D)(C)(B)
+  \rput{0}(A){\hinge}\rput{90}(B){\guide}
+  \psframe[fillstyle=solid,fillcolor=yellow](-1.5,1.5)(0,1.7)
+  \psframe[fillstyle=solid,fillcolor=yellow](0,1.3)(1.5,1.5)
+  \multido{\nStart=0.0+0.0833}{13}{%
+    \psArrowCivil[RotArrows=0,length=0.2,start=\nStart,linecolor=blue](D)(OO){}
+    \psArrowCivil[RotArrows=180,length=0.2,start=\nStart,linecolor=blue](OO)(C){}}
+  \rput{0}(OO){\interhinge}
+\end{pspicture}
+\end{LTXexample}
+
+
+\clearpage
+\section{Antisymmetric load}
+
+\begin{lstlisting}
+\FPmessagesfalse
+\def\retta#1#2{#1 x mul #2 add}
+\def\rettaTeX#1#2{%
+  \multido{\nStart=0.0+0.2}{21}{%
+  \pnode(\nStart,0){E1}
+  \FPeval{\ValueRetta}{(#1)*(\nStart)+(#2)}
+  \pnode(\nStart,\ValueRetta){E2}
+  \FPeval{\Test}{abs(\ValueRetta)-0.2}
+  \FPifneg{\Test}\psset{arrowsize=0}\else\psset{arrowsize=1mm}\fi
+  \psline[linecolor=blue,arrowinset=0]{->}(E2)(E1)}}
+\end{lstlisting}
+
+\FPmessagesfalse
+\def\retta#1#2{#1 x mul #2 add}
+\def\rettaTeX#1#2{%
+  \multido{\nStart=0.0+0.2}{21}{%
+  \pnode(\nStart,0){E1}
+  \FPeval{\ValueRetta}{(#1)*(\nStart)+(#2)}
+  \pnode(\nStart,\ValueRetta){E2}
+  \FPeval{\Test}{abs(\ValueRetta)-0.2}
+  \FPifneg{\Test}\psset{arrowsize=0}\else\psset{arrowsize=1mm}\fi
+  \psline[linecolor=blue,arrowinset=0]{->}(E2)(E1)}}
+
+\begin{LTXexample}
+\begin{pspicture}(-1,-1.5)(5,1)
+\pnode(0,0){A1}\pnode(4,0){B1}
+\uput[180](A1){\Large A$_1$}\uput[0](B1){\Large B$_1$}
+%-----------------------------------------
+% Parameters
+% #1 m = 0.5       y = mùx + n       (1)
+% #2 n = -1
+%----------- line 1 -------  --------------------------
+\pscustom[linecolor=blue,linewidth=1pt,fillstyle=solid,fillcolor=yellow]{
+\psplot[linecolor=blue]{0}{4}{\retta{0.5}{-1}}
+\psline(B1)(A1)}\rettaTeX{0.5}{-1}
+\psline[linecolor=red,linewidth=1.5pt](A1)(B1)  % Beam A1-B1
+\end{pspicture}
+\end{LTXexample}
+
+\clearpage
+\section{Triangular load}
+\begin{LTXexample}
+\begin{pspicture}(-1,-1)(5,1)
+%-----------------------------------------
+% Parameters
+% #1 m = 0.25       y = mùx + n      (2)
+% #2 n = 0
+%----------- line 2 -------  --------------------------
+\pnode(0,0) {A2}
+\pnode(4,0) {B2}
+\uput[180](A2){\Large A$_2$}
+\uput[0](B2){\Large B$_2$}
+\pscustom[linecolor=blue,linewidth=1pt,fillstyle=solid,fillcolor=cyan]{
+\psplot[linecolor=blue]{0}{4}{\retta{0.25}{0}}
+\psline(B2)(A2)}
+\rettaTeX{0.25}{0}
+\psline[linecolor=red,linewidth=1.5pt](A2)(B2)  % Beam A2-B2
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}
+\begin{pspicture}(-1,-1)(5,1)
+%-----------------------------------------
+% Parameters
+% #1 m = -0.5      y = mùx + n      (2)
+% #2 n = 1
+%----------- line 2 ------- Triangular load --------------------------
+  \pnode(0,0){A3}\pnode(4,0){B3}
+  \uput[180](A3){\Large A$_3$}\uput[0](B3){\Large B$_3$}
+  \pscustom[linecolor=blue,linewidth=1pt,fillstyle=solid,fillcolor=cyan]{
+    \psplot[linecolor=blue]{0}{4}{\retta{-0.5}{1}}
+  \psline(B3)(A3)}\rettaTeX{-0.5}{1}
+  \psline[linecolor=red,linewidth=1.5pt](A3)(B3)  % Beam A3-B3
+\end{pspicture}
+\end{LTXexample}
+
+\clearpage
+\section{Loads: Position and naming}
+\begin{LTXexample}[wide=true]
+\begin{pspicture}(-3,-2.5)(3,2)
+% ------ KNOTS definition -----------
+\pnode(-2,0){A}\pnode(1.5,0){B}\pnode(1.5,-1.5){E}\pnode(1.5,1.5){F}\pnode(3,0){G}
+\node(A) \node(E) \node(B) \node(F) \node(G)
+% ------ Structure drawing and fixed ends position -----------
+ \psline[linecolor=red](A)(G) \psline[linecolor=red](E)(F)
+ \rput{-90}(A){\fixedend}    %   left FE
+ \rput{0}(E){\fixedend}      % bottom FE
+ \rput{-160}(F){\fixedend}   %    top FE
+ \rput{90}(G){\fixedend}     %  right FE
+% ------ Loads: Position and naming -----------
+\psArrowCivil[RotArrows=0,length=2.0,start=0.286,%
+    linecolor=magenta,OffsetLabel=-0.3](A)(B){\rput{90}{P$_1$}}
+\psArrowCivil[RotArrows=30,length=1.5,start=0.65,%
+    linecolor=blue,OffsetLabel=0.3](A)(B){\rput{60}{P$_2$}}
+\psArrowCivil[RotArrows=-200,length=1.0,start=0.47,%
+    linecolor=blue,OffsetLabel=-0.3](A)(B){\rput{-70}{T}}
+% ------ Spans measures -----------
+ \pcline [offset=-5mm]{|-|}(-2,-1.5)(1.5,-1.5)\lput*{:U}{\scriptsize 3.50 m}
+ \pcline [offset=-5mm]{|-|}(1.5,-1.5)(3,-1.5) \lput*{:U}{\scriptsize 1.50 m}
+ \pcline [offset=5mm]{|-|}(-2,-1.5)(-2,1.5)   \lput*{:U}{\scriptsize 3.00 m}
+ \pcline [offset=0mm]{|-|}(2,0)(2,1.5)        \lput*{:U}{\scriptsize 1.50 m}
+\end{pspicture}
+\end{LTXexample}
+
+
+\clearpage
+\section{Distributed load}
+
+\begin{LTXexample}[wide=true]
+\def\BMdistributed#1#2#3{#2 x sub 0.5 #1 x mul mul mul #3 mul}
+\begin{pspicture}(-1,-1.5)(11,2)
+  \pnode(0,0){A}\pnode(10,0) {B}
+  \rput{0}(A){\hinge}\rput{0}(B){\roller}\rput(0,-1){\Large A}\rput(10,-1){\Large B}
+  \psline[linecolor=blue](A)(B)
+%==========================================================================
+% Paramenters
+% #1 q = 12
+% #2 l = 10
+% #3 scale factor =0.01: to be multiplied by (10/l)^2 (when l<> 10)
+%----------- BM distributed load ----------------------
+  \pscustom[linecolor=blue,linewidth=1pt,fillstyle=solid,fillcolor=cyan]{
+   \psplot[linecolor=blue]{0}{10}{\BMdistributed{12}{10}{0.01}}
+   \psline[](10,0)(0,0)}
+  \psset{arrowsize=1.5mm}
+  \multido{\nStart=0.0+0.2}{51}{%
+    \pnode(\nStart,0){E1}\pnode(! /x \nStart\space def x \BMdistributed{12}{10}{0.01}){E2}
+    \psline[linecolor=blue,arrowinset=0,arrowsize=1mm]{->}(E2)(E1)}
+\end{pspicture}
+\end{LTXexample}
+
+
+\clearpage
+\psset{arrowsize=0.8mm,arrowinset=0}
+\section{Macro \texttt{\textbackslash triload}}
+
+\begin{LTXexample}
+\begin{pspicture}(-1,-3.5)(11,3)
+  % Total span is (K+1) times L, say AC=(K+1)*L  [K=dimensionless value]
+  \triload[K=1,P=8,L=5] % k=1 -> AB=BC
+  % \triload[K=0.333,P=8,L=7.5] % k=1/3, like example 6
+  % \triload[K=2,P=8,L=3]  % k=2 -> BM always NEGATIVE in the whole structure
+  % \triload[K=2.5,P=8,L=2] % k>2 -> Reaction in C downwards
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}
+\begin{pspicture}(-1,-5.5)(11,2.5)
+  % \psgrid[subgriddiv=0,griddots=10,gridlabels=7pt,gridcolor=magenta]
+  % Total span is (K+1) times L, say AC=(K+1)*L  [K=dimensionless value]
+  % \triload[K=1,P=8,L=5] % k=1 -> AB=BC
+  \triload[K=0.333,P=8,L=7.5] % k=1/3, like example 6
+  % \triload[K=2,P=8,L=3]  % k=2 -> BM always NEGATIVE in the whole structure
+  % \triload[K=2.5,P=8,L=2] % k>2 -> Reaction in C downwards
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}
+\begin{pspicture}(-1,-3)(11,5)
+% \psgrid[subgriddiv=0,griddots=10,gridlabels=7pt,gridcolor=magenta]
+ % Total span is (K+1) times L, say AC=(K+1)*L  [K=dimensionless value]
+% ------------------------------------
+% \triload[K=1,P=8,L=5] % k=1 -> AB=BC
+% \triload[K=0.333,P=8,L=7.5] % k=1/3, like example 6
+ \triload[K=2,P=8,L=3]  % k=2 -> BM always NEGATIVE in the whole structure
+% \triload[K=2.5,P=8,L=2] % k>2 -> Reaction in C downwards
+% ------------------------------------
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}
+\begin{pspicture}(-1,-3)(11,4)
+% \psgrid[subgriddiv=0,griddots=10,gridlabels=7pt,gridcolor=magenta]
+ % Total span is (K+1) times L, say AC=(K+1)*L  [K=dimensionless value]
+% ------------------------------------
+% \triload[K=1,P=8,L=5] % k=1 -> AB=BC
+% \triload[K=0.333,P=8,L=7.5] % k=1/3, like example 6
+% \triload[K=2,P=8,L=3]  % k=2 -> BM always NEGATIVE in the whole structure
+ \triload[K=2.5,P=8,L=2] % k>2 -> Reaction in C downwards
+% ------------------------------------
+\end{pspicture}
+\end{LTXexample}
+
+
+\clearpage
+\section{Non-symmetric superimposed dead load}
+
+\begin{LTXexample}[wide=true]
+\begin{pspicture}(-3,-1)(3,2)
+  \pnode(-2,0){A}\pnode(2,0){B}\pnode(0,1.5){V}\pnode(-2,1.5) {A0}\pnode(2,1.5){B0}
+  \node(A)\node(B)\node(V)
+  \psline[linecolor=red](A)(V)(B)(A)
+  \rput{0}(A){\hinge} \rput{0}(B){\roller}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%        Non-symmetric superimposed dead load
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  \psframe[fillstyle=solid,fillcolor=green](-2,1.5)(0,1.7)
+  \psframe[fillstyle=solid,fillcolor=yellow](2,0)(2.2,1.5)
+  \multido{\nStart=0.0+0.0833}{13}{%
+    \psArrowCivil[RotArrows=0,length=0.2,start=\nStart,linecolor=black](A0)(V){}
+  %        Lateral load  (i.e. wind)
+  \psArrowCivil[RotArrows=180,length=0.2,start=\nStart,linecolor=blue](B)(B0){}}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\clearpage
+\section{Distributed load for all beams}
+
+\begin{LTXexample}[wide=true]
+\begin{pspicture}(-1,-1)(13,1)
+\pnode(0,0){A}\pnode(12,0){B}\pnode(12,0.4){B1}
+ \node (A) \rput(-0.5,0){\Large A} \rput(12.5,0){\Large B}
+\psline[linecolor=blue,linewidth=1.5pt](A)(B)  % join A-B
+%------------------------------------------------------------
+ \psframe[linecolor=blue,fillcolor=green,fillstyle=solid](A)(B1)
+%
+% distributed load for all beams
+ \multido{\nBegin=0+0.025}{41}{%
+  \psArrowCivil[RotArrows=0,length=0.4,start=\nBegin,linecolor=black](A)(B){}}
+%
+% recursive routine
+ \multido{\rStart=0.00+3.00}{5}{%
+   \pnode(0,0){E1}\pnode(\rStart,0){E2}\rput{0}(E2){\hinge}
+   \psline[linecolor=blue,arrowinset=0,arrowsize=1mm]{o-o}(E1)(E2)}
+\end{pspicture}
+\end{LTXexample}
+
+\clearpage
+\section{Distributed load for all beams}
+
+\begin{center}
+\psset{xunit=0.5cm,yunit=0.5cm}   % Scaling
+\begin{pspicture}(-3,-1.5)(16,31)
+% ------ KNOTS definition -----------
+\pnode(0,0) {A0}\pnode(5,0) {B0} \pnode(12,0) {C0}
+  \node (A0)  \node (B0)  \node (C0)
+\pnode(0,30) {A10} \pnode(5,30) {B10} \pnode(12,30) {C10}
+
+%------------------------
+\pnode(5,27) {B9}\pnode(5,24) {B8}
+\pnode(5,6) {B2} \pnode(5,9) {B3}
+%------------------------
+\pnode(14,9) {D3} \pnode(14,12) {D4}
+\pnode(14,15) {D5}\pnode(14,18) {D6}
+\pnode(14,21) {D7}
+%------------------------
+\pnode(0,27)  {A9}\pnode(12,27) {C9}
+\pnode(0,24)  {A8}\pnode(12,24) {C8}
+\pnode(0,21)  {A7}\pnode(12,21) {C7}
+\pnode(0,18)  {A6}\pnode(12,18) {C6}
+\pnode(0,15)  {A5}\pnode(12,15) {C5}
+\pnode(0,12) {A4} \pnode(12,12) {C4}
+\pnode(0,9)  {A3} \pnode(12,9) {C3}
+\pnode(0,6)  {A2} \pnode(12,6) {C2}
+\pnode(0,3)  {A1} \pnode(12,3) {C1}
+%
+% ------ Structure drawing and fixed ends position -----------
+ \psline[linecolor=black,linewidth=0.05](A0)(A10)
+ \psline[linecolor=black,linewidth=0.05](C0)(C10)
+%
+ \psline[linecolor=black,linewidth=0.05](B9)(B10)
+ \psline[linecolor=black,linewidth=0.05](B3)(B8)
+ \psline[linecolor=black,linewidth=0.05](B0)(B2)
+%
+ \psline[linecolor=black,linewidth=0.05](A10)(C10)
+ \psline[linecolor=black,linewidth=0.05](A9)(C9)
+ \psline[linecolor=black,linewidth=0.05](A8)(C8)
+ \psline[linecolor=black,linewidth=0.05](A7)(D7)
+ \psline[linecolor=black,linewidth=0.05](A6)(D6)
+ \psline[linecolor=black,linewidth=0.05](A5)(D5)
+ \psline[linecolor=black,linewidth=0.05](A4)(D4)
+ \psline[linecolor=black,linewidth=0.05](A3)(D3)
+ \psline[linecolor=black,linewidth=0.05](A2)(C2)
+ \psline[linecolor=black,linewidth=0.05](A1)(C1)
+%
+ \psline[linecolor=black,linewidth=0.05](D3)(D7)
+ \rput{0}(A0){\fixedend}      %  bottom FE, column A
+ \rput{0}(B0){\fixedend}      %  bottom FE, column B
+ \rput{0}(C0){\fixedend}      %  bottom FE, column C
+% ------ Loads: Position and naming -----------
+\psArrowCivil[RotArrows=90,length=1.0,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A10)(B10){\rput{0}{\scriptsize 0.25 t}}
+\psArrowCivil[RotArrows=90,length=1.5,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A9)(B9){\rput{0}{\scriptsize 0.50 t}}
+\psArrowCivil[RotArrows=90,length=1.5,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A8)(B8){\rput{0}{\scriptsize 0.50 t}}
+\psArrowCivil[RotArrows=90,length=1.5,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A7)(C7){\rput{0}{\scriptsize 0.50 t}}
+\psArrowCivil[RotArrows=90,length=1.5,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A6)(C6){\rput{0}{\scriptsize 0.50 t}}
+\psArrowCivil[RotArrows=90,length=1.5,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A5)(C5){\rput{0}{\scriptsize 0.50 t}}
+\psArrowCivil[RotArrows=90,length=1.5,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A4)(C4){\rput{0}{\scriptsize 0.50 t}}
+\psArrowCivil[RotArrows=90,length=1.5,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A3)(B3){\rput{0}{\scriptsize 0.50 t}}
+\psArrowCivil[RotArrows=90,length=1.5,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A2)(B2){\rput{0}{\scriptsize 0.50 t}}
+\psArrowCivil[RotArrows=90,length=1.5,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A1)(C1){\rput{0}{\scriptsize 0.50 t}}
+%
+% ------ Spans measures -----------
+ \pcline [offset=-0.5]{|-|}(0,0)(5,0)  \lput*{:U}{\scriptsize 5.00}
+ \pcline [offset=-0.5]{|-|}(5,0)(12,0) \lput*{:U}{\scriptsize 7.00}
+ \pcline [offset=-0.5]{|-|}(12,0)(14,0) \lput*{:U}{\scriptsize 2.00}
+%------------------------
+ \pcline [offset=-0.5]{|-|}(14,0)(14,3)  \lput*{:U}{\scriptsize 3.00}
+ \pcline [offset=-0.5]{|-|}(14,3)(14,6)  \lput*{:U}{\scriptsize 3.00}
+ \pcline [offset=-0.5]{|-|}(14,6)(14,9)  \lput*{:U}{\scriptsize 3.00}
+ \pcline [offset=-0.5]{|-|}(14,9)(14,12) \lput*{:U}{\scriptsize 3.00}
+ \pcline [offset=-0.5]{|-|}(14,12)(14,15)\lput*{:U}{\scriptsize 3.00}
+ \pcline [offset=-0.5]{|-|}(14,15)(14,18)\lput*{:U}{\scriptsize 3.00}
+ \pcline [offset=-0.5]{|-|}(14,18)(14,21)\lput*{:U}{\scriptsize 3.00}
+ \pcline [offset=-0.5]{|-|}(14,21)(14,24)\lput*{:U}{\scriptsize 3.00}
+ \pcline [offset=-0.5]{|-|}(14,24)(14,27)\lput*{:U}{\scriptsize 3.00}
+ \pcline [offset=-0.5]{|-|}(14,27)(14,30)\lput*{:U}{\scriptsize 3.00}
+\end{pspicture}
+\end{center}
+
+
+\begin{lstlisting}
+\psset{xunit=0.5cm,yunit=0.5cm}   % Scaling
+\begin{pspicture}(-3,-2)(16,32)
+\psgrid[subgriddiv=0,griddots=10,gridlabels=7pt,gridcolor=magenta]
+% ------ KNOTS definition -----------
+\pnode(0,0) {A0}\pnode(5,0) {B0} \pnode(12,0) {C0}
+  \node (A0)  \node (B0)  \node (C0)
+\pnode(0,30) {A10} \pnode(5,30) {B10} \pnode(12,30) {C10}
+
+%------------------------
+\pnode(5,27) {B9}\pnode(5,24) {B8}
+\pnode(5,6) {B2} \pnode(5,9) {B3}
+%------------------------
+\pnode(14,9) {D3} \pnode(14,12) {D4}
+\pnode(14,15) {D5}\pnode(14,18) {D6}
+\pnode(14,21) {D7}
+%------------------------
+\pnode(0,27)  {A9}\pnode(12,27) {C9}
+\pnode(0,24)  {A8}\pnode(12,24) {C8}
+\pnode(0,21)  {A7}\pnode(12,21) {C7}
+\pnode(0,18)  {A6}\pnode(12,18) {C6}
+\pnode(0,15)  {A5}\pnode(12,15) {C5}
+\pnode(0,12) {A4} \pnode(12,12) {C4}
+\pnode(0,9)  {A3} \pnode(12,9) {C3}
+\pnode(0,6)  {A2} \pnode(12,6) {C2}
+\pnode(0,3)  {A1} \pnode(12,3) {C1}
+%
+% ------ Structure drawing and fixed ends position -----------
+ \psline[linecolor=black,linewidth=0.05](A0)(A10)
+ \psline[linecolor=black,linewidth=0.05](C0)(C10)
+%
+ \psline[linecolor=black,linewidth=0.05](B9)(B10)
+ \psline[linecolor=black,linewidth=0.05](B3)(B8)
+ \psline[linecolor=black,linewidth=0.05](B0)(B2)
+%
+ \psline[linecolor=black,linewidth=0.05](A10)(C10)
+ \psline[linecolor=black,linewidth=0.05](A9)(C9)
+ \psline[linecolor=black,linewidth=0.05](A8)(C8)
+ \psline[linecolor=black,linewidth=0.05](A7)(D7)
+ \psline[linecolor=black,linewidth=0.05](A6)(D6)
+ \psline[linecolor=black,linewidth=0.05](A5)(D5)
+ \psline[linecolor=black,linewidth=0.05](A4)(D4)
+ \psline[linecolor=black,linewidth=0.05](A3)(D3)
+ \psline[linecolor=black,linewidth=0.05](A2)(C2)
+ \psline[linecolor=black,linewidth=0.05](A1)(C1)
+%
+ \psline[linecolor=black,linewidth=0.05](D3)(D7)
+ \rput{0}(A0){\fixedend}      %  bottom FE, column A
+ \rput{0}(B0){\fixedend}      %  bottom FE, column B
+ \rput{0}(C0){\fixedend}      %  bottom FE, column C
+% ------ Loads: Position and naming -----------
+\psArrowCivil[RotArrows=90,length=1.0,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A10)(B10){\rput{0}{\scriptsize 0.25 t}}
+\psArrowCivil[RotArrows=90,length=1.5,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A9)(B9){\rput{0}{\scriptsize 0.50 t}}
+\psArrowCivil[RotArrows=90,length=1.5,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A8)(B8){\rput{0}{\scriptsize 0.50 t}}
+\psArrowCivil[RotArrows=90,length=1.5,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A7)(C7){\rput{0}{\scriptsize 0.50 t}}
+\psArrowCivil[RotArrows=90,length=1.5,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A6)(C6){\rput{0}{\scriptsize 0.50 t}}
+\psArrowCivil[RotArrows=90,length=1.5,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A5)(C5){\rput{0}{\scriptsize 0.50 t}}
+\psArrowCivil[RotArrows=90,length=1.5,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A4)(C4){\rput{0}{\scriptsize 0.50 t}}
+\psArrowCivil[RotArrows=90,length=1.5,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A3)(B3){\rput{0}{\scriptsize 0.50 t}}
+\psArrowCivil[RotArrows=90,length=1.5,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A2)(B2){\rput{0}{\scriptsize 0.50 t}}
+\psArrowCivil[RotArrows=90,length=1.5,start=0,%
+    linecolor=blue,OffsetLabel=0.2](A1)(C1){\rput{0}{\scriptsize 0.50 t}}
+%
+% ------ Spans measures -----------
+ \pcline [offset=-0.5]{|-|}(0,0)(5,0)  \lput*{:U}{\scriptsize 5.00}
+ \pcline [offset=-0.5]{|-|}(5,0)(12,0) \lput*{:U}{\scriptsize 7.00}
+ \pcline [offset=-0.5]{|-|}(12,0)(14,0) \lput*{:U}{\scriptsize 2.00}
+%------------------------
+ \pcline [offset=-0.5]{|-|}(14,0)(14,3)  \lput*{:U}{\scriptsize 3.00}
+ \pcline [offset=-0.5]{|-|}(14,3)(14,6)  \lput*{:U}{\scriptsize 3.00}
+ \pcline [offset=-0.5]{|-|}(14,6)(14,9)  \lput*{:U}{\scriptsize 3.00}
+ \pcline [offset=-0.5]{|-|}(14,9)(14,12) \lput*{:U}{\scriptsize 3.00}
+ \pcline [offset=-0.5]{|-|}(14,12)(14,15)\lput*{:U}{\scriptsize 3.00}
+ \pcline [offset=-0.5]{|-|}(14,15)(14,18)\lput*{:U}{\scriptsize 3.00}
+ \pcline [offset=-0.5]{|-|}(14,18)(14,21)\lput*{:U}{\scriptsize 3.00}
+ \pcline [offset=-0.5]{|-|}(14,21)(14,24)\lput*{:U}{\scriptsize 3.00}
+ \pcline [offset=-0.5]{|-|}(14,24)(14,27)\lput*{:U}{\scriptsize 3.00}
+ \pcline [offset=-0.5]{|-|}(14,27)(14,30)\lput*{:U}{\scriptsize 3.00}
+\end{pspicture}
+\end{lstlisting}
+
+\psset{unit=1cm}   % Scaling
+
+\clearpage
+\section[Triangular distributed load p]{Simple Beam with one overhang: triangular distributed load p}
+
+\begin{LTXexample}
+\begin{pspicture}(-1,-3.5)(9,1.5)
+\pnode(0,0) {A}\pnode(2,0) {B}\pnode(8,0) {C}
+\rput{0}(C){\hinge}\rput{0}(B){\roller}
+\psline[linecolor=red,fillcolor=yellow,fillstyle=solid](0,0)(8,0)(8,1)(0,0)
+\multido{\nStart=1.00+0.025}{-37}{%
+    \psArrowCivil[RotArrows=0,length=\nStart,start=\nStart,%
+       linecolor=magenta](A)(C){}}
+\rput(8.3,0.4){\large p} \rput(0,-0.4){\Large A}
+\rput(2,-1){\Large B}    \rput(8.3,-0.6){\Large C}
+\pcline[offset=0,linecolor=blue]{|-|}(0,-3)(2,-3) \lput*{:U}{\bf $\frac{l}{3}$}
+\pcline[offset=0,linecolor=blue]{|-|}(2,-3)(8,-3) \lput*{:U}{\bf $l$}
+%%%========================================================================
+% Paramenters: #1 p = 6   #2 l = 6  #3 scale factor =0.15
+%----------- Bending Moment in span AB ----------------------
+\def\MflettAB#1#2#3{#1 #2 div -.125 mul x mul x mul x mul #3 mul neg}
+\pscustom[linecolor=blue,linewidth=1pt,fillstyle=hlines]{
+  \psplot[]{0}{2}{\MflettAB{6}{6}{0.15}}\psline[](2,0)(0,0)}
+%----------- Shear in span AB ----------------------
+\def\TaglioAB#1#2#3{#1 #2 div -.375 mul x mul x mul #3 mul}
+\pscustom[linecolor=green,linewidth=1pt,fillstyle=crosshatch]{
+  \psplot[]{0}{2}{\TaglioAB{6}{6}{0.15}}\psline[](2,0)(0,0)}
+%----------- Bending Moment in span BC ----------------------
+\def\MflettBC#1#2#3{#1 #2 div -.125 mul x mul x mul x mul
+ #1 3.375 div #2 mul x mul add #1 10.125 div #2 mul #2 mul sub #3 mul neg}
+\pscustom[linecolor=blue,linewidth=1pt,fillstyle=hlines]{%
+  \psplot[]{2}{8}{\MflettBC{6}{6}{0.15}}\psline[](8,0)(2,0)}
+%----------- Shear in span BC ----------------------
+\def\TaglioBC#1#2#3{#1 #2 div -.375 mul x mul x mul
+     #1 3.375 div #2 mul add #3 mul}
+\pscustom[linecolor=green,linewidth=1pt,fillstyle=crosshatch]{%
+  \psplot[]{2}{8}{\TaglioBC{6}{6}{0.15}}\psline[](8,0)(2,0)(2,1.4)}
+%%%========================================================================
+\psline[linewidth=1.5pt](0,0)(8,0)  % Printing beam AC after diagrams BM/S
+\rput(3,1.6){\em {\scriptsize Shear diagram (green boundary)}}
+\rput(3,-1.6){\em {\scriptsize Bending Moment diagram (blue boundary)}}
+\rput(2,-1.9){\scriptsize [assumed positive downwards]}
+\rput(5,-1){\bf {\large +}} \rput(2.5,0.6){\bf {\large +}}
+\rput(7.7,-1.3){\bf {\Large -}}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\nocite{*}
+\bgroup
+\raggedright
+\bibliographystyle{plain}
+\bibliography{\jobname}
+\egroup
+
+\printindex
+
+
+\end{document}
+
+
+
+\begin{LTXexample}[pos=t]
+\end{LTXexample}

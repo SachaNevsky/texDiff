@@ -1,0 +1,498 @@
+%% If you’re looking for instructions concerning how to build this
+%% manual, please for now drop me an email: ·phg42.2a at gmail dot com·
+%% as you will need a certain mtx-script.
+\defineitemgroup [credits]
+\setupitemgroup  [credits] [
+  % before={\startnarrower[middle]},
+  % after=\stopnarrower,
+  left=,
+  right=,
+  margin=,
+  option=2,
+]
+
+\pushcatcodetable
+\setcatcodetable\txtcatcodes
+\useurl [chickenize]     [https://github.com/alt/chickenize]
+\useurl [codebook]       [http://simonsingh.net/books/the-code-book/]
+\useurl [key_procedure]  [http://users.telenet.be/d.rijmenants/en/enigmaproc.htm]
+\useurl [luatex-web]     [http://www.luatex.org/]
+\useurl [rotor_wirings]  [http://www.ellsbury.com/ultraenigmawirings.htm]
+\useurl [wp:day_key]     [http://en.wikipedia.org/wiki/Cryptanalysis_of_the_Enigma#Key_setting]
+        []               [\hyphenatedurl{http://en.wikipedia.org/wiki/Cryptanalysis_of_the_Enigma\#Key_setting}]
+\useurl [wp:ring]        [http://en.wikipedia.org/wiki/Enigma_rotor_details#The_ring_setting]
+        []               [\hyphenatedurl{http://en.wikipedia.org/wiki/Enigma_rotor_details\#The_ring_setting}]
+\useurl [initialization] [http://w1tp.com/enigma/mewirg.htm]
+\useurl [model-i]        [http://www.cryptomuseum.com/crypto/enigma/i/index.htm]
+\useurl [ecollection]    [http://cryptocellar.org/enigma/]
+\useurl [heinz_diss]     [http://rzbl04.biblio.etc.tu-bs.de:8080/docportal/receive/DocPortal_document_00001705]
+\popcatcodetable
+
+\startdocchapter[title=Introduction]
+  This module implements an \emph{Enigma} cipher that is equivalent to
+  the most widely distributed model: the Enigma~I (subtypes {\sc m1}
+  {\sc m2} and {\sc m3}).%
+  \footnote{%
+    See \from[model-i] for a showcase.
+  }
+  Machines of this type had three rotors, a non-moving reflector and,
+  as a novelty at the time of their introduction, a plugboard.
+  The simulation accepts arbitrary configurations of these components,
+  as well as the starting position of the rotors, and then processes
+  text accordingly.
+  Depending on the input, this yields the plaintext or ciphertext, as
+  encryption and decryption are the same.
+
+  The code is provided as a module (interface for \CONTEXT) as well as
+  a package (\PLAIN, \LATEX).
+  It is subject to the {\sc bsd} license, see below,
+  \at{page}[license], for details.
+\stopdocchapter
+
+\startdocchapter[title=Usage]
+
+\startdocsection[title=Loading the Module / Package]
+  The intention is for the \modulename{Enigma} codebase to integrate
+  with the three most popular (as of 2012) \TEX\ formats:
+    \CONTEXT,
+    \PLAIN, and
+    \LATEX.
+  If the user interface does not fully conform with the common practice
+  of the latter two, please be lenient toward the author whose
+  intuitions are for the most part informed by \CONTEXT.
+  For this reason, a couple words concerning the interfaces will be
+  necessary.
+  The examples in this manual will be cycling through all three
+  formats, but once you get the general idea of how it works, you will
+  have no problem translating between coding styles.
+  Those familiar with \CONTEXT\ might, therefore, skip the following
+  paragraphs and continue directly with the next section on
+  \at{page}[sec:opts].%
+
+  The package is loaded as usual. For \PLAIN, issue a
+  \type{\input{enigma}}.
+  \LATEX-users need to place \type{\usepackage{enigma}} somewhere
+  inside the preamble.
+  (There are no package options.)
+  From this point on, instructions for both formats are the same.
+
+  The interface provides two basic macros from which all functionality
+  will be derived:
+    \texmacro{defineenigma} and \texmacro{setupenigma}.
+  Both are a kind of \emph{meta-macros}, meaning that they generate
+  other macros which may then be employed to access the functionality
+  of the package.
+  As such they naturally belong inside the preamble (if you chose to
+  use
+  \modulename{Enigma} with \LATEX, that is).
+  The correct order is to \texmacro{defineenigma} an enigma machine
+  first and then \texmacro{setupenigma} it.
+  The definition takes a single, setups a double mandatory argument.
+  Thus, \type{\defineenigma{encrypt}} creates a new environment
+  consisting of the macros \texmacro{beginencrypt} and
+  \texmacro{endencrypt}.%
+  \footnote{%
+    \CONTEXT-users will have noticed that there is no direct macro
+    \type{\encrypt{foo}}. The reason for this is that the callback
+    which the module relies on operates on node-level.
+    This means that for the Enigma encryption to have an effect it will
+    have to process entire paragraphs.
+    As encrypted passages are supposed to stand on their own, this
+    small limitation should not have a severe impact on functionality.
+    If you should, however, need a macro that works for smaller
+    portions of text, please send a feature request to the maintainer
+    (\ichdparameter{email}).
+  }
+  These correspond to \texmacro{startencrypt}/\texmacro{stopencrypt} in
+  the \CONTEXT\ interface.
+  The \CONTEXT-examples below are easily translated to
+  Plain/\LATEX-syntax by replacing curly brackets (groups) with
+  square brackets and substituting environment prefixes:
+    \type{\start<foo>} becomes \type{\begin<foo>} and
+    \type{\stop<foo>}  becomes \type{\end<foo>}.
+  Except for those conventions the syntax, even in key-value
+  assignments, is identical.
+
+  However, the environment is not usable right away, as we still have
+  to set the initial state of the machine.
+  This is achieved by the second meta-macro,
+  \type{\setupenigma{encrypt}{<args>}}, where \type{<args>} is a
+  placeholder for a list of \emph{assignments}, i.\,e. pairs of
+  \emph{key=value} statements by means of which all further parameters
+  are specified.
+  The possible parameters are listed in the next section,
+  examples of their effects will be given further below in the section
+  on functionality (see \at{page}[sec:fun]).%
+  \footnote{%
+    If you grasp the concept of paired \type{\define<foo>}
+    \endash\space \type{\setup<foo>} macros, then congratulations are
+    in order: you qualify for migration from your current macro package
+    to \CONTEXT.
+  }
+\stopdocsection
+\startdocsection[title=Options Explained,reference=sec:opts]
+
+At the moment, the \texmacro{setupenigma} macro in any format  accepts
+the following parameters.
+% \startpostponing[+2]%% messes up floats -- why?
+  \startplacefigure[
+      location={right,high},
+      title={Usage example for the \PLAIN\ format.},
+    ]
+    % \framed[align=right,frameoffset=1em]{%
+    \startframed[
+      align=right,
+      frameoffset=1em,
+      frame=off,
+    ]%
+      \startlatextyping[before=,after=,]
+      \input {enigma}
+      %% Definition ··········· %%
+      \defineenigma {encryption}
+      %% Setup ················ %%
+      \setupenigma  {encryption} {
+        other_chars = no,
+        day_key = I II III
+                  01 01 01,
+        rotor_setting = aaa,
+        spacing = yes,
+        verbose = 1,
+      }
+      %% Usage ················ %%
+      \beginencryption
+        aaaaa aaaaa aaaaa
+        aaaaa aaaaa aaaaa
+      \endencryption
+      \beginencryption
+        Nobody in Poland is going
+        to be able to read this,
+        har har!
+      \endencryption
+      \bye
+      \stoplatextyping
+    \stopframed
+  \stopplacefigure
+% \stoppostponing
+\startitemize
+  \setuptolerance[tolerant]%% it’s crowded in here due to the float
+  \let\olditem\item
+  \let\item\undefined
+  \def\item#1#2{% 1 name, 2 type
+    \olditem
+    \identifier{#1}%
+    \reference[option:#1]{}%
+    \space
+    <\emph{#2}>%
+    \hskip1em%
+  }
+  \item{other_chars}{boolean} How to handle non-encodable characters,
+    i.\,e.  glyphs outside the bare set of Latin letters; see below on
+    \at{page}[explained:other_chars].
+  \item{day_key}{string} Encryption key, i.\,e. a description of the
+    initial setup of an Enigma machine: the reflector used, the choice
+    and positions of the three rotors, the ring settings, and the
+    plugboard wiring.
+  \item{rotor_setting}{string} The initial rotor advancement.
+  \item{spacing}{boolean} Auto-space output?
+  \item{verbose}{integer} Controls overall verbosity level
+    (\emph{global}\/!).
+\stopitemize
+
+%% day key
+\noindentation
+To state the obvious, the value of \identifier{day_key} serves as the
+\emph{day key} for encryption. An Enigma day key ordinarily consists of
+(1) a list of the the rotor configuration,
+(2) the ring settings, and
+(3) the plugboard connections.\footnote{%
+  For a description of the initialization process see
+  \from[initialization].
+}
+Together these have the denotation \emph{day key}, because they are
+meant to be supplied in special code books by central authority, one
+for each day.\footnote{%
+  Read about the historical directives for daily key renewal at
+  \from[key_procedure].
+  there are some {\sc pdf}s with images of \emph{Kenngruppenbücher} at
+  \from[ecollection], section \emph{Enigma Messages and Keys}.
+  Also, while you’re at it, don’t miss the explanation on Wikipedia:
+  \from[wp:day_key].
+}
+In the \modulename{Enigma} setup, the day key starts
+with a triple of Roman numerals ({\sc i} to {\sc v}) describing which
+of the five rotors is located in which of the three slots.
+(e.\,g. \type{I VI II}).\footnote{%
+  For the individual wirings of the five rotors see
+  \from[rotor_wirings], as well as the implementation below at
+  \at{page}[listing:rotor_wiring].
+}
+Its next part is the ring setting, a triple of two-digit integers that
+are the amount by which the internal wiring of each rotor has been
+shifted (\type{03 23 11}). As the Enigma encrypts only the letters of
+the Latin alphabet, sane values range from one (first position: no
+shift) to twenty six.\footnote{%
+  Consult \from[wp:ring] for an introduction into the ring mechanics.
+}
+The third section specifies which pairs of letters are substituted by
+each other by means of plugboard connections (\type{NI CE GO LD ...}).
+There can be zero to thirteen of these redirections, thus the presence
+of this section is entirely optional.
+Also part of the \identifier{day_key}, but not mentioned yet, is the
+choice of the \emph{reflector}.
+It may be specified as one of the three letters \type{A}, \type{B} and
+\type{C} as the first item. If no reflector is requested explicitly,
+the machine defaults to \type{B}, which is actually the only one of the
+three models that had been in widespread use
+(see below on \at{page}[listing:reflector] for the wirings).
+
+Initialization is not complete without a \identifier{rotor_setting}.
+This is a triple of letters, each representing the initial state of one
+rotor (e.\,g. \type{fkd}). Historically this was not part of the day
+key but supposed to be chosen at random by the operating signal
+officer.
+
+The output can be automatically grouped into sequences of five
+characters, delimited by spaces (option \identifier{spacing}). This
+does not only conform with traditional crypto-style, but also allows
+for the resulting text to be sanely broken into lines by \TEX.
+
+%%% other_chars
+Most documents don’t naturally adhere to the machine-imposed
+restriction to the 26 letters of the Latin alphabet. The original
+encipherment directives comprised substitution tables to compensate for
+a set of intrinsic peculiarities of the German language, like umlauts
+and common digraphs.  The \modulename{Enigma} simulation module strives
+to apply these automatically but there is no guarantee of completeness.
+
+However,\reference[explained:other_chars]{} the Enigma lacks means of
+handling languages other than German.  When the substitution lookup
+fails, there are two ways of proceeding: either to ignore the current
+character or to pass it on to the output as if nothing happened. The
+default behaviour is to drop alien letters and move on. If the user
+intends to keep these foreign characters instead, E can achieve this by
+setting the \identifier{other_chars} key in the \modulename{Enigma}
+setup to the value \emph{true}. An example of how the result of both
+methods may look, other things being equal, is given in below listing
+(example for \CONTEXT; see the file \type{enigma-example-context.tex}
+in the \type{doc/} subtree of your installation path).
+
+\startcontexttyping
+\usemodule [enigma]
+\defineenigma [secretmessage]
+\setupenigma  [secretmessage] [
+  other_chars = yes,
+  day_key = B V III II 12 03 01 GI JV KZ WM PU QY AD CN ET FL,
+  rotor_setting = ben,
+]
+
+\defineenigma [othermessage] [secretmessage]
+\setupenigma  [othermessage] [other_chars=wrong]
+
+\starttext
+
+\startsecretmessage
+  føo bąr baž
+\stopsecretmessage
+\startothermessage
+  føo bąr baž
+\stopothermessage
+
+\stoptext
+\stopcontexttyping
+
+Both methods have their disadvantages: if the user chooses to have the
+unknown characters removed it might distort the decrypted text to
+becoming illegible. Far more serious, however, are the consequences of
+keeping them. As artefacts in the ciphertext they would convey
+information about the structure of the plain text.
+
+\stopdocsection
+
+\startdocsection[title=Basic Functionality,reference=sec:fun]
+
+Encrypt the text of your document using the script interface. For
+a start try out the settings as given in below listing.
+
+\starttyping
+mtxrun --script mtx-t-enigma                    \
+       --setup="day_key = B I II III 01 01 01,  \
+                rotor_setting = xyz,            \
+                verbose=0"                      \
+       --text="Gentlemen don’t read each other’s mail, Mr. Turing\!"
+\stoptyping
+
+This will result in the thoroughly scrambled string
+\typ{omribshpwfrfjovkntgqgi abbkhjpxmhdztapkatwrvf}.
+Then, use the same settings you encrypted the text with in your
+document.
+
+\startcontexttyping
+\usemodule[enigma]
+\defineenigma [secretmessage]
+\setupenigma  [secretmessage] [
+  day_key = B I II III 01 01 01,
+  rotor_setting = xyz,
+  verbose=3,
+]
+
+\starttext
+
+\startsecretmessage
+  omribshpwfrfjovkntgqgiabbkhjpxmhdztapkatwrvf
+\stopsecretmessage
+
+\stoptext
+\stopcontexttyping
+
+If you compile this document with \CONTEXT, the plain text will
+reappear.
+Notice that punctuation is substituted with the letter “x” before
+encryption and that spaces are omitted.
+
+\useURL[kgbuch] [http://de.wikipedia.org/wiki/Kenngruppenbuch]
+       []       [code book]
+Now it’s certainly not wise to carry around the key to encrypted
+documents as plain text within those documents. The keys will have to
+be distributed via an independent channel, e.\,g. a \from[kgbuch].
+Keys in general don’t have to be supplied inside the document. If there
+is none specified, the module will interrupt the \TEX\ run and
+\emph{ask} for user input. Suppose Alice wanted to send an encrypted
+file to Bob and already generated the cipher text as follows:
+
+\starttyping
+mtxrun --script mtx-t-enigma                                    \
+        --setup="day_key =B I IV V 22 07 10 AZ DG IE YJ QM CW,  \
+                 rotor_setting = bar,                           \
+                 verbose=0"                                     \
+        --text="I have nothing to hide. From the NSA, that is."
+\stoptyping
+
+Alice would then include the result of this line in her \LATEX\
+document as follows:
+
+\startlatextyping
+\documentclass{scrartcl}
+\usepackage{enigma}
+\defineenigma{decryption}
+%% Encryption key not given in the setup.
+\setupenigma{decryption}{
+  rotor_setting = bar,
+  verbose       = 3,
+}
+\begin{document}
+
+\begindecryption
+usbatbwcaajhzgeyzkqskupzbmdhbdepccgeh
+\enddecryption
+
+\end{document}
+\stoplatextyping
+
+She subsequently mails this file to Bob and conveys the key through a
+secure channel. They only thing that will be left for Bob to do now, is
+to enter the key at the prompt when compiling the document with
+\LUALATEX.
+\stopdocsection
+
+\startdocsection[title=Uses and Abuses]
+
+In \LUATEX, \identifier{callback}s may stack. This allows filtering the
+input through many enigma machines successively. For instance, in the
+following listing, two instances of the same machine are generated and
+applied.
+
+\startcontexttyping
+\usemodule [enigma]             %% load the module
+\defineenigma [secretmessage]   %% generate and
+\setupenigma  [secretmessage] [ %% configure a machine
+  day_key = B IV V II 01 01 01 AD CN ET FL GI JV KZ PU QY WX,
+  rotor_setting = foo,
+  verbose=3,
+]
+
+%% now, copy the first machine’s settings
+\defineenigma [othermessage] [secretmessage]
+
+%% here we go!
+\starttext
+
+\startothermessage  %% enable machine 1
+\startsecretmessage %% enable machine 2 while no 1 is active
+Encryption equals decryption.
+\stopothermessage
+\stopsecretmessage
+
+\stoptext \endinput
+\stopcontexttyping
+
+\stopdocsection
+
+\stopdocchapter
+
+\startdocchapter[title=Metadata]
+\startdocsection[title=License,reference=license]
+
+© 2012--2013 \emph{Philipp Gesang}. All rights reserved.
+
+Redistribution and use in source and binary forms, with or
+without modification, are permitted provided that the following
+conditions are met:
+
+\startitemize[n]
+  \item Redistributions of source code must retain the above
+    copyright notice, this list of conditions and the following
+    disclaimer.
+  \item Redistributions in binary form must reproduce the
+    above copyright notice, this list of conditions and the
+    following disclaimer in the documentation and/or other
+    materials provided with the distribution.
+\stopitemize
+
+\begingroup
+\setuptolerance [horizontal,strict]
+\startalignment [right,nothyphenated]
+\noindentation\startsmallcaps
+  this software is provided by the copyright
+  holder “as is” and any express or implied warranties,
+  including, but not limited to, the implied warranties of
+  merchantability and fitness for a particular purpose are
+  disclaimed. in no event shall the copyright holder or
+  contributors be liable for any direct, indirect, incidental,
+  special, exemplary, or consequential damages (including, but
+  not limited to, procurement of substitute goods or services;
+  loss of use, data, or profits; or business interruption)
+  however caused and on any theory of liability, whether in
+  contract, strict liability, or tort (including negligence or
+  otherwise) arising in any way out of the use of this software,
+  even if advised of the possibility of such damage.
+\stopsmallcaps\endgraf
+\stopalignment
+\endgroup
+\stopdocsection
+
+\startdocsection[title=Acknowledgements]
+\startcredits
+  \item The idea to implement the \emph{Enigma} cipher for \TEX\ came
+        up while I was reading \emph{The Code Book} by Simon Singh.
+        This work contains an excellent portrayal of the history of
+        German military cryptography and Allied cryptanalysis before
+        and during the Second World War.\par
+        \from[codebook]
+  \item A more detailed account from a historical-cryptological
+        perspective is provided by Ulrich Heinz in his Dissertation (in
+        German), which is freely available.
+        Includes an interesting albeit speculative note on the
+        effectiveness of the Soviet code breaking efforts (chapter
+        seven).\par
+        \from[heinz_diss]
+  \item Also, the \modulename{Enigma} module drew lots of inspiration
+        from Arno Trautmann’s \modulename{Chickenize} package, which
+        remains the unsurpassed hands-on introduction to callback
+        trickery.\par
+        \from[chickenize]
+  \item Finally, without \LUATEX, encryption on node-level would not
+        have been possible.\par
+        \from[luatex-web]
+\stopcredits
+\stopdocsection
+\stopdocchapter

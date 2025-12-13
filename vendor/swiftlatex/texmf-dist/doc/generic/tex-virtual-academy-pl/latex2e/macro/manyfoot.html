@@ -1,0 +1,163 @@
+<html>
+<head>
+<title> Zastaw ciekawych makroinstrukcji </title>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-2">
+<LINK REL="stylesheet" TYPE="text/css" HREF="mycss.css">
+<meta http-equiv="Content-language" content="pl">
+<meta name="Author" content="Włodzimierz Macewicz">
+<meta name="Keywords" content="tex, latex, makroinstrukcje, pakiety makroinstrukcji, Wirtualna Akademia">
+</head>
+<body bgcolor=#a0f0a0>
+<h2>manyfoot</h2>
+Pakiet definiuje polecenia umożliwiające definiowanie nowych obiektów
+typu przypis; będą one numerowane niezależnie (w ramach danego typu),
+o kolejności pojawiania się przypisów decyduje kolejność ich definicji.
+ Pakiet posiada
+następujące opcje:
+<table border=1>
+<tr valign="top">
+<td><tt>ruled</tt>
+	</td><td>jeżeli na jednej stronie wystąpi kilka typów
+	przypisów, będą one oddzielone wynikiem działania
+	polecenia <tt>\extrafootnoterule</tt> (domyślnie
+	jest mu nadawana wartość <tt>\footnoterule</tt>)</td></tr>
+<tr valign="top">
+<td><tt>para</tt>
+	</td><td>opcja uaktywnia możliwość
+	utworzenia  typu przypisu, który będzie składany
+	w postaci jednego akapitu (p. też <a href="fnpara.html">fnpara</a> lub
+	<a href="footmisc.html">footmisc</a>)
+		</td></tr>
+<tr valign="top">
+<td><tt>para*</tt>
+	</td><td>jak wyżej, ale
+	w akapicie nie będzie wcinana pierwsza linia
+		</td></tr>
+</table>
+<p>Wewnątrz pakietu jest wywoływany pakiet <tt>nccfoots</tt>, w którym są
+definiowane 
+następujące polecenia:<br>
+<table border=1>
+<tr valign="top"><td>
+<tt>Footnotemark{<i>marker</i>}</tt>
+	</td><td>
+	wstawia odsyłacz do przypisu, jeżeli wartość parametru jest 
+	nieokreślona (pusta), wstawiana jest ostatnio użyta
+	(zarówno w poleceniu <tt>footnote</tt>, <tt>footnotemark</tt>
+	jak i <tt>\Footnotemark</tt> i <tt>Footnote</tt>)
+	</td></tr>
+<tr valign="top"><td>
+<tt>Footnotetext{<i>marker</i>}{<i>tekst</i></tt>
+	</td><td>
+	wstawia przypis (bez odsyłacza), jeżeli wartość parametru <i>marker</i>
+	jest 
+	nieokreślona (pusta), wstawiana jest ostatnio użyta
+	(zarówno w poleceniu <tt>footnote</tt>, <tt>footnotemark</tt>
+	jak i <tt>\Footnotemark</tt> i <tt>Footnote</tt>)
+	</td></tr>
+<tr valign="top"><td>
+<tt>Footnote{<i>marker</i>}{<i>tekst</i></tt>
+	</td><td>
+	wstawia odsyłacz do przypisu (i przypis), jeżeli wartość parametru 
+	<i>marker</i> jest 
+	nieokreślona (pusta), wstawiana jest ostatnio użyta
+	(zarówno w poleceniu <tt>footnote</tt>, <tt>footnotemark</tt>
+	jak i <tt>\Footnotemark</tt> i <tt>Footnote</tt>)
+	</td></tr>
+</table>
+
+<p>Do tworzenia nowych typów przypisów służy następujące polecenie:<br
+clear="all">
+<tt>\newfootnote[<i>parametr</i>]{<i>suffix</i>}</tt><br clear="all">
+<i>parametr</i> może przyjmować wartości: <tt>plain</tt> i <tt>para</tt>
+(tylko w przypadku użycia opcji <tt>para</tt> lub <tt>para*</tt>
+przy wywołaniu pakietu).
+
+<p>Powyższe polecenie tworzy jedynie obiekt ruchomy typu ,,footnote''
+oraz polecenie <tt>\Footnotetext<i>suffix</i></tt> o następującej składni:<br>
+<tt>\Footnotetext<i>suffix</i>{<i>marker</i>}{<i>tekst</i>}</tt>; to niestety
+nie wszystko, oprócz tego należy zdefiniować licznik i podstawową
+makroinstrukcję służącą do wstawienia przypisu -- poniżej przykład
+utworzenia dwu nowych typów przypisów:
+<pre>
+\newfootnote{A}
+\newfootnote{B}
+\newcounter{footnoteA}
+\newcommand{\footnoteA}{%
+   \stepcounter{footnoteA}%
+   \Footnotemark\thefootnoteA \FootnotetextA{}}
+\newcounter{footnoteB}
+\newcommand{\footnoteB}{%
+   \stepcounter{footnoteB}%
+   \Footnotemark\thefootnoteB \FootnotetextB\thefootnoteB}
+\renewcommand{\thefootnoteB}{\roman{footnoteB}}
+</pre>
+i ich użycie:
+<pre>
+to jest tekst
+to jest tekst\footnoteA{a to przypis typu A}
+to jest tekst\footnoteB{a to przypis typu B}
+to jest tekst
+</pre>
+<p>
+Proces tworzenie jest nowego typu przypisu jest nieco uciążliwy,
+proponuję dopisanie poniższego kodu:<br>
+<pre>
+\makeatletter
+\let\xxx=\newfootnote
+\let\newfootnote\relax
+\def\newfootnote{%
+    \@ifnextchar[{\@xnewfootnote}{\@ynewfootnote}}
+\def\@xnewfootnote[#1]#2{%
+\@newfootnote[#1]{#2}%
+}
+\def\@ynewfootnote#1{%
+\@newfootnote[plain]{#1}%
+}
+\def\@newfootnote[#1]#2{%
+  \xxx[#1]{#2}
+  \expandafter\newcounter{footnote#2}
+  \edef\@tempa{\noexpand\newcommand
+    \expandafter\noexpand\csname Footnote#2\endcsname
+     {%
+      \noexpand\stepcounter{footnote#2}%
+        \noexpand\Footnotemark{\noexpand\csname thefootnote#2\endcsname}%
+	\expandafter\noexpand\csname Footnotetext#2\endcsname{}}}%
+  \@tempa
+}
+\makeatother
+</pre>
+składnia polecenie <tt>\newfootnote</tt> zostaje zachowana, jednak w wyniku jej
+działania zostanie utworzony odpowiedni licznik przypisów danego typu,
+oraz samo polecenie wstawiania przypisu.
+<tt>\Footnote<i>suffix</i>{<i>tekst przypisu</i>}</tt>, proszę zwrócić
+uwagę, że nie można w tym poleceniu określić parametru opcjonalnego
+określającego inny, niż kolejny, numer przypisu.
+
+<p>Teraz utworzenie nowych typów przypisów jest proste:
+<pre>
+\newfootnote{A}
+\newfootnote{B}
+\renewcommand{\thefootnoteB}{\roman{footnoteB}}
+</pre>
+i ich użycie:
+<pre>
+to jest tekst
+to jest tekst\FootnoteA{a to przypis typu A}
+to jest tekst\FootnoteB{a to przypis typu B}
+to jest tekst
+</pre>
+<p>oraz efekt:<br clear="all">
+<img src=manyfoot1.png> <br clear="all">
+
+<p>Maksymalna wysokość zajmowana przez przypisy <b>danego typu</b>
+(a nie przez wszystkie razem) wynosi
+<tt>\dimen\footins</tt>
+
+<hr>
+<em>Włodzimierz Macewicz</em>
+<hr>
+Ostatnie zmiany: 05.05.2014.
+
+</body>
+</html>

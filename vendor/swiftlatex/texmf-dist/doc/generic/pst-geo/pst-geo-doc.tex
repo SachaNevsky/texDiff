@@ -1,0 +1,1087 @@
+%% $Id: pst-geo-doc.tex 918 2014-05-19 12:32:37Z herbert $
+\documentclass[11pt,french,BCOR10mm,DIV12,bibliography=totoc,parskip=false,
+   smallheadings, headexclude,footexclude,oneside]{pst-doc}
+\usepackage[utf8]{inputenc}
+
+\usepackage{pstricks,url}
+\usepackage{ragged2e,xspace}
+\usepackage{pst-geo}
+\let\GeoFileVersion\fileversion
+\def\PST{\texttt{PSTricks}\xspace}
+\def\PS{\texttt{PostScript}\xspace}
+
+\newcommand\PstMapTwoDPackage{\textsf{pst-geo}}
+\let\Parameter\texttt
+\psset{level=4,limiteL=190,path=data}
+
+\renewcommand\bgImage{}%
+\definecolor{ocean}{rgb}{0.5,0.8,0.8}
+
+\begin{document}
+
+\title{\texttt{pst-geo}}
+\subtitle{A PSTricks package for Geographical Projections\\Version \GeoFileVersion}
+\author{Manuel Luque \\ Herbert Voß}
+\docauthor{}
+\date{\today}
+
+\maketitle
+
+\part{WorldMap 2D}
+
+
+
+ \begin{abstract}
+ Nous sommes fix\'es pour objectif de repr\'esenter à l'aide PSTricks, diverses
+ projections cartographiques du globe terrestre. Cette extension \PstMapTwoDPackage{} concerne
+ les projections planes (Mercator, Lambert, cylindrique etc.) et 
+ de la repr\'esentation en trois dimensions
+ du globe terrestre avec plusieurs fonctionnalit\'es qui rendent son
+ utilisation agr\'eable (tout au moins nous l'esp\'erons).
+
+ Diff\'erentes possibilit\'es  permettant de choisir le niveau du
+ d\'etail et les trac\'es possibles (villes, fronti\`eres, rivi\`eres etc.), vont
+ \^etre d\'etaill\'ees dans la suite du document.
+ \end{abstract}
+
+\tableofcontents
+
+\section{Les sources\label{sources}}
+\subsection{Pour la partie math\'ematique}
+
+\begin{enumerate}
+  \item Henri \textsc{Bouasse} : G\'eographie math\'ematique (1919), Delagrave.
+  \item \url{http://mathworld.wolfram.com/topics/MapProjections.html}
+\end{enumerate}
+\subsection{Les donn\'ees}
+GLOBE Binaries DECODING : World Public Domain Dbase :
+ F.Pospeschil, A.Rivera (1999)
+
+\url{ftp://ftp.blm.gov/pub/gis/wdbprg.zip}
+
+Elles ont \'et\'e converties sous forme de tableau PostScript, en
+degr\'es,
+gr\^ ace à un petit programme en pascal (de Giuseppe Matarazzo) qui
+fait partie de la distribution.
+
+\subsection{Le pr\'ecurseur en postscript}
+Bill \textsc{Casselman} :
+\url{http://www.math.ubc.ca/~cass/graphics/text/www/}
+
+Dont le chapitre 8 a inspir\'e la r\'ealisation du programme pour PSTricks.
+Il traite des transformations non linéaires et donne divers exemples dont
+les projections planes de la mappemonde. C'est un très beau travail !
+\section{Les diff\'erents types de projections et le niveau de d\'etail}
+\subsection{Les différents types de projections}
+Il y a, pour l'instant, 6 types de projections, lesquelles se paramètrent de
+la manière suivante :
+\begin{center}
+\renewcommand\arraystretch{2}
+\begin{tabular}{|lcr|c|}\hline
+\multicolumn{3}{|c|}{paramètre}&type de projection\\ \hline
+type&=&1& Mercator\\ \hline
+type&=&2 & Lambert\\ \hline
+type&=&3 & simple\\ \hline
+type&=&4 & Sanson-Flamsteed\\ \hline
+type&=&5 & cylindrical\\ \hline
+type&=&6 & Babinet\\ \hline
+type&=&7 & Collignon\\ \hline
+type&=&8 & Bonne\\ \hline
+\end{tabular}
+\end{center}
+\subsection{Les  cinq niveaux des d\'etails}
+\begin{center}
+\begin{tabular}{|lcr|c|}\hline
+\multicolumn{3}{|c|}{niveau de détail}& caractèristique\\ \hline
+level&=&1& très détaillé\\ \hline
+level&=&2 & détaillé\\ \hline
+level&=&3 & assez détaillé\\ \hline
+level&=&4 & moyennement détaillé\\ \hline
+level&=&5 & très schématique\\ \hline
+\end{tabular}
+\end{center}
+\subsection{Les options}
+On ne tracera, par défaut, que le contours des côtes.
+\begin{itemize}
+\item \Parameter{ilimiteL=180} : est la valeur absolue par défaut, en degrés, de
+la longitude $(\pm 180)$.
+\item \Parameter{increment=10} : est la valeur par défaut, en degrés, de l'écart angulaire entre deux
+méridiens ou parallèles. On pourra donc fixer une valeur plus petite dans le cas
+d'un zoom.
+\item  \Parameter{MapFillColor={[rgb]{0.99,0.95,0.7}}} : permet de choisir la couleur de remplissage des continents,
+ en mode RGB.
+\item  \Parameter{borders} : on dessine les frontières des pays.
+\item \Parameter{rivers} : permet de dessiner les fleuves et les rivières.
+\item \Parameter{cities} : marque les capitales et les principales villes.
+\item \Parameter{capitals} : on ne positionne que les capitales.
+\item \Parameter{maillage=false} : permet de supprimer les parallèles et les
+méridiens.
+\item \Parameter{Fill=false} : les surfaces ne sont pas coloriées.
+\item \Parameter{USA}, \Parameter{MEX},
+\Parameter{=true} dessinent respectivement les états des
+\textsc{USA}, du Mexique et de l'Australie.
+\end{itemize}
+
+\clearpage
+
+\section{Mode d'emploi}
+\subsection{Projection de Mercator}
+L'utilisation de la commande est très simple :
+\Parameter{$\backslash$WorldMap[maillage=false]} dessine la projection
+de Mercator, sans les parallèles et les méridiens. Par défaut, c'est le
+niveau de détail le plus élevé et la projection type Mercator qui ont été choisis :
+\Parameter{[type=1,level=1]}. On jouera sur les unités
+afin d'adapter le dessin aux dimensions souhaitées, avec par exemple~:
+\begin{lstlisting}
+\psset{linewidth=0.75\pslinewidth}
+{\psset{xunit=0.5,yunit=0.5}
+\begin{pspicture}*(-9,-9)(10,9)
+\WorldMap[maillage=false]
+\end{pspicture}}
+\end{lstlisting}
+qui permet d'obtenir la projection de Mercator suivante :
+\begin{center}
+\psset{linewidth=0.75\pslinewidth}
+{\psset{xunit=0.5,yunit=0.5}
+\psset{MapFillColor={[rgb]{0.5,0.8,0.5}}}
+\begin{pspicture}*(-9,-9)(10,9)
+\WorldMap[maillage=false]
+\end{pspicture}}
+\end{center}
+
+\clearpage
+
+
+Le script suivant dessine la projection de Mercator, en mode paysage :
+\begin{lstlisting}
+\begin{pspicture}*(-9,-9)(9,10)
+\rput{90}(0,0){\WorldMap[cities,borders]}
+\end{pspicture}
+\end{lstlisting}
+
+\resizebox{\linewidth}{!}{%
+  \begin{pspicture}*(-9,-9)(9,10)
+  \rput{90}(0,0){\WorldMap[cities,USA,Australia,Mexico]}
+  \end{pspicture}}
+
+\subsection{Projection de Lambert}
+
+\begin{lstlisting}
+{\psset{xunit=0.75,yunit=0.75}
+\begin{pspicture}(-9,-4.5)(9.5,4.5)
+\WorldMap[type=2,cities]
+\end{pspicture}}
+\end{lstlisting}
+
+\begin{center}
+{\psset{xunit=0.75,yunit=0.75}
+\begin{pspicture}(-9,-4.5)(9.5,4.5)
+\WorldMap[type=2,cities]
+\end{pspicture}}
+\end{center}
+
+\subsection{Projection simple}
+\begin{lstlisting}
+\begin{pspicture}(-3,-9)(3,10)
+\rput{90}(0,0){\WorldMap[type=3,maillage]}
+\end{pspicture}
+\end{lstlisting}
+\begin{center}
+\begin{pspicture}(-3,-9)(3,10)
+\rput{90}(0,0){\WorldMap[type=3,maillage]}
+\end{pspicture}
+\end{center}
+
+\subsection{Projection Sanson-Flamsteed}
+\begin{lstlisting}
+\psset{xunit=0.75,yunit=0.75}
+\begin{pspicture}(-5,-5)(8,5)
+\WorldMap[type=4]
+\end{pspicture}
+\end{lstlisting}
+\begin{center}
+\psset{xunit=0.75,yunit=0.75}
+\begin{pspicture}(-5,-5)(8,5)
+\WorldMap[type=4]
+\end{pspicture}
+\end{center}
+
+\subsection{Projection cylindrique}
+\begin{lstlisting}
+\begin{pspicture}*(-9,-9)(9.5,9)
+  \WorldMap[type=5]
+\end{pspicture}
+\end{lstlisting}
+
+\resizebox{\linewidth}{!}{%
+  \begin{pspicture}*(-9,-9)(9.5,9)
+  \WorldMap[type=5]
+  \end{pspicture}}
+
+\subsection{Projection de Babinet}
+\begin{center}
+{\psset{xunit=0.75,yunit=0.75}
+\begin{pspicture}(-9,-7)(10,7)
+\WorldMap[type=6]
+\end{pspicture}}
+\end{center}
+
+\subsection{Projection de Collignon}
+\begin{center}
+{\psset{xunit=0.75,yunit=0.75}
+\begin{pspicture}(-9,-7)(10,7)
+\WorldMap[type=7]
+\end{pspicture}}
+\end{center}
+
+\clearpage
+
+\subsection{Projection de Bonne}
+On peut choisir la latitude et la longitude de référence avec les
+paramètres : \Parameter{latitude0=45} et \Parameter{longitude0=0},
+qui sont les valeurs par défaut.
+\begin{center}
+\begin{pspicture}(-7,-10)(7,3)
+\WorldMap[type=8]
+\end{pspicture}
+\end{center}
+
+
+\clearpage
+
+\section{Comment faire un zoom sur un pays ou une région donnée}
+Il n'a pas été prévu de commande particulière, mais la procédure
+suivante :
+\begin{enumerate}
+  \item Placer un option \verb+showgrid+ après le tracé de la carte, puis
+  repérer les coordonnées des deux sommets opposés du rectangle
+  dans lequel sera inclus la région souhaitée.
+\begin{center}
+\psset{level=1,linewidth=0.5\pslinewidth}
+\psset{xunit=0.75,yunit=0.75}
+\begin{pspicture*}[showgrid](-9,-9)(10,9)
+\WorldMap[rivers,cities,USA,maillage=false]
+\psframe[linewidth=0.5mm,linecolor=red](-6.5,1)(-3,3)
+\end{pspicture*}
+\end{center}
+  \item Par exemple, si nous choisissons de représenter les
+  \'Etats-Unis les coordonnées des coins bas-gauche et haut-droit
+  seront : \verb+(-6.5,1)(-3,3)+
+
+  L'agrandissement sera obtenu en changeant d'unité, un zoom $\times4$ s'obtiendra avec :
+  \verb+\psset{xunit=4,yunit=4}+. Finalement la
+  commande s'écrira :
+\begin{lstlisting}
+\psset{level=1,linewidth=0.5\pslinewidth}
+\psset{xunit=0.75,yunit=0.75}
+\begin{pspicture*}[showgrid](-9,-9)(10,9)
+\WorldMap[rivers,cities,USA,maillage=false]
+\psframe[linewidth=0.5mm,linecolor=red](-6.5,1)(-3,3)
+\end{pspicture*}
+\end{lstlisting}
+\begin{center}
+\psset{xunit=4,yunit=4}% zoom 4*
+\psset{linewidth=1.25\pslinewidth}
+\begin{pspicture}*(-6.5,1)(-3,3)
+\WorldMap[rivers,cities,USA,maillage]
+\end{pspicture}
+\end{center}
+\end{enumerate}
+
+\section{Téléchargement des fichiers}
+Le fichier des données (\texttt{wdb.zip}) est sur : \url{http://melusine.eu.org/syracuse/mluque/mappemonde/}
+
+ Si vous
+n'avez pas lu le fichier \verb+A LIRE+, la compilation a du mal se
+passer. Il faut en effet indiquer le chemin des données dans la
+variable \verb+path+. Cette variable contient le chemin des
+données sur mon disque dur :
+
+\verb+path=C:/mappemonde/wdb+
+
+Il faut donc avant le \verb+\begin{document}+, indiquer celui qui
+correspond à votre configuration avec une commande du type :
+
+\verb+\psset{path=C:/mappemonde/wdb}+
+
+ ou bien le modifier
+directement dans le fichier \verb+pst-geo.tex+.
+
+Il est prévu la création d'un CR-ROM contenant toutes données, il
+sera gravé et fourni gratuitement par Giuseppe à tous ceux qui lui
+en feront la demande.
+
+
+\part{WorldMap 2DII}
+
+Dans la continuité de \textsf{pst-map2d}, cette solution se propose
+d'utiliser la base de données géographiques : \textsf{CIA World DataBank II}, que l'on trouvera sur
+\url{http://www.evl.uic.edu/pape/data/WDB/}. On récupérera sur ce
+site toutes les données qui pèsent, compressées au format
+\textsf{tgz},  30~Mo et 121~Mo une fois décompactées. Cela donne
+une finesse de tracé exceptionnelle, qui évidemment ne peut-être appréciée, non pas sur l'écran,
+mais à l'impression, si possible avec une imprimante laser !
+
+\'Evidemment le temps de calcul est proportionnel à la taille des
+données à traiter. Cependant des options permettent de choisir la
+représentation d'un continent ou plusieurs. Un ordinateur puissant
+avec beaucoup de mémoire vive est donc souhaitable.
+\begin{center}
+\psset{xunit=5,yunit=5}
+\psframebox[framesep=0pt,linewidth=0.2mm,doubleline]{%
+  \begin{pspicture}*(-0.5,1.70)(1.5,3)%
+  \WorldMapII[Africa,increment=2]
+\end{pspicture}}
+\end{center}
+
+\section{La mise en forme des données}
+La mise en forme des données a été effectuée (\textsf{wdbII.zip}) sur :
+\url{http://melusine.eu.org/syracuse/mluque/mappemonde/}. Si vous
+souhaitez le faire vous-même, voici quelques indications.
+
+Pour faciliter le travail de PostScript et diminuer le temps de
+calcul les données \verb|europe-cil_II.dat| etc. doivent être très
+légèrement adaptées avec un éditeur de texte acceptant les
+fichiers lourds.
+
+Tous les lignes \textsf{segment ...} doivent être remplacées par :
+
+\textsf{][\% segment...}.
+
+Pour la clarté, si l'éditeur le permet
+on insérera un saut de ligne entre les deux crochets \textsf{] [}.
+On modifiera le début et la fin du fichier ainsi obtenu plaçant au
+début, à la place du premier crochet~] :
+
+\verb|/europe-cil [|
+
+et à la fin, on rajoutera :
+
+\verb|] ] def|
+
+Cet exemple valable pour le fichier \verb|europe-cil_II.dat| doit
+être répété et adapté en modifiant les noms à tous les autres
+fichiers.
+
+Giuseppe Matarazzo a mis au point un programme permettant de faire
+ce travail automatiquement, il fait partie de la distribution.
+
+Cependant le travail ne s'arrête pas là ! La structure des données
+des fichiers \verb|asia-cil_II.dat|, \verb|asia-riv_II.dat| et
+\verb|Southamerica-cil_II.dat| pose problème.
+
+Commençons par le fichier qui donne le plus de soucis :
+\verb|asia-cil_II.dat|.
+
+Avec un votre éditeur de textes rechercher puis supprimez les
+segments :
+\begin{itemize}
+\item segment 7925 à segment 7957
+\item segment 7966
+\item segment 7968 à segment 7986
+\item segment 8377
+\item segment 8638 à segment 8641
+\item segment 8645 à segment 8650
+\item segment 8645 à segment 8650
+\item segments 15 à segment 123
+\end{itemize}
+Exemple : on supprimera [ segment 7925 \ldots ] d'un crochet à
+l'autre, crochets compris.
+
+Ces parties manquantes sont remplacées par le fichier
+\verb|asia-isl_II.dat| qui est la concaténation des précédents.
+
+Pour le fichier \verb|Southamerica-cil_II.dat|, supprimez de même les segments
+:
+\begin{itemize}
+\item segment 2166
+\item segment 1948
+\end{itemize}
+Ils seront remplacés par le fichier \verb|Southamerica-arc_II.dat| : voilà
+vous êtes arrivés au bout de vos peines !
+
+ Si vous
+n'avez pas lu le fichier \verb+A LIRE+, la compilation a du mal se
+passer. Il faut en effet indiquer le chemin des données dans la
+variable \verb+path+. Cette variable contient le chemin des
+données sur mon disque dur :
+
+\verb+path=data+
+
+Il faut donc avant le \verb+\begin{document}+, indiquer celui qui
+correspond à votre configuration avec une commande du type :
+
+\verb+\psset{path=data}+
+
+ ou bien le modifier
+directement dans le fichier \verb+pst-mapII.tex+.
+\section{Les options}
+\subsection{Les différents types de projections} Ils sont ceux
+vus
+avec \textsf{pst-map2d} ; ici il n'y a qu'un seul niveau de détail
+: donc pas de choix possible.
+\begin{center}
+\renewcommand\arraystretch{2}
+\begin{tabular}{|l|c|}\hline
+\Parameter{type=1}& Mercator\\ \hline
+\Parameter{type=2} & Lambert\\ \hline
+\Parameter{type=3} & simple\\ \hline
+\Parameter{type=4} & Sanson-Flamsteed\\ \hline
+\Parameter{type=5} & cylindrical\\ \hline
+\Parameter{type=6} & Babinet\\ \hline
+\end{tabular}
+\end{center}
+\subsection{Les options}
+Les options se résument ici aux choix des continents et aux fleuves  ainsi qu'au dessin ou non des parallèles et méridiens.
+
+Par défaut tous les continents et fleuves sont tracés.
+\begin{itemize}
+\item \Parameter{Europe=false} : l'Europe n'est pas dessinée.
+\item \Parameter{Africa=false} : l'Afrique n'est pas dessinée.
+\item \Parameter{Asia=false} : l'Asie n'est pas dessinée.
+\item \Parameter{Northamerica=false} : l'Amérique du Nord n'est pas dessinée.
+\item \Parameter{Southamerica=false} : l'Amérique du Sud n'est pas dessinée.
+\item \Parameter{rivers=false} : les rivières ne sont pas dessinées.
+\item \Parameter{borders=false} : les frontières ne sont pas
+tracées.
+\item \Parameter{cities=false} : les villes ne sont pas
+placées. Si \Parameter{cities} : les capitales et les villes sont placées
+(sans le nom).
+\item \Parameter{capitals} : les capitales sont seules indiquées.
+\item \Parameter{maillage=false} : les parallèles et méridiens ne sont pas tracés.
+\item \Parameter{increment=10} : est la valeur par défaut, en degrés, de l'écart angulaire entre deux
+méridiens ou parallèles. On pourra donc fixer une valeur plus petite dans le cas
+d'un zoom.
+\item \Parameter{ilimiteL=180} : est la valeur absolue par défaut, en degrés, de
+la longitude $(\pm 180)$.
+\end{itemize}
+\section{Le mode d'emploi}
+\textbf{J'ai désactivé le tracé des fleuves et des frontières avec les options
+:}
+\begin{verbatim}
+rivers=false,borders=false
+\end{verbatim}
+\textbf{Afin d'accélérer l'affichage. Libre à vous des les activer en les plaçant à
+\texttt{true}}
+\subsection{Mercator}
+Le script suivant dessine la projection de Mercator (qui est le type par défaut), en mode paysage :
+\begin{verbatim}
+\hbox{\hspace{-3cm}%
+\begin{pspicture}*(-9,-9)(9,10)
+\rput{90}(0,0){\WorldMapII[all,level=75]}
+\end{pspicture}}
+\end{verbatim}
+\makebox[\textwidth]{%
+\begin{pspicture*}(-9,-9)(9,10)
+\rput{90}(0,0){\WorldMapII[all,rivers=false,borders=false,linewidth=0.1\pslinewidth,level=75]}
+\end{pspicture*}
+}
+\subsection{Projection de Lambert}
+\begin{verbatim}
+\begin{pspicture*}(-9,-5)(9,5)
+\WorldMapII[type=2,all]
+\end{pspicture*}
+\end{verbatim}
+\makebox[\textwidth]{%
+{\psset{xunit=0.75,yunit=0.75}
+\begin{pspicture}(-9,-5)(9,5)
+\WorldMapII[type=2,all,rivers=false,borders=false,linewidth=0.1\pslinewidth]
+\end{pspicture}}
+}
+
+\begin{landscape}
+\subsection{Projection simple}
+\begin{verbatim}
+\begin{pspicture*}(-9,-3)(9,3)
+  \psframe*[linecolor=ocean](-9,-3)(9,3)
+  \WorldMapII[type=3,maillage=false,all]
+\end{pspicture*}
+\end{verbatim}
+\begin{pspicture*}(-9,-3)(9,3)
+  \psframe*[linecolor=ocean](-9,-3)(9,3)
+  \WorldMapII[type=3,all,maillage=false,rivers=false,borders=false,linewidth=0.1\pslinewidth]
+\end{pspicture*}
+\end{landscape}
+
+\subsection{Projection Sanson-Flamsteed}
+\begin{verbatim}
+\begin{pspicture*}(-10,-5)(10,5)
+  \WorldMapII[type=4,all]
+\end{pspicture*}
+\end{verbatim}
+\begin{center}
+\resizebox{\linewidth}{!}{%
+\begin{pspicture*}(-10,-5)(10,5)
+  \WorldMapII[type=4,all,rivers=false,borders=false,linewidth=0.1\pslinewidth]
+\end{pspicture*}}
+\end{center}
+
+\clearpage
+
+\subsection{Projection cylindrique}
+\begin{verbatim}
+\psset{xunit=0.5,yunit=0.5}
+\begin{pspicture}*(-9,-12)(9.5,14)
+\psframe(-9,-12)(9.5,14)
+\WorldMapII[type=5,all]
+\end{pspicture}
+\end{verbatim}
+{\psset{xunit=0.5,yunit=0.5}
+\begin{pspicture}*(-9,-12)(9.5,14)
+\psframe(-9,-12)(9.5,14)
+\WorldMapII[type=5,all,linewidth=0.1\pslinewidth,rivers=false,borders=false]
+\end{pspicture}}
+
+\clearpage
+
+
+\subsection{Projection de Babinet}
+\begin{verbatim}
+{\psset{xunit=0.75,yunit=0.75}
+\begin{pspicture*}(-10,-5)(10,5)
+  \WorldMapII[type=6,all,rivers=false,borders=false,linewidth=0.1\pslinewidth]
+\end{pspicture*}}
+\end{verbatim}
+{\psset{xunit=0.75,yunit=0.75}
+\begin{pspicture*}(-10,-5)(10,5)
+  \WorldMapII[type=6,all,rivers=false,borders=false,linewidth=0.1\pslinewidth]
+\end{pspicture*}}
+
+\clearpage
+
+\subsection{Projection de Collignon}
+\begin{center}
+\resizebox{\linewidth}{!}{%
+\psset{xunit=0.75,yunit=0.75}
+\begin{pspicture*}(-10,-5)(10,5)
+\WorldMapII[type=7,all]
+\end{pspicture*}}
+\end{center}
+
+
+\clearpage
+
+\subsection{Projection de Bonne}
+On peut choisir la latitude et la longitude de référence avec les
+paramètres : \Parameter{latitude0=45} et \Parameter{longitude0=0},
+qui sont les valeurs par défaut.
+\begin{center}
+\begin{pspicture*}(-7,-10)(7,3)
+\WorldMapII[type=8,all]
+\end{pspicture*}
+\end{center}
+
+\clearpage
+
+
+\section{Comment faire un zoom sur un pays ou une région donnée}
+Il n'a pas été prévu de commande particulière, mais la procédure
+suivante :
+\begin{enumerate}
+  \item Placer un \verb+\psgrid+ après le tracé de la carte, puis
+  repérer les coordonnées des deux sommets opposés du rectangle
+  dans lequel sera inclus la région souhaitée.
+\begin{center}
+\psset{linewidth=0.2\pslinewidth}
+\psset{xunit=0.75,yunit=0.75}
+\begin{pspicture*}[showgrid](-9,-9)(10,9)
+  \WorldMapII[maillage=false,rivers=false,borders=false,all]
+\psframe[linewidth=0.5mm,linecolor=red](-6.5,1)(-3,3)
+\end{pspicture*}
+\end{center}
+  \item Par exemple, si nous choisissons de représenter les
+  \'Etats-Unis les coordonnées des coins bas-gauche et haut-droit
+  seront : \verb+(-6.5,1)(-3,3)+
+
+  L'agrandissement sera obtenu en changeant d'unité, un zoom $\times4$ s'obtiendra avec :
+  \verb+\psset{xunit=4,yunit=4}+. Finalement la
+  commande s'écrira :
+\begin{verbatim}
+\begin{center}
+\psset{xunit=4,yunit=4}% zoom 4*
+\psset{linewidth=1.25\pslinewidth}
+  \begin{pspicture*}(-6.5,1)(-3,3)
+  \WorldMapII[Southamerica,Northamerica,Europe=false]
+\end{pspicture*}
+\end{center}
+\end{verbatim}
+\begin{center}
+\psset{xunit=4,yunit=4}% zoom 4*
+\psset{linewidth=1.25\pslinewidth}
+  \begin{pspicture}*(-6.5,1)(-3,3)
+  \WorldMapII[Southamerica,Northamerica,Europe=false]
+\end{pspicture}
+\end{center}
+\item Pour le Japon, on choisira le cadre \verb+(6.2,1.4)(7.6,2.8)+ avec un
+zoom$\times10$. On ne sectionnera que \texttt{Asia}, tous les autres
+sont à \texttt{false}.
+\begin{center}
+\psset{xunit=10,yunit=10}% zoom 10*
+\psset{linewidth=1.25\pslinewidth}
+  \begin{pspicture}*(6.2,1.4)(7.6,2.8)
+  \WorldMapII[Asia,increment=1]
+\end{pspicture}
+\end{center}
+\end{enumerate}
+
+
+\part{Three dimensinal views}
+\newcommand\PstMapThreeDPackage{\textsf{pst-geo}}
+\psset{linewidth=0.2\pslinewidth,path=data,level=4}
+
+
+ \section{Les données\label{datas}}
+GLOBE Binaries DECODING : World Public Domain Dbase :
+ F.Pospeschil, A.Rivera (1999)
+
+\url{ftp://ftp.blm.gov/pub/gis/wdbprg.zip}
+
+Elles ont \'et\'e converties sous forme de tableau PostScript, en
+degr\'es,
+gr\^ ace à un petit programme en pascal (de Giuseppe Matarazzo) qui
+fait partie de la distribution.
+\section{Les paramètres et les options}
+\subsection{Les paramètres}
+\begin{itemize}
+\item \Parameter{PHI=49} : latitude du point de vue.
+\item \Parameter{THETA=0} : longitude du point de vue.
+\item \Parameter{Dobs=20} : distance de l'observateur par rapport au centre de la sphère.
+\item \Parameter{Decran=25} : distance de l'écran de projection par rapport à l'observateur.
+\item \Parameter{Radius=5} : rayon de la sphère.
+\item \Parameter{increment=10} : écart angulaire, en degrés, entre deux
+parallèles ou deux méridiens.
+\item \Parameter{RotX=0} : on fait tourner le globe terrestre autour de l'axe
+\textsf{Ox} et on recalcule les nouvelles coordonnées ;
+\item \Parameter{RotY=0} : on fait tourner le globe terrestre de l'axe
+\textsf{Oy} et on recalcule les nouvelles coordonnées ;
+\item \Parameter{RotZ=0} : on fait tourner le globe terrestre autour de l'axe
+\textsf{Oz} et on recalcule les nouvelles coordonnées.
+\end{itemize}
+$Oxyz$ est le repère ``\textit{absolu}'' dans lequel les coordonnées sont
+définies. Lorsque \Parameter{RotX=0,RotY=0,RotZ=0}, $Oz$ coïncide avec l'axe des
+pôles, le plan $Oxy$ est celui de l'équateur et l'axe $Ox$ correspond à
+la longitude 0.
+
+Les valeurs indiquées sont les valeurs par défaut. L'image sera d'autant
+plus grande que la distance de l'écran par rapport à l'observateur sera
+grande. Les valeurs des distances sont en \textsf{cm}.
+\subsection{Les options}
+\begin{itemize}
+\item  \Parameter{MapFillColor=0.99 0.95 0.7 } : permet de choisir la couleur de remplissage des continents,
+ en mode RGB.
+\item  \Parameter{gridmapcolor=0.5 0.5 0.5 } : permet de choisir la couleur du canevas en mode RGB.
+\item \Parameter{level=1} : niveau de détail élevé (valeur activée par défaut).
+\item \Parameter{level=2} : niveau de détail moyen, la mappemonde est dessinée très rapidement .
+\item \Parameter{cities} : les capitales et les villes importantes sont placées.
+\item \Parameter{capitals} : seules les capitales sont indiquées.
+\item \Parameter{maillage=false} : les parallèles et méridiens ne sont pas tracés.
+\end{itemize}
+
+\clearpage
+
+\section{Divers exemples}
+\psset{level=2}
+\subsection{La mappemonde dans sa totalité}
+\subsubsection{Sans les villes}
+\begin{verbatim}
+\psframebox[fillstyle=solid,fillcolor=black!30]{%
+\begin{pspicture}(-7,-7)(7,7)
+  \WorldMapThreeD[PHI=30,THETA=0]%
+\end{pspicture}}
+\end{verbatim}
+\psframebox[fillstyle=solid,fillcolor=black!30]{%
+\begin{pspicture}(-7,-7)(7,7)
+  \WorldMapThreeD[PHI=30,THETA=0,gridmapcolor=black]%
+\end{pspicture}}
+
+
+\clearpage
+
+\subsubsection{Avec les villes}
+On voit ici l'effet de rotation du paramètre \verb+RotX=-60+
+\begin{verbatim}
+\psframebox[fillstyle=solid,fillcolor=black!30]{%
+\begin{pspicture}(-7,-7)(7,7)
+  \WorldMapThreeD[PHI=50,THETA=0,cities,RotX=-60]%
+\end{pspicture}}
+\end{verbatim}
+\psframebox[fillstyle=solid,fillcolor=black!30]{%
+\begin{pspicture}(-7,-7)(7,7)
+  \WorldMapThreeD[PHI=50,THETA=0,cities,RotX=-60]%
+\end{pspicture}}
+
+\clearpage
+
+\subsection{Le choix du point de vue}
+Si l'on fait abstraction des paramètres \verb+RotX+, \verb+RotY+
+et \verb+RotZ+, le point de vue est déterminé par \verb+THETA+ et
+\verb+PHI+, c'est-à-dire par la latitude et la longitude. Il faut
+ensuite choisir la distance du point de vue \verb+Dobs+ et la position de
+l'écran de projection \verb+Decran+.
+
+Par exemple une vue du Pôle Nord sera obtenue avec :
+\begin{verbatim}
+\psframebox[fillstyle=solid,fillcolor=black!30]{%
+\begin{pspicture}(-7,-7)(7,7)
+\WorldMapThreeD[PHI=90,THETA=-50]
+\end{pspicture}}
+\end{verbatim}
+
+\psframebox[fillstyle=solid,fillcolor=black!30]{%
+\begin{pspicture}(-7,-7)(7,7)
+\WorldMapThreeD[PHI=90,THETA=-50]
+\end{pspicture}}
+
+\clearpage
+
+Par exemple une vue au niveau de l'équateur sera obtenue avec :
+\begin{verbatim}
+\begin{pspicture}(-5,-5)(5,5)
+\WorldMapThreeD[PHI=0,THETA=100,cities]
+\end{pspicture}
+\end{verbatim}
+
+\begin{pspicture}(-7,-7)(7,7)
+\WorldMapThreeD[PHI=0,THETA=100,cities]
+\end{pspicture}
+
+\clearpage
+
+Voici une vue du continent asiatique
+\begin{verbatim}
+\psframebox[fillstyle=solid,fillcolor=black!30]{%
+\begin{pspicture}(-7,-7)(7,7)
+\WorldMapThreeD[PHI=50,THETA=90,maillage=false,cities]
+\end{pspicture}}
+\end{verbatim}
+\psframebox[fillstyle=solid,fillcolor=black!30]{%
+\begin{pspicture}(-7,-7)(7,7)
+\WorldMapThreeD[PHI=50,THETA=90,maillage=false,cities]
+\end{pspicture}}
+
+\clearpage
+\section{Zoom et animations}
+\subsection{Zoom}
+Pour faire un zoom sur une partie de la mappemonde, il suffit de
+rapprocher l'observateur de la sphère (pas trop cela crée des
+distorsions) ou bien d'éloigner l'écran de projection. On passera
+au \Parameter{level=1}.
+\begin{verbatim}
+\begin{center}
+\psframebox[fillstyle=solid,fillcolor=black!30]{%
+\begin{pspicture}*(-7,-4)(7,4)
+\WorldMapThreeD[PHI=48,THETA=30,cities,increment=5,Decran=48,level=1]
+\end{pspicture}
+\end{center}
+\end{verbatim}
+\begin{center}
+\psframebox[fillstyle=solid,fillcolor=black!30,linewidth=0.5pt]{%
+\begin{pspicture}*(-7,-4)(7,4)
+\WorldMapThreeD[PHI=48,THETA=30,cities,increment=5,Decran=48,level=1]%
+\end{pspicture}}
+\end{center}
+
+\clearpage
+
+
+\subsection{Animations}
+Pour faire tourner le globe autour de l'axe des pôles, on fera
+varier \verb+THETA+ dans une boucle \verb+\multido+. On utilisera
+l'une des techniques d'animation déjà présentées, par exemple sur
+:
+
+\url{http://tug.org/mailman/htdig/pstricks/2002/000697.html}
+
+\url{http://tug.org/mailman/htdig/pstricks/2002/000698.html}
+
+\url{http://melusine.eu.org/syracuse/scripts/PST-anim/}
+\begin{verbatim}
+\begin{center}
+\hbox{\hspace{-2cm}
+\multido{\iTheta=0+10}{18}{%
+\psframebox[fillstyle=solid,fillcolor=black!30]{%
+\begin{pspicture}*(-7,-4)(7,4)
+\WorldMapThreeD[PHI=48,THETA=\iTheta,cities,increment=5,Decran=48,level=1]%
+\end{pspicture}}}
+}
+\end{center}
+\end{verbatim}
+On pourra créer une animation consistant en un survol du globe en
+faisant varier \verb+THETA+ et \verb+PHI+ ainsi qu'éventuellement
+l'altitude de l'observateur.
+\section{Téléchargement des fichiers}
+Ce sont les mêmes fichiers de données que \verb+pst-map2d+ (une
+partie de \texttt{wdb.zip}) : \url{http://melusine.eu.org/syracuse/mluque/mappemonde/}
+
+ Si vous
+n'avez pas lu le fichier \verb+A LIRE+ de la documentation de \verb+pst-map2d+, la compilation a du mal se
+passer. Il faut en effet indiquer le chemin des données dans la
+variable \verb+path+. Cette variable contient le chemin des
+données sur mon disque dur :
+
+\verb+path=C:/mappemonde/wdb+
+
+Il faut donc avant le \verb+\begin{document}+, indiquer celui qui
+correspond à votre configuration avec une commande du type :
+
+\verb+\psset{path=C:/mappemonde/wdb}+
+
+ ou bien le modifier
+directement dans le fichier \verb+pst-map3d.tex+.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 3dII %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\par{3dII}
+ \begin{quote}
+ Dans la continuité de \textsf{pst-geo}, cette solution se propose
+d'utiliser la base de données géographiques : \textsf{CIA World DataBank II}, que l'on trouvera sur
+\url{http://www.evl.uic.edu/pape/data/WDB/} pour dessiner la
+mappemonde en 3D.
+
+Comme nous l'avions déjà signalé dans le précédent package et si vous ne l'avez pas fait, il faudra récupérera sur ce
+site toutes les données qui pèsent, compressées au format
+\textsf{tgz},  30~Mo et 121~Mo une fois décompactées. Cela donne
+une finesse de tracé exceptionnelle !
+
+\'Evidemment le temps de calcul est proportionnel à la taille des
+données à traiter. Cependant des options permettent de choisir la
+représentation d'un continent ou plusieurs. Un ordinateur puissant
+avec beaucoup de mémoire vive est donc souhaitable : pour un travail confortable 512~Mb semble l'idéal. Cependant si
+on se limite au dessin de certaines parties du monde, le temps de
+calcul est très raisonnable et une mémoire réduite suffisante.
+ \end{quote}
+
+
+\section{La mise en forme des données}
+Pour faciliter le travail de PostScript et diminuer le temps de
+calcul les données \verb|europe-cil_II.dat| etc. doivent être très
+légèrement adaptées avec un éditeur de texte acceptant les
+fichiers lourds.
+
+Tous les lignes \texttt{segment ...} doivent être remplacées par :
+
+\verb|][\% segment...|
+
+Pour la clarté, si l'éditeur le permet
+on insérera un saut de ligne entre les deux crochets \texttt{] [}.
+On modifiera le début et la fin du fichier ainsi obtenu plaçant au
+début, à la place du premier crochet~] :
+
+\verb|/europe-cil_II [|
+
+et à la fin, on rajoutera :
+
+\verb|] ] def|
+
+On enregistrera le fichier sous le nom \verb|europe-cil_II.dat|.
+
+Cet exemple valable pour le fichier \verb|europe-cil_II.dat| doit
+être répété et adapté, en modifiant les noms, à tous les autres
+fichiers.
+
+Giuseppe Matarazzo a mis au point un programme permettant de faire
+ce travail automatiquement, il fait partie de la distribution (en cas de problèmes veuillez le contacter).
+
+\section{Un exemple : la région méditerranéenne}
+Elle s'obtient par la commande :
+\begin{verbatim}
+\WorldMapThreeDII[PHI=40,THETA=15,Decran=80,increment=2,%
+                Asia,Africa,Northamerica=false,Southamerica=false]%
+\end{verbatim}
+
+Dans laquelle \texttt{PHI=40,THETA=15} fixent en latitude et longitude la
+position du point de vue : sur la carte le point de coordonnées
+géographiques correspondantes sera au centre ; il est nécessaire cependant, que les coordonnées de
+l'environnement \verb+\begin{pspicture}*(-9,-4)(9,4)+ possèdent une symétrie
+centrale. \texttt{Decran=80} fixe la distance de l'écran de projection de
+l'image vue, plus cette distance sera grande et plus l'image obtenue (plus
+l'effet de zoom) sera grande.
+
+\texttt{Asia,Africa,Northamerica=false,Southamerica=false} indique les régions
+qui seront ou non représentées, \texttt{Europe} y est par défaut.
+
+\texttt{increment=2} représente l'écart angulaire, en degrés, entre deux
+parallèles ou deux méridiens. Les explications concernant ces paramètres
+vont être développées dans les exemples suivants, ainsi que celles d'autres
+paramètres.
+
+\makebox[\textwidth]{%
+\begin{pspicture*}(-9,-4)(9,4)
+\WorldMapThreeDII[PHI=35,THETA=15,Decran=80,cities,
+    Asia,Africa,rivers=false,
+    linewidth=0.5pt,increment=5]
+\end{pspicture*}}
+
+\section{Les paramètres et les options}
+\subsection{Les paramètres}
+\begin{itemize}
+\item \Parameter{PHI=49} : latitude du point de vue.
+\item \Parameter{THETA=0} : longitude du point de vue.
+\item \Parameter{Dobs=20} : distance de l'observateur par rapport au centre de la sphère.
+\item \Parameter{Decran=25} : distance de l'écran de projection par rapport à l'observateur.
+\item \Parameter{Radius=5} : rayon de la sphère.
+\item \Parameter{increment=10} : écart angulaire, en degrés, entre deux
+parallèles ou deux méridiens.
+\item \Parameter{RotX=0} : on fait tourner le globe terrestre autour de l'axe
+\textsf{Ox} et on recalcule les nouvelles coordonnées ;
+\item \Parameter{RotY=0} : on fait tourner le globe terrestre de l'axe
+\textsf{Oy} et on recalcule les nouvelles coordonnées ;
+\item \Parameter{RotZ=0} : on fait tourner le globe terrestre autour de l'axe
+\textsf{Oz} et on recalcule les nouvelles coordonnées.
+\end{itemize}
+$Oxyz$ est le repère ``\textit{absolu}'' dans lequel les coordonnées sont
+définies. Si \Parameter{RotX=0,RotY=0,RotZ=0}, $Oz$ coïncide avec l'axe des
+pôles, le plan $Oxy$ est celui de l'équateur et l'axe $Ox$ correspond à
+la longitude 0.
+
+Les valeurs indiquées sont les valeurs par défaut. L'image sera d'autant
+plus grande que la distance de l'écran par rapport à l'observateur sera
+grande. Les valeurs des distances sont en \textsf{cm}.
+
+\subsection{Les options}
+\begin{itemize}
+\item \Parameter{Europe} : l'Europe est dessinée(par défaut).
+\item \Parameter{Africa=false} : l'Afrique n'est pas dessinée.
+\item \Parameter{Asia=false} : l'Asie n'est pas dessinée.
+\item \Parameter{Northamerica=false} : l'Amérique du Nord n'est pas dessinée.
+\item \Parameter{Southamerica=false} : l'Amérique du Sud n'est pas dessinée.
+\item \Parameter{rivers=false} : les rivières ne sont pas dessinées.
+\item \Parameter{borders=false} : les frontières ne sont pas dessinées.
+\item \Parameter{cities} : les capitales et les villes importantes sont placées.
+\item \Parameter{capitals} : seules les capitales sont indiquées.
+\item \Parameter{maillage=false} : les parallèles et méridiens ne sont pas tracés.
+\end{itemize}
+\section{Le mode d'emploi}
+\subsection{La mappemonde dans sa totalité}
+C'est évidemment possible, mais le temps de calcul est élevé .Il vaut mieux
+si on ne possède pas un ordinateur rapide avec beaucoup de mémoire vive
+désactiver le tracé de fleuves et des frontières.
+
+En choisissant les valeurs de \Parameter{PHI}  et \Parameter{THETA} on
+fixera le point de vue.
+
+Avec le scénario suivant on se place au-dessus du pôle Nord.
+\begin{verbatim}
+\WorldMapThreeDII[PHI=80,THETA=-10,Decran=25,cities,
+                Asia,Africa,Northamerica,Southamerica,
+                rivers=false,borders=false,linewidth=0.5pt]
+\end{verbatim}
+\begin{center}
+\begin{pspicture*}(-7,-7)(7,7)
+\psframe*[linecolor=black!30](-7,-7)(7,7)
+\WorldMapThreeDII[PHI=80,THETA=-10,Decran=25,cities,
+                Asia,Africa,Northamerica,Southamerica,
+                rivers=false,borders=false,linewidth=0.5pt]
+\end{pspicture*}
+\end{center}
+
+\clearpage
+
+Avec les paramètres :
+\begin{verbatim}
+\WorldMapThreeDII[PHI=80,THETA=-10,Decran=25,cities,
+                Asia,Africa,Northamerica,Southamerica,
+                rivers=false,borders=false,linewidth=0.5pt]%
+\end{verbatim}
+On tourne le globe terrestre de $\mathrm{-45^o}$ autour de $Ox$, dans le repère $Oxyz$
+les nouvelles coordonnées sont re-calculées ; le dessin
+des fleuves et rivières est désactivé.
+\begin{center}
+\begin{pspicture}*(-7,-7)(7,7)
+\psframe*[linecolor=black!30](-7,-7)(7,7)
+\WorldMapThreeDII[PHI=42,THETA=20,Decran=25,RotX=-45,cities,
+                Asia,Africa,Northamerica,Southamerica,
+                rivers=false,linewidth=0.5pt,borders=false]
+\end{pspicture}
+\end{center}
+
+\subsection{Visualiser une partie du globe terrestre}
+Il est cependant plus intéressant de servir du package pour faire un gros
+plan d'une région du globe. On désactivera alors les régions qui ne sont pas
+représentées, comme nous l'avons vu dans le premier exemple de présentation.
+
+\clearpage
+\subsubsection{La France}
+\begin{verbatim}
+\begin{pspicture}*(-8,-8)(8,8)
+\WorldMapThreeDII[PHI=45,THETA=2,Decran=150,cities,
+                Asia,Africa=false,Southamerica,Europe,increment=2]% France
+\end{pspicture}
+\end{verbatim}
+\begin{center}
+
+\begin{pspicture}*(-8,-8)(8,8)
+\WorldMapThreeDII[PHI=45,THETA=2,Decran=150,cities,%
+                Asia=false,Africa=false,Southamerica,Europe,increment=2]% France
+\end{pspicture}
+\end{center}
+
+
+\clearpage
+
+\subsubsection{L'Amérique centrale}
+\begin{verbatim}
+\begin{pspicture}*(-8,-8)(8,8)
+\WorldMapThreeDII[PHI=15,THETA=-90,Decran=80,cities,
+  Asia=false,Africa=false,Southamerica,Europe=false,Northamerica,
+  increment=2]% Mexico
+\end{pspicture}}
+\end{verbatim}
+\begin{center}
+\begin{pspicture}*(-8,-8)(8,8)
+\WorldMapThreeDII[PHI=15,THETA=-90,Decran=80,cities,%
+                Asia=false,Africa=false,Southamerica,Europe=false,Northamerica,increment=2]% Mexico
+\end{pspicture}
+\end{center}
+
+
+\clearpage
+
+\subsubsection{Madagascar}
+\begin{verbatim}
+\begin{pspicture}*(-5,-5)(5,5)
+\WorldMapThreeDII[PHI=-19,THETA=47.5,Decran=85,Dobs=15,cities,
+                  Asia=false,Africa,Southamerica=false,Europe=false,
+                  Northamerica=false,increment=2]% Madagascar
+\end{pspicture}
+\end{verbatim}
+\begin{center}
+\begin{pspicture}*(-5,-5)(5,5)
+\WorldMapThreeDII[PHI=-19,THETA=47.5,Decran=85,Dobs=15,cities,
+                Asia=false,Africa,Southamerica=false,Europe=false,Northamerica=false,increment=2]% Madagascar
+\end{pspicture}
+\end{center}
+\section{Téléchargement des fichiers}
+\begin{itemize}
+  \item Les données géographiques sont à télécharger sur :
+
+  \url{http://www.evl.uic.edu/pape/data/WDB/}
+  \item Les fichiers concernant le package sur :
+
+  \url{http://pageperso.aol.fr/manuelluque1/map3dII/doc-pst-map3dii.html}
+\end{itemize}
+\section{Appel à collaboration}
+Il reste beaucoup de choses à faire\ldots par exemple placer, en option, le
+nom des villes, les degrés de méridiens et parallèles etc.
+
+Par conséquent, si ce sujet vous intéresse et si vous souhaitez compléter et
+améliorer ces package : \texttt{pst-geo}, n'hésitez pas à vous manifester\ldots
+
+
+
+\clearpage
+\section{List of all optional arguments for \texttt{pst-geo}}
+\xkvview{family=pst-geo,columns={key,type,default}}
+
+\bgroup
+\raggedright
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{\jobname}
+\egroup
+
+\printindex
+
+
+
+\end{document}

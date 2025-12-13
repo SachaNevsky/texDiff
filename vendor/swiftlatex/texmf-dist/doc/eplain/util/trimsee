@@ -1,0 +1,106 @@
+#!/bin/sh
+# (This file is public domain.)
+# This file is part of the Eplain macro package.
+
+help ()
+{
+    cat <<EOF
+Usage:  trimsee [-i IS] [-o OS] [-s SEE]
+        trimsee {-h|--help|-v|--version}
+Remove commas (or other page list separators) in front
+of see / see also commands in the output of MakeIndex.
+Input is read from stdin, output is directed to stdout.
+
+-i IS           use IS as a regular expression matching separator
+                in front of see / see also commands in the input
+                (default: '$DEFAULT_IS')
+-o OS           use OS as a separator to replace IS in front of
+                see / see also commands (default: '$DEFAULT_OS')
+-s SEE          use SEE as a regular expression matching see /
+                see also commands (default: '$DEFAULT_SEE')
+-h, --help      show this help message
+-v, --version   show version
+EOF
+}
+
+check_missing_arg ()
+{
+    if test "$1" -lt 2; then
+        echo "Missing argument to option '$2'" 1>&2
+        exit 1
+    fi
+}
+
+VERSION='0.1'
+
+DEFAULT_SEE='\\indexsee'
+DEFAULT_IS=', \+'
+DEFAULT_OS=' '
+
+SEE=$DEFAULT_SEE
+IS=$DEFAULT_IS
+OS=$DEFAULT_OS
+
+while [ $# != 0 ]
+do
+  case "$1" in
+      -i)
+          check_missing_arg $# "$1"
+          IS=$2
+          shift
+          ;;
+      -o)
+          check_missing_arg $# "$1"
+          OS=$2
+          shift
+          ;;
+      -s)
+          check_missing_arg $# "$1"
+          SEE=$2
+          shift
+          ;;
+      -h | --help)
+          help
+          exit 0
+          ;;
+      -v | --version)
+          echo "trimsee version $VERSION"
+          exit 0
+          ;;
+      *)
+          echo "Unknown option '$1'" 1>&2
+          exit 1
+          ;;
+  esac
+  shift
+done
+
+
+# The idea is to implement line output delayed by one line.  When we
+# read next line, we check if it starts with a see/see also entry, and
+# if it does, we remove the comma at the end of the previous line
+# before printing it.  We keep previous lines in the hold buffer.
+
+sed -n '
+
+# Remove all commas in front of see/see also inside each line.
+s/'"$IS$SEE/$OS$SEE"'/g
+
+# If this line does not start with see/see also, we will print the
+# previous line intact.  NOTE:  There are two characters inside the
+# brackets:  a space and a tab.
+/^[ 	]*'"$SEE"'/! { x; b PRINT; }
+
+# This line starts with see/see also, so remove comma at the end of
+# the previous line before we print it.
+x
+s/'"$IS"'$/'"$OS"'/
+
+# Print the previous line.
+:PRINT
+1! p
+
+# At the end of the input, print the last line.
+$ { x; p; }
+
+'

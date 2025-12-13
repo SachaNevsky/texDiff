@@ -1,0 +1,98 @@
+.TH TransformNotes 3 2016-01-30 "" ""
+
+.SH NAME
+TransformNotes \- macro to transform notes command arguments in MusiXTeX 
+
+.SH SYNOPSIS
+.nf
+
+  \\input musixtnt
+
+  \\TransformNotes{input}{output}%
+
+.fi
+
+.SH USAGE
+
+musixtnt.tex is an extension library for MusiXTeX.  It is available
+at CTAN and at WIMA in the software archive.
+
+\\TransformNotes makes possible transformations of the effect of notes commands such as 
+\\notes.  In general, the effect of \\TransformNotes{input}{output} 
+is that notes commands in the source will expect their arguments to match the input pattern,
+but the notes will be typeset according to the output pattern.
+
+For example, \\TransformNotes{#2&#3&#4&#5}{#2&#3&#5}%
+would be appropriate for a four-instrument score (arguments #2, #3, #4, and #5, separated by three
+&s), but the notes for the usual third argument (#4) will be discarded in the typeset output.
+
+The instrument/staff numbers in the first argument must start at 2 and increase
+consecutively, using & (or | for multi-staff instruments) as a separator.  
+The reason that the segment identifiers start at 2 is that argument #1 for the
+basic \\vnotes macro
+is a spacing parameter.
+It is
+essential  that  every \\znotes, \\notes, \\Notes, \\NOtes, etc. command in
+the score match the pattern of the first argument to \\TransformNotes exactly; too few (or too  many)
+note segments  will result in unintentionally discarded material and possibly compilation failure.
+An auxiliary program 
+.BR msxlint (1)
+can be used to detect such inconsistencies.
+Notes commands are assumed to be terminated by \\en, not \\enotes.
+
+\\TransformNotes may be used anywhere between \\startpiece
+and the command that ends the piece.
+
+To extract 
+a single-instrument part from a (copy of a) multi-instrument musixtex score:
+set \\nbinstrument to 1 (for example, with command \\instrumentnumber1),
+and use \\TransformNotes to discard all but one of the note segments in notes
+commands.
+For example, the following line placed  after
+\\startpiece  (but  before any note commands) would be appropriate for a
+four-instrument score and will result in a single-instrument part for the second of
+these: \\TransformNotes{#2&#3&#4&#5}{#3}% .
+
+Some additional revisions to the source for the part might be necessary:
+
+   + adjusting \\setname1, \\setclef1, \\setsign1, 
+\\setmeter1 and \\setstaffs1  commands, as necessary;
+
+   + ensuring that tempo and roadmap markings (D.C., Fine, etc.) are in
+the appropriate instrument segment;
+
+When the extracted part score is compiled and viewed, it  may be seen
+that horizontal-spacing commands designed for multiple instruments can produce bad
+spacing when used for a single instrument. Bad spacing can be corrected  manually but
+this is very tedious; an auxiliary program called 
+.BR autosp (1)
+automates this process; it is available at WIMA
+in the software archive.
+
+The \\TransformNotes macro may be used for other purposes. Here are some examples:
+
+\\TransformNotes{#2&#3}{#2&\\transpose+7#3}%
+will transpose just the second instrument (argument #3).
+
+\\TransformNotes{#2|#3&#4}{#2|#3&\\tinynotesize#4}%
+will begin typesetting the notes of the second instrument (#4) in tiny size. 
+
+\\TransformNotes{#2&#3}{#3&#2}%
+will switch the order of the two instruments.
+
+\\TransformNotes{#2&#3}{#2&#3}%
+will restore normal two-instrument processing.
+
+.SH LIMITATIONS
+The \\TransformNotes macro is currently incompatible with the musixlyr extension
+package for lyrics.
+
+.SH SEE ALSO
+.BR msxlint (1),
+.BR autosp (1)
+.PP 
+musixdoc.pdf
+
+.SH AUTHOR 
+This manual page was written by Bob Tennent <rdt@cs.queensu.ca>.
+

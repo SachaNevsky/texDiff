@@ -1,0 +1,2316 @@
+%%====================================
+%% This is pst-sigsys documentation.
+%% Farshid Delgosha
+%% fdelgosha@gmail.com
+%% 03/07/2011
+%%====================================
+
+\documentclass[11pt,makeidx]{article}
+
+\usepackage{etex}
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+\usepackage[cmex10]{amsmath}
+\usepackage{amssymb,array}
+\usepackage{fancyhdr,caption}
+\usepackage[margin=1in,dvips]{geometry}
+\usepackage{xspace}
+\usepackage{subfig}
+\usepackage{enumitem}
+\usepackage{url}
+\usepackage{makeidx}
+\usepackage[table]{xcolor}
+\usepackage{multido}
+\usepackage{xkeyval}
+\usepackage{pst-sigsys,pst-plot,pstricks-add}
+\usepackage{multicol}
+
+
+%%=== showexpl ======================================================
+\usepackage{showexpl}
+\lstdefinelanguage{PSTSigSys}{%
+   morekeywords={psaxeslabels,pstick,pssignal,psstem,pszero,pspole,pscircleop,psframeop,%
+                 psring,psdisk,psdiskc,psldots,ldotsnode,psblock,psfblock,psadaptive,psknob,%
+                 psusampler,psdsampler,nclist,ncstar,psBraceUp,psBraceDown,psBraceLeft,psBraceRight},
+   morekeywords={dotnode},
+   sensitive=false
+}
+\lstset{%
+   explpreset={numbers=left,numberstyle=\tiny,numbersep=5pt},%
+   basicstyle=\ttfamily\small,%
+   rframe=,%
+   frame=single,%
+   frameround=tttt,%
+   aboveskip=\baselineskip,%
+   belowskip=\baselineskip,%
+   backgroundcolor=\color{Tangerine!10},%
+   language=PSTricks,%
+   alsolanguage=PSTSigSys,%
+   keywordstyle=\color{ForestGreen},%
+   commentstyle=\color{DarkBrown}%
+}
+%%=== end showexpl ==================================================
+
+
+%%=== hyperref ======================================================
+\usepackage[pagebackref]{hyperref}
+\hypersetup{%
+   colorlinks,backref,breaklinks,dvips,%
+   linkcolor=BrickRed,%
+   citecolor=TealBlue,%
+   urlcolor=ForestGreen!50!black,%
+   bookmarksopen=true,%
+   bookmarksopenlevel=2,%
+   pdfpagelayout=SinglePage,%
+   pdfview=Fit,%
+   pdftitle={The PST-SigSys Package},%
+   pdfauthor={Farshid Delgosha}%
+}
+%%=== end hyperref ==================================================
+
+
+\makeatletter
+%%=== some settings =================================================
+\makeindex
+\setlength{\parskip}{.5\baselineskip}
+\def\tableofcontents{\@starttoc{toc}}
+\renewcommand\l@subsection{\@dottedtocline{2}{1.5em}{3.15em}}
+\psset{gridcolor=gray,gridlabelcolor=gray}
+\captionsetup{labelfont=bf,labelsep=period}
+\captionsetup[subfloat]{labelfont=footnotesize}
+%%=== end some settings =============================================
+
+
+%%=== headers =======================================================
+\fancyhf{}
+\rhead{{\sffamily\thepage}}
+\lhead{\nouppercase{\leftmark}}
+\renewcommand{\headrule}{\psline[linewidth=.4pt,linecolor=Tangerine](\textwidth,0)}
+\pagestyle{fancy}
+%%=== end headers ===================================================
+
+
+%%=== colors ========================================================
+\definecolor{Salmon}{RGB}{178,51,51}
+\definecolor{BrickRed}{RGB}{233,49,16}
+\definecolor{TealBlue}{RGB}{16,83,165}
+\definecolor{ForestGreen}{RGB}{10,112,43}
+\definecolor{Tangerine}{RGB}{244,176,108}
+\definecolor{DarkBrown}{RGB}{130,65,0}
+%%=== end colors ====================================================
+
+
+%%=== maketitle =====================================================
+\def\maketitle{%
+\begin{center}
+\parindent\z@
+{\Large\@title} \\[.5\baselineskip]
+{(version \pstsigsysFV)} \\[1.5\baselineskip]
+\@author \\
+\href{mailto:\@email}{\@email} \\[\baselineskip]
+\@date
+\end{center}
+\vskip 2\baselineskip
+}
+
+\def\email#1{\def\@email{#1}}
+%%=== end maketitle =================================================
+
+
+%%=== new macros ====================================================
+\def\PSTSigSys{\texttt{pst-sigsys}\xspace}
+\def\CMDn#1{\mbox{\texttt{\textbackslash #1}}}
+\def\CMDidx#1{\index{#1@\CMDn{#1}}}
+\def\CMD#1{\CMDn{#1}\CMDidx{#1}}
+\def\rmit#1{\mbox{\textrm{\textit{#1}}}}
+\def\KWDn#1{\mbox{\texttt{#1}}}
+\def\KWDm#1{\mathtt{#1}}
+\def\KWD#1{\KWDn{#1}\index{#1@\texttt{#1}}}
+\def\PKGn#1{\mbox{\texttt{#1}}}
+\def\PKG#1{\PKGn{#1}\index{Package!#1@\texttt{#1}}}
+\def\Keys{\colorbox{TealBlue!20}{[\rmit{keys}]}\kern1pt}
+\def\Arrows{\colorbox{TealBlue!20}{\{\rmit{arrows}\}}\kern1pt}
+\def\Angle{\colorbox{TealBlue!20}{\{\rmit{angle}\}}\kern1pt}
+\def\Coor{\@ifstar{(\rmit{coor})\xspace}{(\rmit{coor})}}
+\def\Node{\@ifstar{\rmit{node}\xspace}{\{\rmit{node}\}}}
+\def\NodeA{\@ifstar{\rmit{node A}\xspace}{\{\rmit{node A}\}}}
+\def\NodeB{\@ifstar{\rmit{node B}\xspace}{\{\rmit{node B}\}}}
+\def\NodeC{\@ifstar{\rmit{node C}\xspace}{\{\rmit{node C}\}}}
+\def\Stuff{\@ifstar{\rmit{stuff}\xspace}{\{\rmit{stuff}\}}}
+\def\List{\@ifstar{\rmit{list}\xspace}{\{\rmit{list}\}}}
+%
+%%--- syntax --------------------
+\newsavebox{\syntaxbox}
+\newenvironment{syntax}{%
+\begin{lrbox}{\syntaxbox}%
+\begin{minipage}{\textwidth}%
+}
+{
+\end{minipage}%
+\end{lrbox}%
+\par\vspace{.5\baselineskip}%
+\noindent\fbox{\usebox{\syntaxbox}}%
+\vspace{.5\baselineskip}%
+\par}
+%%--- end syntax ----------------
+%
+%%--- keytable ------------------
+\newenvironment{keytable}[1]{
+\rowcolors{2}{TealBlue!20}{}
+\begin{tabular}{>{\ttfamily}l  >{\itshape}c  c  p{#1}}
+\hline\rowcolor[RGB]{244,176,108}
+\rmit{Key}  &  \rmit{Value}  &  \rmit{Default}  &  \rmit{Description} \\
+\hline
+}
+{\hline
+\end{tabular}
+\rowcolors{1}{}{}
+}
+%%--- end keytable --------------
+%
+%%--- MarkDistInner -------------
+\def\MarkDistInner{\def\pst@par{}\pst@object{MarkDistInner}}
+\def\MarkDistInner@i{\@ifnextchar({\MarkDistInner@ii{0}}{\MarkDistInner@ii}}
+\def\MarkDistInner@ii#1(#2)#3[#4]#5{{%
+\use@par%
+\nodexn{(#2)+(-#3;#1)}{MD@A}%
+\nodexn{(#2)+(#3;#1)}{MD@B}%
+\ncline{|<*->|*}{MD@A}{MD@B}%
+\ifx#4a\relax%
+\naput[nrot=:U]{#5}%
+\else
+\nbput[nrot=:U]{#5}%
+\fi%
+}\ignorespaces}
+%%--- end MarkDistInner ---------
+%
+%%--- MarkDistOuter -------------
+\def\MD@temp{}
+\def\MarkDistOuter{\def\pst@par{}\pst@object{MarkDistOuter}}
+\def\MarkDistOuter@i{\@ifnextchar({\MarkDistOuter@ii{0}}{\MarkDistOuter@ii}}
+\def\MarkDistOuter@ii#1(#2)#3[#4]#5{{%
+\use@par%
+\rput{#1}(#2){\rput(#3,0){\psline{|<*-}(.5,0)}}%
+\rput{#1}(#2){\rput(-#3,0){\psline{|<*-}(-.5,0)}}%
+\ifx#4a\relax%
+\ss@addnum{#1}{90}\MD@temp%
+\else%
+\ss@addnum{#1}{-90}\MD@temp%
+\fi%
+\uput[\MD@temp]{#1}(#2){#5}%
+}\ignorespaces}
+%%--- end MarkDistOuter ---------
+%
+\def\@choice{}
+\newif\if@lineA
+\newif\if@lineB
+%
+%%--- xdashline -----------------
+\define@choicekey*{xdashline}{lines}[\val\@choice]{t,b,tb}{%
+  \ifcase\@choice\relax
+     \@lineAtrue\@lineBfalse
+  \or
+     \@lineAfalse\@lineBtrue
+  \else
+     \@lineAtrue\@lineBtrue
+  \fi
+}
+\def\xdashline{\@ifnextchar[{\xdashline@i}{\xdashline@i[lines=b]}}
+\def\xdashline@i[#1](#2,#3,#4)#5#6#7{{%
+\setkeys{xdashline}{#1}%
+\psset{linecolor=#6}%
+\if@lineA%
+\rput(#2,#3){\psline[style=Dash,linewidth=.5pt](-#5,0)}%
+\fi%
+\if@lineB%
+\rput(#2,#4){\psline[style=Dash,linewidth=.5pt](-#5,0)}%
+\fi%
+\rput(#2,#3){\psline[arrows=|<-](0,.5)}%
+\rput(#2,#4){\psline[arrows=|<-](0,-.5)}%
+\rput(#2,#3){\rput[l]{90}(0,.65){\textcolor{#6}{\KWD{#7}}}}%
+}\ignorespaces}
+%%--- end xdashline -------------
+%
+%%--- ydashline -----------------
+\define@choicekey*{ydashline}{lines}[\val\@choice]{l,r,lr}{%
+  \ifcase\@choice\relax
+     \@lineAtrue\@lineBfalse
+  \or
+     \@lineAfalse\@lineBtrue
+  \else
+     \@lineAtrue\@lineBtrue
+  \fi
+}
+\def\ydashline{\@ifnextchar[{\ydashline@i}{\ydashline@i[lines=r]}}
+\def\ydashline@i[#1](#2,#3,#4)#5#6#7{{%
+\setkeys{ydashline}{#1}%
+\psset{linecolor=#6}%
+\if@lineA%
+\rput(#2,#4){\psline[style=Dash,linewidth=.5pt](0,-#5)}%
+\fi%
+\if@lineB%
+\rput(#3,#4){\psline[style=Dash,linewidth=.5pt](0,-#5)}%
+\fi%
+\rput(#2,#4){\psline[arrows=|<-](-.5,0)}%
+\rput(#3,#4){\psline[arrows=|<-](0,0)(.5,0)}%
+\rput(#3,#4){\rput[l](.65,0){\textcolor{#6}{\KWD{#7}}}}%
+}\ignorespaces}
+%%--- end ydashline -------------
+%
+%%--- Example -------------------
+\newcount\example@cnt
+\example@cnt=0
+\def\Example#1{%
+\advance\example@cnt\@ne%
+\ifx\@empty#1\@empty%
+\noindent\textbf{Example \the\example@cnt.}\hspace{.5em}%
+\else%
+\noindent\textbf{Example \the\example@cnt.}{{\normalfont\footnotesize\space(#1)}}\hspace{.5em}%
+\fi}
+%%--- end Example ---------------
+%%===================================================================
+\makeatother
+
+
+
+\title{The \PSTSigSys Package}
+\author{Farshid Delgosha}
+\email{fdelgosha@gmail.com}
+\date{March $\text{7}^\text{th}$, 2011}
+\thispagestyle{plain}
+
+
+\begin{document}
+
+\maketitle
+
+
+
+\begin{abstract}
+This package is a collection of useful macros for disciplines related to signal processing. It defines macros for plotting a sequence of numbers, drawing the pole-zero diagram of a system, shading the region of convergence, creating an adder or a multiplier node, placing a framed node at a given coordinate, creating an up-sampler or a down-sampler node, drawing the block diagram of a system, drawing adaptive systems, sequentially connecting a list of nodes, and connecting a list of nodes to one node using any node-connecting macro. The author welcomes all comments for further improvements of this package and suggestions for adding new macros or features.
+\end{abstract}
+
+
+\section*{Contents}
+\begin{multicols}{2}
+\tableofcontents
+\end{multicols}
+
+
+\section{Introduction}
+
+To use the \PSTSigSys package, add the command
+
+\CMDn{usepackage\{pst-sigsys\}}
+
+\noindent to the preamble of the document. This package loads \PKG{pstricks} \cite{pstricks}, \PKG{pst-node} \cite{pst-node}, and \PKG{pst-xkey} \cite{pst-xkey} packages. Moreover, it activates polar coordinates through the \CMDn{SpecialCoor} macro defined by the \PKG{pstricks} package. Hence, all macros support polar coordinates. Simultaneously loading the \PSTSigSys package along with some other packages in regular {\TeX} might be impossible due to memory restrictions. If {\TeX} runs out of memory, load the \PKG{etex} package.
+
+Section~\ref{sec:change log} keeps a change log from previous versions of the package. All macros defined by the \PSTSigSys package are introduced in Section~\ref{sec:macros}. The extra functionalities of the package are introduced in Section~\ref{sec:extras}. Many practical examples are provided in Section~\ref{sec:examples} that illustrate the applications of the introduced macros.
+
+
+
+
+\section{Change Log}
+\label{sec:change log}
+
+\begin{itemize}[label=$\scriptscriptstyle\blacksquare$]
+\item \textbf{Version 1.4 (03/07/2011):} The code for the \CMDn{psaxeslabels} macro is updated to accommodate for cases when one of the two axes lines has length zero. The code for \CMDn{pspole} is updated due to the new changes in the \PKG{pst-node} package. The new key \KWDn{afac} is added to the \CMDn{psadaptive} macro.
+
+\item \textbf{Version 1.3 (06/18/2010):} In the \CMDn{pstick} and \CMDn{psTick} macros, the tick angle is either directly specified by the user or set by the \KWDn{angle} key when unspecified. The \KWDn{ticklength} key refers to the entire length of a tick, not half of it. The new key \KWDn{killzero} is added to the \CMDn{psstem} macro. In the \CMDn{psldots} and \CMDn{ldotsnode} macros, the angle of dots is either directly specified by the user or set by the \KWDn{angle} key when unspecified. Two new macros \CMDn{psadaptive} and \CMDn{psknob} are added. The new keys \KWDn{framewidth}, \KWDn{frameheight}, and \KWDn{FillColor} are introduced.
+
+\item \textbf{Version 1.2 (01/15/2010):} Five new macros \CMDn{pstick}, \CMDn{psTick}, \CMDn{pssignal}, \CMDn{ldotsnode}, and \CMDn{ncstar} are added. The macros \CMDn{pshtick}, \CMDn{psvtick}, \CMDn{pshTick}, and \CMDn{psvTick} are not available any longer since their functionalities are carried out by the newly defined macros \CMDn{pstick} and \CMDn{psTick}. Codes for the macros \CMDn{pscircleop}, \CMDn{psframeop}, \CMDn{psldots}, and \CMDn{nclist} are updated. Four new keys \KWDn{gratioWh}, \KWDn{gratioWv}, \KWDn{gratioHh}, and \KWDn{gratioHv} are added that allow frames with edges proportional by the golden ratio. The global round-cornering settings are removed because of their undesired effects in other packages. Hence, the option \KWDn{notelegant} is not available any longer. Instead, the new style \KWDn{RoundCorners} is introduced. The styles \KWDn{BraceUp}, \KWDn{BraceDown}, \KWDn{BraceLeft}, and \KWDn{BraceRight} are not available any longer. Instead, the macros \CMDn{psBraceUp}, \CMDn{psBraceDown}, \CMDn{psBraceLeft}, and \CMDn{psBraceRight} are defined. The option \KWDn{pstadd} is not available any longer. If the package \PKGn{pstricks-add} is loaded, the relevant styles are automatically defined. The macros \CMDn{RE}, \CMDn{IM}, \CMDn{sRE}, and \CMDn{sIM} are not available any longer because of their irrelevance to the objectives of the package.
+
+\item \textbf{Version 1.1 (04/01/2009):} Four new macros \CMDn{pshtick}, \CMDn{psvtick}, \CMDn{pshTick}, and \CMDn{psvTick} are added. The codes of macros \CMDn{psusampler} and \CMDn{psdsampler} are updated. However, there is no change in their user interface.
+
+\item \textbf{Version 1.0 (01/15/2009):} The fist version of the package.
+\end{itemize}
+
+
+
+
+
+\section{Macros}
+\label{sec:macros}
+
+In this section, we introduce all the macros defined by the \PSTSigSys package. Every macro has some optional keys that can be assigned either directly inside brackets right after the macro name or through the \CMDn{psset} macro provided by the \PKG{pstricks} package. In the syntax of every macro, the optional portions are identified by the shaded background. Unless directly stated, all coordinates specified by \Coor* could be either in the cartesian format $(x, y)$ or the polar format $(\rho; \theta)$\footnote{Recall that \PSTSigSys activates the polar coordinates on loading. Hence, there is no need to use the \CMDn{SpecialCoor} macro.}. After the introduction of every macro, some examples are provided to illustrate the usage of that macro.
+
+
+
+\subsection{\CMDn{psaxeslabels}}
+
+\begin{syntax}
+\CMD{psaxeslabels}\Keys\Arrows($x_0, y_0$)($x_1, y_1$)($x_2, y_2$)\{\rmit{x-label}\}\{\rmit{y-label}\}
+\end{syntax}
+
+\noindent
+This macro is a simplified version of the \CMDn{psaxes} macro defined by the \PKG{pst-plot} package \cite{pst-plot}. As depicted in Figure~\ref{fig:psaxeslabels}, the \CMD{psaxeslabels} draws two straight lines, one vertical and one horizontal, that intersect at the point ($x_0, y_0$). These lines are enclosed by a virtual rectangular box with the lower left corner at ($x_1, y_1$) and the upper right corner at ($x_2, y_2$). The two lines are labeled \rmit{x-label} and \rmit{y-label}, respectively. Similar to the \CMDn{psaxes} macro, the use of \rmit{arrows} is optional. The keys specific to the \CMD{psaxeslabels} are summarized in Table~\ref{tab:psaxeslabels}.
+%%=======================================================================
+\begin{figure}[ht!]
+\centering
+\begin{pspicture}[showgrid=false](-2,-1)(3.5,3)
+%
+\psgrid[griddots=10,subgriddiv=1,gridlabels=0pt](0,0)(-2,-1)(3,2)
+\psaxeslabels(0,0)(-2,-1)(3,2){\rmit{x-label}}{\rmit{y-label}}
+\psset{linecolor=red}
+\dotnode(0,0){org}
+\dotnode(-2,-1){xy1}
+\dotnode(3,2){xy2}
+\nput{45}{org}{\textcolor{red}{$(x_0, y_0)$}}
+\nput{45}{xy1}{\textcolor{red}{$(x_1, y_1)$}}
+\nput{225}{xy2}{\textcolor{red}{$(x_2, y_2)$}}
+\xdashline(3.35,0,-\pslabelsep){1.5}{TealBlue}{\footnotesize labelsep}
+\ydashline(0,\pslabelsep,2.35){1.5}{TealBlue}{\footnotesize labelsep}
+%
+\end{pspicture}
+\caption{\CMD{psaxeslabels} macro}
+\label{fig:psaxeslabels}
+\end{figure}
+%%=======================================================================
+\begin{table}[ht!]
+\centering
+\caption{\CMD{psaxeslabels} keys}
+\label{tab:psaxeslabels}
+\begin{keytable}{3.2in}
+xlpos   &  {\normalfont\ttfamily t | b}  &  \texttt{b}  &  Position of the $x$-label along the horizontal axis  \\
+ylpos   &  {\normalfont\ttfamily l | r}  &  \texttt{r}  &  Position of the $y$-label along the vertical axis    \\
+\end{keytable}
+\end{table}
+%%=======================================================================
+
+
+\begin{LTXexample}[width=5.5cm]
+\begin{pspicture}[showgrid](-2,-1)(2,1)
+  \psaxeslabels(0,0)(-2,-1)(2,1){$\Re$}{$\Im$}
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[width=5.5cm]
+\begin{pspicture}[showgrid](-2,-1)(2,2)
+  \psset{linecolor=blue,xlpos=t,ylpos=l}
+  \psaxeslabels{->}(-1,0)(-2,-1)(2,2){$x$}{$y$}
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[width=5.5cm]
+\begin{pspicture}[showgrid](-1,0)(3,2)
+   \psaxeslabels{->}(0,0)(0,0)(3,2){}{}
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[width=5.5cm]
+\begin{pspicture}[showgrid](-2,-1)(2,1)
+   \psaxeslabels{->}(0,0)(-2,0)(2,0){$x$}{}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\subsection{\CMDn{pstick}}
+
+\begin{syntax}
+\CMD{pstick}\Keys\Angle\Coor\{\rmit{ticklength}\}
+\end{syntax}
+
+\noindent
+As depicted in Figure~\ref{fig:pstick}, the \CMD{pstick} macro draws a straight line with length \rmit{ticklength} centered at \Coor* and angled \rmit{angle} with respect to the horizontal axis. If the optional parameter \rmit{angle} is absent, then the angle is determined using the \KWD{angle} key. This macro could be used for adding tick lines to coordinate axes in addition to many other usages. The keys specific to the \CMD{pstick} are summarized in Table~\ref{tab:pstick}.\\[\baselineskip]
+%%=======================================================================
+\begin{figure}[ht!]
+\centering
+\begin{pspicture}[showgrid=false](-2.5,-1)(2.5,1.5)
+%
+\pstick[style=Dash,linecolor=gray](0,0){4}
+\pstick{30}(0,0){4}
+%
+\pnode(0,0){org}
+\pssignal(0,-1){coor}{\textcolor{red}{\Coor}}
+\ncline[linecolor=red]{->}{coor}{org}
+%
+\psarc[linecolor=gray](0,0){1}{0}{30}
+\rput[l](1.15;15){{\footnotesize\ttfamily\color{gray}angle}}
+%
+\psBraceUp*[linecolor=TealBlue]%
+(2;30)(-2;30){{\ttfamily\footnotesize\color{TealBlue}ticklength}}
+%
+\end{pspicture}
+\caption{\CMD{pstick} macro}
+\label{fig:pstick}
+\end{figure}
+%%=======================================================================
+\begin{table}[ht!]
+\centering
+\caption{\CMD{pstick} keys}
+\label{tab:pstick}
+\begin{keytable}{.85in}
+angle   &  num  &  0  &  Tick angle \\
+\end{keytable}
+\end{table}
+%%=======================================================================
+
+\begin{LTXexample}[width=6.5cm]
+\begin{pspicture}[showgrid](-2,-1)(3,2)
+   \psaxeslabels(0,0)(-2,-1)(3,2){$x$}{$y$}
+   \pstick[linecolor=red](0,1){.2}
+   \pstick[arrows=|-|]{90}(-1,0){.5}
+   \psset{angle=45}
+   \pstick[arrows=->](0,0){1}
+   \pstick[linecolor=blue](1,0){.5}
+   \pstick[linecolor=green]{135}(2,0){.5}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\subsection{\CMDn{psTick}}
+
+\begin{syntax}
+\CMD{psTick}\Keys\Angle\Coor
+\end{syntax}
+
+\noindent
+Similar to \CMD{pstick}, the \CMD{psTick} macro draws a straight line centered at \Coor* and angled \rmit{angle} with respect to the horizontal axis. The only difference is that the tick length is specified by the \KWD{ticklength} key (Table~\ref{tab:psTick}). This macro is useful when multiple ticks are to be drawn all with the same length.
+
+%%=======================================================================
+\begin{table}[ht!]
+\centering
+\caption{\CMD{psTick} keys}
+\label{tab:psTick}
+\begin{keytable}{.85in}
+ticklength   &  num[dimen]  &  0.15  &  Tick length \\
+angle        &  num         &  0     &  Tick angle \\
+\end{keytable}
+\end{table}
+%%=======================================================================
+
+\begin{LTXexample}[width=6.5cm]
+\begin{pspicture}[showgrid](-2,-1)(3,2)
+   \psaxeslabels(0,0)(-2,-1)(3,2){$x$}{$y$}
+   \psset{ticklength=.5}
+   \psTick[linecolor=red](0,1)
+   \psTick[arrows=|-|]{90}(-1,0)
+   \psTick[linecolor=blue]{90}(1,0)
+   \psset{angle=45}
+   \psTick[linecolor=green](2,0)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+
+\subsection{\CMDn{pssignal}}
+
+\begin{syntax}
+\CMD{pssignal}\Keys\Coor\Node\Stuff
+\end{syntax}
+
+\noindent
+This macro places \Stuff* inside an invisible frame centered at \Coor* and makes that a node labeled \Node* (Figure~\ref{fig:pssignal}). The separation of the frame and the \Stuff* is determined by the key \KWD{signalsep} (Table~\ref{tab:pssignal}).
+%%=======================================================================
+\begin{figure}[ht!]
+\centering
+\begin{pspicture}[showgrid=false](-2,-2)(2,1)
+%
+\rput(0,0){%
+\psframebox[framesep=.5,linecolor=gray]{%
+\psframebox[framesep=0,linecolor=gray]{{\LARGE\color{gray}\Stuff*}}%
+}}
+\dotnode[linecolor=red](0,0){org}
+\pssignal(0,-1.5){coor}{\textcolor{red}{\Coor}}
+\ncline[linecolor=red]{->}{coor}{org}
+%
+\MarkDistOuter[linecolor=TealBlue](.95,.4){.25}[a]{\ttfamily\footnotesize\color{TealBlue}signalsep}
+%
+\end{pspicture}
+\caption{\CMD{pssignal} macro}
+\label{fig:pssignal}
+\end{figure}
+%%=======================================================================
+\begin{table}[ht!]
+\centering
+\caption{\CMD{pssignal} keys}
+\label{tab:pssignal}
+\begin{keytable}{1.25in}
+signalsep   &  num[dimen]  &  $5$pt  &  Frame separation  \\
+\end{keytable}
+\end{table}
+%%=======================================================================
+
+
+\begin{LTXexample}[width=6cm]
+\begin{pspicture}[showgrid](-2,-1)(2,1)
+   \pssignal(-1.5,.5){x}{$x[n]$}
+   \pssignal[signalsep=.5](1.5,-.5){y}{$y[n]$}
+   \ncline{x}{y}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+
+\subsection{\CMDn{psstem}}
+
+\begin{syntax}
+\CMD{psstem}\Keys($x_0, \Delta$)\List \\
+\CMD{psstem}\Keys\List
+\end{syntax}
+
+\noindent
+The \CMD{psstem} macro plots the sequence defined by \List*, which is a comma-separated list of numbers. As shown in Figure~\ref{subfig:psstem:sample}, if $\List* = n_1, n_2, n_3, \dotsc$, then \CMD{psstem} draws vertical lines (stems) at $x_0, x_0 + \Delta, x_0 + 2\Delta, \dotsc$ on the horizontal axis with heights $n_1, n_2, n_3, \dotsc$, respectively. \emph{It is important to remember that both $x_0$ and $\Delta$ must be integers.}\footnote{If you must use non-integer values, utilize the \KWD{xunit} key to arbitrarily choose any real value.} In case their values are not explicitly given, they are assumed $x_0 = 0$ and $\Delta = 1$. The stem ends are determined by the \KWD{stemhead} key. The \CMD{psstem} macro is also capable of numerically tagging the stems. As depicted in Figure~\ref{subfig:psstem:tag}, the tag of every stem is placed either below or above it depending on whether the corresponding number in the sequence is nonnegative (positive or zero) or negative, respectively. The distance of tags to stems is determined by the \KWD{labelsep} key. In some cases (e.g., when the stemhead is \texttt{>}), it is desirable to remove zero-height stems. The key \KWD{killzero}, when used, removes such stems. The keys specific to the \CMD{psstem} macro are summarized in Table~\ref{tab:psstem}.
+
+%%=======================================================================
+\begin{figure}[ht!]
+\centering
+%-------------------------------------------------------
+% Sample
+%-------------------------------------------------------
+\subfloat[Sample sequence]{\label{subfig:psstem:sample}
+\begin{pspicture}[showgrid=false](-1,-1)(4.5,3)
+%
+\psgrid[griddots=10,subgriddiv=1,gridlabels=0pt](4,2)
+%
+\pnode(0,0){a}
+\pnode(0,2){b}
+\ncline{-*}{a}{b}
+\nput{-90}{a}{$x_0$}
+\ncline[offset=.35,linecolor=gray]{|*-|*}{a}{b}
+\ncput*{$n_1$}
+%
+\pnode(2,0){a}
+\pnode(2,1){b}
+\ncline{-*}{a}{b}
+\nput{-90}{a}{$x_0+\Delta$}
+\ncline[offset=.35,linecolor=gray]{|*-|*}{a}{b}
+\ncput*{$n_2$}
+%
+\pnode(4,0){a}
+\pnode(4,1.5){b}
+\ncline{-*}{a}{b}
+\nput{-90}{a}{$x_0+2\Delta$}
+\ncline[offset=.35,linecolor=gray]{|*-|*}{a}{b}
+\ncput*{$n_3$}
+%
+\end{pspicture}}
+%
+\hspace{1.5cm}
+%
+%-------------------------------------------------------
+% Tag
+%-------------------------------------------------------
+\subfloat[Tagging]{\label{subfig:psstem:tag}
+\begin{pspicture}[showgrid=false](-1,-1)(4,3)
+%
+\psgrid[griddots=10,subgriddiv=1,gridlabels=0pt](3,2)
+%
+\psset{labelsep=.25}
+%
+\psline{-*}(0,0)(0,2)
+\rput[t](0,-\pslabelsep){$x_i$}
+\xdashline[lines=tb](.5,0,-\pslabelsep){1}{TealBlue}{\footnotesize labelsep}
+%
+\psline{-*}(2.5,0)(2.5,-1)
+\rput[b](2.5,\pslabelsep){$x_j$}
+\xdashline[lines=tb](3,\pslabelsep,0){1}{TealBlue}{\footnotesize labelsep}
+%
+\end{pspicture}}
+%
+\caption{\CMD{psstem} macro}
+\label{fig:psstem}
+\end{figure}
+%=======================================================================
+\begin{table}[ht!]
+\centering
+\caption{\CMD{psstem} keys}
+\label{tab:psstem}
+\begin{keytable}{2.75in}
+stemhead       &  style    &  *                   &  Stem head. Possible choices are \texttt{*}, \texttt{o}, \texttt{>}, \texttt{<}, \texttt{>\kern.5pt>}, \texttt{<\kern.5pt<}, \texttt{|}, \texttt{)}, \texttt{(}, \texttt{>|}, and \texttt{<|}. \\
+stemtag        &  Boolean  &  \texttt{false}      &  Tagging the stems \\
+stemtagformat  &  format   &  \CMDn{scriptstyle}  &  Tag format \\
+killzero       &  Boolean  &  \texttt{false}      &  Removing zero-height stems \\
+\end{keytable}
+\end{table}
+%%=======================================================================
+
+
+\begin{LTXexample}[width=6.5cm]
+\begin{pspicture}[showgrid](0,-1)(6,2)
+  \psstem[style=Stem]{0,.5,1,-1,2}
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[width=6.5cm]
+\begin{pspicture}[showgrid](0,-1)(6,2)
+  \psset{style=Stem,linecolor=blue,%
+  stemtagformat=\color{red}\scriptstyle}
+  \psstem[stemhead=>,stemtag](1,2){-1,1,2}
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[width=6.5cm]
+\begin{pspicture}[showgrid](0,-1)(6,2)
+   \psset{style=Stem,stemtag}
+   \psstem[linecolor=red](0,2){1,-.75,1}
+   \psset{stemhead=o}
+   \psstem[linecolor=blue](1,2){.5,2,-1}
+\end{pspicture}
+\end{LTXexample}
+
+
+\begin{LTXexample}[width=6.5cm]
+\begin{pspicture}[showgrid](5,1)
+  \psset{stemhead=>}
+  \psstem{1,0,1}
+  \psset{linecolor=red,killzero}
+  \psstem(3,1){1,0,1}
+\end{pspicture}
+\end{LTXexample}
+
+
+\begin{LTXexample}[width=6.5cm]
+\begin{pspicture}[showgrid](5,1)
+   \psstem[xunit=.5]{1,.5,1,.5,1,.5,1,.5,1}
+\end{pspicture}
+\end{LTXexample}
+
+
+\begin{LTXexample}[width=6.5cm]
+\begin{pspicture}[showgrid](5,3)
+  \psstem[stemhead=*](0,1){1}
+  \psstem[stemhead=o](1,1){1}
+  \psstem[stemhead=>](2,1){1}
+  \psstem[stemhead=<](3,1){1}
+  \psstem[stemhead=>>](4,1){1}
+  \psstem[stemhead=<<](5,1){1}
+
+  \rput(0,1.5){%
+    \psstem[stemhead=|](0,1){1}
+    \psstem[stemhead=)](1,1){1}
+    \psstem[stemhead=(](2,1){1}
+    \psstem[stemhead=>|](3,1){1}
+    \psstem[stemhead=<|](4,1){1}
+  }
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+
+\subsection{\CMDn{pszero}}
+
+\begin{syntax}
+\CMD{pszero}\Keys\Coor\Node
+\end{syntax}
+
+\noindent
+This macro is used to generate a circle node centered at \Coor* and labeled \Node* that represents a zero of a system. It could also be used to generate several circles, all centered at \Coor*, representing high order zeros as shown in Figure~\ref{fig:pszero}. The radius of innermost circle is \KWD{zeroradius}, and it is incremented by \KWD{zeroradiusinc} for high order zeros. The line-width of all circles is determined by the \KWD{zerowidth} key. The key \KWD{order} determines the order of the zero, i.e., the number of circles. The key \KWD{scale} can be used to scale up or down the radius of the innermost circle, the radius increment, and the line-width of all circles. Table~\ref{tab:pszero} summarizes keys corresponding to \CMD{pszero} and their default values.
+
+%%=======================================================================
+\begin{figure}[ht!]
+\centering
+\begin{pspicture}[showgrid=false](-2.5,-2.5)(2.5,2.5)
+%
+\dotnode[linecolor=red](0,0){org}
+\nput[labelsep=.1]{-90}{org}{\textcolor{red}{\Coor}}
+%
+\pscircle(0,0){1.25}
+\pscircle(0,0){1.65}
+\psldots(2,0)
+\pscircle(0,0){2.35}
+%
+\pnode(1.25;45){rad}
+\ncline[linecolor=TealBlue]{->}{org}{rad}
+\naput[nrot=:U]{{\ttfamily\scriptsize\color{TealBlue}zeroradius}}
+%
+\MarkDistOuter[linecolor=Salmon]{-20}(1.45;-20){.2}[a]{\ttfamily\scriptsize\color{Salmon}zeroradiusinc}
+%
+\end{pspicture}
+\caption{\CMD{pszero} macro}
+\label{fig:pszero}
+\end{figure}
+%%=======================================================================
+\begin{table}[ht!]
+\centering
+\caption{\CMD{pszero} keys}
+\label{tab:pszero}
+\begin{keytable}{2.1in}
+zerowidth      &  num[dimen]  &  $0.7$pt &  Line-width of all circles \\
+zeroradius     &  num[dimen]  &  $0.08$  &  Radius of the innermost circle \\
+zeroradiusinc  &  num[dimen]  &  $0.07$  &  Radius increment \\
+order          &  int         &  $1$     &  Order of the zero \\
+scale          &  num         &  $1$     &  Scale factor \\
+\end{keytable}
+\end{table}
+%%=======================================================================
+
+\begin{LTXexample}[width=7.5cm]
+\begin{pspicture}[showgrid](5,2)
+  \pszero(1,1){z1}
+    \nput{-90}{z1}{$z_1$}
+  \pszero[linecolor=red](2,1){z2}
+  \pszero[zerowidth=2pt](3,1){z3}
+  \pszero[zeroradius=.25](4,1){z4}
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[width=7.5cm]
+\begin{pspicture}[showgrid](4,2)
+  \pszero[order=3](1,1){z5}
+    \nput{-90}{z5}{$z_5$}
+  \pszero[zeroradiusinc=.15,%
+         order=2](2,1){z6}
+  \pszero[scale=3](3,1){z7}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+
+\subsection{\CMDn{pspole}}
+
+\begin{syntax}
+\CMD{pspole}\Keys\Coor\Node
+\end{syntax}
+
+\noindent
+This macro is used to generate a cross node, as shown in Figure~\ref{fig:pspole}, centered at \Coor* and labeled \Node* that represents the pole of a system. The length and the line width of the cross are controlled by the \KWD{polelength} and \KWD{polewidth} keys, respectively. The key \KWD{scale} can be used to scale up or down the pole line-width and the pole length. The keys corresponding to the \CMD{pspole} macro are summarized in Table~\ref{tab:pspole}.
+
+%%=======================================================================
+\begin{figure}[ht!]
+\centering
+\begin{pspicture}[showgrid=false](-2,-1.5)(2,1.5)
+%
+\pnode(0,0){org}
+\pssignal(0,-1){coor}{\textcolor{red}{\Coor}}
+\ncline[linecolor=red]{->}{coor}{org}
+%
+\pstick[style=Dash,linecolor=gray](0,0){3}
+\psarc[linecolor=gray](0,0){.75}{0}{45}
+\rput[l](.9;22.5){\textcolor{gray}{$45^\circ$}}
+%
+\pspole[polelength=2,linewidth=1pt](0,0){p}
+%
+\psBraceUp*[linecolor=TealBlue]%
+(2;45)(0,0){{\ttfamily\footnotesize\color{TealBlue}polelength}}
+%
+\end{pspicture}
+\caption{\CMD{pspole} macro}
+\label{fig:pspole}
+\end{figure}
+%%=======================================================================
+\begin{table}[ht!]
+\centering
+\caption{\CMD{pspole} keys}
+\label{tab:pspole}
+\begin{keytable}{1.125in}
+polelength  &  num[dimen]  &  $0.12$  &  Cross length \\
+polewidth   &  num[dimen]  &  $0.7$pt &  Cross line-width \\
+scale       &  num         &  $1$     &  Scale factor \\
+\end{keytable}
+\end{table}
+%%=======================================================================
+
+\begin{LTXexample}[width=8cm]
+\begin{pspicture}[showgrid](6,2)
+  \pspole(1,1){p1}
+    \nput{-90}{p1}{$p_1$}
+  \pspole[linecolor=blue](2,1){p2}
+  \pspole[polewidth=2pt](3,1){p3}
+  \pspole[polelength=.5](4,1){p4}
+  \pspole[scale=3](5,1){p5}
+    \nput{-90}{p5}{$p_5$}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\subsection{\CMDn{pscircleop}}
+
+\begin{syntax}
+\CMD{pscircleop}\Keys\Coor\Node
+\end{syntax}
+
+\noindent
+This macro draws a cross inside a circle. Both the circle and the cross are centered at \Coor*. Then, it turns the circle into a node labeled \Node* as shown in Figure~\ref{fig:pscircleop}. The length of the cross and its line-width are controlled by the \KWD{oplength} and \KWD{opwidth} keys, respectively. The line-width of the enclosing circle is separately controlled by the \KWD{linewidth} key. The distance between the circle and the cross is determined by the \KWD{opsep} key. The type of operation (whether plus or times) is controlled by the \KWD{operation} key. Another way of determining the operation inside the circle is through the key \KWD{angle} that determines the angle of the cross. The key \KWD{scale} can be used to scale up or down the cross line-width, the cross length, the separation between the cross and the circle, and the circle line-width. The keys corresponding to the \CMD{pscircleop} macro are summarized in Table~\ref{tab:pscircleop and psframeop}.
+
+%%=======================================================================
+\begin{figure}[ht!]
+\centering
+\begin{pspicture}[showgrid=false](-2,-2)(2,2)
+%
+\pnode(0,0){org}
+\pssignal(1;-105){coor}{\textcolor{red}{\Coor}}
+\ncline[linecolor=red]{->}{coor}{org}
+%
+\pstick[style=Dash,linecolor=gray](0,0){3}
+\psarc[linecolor=orange](0,0){.9}{0}{30}
+\rput[l](1.05;15){{\ttfamily\footnotesize\color{orange}angle}}
+%
+\pscircleop[oplength=1.5,opsep=.5,angle=30](0,0){op}
+%
+\psBraceUp*[linecolor=TealBlue]%
+(1.5;30)(0,0){{\ttfamily\footnotesize\color{TealBlue}oplength}}
+%
+\pscircle[style=Dash,linecolor=gray]{1.5}
+\rput(1.75;150){\MarkDistOuter[linecolor=Salmon]{-30}(0,0){.25}[a]{\ttfamily\scriptsize\color{Salmon}opsep}}
+%
+\end{pspicture}
+\caption{\CMD{pscircleop} macro}
+\label{fig:pscircleop}
+\end{figure}
+%%=======================================================================
+\begin{table}[ht!]
+\centering
+\caption{\CMD{pscircleop} and \CMD{psframeop} keys}
+\label{tab:pscircleop and psframeop}
+\begin{keytable}{3.1in}
+oplength   &  num[dimen]                         &  $0.125$        &  Cross length \\
+opwidth    &  num[dimen]                         &  $0.7$pt        &  Cross line-width \\
+opsep      &  num[dimen]                         &  $0.1$          &  Separation between the cross and the frame \\
+operation  &  {\normalfont\ttfamily plus|times}  &  \texttt{plus}  &  Operation \\
+angle      &  angle                              &  $0$            &  Cross angle \\
+scale      &  num                                &  $1$            &  Scale factor \\
+\end{keytable}
+\end{table}
+%%=======================================================================
+
+
+\begin{LTXexample}[width=6.5cm]
+\begin{pspicture}[showgrid](5,2)
+  \pscircleop(1,1){op1}
+  \pscircleop[opwidth=2pt](2,1){op2}
+  \pscircleop[oplength=.25](3,1){op3}
+  \pscircleop[opsep=0](4,1){op4}
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[width=6.5cm]
+\begin{pspicture}[showgrid](5,2)
+  \pscircleop[operation=times](1,1){op5}
+  \pscircleop[angle=20](2,1){op6}
+  \psset{fillstyle=solid,fillcolor=gray!50}
+  \pscircleop[scale=2.5](4,1){op7}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\subsection{\CMDn{psframeop}}
+
+\begin{syntax}
+\CMD{psframeop}\Keys\Coor\Node
+\end{syntax}
+
+\noindent
+This macro is very similar to the \CMD{pscircleop} macro with the same keys as in Table~\ref{tab:pscircleop and psframeop}. The only difference is that the operation is enclosed in a square frame rather than a circular one.
+
+
+\begin{LTXexample}[width=6.5cm]
+\begin{pspicture}[showgrid](5,2)
+  \psframeop(1,1){op1}
+  \psframeop[opwidth=2pt](2,1){op2}
+  \psframeop[oplength=.25](3,1){op3}
+  \psframeop[opsep=0](4,1){op4}
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[width=6.5cm]
+\begin{pspicture}[showgrid](5,2)
+  \psframeop[operation=times](1,1){op5}
+  \psframeop[angle=20](2,1){op6}
+  \psset{fillstyle=solid,fillcolor=blue!20}
+  \psframeop[scale=2.5](4,1){op7}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\CMDn{psdisk}}
+
+\begin{syntax}
+\CMD{psdisk}\Keys\Coor\{\rmit{radius}\}
+\end{syntax}
+
+\noindent
+This macro is used to shade the region of convergence of a system in the $z$ plane. It draws a solid disk centered at \Coor* with radius \rmit{radius} as depicted in Figure~\ref{fig:psdisk}. The fill color is specified by the \KWD{fillcolor} key.
+
+%%=======================================================================
+\begin{figure}[ht!]
+\centering
+\begin{pspicture}[showgrid=false](-1.5,-1.5)(1.5,1.5)
+%
+\psdisk[fillcolor=orange!20](0,0){1.5}
+%
+\dotnode[linecolor=red](0,0){org}
+\nput{-90}{org}{\textcolor{red}{\Coor}}
+\pnode(1.5;45){rad}
+\ncline[linecolor=TealBlue]{->}{org}{rad}
+\naput[nrot=:U]{\textcolor{TealBlue}{\rmit{radius}}}
+%
+\end{pspicture}
+\caption{\CMD{psdisk} macro}
+\label{fig:psdisk}
+\end{figure}
+%%=======================================================================
+
+
+\begin{LTXexample}[width=7cm]
+\begin{pspicture}[showgrid](5,2)
+  \psdisk[fillcolor=red](1,1){.5}
+  \psdisk[fillcolor=blue!50](3,1){1}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\subsection{\CMDn{psring}}
+
+\begin{syntax}
+\CMD{psring}\Keys\Coor\{\rmit{inner-radius}\}\{\rmit{outer-radius}\}
+\end{syntax}
+
+\noindent
+This macro is used to shade the region of convergence of a system in the $z$ plane. It draws a solid ring centered at \Coor* with inner radius \rmit{inner-radius} and outer radius \rmit{outer-radius} as shown in Figure~\ref{fig:psring}. The fill color is specified by the \KWD{fillcolor} key.
+
+%%=======================================================================
+\begin{figure}[ht!]
+\centering
+\begin{pspicture}[showgrid=false](-2,-2)(2,2)
+%
+\psring[fillcolor=orange!20](0,0){1}{2}
+%
+\dotnode[linecolor=red](0,0){org}
+\nput{-90}{org}{\textcolor{red}{\Coor}}
+\pnode(1;0){rad1}
+\pnode(2;60){rad2}
+\psset{linecolor=TealBlue}
+\ncline{->}{org}{rad1}  \naput[nrot=:U,npos=1.25]{{\footnotesize\color{TealBlue}\rmit{inner-radius}}}
+\ncline{->}{org}{rad2}  \naput[nrot=:U]{{\footnotesize\color{TealBlue}\rmit{outer-radius}}}
+%
+\end{pspicture}
+\caption{\CMD{psring} macro}
+\label{fig:psring}
+\end{figure}
+%%=======================================================================
+
+
+\begin{LTXexample}[width=7cm]
+\begin{pspicture}[showgrid](5,2)
+  \psring[fillcolor=red](1,1){.5}{1}
+  \psring[fillcolor=green](3,1){.25}{.5}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\subsection{\CMDn{psdiskc}}
+
+\begin{syntax}
+\CMD{psdiskc}\Keys\Coor($x_0, y_0$)\{\rmit{radius}\}
+\end{syntax}
+
+\noindent
+This macro is used to shade the region of convergence of a system in the $z$ plane. As shown in Figure~\ref{fig:psdiskc}, it shades the area confined between a circle centered at \Coor* with radius \rmit{radius} and a rectangle centered at \Coor* with width $2x_0$ and height $2y_0$. The fill color is specified by the \KWD{fillcolor} key.
+
+%%=======================================================================
+\begin{figure}[ht!]
+\centering
+\begin{pspicture}[showgrid=false](-4,-2)(3,2.15)
+%
+\psdiskc[fillcolor=orange!20,framearc=0](0,0)(2,1.5){1}
+%
+\dotnode[linecolor=red](0,0){org}
+\nput{-90}{org}{\textcolor{red}{\Coor}}
+\pnode(1;45){rad}
+\ncline[linecolor=TealBlue]{->}{org}{rad}  \naput[nrot=:U]{{\small\color{TealBlue}\rmit{radius}}}
+\dotnode(2,1.5){a}    \nput{45}{a}{$(x_0, y_0)$}
+\dotnode(-2,-1.5){b}  \nput{225}{b}{$(-x_0, -y_0)$}
+%
+\rput(0,2){%
+\pstick[arrows=|<->|](0,0){4}%
+\rput*(0,0){$2x_0$}}
+%
+\rput(-2.5,0){%
+\pstick[arrows=|<->|]{90}(0,0){3}%
+\rput*{90}(0,0){$2y_0$}}
+%
+\end{pspicture}
+\caption{\CMD{psdiskc} macro}
+\label{fig:psdiskc}
+\end{figure}
+%%=======================================================================
+
+\begin{LTXexample}[width=6.5cm]
+\begin{pspicture}[showgrid](6,2)
+  \psdiskc[fillcolor=red](1.5,1)(1.5,1){.5}
+  \psdiskc[fillcolor=blue](4.5,1)(.5,1){.15}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\subsection{\CMDn{psldots}}
+
+\begin{syntax}
+\CMD{psldots}\Keys\Angle\Coor
+\end{syntax}
+
+\noindent
+As depicted in Figure~\ref{fig:psldots}, this macro draws three dots each with diameter \KWD{ldotssize} on the same straight line, where the middle one is centered at \Coor*. Every two consecutive dots are separated by \KWD{ldotssep}. The angle of the line on which the dots lie with the horizontal axis is controlled by the optional parameter \rmit{angle}. In case it is absent, the angle is determined by the key \KWD{angle}. The key \KWD{scale} can be used to scale up or down the dot diameter and the dot separation. The keys corresponding to \CMD{psldots} are summarized in Table~\ref{tab:psldots}.
+
+%%=======================================================================
+\begin{figure}[ht!]
+\centering
+\begin{pspicture}[showgrid=false](-4,-2.5)(5,1.5)
+%
+\psset{linecolor=Salmon}
+\psline[style=Dash](-4;15)(4.5;15)
+\psline[style=Dash](-4,0)(4.5,0)
+\psarc(0,0){3.85}{0}{15}
+\rput[l](4;7.5){{\footnotesize\ttfamily\color{Salmon}angle}}
+\pnode(-3;15){L1}
+\rput(L1){\pnode(1.25;-75){L2}}
+\pnode(0,0){O1}
+\rput(O1){\pnode(1.25;-75){O2}}
+\pnode(3;15){R1}
+\rput(R1){\pnode(1.25;-75){R2}}
+%
+\psset{linecolor=TealBlue,style=Dash}
+\ncline{L1}{L2}
+\ncline{O1}{O2}
+\ncline{R1}{R2}
+%
+\psset{linestyle=solid}
+\ncline{|<*->|*}{L2}{O2}   \nbput[nrot=:U]{{\footnotesize\ttfamily\color{TealBlue}ldotssep}}
+\ncline{|<*->|*}{O2}{R2}   \nbput[nrot=:U]{{\footnotesize\ttfamily\color{TealBlue}ldotssep}}
+%
+\psline[style=Dash](-.5,0)(-.5,1)
+\psline[style=Dash](.5,0)(.5,1)
+\MarkDistInner(0,1){.5}[a]{{\footnotesize\ttfamily\color{TealBlue}ldotssize}}
+%
+\psldots[ldotssize=1,ldotssep=3,linecolor=gray]{15}(0,0)
+%
+\dotnode[linecolor=red](0,0){org}
+\pssignal(-2.5,1){coor}{\textcolor{red}{\Coor}}
+\ncline[linecolor=red]{->}{coor}{org}
+%
+\end{pspicture}
+\caption{\CMD{psldots} macro}
+\label{fig:psldots}
+\end{figure}
+%%=======================================================================
+\begin{table}[ht!]
+\centering
+\caption{\CMD{psldots} keys}
+\label{tab:psldots}
+\begin{keytable}{2.45in}
+ldotssize  &  num[dimen]  &  $0.05$  &  Dot diameter \\
+ldotssep   &  num[dimen]  &  $0.15$  &  Distance between consecutive dots \\
+angle      &  angle       &  $0$     &  Dots angle \\
+scale      &  num         &  $1$     &  Scale factor \\
+\end{keytable}
+\end{table}
+%%=======================================================================
+
+
+\begin{LTXexample}[width=8cm]
+\begin{pspicture}[showgrid](6,2)
+  \psldots(1,1)
+  \psldots{45}(2,1)
+  \psldots[ldotssize=.1]{120}(3,1)
+  \psset{linecolor=blue,angle=90}
+  \psldots[ldotssep=.5](4,1)
+  \psldots[scale=3](5,1)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+
+\subsection{\CMDn{ldotsnode}}
+
+\begin{syntax}
+\CMD{ldotsnode}\Keys\Angle\Coor\Node
+\end{syntax}
+
+\noindent
+This macro is very similar to the \CMD{psldots} macro. The only difference is that the \CMD{ldotsnode} places the dots inside an invisible frame and turns that frame into a node labeled \Node* as shown in Figure~\ref{fig:ldotsnode}. The frame is separated from the dots by half \KWD{signalsep}.
+
+%%=======================================================================
+\begin{figure}[ht!]
+\centering
+\begin{pspicture}[showgrid=false](-4,-2.5)(5.5,2)
+%
+\psset{linecolor=Salmon}
+\psline[style=Dash](-4;15)(5;15)
+\psline[style=Dash](-4,0)(5,0)
+\psarc(0,0){4.5}{0}{15}
+\rput[l](4.65;7.5){{\footnotesize\ttfamily\color{Salmon}angle}}
+%
+\psldots[ldotssize=1,ldotssep=3,linecolor=gray]{15}(0,0)
+%
+\dotnode[linecolor=red](0,0){org}
+\pssignal(0,-1.5){coor}{\textcolor{red}{\Coor}}
+\ncline[linecolor=red,nodesepA=.15]{->}{coor}{org}
+%
+\psset{linecolor=TealBlue!50}
+\rput{15}(0,0){\psframe(-3.5,-.5)(3.5,.5)}
+\rput{15}(0,0){\psframe(-4,-1)(4,1)}
+%
+\rput(.75;105){%
+\MarkDistOuter{-75}(-1.75;15){.25}[a]{{\ttfamily\footnotesize\color{TealBlue}$0.5$signalsep}}}
+%
+\end{pspicture}
+\caption{\CMD{ldotsnode} macro}
+\label{fig:ldotsnode}
+\end{figure}
+%%=======================================================================
+
+
+\begin{LTXexample}[width=6cm]
+\begin{pspicture}[showgrid](-2,-1)(2,1)
+   \pssignal(1.5;0){a}{$a$}
+   \pssignal(1.5;180){b}{$b$}
+   \pssignal(1;270){c}{$c$}
+   \ldotsnode{45}(0,0){dots}
+   \ncline{a}{dots}  \ncline{b}{dots}
+   \ncline{c}{dots}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+
+\subsection{\CMDn{psblock}}
+
+\begin{syntax}
+\CMD{psblock}\Keys\Coor\Node\Stuff
+\end{syntax}
+
+\noindent
+This macro places \Stuff* at coordinate \Coor*, encloses it in a rectangular frame, and turns that frame into a node labeled \Node*. The separation between the \Stuff* and the frame is controlled by the \KWD{framesep} key.
+
+
+\begin{LTXexample}[width=7cm]
+\begin{pspicture}[showgrid](6,2)
+   \pssignal(0,1){x}{$x[n]$}
+   \psblock(2,1){a}{$z^{-1}$}
+   \psblock(4,1){b}{$h[n], H(z)$}
+   \pssignal(6,1){y}{$y[n]$}
+   %-----------------
+   \psset{arrows=->}
+   \ncline{x}{a}  \ncline{a}{b}  \ncline{b}{y}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\subsection{\CMDn{psfblock}}
+
+\begin{syntax}
+\CMD{psfblock}\Keys\Coor\Node\Stuff
+\end{syntax}
+
+\noindent
+This macro is very similar to the \CMD{psblock} macro except that the size of the frame is controlled by the key \KWD{framesize}. The frame size is specified as
+
+\KWDn{framesize=\rmit{num1[dimen]} \rmit{num2[dimen]}}
+
+\noindent in which \rmit{num1} and \rmit{num2} are separated by a space, not by a comma. If \rmit{num2} is absent, then a square frame is created.
+
+\begin{LTXexample}[width=6.5cm]
+\begin{pspicture}[showgrid](6,2)
+  \pssignal(0,1){x}{$x[n]$}
+  \psfblock[framesize=.75 .5](2,1){a}{$H_1$}
+  \psfblock[framesize=1.5 1](4,1){b}{$H_2$}
+  \pssignal(6,1){y}{$y[n]$}
+  %-----------------
+  \psset{arrows=->}
+  \ncline{x}{a}  \ncline{a}{b}
+  \ncline{b}{y}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\subsection{\CMDn{psadaptive}}
+
+\begin{syntax}
+\CMD{psadaptive}\Keys\Arrows\NodeA\Coor\NodeB
+\end{syntax}
+
+\noindent
+This macro is useful in drawing adaptive systems. It creates \NodeB* at coordinate \Coor* with respect to the center of \NodeA*. Then, it connects \NodeB* to \NodeA* and continues to \NodeC* on the same line (Figure~\ref{fig:psadaptive}). The proportion of the distances of \NodeB* and \NodeC* from \NodeA* is determined by the key \KWD{afac}. A horizontal offset to the location of \NodeB* is achieved through the \KWD{aoffset} key (Table~\ref{tab:psadaptive}).
+
+%%=======================================================================
+\begin{figure}[ht!]
+\centering
+\begin{pspicture}[showgrid=false](-4,-1.5)(1.5,1.5)
+%
+\psfblock[framesize=2 1](0,0){A}{{\large\color{gray}\NodeA*}}
+\dotnode[linecolor=red!50](0,0){CenterA}
+\pssignal(-2.75,0){LabelA}{{\footnotesize\color{red!50}center of \NodeA*}}
+\ncline[linecolor=red!50]{->}{LabelA}{CenterA}
+%
+\pnode(1.5;50){B}
+\pnode(-1.5;50){C}
+\nclist{ncline}{B,A,C}
+\nput{90}{B}{{\footnotesize\color{gray}\NodeB*}}
+\nput{-90}{C}{{\footnotesize\color{gray}\rmit{node C}}}
+%
+\end{pspicture}
+\caption{\CMD{psadaptive} macro}
+\label{fig:psadaptive}
+\end{figure}
+%%=======================================================================
+\begin{table}[ht!]
+\centering
+\caption{\CMD{psadaptive} keys}
+\label{tab:psadaptive}
+\begin{keytable}{1.25in}
+aoffset  &  num  &  $0$  &  Horizontal offset \\
+afac     &  num  &  $1$  &  Length factor     \\
+\end{keytable}
+\end{table}
+%%=======================================================================
+
+
+\begin{LTXexample}[width=7.5cm]
+\begin{pspicture}[showgrid](-3,-1)(3,1)
+  \psblock(-1.5,0){H}{$H(z)$}
+  \psadaptive{->}{H}(-.5,-.75){Ha}
+  %-----------------
+  \psblock(1.5,0){H}{$H(z)$}
+  \psadaptive{-*}{H}(1;-45){Ha}
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[width=7.5cm]
+\begin{pspicture}[showgrid](-3,-1)(3,1)
+  \psblock(-1.5,0){H}{$H(z)$}
+  \psadaptive[aoffset=-.5]{->}{H}
+      (.5,-.75){Ha}
+  %-----------------
+  \psblock(1.5,0){H}{$H(z)$}
+  \psadaptive[aoffset=.5]{->}{H}
+      (.5,.75){Ha}
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[width=7.5cm]
+\begin{pspicture}[showgrid](-3,-1)(3,2)
+  \psblock(0,0){H}{$H(z)$}
+  \psadaptive[afac=2]{->}{H}
+       (1;-120){Ha}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\CMDn{psknob}}
+
+\begin{syntax}
+\CMD{psknob}\Keys\Coor\Node
+\end{syntax}
+
+\noindent
+This macro is useful in drawing adjustable weights in adaptive systems. It creates a circle node centered at \Coor* and labeled \Node*. The radius of this circle is determined by the \KWD{radius} key. Then, it draws a straight arrow centered at \Coor* (Figure~\ref{fig:psknob}). The length and the angle of this line are controlled by the \KWD{knoblength} and the \KWD{knobangle} keys. The line width of both the circle and the line are controlled by the \KWD{knobwidth} key. The key \KWD{scale} can be used to control the length of the line and the line width of both the circle and the line. The keys specific to \CMD{psknob} are summarized in Table~\ref{tab:psknob}.
+
+%%=======================================================================
+\begin{figure}[ht!]
+\centering
+\begin{pspicture}[showgrid=false](-1.5,-2)(2.25,1.5)
+%
+\pnode(0,0){org}
+\pssignal(0,-1.75){coor}{\textcolor{red}{\Coor}}
+\ncline[linecolor=red]{->}{coor}{org}
+%
+\psknob[radius=1.15,knoblength=4](0,0){knob}
+%
+\pstick[style=Dash,linecolor=gray](0,0){3}
+\psBraceUp*[linecolor=TealBlue]%
+(2;45)(-2;45){{\ttfamily\footnotesize\color{TealBlue}knoblength}}
+%
+\psarc[linecolor=orange](0,0){.65}{0}{45}
+\rput[l](.7;22.5){{\ttfamily\footnotesize\color{orange}knobangle}}
+%
+\end{pspicture}
+\caption{\CMD{psknob} macro}
+\label{fig:psknob}
+\end{figure}
+%%=======================================================================
+\begin{table}[ht!]
+\centering
+\caption{\CMD{psknob} keys}
+\label{tab:psknob}
+\begin{keytable}{.95in}
+knobwidth   &  num[dimen]  &  $0.7$pt   &  Line width     \\
+knoblength  &  num[dimen]  &  $1$       &  Line length    \\
+knobangle   &  num         &  $45$      &  Line angle     \\
+radius      &  num[dimen]  &  $0.25$cm  &  Circle radius  \\
+scale       &  num         &  $1$       &  Scale factor   \\
+\end{keytable}
+\end{table}
+%%=======================================================================
+
+
+\begin{LTXexample}[width=7.5cm]
+\begin{pspicture}[showgrid](6,4)
+  \psknob(1,1){w1}
+    \nput{180}{w1}{$w_1$}
+  \psknob[knoblength=2](3,1){w2}
+    \nput{0}{w2}{$w_2$}
+  \psknob[knobangle=90](5,1){w3}
+  \psknob[knobwidth=1.5pt](1,3){w4}
+  \psknob[scale=2.5](3,3){w5}
+  \psset{radius=.5,knoblength=2}
+  \psknob[arrows=-*](5,3){w6}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+
+
+\subsection{\CMDn{psusampler}}
+
+\begin{syntax}
+\CMD{psusampler}\Keys\Coor\Node\Stuff
+\end{syntax}
+
+\noindent
+This macro is similar to the \CMD{psfblock} except that \Stuff* is placed next to an up-arrow in the math mode representing an up-sampler. \emph{It is important to remember that \Stuff* must be in the text mode, not in the math mode, i.e., do not put \$ around \Stuff*.}
+
+\begin{LTXexample}[width=7cm]
+\begin{pspicture}[showgrid](6,2)
+  \pssignal(.5,1){x}{$x[n]$}
+  \psusampler[framesize=1 .75](3,1){a}{2}
+  \pssignal(5.5,1){y}{$y[n]$}
+  %-----------------
+  \psset{arrows=->}
+  \ncline{x}{a}
+  \ncline{a}{y}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+
+\subsection{\CMDn{psdsampler}}
+
+\begin{syntax}
+\CMD{psdsampler}\Keys\Coor\Node\Stuff
+\end{syntax}
+
+\noindent
+This macro is similar to the \CMD{psfblock} except that \Stuff* is placed next to a down-arrow in the math mode representing a  down-sampler. \emph{It is important to remember that \Stuff* must be in the text mode, not in the math mode, i.e., do not put \$ around \Stuff*.}
+
+\begin{LTXexample}[width=7cm]
+\begin{pspicture}[showgrid](6,2)
+  \pssignal(.5,1){x}{$x[n]$}
+  \psdsampler[framesize=1 .75](3,1){a}{3}
+  \pssignal(5.5,1){y}{$y[n]$}
+  %-----------------
+  \psset{arrows=->}
+  \ncline{x}{a}
+  \ncline{a}{y}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\subsection{\CMDn{nclist}}
+
+\begin{syntax}
+\CMD{nclist}\Keys\Arrows\{\rmit{nc-macro}\}\List \\
+\CMD{nclist}\Keys\Arrows\{\rmit{nc-macro}\}[\rmit{nc-label}]\List
+\end{syntax}
+
+\noindent
+This macro is very useful when sequentially connecting several nodes using a single node-connecting macro. In addition, it is capable of labeling the node connections. The \List* must be a comma-separated list of items. Possible uses of the \CMD{nclist} are summarized below.
+\begin{itemize}
+\item \CMD{nclist}\Keys\Arrows\{\rmit{nc-macro}\}\{$n_1, n_2, n_3, \dotsc$\} connects the node $n_{i-1}$ to the node $n_i$, for all $i = 2, 3, \dotsc$, using the macro \rmit{nc-macro}.
+
+\item \CMD{nclist}\Keys\Arrows\{\rmit{nc-macro}\}[\rmit{nc-label}]\{$n_1, n_2 \; l_2, n_3 \; l_3, \dotsc$\} connects the node $n_{i-1}$ to the node $n_i$, for all $i = 2, 3, \dotsc$, using the macro \rmit{nc-macro}. Moreover, it puts the label $l_i$ on the connection $n_{i-1}$--$n_i$, for all $i = 2, 3, \dotsc$, using the macro \rmit{nc-label}. It is important to remember the following:
+    \begin{enumerate}
+    \item In the list, the node $n_i$ and the label $l_i$ are separated by a space. If the label contains spaces, then it must be enclosed in double curly braces, i.e., $n_i \; \{\{l_i\}\}$.
+    \item The first element of the list must be a single node ($n_1$); it should not have any labels.
+    \end{enumerate}
+
+\item \CMD{nclist}\Keys\Arrows\{\rmit{nc-macro}\}[\rmit{nc-label}]\{$n_1, n_2 \; \KWDm{ncl}_2 \; l_2, n_3 \; \KWDm{ncl}_3 \; l_3, \dotsc$\} connects the node $n_{i-1}$ to the node $n_i$, for all $i = 2, 3, \dotsc$, using the macro \rmit{nc-macro}. Moreover, it puts the label $l_i$ on the connection $n_{i-1}$--$n_i$ using the macro $\KWDm{ncl}_i$ for all $i = 2, 3, \dotsc$. If for some $i$, $\KWDm{ncl}_i$ is empty, then the macro \rmit{nc-label} is used. In other words, the \rmit{nc-label} is the default macro for labeling connections when such macro is not explicitly present in the list. It is important to remember the following:
+    \begin{enumerate}
+    \item In the list, the node $n_i$, the connection-labeling macro $\KWDm{ncl}_i$, and the label $l_i$ are separated by spaces. If the label contains spaces, then it must be enclosed in double curly braces, i.e., $n_i \; \KWDm{ncl}_i \; \{\{l_i\}\}$.
+    \item The first element of the list must be a single node ($n_1$); it should not have any labels.
+    \end{enumerate}
+\end{itemize}
+
+
+\begin{LTXexample}[width=7.5cm]
+\begin{pspicture}[showgrid](6,2)
+  \psblock(1,1){a}{A}
+  \psblock(2.5,1){b}{B}
+  \psblock(4,1){c}{C}
+  \psblock(5.5,1){d}{D}
+  \nclist{->}{ncline}{a,b,c,d}
+\end{pspicture}
+\end{LTXexample}
+
+
+\begin{LTXexample}[width=7.5cm]
+\begin{pspicture}[showgrid](6,2)
+  \dotnode(0,1){a}
+  \dotnode(1.5,1){b}
+  \dotnode(3,1){c}
+  \dotnode(4.5,1){d}
+  \dotnode(6,1){e}
+  \psset{arcangle=50,linecolor=blue}
+  \nclist{ncarc}{a,b,c,d,e}
+\end{pspicture}
+\end{LTXexample}
+
+
+\begin{LTXexample}[width=7.5cm]
+\begin{pspicture}[showgrid](6,2)
+   \dotnode(.5,1){a}
+   \dotnode(2,1){b}
+   \dotnode(3.5,1){c}
+   \dotnode(5,1){d}
+   \nclist{ncline}[naput]%
+      {a,b $1$,c,d {{$3$ $4$}}}
+\end{pspicture}
+\end{LTXexample}
+
+
+\begin{LTXexample}[width=7.5cm]
+\begin{pspicture}[showgrid](6,2)
+   \dotnode(.5,1){a}
+   \dotnode(2,1){b}
+   \dotnode(3.5,1){c}
+   \dotnode(5,1){d}
+   \nclist{ncline}[naput]%
+      {a,b $1$,c nbput $2$,d ncput $3$}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+
+\subsection{\CMDn{ncstar}}
+
+\begin{syntax}
+\CMD{ncstar}\Keys\Arrows\{\rmit{nc-macro}\}\List\{\rmit{Node}\} \\
+\CMD{ncstar}\Keys\Arrows\{\rmit{nc-macro}\}[\rmit{nc-label}]\List\{\rmit{Node}\}
+\end{syntax}
+
+\noindent
+This macro is used to connect several nodes to a single node. It is also capable of labeling the node connections. The \List* must be a comma-separated list of items. Possible uses of the \CMD{ncstar} are summarized below.
+\begin{itemize}
+\item \CMD{ncstar}\Keys\Arrows\{\rmit{nc-macro}\}\{$n_1, n_2, \dotsc$\}\{$N$\} connects the node $n_i$ to the node $N$, for all $i = 1, 2, \dotsc$, using the macro \rmit{nc-macro}.
+
+\item \CMD{ncstar}\Keys\Arrows\{\rmit{nc-macro}\}[\rmit{nc-label}]\{$n_1 \; l_1, n_2 \; l_2, \dotsc$\}\{$N$\} connects the node $n_i$ to node $N$, for all $i = 1, 2, \dotsc$, using the macro \rmit{nc-macro}. Moreover, it puts the label $l_i$ on the connection $n_i$--$N$, for all $i = 1, 2, \dotsc$, using the macro \rmit{nc-label}. It is important to remember that the node $n_i$ and the label $l_i$ are separated by a space in the list. If the label contains spaces, then it must be enclosed in double curly braces, i.e., $n_i \; \{\{l_i\}\}$.
+
+\item \CMD{ncstar}\Keys\Arrows\{\rmit{nc-macro}\}[\rmit{nc-label}]\{$n_1 \; \KWDm{ncl}_1 \; l_1, n_2 \; \KWDm{ncl}_2 \; l_2, \dotsc$\}\{$N$\} connects node $n_i$ to node $N$, for all $i = 1, 2, \dotsc$, using the macro \rmit{nc-macro}. Moreover, it puts the label $l_i$ on the connection $n_i$--$N$ using the macro $\KWDm{ncl}_i$ for all $i = 1, 2, \dotsc$. If for some $i$, $\KWDm{ncl}_i$ is empty, then the macro \rmit{nc-label} is used. In other words, the \rmit{nc-label} is the default macro for labeling connections when such macro is not explicitly present in the list. It is important to remember that the node $n_i$ and the label $l_i$ are separated by a space in the list. If the label contains spaces, then it must be enclosed in double curly braces, i.e., $n_i \; \KWDm{ncl}_i \; \{\{l_i\}\}$.
+\end{itemize}
+
+\begin{LTXexample}[width=6.5cm]
+\begin{pspicture}[showgrid](0,-2)(3,2)
+   \pssignal(1,1){x1}{$x_1$}
+   \pssignal(1,0){x2}{$x_2$}
+   \pssignal(1,-1){x3}{$x_3$}
+   \pscircleop(2.5,0){oplus}
+   \ncstar{->}{ncline}{x1,x2,x3}{oplus}
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[width=6.5cm]
+\begin{pspicture}[showgrid](-2,-1)(2,2)
+   \pssignal(-1.5,0){a}{$a$}
+   \pssignal(0,1.5){b}{$b$}
+   \pssignal(1.5,0){c}{$c$}
+   \pssignal(0,0){d}{$d$}
+   \ncstar{ncline}[naput]%
+      {a $1$,b {{$2$ $3$}},c}{d}
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[width=6.5cm]
+\begin{pspicture}[showgrid](0,-2)(5,2)
+   \psblock(1,1){a}{$a$}
+   \psblock(1,0){b}{$b$}
+   \psblock(1,-1){c}{$c$}
+   \pscircleop(3,0){oplus}
+   \pssignal(4.5,0){y}{$y$}
+   \psset{labelsep=.1,npos=.25}
+   \ncstar{->}{ncline}[naput]%
+      {a $x_1$,b $x_2$,c nbput $x_3$}{oplus}
+   \ncline{->}{oplus}{y}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\section{Extras}
+\label{sec:extras}
+
+In addition to the macros introduced in Section~\ref{sec:macros}, the \PSTSigSys package defines some extra styles, brace macros, and new keys that are introduced in this section. Their usages are shown in Section~\ref{sec:examples} with some examples.
+
+
+
+\subsection{New Styles}
+
+The \PSTSigSys package defines a few useful PSTricks styles for drawling arrows and dashed lines as shown in Figure~\ref{fig:styles}. Some of these styles, which are shown in Figure~\ref{subfig:pstricks-add styles}, can be used only with the \PKG{pstricks-add} package.
+
+%%=======================================================================
+\begin{figure}[ht!]
+\centering
+%%----------------------------------
+\subfloat[\PKGn{pstricks} styles\label{subfig:pstricks styles}]{%
+\begin{pspicture}[showgrid=false](0,-.5)(5,5)
+%
+\rput[l](0,4.5){Default arrow}
+\rput[l](2.75,4.5){\psline{->}(2,0)}
+%
+\rput[l](0,3.75){Arrow}
+\rput[l](2.75,3.75){\psline[style=Arrow](2,0)}
+%
+\rput[l](0,3){Default dash}
+\rput[l](2.75,3){\psline[linestyle=dashed](2,0)}
+%
+\rput[l](0,2.25){Dash}
+\rput[l](2.75,2.25){\psline[style=Dash](2,0)}
+%
+\rput[l](0,1.5){Default line}
+\rput[l](2.75,1.5){\psline(2,0)}
+%
+\rput[l](0,.75){Graph}
+\rput[l](2.75,.75){\psline[style=Graph](2,0)}
+%
+\rput[l](0,0){Stem}
+\rput[l](2.75,0){\psline[style=Stem]{-*}(2,0)}
+%
+\end{pspicture}}
+%%----------------------------------
+\hspace{1cm}
+%%----------------------------------
+\subfloat[\PKGn{pstricks-add} styles\label{subfig:pstricks-add styles}]{%
+\begin{pspicture}[showgrid=false](0,-.5)(5,5)
+%
+\rput[l](0,.75){ArrowIn}
+\rput[l](2.5,.75){\psline[style=ArrowIn](2,0)}
+%
+\rput[l](0,0){DashDot}
+\rput[l](2.5,0){\psline[style=DashDot](2,0)}
+%
+\end{pspicture}}
+%%----------------------------------
+\caption{New styles}
+\label{fig:styles}
+\end{figure}
+%%=======================================================================
+
+\begin{LTXexample}[width=7.5cm]
+\begin{pspicture}[showgrid](-1,-1)(5,2)
+  \psset{style=Stem,linecolor=blue}
+  \psstem[stemtag]{2,1.5,1,.5,0}
+\end{pspicture}
+\end{LTXexample}
+
+
+In addition, the \PSTSigSys package defines the style \KWD{RoundCorners} that makes the following settings:
+\begin{verbatim}
+   framesep=0.125
+   framearc=0.25
+   linearc=0.1
+\end{verbatim}
+The author believes that when drawing block diagrams, it is more elegant to have round corners.
+
+
+\begin{LTXexample}[width=7.25cm]
+\begin{pspicture}[showgrid](-3,-2)(4,1)
+  \psset{style=RoundCorners,style=Arrow}
+  \pssignal(-2.5,0){x}{$x[n]$}
+  \dotnode(-1.25,0){dot}
+  \psblock(0,0){H}{$H(z)$}
+  \pscircleop(1.5,0){oplus}
+  \pssignal(3,0){y}{$y[n]$}
+  \nclist{ncline}{x,H,oplus,y}
+  \ncbar[angle=-90,arm=.75]{dot}{oplus}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+
+\subsection{Brace Macros}
+
+The \PSTSigSys package defines four new macros \CMD{psBraceUp}, \CMD{psBraceDown}, \CMD{psBraceRight}, and \CMD{psBraceLeft} that are derived from the \CMDn{psbrace} macro (using the \CMDn{newpsobject} macro) defined by the \PKG{pstricks-add} package. They all have the same syntax that is the same as that of the \CMDn{psbrace} macro. The usage of these macros is shown by the following examples:
+
+\begin{LTXexample}[width=7cm]
+\begin{pspicture}[showgrid](5,3)
+   \psframe(1,1)(4,2)
+   \psset{linecolor=blue}
+   \psBraceUp[nodesepB=-.5](4,2)(1,2){Up}
+   \psBraceDown(1,1)(4,1){Down}
+   \psBraceRight(4,1)(4,2){Right}
+   \psBraceLeft(1,2)(1,1){Left}
+\end{pspicture}
+\end{LTXexample}
+
+\begin{LTXexample}[width=7cm]
+\begin{pspicture}[showgrid](4,3)
+   \psset{linecolor=red}
+   \dotnode(1,1){a}
+   \dotnode(3,2){b}
+   %---------------------
+   \psset{linecolor=blue}
+   \psBraceUp*(b)(a){up}
+   \psBraceDown*(a)(b){down}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\subsection{Golden Ratio}
+
+The \PSTSigSys package defines four keys \KWD{gratioWh}, \KWD{gratioWv}, \KWD{gratioHh}, and \KWD{gratioHv} for determining the frame size by the golden ratio $\varphi$ defined as
+\[
+\varphi = \frac{1 + \sqrt{5}}{2} \approx 1.61803398875\enspace.
+\]
+The ancient Greeks thought a rectangle is the most pleasing to the eye if its edges $a$ and $b$ were in the proportion $a \colon b = \varphi$ \cite{Rotman:00}. In the \KWDn{gratio} keys, the capital letters \KWDn{W} and \KWDn{H} stand for the width and the height of the frame, respectively. The ending letters \KWDn{h} and \KWDn{v} imply whether the frame is horizontal or vertical, respectively. In a horizontal frame, the longest edge is horizontal while in a vertical one, the longest edge is vertical.
+
+The four aforementioned keys set one of the edges of a frame as specified by the user and determine the other one by the golden ratio $\varphi$ as follows:
+\begin{itemize}
+\item The key assignment $\KWDm{gratioWh} = a$ sets the width of the frame to $a$ and the height to $a / \varphi$ as in Figure~\ref{subfig:gratioWh}.
+\item The key assignment $\KWDm{gratioWv} = a$ sets the width of the frame to $a$ and the height to $a \varphi$ as in Figure~\ref{subfig:gratioWv}.
+\item The key assignment $\KWDm{gratioHh} = a$ sets the height of the frame to $a$ and the width to $a \varphi$ as in Figure~\ref{subfig:gratioHh}.
+\item The key assignment $\KWDm{gratioHv} = a$ sets the height of the frame to $a$ and the width to $a / \varphi$ as in Figure~\ref{subfig:gratioHv}.
+\end{itemize}
+
+%%=======================================================================
+\begin{figure}[ht!]
+\centering
+%%----------------------------------
+\subfloat[$\KWDm{gratioWh} = a$ \label{subfig:gratioWh}]{
+\begin{pspicture}[showgrid=false](-1.5,-1.5)(1.5,1.5)
+%
+\fnode[gratioWh=2](0,0){a}
+%
+\rput(0,-.918){%
+\psline[linecolor=TealBlue]{|-|}(-1,0)(1,0)%
+\rput*(0,0){\textcolor{TealBlue}{$\scriptstyle a$}}%
+}
+%
+\rput(-1.3,0){%
+\psline[linecolor=TealBlue]{|-|}(0,-.618)(0,.618)%
+\rput*{90}(0,0){\textcolor{TealBlue}{$\scriptstyle a / \varphi$}}%
+}
+%
+\end{pspicture}}
+%%----------------------------------
+\hspace{.5cm}
+%%----------------------------------
+\subfloat[$\KWDm{gratioWv} = a$ \label{subfig:gratioWv}]{
+\begin{pspicture}[showgrid=false](-1.5,-1.5)(1.5,1.5)
+%
+\fnode[gratioWv=1.23607](0,0){a}
+%
+\rput(0,-1.3){%
+\psline[linecolor=TealBlue]{|-|}(-.618,0)(.618,0)%
+\rput*(0,0){\textcolor{TealBlue}{$\scriptstyle a$}}%
+}
+%
+\rput(-.918,0){%
+\psline[linecolor=TealBlue]{|-|}(0,-1)(0,1)%
+\rput*{90}(0,0){\textcolor{TealBlue}{$\scriptstyle a \varphi$}}%
+}
+%
+\end{pspicture}}
+%%----------------------------------
+\hspace{.5cm}
+%%----------------------------------
+\subfloat[$\KWDm{gratioHh} = a$ \label{subfig:gratioHh}]{
+\begin{pspicture}[showgrid=false](-1.5,-1.5)(1.5,1.5)
+%
+\fnode[gratioHh=1.23607](0,0){a}
+%
+\rput(0,-.918){%
+\psline[linecolor=TealBlue]{|-|}(-1,0)(1,0)%
+\rput*(0,0){\textcolor{TealBlue}{$\scriptstyle a \varphi$}}%
+}
+%
+\rput(-1.3,0){%
+\psline[linecolor=TealBlue]{|-|}(0,-.618)(0,.618)%
+\rput*{90}(0,0){\textcolor{TealBlue}{$\scriptstyle a$}}%
+}
+%
+\end{pspicture}}
+%%----------------------------------
+\hspace{.5cm}
+%%----------------------------------
+\subfloat[$\KWDm{gratioHv} = a$ \label{subfig:gratioHv}]{
+\begin{pspicture}[showgrid=false](-1.5,-1.5)(1.5,1.5)
+%
+\fnode[gratioHv=2](0,0){a}
+%
+\rput(0,-1.3){%
+\psline[linecolor=TealBlue]{|-|}(-.618,0)(.618,0)%
+\rput*(0,0){\textcolor{TealBlue}{$\scriptstyle a / \varphi$}}%
+}
+%
+\rput(-.918,0){%
+\psline[linecolor=TealBlue]{|-|}(0,-1)(0,1)%
+\rput*{90}(0,0){\textcolor{TealBlue}{$\scriptstyle a$}}%
+}
+%
+\end{pspicture}}
+%%----------------------------------
+\caption{Setting the size of a frame by the golden ratio $\varphi$}
+\label{fig:golden ratio}
+\end{figure}
+%%=======================================================================
+
+
+
+\begin{LTXexample}[width=7.5cm]
+\begin{pspicture}[showgrid](6,2)
+  \psfblock[gratioWh=1](.5,1){a}{a}
+  \psfblock[gratioWv=1](2,1){b}{b}
+  \psfblock[gratioHh=1](3.5,1){c}{c}
+  \psfblock[gratioHv=1](5,1){d}{d}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\subsection{Frame Width and Height}
+
+When drawing block diagrams, it is sometimes useful to change only the width or the height of a frame. This goal is achieved through the keys \KWD{framewidth} and \KWD{frameheight}.
+
+\begin{LTXexample}[width=7.5cm]
+\begin{pspicture}[showgrid](6,2)
+  \psset{framesize=1 .5}
+  \psfblock[framewidth=.5](1,1){a}{a}
+  \psfblock[frameheight=1](3,1){b}{b}
+  \psdsampler(5,1){c}{2}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\subsection{Fill Color}
+
+To emphasize the functions of some blocks in a diagram, it is useful to color them. For this purpose, both the \KWD{fillstyle} and the \KWD{fillcolor} keys must be set. This could be cumbersome when many blocks are to be colored. Since almost always the fill style is solid, it makes sense to define a single key that automatically sets the fill style to solid. The key \KWD{FillColor} plays this role.
+
+
+\begin{LTXexample}[width=7.5cm]
+\begin{pspicture}[showgrid](6,1)
+  \psset{fillstyle=crosshatch*}
+  \psframe[fillcolor=red](1,0)(2,1)
+  \psframe[FillColor=blue](3,0)(4,1)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+%%=======================================================================
+%% Examples
+%%=======================================================================
+
+
+\section{Examples}
+\label{sec:examples}
+
+
+In this section, we provide some examples to illustrate the benefits and usages of the macros, styles, and keys defined in Sections~\ref{sec:macros} and \ref{sec:extras}. Some of these examples require the use of additional packages. In that case, additional packages are mentioned next to the example number.
+
+
+\newpage
+
+
+\subsection{Complex Number}
+
+\Example{use \PKG{pstricks-add}} Show the complex number $c = a + j b = \rho e^{j\theta}$ as a point in the complex plane.
+
+
+\begin{LTXexample}[width=5.5cm]
+\begin{pspicture}[showgrid](-1,-1)(3,3)
+  %--- Drawing axes ---
+  \psaxeslabels[xlpos=t](0,0)(0,0)(3,3)
+       {$\Re$}{$\Im$}
+
+  %--- Defining some useful nodes ---
+  \dotnode[linecolor=purple](2,2){c}
+  \pnode(0,0){org}
+  \pnode(2,0){a}
+  \pnode(0,2){b}
+
+  %--- Connecting nodes ---
+  \ncline{org}{c}
+  \ncstar[style=Dash,linecolor=gray]
+      {ncline}{a,b}{c}
+
+  %--- Labeling ---
+  \color{blue}
+  \psset{linecolor=blue,nrot=:U}
+  \psBraceDown*(org)(a){$a$}
+  \psBraceLeft*(b)(org){$b$}
+  \ncline[offset=.25]{|*-|*}{org}{c}
+  \ncput*{$\rho$}
+  \psarc[linecolor=gray](org){.75}{0}{45}
+  \rput(1;22.5){$\theta$}
+\end{pspicture}
+\end{LTXexample}
+
+
+\lstset{pos=t}
+
+\newpage
+
+\subsection{Plotting}
+
+\Example{use \PKG{pst-plot}} Draw the sampled sequence $x[n] = x_c(\pi n/4)$, where
+\[
+x_c(t) =
+\begin{cases}
+\sin(t)\enspace,  &  t \geq 0 \\
+0\enspace,  &  t < 0\enspace.
+\end{cases}
+\]
+
+\bigskip
+
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-3,-2)(9,2)
+  %--- Drawing axes ---
+  \psaxeslabels(0,0)(-3,-2)(9,2){$n$}{$x[n]$}
+
+  %--- x_c(t) ---
+  \psplot[style=Graph,style=Dash,linecolor=gray]{0}{8}{x 45 mul sin}
+
+  %--- x[n] ---
+  \psset{style=Stem,linecolor=teal,
+         stemtagformat={\color{blue}\scriptstyle}}
+  \psstem(0,-1){0,0,0}
+  \psstem[stemtag](1,1){.707107,1,.707107,0,-.707107,-1,-.707107,0}
+
+  %--- Labeling the origin ---
+  \uput[-45](0,0){$\color{blue}\scriptstyle 0$}
+
+  %--- Horizontal ticks ----
+  \psset{linecolor=gray}
+  \psTick(0,1)
+  \psTick(0,-1)
+  \uput[180](0,1){$\scriptstyle 1$}
+  \uput[180](0,-1){$\scriptstyle -1$}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\newpage
+
+\subsection{Sampling}
+
+\Example{use \PKG{pst-plot} and \PKG{multido}} Consider the process of sampling a continuous-time signal $x_c(t)$ with period $T$: (1) multiply $x_c(t)$ by the impulse train $s(t) = \sum_{n=-\infty}^\infty \delta(t - nT)$ to get $x_s(t) = x_c(t) s(t)$, and (2) convert every delta in $x_s(t)$ into a sample to get the sequence $x[n]$. Demonstrate this process for the continuous-time signal $x_c(t) = 0.5\sin(\pi t/2) + 0.5$ and $T = 1$.
+
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-7,-5)(7,1)
+  \psset{plotpoints=500,stemtag}
+  %--- x_c(t) ---
+  \psaxeslabels(0,0)(-7,0)(7,0){$t$}{}
+  \rput[tl](-7,1){$x_c(t)$}
+  \psplot[style=Graph,linecolor=blue]{-6}{6}{x 90 mul sin .5 mul .5 add}
+  \multirput(-6,0)(1,0){13}{\psTick[linecolor=gray]{90}(0,0)}
+  \multido{\nn=-6+1}{13}{\rput[t](\nn,-.25){$\scriptstyle\nn$}}
+
+  %--- s(t) ----
+  \rput(0,-1.5){\psaxeslabels(0,0)(-7,0)(7,0){$t$}{}
+     \rput[tl](-7,1){$s(t)$}
+     \psstem[style=Stem,stemhead=>,linecolor=blue](-6,1)
+            {1,1,1,1,1,1,1,1,1,1,1,1,1}}
+
+  %--- x_s(t) ---
+  \rput(0,-3){\psaxeslabels(0,0)(-7,0)(7,0){$t$}{}
+     \rput[tl](-7,1){$x_s(t)$}
+     \psplot[style=Graph,style=Dash,linecolor=gray]{-6}{6}
+            {x 90 mul sin .5 mul .5 add}
+     \psset{style=Stem,stemhead=>,linecolor=blue}
+     \psstem[killzero](-6,1){.5,0,.5,1,.5,0,.5,1,.5,0,.5,1,.5}}
+
+  %--- x[n] ----
+  \rput(0,-4.5){\psaxeslabels(0,0)(-7,0)(7,0){$n$}{}
+     \rput[tl](-7,1){$x[n]$}
+     \psstem[style=Stem,linecolor=blue](-6,1)
+            {.5,0,.5,1,.5,0,.5,1,.5,0,.5,1,.5}}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\newpage
+
+\subsection{Pole-Zero Diagram}
+
+\Example{} Draw the pole-zero diagram of a system with the following system function:
+\[
+H(z) = \frac{z^4 - 2z^3 + 2z^2}{z^2 - 4}\enspace.
+\]
+
+
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-3,-2)(3,2)
+  \psaxeslabels(0,0)(-3,-2)(3,2){$\Re$}{$\Im$}
+  \psset{linecolor=red}
+
+  %--- Placing zeros ---
+  \pszero[order=2](0,0){z1}
+  \pszero(1,1){z2}   \nput{90}{z2}{$1 + j$}
+  \pszero(1,-1){z3}  \nput{-90}{z3}{$1 - j$}
+
+  %--- Placing poles ---
+  \pspole(2,0){p1}   \nput{-90}{p1}{$2$}
+  \pspole(-2,0){p2}  \nput{-90}{p2}{$-2$}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\newpage
+
+\subsection{Butterworth Filter}
+
+\Example{use \PKG{multido}} Draw the pole-zero diagram of a fifth-order Butterworth filter.
+
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-3,-3)(3,3)
+  %--- Drawing axes ---
+  \psaxeslabels(0,0)(-3,-3)(3,3){$\Re$}{$\Im$}
+  \pscircle[linecolor=gray](0,0){2}
+
+  %--- Angle between poles ---
+  \psset{linecolor=gray}
+  \psline[style=Dash](3;108)
+  \psline[style=Dash](3;144)
+  \psarc[style=Arrow]{<->}(0,0){2.5}{108}{144}
+  \rput(2.75;126){\textcolor{gray}{$36^\circ$}}
+
+  %--- Placing poles ---
+  \psset{linecolor=red,scale=1.25}
+  \multido{\np=108+36}{5}{\pspole(2;\np){p}}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\newpage
+
+
+\subsection{Region of Convergence}
+
+\Example{} Shade the region of convergence (ROC) of a system with the following system function assuming it is: (1) causal, and (2) stable.
+\[
+H(z) = \frac{1}{z^2 + z - \tfrac{3}{4}}
+\]
+Since the poles of the system are at $z = \tfrac{1}{2}$ and $z = -\tfrac{3}{2}$, the ROC of the system with the given assumptions is as follows:
+
+\bigskip
+
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-4,-3)(4,3)
+  %--- Shading ROCs ---
+  \psring[fillcolor=teal!30](0,0){.75}{2.25}
+  \psdiskc[fillcolor=blue!30](0,0)(3,2.5){2.25}
+
+  %--- Drawing axes ---
+  \psaxeslabels(0,0)(-4,-3)(4,3){$\Re$}{$\Im$}
+
+  %--- Placing poles ---
+  \psset{linecolor=purple,labelsep=.05}
+  \pscircle(0,0){1.5}
+  \rput[b]{45}(1.68;135){{\scriptsize\color{purple}unit circle}}
+  \pscircle[style=Dash,linecolor=gray](0,0){.75}
+  \pspole(.75,0){p1}    \nput{-45}{p1}{$\tfrac{1}{2}$}
+  \pscircle[style=Dash,linecolor=gray](0,0){2.25}
+  \pspole(-2.25,0){p2}  \nput{225}{p2}{$\scriptstyle-\tfrac{3}{2}$}
+
+  %--- Labeling the stable and causal ROCs ---
+  \rput*(1.5;45){\scriptsize Stable}
+  \rput*(3;45){\scriptsize Causal}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\newpage
+
+\subsection{Block Diagrams}
+
+\Example{} Draw the block diagrams of two systems $H_1(z)$ and $H_2(z)$ in both parallel and series combinations.
+
+\bigskip
+
+\begin{LTXexample}
+%=== Parallel Combination ===
+\begin{pspicture}[showgrid](-3,-1)(3,1)
+  \psset{style=RoundCorners,gratioWh=1.25}
+
+  %--- Defining blocks ---
+  \pssignal(-3,0){x}{$x[n]$}
+  \dotnode(-1.5,0){dot}
+  \psfblock[FillColor=red!20](0,.75){H1}{$H_1(z)$}
+  \psfblock[FillColor=blue!20](0,-.75){H2}{$H_2(z)$}
+  \pscircleop(1.5,0){oplus}
+  \pssignal(3,0){y}{$y[n]$}
+
+  %--- Connecting blocks ---
+  \psset{style=Arrow}
+  \ncline{-}{x}{dot}
+  \ncangle[angleA=90,angleB=180]{dot}{H1}
+  \ncangle[angleA=-90,angleB=180]{dot}{H2}
+  \ncangle[angleB=90]{H1}{oplus}
+  \ncangle[angleB=-90]{H2}{oplus}
+  \ncline{oplus}{y}
+\end{pspicture}
+%
+\hspace{1cm}
+%
+%=== Series Combination ===
+\begin{pspicture}[showgrid](-4,-1)(4,1)
+  \psset{style=RoundCorners,gratioWh=1.25}
+
+  %--- Defining blocks ---
+  \pssignal(-3.5,0){x}{$x[n]$}
+  \psfblock[FillColor=red!20](-1.25,0){H1}{$H_1(z)$}
+  \psfblock[FillColor=blue!20](1.25,0){H2}{$H_2(z)$}
+  \pssignal(3.5,0){y}{$y[n]$}
+
+  %--- Connecting blocks ---
+  \nclist[style=Arrow]{ncline}[naput]{x,H1,H2 $v[n]$,y}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\newpage
+
+\subsection{C/D Converter}
+
+\Example{} Draw the block diagram of a continuous-to-discrete-time (C/D) converter.
+
+\bigskip
+
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-2,-2)(7,2)
+  \psset{style=RoundCorners}
+
+  %--- Defining blocks ---
+  \pssignal(-1.75,0){xc}{$x_c(t)$}
+  \pscircleop[operation=times](0,0){otimes}
+  \pssignal(0,1.25){s}{$s(t)$}
+  \psblock[FillColor=blue!20](3.25,0){conv}{\parbox[c]{3\psunit}%
+  {\centering Conversion from impulse train to discrete-time sequence}}
+  \pssignal(6.5,0){x}{$x[n]$}
+
+  %--- Connecting blocks ---
+  \psset{style=Arrow}
+  \nclist{ncline}[naput]{xc,otimes,conv $x_s(t)$,x}
+  \ncline{s}{otimes}
+
+  %--- Drawing the dashed frame ---
+  \fnode[style=Dash,linecolor=purple,framesize=6 3.25](2.25,0){box}
+  \nput{90}{box}{\textcolor{purple}{C/D Converter}}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\newpage
+
+\subsection{Direct Form II}
+
+\Example{use \PKG{multido}} Draw the direct-form II block diagram of a discrete-time LTI system with the following system function:
+\[
+H(z) = \frac{1 - z^{-1} + 2z^{-2} + 3z^{-3}}{1 + z^{-1} - 0.5 z^{-2} + 0.75 z^{-3}}\enspace.
+\]
+
+
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-5,-6)(5,1)
+  \psset{style=RoundCorners,style=Arrow}
+
+  %--- Defining blocks ---
+  \dotnode(0,0){dot1}
+  \multido{\nA=1+1,\nB=2+1,\ryA=-.9+-1.8,\ryB=-1.8+-1.8}{3}{%
+    \psblock(0,\ryA){D\nA}{$z^{-1}$}   \dotnode(0,\ryB){dot\nB}}
+  \multido{\nn=1+1,\ry=0+-1.8}{3}{\pscircleop(-2,\ry){oplusL\nn}}
+  \multido{\nn=1+1,\ry=0+-1.8}{3}{\pscircleop(2,\ry){oplusR\nn}}
+  \pssignal(-4,0){x}{$x[n]$}
+  \pssignal(4,0){y}{$y[n]$}
+
+  %--- Connecting blocks ---
+  \psset{style=Arrow}
+  \nclist{ncline}{x,oplusL1,oplusR1,y}
+  \nclist{ncline}{dot1,D1,D2,D3}
+  \ncline{-}{D3}{dot4}
+  \nclist{ncline}{oplusL3,oplusL2,oplusL1}
+  \nclist{ncline}{oplusR3,oplusR2,oplusR1}
+  \ncstar{<-}{ncline}[naput]{oplusL2 $-1$,oplusR2 nbput $-1$}{dot2}
+  \ncstar{<-}{ncline}[naput]{oplusL3 $0.5$,oplusR3 nbput $2$}{dot3}
+  \ncangle[angleA=180,angleB=-90]{dot4}{oplusL3}
+  \nbput[npos=.5]{$-0.75$}
+  \ncangle[angleB=-90]{dot4}{oplusR3}
+  \naput[npos=.5]{$3$}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\newpage
+
+\subsection{Filter Bank}
+
+\Example{} Draw the block diagram of an $M$-channel maximally-decimated filter bank.
+
+
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-7,-3.5)(7,.5)
+  \psset{style=RoundCorners,style=Arrow,gratioWh=1.35}
+  \pssignal(-7,0){x}{$x[n]$}      \pssignal(7,0){y}{$y[n]$}
+  \dotnode(-5.5,0){dot1}          \dotnode(-5.5,-1.25){dot2}
+  \newcount\cnt
+
+  %--- First and second channels ---
+  \cnt=0
+  \psforeach{\ry}{0,-1.25}{\advance\cnt by 1\relax
+     \psfblock(-4,\ry){h\the\cnt}{$h_{\the\cnt}[n]$}
+     \psdsampler(-1.5,\ry){ds\the\cnt}{M}
+     \psusampler(1.5,\ry){us\the\cnt}{M}
+     \psfblock(4,\ry){g\the\cnt}{$g_{\the\cnt}[n]$}
+     \pscircleop(5.5,\ry){oplus\the\cnt}}
+
+  %--- Placing dots ---
+  \cnt=0
+  \psforeach{\rx}{-5.5,-4,-1.5,1.5,4,5.5}{\advance\cnt by 1\relax
+     \ldotsnode[angle=90](\rx,-2.125){dots\the\cnt}}
+
+  %--- M-th channel ---
+  \psfblock(-4,-3){hM}{$h_M[n]$}
+  \psdsampler(-1.5,-3){dsM}{M}
+  \psusampler(1.5,-3){usM}{M}
+  \psfblock(4,-3){gM}{$g_M[n]$}
+
+  %--- Connecting blocks ---
+  \nclist{ncline}{x,h1,ds1,us1,g1,oplus1,y}
+  \nclist{ncline}{dot2,h2,ds2,us2,g2,oplus2}
+  \ncline{dot1}{dots1}
+  \ncangle[angleA=-90,angleB=180]{dots1}{hM}
+  \nclist{ncline}{hM,dsM,usM,gM}
+  \ncangle[angleB=-90]{gM}{dots6}
+  \nclist{ncline}{dots6,oplus2,oplus1}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\newpage
+
+\subsection{System Identification}
+
+\Example{} Draw the block diagram of an adaptive system used for system identification.
+
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-5,-3)(4,2)
+  \psset{style=RoundCorners}
+
+  %--- Placing the input signal and drawing blocks ---
+  \pssignal(-4,0){x}{$x_k$}
+  \dotnode(-2.5,0){dot}
+  \psblock(0,-1){AdapSys}
+       {\parbox[c]{1.75\psunit}{\centering\small Adaptive System}}
+  \psadaptive[aoffset=1,afac=.75]{->}{AdapSys}(-1.75;60){AdapSysA}
+  \pscircleop(3,-1){oplus}
+  \nput{150}{oplus}{$\scriptstyle -$}
+  \nput{60}{oplus}{$\scriptstyle +$}
+  \psblock(0,1){UnSys}
+       {\parbox[c]{1.75\psunit}{\centering\small Unknown System}}
+
+  %--- Connecting blocks ---
+  \psset{style=Arrow}
+  \ncline{-}{x}{dot}
+  \ncangle[angleA=-90,angleB=180]{dot}{AdapSys}
+  \ncangle[angleA=90,angleB=180]{dot}{UnSys}
+  \ncangle[angleB=90]{UnSys}{oplus}   \naput[npos=1.5]{$d_k$}
+  \ncline{AdapSys}{oplus}
+  \naput{$y_k$}
+  \ncangle[angleA=-90]{-}{oplus}{AdapSysA}
+  \naput[npos=.5]{$e_k$}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\newpage
+
+\subsection{Adaptive Linear Combiner}
+
+\Example{use \PKG{multido}} Draw the block diagram of an adaptive linear combiner.
+
+\begin{LTXexample}
+\begin{pspicture}[showgrid](-4,-6)(4,.5)
+  \psset{style=RoundCorners,gratioWh=1,radius=.25}
+
+  %--- Signals ---
+  \pssignal(-3.25,0){x1}{$x_1[n]$}
+  \pssignal(-1.25,0){x2}{$x_2[n]$}
+  \pssignal(1.25,0){x3}{$x_{k-1}[n]$}
+  \pssignal(3.25,0){x4}{$x_k[n]$}
+  \pssignal(0,-5){y}{$y[n]$}
+
+  %--- Gains, dots, and the adder ---
+  \psknob(-3.25,-1.75){w1}   \nput{180}{w1}{$w_1$}
+  \psknob(-1.25,-1.75){w2}   \nput{180}{w2}{$w_2$}
+  \psknob(1.25,-1.75){w3}    \nput{0}{w3}{$w_{k-1}$}
+  \psknob(3.25,-1.75){w4}    \nput{0}{w4}{$w_k$}
+  \psldots(0,0)   \psldots(0,-1.75)
+  \pscircleop(0,-3.5){oplus}
+
+  %--- Connections ---
+  \psset{style=Arrow}
+  \multido{\nn=1+1}{4}{\ncline{x\nn}{w\nn}}
+  \ncstar[armA=.75,angleA=-90]{ncdiagg}{w1,w2,w3,w4}{oplus}
+  \ncline{oplus}{y}
+\end{pspicture}
+\end{LTXexample}
+
+
+\newpage
+
+\bibliographystyle{plain}
+\bibliography{pst-sigsys-doc}
+
+\printindex
+
+\end{document} 

@@ -1,0 +1,1584 @@
+%% $Id: xindex-doc.tex 635 2017-10-24 18:22:59Z herbert $
+%
+\listfiles\setcounter{errorcontextlines}{100}
+\documentclass[paper=a4,fontsize=11pt,DIV=13,parskip=half-,
+               captions=tableabove,twoside=on]{scrartcl}
+\usepackage{fontspec}
+%\usepackage{libertinus-otf}
+\setmainfont{AccanthisADFStdNo3}[
+  UprightFont   =*-Regular,
+  BoldFont      =*-Bold,
+  ItalicFont    =*-Italic,
+  BoldItalicFont=*-BoldItalic,
+  RawFeature    = -rlig,
+]
+\setsansfont{GilliusADF}[
+  UprightFont   =*-Regular,
+  BoldFont      =*-Bold,
+  ItalicFont    =*-Italic,
+  BoldItalicFont=*-BoldItalic,
+  RawFeature    = -rlig,
+]
+\setmonofont{DejaVu Sans Mono}[Scale=MatchLowercase,FakeStretch=0.9]
+%\setmonofont{Anonymous Pro}[Scale=MatchLowercase,FakeStretch=0.9]
+
+\newfontfamily\Japanese[Scale=MatchUppercase]{SourceHanSans}
+\newfontfamily\CODE{CODE2000}
+
+\usepackage[english]{babel}
+\usepackage{scrlayer-scrpage}
+\automark[section]{section}
+\automark*[subsection]{}
+\pagestyle{scrheadings}
+
+{\catcode`\%=12 
+ \gdef\perCent{%}
+ \gdef\DoubleperCent{%%}
+}
+
+
+\usepackage{xcolor,fancyvrb,varioref}
+\usepackage{xltabular}
+\usepackage{dtk-logos} % for Wikipedia W
+\usepackage{listings}
+\usepackage{dtk-extern} % for Wikipedia W
+\lstset{basicstyle=\ttfamily\small,language=[LaTeX]TeX}
+\usepackage{ragged2e}
+\usepackage{makeidx}\makeindex
+\usepackage{hvindex}
+\def\Lfile#1{\texttt{#1}\index{#1 file@\texttt{#1} file}}
+\def\Lext#1{\texttt{.#1}\index{#1 file extension@\texttt{.#1} file extension}}
+\def\Lcs#1{\texttt{\textbackslash#1}\index{#1@\texttt{\textbackslash#1}}}
+\def\Lenv#1{\texttt{#1}\index{#1 environment@\texttt{#1} environment}}
+\def\Lpack#1{\texttt{#1}\index{#1 package@\texttt{#1} package}}
+\def\Lprog#1{\texttt{#1}\index{#1 program@\texttt{#1} program}}
+\def\Loption#1{\texttt{#1}\index{#1@\texttt{#1} package option}}
+
+%\usepackage[bibstyle=dtk]{biblatex}
+%\addbibresource{\jobname.bib}
+
+\raggedbottom
+\usepackage{url}
+\usepackage[colorlinks,linktocpage]{hyperref}
+
+\makeatletter% from: doc.sty
+\newcommand*\GetFileInfo[1]{%
+  \def\filename{#1}%
+  \def\@tempb##1 ##2 ##3\relax##4\relax{%
+    \def\filedate{##1}%
+    \def\fileversion{##2}%
+    \def\fileinfo{##3}}%
+  \edef\@tempa{\csname ver@#1\endcsname}%
+  \expandafter\@tempb\@tempa\relax? ? \relax\relax}
+\makeatother
+
+%\GetFileInfo{xltabular.sty}
+\usepackage{xspace}
+
+\newcommand\XI{\texttt{xindex}\xspace}
+
+\def\setVersion#1{\setVVersion#1!!}
+\def\setVVersion#1=#2!!{\def\xIndexVersion{#2}} 
+
+\setVersion{version = 0.20}%  can be autimatically changed by perl
+
+\setkeys{dtk}{cleanup=true,force=false}
+
+
+\title{Program and package \texttt{xindex} \\--\\ \normalsize \xIndexVersion\ (\today)}
+\author{\shortstack{Herbert Voß\\\small \href{mailto:hvoss@tug.org}{hvoss@tug.org}}}
+\begin{document}
+\maketitle
+\tableofcontents
+
+\vfill
+Thanks to: \\
+Mark Baudoin;
+Heiko Oberdiek
+
+\clearpage
+
+\section{Introduction}
+The Lua program
+\XI is a  \Index{unicode} aware program for creating an index file from an \Lext{idx} source
+file. It is completely compatible to the current \Lprog{makeindex} program, but can handle
+\Index{UTF-8}, 16, 32, and 64. The \LaTeX\ package \Lpack{xindex} is a package which provides
+a \LaTeX\ command which writes additional text into the index file. This text (comments and/or macros)
+will be accepted by the program \XI.
+
+The general structure of a \Index{data element} in the Lua table is:
+
+\begin{verbatim}
+data = { Entry = <text>,  -- like the input line without command \indexentry
+         pages = {
+                    { number  = <roman/arabic number or text>,
+                      special = <macro> },  -- the part after | in the input
+                    [...]
+                    { number  = <roman/arabic number or text>,
+                      special = <macro> }
+                  },
+          sortChar = <unicode codepoint>, -- of the first character of Entry
+          Macro    = <TeX macro>  -- only useful with LaTeX package \Lpack{xindex}
+        }
+\end{verbatim}
+
+After reading the input file the table \texttt{pages} has only one element for the number\index{page number}
+and the so-called special command. When the pages are compressed the table will collect all pages which
+refer to the same \Index{entry name}.
+ 
+
+\iffalse
+EntryList[2] = { 
+      Entry   = "Johann",   -- the index item  foo@bar 
+      pages   = {           -- the page number(s) and the part after |
+        { number  = 111,
+          special = '\\emph'  },
+        { number  = 11,
+          special = "\\textit"}
+      },  
+      sortChar= 80, -- Initial for later output
+      Macro   = ""
+}
+
+\fi
+
+
+
+\subsection{Syntax}
+
+The \Index{syntax} is \verb|xindex [...] <file>| where \verb|[...]|  are optional \Index{argument}s, either in short or
+long form which, of course, can be mixed:
+
+\begin{verbatim}
+xindex
+    [-q,--quiet ]
+    [-h,--help ]
+    [-v ]                                 verbose
+    [-c,--config ]                        default is cfg
+    [-e,--escapechar ]                    default is " 
+    [-a, --nocasesensitive ]              default is false
+    [-n,--noheadings ]                    default is false
+    [-o,--output ]                        default is <input>.ind
+    [-l,--language ]                      default is en 
+    [-p,--prefix]                         default L
+    <input file> 
+\end{verbatim}
+
+
+
+The \Index{language} has to be chosen as an international abbreviation in lower- or uppercase letters, see 
+\url{https://en.wikipedia.org/wiki/ISO_3166-2}
+
+
+\subsection{How it works}
+\XI creates by default an \Index{output} file \texttt{<input>.ind} which can be read
+by the \LaTeX\ document with the default command \Lcs{printindex}. One can use another
+output filename, which makes only sense if one doesn't use the \Lcs{printindex} command
+for typesetting the index.
+The default \Index{sorting}
+is given by the configuration file, which defines replacements for \Index{accented characters},
+like \texttt{ö}$\rightarrow$\texttt{o}. 
+
+\subsection{The \texttt{.idx} file}
+There are four characters which must be escaped if used in the command \Lcs{index}:
+\verb=!=, \verb=@=, \verb="=, or \verb=|=. These charactzers have a special meaning for 
+the index.\index{"!}\index{"@}\index{"|}
+The default \Index{escape character} is the double quote \verb|"|:
+
+\iffalse
+To put a !\index{"!}, @\index{"@}, or |\index{"|} character in an index entry, quote it by preceding the
+character with a quote ". More precisely, any character is said to be quoted if it
+follows an unquoted " that is not part of a \" command. A quoted !, @, or
+| character is treated like an ordinary character rather than having its usual
+meaning. The " preceding a quoted character is deleted before the entries
+are alphabetized.
+\fi
+
+
+\begin{externalDocument}[
+%  grfOptions={width=\dimexpr\linewidth-2\fboxsep-2\fboxrule},
+  pages={1,2},
+  frame,
+  compiler=lualatex,
+  crop,
+  xindex,
+  force=false,
+  runs=2,code,docType=latex,
+  showFilename,
+  align=\centering,
+  lstOptions={columns=fixed}]{xindex}
+\documentclass{scrartcl}
+\makeatletter
+\def\theindex{%    only for demonstration
+  \section*{\indexname}
+  \parskip\z@ \@plus .3\p@\relax \parindent\z@
+  \let\item\@idxitem}
+\makeatother
+
+%StartVisiblePreamble
+\usepackage{makeidx}\makeindex
+%StopVisiblePreamble
+\pagestyle{empty}
+\begin{document}
+\section{Escaping characters}
+\begin{itemize}
+\item Exclamation mark ! \index{exclaim ("!)}
+\item Vertical bar| \index{Vertical bar ("|)}
+\item Doublequote \verb|"| \index{""}
+\item Double doublequote \verb|""| \index{""""}
+\item At character @ \index{At ("@)}
+\end{itemize}
+run \texttt{xindex <file.idx>}\index{<file.idx>}\index{123}
+\newpage
+\printindex
+\end{document}
+\end{externalDocument}
+
+
+For the german language the double quote is an active character and it makes live easier
+if one chooses another character.
+The escape character can be changed easily by the optional argument \verb|-e "<char>"| or 
+\verb|--escapechar "<char">|. The following example shows how
+it works for the \Index{escape character} > (greater). Internally the escape sequences are
+now defined as:
+
+\begin{verbatim}
+escape_chars = { -- by default " is the escape char
+  {esc_char..'"', '//escapedquote//', '\\"{}' },
+  {esc_char..'@', '//escapedat//',    '@'    },
+  {esc_char..'|', '//escapedvert//',  "|"    },
+  {esc_char..'!', '//scapedexcl//',  '!'    }
+}
+\end{verbatim}
+
+which is, of course, not of interest for the user. With the beginning the escaped chars
+are converted into the internal strings and later back to the origin meaning.
+
+
+\begin{externalDocument}[
+%  grfOptions={width=\dimexpr\linewidth-2\fboxsep-2\fboxrule},
+  pages={1,2},
+  frame,
+  compiler=lualatex,
+  crop,
+  xindex,
+  xindexOptions=-e ">",
+  force=false,
+  runs=2,code,docType=latex,
+  showFilename,
+  align=\centering,
+  lstOptions={columns=fixed}]{xindex}
+\documentclass{scrartcl}
+\makeatletter
+\def\theindex{%    only for demonstration
+  \section*{\indexname}
+  \parskip\z@ \@plus .3\p@\relax \parindent\z@
+  \let\item\@idxitem}
+\makeatother
+%StartVisiblePreamble
+\usepackage{makeidx}\makeindex
+%StopVisiblePreamble
+\pagestyle{empty}
+\begin{document}
+\section{Escaping characters with >}
+\begin{itemize}
+\item Exclamation mark ! \index{exclaim (>!)}
+\item Vertical bar| \index{Vertical bar (>|)}
+\item Doublequote \verb|"| \index{>"}
+\item Double doublequote \verb|""| \index{>">"}
+\item At character @ \index{At (>@)}
+\end{itemize}
+Run \texttt{xindex} with \texttt{xindex -e ">"}\index{<file.idx>}\index{123}
+\newpage
+\printindex
+\end{document}
+\end{externalDocument}
+
+
+\section{Language}\label{language}
+
+The \Index{language} is only important for the first two headers in the output of the index data.
+They are by default \emph{Symbols} followed by \emph{Numbers}. In a new version of \Lprog{xindex}
+it will be customizable.
+The predefined language is »en« and currently the following languages are possible:
+
+{\Japanese
+\begin{Verbatim}[fontfamily=helvetica,commandchars=\\<>]
+indexheader = { 
+  de = {"Symbole", "Zahlen"},
+  en = {"Symbols", "Numbers"},
+  fr = {"Symboles","Chiffre"},
+\Japanese  jp = {"シンボル","番号"},
+}
+\end{Verbatim}
+}
+
+The following example was run with \verb|xindex -l de <file>.idx|:
+
+\begin{externalDocument}[
+%  grfOptions={width=\dimexpr\linewidth-2\fboxsep-2\fboxrule},
+  pages={1,2},
+  frame,
+  compiler=lualatex,
+  crop,
+  xindex,
+  xindexOptions=-l de -e ">",
+  force=false,
+  runs=2,code,docType=latex,
+  showFilename,
+  align=\centering,
+  lstOptions={columns=fixed}]{xindex}
+\documentclass{scrartcl}
+\makeatletter
+\def\theindex{%    only for demonstration
+  \section*{\indexname}
+  \parskip\z@ \@plus .3\p@\relax \parindent\z@
+  \let\item\@idxitem}
+\makeatother
+%StartVisiblePreamble
+\usepackage{makeidx}\makeindex
+%StopVisiblePreamble
+\pagestyle{empty}
+\begin{document}
+\section{Escaping characters with >}
+\begin{itemize}
+\item Exclamation mark ! \index{exclaim (>!)}
+\item Vertical bar| \index{Vertical bar (>|)}
+\item Doublequote \verb|"| \index{>"}
+\item Double doublequote \verb|""| \index{>">"}
+\item At character @ \index{At (>@)}
+\end{itemize}
+Run \texttt{xindex} with \texttt{xindex -l de -e ">"}\index{123}
+\newpage
+\printindex
+\end{document}
+\end{externalDocument}
+
+
+\section{Sorting}
+
+The default sorting is unicode aware and uses a translation table for accented characters:
+
+\begin{verbatim}
+alphabet_lower = { --   for sorting
+    { ' ' },  -- only for internal tests
+    { 'a', 'á', 'à', 'ä'},
+    { 'b' },
+    { 'c' },
+    { 'd' },
+    { 'e', 'é', 'è', 'ë' },
+    { 'f' },
+    { 'g' },
+    { 'h' },
+    { 'i', 'í', 'ì', 'ï' },
+    { 'j' },
+    { 'k' },
+    { 'l' },
+    { 'm' },
+    { 'n', 'ñ' },
+    { 'o', 'ó', 'ò', 'ö' },
+    { 'p' },
+    { 'q' },
+    { 'r' },
+    { 's' },
+    { 't' },
+    { 'u', 'ú', 'ù', 'ü' },
+    { 'v' },
+    { 'w' },
+    { 'x' },
+    { 'y' },
+    { 'z' }
+}
+\end{verbatim}
+
+There is also a table for the uppercase letters. If it should be edited or extended then copy first the
+base configuration file \Lfile{xindex-cfg.lua} and modify that new file. It can be used by \XI
+with the optional argument \texttt{-c newfile} if it is named as \Lfile{xindex-newfile.lua}. 
+For german there already exists a configuration
+file \Lfile{xindex-DIN2.lua} which uses the so-called »Telefonbuchsortierung« which converts 
+the umlauts like ö$\rightarrow$oe:
+
+\begin{verbatim}
+alphabet_upper = { -- for sorting
+    { ' ' },
+    { 'A', 'Á', 'À', 'Ä'},
+    { 'B' },
+    { 'C' },
+    { 'D' },
+    { 'E', 'È', 'È', 'ë' },
+    { 'F' },
+    { 'G' },
+    { 'H' },
+    { 'I', 'Í', 'Ì', 'ï' },
+    { 'J' },
+    { 'K' },
+    { 'L' },
+    { 'M' },
+    { 'N', 'Ñ' },
+    { 'O', 'Ó', 'Ò', 'Ö' },
+    { 'P' },
+    { 'Q' },
+    { 'R' },
+    { 'S' },
+    { 'T' },
+    { 'U', 'Ú', 'Ù', 'Ü' },
+    { 'V' },
+    { 'W' },
+    { 'X' },
+    { 'Y' },
+    { 'Z' }
+}
+\end{verbatim}
+
+
+
+\begin{externalDocument}[
+  grfOptions={scale=0.9},%width=\dimexpr\linewidth-2\fboxsep-2\fboxrule},
+  mpwidth=0.4\linewidth,
+  pages={2},
+  frame=false,
+  compiler=lualatex,
+  crop,
+  xindex,
+  xindexOptions=-l de,
+  force=false,
+  runs=2,code,docType=latex,
+  showFilename,
+  align=\centering,
+  lstOptions={columns=fixed}]{xindex}
+\documentclass[paper=a5]{scrartcl}
+\usepackage[ngerman]{babel}
+%StartVisiblePreamble
+\usepackage{makeidx}\makeindex
+\newcommand\Index[1]{\index{#1}#1}
+%StopVisiblePreamble
+\usepackage{multicol}
+\makeatletter
+\def\theindex{%    only for demonstration
+  \newpage
+  \section*{\indexname}
+  \begin{multicols}{2}
+  \parskip\z@ \@plus .3\p@\relax \parindent\z@
+  \let\item\@idxitem}
+\def\endtheindex{\end{multicols}}
+\makeatother
+\pagestyle{empty}
+\begin{document}
+Sorted with \verb|-l DE|
+
+\Index{Österreich} \Index{Öresund} 
+\Index{Ostern} \Index{Ober} 
+\Index{Oberin} \Index{Österreich} 
+\Index{Öresund} \Index{Ostern} 
+\Index{Ober} \Index{Oberin} 
+\Index{Obstler} \Index{Öl} 
+\Index{ölen} \Index{Ödem} 
+\Index{Oligarch} \Index{Oder} 
+\Index{oder} \index{Fluss!Oder} 
+\index{Oder|seealso{Fluss}} 
+\Index{Göbel} \Index{Goethe} 
+\Index{Göthe} \Index{Götz} 
+\Index{Goldmann}
+
+\printindex
+\end{document}
+\end{externalDocument}
+
+
+
+The same sorted with the german DIN variant 2 with \verb|--config DIN2|, which
+is part of the \TeX\ distribution. In this case a letter Ö is converted to Oe before sorting
+the word beginninjg with the letter Ö:
+
+\noindent
+\begin{externalDocument}[
+  grfOptions={scale=0.9},%width=\dimexpr\linewidth-2\fboxsep-2\fboxrule},
+  mpwidth=0.4\linewidth,
+  pages={2},
+  frame=false,compiler=lualatex,
+  crop,
+  xindex,
+  xindexOptions=-c DIN2 -l DE,
+  force=false,
+  runs=2,code,docType=latex,
+  showFilename,
+  align=\centering,
+  lstOptions={columns=fixed}]{xindex}
+\documentclass[paper=a5]{scrartcl}
+\usepackage[ngerman]{babel}
+%StartVisiblePreamble
+\usepackage{makeidx}\makeindex
+\newcommand\Index[1]{\index{#1}#1}
+%StopVisiblePreamble
+\usepackage{multicol}
+\makeatletter
+\def\theindex{%    only for demonstration
+  \newpage
+  \section*{\indexname}
+  \begin{multicols}{2}
+  \parskip\z@ \@plus .3\p@\relax \parindent\z@
+  \let\item\@idxitem}
+\def\endtheindex{\end{multicols}}
+\makeatother
+\pagestyle{empty}
+\begin{document}
+Sorted with 
+\verb|--config DIN2 -l DE|
+
+\Index{Österreich} \Index{Öresund} 
+\Index{Ostern} \Index{Ober} 
+\Index{Oberin} \Index{Österreich} 
+\Index{Öresund} \Index{Ostern} 
+\Index{Ober} \Index{Oberin} 
+\Index{Obstler} \Index{Öl} 
+\Index{ölen} \Index{Ödem} 
+\Index{Oligarch} \Index{Oder} 
+\Index{oder} \index{Fluss!Oder} 
+\index{Oder|seealso{Fluss}} 
+\Index{Göbel} \Index{Goethe} 
+\Index{Göthe} \Index{Götz} 
+\Index{Goldmann}
+
+\printindex
+\end{document}
+\end{externalDocument}
+
+
+
+The following runs with \verb|xindex -l jp <file>|:
+
+%  {begin\string{document\string}}%       #2
+%  {end\string{document\string}}%         #3
+%  {\perCent StartVisiblePreamble}% #4
+%  {\perCent StopVisiblePreamble}%  #5
+
+\noindent
+\begin{minipage}[t]{0.45\linewidth}
+\vspace{0pt}
+\setsansfont{SourceHanSans}\sffamily
+\edef\FancyVerbStartString{\perCent StartVisiblePreamble}
+\edef\FancyVerbStopString{\perCent StopVisiblePreamble}
+\colorbox{black!20}{\parbox{\linewidth}{%
+\VerbatimInput[fontfamily=helvetica]{Examples/xindex-6.tex}
+}}
+
+\edef\FancyVerbStartString{\string\begin\string{document\string}}
+\edef\FancyVerbStopString{\string\end\string{document\string}}
+\colorbox{black!10}{\parbox{\linewidth}{%
+\VerbatimInput[fontfamily=helvetica]{Examples/xindex-6.tex}
+}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.54\linewidth}
+\vspace{0pt}
+\begin{externalDocument}[
+%  grfOptions={width=\dimexpr\linewidth-2\fboxsep-2\fboxrule},
+%  mpwidth=0.5\linewidth,
+  pages={2},
+  frame=false,
+  compiler=lualatex,
+  crop,
+  xindex,
+  xindexOptions=-l jp,
+  force=false,
+  runs=2,
+  code=false,
+  docType=latex,
+  showFilename,
+  align=\centering,
+%  usefancyvrb,
+  lstOptions={fontfamily=helvetica}]{xindex}
+\documentclass[a5paper]{article}
+%StartVisiblePreamble
+\usepackage{fontspec}
+\setmainfont{SourceHanSans}
+\usepackage[japanese]{babel}
+\addto\captionsjapanese{%
+  \def\indexname{指数}}
+\usepackage{hvindex}% for \Index
+\usepackage{makeidx}\makeindex
+%StopVisiblePreamble
+\usepackage{multicol}
+\makeatletter
+\def\theindex{%    only for demonstration
+  \section*{\indexname}  
+  \begin{multicols}{2}
+  \parskip\z@ \@plus .3\p@\relax \parindent\z@
+  \let\item\@idxitem}
+\def\endtheindex{\end{multicols}}
+\makeatother
+\pagestyle{empty}
+\begin{document}
+\Index{車} \Index{車道} 
+日本\index{日本|fbox} 
+\Index{病院} \Index{コンピュータ} 
+\Index{プリンタ} \Index{印刷} 
+\Index{スイミングプール} \Index{天王} 
+\Index{広島} \Index{ドイツ} 
+\Index{日本} \Index{ワープロ} 
+\Index{foo} und \Index{bar}
+\Index{//} \Index{4711}
+\newpage\printindex
+\end{document}
+\end{externalDocument}
+\end{minipage}
+
+
+
+%\clearpage
+
+\section{Compressing pagenumbers}\label{Compressing}
+By default page sequences of an entry are compressed to 
+\begin{description}
+\item[8f] page 8 and 9
+\item[8ff] page 8, 9, and 10
+\item[8-12] page 8, 9, \ldots, 12
+\end{description}
+
+The so-called folio abbreviation is language dependent and defined in the
+file \Lfile{xindex-cfg-common.cfg}:
+
+{\setsansfont[Scale=MatchUppercase]{SourceHanSans}
+\small
+\begin{Verbatim}[fontfamily=helvetica]
+folium = { 
+  de = {"f", "ff"},
+  en = {"f", "ff"},
+  fr = {"\,sq","\,sqq"},
+  jp = {"シンボル","番号"},
+}
+\end{Verbatim}
+}
+
+\begin{externalDocument}[
+%  grfOptions={width=\dimexpr\linewidth-2\fboxsep-2\fboxrule},
+  mpwidth=0.55\linewidth,
+  pages={6},
+  frame=false,
+  compiler=lualatex,
+  crop,
+  xindex,
+  xindexOptions=-l fr,
+  force=false,
+  runs=2,code,docType=latex,
+  showFilename,
+  align=\centering,
+  lstOptions={columns=fixed}]{xindex}
+\documentclass{scrartcl}
+\makeatletter
+\def\theindex{%    only for demonstration
+  \section*{\indexname}
+  \parskip\z@ \@plus .3\p@\relax \parindent\z@
+  \let\item\@idxitem}
+\makeatother
+%StartVisiblePreamble
+\usepackage{makeidx}\makeindex
+%StopVisiblePreamble
+\pagestyle{empty}
+\begin{document}
+Sorted with \verb|-l fr|
+
+foobar\index{foobar|(}
+foo\index{foo}\index{bar}\index{baz}\newpage
+foo\index{foo}\index{bar}\index{baz}\newpage
+foo\index{bar}\index{baz}\newpage
+foo\index{baz}\newpage
+foo\index{foo}foobar\index{foobar|)}
+\newpage
+\printindex
+\end{document}
+\end{externalDocument}
+
+
+
+\section{\texttt{hyperref}}
+
+Using the package \Lpack{hyperref} is no problem:
+
+\enlargethispage{2.5\normalbaselineskip}
+
+\begin{externalDocument}[
+%  grfOptions={width=\dimexpr\linewidth-2\fboxsep-2\fboxrule},
+  mpwidth=0.55\linewidth,
+  pages={3},
+  frame=false,
+  compiler=lualatex,
+  crop,
+  xindex,
+  xindexOptions=-l de,
+  force,
+  runs=2,code,docType=latex,
+  showFilename,
+  align=\centering,
+  lstOptions={columns=fixed}]{xindex}
+\documentclass[paper=a6]{scrartcl}
+\usepackage{multicol}
+\makeatletter
+\def\theindex{%    only for demonstration
+  \section*{\indexname}
+  \begin{multicols}{2}
+  \parskip\z@ \@plus .3\p@\relax \parindent\z@
+  \let\item\@idxitem}
+\def\endtheindex{\end{multicols}}
+\makeatother
+%StartVisiblePreamble
+\usepackage{makeidx}\makeindex
+\usepackage{hvindex}% for \Index
+\usepackage[colorlinks]{hyperref}
+%StopVisiblePreamble
+\pagestyle{empty}
+\begin{document}
+Sorted with \verb|-l DE|
+\Index{Österreich} \Index{Öresund} 
+\Index{Ostern} \Index{Ober} \Index{Oberin} 
+\Index{Österreich} \index{Öresund|textbf} 
+\Index{Ostern} \Index{Ober} \Index{Oberin} 
+\Index{Obstler} \Index{Öl} \Index{ölen} 
+\Index{Ödem} \Index{Oligarch} \Index{Oder} 
+\Index{oder} \index{Fluss!Oder|textit} 
+\Index{Oder|seealso{Fluss}} \Index{Göbel} 
+\Index{Goethe} \Index{Göthe} \Index{Götz} 
+\newpage\Index{Goldmann} \Index{Goethe}
+\newpage \printindex
+\end{document}
+\end{externalDocument}
+
+
+\section{Page argument}
+Every page can be combined with an additional macro, like \verb=\index{foo|fbox}=, the page number
+will be set into a framebox. If we have on the same page the two commands:
+
+\begin{verbatim}
+foo\index{foo} and foo\index{foo|bar}
+\end{verbatim}
+
+then we have two \emph{different} index entries which will not be compressed to one entry.
+In the follwoing example we have four different entries for \emph{foo} which is the reason
+that we do not get an output like \texttt{foo, 1--4}. Only the first two entries are
+of the same type, so we get \texttt{1f} in the output.
+
+\begin{externalDocument}[
+%  grfOptions={width=\dimexpr\linewidth-2\fboxsep-2\fboxrule},
+  mpwidth=0.55\linewidth,
+  pages={5},
+  frame=false,
+  compiler=lualatex,
+  crop,
+  xindex,
+  xindexOptions=-l de,
+  force=false,
+  runs=2,code,docType=latex,
+  showFilename,
+  align=\centering,
+  lstOptions={columns=fixed}]{xindex}
+\documentclass{scrartcl}
+\makeatletter
+\def\theindex{%    only for demonstration
+  \section*{\indexname}
+  \parskip\z@ \@plus .3\p@\relax \parindent\z@
+  \let\item\@idxitem}
+\makeatother
+%StartVisiblePreamble
+\usepackage{makeidx}\makeindex
+%StopVisiblePreamble
+\pagestyle{empty}
+\begin{document}
+Ein foo\index{foo} \newpage und \index{foo} 
+ein foo\index{foo|textit} \newpage 
+und foo\index{foo|textbf} \newpage 
+und foo\index{foo|fbox}
+
+\newpage
+\printindex
+\end{document}
+\end{externalDocument}
+
+
+
+
+
+
+\section{The config file}
+
+The main config file is \Lfile{xindex-cfg.lua} is used by default and loading it by the 
+optional parameter -c makes no sense. A new config file must have the prefix \texttt{xindex-}
+and the file extension \Lext{lua}, for example: \Lfile{xindex-HAdW-eKO.lua} which can be used
+with \verb|--config HAdW-eKO|. The file must be saved in the documents directory or in
+one which is known to \Lprog{kpsewhich}, for example\footnote{The directory \texttt{xindex} must be created
+before saving the file.} \verb|$TEXMFLOCAL/tex/lualatex/xindex/| %$
+Don not forgot to update the filename database.
+
+A new config file must declare at least the variables which are part of the
+default config file: the translation tables and
+
+\begin{verbatim}
+itemPageDelimiter = ","     -- Hello, 14
+compressPages     = true    
+  -- something like 12--15, instaead of 12,13,14,15. the |( ... |) syntax is still valid
+fCompress	  = true    -- 3f -> page 3, 4 and 3ff -> page 3, 4, 5
+minCompress       = 3       -- 14--17 or 
+rangeSymbol       = "--"    
+numericPage       = true    -- for non numerical pagenumbers, like "VI-17"
+sublabels         = {"", "-\\-", "--\\-", "---\\-"} 
+   -- for the sub(sub(sub-items, first one is empty
+pageNoPrefixDel   = ""     -- a delimiter for page numbers like "VI-17"  -- not used !!!
+indexOpening      = ""     -- commands/text after \begin{theindex}
+\end{verbatim}
+
+The new config file can define own functions for compressing the pagelist
+for a given entry and for the formatting of the output. They must be called 
+\verb|specialCompressPageList| and  \verb|specialGetPageList|.
+%needs
+%the unmodified list of pages for one entry. 
+
+For example:
+
+\begin{verbatim}
+function specialCompressPageList(pages)
+  if (pages[1]["number"] == "") then pages[1]["number"] = " " end
+  if (#pages <= 1) then 
+    pages[1]["number"] = pages[1]["number"]:gsub('-',':~')-- replace "-" with ":~"
+    return pages 
+  end  -- only one pageno
+  local sortPages = {}
+  local roman 
+  local volume
+  local page
+  local i
+  for i=1,#pages do
+     roman = string.gsub(pages[i]["number"],'%U*','') -- only uppercase to catch VII/1-123f and VII/3-123ff (folium pages)
+     if romanToNumber(roman) then
+       roman = string.format("%05d",tonumber(romanToNumber(roman))) -- only roman part VII
+     else
+       roman = ""
+     end
+     volume = string.gsub(pages[i]["number"],'%a*','') -- only the number /2 123 or /2-123
+     if volume then volume = volume:gsub('-%d*','') end -- delete - char to get /2
+     page = string.gsub(pages[i]["number"],'.*-','')
+     page = string.format("%5s",page)
+     sortPages[#sortPages+1] = {
+       origin = pages[i],
+       sort = roman..volume.." "..page }  -- no minus between Roman/Volume and first page
+   end
+  table.sort(sortPages, function(a,b) return a["sort"] < b["sort"] end )
+
+[...]
+
+    return pages
+  end
+end
+\end{verbatim}
+
+is a special function which can handle \Index{page number}s like VII-17, VIII/2/1-186.
+Internally exists a function \verb|compressPageList| which is used if no
+\verb|specialCompressPageList| is defined.
+
+\begin{externalDocument}[
+  grfOptions={scale=0.9},% width=\dimexpr\linewidth-2\fboxsep-2\fboxrule},
+%  mpwidth=0.25\linewidth,
+  pages={2},
+  frame=false,
+  compiler=lualatex,
+  crop,
+  xindex,
+  xindexOptions=-c HAdW-eKO,
+  force,
+  runs=2,code,docType=latex,
+  showFilename,
+  align=\centering,
+  lstOptions={columns=fixed}]{xindex}
+\RequirePackage{filecontents}
+\begin{filecontents*}{\jobname.idx}
+\indexentry{Aachen, Johannes von}{VII/1-215}
+\indexentry{Aarones}{VII/2/1-1003}
+\indexentry{Aarones}{VII/2/1-1012}
+\indexentry{Abrahamson}{VII/2/1-864}
+\indexentry{Abrahamson}{VII/2/1-991}
+\indexentry{Abrahamson}{VII/2/1-1048}
+\indexentry{Abrahamson}{VII/2/1-1067}
+\indexentry{Abrahamson}{VII/2/1-1156}
+\indexentry{Adamson}{VII/2/1-1223}
+\indexentry{Adamson}{IX/1-1228}
+\indexentry{Karl!der Große, Kaiser}{VI/2-987}
+\indexentry{Karl!der Große, Kaiser}{VI/2-989}
+\indexentry{Karl!der Große, Kaiser}{VI/2-1028}
+\indexentry{Karl!IV., Kaiser}{VI/1-12}
+\indexentry{Karl!V., Kaiser}{VI/1-84}
+\indexentry{Karl!V., Kaiser}{VI/1-284}
+\indexentry{Karl!V., Kaiser}{VI/1-654}
+\indexentry{Karl!V., Kaiser}{VI/2-708}
+\indexentry{Karl!V., Kaiser}{VI/2-1014}
+\indexentry{Karl!V., Kaiser}{VI/2-1043}
+\indexentry{Karl!V., Kaiser}{VI/2-1131}
+\indexentry{Karl!V., Kaiser}{VI/2-1210}
+\indexentry{Braunschweig-Wolfenbüttel!Karl Viktor von, Herzog}{VI/1-83}
+\indexentry{Schleswig-Holstein!Rudolf von, Herzog}{VII/2/1-758}
+\indexentry{Schleswig-Holstein!Rudolf von, Herzog}{VII/2/1-759}
+\indexentry{Schleswig-Holstein!Rudolf von, Herzog}{VII/2/1-760}
+\indexentry{Schleswig-Holstein!Rudolf von, Herzog}{VII/2/1-761}
+\indexentry{Schleswig-Holstein!Rudolf von, Herzog}{VII/2/1-765}
+\indexentry{Adrian!Hauster}{VII/1-514}
+\indexentry{Adrian!Hauster}{XI/1-515}
+\indexentry{Alting!Mensa}{VII/1-426}
+\indexentry{Alting!Mensa}{VII/1-434}
+\indexentry{Alting!Mensa}{VII/1-453}
+\indexentry{Alting!Mensa}{VII/1-455}
+\indexentry{Alting!Mensa}{VII/1-466}
+\indexentry{Alting!Mensa}{VII/1-467}
+\indexentry{Bremen!Heinz von, Erzbischof|see{Sachsen-Lauenburg}}{}
+\indexentry{Osnabrück!Heinz  von, Bischof|see{Sachsen-Lauenburg}}{}
+\indexentry{Zwingl, Haldrich}{IX-479}
+\indexentry{Zwingl, Haldrich}{IX-692}
+\indexentry{Julian!Apostata, römischer Kaiser}{VII/2/1-904}
+\indexentry{Justinian I., byzantinischer Kaiser}{VII/1-326}
+\indexentry{Justinian I., byzantinischer Kaiser}{VII/1-734}
+\indexentry{Justinian I., byzantinischer Kaiser}{VII/2/1-1011}
+\indexentry{Karl!V., Kaiser}{VII/1-34}
+\indexentry{Karl!II., Kaiser}{VII/1-147}
+\indexentry{Karl!III., Kaiser}{VII/1-149}
+\indexentry{Karl!VI., Kaiser}{VII/1-296}
+\indexentry{Karl!IV., Kaiser}{VII/1-34}
+\indexentry{Karl!IV., Kaiser}{VII/1-147}
+\indexentry{Karl!X., Kaiser}{VII/1-149}
+\indexentry{Karl!IX., Kaiser}{VII/1-296}
+\end{filecontents*}
+\documentclass[a4paper]{article}
+\usepackage[margin=1cm]{geometry}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage{multicol}
+\makeatletter
+\def\theindex{%    only for demonstration
+  \newpage
+  \section*{Personenverzeichnis}
+  \begin{multicols}{2}
+  \parskip\z@ \@plus .3\p@\relax \parindent\z@ \raggedright
+  \let\item\@idxitem}
+\def\endtheindex{\end{multicols}}
+\makeatother
+%StartVisiblePreamble
+\usepackage{makeidx}
+%StopVisiblePreamble
+\pagestyle{empty}
+\begin{document}
+\mbox{}\printindex
+\end{document}
+\end{externalDocument}
+
+
+
+
+
+
+The \Index{config file} \Lfile{xindex-dtk.lua} defines a special page output:
+
+\begin{verbatim}
+function specialGetPageList(v,hyperpage)  -- Entry table, boolean
+  local Pages = {}
+[..]
+      if (Pages[1]["special"] == nil) or (Pages[1]["number"] == nil) then return ""  end 
+      if #Pages == 1 then
+        return "\\relax"..Pages[1]["number"].."\\@nil"
+      else        
+        pageNo = "\\relax"..Pages[1]["number"] 
+        for i=2,#Pages do
+          if Pages[i]["number"] then
+            pageNo = pageNo..", "..Pages[i]["number"].."\\@nil"
+            Pages[i] = {}
+          end
+        end
+[..]
+end
+\end{verbatim}
+
+
+The following example runs \verb|xindex -c dtk -l de -n <input>|
+
+\begin{externalDocument}[
+  grfOptions={scale=0.9},% width=\dimexpr\linewidth-2\fboxsep-2\fboxrule},
+  mpwidth=0.25\linewidth,
+  pages={1},
+  frame=false,
+  compiler=lualatex,
+  crop,
+  xindex,
+  xindexOptions=-c dtk -n -l de,
+  force,
+  runs=2,code,docType=latex,
+  showFilename,
+  align=\centering,
+  lstOptions={columns=fixed}]{xindex}
+\RequirePackage{filecontents}
+\begin{filecontents*}{\jobname.idx}
+\indexentry{VoßHerbert@Herbert Voß!Wasgenstraße 121\protect \\10127 Potsdam\protect \\\Email {herbert"@xyz.de}}{3}
+\indexentry{SeversMartin@Martin Severs!siehe Seite~\protect \pageref  {president}}{4}
+\indexentry{VoßHerbert@Herbert Voß!Wasgensteig 12\protect \\10127 Potsdam\protect \\\Email {herbert"@xyz.de}}{5}
+\indexentry{ZiegendatenMichael@Michael Ziegendaten!Lokostr. 19 \protect \\ 20713 Kalln \protect \\\Email {ziegendaten"@mail.com}}{9}
+\indexentry{BährendtsenElke@Elke Baehrendtsen!\Email {dori"@xyz.de}}{14}
+\indexentry{JacekJonasson Jared@Jonasson Jared Jazek!\Email {mail"@jones.net}}{20}
+\indexentry{KoomerMartin@Martin Koomer!Freiherr-von-Stein-Weg~16\protect \\ 15525~Erdingen-Neckar\protect \\ \Email {kooma"@xyz.info}}{24}
+\indexentry{KoomerMartin@Martin Koomer!Freiherr-von-Stein-Weg~16\protect \\ 15525~Erdingen-Neckar\protect \\ \Email {kooma"@xyz.info}}{31}
+\indexentry{SchusterEike@Eike Schuster!Haussteig~15\protect \\ 36396~Stuttens\protect \\ \Email {elke.schuster"@kabelxyz.de}}{40}
+\indexentry{FanntHorst@Horst Fannt!Friedrichallee 74\protect \\13233 Neu-Isenburg\protect \\\Email {juergen.fannt"@gmxnet.de}}{48}
+\end{filecontents*}
+\documentclass{article}
+\usepackage{url}
+\DeclareUrlCommand\Email{%
+  \def\UrlLeft{}%
+  \def\UrlRight{}%
+  \def\UrlLinkPrefix{mailto:}%
+  \def\UrlType{email}%
+}
+\usepackage{multicol}
+\makeatletter
+\def\DTK@scan@item#1\subitem#2\relax#3\@nil{%
+  \def\DTK@tempa{#1}\def\DTK@tempb{#2}\def\DTK@tempc{#3}%
+}
+\def\theindex{%    only for demonstration
+  \columnseprule=\z@ \columnsep=10\p@
+  \begin{multicols}{2}[\noindent\textbf{\large Autorenliste}]%
+    \makeatletter
+    \def\indexspace{}%
+    \parindent\z@
+    \setlength{\parskip}{\z@ \@plus .3\p@}%
+    \setlength{\parfillskip}{\z@ \@plus 1fil}%
+    \raggedright
+    \def\item##1\@nil{\DTK@scan@item##1\@nil
+      \par\parbox{\columnwidth}{%
+        \textbf{\DTK@tempa}\hfill[\DTK@tempc]\par\DTK@tempb
+      }%
+      \par\bigskip
+    }%
+}
+\def\endtheindex{\end{multicols}}
+\makeatother
+%StartVisiblePreamble
+\usepackage{makeidx}
+%StopVisiblePreamble
+\pagestyle{empty}
+\begin{document}
+\mbox{}\ref{president}
+\printindex
+\end{document}
+\end{externalDocument}
+
+
+\subsection{Sublabels}
+There are three predefined sublabels for \Lcs{subitems}. The program itself can handle more, there is
+no limit for \Lprog{xindex}.
+
+\begin{externalDocument}[
+%  grfOptions={width=\dimexpr\linewidth-2\fboxsep-2\fboxrule},
+  mpwidth=0.55\linewidth,
+  pages={2},
+  frame=false,
+  compiler=lualatex,
+  crop,
+  xindex,
+%  xindexOptions=,
+  force=false,
+  runs=2,code,docType=latex,
+  showFilename,
+  align=\centering,
+  lstOptions={columns=fixed}]{xindex}
+\documentclass{article}
+\makeatletter
+\def\theindex{%    only for demonstration
+  \section*{\indexname}
+  \pagestyle{empty}%
+  \parskip\z@ \@plus .3\p@\relax \parindent\z@
+  \let\item\@idxitem}
+\makeatother
+\pagestyle{empty}%
+%StartVisiblePreamble
+\makeatletter
+\g@addto@macro{\theindex}{%
+  \def\subsubsubitem{\@idxitem\hspace*{35\p@}}
+  \def\subsubsubsubitem{\@idxitem\hspace*{40\p@}}
+}
+\makeatother
+\usepackage{makeidx}\makeindex
+%StopVisiblePreamble
+\begin{document}
+foo\index{foo} bar\index{foo!bar}
+baz\index{foo!bar!baz} foobar%
+\index{foo!bar!baz!foobar} Kuba 
+\index{foo!bar!baz!foobar!Kuba}
+\newpage \printindex
+\end{document}
+\end{externalDocument}
+
+
+
+
+
+
+
+
+\section{Including \LaTeX\ commands into the \Lext{idx} file}
+The command \Lcs{addtocontents} doesn't work for the index file. With the \LaTeX\ package
+\Lpack{xindex} (same name as the Lua program \Lprog{xindex}) defines a macro \Lcs{writeidx}
+which writes its argument into the \Lext{idx} file. This can be usefull to insert a 
+\Index{pagebreak}/""\Index{columnbreak}
+before a new letter in the output of the index file:
+
+
+\begin{verbatim}
+\documentclass{article}
+\usepackage{makeidx}
+\makeindex
+\usepackage{xindex}
+\begin{document}
+
+\index{foo}foo and
+\writeidx{\clearpage}
+\index{bar}bar
+
+\printindex
+\end{document} 
+\end{verbatim}
+
+
+Such commands are then taken into account by the program \Lprog{xindex}. With the often used program \Lprog{makeindex}
+such commands are ignored. In the following example we put an horizontal line after the first entry:
+
+\begin{externalDocument}[
+%  grfOptions={width=\dimexpr\linewidth-2\fboxsep-2\fboxrule},
+  mpwidth=0.55\linewidth,
+  pages={2},
+  frame=false,
+  compiler=lualatex --shell-escape, 
+  crop,
+  xindex,
+  xindexOptions=-l de,
+  force,
+  runs=2,code,docType=latex,
+  showFilename,
+  align=\centering,
+  lstOptions={columns=fixed}]{xindex}
+\documentclass{scrartcl}
+\usepackage{libertinus-otf}
+%StartVisiblePreamble
+\usepackage{xindex}
+\makeindex
+%StopVisiblePreamble
+\pagestyle{empty}
+\makeatletter
+\def\theindex{%    only for demonstration
+  \newpage
+  \section*{\indexname}
+  \parskip\z@ \@plus .3\p@\relax \parindent\z@
+  \let\item\@idxitem}
+\makeatother
+\begin{document}
+\index{foo}foo and
+\writeidx{\item\protect\hrulefill}
+\index{bar}bar
+\index{gex}gex
+\printindex
+\end{document}
+\end{externalDocument}
+
+
+\section{Headings}
+By default the output uses the english headings: \textit{Symbols}, \textit{Numbers}, and \textit{A} \ldots
+There are three predefined languages \texttt{en}, \texttt{de}, and \texttt{fr}. The definition is in the file
+\Lfile{xindex-cfg-common.lua} (see also section \vref{language}).
+%
+It can easily be extended for other \Index{language}s. Sometimes the headers are not needed, for example in a name
+list. With the optional argument \verb=-n= or \verb=--noheadings= the created \Lext{ind} file has only
+the vertical space between different first letters:
+
+\begin{externalDocument}[
+%  grfOptions={width=\dimexpr\linewidth-2\fboxsep-2\fboxrule},
+  mpwidth=0.55\linewidth,
+  pages={5},
+  frame=false,
+  compiler=lualatex,
+  crop,
+  xindex,
+  xindexOptions=-n,
+  force,
+  runs=2,code,docType=latex,
+  showFilename,
+  align=\centering,
+  lstOptions={columns=fixed}]{xindex}
+\documentclass{scrartcl}
+\makeatletter
+\def\theindex{%    only for demonstration
+  \section*{\indexname}
+  \parskip\z@ \@plus .3\p@\relax \parindent\z@
+  \let\item\@idxitem}
+\makeatother
+%StartVisiblePreamble
+\usepackage{makeidx}\makeindex
+%StopVisiblePreamble
+\pagestyle{empty}
+\begin{document}
+Ein foo\index{foo}\index{bar|(}
+ \newpage und \index{foo} 
+ein foo\index{foo|textit} \newpage 
+und foo\index{foo|textbf} \newpage 
+und foo\index{foo|fbox}
+\index{bar|)}
+\newpage
+\verb|xindex -n <file>|
+\printindex
+\end{document}
+\end{externalDocument}
+
+
+The headings are printed by default as \Lcs{textbf}. This can be changed in the config file 
+by setting the
+variable \texttt{idxnewletter}, for example: \verb|idxnewletter = "\\textit"|. If you need some
+more code here then define an own  macro for it, which can be seen in the following example. It has
+an own config file \Lfile{xindex-header.lua} which has the line
+
+\verb|idxnewletter = "\\idxnewletter"|
+
+In the documents preamble there is the definition:
+
+\verb|\newcommand\idxnewletter[1]{\textbf{\textit{#1}}}|
+
+\begin{externalDocument}[
+%  grfOptions={width=\dimexpr\linewidth-2\fboxsep-2\fboxrule},
+  mpwidth=0.55\linewidth,
+  pages={2},
+  frame=false,
+  compiler=lualatex,
+  crop,
+  xindex,
+  xindexOptions=-c header,
+  force,
+  runs=2,code,docType=latex,
+  showFilename,
+  align=\centering,
+  lstOptions={columns=fixed}]{xindex}
+\documentclass{scrartcl}
+\usepackage{filecontents}
+\begin{filecontents*}{xindex-header.lua}
+-----------------------------------------------------------------------
+--         FILE:  xindex-header.lua
+--  DESCRIPTION:  configuration file for xindex.lua
+-- REQUIREMENTS:  
+--       AUTHOR:  Herbert Voß
+--      LICENSE:  LPPL1.3
+-----------------------------------------------------------------------
+
+if not modules then modules = { } end modules ['xindex-header'] = {
+      version = 0.19,
+      comment = "main configuration to xindex.lua",
+       author = "Herbert Voss",
+    copyright = "Herbert Voss",
+      license = "LPPL 1.3"
+}
+
+itemPageDelimiter = ","     -- Hello, 14
+compressPages     = true    -- something like 12--15, instaead of 12,13,14,15. the |( ... |) syntax is still valid
+fCompress	  = true    -- 3f -> page 3, 4 and 3ff -> page 3, 4, 5
+minCompress       = 3       -- 14--17 or 
+rangeSymbol       = "--"
+numericPage       = true    -- for non numerical pagenumbers, like "VI-17"
+sublabels         = {"", "-\\,", "--\\,", "---\\,"} -- for the (sub(sub(sub-items  first one is for item
+pageNoPrefixDel   = ""     -- a delimiter for page numbers like "VI-17"  -- not used !!!
+indexOpening      = ""     -- commands after \begin{theindex}
+idxnewletter      = "\\idxnewletter"
+
+--[[
+    Each character's position in this array-like table determines its 'priority'.
+    Several characters in the same slot have the same 'priority'.
+]]
+alphabet_lower = { --   for sorting
+    { ' ' },  -- only for internal tests
+    { 'a', 'á', 'à', 'ä', 'â', 'å', 'æ', },
+    { 'b' },
+    { 'c', 'ç' },
+    { 'd' },
+    { 'e', 'é', 'è', 'ë', 'ê' },
+    { 'f' },
+    { 'g' },
+    { 'h' },
+    { 'i', 'í', 'ì', 'î', 'ï' },
+    { 'j' },
+    { 'k' },
+    { 'l' },
+    { 'm' },
+    { 'n', 'ñ' },
+    { 'o', 'ó', 'ò', 'ö', 'ô', 'ø', 'œ', 'ø'},
+    { 'p' },
+    { 'q' },
+    { 'r' },
+    { 's', 'š', 'ß' },
+    { 't' },
+    { 'u', 'ú', 'ù', 'ü' , 'û'},
+    { 'v' },
+    { 'w' },
+    { 'x' },
+    { 'y', 'ý', 'ÿ' },
+    { 'z', 'ž' }
+}
+alphabet_upper = { -- for sorting
+    { ' ' },
+    { 'A', 'Á', 'À', 'Ä', 'Å', 'Æ'},
+    { 'B' },
+    { 'C', 'Ç' },
+    { 'D' },
+    { 'E', 'È', 'É', 'Ë' },
+    { 'F' },
+    { 'G' },
+    { 'H' },
+    { 'I', 'Í', 'Ì', 'Ï' },
+    { 'J' },
+    { 'K' },
+    { 'L' },
+    { 'M' },
+    { 'N', 'Ñ' },
+    { 'O', 'Ó', 'Ò', 'Ö', 'Ø','Œ', 'Ø' },
+    { 'P' },
+    { 'Q' },
+    { 'R' },
+    { 'S', 'Š' },
+    { 'T' },
+    { 'U', 'Ú', 'Ù', 'Ü' },
+    { 'V' },
+    { 'W' },
+    { 'X' },
+    { 'Y', 'Ý', 'Ÿ' },
+    { 'Z', 'Ž' }
+}
+\end{filecontents*}
+\makeatletter
+\def\theindex{%    only for demonstration
+  \section*{\indexname}
+  \parskip\z@ \@plus .3\p@\relax \parindent\z@
+  \let\item\@idxitem}
+\makeatother
+%StartVisiblePreamble
+\usepackage{makeidx}\makeindex
+\newcommand\idxnewletter[1]{\textbf{\textit{#1}}}
+%StopVisiblePreamble
+\pagestyle{empty}
+\begin{document}
+\section{Escaping characters}
+\begin{itemize}
+\item Exclamation mark ! \index{exclaim ("!)}
+\item Vertical bar| \index{Vertical bar ("|)}
+\item Doublequote \verb|"| \index{""}
+\item Double doublequote \verb|""| \index{""""}
+\item At character @ \index{At ("@)}
+\end{itemize}
+run \verb|xindex -c header <file.idx>|
+\index{<file.idx>@\texttt{<file.idx>}}
+\index{123}
+\newpage
+\printindex
+\end{document}
+\end{externalDocument}
+
+
+
+\section{Case sensitive index entries}
+By default \textsf{foo} and \textsf{Foo} are two different entries and will handled differently
+by \Lprog{xindex}: \textsf{Foo} will be as an own entry \emph{before} \textsf{foo}. Let's see 
+a more complex example. In the index the entry \verb|xindex-DIN2.lua| is the first one of
+the \verb|xindex-???| series because uppercase letters are sorted before lowercase letters.
+
+\begin{externalDocument}[
+%  grfOptions={width=\dimexpr\linewidth-2\fboxsep-2\fboxrule},
+  mpwidth=0.55\linewidth,
+  pages={2},
+  frame=false,
+  compiler=lualatex --shell-escape, 
+  crop,
+  xindex,
+%  xindexOptions=,
+  force,
+  runs=2,code,docType=latex,
+  showFilename,
+  align=\centering,
+  lstOptions={columns=fixed}]{xindex}
+\documentclass{scrartcl}
+\usepackage{libertinus-otf}
+\makeatletter
+\def\theindex{%    only for demonstration
+  \section*{\indexname}
+  \parskip\z@ \@plus .3\p@\relax \parindent\z@
+  \let\item\@idxitem}
+\makeatother
+\usepackage{filecontents}
+\begin{filecontents*}{\jobname.idx}
+\indexentry{xindex package@\texttt  {xindex} package|hyperpage}{2}
+\indexentry{xindex program@\texttt  {xindex} program|hyperpage}{4}
+\indexentry{xindex-cfg.lua file@\texttt  {xindex-cfg.lua} file|hyperpage}{6}
+\indexentry{xindex-newfile.lua file@\texttt  {xindex-newfile.lua} file|hyperpage}{6}
+\indexentry{xindex-DIN2.lua file@\texttt  {xindex-DIN2.lua} file|hyperpage}{6}
+\indexentry{xindex-cfg-common.cfg file@\texttt  {xindex-cfg-common.cfg} file|hyperpage}{9}
+\indexentry{xindex-cfg.lua file@\texttt  {xindex-cfg.lua} file|hyperpage}{10}
+\indexentry{xindex-HAdW-eKO.lua file@\texttt  {xindex-HAdW-eKO.lua} file|hyperpage}{10}
+\indexentry{xindex-dtk.lua file@\texttt  {xindex-dtk.lua} file|hyperpage}{12}
+\indexentry{xindex program@\texttt  {xindex} program|hyperpage}{13}
+\indexentry{xindex program@\texttt  {xindex} program|hyperpage}{14}
+\indexentry{xindex-cfg-common.lua file@\texttt  {xindex-cfg-common.lua} file|hyperpage}{14}
+\indexentry{xindex package@\texttt  {xindex} package|hyperpage}{15}
+\end{filecontents*}
+%StartVisiblePreamble
+\usepackage{makeidx}
+\usepackage{hyperref}
+%StopVisiblePreamble
+\pagestyle{empty}
+\begin{document}
+foo\newpage
+\printindex
+\end{document}
+\end{externalDocument}
+
+
+The same example sorted with the \verb|-a| or \verb|--nocasesensitive| has another output: now
+\verb|xindex-cfg-common.lua| is the first one of the \verb|xindex-???| series.
+
+
+\begin{externalDocument}[
+%  grfOptions={width=\dimexpr\linewidth-2\fboxsep-2\fboxrule},
+  mpwidth=0.55\linewidth,
+  pages={2},
+  frame=false,
+  compiler=lualatex --shell-escape, 
+  crop,
+  xindex,
+  xindexOptions=-a,
+  force,
+  runs=2,code,docType=latex,
+  showFilename,
+  align=\centering,
+  lstOptions={columns=fixed}]{xindex}
+\documentclass{scrartcl}
+\usepackage{libertinus-otf}
+\makeatletter
+\def\theindex{%    only for demonstration
+  \section*{\indexname}
+  \parskip\z@ \@plus .3\p@\relax \parindent\z@
+  \let\item\@idxitem}
+\makeatother
+\usepackage{filecontents}
+\begin{filecontents*}{\jobname.idx}
+\indexentry{xindex package@\texttt  {xindex} package|hyperpage}{2}
+\indexentry{xindex program@\texttt  {xindex} program|hyperpage}{4}
+\indexentry{xindex-cfg.lua file@\texttt  {xindex-cfg.lua} file|hyperpage}{6}
+\indexentry{xindex-newfile.lua file@\texttt  {xindex-newfile.lua} file|hyperpage}{6}
+\indexentry{xindex-DIN2.lua file@\texttt  {xindex-DIN2.lua} file|hyperpage}{6}
+\indexentry{xindex-cfg-common.cfg file@\texttt  {xindex-cfg-common.cfg} file|hyperpage}{9}
+\indexentry{xindex-cfg.lua file@\texttt  {xindex-cfg.lua} file|hyperpage}{10}
+\indexentry{xindex-HAdW-eKO.lua file@\texttt  {xindex-HAdW-eKO.lua} file|hyperpage}{10}
+\indexentry{xindex-dtk.lua file@\texttt  {xindex-dtk.lua} file|hyperpage}{12}
+\indexentry{xindex program@\texttt  {xindex} program|hyperpage}{13}
+\indexentry{xindex program@\texttt  {xindex} program|hyperpage}{14}
+\indexentry{xindex-cfg-common.lua file@\texttt  {xindex-cfg-common.lua} file|hyperpage}{14}
+\indexentry{xindex package@\texttt  {xindex} package|hyperpage}{15}
+\end{filecontents*}
+%StartVisiblePreamble
+\usepackage{makeidx}
+\usepackage{hyperref}
+%StopVisiblePreamble
+\pagestyle{empty}
+\begin{document}
+foo\newpage
+\printindex
+\end{document}
+\end{externalDocument}
+
+
+
+
+\section{Automatic index creation}
+With package \Lpack{xindex} one can define several different index files, e.\,g.
+an \Index{index of names}. With the optional argument \Loption{imakeidx} the package itself loads  \Lpack{imakeidx}
+and adds the program \Lprog{xindex} as the default program to  \Lpack{imakeidx}. 
+
+\begin{externalDocument}[
+%  grfOptions={width=\dimexpr\linewidth-2\fboxsep-2\fboxrule},
+  mpwidth=0.55\linewidth,
+  pages={6},
+  frame=false,
+  compiler=lualatex --shell-escape, 
+  crop,
+  xindex,
+  xindexOptions=-l de,
+  force,
+  runs=2,code,docType=latex,
+  showFilename,
+  align=\centering,
+  lstOptions={columns=fixed}]{xindex}
+\documentclass{scrartcl}
+\usepackage{libertinus-otf}
+\makeatletter
+\let\ps@plain\ps@empty
+\makeatother
+%StartVisiblePreamble
+\usepackage[imakeidx]{xindex}
+\makeindex[name=persons,title=Index of names,
+   columns=1,options=--noheadings]
+\def\ThanhVN{Hàn Thê\protect\llap{%
+  \raise 0.5ex\hbox{\'{}}}}
+%StopVisiblePreamble
+\pagestyle{empty}\renewcommand\thepage{}
+\begin{document}
+foo\index[persons]{Niepraschk,~ Rolf}
+foo\index[persons]{Lamport,~ Leslie}
+foo\index[persons]{Knuth,~ Donald}
+foo\index[persons]{Knuth,~ Donald}
+\newpage
+foo\index[persons]{Lamport,~ Leslie}
+foo\index[persons]{Thành,~ \ThanhVN}
+foo\index[persons]{Kew,~ Jonathan}
+foo\index[persons]{Kohm,~ Markus}
+foo\index[persons]{Preining,~ Norbert}
+\newpage
+foo\index[persons]{Schenk,~ Christian}
+foo\index[persons]{Feuerstack,~ Thomas}
+foo\index[persons]{Tobin,~ Geoffrey}
+foo\index[persons]{Wilson,~ Peter}
+\newpage
+foo\index[persons]{Kohm,~ Markus}
+foo\index[persons]{Theiling,~ Henrik}
+foo\index[persons]{Pégourié-Gonnard,~ Manuel}
+foo\index[persons]{Roux,~ Élie}
+\newpage
+foo\index[persons]{Mittelbach,~ Frank}
+foo\index[persons]{Fairbairns,~ Robin}
+foo\index[persons]{Lemberg,~ Werner}
+foo\index[persons]{Volovich,~ Vladimir}
+
+\printindex[persons]
+\end{document}
+\end{externalDocument}
+
+
+You have to run \LaTeX\  with the \verb|--shell-escape|\index{Shell escape} option to run \Lprog{xindex}
+from within the \LaTeX\ document.
+
+\section{Demerits}
+\begin{itemize}
+\item For more than 5000 entries in the \Lext{idx} file the internal Lua function
+for \Index{sorting} may take some time.
+\item The \Lext{idx} file is not checked for \LaTeX\  errors\index{LaTeX\ errors@\LaTeX\  errors} 
+in the argument of \Lcs{indexentry}.
+\end{itemize}
+
+
+
+
+
+%\nocite{*}
+%\printbibliography
+
+
+\printindex
+
+\end{document}
+
+
+
+folium = { 
+  de = {"f", "ff"},
+  en = {"f", "ff"},
+  fr = {"sq","sqq"},
+}

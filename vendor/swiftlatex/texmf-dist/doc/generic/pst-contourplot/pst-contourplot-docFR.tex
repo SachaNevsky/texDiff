@@ -1,0 +1,185 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=2cm]{geometry}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[garamond]{mathdesign}
+\usepackage{multido,animate,pst-math}
+\usepackage[colorlinks=true]{hyperref}
+\usepackage{pst-contourplot}
+\title{psContourPlot}
+\date{14 juillet 2018}
+\author{Manuel Luque}
+\title{L'algorithme ``\textit{marching squares}'' adapté à PSTricks v\fileversion}
+\begin{document}
+\maketitle
+\section{La commande \textbackslash{psContourPlot[options](x1,y1)(x2,y2)}}
+Si vous ne connaissez pas les ``\textit{marching squares}'', l'article que Wikipedia lui consacre, très joliment illustré, me paraît très complet :
+
+\centerline{\url{https://en.wikipedia.org/wiki/Marching_squares}}
+
+Il s'agit d'une adaptation de cet algorithme à PSTricks, utilisé dans la commande \verb+\psContourPlot[options]+\footnote{Le nom de la commande est copié sur celle de Mathematica  : ContourPlot} qui possède les options suivantes :
+\begin{enumerate}
+  \item \texttt{[function=])} : fonction implicite $f(x,y)$ de la courbe à représenter en mode algebraic ou postscript, il faut noter que le mode postscript est le plus rapide ;
+  \item \texttt{(x1,y1)(x2,y2)} : les limites du cadre d'étude, comme pour \verb+\psframe(x1,y1)(x2,y2)+, coordonnées du coin inférieur à gauche et du coin supérieur à droite ;
+  \item \texttt{[a=0.025]} : côté d'une cellule (carré) ;
+  \item \texttt{[grid=false]} : booléen pour dessiner la grille des cellules ;
+  \item \texttt{[Fill=false]} : booléen pour colorier l'intérieur avec l'option de PSTricks \texttt{[fillcolor]} ;
+  \item \texttt{[ReverseColors=false]} : le coloriage de l'intérieur n'est valable que pour un seul objet (un cercle par exemple). S'il y a plusieurs objets (voir les 2 exemples des metaballs) c'est l'extérieur qui se colorise. En activant ce booléen on corrige ce problème ;
+  \item \texttt{[showpoints]} : booléen pour afficher les points la la courbe (option de PSTricks) ;
+  \item \texttt{[ChoicePoints= liste de numéros de points]} : on place ici les points où il y aura une flèche sur la courbe, on indique une valeur négative si pour la valeur positive la flèche n'est pas dans le sens souhaité~;
+  \item \texttt{[WriteData]} : booléen permettant d'enregistrer les coordonnées des points, le nom du fichier peut-être choisi avec l'option \texttt{[FileName=PointsCurve]}.
+\end{enumerate}
+Pour résoudre les 2 cas ambigus de l'algorithme, j'ai adopté la solution proposée par Xiaoqiang Zheng et Alex Pang :
+
+\centerline{\url{https://classes.soe.ucsc.edu/cmps161/Winter14/papers/tensor/projects/contour/paper.pdf}}
+
+Une deuxième commande \verb+\psReadData[FileName=...]+ permet représenter la courbe enregistrée, l'option [Fill] n'est pas permise.
+\section{Exemples}
+\subsection{Un cercle}
+\begin{center}
+\begin{pspicture}[showgrid](-4,-4)(4,4)
+\psContourPlot[algebraic,a=0.5,linecolor=red,grid,function=x^2+y^2-16,ChoicePoints=-4 120 -45,WriteData,FileName=circle,showpoints](-4,-4)(4,4)
+\psline{<->}(0,4.5)(0,0)(4.5,0)
+\uput[ul](0,0){$O$}
+\uput[u](0,4.5){$y$}
+\uput[r](4.5,0){$x$}
+\end{pspicture}
+\end{center}
+\begin{verbatim}
+\psContourPlot[algebraic,a=0.5,linecolor=red,grid,function=x^2+y^2-16,,showpoints,
+               ChoicePoints=-4 120 -45,WriteData,FileName=circle](-4,-4)(4,4)
+\end{verbatim}
+Cette grille contient 16 cellules suivant les 2 axes, le côté de chacune vaut 0.5 cm.
+
+\subsection{Colorier l'intérieur}
+\begin{center}
+\begin{pspicture}[showgrid=false](-6,-4)(6,4)
+\psContourPlot[unit=0.5,algebraic,a=0.4,linecolor=blue,Fill,fillcolor=red,function=x*(x^2+y^2)-10*(x^2-y^2),grid](-10,-8)(10,8)
+\psline{<->}(0,4.5)(0,0)(5.5,0)
+\uput[d](0,0){$O$}
+\uput[u](0,4.5){$y$}
+\uput[r](5.5,0){$x$}
+\end{pspicture}
+\end{center}
+\begin{verbatim}
+\psContourPlot[unit=0.5,algebraic,a=0.4,
+               linecolor=blue,Fill,fillcolor=red,
+               function=x*(x^2+y^2)-10*(x^2-y^2),grid](-10,-8)(10,8)
+\end{verbatim}
+\subsection{2D metaballs}
+\begin{center}
+\begin{animateinline}[controls,palindrome,
+                     begin={\begin{pspicture}(-8,-4)(8,4)},
+                     end={\end{pspicture}}]{5}% 5 image/s
+\multiframe{50}{r=-2+0.08}{%
+\psframe*(-6.4,-4)(6.4,4)
+\pstVerb{/xC \r\space def
+         /FonctionMetaballs {
+          1 x xC sub dup mul y dup mul add sqrt div
+          0.5 x xC add dup mul y dup mul add sqrt div
+          add
+          1 sub
+         } def}%
+\psContourPlot[unit=2,a=0.1,linewidth=0.025,linecolor=red,fillcolor=cyan,Fill,ReverseColors,function=FonctionMetaballs](-4,-2)(4,2)
+\psdots(! xC 2 mul 0)(! xC neg 2 mul 0)}
+\end{animateinline}
+\end{center}
+\begin{verbatim}
+\begin{animateinline}[controls,palindrome,
+                     begin={\begin{pspicture}(-8,-4)(8,4)},
+                     end={\end{pspicture}}]{5}% 5 image/s
+\multiframe{50}{r=-2+0.08}{%
+\psframe*(-6.4,-4)(6.4,4)
+\pstVerb{/xC \r\space def
+         /FonctionMetaballs {
+          1 x xC sub dup mul y dup mul add sqrt div
+          0.5 x xC add dup mul y dup mul add sqrt div
+          add
+          1 sub
+         } def}%
+\psContourPlot[unit=2,a=0.1,linewidth=0.025,linecolor=red,fillcolor=cyan,Fill,ReverseColors,
+               function=FonctionMetaballs](-8,-4)(8,4)
+\psdots(! xC 2 mul 0)(! xC neg 2 mul 0)}
+\end{animateinline}
+\end{verbatim}
+\newpage
+% 5 metaballs
+\begin{center}
+%     1/((x-0.0001)^2+(y-1)^2)^2+
+%     1/((x-0.95)^2+(y-0.309)^2)^2+
+%     1/((x+0.5878)^2+(y+0.809)^2)^2+
+%     1/((x-0.5878)^2+(y+0.809)^2)^2+
+%     1/((x+0.95)^2+(y-0.309)^2)^2
+%     -17
+\begin{pspicture}[showgrid](-4,-4)(4,4)
+\psset{unit=2.5}
+\pstVerb{/FonctionMetaballs {
+         1 x 0.0001 sub dup mul y 1     sub dup mul add dup mul div
+         1 x 0.95   sub dup mul y 0.309 sub dup mul add dup mul div add
+         1 x 0.5878 sub dup mul y 0.809 add dup mul add dup mul div add
+         1 x 0.5878 add dup mul y 0.809 add dup mul add dup mul div add
+         1 x 0.95   add dup mul y 0.309 sub dup mul add dup mul div add
+         17 sub
+        } def}%
+\psContourPlot[a=0.025,linecolor=red,fillcolor=cyan,Fill,ReverseColors,
+               function=FonctionMetaballs](-4,-4)(4,4)
+\psdots(0,1)(0.95,0.309)(-0.95,0.309)(-0.5878,-0.809)(0.5878,-0.809)
+\pspolygon(0,1)(-0.95,0.309)(-0.5878,-0.809)(0.5878,-0.809)(0.95,0.309)
+\end{pspicture}
+\end{center}
+\begin{verbatim}
+% 5 metaballs
+\begin{center}
+%     1/((x-0.0001)^2+(y-1)^2)^2+
+%     1/((x-0.95)^2+(y-0.309)^2)^2+
+%     1/((x+0.5878)^2+(y+0.809)^2)^2+
+%     1/((x-0.5878)^2+(y+0.809)^2)^2+
+%     1/((x+0.95)^2+(y-0.309)^2)^2
+%     -17
+\begin{pspicture}[showgrid](-4,-4)(4,4)
+\psset{unit=2.5}
+\pstVerb{/FonctionMetaballs {
+         1 x 0.0001 sub dup mul y 1     sub dup mul add dup mul div
+         1 x 0.95   sub dup mul y 0.309 sub dup mul add dup mul div add
+         1 x 0.5878 sub dup mul y 0.809 add dup mul add dup mul div add
+         1 x 0.5878 add dup mul y 0.809 add dup mul add dup mul div add
+         1 x 0.95   add dup mul y 0.309 sub dup mul add dup mul div add
+         17 sub
+        } def}%
+\psContourPlot[a=0.05,linecolor=red,fillcolor=cyan,Fill,ReverseColors,
+               function=FonctionMetaballs](-4,-4)(4,4)
+\psdots(0,1)(0.95,0.309)(-0.95,0.309)(-0.5878,-0.809)(0.5878,-0.809)
+\pspolygon(0,1)(-0.95,0.309)(-0.5878,-0.809)(0.5878,-0.809)(0.95,0.309)
+\end{pspicture}
+\end{verbatim}
+\newpage
+\subsection{Les lignes de champ d'un dipôle hertzien}
+\begin{center}
+\begin{pspicture}(-5,-5)(5,5)
+\pstVerb{/ti 0 def /k0 2 PI mul def}%
+\multido{\rc=-0.9+0.2,\i=1+1}{11}{
+\psContourPlot[unit=5,a=0.025,linewidth=0.01,linecolor={[rgb]{0 0.5 0}},
+		   function=/ri x dup mul y dup mul add sqrt k0 mul def
+                    /theta x y atan def
+		   ri ti sub COS ri ti sub SIN ri div add theta sin dup mul mul \rc\space sub](-1,-1)(1,1)
+}
+\end{pspicture}
+\end{center}
+\begin{verbatim}
+\pstVerb{/t 0 def /k0 2 PI mul def}%
+\multido{\rc=-1.1+0.2}{11}{
+\psContourPlot[unit=5,a=0.025,linewidth=0.01,linecolor={[rgb]{0 0.5 0}},
+		   function=/r x dup mul y dup mul add sqrt k0 mul def
+                    /theta x y atan def
+		   r t sub COS r t sub SIN r div add theta sin dup mul mul \rc\space sub](-1,-1)(1,1)}
+\end{verbatim}
+\section{Compléments}
+Des exemples sont inclus dans la documentation, mais vous trouverez d'autres exemples sur le blog :
+
+\centerline{\url{http://pstricks.blogspot.com/}}
+
+\noindent et comme application dédiée à la physique, le tracé des lignes de champ magnétique de fils parallèles :
+
+\centerline{\url{http://pstricks.blogspot.com/2018/07/champs-magnetiques-crees-par-des-fils.html}}
+
+\end{document} 

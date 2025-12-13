@@ -1,0 +1,196 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-2">
+<meta http-equiv="Content-language" content="pl">
+<meta name="Author" content="Włodzimierz Macewicz">
+<meta name="Keywords" content="tex, dvidvi, Wirtualna Akademia">
+<title>DVIDVI </title>
+</head>
+<body bgcolor=#a0F0f0>
+
+<center>
+<h2>DVIDVI </h2>
+<i></i><p>
+<i></i><p>
+
+autor: <i>Maciej Głowacki </i></center>
+
+<i></i><p>
+<hr>
+<p>
+<code>DVIDVI</code> jest programem sygnowanym przez Radical Eye Software (co w praktyce
+oznacza autorstwo Tomasa Rokickiego). Program ten, operując na pliku typu DVI
+wybiera strony, zmienia ich wzajemne położenie i pozycjonuje na arkuszu druku.
+
+<h3> Format: </h3>
+
+<pre>
+d:p<sub>1</sub>[(x<sub>1</sub>,y<sub>1</sub>)][,p<sub>2</sub>[(x<sub>2</sub>,y<sub>2</sub>)]]...[,p<sub>n</sub>[(x<sub>n</sub>,y<sub>n</sub>)]] fi fo
+</pre>
+gdzie:
+<dl>
+<dd>nawiasy kwadratowe oznaczają nieobowiązkowe użycie tego co zawierają;
+<dd>odstępy, nawiasy okrągłe i przecinki są konieczne w kontekście;
+<dt><code>d</code>
+
+   <dd>dzielnik (modulo); liczba dodatnia z zakresu 1 do 32,
+określająca rozmiar porcji (w stronach), na jakie zostanie podzielony plik
+wejściowy;
+<dt><code>p</code>
+   <dd>pozycja; liczba określająca pozycję strony w ramach porcji
+(pierwsza strona w porcji jest określana liczbą 0, a więc najwyższa możliwa
+pozycja to <code>d</code>-1); gdy liczba ta jest poprzedzona znakiem '-',
+w przetwarzaniu brane będą pod uwagę porcje w odwrotnej kolejności, czyli
+począwszy od ostatniej (nie znaczy to że liczba jest ujemna!); w szczególności
+więc możliwy jest zapis '-0' znaczący co innego niż '0'; można określić
+pozycje tylko niektórych stron, można też powtarzać specyfikacje tych samych
+stron (wtedy w pliku wyjściowym te strony pojawią się wielokrotnie);
+<dt><code>x</code> i <code>y</code>
+   <dd>współrzędna pozioma i pionowa lewego górnego rogu
+strony z pliku wejściowego na arkuszu pliku wyjściowego; specyfikacja -- tak
+jak w TeX-u<sup><a href=#fn1>1</a></sup>; gdy <code>x</code> i <code>y</code> są
+równocześnie zerowe, można je wraz z nawiasami pominąć;
+<dt><code>fi</code>
+   <dd>nazwa pliku wejściowego; rozszerzenie (<code>.dvi</code>) można pominąć;
+<dt><code>fo</code>
+   <dd>nazwa pliku wyjściowego; w podpowiedzi przy wywołaniu programu
+z błędnymi parametrami czytamy, że parametr ten można pominąć; jest to nieprawda
+przynajmniej w używanej przeze mnie wersji 0.5 -- gdy nie zostanie podany ten
+parametr, pierwsza próba zapisu do tego pliku kończy się zawieszeniem programu,
+czyli koniecznością restartu systemu (sic!).
+</dl>
+
+<h3>Opis działania</h3>
+
+<ul>
+<li>Program czyta plik wejściowy i dzieli go na porcje o <code>d</code>
+stronach (ewentualnie ostatnia porcja jest uzupełniana pustymi stronami).
+Następnie zaczyna budować arkusze, tworząc plik wyjściowy.
+<li>Dla każdego tworzonego arkusza zostaje raz użyta każda grupa
+parametrów <code>p(x,y)</code>; kolejność grup w wywołaniu nie ma znaczenia. Arkuszy
+powstanie tyle, ile zostało utworzonych porcji.
+<li>Dla pierwszego arkusza zostają pobrane -- określone przez kolejne
+<code>p</code> z wywołania -- strony z pierwszej porcji 
+(gdy przed <code>p</code> jest
+'-', to z ostatniej) i umieszczone w pierwszym arkuszu, w miejscu określonym
+przez odpowiadające im <code>(x,y)</code>.
+<li>Dla każdego następnego arkusza pobrane zostają strony z następnej
+(lub poprzedniej gdy przed <code>p</code> jest '-') porcji. I te deum.
+</ul>
+
+
+<h3> Ograniczenia: </h3>
+
+ <ul>
+<li>Program z całego dostępnego pliku produkuje jedną zszywkę. Chcąc
+więc utworzyć więcej zszywek, należy najpierw plik wejściowy podzielić na
+mniejsze (o ilości stron takiej, jak pojemność jednej zszywki). Nie znam
+sposobu, w jaki mógłby to zrobić <code>DVIDVI</code>.
+<li>Przy tworzeniu arkuszy zawierających piętrowo umieszczone strony,
+program nie potrafi ich obracać włosami w dół, a jest to potrzebne gdy trzeba
+arkusz falcować<sup><a href=#fn2>2</a></sup>,
+a potem dopiero przycinać; można
+temu zaradzić na trzy sposoby: --> pociąć najpierw arkusze na
+poziome pasy o wysokości jednej strony, a potem dopiero falcować;
+--> wydrukować częściowo strony, obrócić o 180<sup>0</sup> i wydrukować
+resztę po tej samej stronie kartek, jednak wtedy trudno (szczególnie na
+drukarce laserowej) uzyskać powtarzalność pozycjonowania; -->
+(najmniej fizyczny) sprzęg z TeX-em: można w obsłudze procesu zrzutu stron
+(output routine) oprogramować obrót wybranych stron. Oczywiście w każdym
+z tych trzech przypadków trzeba przygotować inne parametry dla programu
+<code>DVIDVI</code>.
+</ul>
+
+<h3> Przykłady: </h3>
+
+<ul>
+<li>Ekstrakcja:<br>
+
+<code>dvidvi</code> 30:6 we wy  (różne od <code>dvidvi</code> 5 we wy)<br>
+
+z pliku <code>we</code> do pliku <code>wy</code> zostanie przeniesiona 7 strona, pod
+warunkiem, że ilość stron w pliku <code>we</code> nie jest większa niż suma obu
+użytych w wywołaniu liczb.
+
+<li>Panie na lewo, panowie na prawo:<br>
+
+<code>dvidvi 2:0 we wy1</code><br>
+
+<code>dvidvi 2:-1 we wy2</code><br>
+
+Jeśli założymy, że plik wejściowy zawierał 27 lub 28 stron, to program
+poprzestawia je następująco (strzałki unaoczniają machinacje programu <code>DVIDVI</code>):
+
+<center>
+<img src=./dvistro1.gif width=470 height=320>
+</center>
+
+<p>
+w pliku <code>wy1</code> znajdą się strony nieparzyste, a w <code>wy2</code> parzyste, ale
+w odwrotnej kolejności. W przypadku korzystania z drukarki laserowej wystarczy
+wypuścić arkusze zadrukowane jednostronnie zawartością pliku <code>wy1</code> do
+odbiornika drukiem w górę (na ogół służy do tego tacka z przodu drukarki),
+i nie odwracając (tak, by ostatnio wydrukowany arkusz stał się pierwszym
+drukowanym z drugiej strony) podstawić pod druk zawartości pliku <code>wy2</code> (także
+drukiem w górę).
+
+<li>Broszurka w A5<sup><a href=#fn3>3</a></sup>:<br>
+
+<code>dvidvi 4:-3,0(5.5in,0in) we wy1</code><br>
+
+<code>dvidvi 4:1,-2(5.5in,0in) we wy2</code>
+
+<p>Przy założeniu, że na wejściu było od 37 do 40 stron, zostaną one
+poprzemieszczane i połączone jak niżej (strzałki kropkowane łączą przeciwne
+strony kartki przyszłej książeczki):
+
+<center>
+<img src=./dvistro2.gif width=546 height=327>
+</center>
+
+Jeśli więc w pliku <code>we</code> znajdą się strony w formacie A5, to w pliku <code>wy1</code>
+zostaną umieszczone ,,prawe'' strony arkuszy formatu A4, a w <code>wy2</code> --- w tej
+samej kolejności arkuszy --- ,,lewe''. Tym razem należy w pierwszym przebiegu
+wypuścić arkusze do odbiornika drukiem w dół, po czym cały pakiet odwrócić
+,,na grzbiet'' wzdłuż osi równoległej do krótszego boku kartek i tak podstawić
+do druku z drugiej strony. Dodatkowo po zakończeniu drukowania trzeba arkusze
+odpowiednio potasować.
+
+<li>Po tym co napisano powyżej, uważny TeX-nik nie potrzebuje już chyba
+wyjaśnienia (ewentualnie warto to sobie rozrysować):<br>
+
+<code>dvidvi 8:-7,0(4.12in,0in),-5(0in,5.8in),2(4.12in,5.8in) we wy1</code><br>
+
+<code>dvidvi 8:1,-6(4.12in,0in),3(0in,5.8in),-4(4.12in,5.8in) we wy2</code>
+</ul>
+
+
+<h3>Przypisy</h3>
+
+
+<i></i><p>
+<hr width=20% align=left>
+<sup><a name=fn1><b>1</b></A></sup> Z tą zgodnością z TeX-em nie jest tak
+radośnie. Na przykład nie można pominąć w liczbie cyfry '0' przed kropką
+dziesiętną. W ogóle p. Rokicki sprawia wrażenie jakby się trochę dąsał na
+TeX-a --- np.  TeX numeruje strony od '1' --- <code>DVIDVI</code> od '0'. Natomiast gdy dla
+ TeX-a nie ma jednostki domyślnej, to w <code>DVIDVI</code> są aż dwie: jedna to cal,
+a druga --- mocniejsza --- taka, jakiej użyto wcześniej.
+
+<hr width=20% align=left>
+<sup><a name=fn2><b>2</b></a></sup> Podobno po polsku mówi się: złamywać, ale są
+także w użyciu słowa: załamywać, składać.
+
+<hr width=20% align=left>
+
+<sup><a name=fn3><b>3</b></a></sup> Podane w tym i następnym
+przykładzie wielkości współrzędnych oczywiście ściśle zależą od lokalnych cech
+środowiska systemowego i parametrów drukarki.
+
+
+<hr>
+Zredagował:
+<em>Włodzimierz Macewicz</em>
+<hr>
+</body>
+</html>

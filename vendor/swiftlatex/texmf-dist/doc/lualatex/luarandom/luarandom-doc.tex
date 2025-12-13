@@ -1,0 +1,90 @@
+%% $Id: luarandom-doc.tex 862 2018-12-15 16:25:55Z herbert $
+\documentclass[fontsize=11pt,english,BCOR=10mm,DIV=12,bibliography=totoc,parskip=false,
+   headings=small, headinclude=false,footinclude=false,oneside,abstract=on]{pst-doc}
+
+\usepackage{xcolor,pstricks,multido}
+\usepackage{auto-pst-pdf-lua}
+
+\usepackage{luarandom}
+\let\pstMathFV\fileversion
+\lstset{pos=t,wide=true,language=[LaTeX]{TeX},basicstyle=\footnotesize\ttfamily}
+%
+\makeatletter
+\def\DefOfOperator{\@ifstar{\DefOfOperator@}{\DefOfOperator@@}}
+\def\DefOfOperator@#1#2#3#4{{\operator@font#1}:\left\{\begin{array}{ccc} #2&\to&#3\\
+x&\mapsto&#4\end{array}\right.}
+\def\DefOfOperator@@#1#2#3{{\operator@font#1}:\left\{\begin{array}{ccc} #2&\to&#3\\
+x&\mapsto&{\operator@font#1}(x)\end{array}\right.}
+\makeatother
+
+
+\begin{document}
+
+\title{\texttt{luarandom}}
+\subtitle{Create a list of random numbers with or without multiple values; v. 0.01}
+\author{Herbert Vo\ss}
+\docauthor{Herbert Vo\ss}
+\date{\today}
+\maketitle
+
+\tableofcontents
+
+
+\section{Random numbers}
+Package \LPack{luarandom} supports the creation of random number lists where a number will
+appear only once or multiple times. With Lua\TeX\ all random numbers are build with the help of Lua which
+has the advantage that there will be no problem with \TeX's limited parameter stack size.
+However, this package will \emph{not}  run with other \TeX-engines than Lua\LaTeX.
+
+
+\section{The Macros}
+\begin{BDef}
+\Lcs{makeSimpleRandomNumberList}\Largb{Left}\Largb{Right}\Largb{N}\% multiple values possible\\
+\Lcs{makeRandomNumberList}\Largb{Left}\Largb{Right}\Largb{N} \% no multiple values!\\
+\Lcs{getNumberFromList}\Largb{number}
+\end{BDef}
+
+
+The list of the random numbers is saved in the Lua table \texttt{RandomNumbers}. 
+
+
+\section{Examples}
+
+
+\begin{LTXexample}[pos=t]
+\small
+\makeSimpleRandomNumberList{1}{30}{30}% with multiple values (hopefully ;-)
+\multido{\iA=1+1}{30}{\getNumberFromList{\iA}, }
+
+\makeRandomNumberList{1}{30}{30}%  without multiple values
+\multido{\iA=1+1}{30}{\getNumberFromList{\iA}, }
+\end{LTXexample}
+
+
+
+The following example uses PSTricks related packages which cannot be run directly 
+with Lua\LaTeX. The package \LPack{auto-pst-pdf-lua} will convert the PSTricks stuff
+in the baclground into PDF images which will be included in a second run.
+
+
+\begin{LTXexample}[pos=t]
+\newcounter{RandNo}\setcounter{RandNo}{1}
+\def\n{10} \def\N{\the\numexpr\n*\n}
+\makeRandomNumberList{1}{\N}{\N}   
+\begin{pspicture}(\n,\n)
+  \psgrid[subgriddiv=0,gridlabels=0pt]
+  \multido{\rRow=0.5+1.0}{\n}{\multido{\rCol=0.5+1.0}{\n}{%
+      \rput(\rCol,\rRow){\textcolor{randomhsb}{\getNumberFromList{\theRandNo}}}%
+     \stepcounter{RandNo}}}
+\end{pspicture}
+\end{LTXexample}
+
+
+\section{The code}
+
+\lstinputlisting{luarandom.sty}
+
+\printindex
+
+
+\end{document}

@@ -1,0 +1,481 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+ <meta http-equiv="content-type" content="text/html; charset=iso-8859-2">
+ <meta name="keywords" lang="en" content="Polish TeX Users Group,  Polish TeX, computer fonts,
+  MikTeX, fpTeX, teTeX, font installation" >
+ <LINK REL=STYLESHEET TYPE="text/css" HREF="./tpstyle.css">
+ <title>Instalowanie fontów Type 1/TrueType w systemie TeX </title>
+</head>
+
+<!-- zmiany i uzupełnienia: StaW 05.05.2014 -->
+
+<body>
+<html>
+<h1>Instalowanie fontów Type&nbsp;1/TrueType</h1>
+
+<h3>
+UWAGA: poniższy artykuł jest mocno ''techniczny'', wyjaśniając nieco, co 
+się dzieje za kulisami. Tym samym może okazać się przydatny dla nietypowych 
+sytuacji, gdy instalujemy "ręcznie" własne, lub niedostępne w dystrybucji fonty.
+Obecnie w dystrybucji TeX Live 
+cały proces instalacji fontów został zautomatyzowany: po instalacji pakietu
+fontów za pomocą programu TeX Live Manager aktualizowane są odpowiednie 
+pliki konfiguracyjne i fonty są dostępne dla różnych wersji-silników TeX-a.
+</h3>
+
+<!-- Spis treści ....................................................... -->
+<hr>
+<A NAME=P0> <ul>
+ <li><A HREF=#fontyt1> Instalowanie fontów Type&nbsp;1</A></li>
+  <ul>
+   <li><A HREF=#summa> Omówienie</A></li>
+   <li><A HREF=#textfm> TeX</A></li>
+   <li><A HREF=#dvips> Dvips</A></li>
+   <li><A HREF=#latex> LaTeX</A></li>
+   <li><A HREF=#pdftex> pdfTeX/pdfLaTeX</A></li>
+  </ul>
+ <li><A HREF=#fontyttf> Instalowanie fontów True Type</A></li>
+ <ul> 
+   <li><A HREF=#ttftld> TeX/LaTeX/Dvips</A></li>
+   <li><A HREF=#pdftexttf> pdfTeX/pdfLaTeX</A></li>
+ </ul>
+</ul>
+
+
+<hr>
+<A NAME="fontyt1">
+<h2>Instalowanie fontów Type&nbsp;1</h2>
+<p>
+ Podczas składania tekstu TeX korzysta wyłącznie z&nbsp;plików
+ metrycznych. Pliki takie mają rozszerzenie <code>.tfm</code>.  Pliki
+ metryczne nie zawierają informacji o&nbsp;kształtach znaków, te są
+ zdefiniowane w&nbsp;innych plikach. Aby mieć możliwość wydrukowania
+ złożonego dokumentu, korzystującego z&nbsp;fontów wektorowych (skalowalnych,
+ np. Type&nbsp;1) należy plik <code>dvi</code> zamienić na plik 
+ w&nbsp;formacie PostScript. W&nbsp;każdej dystrybucji 
+ TeX-a znajduje się program <code>dvips</code> wykonujący taką zamianę. 
+ Program ten korzysta z&nbsp;plików z&nbsp;rozszerzeniem <code>.pfb</code>, 
+ zawierających definicje kształtu znaków; może także korzystać z&nbsp;innych, 
+ pomocniczych plików.
+</p>
+<p>
+ Zainstalowanie fontów Type&nbsp;1 w&nbsp;systemie TeX polega na
+ umieszczeniu kilku plików w&nbsp;odpowiednich miejscach. Poniżej
+ opisano cały proces, biorąc za przykład instalację pakietu fontów
+ <A href="./index.html#Antyktor"> Antykwa Toruńska</A>.
+</p>
+<A NAME=summa>
+<h3>Omówienie</h3>
+<p>
+ Ponieważ cały proces instalacji fontów Type1 może się wydać nieco 
+ skomplikowany (szczególnie dla początkujących), wymienimy tu pokrótce 
+ poszczególne kroki. Dalsza część zawiera informacje techniczne, które mogą
+ zainteresować bardziej zaawansowanych użytkowników.</p>
+
+Pakiet fontowy zawiera zwykle kilka rodzajów plików:
+<ul>
+ <li>pliki metryczne <code>.tfm</code>, z&nbsp;których korzysta TeX.
+   W&nbsp;strukturze katalogów zgodnej z&nbsp;TDS (<em>TeX Directory Structure</em>)
+   instalujemy je w&nbsp;ramach katalogu <code>~/texmf/fonts/tfm/</code>.
+   Szczegóły (np. użytą tu interpretację znaku <code>~</code>) patrz 
+   część dot. samego <A HREF=#textfm>TeX-a</A>.
+
+ <li>pliki fontowe <code>.pfb</code>, z&nbsp;których korzysta 
+   <code>dvips</code>, instalujemy w&nbsp;ramach katalogu 
+   <code>~/texmf/fonts/type1/</code>.
+ <li>pliki przekodowania <code>.enc</code>, oraz
+ <li>pliki map fontowych <code>.map</code>, z&nbsp;których także korzysta 
+   sterownik <code>dvips</code>, instalujemy w&nbsp;ramach katalogu 
+   <code>~/texmf/dvips/</code>. Dla Antykwy Toruńskiej odpowiedni podkatalog
+   może mieć nazwę <code>antt/</code>.<br>
+   <b>UWAGA:</b> W 2004 postanowiono zmienić wytyczne TDS i&nbsp;wszystkie
+   pliki fontowe gromadzić w&nbsp;katalogu <code>~/texmf/fonts/</code>.
+   Tym samym pliki <code>.enc</code> znajdują się obecnie w&nbsp;katalogu
+   <code>~/texmf/fonts/enc/dvips/</code> zaś pliki <code>.map</code>
+   w&nbsp;katalogu <code>~/texmf/fonts/map/dvips/</code>.
+   Szczegóły, patrz część dot. <A HREF=#dvips>Dvips</A>.
+ <li>pliki <code>.sty</code> oraz <code>.fd</code> zawierają makra 
+   włączania fontu do składu i&nbsp;definicje fontów, przydatne dla 
+   użytkowników LaTeX-a. Instalujemy je w&nbsp;ramach katalogu 
+   przeznaczonego na makra i&nbsp;style: <code>~/texmf/tex/latex/</code>. 
+   Jeśli pakiet dystrybucyjny z&nbsp;fontami nie zawiera takich plików, 
+   należy je odszukać w&nbsp;innym, towarzyszącym pakiecie.
+   Szczegóły, patrz część dot. <A HREF=#latex>LaTeX</A>.
+</ul>
+</p>
+<p>Po skopiowaniu plików do odpowiednich katalogów i&nbsp;odświeżeniu
+bazy danych instalacji, mapy fontowe powinny być 
+następnie <i>zarejestrowane</i> w&nbsp;głównym pliku mapowań 
+<code>psfonts.map</code>. Proces ten jest obecnie znacznie ułatwiony:
+w&nbsp;katalogu <code>~/texmf/web2c/</code> znajduje się plik 
+<code>updmap.cfg</code>; należy do niego dopisać deklaracje dodawanych
+do instalacji map fontowych, np:</p>
+<code>Map antt-qx.map</code><br>
+<code>Map antt-ec.map</code></p>
+<p>itd. Następnie należy uruchomić program <code>updmap</code>, który
+zaktualizuje nie tylko wspomniany <code>psfonts.map</code>, ale także 
+pliki mapowań dla programów <code>pdftex</code> oraz <code>dvipdfm</code>.
+</p>
+
+<A NAME="textfm"><h3>TeX</h3>
+<p>
+ Pliki <code>.tfm</code> powinny być umieszczone w&nbsp;katalogu,
+ w&nbsp;którym TeX szuka tego typu plików.  W&nbsp;instalacji TeX-a
+ o&nbsp;strukturze katalogów zgodnej z&nbsp;TDS 
+ będzie to <code>~/texmf/fonts/tfm/</code>. Znak <code>~</code> oznacza 
+ tu korzeń drzewa TeX-owego, np. <code>/usr/TeX</code> lub 
+ <code>C:\tex</code>. 
+ Dla wprowadzenia porządku dobrze jest utworzyć podkatalog, który będzie
+ przechowywał nowo instalowane pliki.
+ Pliki metryczne Antykwy Toruńskiej można np. umieścić 
+ w&nbsp;katalogu <code>~/texmf/fonts/tfm/public/antt/</code>
+</p>
+ W systemach TeX-a opartych na bibliotece 
+ <A href="../poczatki/web2c.html">Web2c</a>
+<!-- (<A href="ftp://ftp.GUST.org.pl/TeX/systems/win32/fptex">fpTeX</A>, 
+  <A href="ftp://ftp.GUST.org.pl/TeX/systems/unix/teTeX">teTeX</A>) -->
+ (np. <A href="http://tug.org/texlive">TeX Live<A>)
+ istnieje <em>główny plik konfiguracyjny</em> systemu, którym jest 
+ plik <code>texmf.cnf</code>, znajdujący się 
+ zwykle w&nbsp;katalogu <code>~/texmf/web2c/</code>. 
+ <code>texmf.cnf</code> zawiera deklaracje określające katalogi,
+ w&nbsp;których znajdują się poszczególne części składowe systemu. 
+ I&nbsp;tak zmienna <code>TFMFONTS</code> określa listę katalogów, 
+ w&nbsp;których TeX ma szukać plików TFM.
+ W&nbsp;naszej instalacji zmienna <code>TFMFONTS</code> ma wartość:
+</p>
+<pre>
+ TFMFONTS = .;{$TEXMF/fonts,$VARTEXFONTS}/tfm//
+</pre>
+</p>
+Użyta tu notacja jest opisana w&nbsp;pliku konfiguracyjnym 
+<code>texmf.cnf</code>. Jej interpretacja 
+dla powyższego przykładu brzmi: znajdź pliki <code>.tfm</code> w&nbsp;katalogu
+bieżącym (kropka) a&nbsp;następnie w&nbsp;podkatalogach, kolejno,
+<code>fonts/tfm/</code> katalogów z&nbsp;instalacją TeX-ową 
+(zmienna <code>$TEXMF</code>) lub/ewentualnie 
+w&nbsp;<code>$VARTEXFONTS/tfm/</code> i&nbsp;wszystkich ich podkatalogach
+(znaki <code>//</code>).
+
+<a name ="MikTeX">
+<p>
+ W&nbsp;przypadku popularnej w&nbsp;środowisku MS&nbsp;Windows dystrybucji
+ <A href="ftp://ftp.GUST.org.pl/TeX/systems/win32/miktex">MikTeX</A> 
+ idea jest podobna ale nieco inne są szczegóły (dystrybucja ta 
+ nie jest oparta na Web2c, ale w&nbsp;pełni zgodna z&nbsp;TDS). Główny plik 
+ konfiguracyjny <code>miktex.ini</code> znajduje się w&nbsp;katalogu 
+ <code>~\miktex\config\</code>.
+ Zapis zmiennych i&nbsp;ich nazwy różnią się od ich odpowiedników
+ w&nbsp;dystrybucjach fpTeX i&nbsp;teTeX. 
+ I&nbsp;tak do określenia katalogów zawierających pliki <code>TFM</code> 
+ MikTeX używa zmiennej <code>TFMPath</code>, zaś zapis może wyglądać 
+ następująco:
+</p>
+<pre>
+TFMPath=.;%R\fonts\tfm//
+</pre>
+<p>
+Notacja użyta w&nbsp;przykładzie i&nbsp;jej interpretacja 
+jest opisana w&nbsp;pliku konfiguracyjnym <code>miktex.ini</code>
+oraz w&nbsp;dokumentacji dystrybucji.
+</p>
+<p>
+<small>
+ Pliki <code>.afm</code> (Adobe Font Metric) nie są wprawdzie wykorzystywane 
+ przez TeX-a, ale mogą być potrzebne dla innych programów wspomagających. 
+ Umieścić je należy w&nbsp;katalogu
+ <code>~/texmf/fonts/afm/public/antt</code>. 
+</p>
+<p>
+ Definiowana w&nbsp;pliku <code>texmf.cnf</code> zmienna
+ <code>AFMFONTS</code> (lub zmienna <code>AFMPath</code> 
+ z&nbsp;pliku <code>miktex.ini</code> w&nbsp;przypadku dystrybucji
+ <A href="#MikTeX">MikTeX</A>) 
+ określa listę katalogów,  w&nbsp;których programy
+ mają szukać plików AFM. W&nbsp;naszej instalacji zmienna
+ <code>AFMFONTS</code> ma wartość:
+</p>
+<pre>
+ AFMFONTS = .;$TEXMF/fonts/afm//
+</pre>
+</p>
+<p>
+ Pliki <code>.pfm</code> -- jeżeli takowe są dołączone do pakietu 
+ z&nbsp;fontami -- nie są wykorzystywane przez żaden program systemu TeX; 
+ można je umieścić, dla porządku, w&nbsp;katalogu 
+ <code>~/texmf/fonts/type1/public/antt</code>. Pliki te mogą być przydatne
+ w&nbsp;systemach Windows i&nbsp;OS/2 jeśli chcemy korzystać z&nbsp;fontów
+ w&nbsp;innych aplikacjach i&nbsp;jeśli posiadamy program ATM (Adobe Type
+ Manager).
+</small>
+</p>
+<A NAME="dvips"><h3>dvips</h3>
+<p>
+ Podstawowymi i&nbsp;najważniejszymi plikami konfiguracyjnymi programu 
+ <code>dvips</code> są: <code>config.ps</code> oraz <code>psfonts.map</code>.
+ Pierwszy z&nbsp;nich znajdziemy się w&nbsp;katalogu <code>~/texmf/dvips/config/</code>.
+ Plik <code>config.ps</code> może zawierać deklaracje m.in. używanych przez 
+ program map fontowych (standardowo jest to <code>psfonts.map</code>), zaś
+ plik <code>psfonts.map</code> zawiera informacje niezbędne do prawidłowego 
+ wykorzystania fontu Type&nbsp;1 przez sterownik; jest to 
+ tzw. mapa fontów używanych przez program.
+ Właściwe pliki fontowe (<code>.pfb</code>) powinny być umieszczone 
+ w&nbsp;katalogu przeszukiwanym przez sterownik <code>dvips</code>.  
+ W&nbsp;systemie TeX o&nbsp;strukturze katalogów zgodnej z&nbsp;TDS będzie to
+ <code>~/texmf/fonts/type1/</code>. Także w&nbsp;tym przypadku dobrze
+ jest utworzyć podkatalog, np. pliki <code>.pfb</code> Antykwy Toruńskiej 
+ można umieścić w&nbsp;katalogu 
+ <code>~/texmf/fonts/type1/public/antt/</code>.
+</p>
+<p>
+ Definiowana w&nbsp;pliku <code>texmf.cnf</code> zmienna
+ <code>T1FONTS</code> (lub zmienna <code>Type1Path</code> 
+ z&nbsp;pliku <code>miktex.ini</code> w&nbsp;przypadku instalacji
+ <A href="#MikTeX">MikTeX</A>) 
+ określa listę katalogów, w&nbsp;których dvips 
+ ma szukać fontów Type&nbsp;1. W&nbsp;naszej instalacji (Web2c) zmienna
+ <code>T1FONTS</code> ma wartość:
+</p>
+<pre>
+ T1FONTS = .;$TEXMF/fonts/type1//
+</pre>
+</p>
+<p>
+ Zawartość plików <code>.map</code>, dostarczonych zwykle 
+ w&nbsp;pakiecie z&nbsp;fontami (dla Antykwy Toruńskiej jest to kilka plików),
+ należy dołączyć do głównego pliku map fontowych 
+ <code>psfonts.map</code> (w&nbsp;strukturze katalogów zgodnej z&nbsp;TDS 
+ plik ten znajduje się w&nbsp;katalogu <code>~/texmf/fonts/dvips/map/updmap/</code>).
+ Wykonuje to wspomniany powyżej program <code>updmap</code>.
+ W&nbsp;starszych instalacjach zawartość plików <code>.map</code> należało 
+ ręcznie dopisać do pliku <code>psfonts.map</code>, albo po prostu 
+ zadeklarować je w&nbsp;pliku konfiguracyjnym
+ <code>~/texmf/dvips/config/config.ps</code> -- po deklaracji:
+<pre>
+p psfonts.map
+</pre>
+dopisać wiersz, np.:
+<pre>
+p +antt-qx.map
+</pre>
+ itd. (uwaga: znak <code>+</code> jest istotny).
+ Pliki <code>.map</code> należy umieścić w&nbsp;katalogu
+ <code>~/texmf/fonts/map/dvips/antt/</code>.
+ Fonty <a href="./index.html#Antyktor">Antykwa Toruńska</a>,
+ <a href="./index.html#Antykp">Antykwa Półtawskiego</a>, 
+ czy <a href="./index.html#texgyre">TeX Gyre Termes</a>
+ oraz wiele innych posiadają ponadto pliki <code>.enc</code> potrzebne do
+ zmiany wewnętrznego kodowania fontu na kodowanie wymagane przez TeX-a.
+ Pliki takie  należy umieścić w&nbsp;ramach katalogu 
+<code>~/texmf/fonts/enc/dvips/</code>.
+ Dla Antykwy Toruńskiej podkatalog będzie miał nazwę <code>antt/</code>.
+</p>
+<p>
+ Jeżeli instalujemy font samodzielnie i&nbsp;nie posiadamy gotowego 
+ pliku <code>.map</code> to powinniśmy dokonać odpowiedniego
+ wpisu do głównego pliku mapowego <code>psfonts.map</code>.
+ Więcej informacji na ten temat można znaleźć w&nbsp;punkcie 
+ <a href="font-abc.html#Pliki-cnf"><i>Pliki konfiguracyjne sterownika DVIPS</i></a>
+ z&nbsp;artykułu <i>Fontowe ABC</i>, 
+ B.&nbsp;Jackowskiego i&nbsp;S.&nbsp;Wawrykiewicza.
+</p>
+
+<small>
+<p>
+Często zadawanym przez użytkowników pytaniem jest: <em>dlaczego dvips
+nie ,,widzi'' standardowych fontów CM w&nbsp;formacie Type&nbsp;1
+i&nbsp;ładuje zamiast nich fonty bitmapowe (.pk), które źle się prezentują 
+na ekranie, szczególnie w&nbsp;powiększeniach?</em><br>
+Odpowiedź jest prosta: do niedawna fonty CM Type&nbsp;1 (choć często obecne
+w&nbsp;instalacji) nie były wyszczególnione w&nbsp;pliku 
+<code>psfonts.map</code>. Wynikało to głównie z&nbsp;istnienia dwóch 
+dystrybucji BaKoMa i&nbsp;BlueSky Research. Włączenie ładowania fontów
+CM Type&nbsp;1 przez program <code>dvips</code> wymaga odblokowania wiersza 
+(usunięcia znaku&nbsp;%):
+<pre>
+p +bsr.map
+</pre>
+co dołączy mapowania fontów BlueSky Research do standardowych mapowań
+deklarowanych w&nbsp;pliku <code>psfonts.map</code>.
+</small>
+
+<A NAME="latex"><h3>LaTeX</h3>
+<p>
+ Aby móc wykorzystać zainstalowane fonty użytkownicy LaTeX-a
+ <em>muszą</em> jeszcze zainstalować odpowiedni
+ <em>pakiet</em>. Niekiedy może się zdarzyć, że pakiet
+ z&nbsp;fontami <em>nie</em> zawiera odpowiedniego pakietu
+ LaTeX-owego, który -- jeżeli nie ma go w&nbsp;standardowej dystrybucji
+ LaTeX-a -- trzeba odnaleźć i&nbsp;zainstalować samodzielnie.  Pakiet
+ taki zawiera styl włączający dany krój do składu (z&nbsp;reguły jest
+ to plik z&nbsp;rozszerzeniem <code>.sty</code>)
+ oraz plik (lub pliki) z&nbsp;definicją fontu (z&nbsp;reguły 
+ z&nbsp;rozszerzeniem <code>.fd</code>). 
+ Instalacja polega na skopiowaniu plików <code>.sty</code> 
+ i&nbsp;<code>.fd</code> do katalogu, w&nbsp;którym znajdują się inne pakiety LaTeX-owe,
+ np. do <code>~/texmf/tex/latex/</code>.<br>
+ Pliki <code>.sty</code> i&nbsp;<code>.fd</code> fontów PL oraz
+ <code>cc-pl</code> (spolonizowane fonty Computer Concrete) dla LaTeXa są 
+ standardowo zawarte w&nbsp;pakiecie Platex. Pozostałe dostępne polskie 
+ fonty (a&nbsp;więc te, które udostępniono jedynie w&nbsp; formatach
+ obwiedniowych Type&nbsp;1 i/lub TrueType) zawierają pliki dla LaTeXa
+ w&nbsp;pakietach dystrybucyjnych.
+</p>
+<!--...................................................................-->
+
+</p>
+<A NAME="pdftex"><h3>pdfTeX/pdfLaTeX</h3>
+<p>
+ Program pdfTeX jest rozszerzeniem TeX-a, który tworzy 
+ (właśnie w&nbsp;trybie rozszerzonym) plik wynikowy w&nbsp;formacie
+ PDF (Portable Document Format), zamiast typowego DVI. Hipertekstowe pliki 
+ PDF mogą być przeglądane na wielu platformach systemowych dzięki
+ udostępnionemu bezpłatnie programowi Adobe Acrobat Reader, zachowując przy 
+ tym wszystkie szczegóły układu strony. Opisana powyżej instalacja fontów 
+ Type1 różni się dla pdfTeX jednym szczegółem: należy zadbać aby zawartość
+ pliku mapy fontowej została dołączona (najlepiej przez program 
+ <code>updmap</code>) do pliku <code>pdftex.map</code> czytanego przez program 
+ pdfTeX; znajduje się on obecnie w&nbsp;katalogu 
+ <code>~/texmf/fonts/map/pdftex/updmap/</code>.
+ W&nbsp;aktualnych wersjach pdfTeX użycie danej mapy fontowej może
+ być także wprost zadeklarowane w&nbsp;pliku dokumentu.<br>
+ 
+ Tworząc pliki PDF musimy pamiętać aby stosować <strong>wyłącznie</strong>
+ fonty obwiedniowe (Type1 lub True Type -- patrz niżej), ponieważ fonty 
+ bitmapowe są zwykle fatalnie wyświetlane w&nbsp;przeglądarce.
+ Dotyczy to szczególnie użytkowników LaTeXa, którzy przyzwyczaili się
+ do stosowania fontów EC, które są domyślnie włączane po deklaracji 
+ w&nbsp;preambule pliku:<br>
+ <code>\usepackage[T1]{fontenc}</code>.<br>
+ Otóż nie ma fontów EC w&nbsp;formacie Type&nbsp1, choć są różne zastępniki
+ (ładowanie dodatkowych pakietów np. <code>ae</code>, użycie fontów
+ <code>cmsuper</code> itp.). Obecnie zalecane jest użycie fontów 
+ <a href="./index.html#LModern">Latin Modern</a>, czyli dopisanie (prócz
+ powyższej deklaracji) w&nbsp;preambule:<br>
+ <code>\usepackage{lmodern}</code>.<br>
+</p>
+
+<p>
+Wiele szczegółów na temat instalowania fontów Type&nbsp;1 zawiera artykuł 
+<a href="ftp://ftp.gust.org.pl/pub/CTAN/info/Type1fonts/fontinstallationguide/fontinstallationguide.pdf">
+The Font Installation Guide</a> Phillipa Lehmana.
+</p>
+<!--...................................................................-->
+<hr>
+
+<A NAME="fontyttf">
+<h2> Instalowanie fontów TrueType </h2>
+<p>
+ W&nbsp;powszechnie używanych w&nbsp;chwili obecnej
+ dystrybucjach TeX-a (fpTeX, teTeX, MikTeX) nie ma sterowników potrafiących 
+ bezpośrednio wykorzystać fonty w&nbsp;formacie TrueType.
+ Chcąc skorzystać z&nbsp;takich fontów należy dokonać odpowiedniej 
+ konwersji, która może polegać na ich zamianie albo na fonty bitmapowe 
+ w&nbsp;formacie <code>.pk</code>, albo na zamianie na 
+ fonty w&nbsp;formacie Type&nbsp;42, a&nbsp;ostatnio także do formatu 
+ Type&nbsp;1. 
+</p>
+<p>
+ Pierwszy sposób można określić mianem standardowego -- jeżeli umieścimy pliki
+ <code>.ttf</code> i&nbsp;<code>.tfm</code> w&nbsp;odpowiednich katalogach,
+ to w&nbsp;dystrybucjach, które omawiamy, przy uruchomieniu program
+ <code>dvips</code> lub sterownika ekranowego (<code>yap</code>,
+ <code>xdvi</code>), zostaną automatyczne uruchomione programy generujące 
+ fonty <code>.pk</code> o&nbsp;odpowiedniej rozdzielczości, podobnie jak 
+ sprawa ma miejsce przy generowaniu fontów <code>.pk</code> na podstawie 
+ plików źródłowych <code>.mf</code>.
+ Sposób ten ma jedną <em>zasadniczą wadę</em>: 
+ fonty <code>.pk</code> -- jak każde fonty bitmapowe -- nie nadają się 
+ do wykorzystania przy tworzeniu dokumentów w&nbsp;formacie PDF.
+</p>
+<p>
+ <strong>Uwaga&nbsp;1</strong>:
+ Ponieważ współczesne systemy TeX-owe potrafią skorzystać 
+ z&nbsp;fontów <code>.ttf</code> ,,z&nbsp;definicji'',
+ ale jednocześnie sposób ten nie bardzo się nadaje, np. do tworzenia
+ wysokiej jakości plików PDF, poniżej omawiamy bardziej szczegółowo jedynie 
+ wykorzystanie fontów <code>.ttf</code> po ich konwersji do formatu Type&nbsp;42.
+</p>
+<p> 
+ <strong>Uwaga&nbsp;2</strong>:
+ Zakładając, że pakiet, który instalujemy zawiera metryki fontów <code>.tfm</code>,
+ instalacja fontów TrueType nie różni się zbytnio od instalowania
+ fontów Type&nbsp;1. Jeżeli nie dysponujemy plikami <code>.tfm</code>,
+ to sprawa się komplikuje, bo utworzenie takich plików nie jest
+ sprawą trywialną. W&nbsp;grę wchodzą sprawy różnego kodowania 
+ znaków, tzw. fonty wirtualnych&nbsp;itp. Ponieważ niniejszy tekst ma charakter
+ wprowadzenia dla początkujących nie będziemy omawiać tego zagadnienia.
+ <!-- [prawdę powiedziawszy w&nbsp;przypadku fontów TrueType nie
+ jest ono zbyt realistyczne, gdyż <i>z&nbsp;reguły</i> nie dysponujemy
+ przygotowanymi przez kogoś plikami <code>.tfm</code> czy 
+ <code>.enc</code>]. -->
+ Niemniej jednak w&nbsp;aktualnych dystrybucjach znajdziemy program 
+<code>ttf2tfm</code> tworzący pliki <code>.tfm</code>.
+ </p>
+ <p>
+ Informacje na temat narzędzi i&nbsp;problemów zamiany 
+ plików <code>ttf</code> na pliki <code>tfm</code> można znaleźć
+ w&nbsp;artykule T.&nbsp;Przechlewskiego <i>Uwagi nt. wykorzystania fontów 
+ True Type</i> (Biuletyn GUST, 11/1998). Najbardziej aktualne informacje
+ na ten temat zawiera katalog <code>info/TrueType/</code> na serwerach CTAN.
+</p>
+<A NAME="ttftld">
+<h3>TeX/LaTeX, dvips</h3>
+<p>
+ Pliki <code>.tfm</code>, <code>.enc</code> oraz <code>.map</code>
+ kopiujemy w&nbsp;sposób analogiczny do opisanego wyżej. 
+ <!-- Pliki <code>.ttf</code> w&nbsp;większości instalacji TeX-wych nie mogą
+ być bezpośrednio wykorzystane, konieczne jest utworzenie
+ na ich podstawie fontów typu&nbsp;42 (Type&nbsp;42).-->
+ Fonty Type&nbsp;42 mogą być wykorzystane przez program <code>dvips</code>
+ a&nbsp;powstały plik PostScriptowy może być wydrukowany za pomocą
+ programu ghostscript i&nbsp;innych interpretatorów PostScripta (byle nie
+ bardzo starych). Do zamiany pliku <code>.ttf</code> na font
+ Type&nbsp;42 (załóżmy, że taki font ma rozszerzenie
+ <code>.t42</code>) można wykorzystać program 
+ <A href="ftp://ftp.giga.or.at/pub/nih/ttftot42"><code>ttftot42</code></A>: 
+<pre>
+ ttftot42 anttr
+</pre>
+ Powstały w&nbsp;wyniku plik <code>.t42</code> kopiujemy do odpowiedniego
+ katalogu. W&nbsp;systemie TeX o&nbsp;strukturze katalogów 
+ zgodnej z&nbsp;TDS będzie to <code>~/texmf/fonts/type42/</code>.
+ Należy się upewnić gdzie dvips szuka fontów Type&nbsp;42.  
+ Zaglądamy w&nbsp;tym celu do głównego pliku konfiguracyjnego
+ systemu TeX, którym jest plik <code>texmf.cnf</code> (zwykle katalog
+ <code>~/texmf/web2c/</code>). 
+ Powinien on zawierać wpis podobny do poniższego:
+</p>
+<pre>
+ % Type 42 outline fonts.
+ T42FONTS = .;$TEXMF/fonts/type42//
+</pre>
+<p>
+ Jeżeli takowego wpisu nie ma, to trzeba go dodać. Powyższy
+ zapis oznacza, że fonty są szukane albo w&nbsp;katalogu bieżącym
+ (kropka) albo w&nbsp;katalogu (i&nbsp; wszystkich jego
+ podkatalogach) <code>$TEXMF/fonts/type42//</code>, gdzie 
+ <code>$TEXMF</code> oznacza korzeń drzewa TeX-owego.
+</p>
+<p> 
+ Wydaje się, że aktualnie lepszym rozwiązaniem niż konwersja do formatu 
+ Type&nbsp;42 jest skorzystanie z&nbsp;programu do konwersji fontów TrueType
+ do formatu Type&nbsp;1. Patrz: 
+ <a href="ftp://ftp.gust.org.pl/pub/CTAN/info/TrueType/">CTAN/info/TrueType</a>.
+</p>
+<A NAME="pdftexttf"><h3>pdfTeX/pdfLaTeX</h3>
+<p>
+ W&nbsp;trybie rozszerzonym pdfTeX potrafi korzystać bezpośrednio 
+ z&nbsp;fontów <code>.ttf</code> -- nie musimy zatem ich konwertować
+ do formatu Type&nbsp;42 bądź Type&nbsp;1. Więcej szczegółów można 
+ znaleźć w&nbsp;opisie programu pdfTeX.
+</p>
+<p>
+ <i>T.&nbsp;Przechlewski i&nbsp;S.&nbsp;Wawrykiewicz</i><br>
+ <i>Ostatnia modyfikacja 05.05.2014</i>
+</P>
+<hr>
+<A HREF="./index.html#infod"><IMG ALIGN="BOTTOM" SRC="back.gif">Powrót</A>
+</body>
+</html>

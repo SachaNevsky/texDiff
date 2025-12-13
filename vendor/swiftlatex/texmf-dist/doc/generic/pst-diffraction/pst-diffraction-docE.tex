@@ -1,0 +1,485 @@
+\documentclass[dvips,english,a4paper]{article}
+\usepackage[utf8]{inputenc}%
+\usepackage[T1]{fontenc}
+\usepackage[bmargin=2cm,tmargin=2cm]{geometry}
+%
+\usepackage{pstricks,pst-node,pst-grad,url}
+\usepackage{pst-diffraction}
+\let\PSTfileversion\fileversion
+\let\PSTfiledate\filedate
+%
+\usepackage{ccfonts}
+\usepackage[euler-digits]{eulervm}
+\usepackage[scaled=0.85]{luximono}
+\usepackage{xspace}
+\newcommand*\psp{\texttt{pspicture}\xspace}
+\def\UrlFont{\small\ttfamily}
+\makeatletter
+\def\verbatim@font{\small\normalfont\ttfamily}
+\makeatother
+\usepackage{prettyref,multicol}
+\usepackage{fancyhdr}
+\usepackage{showexpl}
+\lstdefinestyle{syntax}{backgroundcolor=\color{blue!20},numbers=none,xleftmargin=0pt,xrightmargin=0pt,
+    frame=single}
+\lstdefinestyle{example}{backgroundcolor=\color{red!20},numbers=none,xleftmargin=0pt,xrightmargin=0pt,
+    frame=single}
+\lstset{wide=true,language=PSTricks,
+    morekeywords={psdiffractionCircular,psdiffractionRectangle,psdiffractionTriangle}}
+
+\usepackage{babel}
+\usepackage[colorlinks,linktocpage]{hyperref}
+
+\pagestyle{fancy}
+\def\Lcs#1{{\ttfamily\textbackslash #1}}
+\lfoot{\small\ttfamily\jobname.tex}
+\cfoot{Documentation}
+\rfoot{\thepage}
+\lhead{PSTricks}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+\newcommand{\PS}{PostScript}
+\newcommand\CMD[1]{\texttt{\textbackslash#1}}
+\makeatother
+\usepackage{framed}
+\definecolor{shadecolor}{cmyk}{0.2,0,0,0}
+\SpecialCoor
+
+\title{\texttt{pst-diffraction}\\[6pt]
+Diffraction patterns for diffraction from circular, rectangular and triangular
+apertures
+\\[1cm]
+---\\[10pt]
+{\normalsize v. \PSTfileversion (\PSTfiledate)}}
+\author{%
+    \tabular[t]{c}Manuel Luque\\[3pt]
+    \url{ml@PSTricks.de}
+    \endtabular   \and 
+    \tabular[t]{c}Herbert Vo\ss\\[3pt]
+    \url{hv@PSTricks.de}\endtabular%
+} 
+\date{\today}
+\begin{document}
+\maketitle
+\vfill\noindent
+Thanks to Doris Wagner for help with the documentation.\\
+Also thanks to: Julien Cubizolles.
+
+
+\clearpage
+\tableofcontents
+
+\clearpage
+
+\section{Optical setup}
+
+\begin{center}
+\begin{pspicture}(0,-3)(12,3)
+\pnode(0,0){S}   \pnode(4,1){L'1}  \pnode(4,-1){L'2}  \pnode(6,1){E'1}   \pnode(6,-1){E'2}
+\pnode(6,0.5){E1}\pnode(6,-0.5){E2}\pnode(8.5,1.5){L1}\pnode(8.5,0.5){L2}\pnode(11.5,1.25){P}
+% lentille L'
+\pscustom[fillstyle=gradient,linecolor=blue,gradend=white]{%
+  \code{0.5 0.83333 scale}
+  \psarc(4,0){4.176}{-16.699}{16.699}
+  \psarc(12,0){4.176}{163.30}{196.699}}
+% lentille L
+\pscustom[fillstyle=gradient,linecolor=blue,gradend=white]{%
+  \code{1 1.5 scale}
+  \psarc(4.5,0){4.176}{-16.699}{16.699}
+  \psarc(12.5,0){4.176}{163.30}{196.699}}
+\pspolygon[linestyle=none,fillstyle=vlines,
+    hatchcolor=yellow](S)(L'1)(E'1)(E1)(L1)(P)(L2)(E2)(E'2)(L'2)
+\uput[90](4,1){$L'$}\uput[90](8.5,2){$L$}
+\psdot(S)\uput[180](S){S}
+\psline(S)(12,0)\psline[linewidth=2\pslinewidth](6,2)(6,0.5)\psline[linewidth=2\pslinewidth](6,-2)(6,-0.5)
+\psline[linestyle=dashed](6,0.5)(6,-0.5)\psline(11.5,-3)(11.5,3)\psline(S)(L'1)(E'1)\psline(S)(L'2)(E'2)
+\uput[0](P){P}
+\psline(E1)(L1)(P)\psline(E2)(L2)(P)\psline[linestyle=dashed](8.5,0)(P)
+%\rput(8.5,0){\psarc{->}(0,0){1.5}{0}{!1.25 3 atan}\uput[0](1.5;15){$\theta$}}
+\uput[-90](10,0){$f$}\uput[0](6,2){E}\uput[135](6,0){T}\uput[45](11.5,0){O}
+\end{pspicture}
+\end{center}
+
+Monochromatic light rays diverging from the focal point S of a positive lens L' emerge parallel to
+the axis and strike the aperture stop E with the aperture T.
+The light bends behind the aperture, this bending is called diffraction:
+Every point in the opening acts as if it was a point source (Huygens's principle) and the
+light waves of all those points overlap and produce an interference pattern (diffraction
+pattern) on a screen. When the screen is very far away, the observed patterns are called
+Fraunhofer diffraction patterns. In this case one can assume that the rays from the aperture
+striking the same point P on the screen are parallel.\\
+In practice one wants to realize a short distance between the aperture stop and the screen.
+Hence one sets up a converging lens L after the opening and installs the screen
+into the focal plane (containing the points P and O) of this lens. Parallel rays incident on
+the lens are then focused at a point P in the focal plane.
+
+With the following PSTricks-commands we can draw the diffraction patterns for different
+geometric forms
+of apertures. It is understood that only monochromatic light is used. The aperture stops can
+have rectangular, circular or triangular openings.
+
+The options available are the dimensions of the aperture under consideration and of the particular optical
+setting, e.g. the radius in case of an circular opening. Moreover one can choose the wavelength
+of the light (the associated color will be given automatically by the package).
+
+There are three commands, for rectangular, circular and triangular openings respectively:
+
+\begin{lstlisting}[style=syntax]
+\psdiffractionRectangle[<Optionen>]
+\psdiffractionCircular[<Optionen>]
+\psdiffractionTriangle[<Optionen>]
+\end{lstlisting}
+
+
+\section{The color}
+The desired color is defined by specifying the associated wavelength $\lambda$ (in nanometers).
+Red for instance one gets by the option \texttt{[lambda=632]} because 
+red light has the wavelength $\lambda_{\textrm{rot}}=632\,\textrm{nm}$.
+
+The conversion of the wavelength into the associated \texttt{RGB}-value is done by PostScript. 
+The code is similar to the code of a FORTRAN program which can be found here: \\
+\url{http://www.midnightkite.com/color.html}
+
+\clearpage
+
+\section{Diffraction from a rectangular aperture}
+
+\begin{center}
+\begin{pspicture}(-2,-1)(2,1.5)
+\psframe(-0.5,-1)(0.5,1)
+\pcline{<->}(-0.5,1.1)(0.5,1.1)
+\Aput{$a$}
+\pcline{<->}(0.6,1)(0.6,-1)
+\Aput{$h=k\times a$}
+\end{pspicture}
+\end{center}
+
+The width of the rectangle with the area $h=k\times a$ is defined by the letter \texttt{[a]},
+the height by \texttt{[k]}.
+The focal length is specified by \texttt{[f]}, the desired resolution in pixels [pixel].
+With the option \texttt{[contrast]} one can improve the visibility of the minor secondary
+maxima more.\\ 
+We get a black and white picture if we use the option \texttt{[colorMode=0]},
+the option \texttt{[colorMode=1]} provides the associated negative pattern. The options
+\texttt{[colorMode=2]} and \texttt{[colorMode=3]} render color pictures in the
+CMYK and RGB color model respectively.
+
+By default the settings are as follows: 
+
+
+\begin{tabular}{@{}lll@{}}
+\texttt{[a=0.2e-3]} in m;    & \texttt{[k=1]};       &  \texttt{[f=5]} in m;\\
+\texttt{[lambda=650]} in nm; & \texttt{[pixel=0.5]}; &   \texttt{[contrast=38]}, greates value;\\
+\texttt{[colorMode=3]};   &   \texttt{[IIID=false]}.
+\end{tabular}
+
+\bigskip
+\noindent
+\begin{pspicture}(-3.5,-3.5)(3.5,3.5)
+\psdiffractionRectangle[f=2.5]
+\end{pspicture}
+\hfill
+\begin{pspicture}(-1.5,-2.5)(3.5,3.5)
+\psdiffractionRectangle[IIID,Alpha=30,f=2.5]
+\end{pspicture}
+
+\begin{lstlisting}[style=example]
+\begin{pspicture}(-3.5,-3.5)(3.5,3.5)
+\psdiffractionRectangle[f=2.5]
+\end{pspicture}
+\hfill
+\begin{pspicture}(-1.5,-2.5)(3.5,3.5)
+\psdiffractionRectangle[IIID,Alpha=30,f=2.5]
+\end{pspicture}
+\end{lstlisting}
+
+
+
+\noindent\begin{pspicture}(-2,-4)(2,4)
+\psdiffractionRectangle[a=0.5e-3,k=0.5,f=4,pixel=0.5,colorMode=0]
+\end{pspicture}
+\hfill
+\begin{pspicture}(0,-3)(4,4)
+\psdiffractionRectangle[IIID,a=0.5e-3,k=0.5,f=4,pixel=0.5,colorMode=0]
+\end{pspicture}
+
+
+\begin{lstlisting}[style=example]
+\begin{pspicture}(-2,-4)(2,4)
+\psdiffractionRectangle[a=0.5e-3,k=0.5,f=4,pixel=0.5,colorMode=0]
+\end{pspicture}
+\hfill
+\begin{pspicture}(0,-3)(4,4)
+\psdiffractionRectangle[IIID,a=0.5e-3,k=0.5,f=4,pixel=0.5,colorMode=0]
+\end{pspicture}
+\end{lstlisting}
+
+
+
+\noindent
+\begin{pspicture}(-2.5,-2.5)(3.5,3)
+\psdiffractionRectangle[a=0.5e-3,k=2,f=10,lambda=515,colorMode=1]
+\end{pspicture}
+\hfill
+\begin{pspicture}(-1.5,-2)(3.5,3)
+\psdiffractionRectangle[IIID,Alpha=20,a=0.5e-3,k=2,f=10,lambda=515,colorMode=1]
+\end{pspicture}
+
+
+\begin{lstlisting}[style=example]
+\begin{pspicture}(-2.5,-2.5)(3.5,3)
+\psdiffractionRectangle[a=0.5e-3,k=2,f=10,lambda=515,colorMode=1]
+\end{pspicture}
+\hfill
+\begin{pspicture}(-1.5,-2)(3.5,3)
+\psdiffractionRectangle[IIID,Alpha=20,a=0.5e-3,k=2,f=10,lambda=515,colorMode=1]
+\end{pspicture}
+\end{lstlisting}
+
+
+\noindent
+\begin{pspicture}(-3.5,-1)(3.5,1)
+\psdiffractionRectangle[a=0.5e-3,k=20,f=10,pixel=0.5,lambda=450]
+\end{pspicture}
+\hfill
+\begin{pspicture}(-3.5,-1)(3.5,4)
+\psdiffractionRectangle[IIID,Alpha=10,a=0.5e-3,k=20,f=10,pixel=0.5,lambda=450]
+\end{pspicture}
+
+\begin{lstlisting}[style=example]
+\begin{pspicture}(-3.5,-1)(3.5,1)
+\psdiffractionRectangle[a=0.5e-3,k=20,f=10,pixel=0.5,lambda=450]
+\end{pspicture}
+\hfill
+\begin{pspicture}(-3.5,-1)(3.5,4)
+\psdiffractionRectangle[IIID,Alpha=10,a=0.5e-3,k=20,f=10,pixel=0.5,lambda=450]
+\end{pspicture}
+\end{lstlisting}
+
+\section{Diffraction from two rectangular apertures}
+
+\begin{shaded}
+This simulation was provided by Julien
+\textsc{Cubizolles}.
+\end{shaded}
+It is also possible to render the diffraction pattern of two congruent rectangles
+(placed parallel such that their base is located on the $x$-axis)
+by using the option \texttt{[twoSlit]}.
+By default this option is deactivated.
+The distance of the two rectangles is specified by the option $s$.
+The default for $s$ is $12e^{-3}\,\mathrm{m}$.
+
+
+\begin{center}
+\noindent
+\begin{pspicture}(-4,-1)(4,1)
+\psdiffractionRectangle[a=0.5e-3,k=10,f=10,pixel=0.5,lambda=650,twoSlit,s=2e-3]
+\end{pspicture}
+\end{center}
+
+\begin{lstlisting}[style=example]
+\begin{pspicture}(-4,-1)(4,1)
+\psdiffractionRectangle[a=0.5e-3,k=10,f=10,pixel=0.5,lambda=650,twoSlit,s=2e-3]
+\end{pspicture}
+\end{lstlisting}
+
+\begin{center}
+\begin{pspicture}(-2,-1)(4,4)
+\psdiffractionRectangle[IIID,Alpha=20,a=0.5e-3,k=10,f=10,pixel=0.5,lambda=650,twoSlit,s=2e-3]
+\end{pspicture}
+\end{center}
+
+\begin{lstlisting}[pos=t,style=example,wide=false]
+\begin{pspicture}(-2,-1)(4,4)
+\psdiffractionRectangle[IIID,Alpha=20,a=0.5e-3,k=10,f=10,pixel=0.5,lambda=650,twoSlit,s=2e-3]
+\end{pspicture}
+\end{lstlisting}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Diffraction from a circular aperture}
+The radius of the circular opening can be chosen via the letter \texttt{r}, e.g.
+\texttt{[r=1e-3]}. The default is $r=1$ mm. In the first quadrant
+PSTricks displays the graph of the intensity distribution (the maximum in the center will be
+cropped if its height exceeds the margin of the \psp-environment).
+
+\hspace*{-1cm}%
+\begin{LTXexample}[pos=t,style=example,wide=false]
+\begin{pspicture}(-3.5,-3.5)(3.5,3.5)
+\psdiffractionCircular[r=0.5e-3,f=10,pixel=0.5,lambda=520]
+\end{pspicture}
+%
+\begin{pspicture}(-3.5,-1.5)(3.5,3.5)
+\psdiffractionCircular[IIID,r=0.5e-3,f=10,pixel=0.5,lambda=520]
+\end{pspicture}
+\end{LTXexample}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Diffraction from two circular apertures}
+Only the case of equal radii is provided, this common radius can be defined like in the
+previous section via \texttt{[r=\dots]}.
+Furthermore one has to give the half distance of the circles measured from their centers by 
+\texttt{[d=\dots]}, e.g. \texttt{[d=3e-3]}. Also the option
+\texttt{[twoHole]} has to be used.\\
+The rendering process could take some time in this case\dots
+
+
+\begin{pspicture}(-3,-3.5)(3.5,3.5)
+\psdiffractionCircular[r=0.5e-3,f=10,d=3e-3,lambda=515,twoHole]
+\end{pspicture}
+%
+\begin{pspicture}(-3.5,-1.5)(3.5,3.5)
+\psdiffractionCircular[IIID,r=0.5e-3,f=10,d=3e-3,lambda=515,twoHole]
+\end{pspicture}
+
+
+\begin{lstlisting}[style=example]
+\begin{pspicture}(-3,-3.5)(3.5,3.5)
+\psdiffractionCircular[r=0.5e-3,f=10,d=3e-3,lambda=515,twoHole]
+\end{pspicture}
+%
+\begin{pspicture}(-3.5,-1.5)(3.5,3.5)
+\psdiffractionCircular[IIID,r=0.5e-3,f=10,d=3e-3,lambda=515,twoHole]
+\end{pspicture}
+\end{lstlisting}
+
+
+\hspace*{-1cm}%
+\begin{pspicture}(-3,-3)(3.5,4)
+\psdiffractionCircular[r=0.5e-3,f=10,d=2e-3,lambda=700,twoHole,colorMode=0]
+\end{pspicture}
+%
+\begin{pspicture}(-3.5,-2)(3.5,3.5)
+\psdiffractionCircular[IIID,r=0.5e-3,f=10,d=2e-3,lambda=700,twoHole,colorMode=0]
+\end{pspicture}
+
+\begin{lstlisting}[style=example]
+\begin{pspicture}(-3.5,-3)(3.5,4)
+\psdiffractionCircular[r=0.5e-3,f=10,d=2e-3,lambda=700,twoHole,colorMode=0]
+\end{pspicture}
+%
+\begin{pspicture}(-3.5,-2)(3.5,3.5)
+\psdiffractionCircular[IIID,r=0.5e-3,f=10,d=2e-3,lambda=700,twoHole,colorMode=0]
+\end{pspicture}
+\end{lstlisting}
+
+Not in every case bands occur in the central circle. The number $N$ of those inner
+bands is given by $N=2.44\frac{d}{r}$. Thus this effect is not observable until $N\geq2$
+or $d=\frac{2r}{1.22}$ (see 
+\url{http://www.unice.fr/DeptPhys/optique/diff/trouscirc/diffrac.html}).
+
+\hspace*{-1cm}%
+\begin{pspicture}(-3,-3.5)(3,3.5)
+\psdiffractionCircular[r=0.5e-3,f=10,d=4.1e-4,lambda=632,twoHole]
+\end{pspicture}
+%
+\begin{pspicture}(-3.5,-1.5)(3.5,3)
+\psdiffractionCircular[IIID,r=0.5e-3,f=10,d=4.1e-4,lambda=632,twoHole]
+\end{pspicture}
+
+
+\begin{lstlisting}[style=example]
+\begin{pspicture}(-3,-3.5)(3,3.5)
+\psdiffractionCircular[r=0.5e-3,f=10,d=4.1e-4,lambda=632,twoHole]
+\end{pspicture}
+%
+\begin{pspicture}(-3.5,-1.5)(3.5,3)
+\psdiffractionCircular[IIID,r=0.5e-3,f=10,d=4.1e-4,lambda=632,twoHole]
+\end{pspicture}
+\end{lstlisting}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Diffraction from a triangular aperture}
+
+Only the case of an equilateral triangle is provided, whose height \texttt{[h]} has to be
+defined as an option. As is generally known, $h$ can be computed from the length $s$ of 
+its side by $h=\frac{\sqrt{3}}{2}s$. A black and white picture can be obtained by using the
+option \texttt{[colorMode=0]}.
+
+
+
+\begin{center}
+\begin{pspicture}(-1,-1)(1,1)
+\pspolygon*(0,0)(1;150)(1;210)
+\pcline{|-|}(-0.732,-1)(0,-1)
+\Aput{$h$}
+\end{pspicture}
+\end{center}
+
+\makebox[\linewidth]{%
+\begin{pspicture}(-3,-3)(3,2.5)
+\psdiffractionTriangle[f=10,h=1e-3,lambda=515,contrast=38]
+\end{pspicture}
+\quad
+\begin{pspicture}(-3,-3)(3,2.5)
+\psdiffractionTriangle[f=10,h=1e-3,colorMode=1,contrast=38,lambda=515]
+\end{pspicture}
+\quad
+\begin{pspicture}(-3,-3)(3,2.5)
+\psdiffractionTriangle[f=10,h=1e-3,colorMode=0,contrast=38,lambda=515]
+\end{pspicture}}
+
+
+\begin{lstlisting}[style=example]
+\begin{pspicture}(-3,-3)(3,2.5)
+\psdiffractionTriangle[f=10,h=1e-3,lambda=515,contrast=38]
+\end{pspicture}
+\quad
+\begin{pspicture}(-3,-3)(3,2.5)
+\psdiffractionTriangle[f=10,h=1e-3,colorMode=1,contrast=38,lambda=515]
+\end{pspicture}
+\quad
+\begin{pspicture}(-3,-3)(3,2.5)
+\psdiffractionTriangle[f=10,h=1e-3,colorMode=0,contrast=38,lambda=515]
+\end{pspicture}
+\end{lstlisting}
+
+
+\makebox[\linewidth]{%
+\begin{pspicture}(-3,-2)(3,3.5)
+\psdiffractionTriangle[IIID,f=10,h=1e-3,lambda=515,contrast=38]
+\end{pspicture}
+\quad
+\begin{pspicture}(-3,-2)(3,3.5)
+\psdiffractionTriangle[IIID,f=10,h=1e-3,colorMode=1,contrast=38,lambda=515]
+\end{pspicture}
+\quad
+\begin{pspicture}(-3,-2)(3,3.5)
+\psdiffractionTriangle[IIID,f=10,h=1e-3,colorMode=0,contrast=38,lambda=515]
+\end{pspicture}}
+
+\begin{lstlisting}[style=example]
+\begin{pspicture}(-3,-2)(3,3.5)
+\psdiffractionTriangle[IIID,f=10,h=1e-3,lambda=515,contrast=38]
+\end{pspicture}
+\quad
+\begin{pspicture}(-3,-2)(3,3.5)
+\psdiffractionTriangle[IIID,f=10,h=1e-3,colorMode=1,contrast=38,lambda=515]
+\end{pspicture}
+\quad
+\begin{pspicture}(-3,-2)(3,3.5)
+\psdiffractionTriangle[IIID,f=10,h=1e-3,colorMode=0,contrast=38,lambda=515]
+\end{pspicture}
+\end{lstlisting}
+
+
+
+
+%\section{Credits}
+
+
+\bgroup
+\nocite{*}
+\raggedright
+\bibliographystyle{plain}
+\bibliography{pst-diffraction-doc}
+\egroup
+
+
+\end{document}

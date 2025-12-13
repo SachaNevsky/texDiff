@@ -1,0 +1,42 @@
+% !TeX program = LuaTeX
+% Copyright (C) 2020 Roberto Giacomelli
+
+\newbox\mybox
+\nopagenumbers
+
+Test 1: check uint costructor:
+
+\directlua{
+barracuda = require "barracuda"
+local c39, err = barracuda:barcode()
+                          :new_encoder("code39")
+assert(not err, err)
+local err
+local symbol
+symbol, err = c39:from_uint(0, {text_hpos="center"})
+assert(not err, err)
+
+local canvas = barracuda:new_canvas()
+symbol:append_ga(canvas)
+
+local drv = barracuda:get_driver()
+drv:ga_to_hbox(canvas, "mybox")
+}\box\mybox
+
+\directlua{
+local c39, err = barracuda:barcode()
+                          :enc_by_name("code39")
+assert(c39, err)
+local e
+local symbol
+symbol, e = c39:from_uint(0123456789, {text_hpos="spaced",text_star=true})
+assert(not e, e)
+
+local canvas = barracuda:new_canvas()
+symbol:append_ga(canvas)
+
+local drv = barracuda:get_driver()
+drv:ga_to_hbox(canvas, "mybox")
+}\box\mybox
+
+\bye

@@ -1,0 +1,638 @@
+% arara: pdflatex
+% arara: pdflatex
+% arara: clean: { extensions: [ aux, listing, log, gz ] }
+\documentclass[11pt,article,twocolumn,a4paper]{memoir}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+
+\usepackage{bookman}
+\usepackage[scaled=.9]{beramono}
+\usepackage{microtype}
+
+\newcommand{\texplate}{\TeX plate}
+\newcommand{\var}[1]{{\ttfamily\$#1}}
+\newcommand{\inline}[1]{{\ttfamily#1}}
+\newcommand{\shortopt}[1]{{\ttfamily-#1}}
+\newcommand{\longopt}[1]{{\ttfamily{-}{-}#1}}
+\newcommand{\macro}[1]{{\ttfamily\textbackslash#1}}
+\newcommand{\texplateversion}{1.0.2}
+
+\title{A gentle introduction to \texplate:\\ a document structure creation tool}
+\author{Island of \TeX}
+\date{Version \texplateversion\ -- \today}
+
+\usepackage{tcolorbox}
+\tcbuselibrary{listings}
+\tcbuselibrary{breakable}
+\tcbuselibrary{skins}
+
+\newtcblisting{code}{
+  colback=white,
+  colupper=black,
+  colframe=cyan!75!black,
+  listing only,
+  breakable,
+  enhanced,
+  before skip=10pt,
+  top=2pt,
+  left=4pt,
+  right=4pt,
+  bottom=2pt
+}
+\newtcolorbox{disclaimer}{
+  colback=white,
+  colupper=black,
+  colframe=cyan!75!black,
+  breakable,
+  enhanced,
+  before skip=10pt,
+  top=4pt,
+  left=4pt,
+  right=4pt,
+  bottom=4pt,
+  adjusted title=Disclaimer,
+  fonttitle=\bfseries,
+  fontupper=\em
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+As the title implies, this document dares to be a gentle introduction to a rather unusual application, at least from our ordinary \TeX\ workflow: a tool for creating document structures based on templates. The application name is a word play on \emph{\TeX} and \emph{template}, so the purpose seems quite obvious: we want to provide an easy and straightforward framework for reducing the typical code boilerplate when writing \TeX\ documents. Also note that one can easily extrapolate the use beyond articles and theses: the application is powerful enough to generate \emph{any} text-based structure, given that a corresponding template exists.
+\end{abstract}
+
+\chapter{Introduction}
+\label{chap:introduction}
+
+A typical \TeX\ document usually contains a common preamble, the same code boilerplate we hold dear to keep our writing workflow efficient and, to an extent, satisfy our darkest typographic additions. A coherent preamble might significantly reduce the odds of having issues when compiling your document, but at the end of the day, it is always your fault when something terribly wrong happens in your code\footnote{This statement is suspiciously Carlislean. Also, since we are on the subject, make sure to never read documentation, as bad things happen.}. Anyway, consider the following \TeX\ document\footnote{Apologies in advance to every pizza connoisseur out there (specially Italians) for the provocative statement in the document. That said, one must accept the truth that Nutella pizza \emph{is} good.}:
+
+\begin{code}
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+\begin{document}
+This is the law of the jungle:
+Nutella pizza is good.
+\end{document}
+\end{code}
+
+Modulo actual content, this structure is probably recurring on the majority of documents using the classical engines. Ultimately, we aim at providing a collection of text-based structures through a comprehensive command line interface\footnote{Granted, command line usage is not exactly as friendly, intuitive and comprehensive as one could have ever hoped. We have plans for a graphical interface in the near future, so stay tuned.}, so as a means to reduce the code boilerplate for typical documents.
+
+\chapter{Concepts}
+\label{chap:concepts}
+
+Before introducing the command line application itself, we need to establish a common foundation and formally present a couple of concepts in which our tool is built. Consider this section as a primer to such elements.
+
+\section{Template}
+\label{sec:template}
+
+A template is basically a textual structure with certain entry points,  in a sort of \emph{fill in the blanks} fashion. For \texplate, we rely on a template language provided by the Apache Foundation named VTL (or Velocity, for short), in its latest 2.0 specification, as of the writing of this manual.
+
+\begin{disclaimer}
+We do not intend to cover the language specification on its full glory in this manual. However, we might pinpoint and highlight some characteristics whenever relevant to the context.
+\end{disclaimer}
+
+For our purposes, the basic structure of any text-based document constitutes a template. For instance, the \TeX\ document originally presented in Section~\ref{chap:introduction}, modulo actual content, can certainly act as a verbatim template:
+
+\begin{code}
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+\begin{document}
+
+\end{document}
+\end{code}
+
+Note, however, that this template, as it is, does not hold any variables, conditional flows or sophisticated language constructs. The next concepts will build upon variables in the text, as a means to enhance the template expressiveness.
+
+\section{Map}
+\label{sec:map}
+
+A map is a collection of variables and values instantiated at run time and available within the template context. Since these values are specified in the command line, \texplate\ initially casts them as strings. It is worth noting, however, that these string values can be converted to arbitrary types later on through special functions named handlers in the template specification (see Section~\ref{sec:handlers} for further details). Regarding syntax, a variable \inline{bar} in the command line is referenced as a variable \var{bar} inside the template context. Note that all methods from the corresponding type class are available in the variable scope, since a variable acts like a proper Java object. However, note that it is highly advisable to verify whether a variable is defined before invoking any method. For instance, consider the following excerpt:
+
+\begin{code}
+#if($name)
+Hello, my name is $name.
+#else
+Hello, my name is John.
+#end
+\end{code}
+
+In this excerpt, observe that \var{name} is a variable. If such variable is properly specified in the command line, it will be set accordingly in the template context and the corresponding conditional branch is handled. Please refer to the VTL specification for further details.
+
+\begin{disclaimer}
+Ultimately, Java objects will rely on the \inline{toString()} method when the template is actually rendered, so there is no need to worry about converting arbitrary values back to strings.
+\end{disclaimer}
+
+The map is specified at run time, in the command line. It is important to observe that a variable might be marked as mandatory by the template (more on that later, when discussing the template specification in Chapter~\ref{chap:templatespecification}), so the absence of such variable in the map will trigger an exception and the tool will prematurely end.
+
+\chapter{Command line}
+\label{chap:commandline}
+
+Our tool is a typical command line application, so we need to invoke it by simply typing \inline{texplate} in the terminal:
+
+\begin{code}
+$ texplate
+\end{code}
+
+Provided that \texplate\ is properly available in the underlying operating system, we will get a lovely, colourful output in our terminal, along with a couple of scary messages telling that some required options are missing. Our tool provides four options, described as follows. Strictly speaking, there is only one mandatory option. The remainder might be optional, depending on certain scenarios. 
+
+\section{Output}
+\label{sec:outputcli}
+
+Referred as either \shortopt{o} (short representation) or \longopt{output} (long representation), this option holds the output file in which the chosen template will be effectively written. The following examples are valid entries to this option:
+
+\begin{code}
+-o mydoc.tex
+-o=mydoc.tex
+--output mydoc.tex
+--output=mydoc.tex
+\end{code}
+
+The name is arbitrary, so you can use anything to your heart's desires. Keep in mind, however, that an existing file will be mercilessly overwritten. Also, make sure the path has the proper permissions for writing the output file.
+
+\section{Template}
+\label{sec:templatecli}
+
+Referred as either \shortopt{t} (short representation) or \longopt{template} (long representation), this option holds the reference to the template to be potentially merged with data and properly generated. The basic syntax is detailed as follows (note that \var{article} refers to the template identifier):
+
+\begin{code}
+-t article
+-t=article
+--template article
+--template=article
+\end{code}
+
+The provided string should match the template identifier, otherwise \texplate\ will raise an error complaining about the missing reference. The template identifier will be discussed later on, in Section~\ref{sec:namingscheme}.
+
+\section{Map}
+\label{sec:mapcli}
+
+Referred as either \shortopt{m} (short representation) or \longopt{map} (long representation), this option holds a map entry, defined as a \inline{key=value} ordered pair (mind the \inline{=} symbol used as entry separator). This option can be used multiple times. The following examples are valid entries to this option (note that \inline{foo} and \inline{bar} refer to an arbitrary map entry key and value, respectively):
+
+\begin{code}
+-m foo=bar
+-m=foo=bar
+--map foo=bar
+--map=foo=bar
+\end{code}
+
+The map entry denotes a variable in the template context, where the key is the variable name and the value is set to be the initial state of such variable. As the  \longopt{map} option can be used multiple times, consider the following scenario, where the map entry key is repeated:
+
+\begin{code}
+--map foo=1 --map foo=2 --map foo=3
+\end{code}
+
+The final value associated to \inline{foo} is set to be the rightmost occurrence of the corresponding pair in the command line.
+
+\section{Configuration}
+\label{sec:configurationcli}
+
+\texplate\ also offers a configuration file in which the tool can read template data, for automation purposes. The configuration file is written in a text-based format named TOML\footnote{According to Wikipedia, TOML is a configuration file format intended to be easy to read and write due to obvious semantics and designed to map unambiguously to a dictionary. The syntax consists of entry pairs, sections and comments.} and can hold at most two sections: the template name as a string (with the same behaviour of \longopt{template} in the command line) and the contextual data map, with keys and associated values. A configuration file can have at least one of such sections, but never be empty. Consider the following configuration file:
+
+\begin{code}
+template = "article"
+
+[map]
+country = "Germany"
+year = 2020
+articles = [ "Die", "Der", "Das" ]
+\end{code}
+
+Observe that, contrary to the \longopt{map} option in the command line, the \inline{[map]} section in the configuration file accepts values other than strings (e.g., integers and lists of strings).
+
+\begin{disclaimer}
+Please keep in mind that map entries in the configuration file are not subjected to handlers (when available), as their command line counterparts are.
+\end{disclaimer}
+
+Command line options have priority over values originated from the configuration file. Given the previous configuration file, 
+consider the following scenario:
+
+\begin{code}
+$ texplate -c config.toml -t book
+\end{code}
+
+Even though \inline{article} was the template set in the configuration, the \longopt{template} option has higher priority and thus the template is set to \inline{book}, as it is defined in the command line. The same logic is applied to map entries.
+
+\begin{disclaimer}
+Observe that, if a configuration file is being used and has no template key, the \longopt{template} option automatically becomes mandatory.
+\end{disclaimer}
+
+Note that \texplate\ has support for just one configuration file at run time. Support for multiple configurations might be added in the near future.
+
+\chapter{Template specification}
+\label{chap:templatespecification}
+
+\texplate\ uses predefined templates to generate text-based structures. Similar to the configuration structure presented in Section~\ref{sec:configurationcli}, the tool relies on text-based files written in TOML for holding the template specifications.
+
+\section{Naming scheme}
+\label{sec:namingscheme}
+
+For starters, a template has an identifier, a name that logically represents the text-based structure to be generated. Observe that the name corresponds to the reference used later on in the \longopt{template} option in the command line. A template file name has to match this identifier, so e.g., the \inline{article} reference is automatically linked to the \inline{article.toml} file which contains the template specification.
+
+\begin{disclaimer}
+Observe that \texplate's lookup system is case-sensitive, so make sure to always reference the correct name.
+\end{disclaimer}
+
+Although there are no hard limitations on a template name, it is advisable to keep it short and concise, with no spaces whatsoever\footnote{Another Carlislean statement would remind us that people who put spaces in their file names deserve no sympathy. At all.}. As a consequence, potential issues with extended characters in the Unicode range and command line escaping are avoided, and thus our beloved tool might just work as expected.
+
+\section{Directory lookup}
+\label{sec:directorylookup}
+
+\texplate\ employs a lookup system that basically searches two locations for template files (specifications written in the TOML format), in order of priority:
+
+\begin{enumerate}
+\item\inline{\textasciitilde/.texplate/templates} which refers to a path structure from the user home directory.
+
+\item The application's resources which refers to a files within the JAR file. You can use a ZIP viewer to look at the templates there.
+\end{enumerate}
+
+For instance, as a means to illustrate the concept of directory lookup, consider the following command line command:
+
+\begin{code}
+$ texplate -t article -o mydoc.tex
+\end{code}
+
+\texplate\ will look for a template file named \inline{article.toml} in the path structure from the user home directory, as seen in \#1. If the file is found, the search ends  and the tool proceeds to the template generation. Otherwise, \texplate\ will attempt to look in its own template folder for a match. If found, the tool will use this file reference. If the template file is not found in any of the two locations, the tool reports the issue and prematurely ends.
+
+\section{Handlers}
+\label{sec:handlers}
+
+A map entry, when obtained from the command line through the \longopt{map} option, holds a string value. \texplate\ provides a straightforward way to convert string values to arbitrary types through special functions named handlers in the template specification. The following handlers are available for type conversion:
+
+\begin{itemize}
+\item\inline{to-csv-list}: this handler, as the name implies, converts a string to a list of comma-separated values. The implementation attempts to respect quoted elements, when available.
+\item\inline{to-boolean}: this handler converts a string to a boolean value, based on the following patterns: \inline{true} and \inline{false}, \inline{1} and \inline{0}, and \inline{yes} or \inline{no}.
+\end{itemize}
+
+When type conversion is needed in the template logic, handlers are assigned to map keys in the corresponding specification, detailed later on, in Section~\ref{sec:templatestructure}.
+
+\begin{disclaimer}
+Handlers are internal functions provided by \texplate\ that map String values to arbitrary types.
+\end{disclaimer}
+
+When referencing handlers, make sure to write the correct name in the template specification, so the lookup and subsequent call work as expected.
+
+\section{Template structure}
+\label{sec:templatestructure}
+
+The template structure holds at most two sections: the template itself and an optional \inline{[handlers]} section holding the handlers to be applied to certain map entries. The following keys are required for the first section (i.e., the template definition):
+
+\begin{itemize}
+\item\inline{name}: this key holds a string value that denotes the template name. Observe that \texplate\ requires this key to hold the exact value of the template identifier, as described in Section~\ref{sec:namingscheme}.
+
+\begin{code}
+name = "mytemplate"
+\end{code}
+
+\item\inline{description}: this key holds a string value that provides a short yet meaningful description for the template being written. It is usually suitable to use the \inline{"""} (triple double quotes) notation for this key, as it allows long strings to span multiple lines (and ignore line breaks).
+
+\begin{code}
+description = """
+A simple template used to
+illustrate the template
+structure.
+"""
+\end{code}
+
+\item\inline{authors}: this key, as the name implies, holds a list of strings denoting the template authors, for obvious blaming purposes, in case anything goes terribly wrong\footnote{Of course, it is important to observe that an error, exception or issue is definitely \emph{not our fault}.}.
+
+\begin{code}
+authors = [ "Alice", "Bob" ]
+\end{code}
+
+\item\inline{requirements}: this key holds a list of strings denoting potential requirements for the template. For instance, the template might require some variables to be specified at run time, either through the command line or configuration file:
+
+\begin{code}
+requirements = [ "names" ]
+\end{code}
+
+If the requirements are not complied, \texplate\ will report the issue and prematurely end. When the template imposes no requirements at all, make sure to provide an empty list:
+
+\begin{code}
+requirements = [ ]
+\end{code}
+
+\item\inline{document}: this key, as the name suggests, holds the actual text-based document, written using the VTL specification (or any subset of it). It is usually suitable to use the \inline{{'}{'}{'}} (triple single quotes) notation for this key, as it allows raw strings (i.e., literal reproduction with no need of escaping characters) and multiple lines while respecting breaks.
+
+\begin{code}
+document = '''
+These are the names:
+
+\begin{itemize}
+#foreach ($name in $names)
+  \item $name
+#end
+\end{itemize}
+'''
+\end{code}
+
+\end{itemize}
+
+The \inline{[handlers]} section, as the name indicates, holds potential handler references to be applied to certain map entries. These references are set as strings. For instance, \var{names} is actually a list of strings, so a type conversion has to be employed:
+
+\begin{code}
+[handlers]
+names = "to-csv-list"
+\end{code}
+
+Observe that, if there is no need for handlers in the template structure, this section might safely be omitted.
+
+\chapter{A complete example}
+\label{chap:completeexample}
+
+Now that all concepts are formally introduced in the previous chapters, it is time to glue everything together. The following steps cover the basics from creating a template to merging data into it:
+
+\begin{enumerate}
+\item First and foremost, let us create a template named \inline{mytemplate}, inspired on the previous content presented in this user manual. The naming scheme, as well as the directory structure, must be respected, so open your favourite editor\footnote{Your favourite editor should be \inline{vim}, of course. Anything else is simply wrong and unacceptable.} and create the following file:
+
+\begin{code}
+$ mkdir -p ~/.texplate/templates/
+$ cd ~/.texplate/templates/
+$ vim myarticle.toml
+\end{code}
+
+\item Now, add the following content to the newly created \inline{mytemplate.toml} file:
+
+\begin{code}
+name = "mytemplate"
+description = """
+A simple template used to
+illustrate the template
+structure.
+"""
+authors = [ "Alice", "Bob" ]
+requirements = [ "names" ]
+document = '''
+These are the names:
+
+\begin{itemize}
+#foreach ($name in $names)
+  \item $name
+#end
+\end{itemize}
+'''
+
+[handlers]
+names = "to-csv-list"
+\end{code}
+
+\item Done, the template is ready to be used! Now, simply call \texplate\ in the command line and provide the required map entry, as seen as follows:
+
+\begin{code}
+$ texplate -t mytemplate -m names=John,Jane -o list.tex
+\end{code}
+
+The output (i.e., the template merged with the provided data) will be written to a text-based file named \inline{list.tex}.
+
+\item When running \texplate, this is the expected output to be displayed in the command line (note that the layout is slightly modified due to space constraints in this user manual):
+
+\begin{code}
+TeXplate 1.0.2, a document structure creation tool
+Copyright (c) 2020, Island of TeX
+All rights reserved.
+
+Configuration file
+mode disabled ......... [ DONE ]
+Entering full
+command line mode ..... [ DONE ]
+
+Please, wait...
+
+Obtaining reference ... [ DONE ]
+Composing template .... [ DONE ]
+Validating data ....... [ DONE ]
+Merging template
+and data .............. [ DONE ]
+
+Done! Enjoy your template!
+Written: 78 B
+\end{code}
+
+\item Great, everything worked as expected! Now, let us check the contents of the newly generated \inline{list.tex} file:
+
+\begin{code}
+$ cat list.tex 
+These are the names:
+
+\begin{itemize}
+  \item John
+  \item Jane
+\end{itemize}
+\end{code}
+
+As seen in the previous output, the template and provided data were successfully merged.
+
+\item Let us reproduce the same output with a configuration file. Observe, however, that handlers are not applied to map entries in the configuration file, so we have to explicitly set \inline{names} as a list of strings. Let us create a configuration file named \inline{config.toml} in the current directory:
+
+\begin{code}
+$ vim config.toml
+\end{code}
+
+Now, add the following content to the newly created \inline{config.toml} file:
+
+\begin{code}
+template = "mytemplate"
+
+[map]
+names = [ "John", "Jane" ]
+\end{code}
+
+\item The new call to \texplate, given the aforementioned configuration file, is slightly different than the previous one (step 3), so write the following entry in the command line:
+
+\begin{code}
+$ texplate -c config.toml -o list.tex
+\end{code}
+
+\item The output is pretty much the same obtained in the previous call (step 4), except for the following lines acknowledging the configuration file mode:
+
+\begin{code}
+Checking
+configuration .......... [ DONE ]
+Adjusting variables
+from file .............. [ DONE ]
+\end{code}
+
+The final lines from \texplate\ indicate everything worked as expected:
+
+\begin{code}
+Done! Enjoy your template!
+Written: 78 B
+\end{code}
+
+\item The generated \inline{list.tex} file has exactly the same contents as illustrated in step 5. It is important to remember that an existing output file will be mercilessly overwritten.
+\end{enumerate}
+
+The previous steps described how \texplate\ works, from creating a template to merging data into it, as a means to generating a text-based document. Chapter~\ref{chap:includedtemplates} presents text-based templates shipped with our tool, as well as the available variables in the document context.
+
+\chapter{Included templates}
+\label{chap:includedtemplates}
+
+\texplate\ ships with the following text-based templates, automatically available from the application directory:
+
+\section*{\inline{article}}
+
+This reference holds a simple template for the default \inline{article} class, with support for new engines (with \inline{fontspec} fallback), \inline{babel} languages, geometry options, generic packages, and Ti\textit{k}Z and corresponding libraries. There are no requirements for this template. Available variables are described as follows:
+
+\begin{itemize}
+\item\inline{xetex}: boolean value, changes the default behaviour to accommodate the Xe\TeX\ engine. Typical \inline{fontenc} and \inline{inputenc} packages are replaced by \inline{fontspec} when this variable holds true (semantically equivalent).
+
+\begin{code}
+-m xetex=true
+\end{code}
+
+\item\inline{luatex}: boolean value, changes the default behaviour to accommodate the Lua\TeX\ engine. Typical \inline{fontenc} and \inline{inputenc} packages are replaced by \inline{fontspec} when this variable holds true (semantically equivalent).
+
+\begin{code}
+-m luatex=true
+\end{code}
+
+\item\inline{options}: string value, holds the document class options, when applied.
+
+\begin{code}
+-m options=12pt,a4paper
+\end{code}
+
+\item\inline{babel}: string value, holds a sequence of languages supported by the \inline{babel} package. Keep in mind that the last entry in the sequence is set to be the default language.
+
+\begin{code}
+-m babel=english,italian
+\end{code}
+
+\item\inline{geometry}: string value, holds the options for the \inline{geometry} package. It is important to note that order matters.
+
+\begin{code}
+-m geometry=margins=2cm
+\end{code}
+
+\item\inline{packages}: list of strings, holds a list of packages to be included in the document preamble, in the specified order.
+
+\begin{code}
+-m packages=longtable,array
+\end{code}
+
+\item\inline{tikz}: boolean value, checks whether the document should include support for Ti\textit{k}Z in the preamble.
+
+\begin{code}
+-m tikz=true
+\end{code}
+
+\item\inline{libraries}: list of strings, holds a list of Ti\textit{k}Z libraries to be included in the document preamble, in the specified order. It is important to observe that this variable has no effect whatsoever if the \inline{tikz} variable is either not set or does not hold true.
+
+\begin{code}
+-m libraries=automata,positioning
+\end{code}
+\end{itemize}
+
+\section*{\inline{standalone}}
+
+This reference holds a simple template for the \inline{standalone} class, with support for new engines (with \inline{fontspec} fallback), \inline{babel} languages, geometry options, generic packages, and Ti\textit{k}Z and corresponding libraries. There are no requirements for this template. Available variables are described as follows:
+
+\begin{itemize}
+\item\inline{xetex}: boolean value, changes the default behaviour to accommodate the Xe\TeX\ engine. Typical \inline{fontenc} and \inline{inputenc} packages are replaced by \inline{fontspec} when this variable holds true (semantically equivalent).
+
+\begin{code}
+-m xetex=true
+\end{code}
+
+\item\inline{luatex}: boolean value, changes the default behaviour to accommodate the Lua\TeX\ engine. Typical \inline{fontenc} and \inline{inputenc} packages are replaced by \inline{fontspec} when this variable holds true (semantically equivalent).
+
+\begin{code}
+-m luatex=true
+\end{code}
+
+\item\inline{options}: string value, holds the document class options, when applied.
+
+\begin{code}
+-m options=12pt,a4paper
+\end{code}
+
+\item\inline{babel}: string value, holds a sequence of languages supported by the \inline{babel} package. Keep in mind that the last entry in the sequence is set to be the default language.
+
+\begin{code}
+-m babel=english,italian
+\end{code}
+
+\item\inline{geometry}: string value, holds the options for the \inline{geometry} package. It is important to note that order matters.
+
+\begin{code}
+-m geometry=margins=2cm
+\end{code}
+
+\item\inline{packages}: list of strings, holds a list of packages to be included in the document preamble, in the specified order.
+
+\begin{code}
+-m packages=longtable,array
+\end{code}
+
+\item\inline{tikz}: boolean value, checks whether the document should include support for Ti\textit{k}Z in the preamble.
+
+\begin{code}
+-m tikz=true
+\end{code}
+
+\item\inline{libraries}: list of strings, holds a list of Ti\textit{k}Z libraries to be included in the document preamble, in the specified order. It is important to observe that this variable has no effect whatsoever if the \inline{tikz} variable is either not set or does not hold true.
+
+\begin{code}
+-m libraries=automata,positioning
+\end{code}
+\end{itemize}
+
+\chapter{Final remarks}
+\label{chap:finalremarks}
+
+This document aimed at being a gentle introduction to \texplate, a tool for creating document structures based on templates. We invite you to contribute to this project by submitting feature requests, issues and new templates:
+
+\begin{code}
+gitlab.com/islandoftex/texplate
+\end{code}
+
+Happy \TeX ing with \texplate!
+
+\chapter*{License}
+
+\texplate\ is licensed under the New BSD License. Please note that the New BSD License has been verified as a GPL-compatible free software license by the Free Software Foundation, and has been vetted as an open source license by the Open Source Initiative.
+
+\chapter*{Changelog}
+
+\section*{1.0.2 (current)}
+
+\subsection*{Fixed}
+
+\begin{itemize}
+\item \texplate\ now finds its templates even on Windows.
+\end{itemize}
+
+\subsection*{Changed}
+
+\begin{itemize}
+\item \texplate\ now finishes its transition to Kotlin. We did not change any  functionality in the course of this change.
+\item Templates are now provided as resources from the JAR instead of a separate  folder on the hard drive.
+\end{itemize}
+
+\section*{1.0.1 (2020-01-17)}
+
+\subsection*{Changed}
+
+\begin{itemize}
+\item \texplate\ will now distribute only non-generic template file names. In the  system's template directory, we search for \inline{texplate-<name>.toml} as well.
+\end{itemize}
+
+\section*{1.0.0 (2020-01-15)}
+
+\subsection*{Added}
+
+\begin{itemize}
+\item Base functionality and default templates.
+\item User manual.
+\end{itemize}
+
+\end{document}

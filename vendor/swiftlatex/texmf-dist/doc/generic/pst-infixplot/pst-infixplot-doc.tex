@@ -1,0 +1,216 @@
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+
+\usepackage[a4paper,dvips,margin=1.5cm,includeheadfoot]{geometry}
+
+\usepackage{pst-infixplot,fancyhdr}
+
+\usepackage[pstricks,baw]{fvrb-ex}
+
+\makeatletter
+\renewcommand{\Begin@Example}{%
+\parindent=0pt
+\multiply\topsep by 2 \VerbatimEnvironment
+\begin{VerbatimOut}[codes={\catcode`\£=12\catcode`\?=12\catcode`\&=12%
+                           \catcode`\"=12}]{\jobname.tmp}}
+
+\renewcommand{\Below@Example}[1]{%
+\VerbatimInput[gobble=0,commentchar=£,commandchars=?&",numbersep=3pt]%
+              {\jobname.tmp}
+\catcode`\£=9\relax%
+\NoHighlight@Attributes % To suppress possible highlighting
+\ifFvrbEx@Grid\vspace{5pt}\fi
+#1%
+\ifFvrbEx@Grid\vspace{5pt}\fi
+\par}
+
+\renewcommand{\SideBySide@Example}[1]{%
+\@tempdimb=\FV@XRightMargin \advance\@tempdimb -5mm
+\begin{minipage}[c]{\@tempdimb}
+  \fvset{xrightmargin=0pt}
+  \catcode`\£=9\relax%
+  \NoHighlight@Attributes % To suppress possible highlighting
+  #1
+\end{minipage}%
+\@tempdimb=\textwidth \advance\@tempdimb -\FV@XRightMargin \advance\@tempdimb 5mm
+\begin{minipage}[c]{\@tempdimb}
+  \VerbatimInput[gobble=0,commentchar=£,commandchars=?&",numbersep=3pt,
+                 xleftmargin=5mm,xrightmargin=0pt]{\jobname.tmp}
+\end{minipage}}
+% The \NoHighlight@Attributes from `hbaw' and `hcolors' packages
+% must be modified too
+\def\NoHighlight@Attributes{%
+\catcode`\?=0\relax%
+\catcode`\&=1\relax%
+\catcode`\"=2\relax%
+\def\HLa##1{##1}%
+\def\HLb##1{##1}%
+\def\HLc##1{##1}%
+\def\HLd##1{##1}%
+\def\HLe##1{##1}%
+\def\HLf##1{##1}%
+\def\HLBFa##1{##1}%
+\def\HLBFb##1{##1}%
+\def\HLBFc##1{##1}%
+\def\HLBFd##1{##1}%
+\def\HLBFe##1{##1}%
+\def\HLBFf##1{##1}%
+\def\HLITa##1{##1}%
+\def\HLITb##1{##1}%
+\def\HLITc##1{##1}%
+\def\HLITd##1{##1}%
+\def\HLITe##1{##1}%
+\def\HLITf##1{##1}%
+\def\HLCBBa##1{##1}%
+\def\HLCBBb##1{##1}%
+\def\HLCBBc##1{##1}%
+\def\HLCBBd##1{##1}%
+\def\HLCBBe##1{##1}%
+\def\HLCBBf##1{##1}%
+\def\HLCBBz##1{##1}%
+\def\HLCBWa##1{##1}%
+\def\HLCBWb##1{##1}%
+\def\HLCBWc##1{##1}%
+\def\HLCBWd##1{##1}%
+\def\HLCBWe##1{##1}%
+\def\HLCBWf##1{##1}%
+\def\HLCBWz##1{##1}%
+}
+
+\makeatother
+
+\fvset{numbers=none,frame=single,labelposition=topline,gobble=2}
+
+\DefineShortVerb{\|}
+
+\newcommand{\pstInfixplotPackage}{\textbf{`pst-infixplot'}}
+\newcommand{\InfixRPNPackage}{\textbf{`infix-RPN'}}
+
+\lhead{\InfixRPNPackage{} -- \pstInfixplotPackage}\rhead{From infix expressions to Reverse Polish
+Notation} \pagestyle{fancy}
+
+\begin{document}
+\VerbatimFootnotes
+
+\title{\InfixRPNPackage{} -- \pstInfixplotPackage \\ \normalsize ver. 0.11}
+\author{%
+  Jean-Côme \textsc{Charpentier} \texttt{<jean-côme.charpentier@wanadoo.fr>}\\
+  Christophe \textsc{Jorssen} \texttt{<christophe.jorssen@libre.fr.invalid>}\\
+  \footnotesize `libre' is the french word for `free'
+}
+\date{2005/05/16}
+\maketitle
+
+\begin{abstract}
+Plotting functions with \texttt{pst-plot} is very powerful but sometimes difficult to learn since
+the syntax of |\psplot| and |\parametricplot| requires some PostScript knowledge. What
+\InfixRPNPackage{} and \pstInfixplotPackage{} intend to do is to simplify the usage of
+\texttt{pst-plot} for the beginner, providing macro commands that convert natural mathematical
+expressions to PS syntax.
+\end{abstract}
+
+\section{Basic examples: usage of \InfixRPNPackage}
+
+|\usepackage{infix-RPN}| for \LaTeX{} users or |\input infix-RPN.tex| for \TeX{} users gives access
+to three macros: |\infixtoRPN|, |\RPN| and |\DeclareNewPSOperator|.
+
+The macro |\infixtoRPN| takes an infix expression as argument and converts it to Reverse Polish
+Notation. The result of the conversion is put in the macro |\RPN|.
+
+\begin{SideBySideExample}[xrightmargin=6cm]
+  ?HLCBWz&\infixtoRPN"{2+3-4*x}?HLCBWz&\RPN"
+
+  \infixtoRPN{log(-x)}\RPN
+
+  \infixtoRPN{2*sin(x/y)}\RPN
+\end{SideBySideExample}
+
+\bigskip\bigskip
+
+Multiple signs are OK:
+
+\begin{SideBySideExample}[xrightmargin=6cm]
+  \infixtoRPN{3?HLCBWz&+-+--"0.5}\RPN
+\end{SideBySideExample}
+
+\bigskip\bigskip
+
+For operators that require more than one argument, arguments must be separated with commas:
+
+\begin{SideBySideExample}[xrightmargin=6cm]
+  \infixtoRPN{atan(x?HLCBWz&,"y)}\RPN
+\end{SideBySideExample}
+
+\bigskip\bigskip
+
+There is a difference between variables and operators. There are 11 pre-defined
+operators\footnote{Actually, there are five more operators defined : \texttt{add}, \texttt{sub},
+\texttt{mul}, \texttt{div} and \texttt{exp}. Those ones should \emph{not} be used direclty. Use
+|+|, |-|, |*|, |/| and |^| instead, which is, by the way, the main interest of using infix
+notation.}$^{,}$\footnote{If you use \texttt{pst-math} with \texttt{infix-RPN}, PS operators added
+by \texttt{pst-math} are declared by |\DeclareNewPSOperator| and are therefore directly accessible
+in any infix expression.} which are basically those of PostScript: \texttt{abs}, \texttt{sin},
+\texttt{cos}, \texttt{atan}, \texttt{neg}, \texttt{ceiling}, \texttt{floor}, \texttt{truncate},
+\texttt{sqrt}, \texttt{ln}, \texttt{log}. You can define more operators with the
+|\DeclareNewPSOperator| macro:
+
+\begin{SideBySideExample}[xrightmargin=6cm,label={Div is a PS operator defined by pstricks}]
+  ?HLCBWz&\DeclareNewPSOperator"{Div}
+  \infixtoRPN{Div(x,y)}\RPN
+\end{SideBySideExample}
+
+\section{Plot examples with \InfixRPNPackage}
+
+\begin{PSideBySideExample}[xrightmargin=10.5cm](0,-2)(10,3)
+  \psset{plotpoints=1000}
+  \psaxes{->}(0,0)(0,-2)(10,3)
+  \infixtoRPN{sqrt(x)}
+  \psplot[linecolor=green]{0}{10}{\RPN}
+  \infixtoRPN{x^0.4}
+  \psplot[linecolor=red]{0}{10}{\RPN}
+  \infixtoRPN{sin(-x*180/3.1415)}
+  \psplot[linecolor=blue]{0}{10}{\RPN}
+\end{PSideBySideExample}
+
+\section{Plot examples with \pstInfixplotPackage}
+
+If you don't want the limitation of having to invoke two macro calls (namely |\infixtoRPN| and
+|\RPN|) for plotting, then use the \pstInfixplotPackage{} package! \LaTeX{} users should type
+|\usepackage{pst-infixplot}| in the preamble when \TeX{} users should type %
+|\input pst-infixplot.tex|.
+
+\pstInfixplotPackage{} automatically loads \texttt{pstricks}, \texttt{pst-plot} and
+\texttt{infix-RPN}. \pstInfixplotPackage{} defines two macro commands: |\psPlot| and
+|\parametricPlot|.
+
+The syntax of |\psPlot| is:
+\texttt{\char`\\psPlot[\textit{<parameters>}]\{\textit{x\_begin}\}\{\textit{x\_end}\}\{\textit{infix\_expression}\}}
+where the optional \texttt{\textit{parameters}} are any pstricks valid parameter.
+
+\begin{PSideBySideExample}[xrightmargin=7.5cm](0,-2)(7,3)
+  \psset{plotpoints=1000}
+  \psaxes{->}(0,0)(0,-2)(7,3)
+  ?HLCBWz&\psPlot"[linecolor=green]{0}{7}{sqrt(x)}
+  \psPlot[linecolor=red]{0}{7}{x^0.4}
+  \psPlot[linecolor=blue]{0}{7}{sin(-x*180/3.1415)}
+  \psplot{0}{7}{x neg 180 mul 3.1415 div cos}
+\end{PSideBySideExample}
+
+The syntax of |\parametricPlot| is:
+
+\texttt{\char`\\parametricPlot[\textit{<parameters>}]\{\textit{x\_begin}\}\{\textit{x\_end}\}\{\textit{infix\_x\_expression}\}%
+\{\textit{infix\_y\_expression}\}} where the optional \texttt{\textit{parameters}} are any pstricks
+valid parameter.
+
+\begin{PSideBySideExample}[xrightmargin=4cm](0,-2)(3.8,3)
+  \psset{plotpoints=1000}
+  \psaxes{->}(0,0)(0,-2)(3.8,3)
+  ?HLCBWz&\parametricPlot"[linecolor=red]{-30}{70}{3.5*cos(t)}{2.3*sqrt(abs(sin(t)))}
+  \parametricPlot[linecolor=green]{-30}{60}{4*sqrt(abs(floor(t)))/10}{t/20}
+  \parametricplot{-30}{60}{2 t cos mul 3 t sin mul}
+\end{PSideBySideExample}
+
+
+\end{document}

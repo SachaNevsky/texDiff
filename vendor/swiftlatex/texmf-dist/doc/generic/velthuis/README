@@ -1,0 +1,195 @@
+==============================================================================
+Velthuis Devanagari for TeX                         Usage & Installation Notes
+Version 2.17.1                                                    6 March 2019
+==============================================================================
+
+
+This package provides support for typesetting texts in Devanagari script
+(Sanskrit and Hindi) in plain TeX and LaTeX. the text is entered in Velthuis
+transliteration.
+
+The package is obsolete, it is better to use modern tools such as XeTeX for
+new documents because these tools support Unicode and OpenType fonts can
+be used. The package is preserved for those who need to process legacy
+documents. The package is still maintained, bugs will be fixed but there is
+no intention to implement new features.
+
+The package is included in famous TeX distributions such as TeX Live and
+MikTeX. It is being maintained in the TeX Live repository.
+
+
+Release numbering scheme
+========================
+
+The project used to live on a CVS server which means that each file has its own
+version number. This is not practical for milestone releases prepared for
+publishing on Sarovar, CTAN or elsewhere. Moreover, the preprocessor has its
+own version number advanced manually when a new feature is added or a bug is
+fixed. Since release 2.14 the whole package shares version number of the
+preprocessor. If only macros and/or fonts were changed since the previous
+release and the preprocessor remains unchanged, another digit is added to the
+version number. Thus release 2.14.1 would mean that the preprocessor remained
+at version 2.14 but some macros and/or fonts were modified. Users who update
+their distributions will thus know whether they have to compile a new version
+of the preprocessor or whether they can keep the existing executable.
+
+
+
+Compiling the preprocessor
+==========================
+
+The package contains the source code of the devnag preprocessor in the
+"bin" directory. Users of other platforms are supposed to compile the
+preprocessor themselves. See important notes inside devnag.c.
+
+Releases both on devnag.sarovar.org and CTAN contain also an executable for
+OS/2 (eComStation) and statically linked executable for Linux.
+
+Enter the directory with the executable to the PATH variable or move or
+symlink the executable to a directory listed in PATH. In UNIX systems you can
+verify by "which devnag" that the file can be located.
+
+
+Install the macros and fonts
+============================
+
+You must instruct your TeX distribution to include your directory into the
+beginning of search paths. If you have web2c based system (TeX Live, teTeX),
+find file texmf.cnf (typically in texmf/web2c directory) and modify the TEXMF
+variable. It typically contains:
+
+TEXMF = {!!$TEXMFLOCAL,!!$TEXMFMAIN}
+
+Define the location of the package (before definition od TEXMF) as:
+
+DEVNAG = /path/to/velthuis
+
+and then modify the TEXMF definition as:
+
+TEXMF = {!!$DEVNAG,!!$TEXMFLOCAL,!!$TEXMFMAIN}
+
+Rebuild the file database either by running mktexlsr from the command prompt
+or from the texconfig menu (be sure that mktexlsr and/or texconfig come from
+the same distribution as tex, latex, etc.).
+
+If you are a MikTeX user, find MikTeX menu, open MikTeX Options, select the
+Roots tab, use the Add button to add the "velthuis" directory, move it to the
+top location by the Up button. MikTeX also needs to know about the fonts.
+Locate your updmap.cfg file. It usually resides in X:\texmf\web2c directory (X:
+is the drive with your MikTeX installation) or you may have a local copy in
+X:\localtexmf\web2c. The file must contain the following line:
+
+MixedMap dvng.map
+
+If it is not present, put it to the end of the file. Finally refresh the file
+database pushing the Refresh FNDB button.
+
+Note: We rarely add new files or remove files or change their locations. Once
+you install the package from CVS and update it by "cvs up -P" without removing
+the "ls-R" file, TeX will immediatelly use the new files. It is NOT necessary
+to rebuild the database.
+
+Test your installation
+======================
+
+The kpathsea library now should be able to find your files. Try the following
+commands:
+
+kpsewhich devanagari.sty
+kpsewhich dvng10.tfm
+kpsewhich dvng10.mf
+kpsewhich dvng10.pfb
+
+If the files are not found or if files from other directories are found
+instead, there is something wrong with your installation. It makes no sense to
+continue. Return to the previous step and fix the installation.
+
+
+Enable Hindi in Babel
+=====================
+
+Hindi support is not yet an official part of LaTeX. The installation files
+for Babel are included in the "doc" directory but the language definition
+file has been generated and installed. In order to enable Hindi add the
+following line to your language.dat:
+
+hindi zerohyph.tex
+
+Afterwards rebuild the formats by the coresponding butten in MikTeX or by the
+following commands in TeX Live:
+
+fmtutil --byfmt latex
+fmtutil --byfmt pdflatex
+fmtutil --byfmt xelatex
+
+
+Make font information files
+===========================
+
+Drivers dvips, dvipdfm, pstopk as well as pdftex require information on fonts.
+Create them by:
+
+updmap --enable=MixedMap dvng.map
+
+If it says that the fonts are already known and nothing will be changed, it
+means that updmap knows some older version. In such a case just run updmap
+without any arguments.
+
+This step is not necessary with MikTeX because it was already done during macro
+installation (updmap just adds the mentioned line to updmap.cfg and generates
+necessary *.map files).
+
+
+Run a sample document
+=====================
+
+Make a copy of a sample file doc/generic/velthuis/misspaal.dn into another
+directory. Now "cd" to that directory and run the file through the
+preprocessor by:
+
+devnag misspaal
+
+The resulting misspaal.tex file can then be processed by latex into
+misspaal.dvi or by pdflatex directly to misspaal.pdf. If you get the same
+result as doc/generic/velthuis/misspaal.pdf, then -- {\dn "saabaa"s} -- your
+installation is correct. Now you can read the manual (available both as
+manual.tex and manual.pdf in the doc/generic/velthuis/ directory) and create
+your own Devanagari documents.
+
+
+Frequent errors
+===============
+
+* (La)TeX cannot find files (*.sty, *.fd, dnmacs.tex)
+
+  Make sure that the directory with Velthuis Devanagari is mentioned in the
+  TEXMF variable (teTeX, TeX Live) or selected in MikTeX options in the Roots
+  tab. Refresh the filename database (it never harms anything).
+
+* PostScript files created by dvips do not contain Type 1 fonts, they are
+  replaced by roman fonts although dv*.pfb were loaded
+
+  You probably have an old version of dvng.map earlier in the search path or
+  different version of Type 1 fonts earlier in the search path. The PostScript
+  names of the fonts have changed. PdfTeX can often cope with it but dvips
+  cannot and the resulting PostScript file is damaged and unusable. Be sure
+  that the directory with the Velthuis Devanagari package is at the beginning
+  of the TEXMF variable (teTeX, TeX Live) or selected in MikTeX options in the
+  Roots tab as the first one. Then refresh the filename database. Non-MikTeX
+  users should also run updmap without arguments.
+
+Features that may seem to be bugs
+=================================
+
+* If you enter a word containing an i-matra with a consonant group with virama
+  such as `chu.t.tiyaa/', the vowel follows the consonant vith the virama. This
+  is prefered behaviour, it is used in nowaday's Hindi texts typeset in India
+  and such words are rendered this way by Unicode rendering libraries such as
+  ICU, Pango, Harfbuzz, and Uniscribe. It is still possible to change the
+  rendering method, see the directives @vconjuncts/@novconjuncts in section 5.1
+  of the manual.
+
+Recent changes
+==============
+
+2.17.1: Fixed misprint in \bibname in devanagari.sty as well as captions.dn

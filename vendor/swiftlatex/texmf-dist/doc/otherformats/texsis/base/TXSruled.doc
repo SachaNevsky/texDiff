@@ -1,0 +1,604 @@
+%% file: TXSruled.doc - Ruled Tables - TeXsis version 2.18
+%% @(#) $Id: TXSruled.doc,v 18.2 2000/05/17 00:19:46 myers Exp $  
+%======================================================================*
+% (C) copyright 1994, 1999 by Eric Myers and Frank E. Paige.
+% This file is a part of TeXsis.  Distribution and/or modifications
+% are allowed under the terms of the LaTeX Project Public License (LPPL).
+% See the file COPYING or ftp://ftp.texsis.org/texsis/LPPL
+%======================================================================*
+\ifx\undefined\bs \texsis\input TXSdocM.doc\draft\fi
+
+\noindent
+While \cs{halign} in Plain \TeX\ is convenient for making simple
+tables, it is still difficult to make tables with horizontal and
+vertical rules.  Indeed, typesetting ruled tables in \TeX\ has often
+been likened to programming a computer in assembler language.  Even
+\TeXbook\ acknowledges that ``people who know how to make ruled tables
+are generally known as \TeX\ Masters.''\reference{Masters}\relax
+D.E.~Knuth, {\sl The \TeX book} (Addison Wesley, 1986), page 245
+\endreference
+The macros described below take a great deal of the difficulty out of
+making ruled tables, so that anybody can become a
+\TeX\ Master, or at least a master of ruled tables.
+\index{ruled tables}\index{tables!ruled|see{ruled tables}}
+
+\def\VT{\char'174}      % the vertical var character ``|'' is needed below
+
+        The basic idea behind making a ruled table is similar to
+\cs{halign}, and the syntax is the same as the Princeton table macros
+known as |TABLES.TEX| by Ray Cowan\reference{Cowan} Ray F.~Cowan, {\sl
+Making Tables with Macros} (unpublished)
+\endreference\index{Cowan, Ray F.}
+(although the \TeXsis\ macros are quite different internally and run
+about 5 times faster).  You begin the table material with \cs{ruledtable}
+and end it with \cs{endruledtable}.  The table material is a list of items
+to appear in the rows and columns of the tables.  Just as with \cs{halign},
+you can separate items in different columns with |&|\index{&@{\tt \&}}
+and end a row with
+\cs{cr}.  The |&| \idx{alignment character}\index{&@{\tt \&}}
+separates columns without putting a
+vertical rule between the columns, while \cs{cr} ends a line and puts a
+thin horizontal rule under it.  To get a vertical rule between columns
+replace the |&|\index{&@{\tt \&}}
+ with a `{\tt\VT}' (the vertical line), and to end a line
+without a horizontal rule under it replace the \cs{cr} with \cs{crnorule}.
+One important thing to remember is to end the last line in the table
+with \cs{endruledtable} instead of \cs{cr}.
+
+\bigskip
+\pagecheck{2cm}
+
+   As a first example, here is a simple ruled table,
+{\singlespaced
+\bigskip\tenpoint
+\ruledtable
+Year      |    World Population \cr
+8000 B.C. |   ~~~5000000        \crnorule
+~~50 B.C. |   ~200000000        \crnorule
+1650 A.D. |   ~500000000        \crnorule
+1850 A.D. |   1000000000        \crnorule
+1945 A.D. |   2300000000        \crnorule
+1980 A.D. |   4400000000        
+\endruledtable
+\smallskip}
+\pagecheck{2cm}\noindent 
+and here are the instructions that created it,
+\TeXexample
+|smalltt\ruledtable
+Year      |VT    World Population \cr
+8000 B.C. |VT   ~~~5000000        \crnorule
+~~50 B.C. |VT   ~200000000        \crnorule
+1650 A.D. |VT   ~500000000        \crnorule
+1850 A.D. |VT   1000000000        \crnorule
+1945 A.D. |VT   2300000000        \crnorule
+1980 A.D. |VT   4400000000        
+\endruledtable
+|endTeXexample
+This example also appears in \TeXbook, on page~246, where it is typeset using
+|\halign|.  Compare how the two are constructed
+and see which way you think is easier.
+
+   By default each item in the table is centered in its column.  Inside
+a table the tie character ``|~|''\index{~@{\tt\char'176}} takes up the space
+of exactly one digit (it is the same as saying
+|\phantom{0}|),\index{phantom@{\tt\bs phantom\lb 0\rb}} and this has been
+used to line up the digits of the entries in both columns.  It is also
+possible to change the definition of the \cs{TableItem} macro so that each
+entry in each column is left or right justified.  This is described a
+little bit later.
+
+   Something to note about this example table is that the outer
+rules are thicker than the others.  You can also get a thick
+vertical rule between columns by using ``{\tt\bs\VT}'' in place of
+``{\tt\VT}'', and you can get a thick horizontal rule below a row by
+replacing the \cs{cr} with \cs{crthick}.  The widths of thick and
+thin rules are controlled by the dimensions \cs{thicksize} and
+\cs{thinsize}.  If you don't want thick rules at all simply say
+|\thicksize=\thinsize|, which makes the thick rules as thin
+as the thin rules.
+
+   Some synonyms:  \cs{CR} is the same as \cs{crthick}, \cs{nr} is the
+same as \cs{crnorule}, and \cs{crrule} is the same as \cs{cr} (actually
+it's the other way around).  \cs{tab} is the same as |&|\index{&@{\tt \&}}
+--- it separates columns without a vertical rule.  \cs{vb} is the same as 
+{\tt\VT}, it separates columns with a thin vertical bar, while
+\cs{Vb} is the same as {\tt\bs\VT} and separates the columns with a
+thick vertical bar.  You can also use \cs{dbl} to separate columns
+with a double vertical rule.
+
+   As in Plain \TeX\ you can use \cs{span} in place of
+|&|\index{&@{\tt \&}} (or the other column separators) to join two
+columns together into one, and you can use \cs{omit} as the very first
+token in a column to tell it to omit the fancy column layout (the
+centering or other spacing).
+You can also use \cs{multispan} to \cs{span} and \cs{omit} several
+columns, just as in an \cs{halign}.
+The only difference is that the number of columns you tell it to
+\cs{multispan} is the number of columns of the table it spans --- in a
+ruled table constructed with \cs{halign} you would count the columns
+{\sl and} any vertical rules (because the rules are also columns of
+the \cs{halign}).
+
+
+
+\table{example-II}
+\caption{Another example of a ruled table.}
+\intablelist{Example of a ruled table --- AT\&T Common Stock.}
+\singlespaced
+\tenpoint
+\ruledtable
+\multispan3\hfil AT\&T Common Stock \hfil\CR
+ Year \dbl Price | Dividend \cr
+ 1971 \dbl 41-54 | \$2.60   \cr
+ ~~~2 \dbl 41-54 | \$2.70   \cr
+ ~~~3 \dbl 46-55 | \$2.87   \cr
+ ~~~4 \dbl 40-53 | \$3.24   \cr
+ ~~~5 \dbl 45-52 | \$3.40   \cr
+ ~~~6 \dbl 51-59 |  ~~.95
+\endruledtable
+\endtable
+
+  \Tbl{example-II} is another sample table, again taken
+{from} \TeXbook.  Something important to notice is that the last
+ruled table example didn't have a table number or a caption,
+while this one does.  That's because the last example was created
+using just \cs{ruledtable}, while this example is inside of
+\cs{table}.  The point is that \cs{table} and \cs{ruledtable} do
+separate things and can be used either separately or together;
+\cs{table} creates the space for the table and gives it a caption
+and a number, while \cs{ruledtable} actually constructs the body of
+the ruled table.  The instructions that created \Tbl{example-II}
+are:
+\smallskip\goodbreak
+\TeXexample
+|smalltt\table{example-II}
+\caption{Another example of a ruled table.}
+\singlespaced
+\ruledtable
+\multispan3\hfil AT\&T Common Stock \hfil\CR
+Year \dbl Price |VT Dividend \cr
+1971 \dbl 41-54 |VT \$2.60   \cr
+~~~2 \dbl 41-54 |VT \$2.70   \cr
+~~~3 \dbl 46-55 |VT \$2.87   \cr
+~~~4 \dbl 40-53 |VT \$3.24   \cr
+~~~5 \dbl 45-52 |VT \$3.40   \cr
+~~~6 \dbl 51-59 |VT  ~~.95
+\endruledtable
+\endtable
+|endTeXexample
+\bigskip\goodbreak
+
+\table{SiHCl}
+\caption{Parameters used in the MS-X$\alpha$ calculations for 
+        the chlorosilane molecules, H$_{\rm x}$SiCl$_{\rm 4-x}$; 
+        x=0--4.}
+\intablelist{Example of a ruled table --- Parameters used in the
+        MS-X$\alpha$ calculations for the chlorosilane molecules, 
+        H$_{\rm x}$SiCl$_{\rm 4-x}$; x=0--4.}
+\singlespaced
+\tenpoint
+\ruledtable
+\vctr{Molecule} | \vctr{Region} | Radius | 
+  \vctr{$\alpha _{\rm HF}$}|\multispan{2} $l_{\rm max}$ \crnorule
+\cskip | \cskip | \cskip |\cskip|    \crule     |  \crule \crpart 
+       |        | (au)   |      | initial state | final state \CR
+
+SiCl$_4$      | outersphere | 6.21 | 0.7238 | 4 | 7\crnorule
+              | Si          | 2.20 | 0.7275 | 2 | 3\crnorule
+              | Cl          | 2.40 | 0.7233 | 2 | 3\cr
+
+SiHCl$_3$     | outersphere | 6.21 | 0.7260 | 4 | 7\crnorule
+              | Si          | 2.16 | 0.7275 | 2 | 3\crnorule
+              | Cl          | 2.40 | 0.7233 | 2 | 3\crnorule
+              | H           | 1.20 | 0.7772 | 1 | 2\cr
+
+SiH$_2$Cl$_2$ | outersphere | 6.25 | 0.7295 | 4 | 7\crnorule
+              | Si          | 2.20 | 0.7275 | 2 | 3\crnorule
+              | Cl          | 2.40 | 0.7233 | 2 | 3\crnorule
+              | H           | 1.20 | 0.7772 | 1 | 2\cr
+
+SiH$_3$Cl     | outersphere | 6.30 | 0.7360 | 4 | 7\crnorule
+              | Si          | 2.20 | 0.7275 | 2 | 3\crnorule
+              | Cl          | 2.40 | 0.7233 | 2 | 3\cr
+
+SiH$_4$       | outersphere | 4.10 | 0.7524 | 4 | 7 \crnorule
+              | Si          | 2.04 | 0.7275 | 2 | 3 \crnorule
+              | H           | 1.20 | 0.7772 | 1 | 2 
+\endruledtable
+\bigskip\bigskip
+\endtable
+
+Sometimes it is desirable to have rules across only some of the columns
+of a table.  In this case put \cs{crule} in the columns that are to have
+rules, \cs{cskip} in the columns where no rules are desired, and
+end the line with \cs{crpart}, which signals that the line contains a
+partial rule.  The column headings in  \Tbl{SiHCl} are an example of
+partial rules in a table.
+That table was created with the commands,\reference{Bozek, 1991}
+J.D.~Bozek, Ph.D. thesis (unpublished), Department of Chemistry,
+University of Western Ontario, London, Ontario CANADA
+\endreference\relax
+\TeXexample
+|smalltt\table{SiHCl}
+\caption{...}
+\singlespaced\tenpoint
+\ruledtable
+\vctr{Molecule} |VT \vctr{Region} |VT Radius |VT 
+  \vctr{$\alpha _{\rm HF}$}|VT\multispan{2} $l_{\rm max}$ 
+\crnorule
+\cskip |VT \cskip |VT \cskip |VT\cskip|VT    \crule     |VT  \crule \crpart 
+       |VT        |VT (au)   |VT      |VT initial state |VT final state \CR
+SiCl$_4$      |VT outersphere |VT 6.21 |VT 0.7238 |VT 4 |VT 7 \crnorule
+              |VT Si          |VT 2.20 |VT 0.7275 |VT 2 |VT 3 \crnorule
+              |VT Cl          |VT 2.40 |VT 0.7233 |VT 2 |VT 3 ...
+...
+\endruledtable
+\endtable
+|endTeXexample
+\bigskip\goodbreak
+
+
+   Ruled tables are normally centered on the page, but you can turn
+off the centering with \cs{noncenteredtables}.
+Then the table becomes just another piece to add to a horizontal list.
+One thing this lets you do is have two tables side by side on the
+page, like so:
+\nobreak
+\noncenteredtables\index{ruled tables!centered}
+\bigskip
+\line{\tenpoint\ruledtable
+Item ABC | Item DEF \cr
+Item GHI | Item JKL \endruledtable
+\hfil
+\ruledtable
+Data 111 | Data 222 \cr
+Data 333 | Data 444 \cr
+Data 555 | Data 666 \endruledtable}
+\bigskip
+\pagecheck{5\baselineskip}
+\noindent 
+This pair of tables was produced by saying:
+\TeXexample
+|smalltt\noncenteredtables
+\medskip
+\line{\ruledtable
+Item ABC |VT Item DEF \cr
+Item GHI |VT Item JKL \endruledtable
+\hfil
+\ruledtable
+Data 111 |VT Data 222 \cr
+Data 333 |VT Data 444 \cr
+Data 555 |VT Data 666 \endruledtable}
+\smallskip
+|endTeXexample
+\noindent Saying \cs{centeredtables} turns table centering back on.
+Tables are then centered across the page, and a table is then 
+added to a {\sl vertical\/} list.
+\bigskip\goodbreak
+
+        Usually \cs{ruledtable} makes tables as wide as their natural
+width, but it is possible to make them wider by setting the dimension
+\cs{tablewidth} to the width desired before saying \cs{ruledtable}.  We can
+make the same table in \Tbl{example-II} but with the width set to
+10cm: \index{ruled tables!size}
+\bigskip
+\noncenteredtables
+\tablewidth=10cm
+\line{\tenpoint\hfil\vbox{\singlespaced
+  \ruledtable
+  \multispan3\hfill AT\&T Common Stock \hfill\CR
+  Year \dbl Price | Dividend \cr
+  1971 \dbl 41-54 | \$2.60   \cr
+  ~~~2 \dbl 41-54 | \$2.70   \cr
+  ~~~3 \dbl 46-55 | \$2.87   \cr
+  ~~~4 \dbl 40-53 | \$3.24   \cr
+  ~~~5 \dbl 45-52 | \$3.40   \cr
+  ~~~6 \dbl 51-59 |  ~~.95\rlap* 
+  \endruledtable
+  \hbox{* (first quarter only)}
+\vss}\hfil}
+\smallskip
+\noindent  
+The careful reader will notice that the version of
+\Tbl{example-II} in \TeXbook\ had a footnote to the last entry,
+and we have added that here.  To do so we had to put the footnote in an
+\cs{hbox} and stack it under the table, so we had to turn off table
+centering.  The table is therefore a bit more complicated to make, but
+not much: \index{ruled tables!footnotes}
+\TeXexample
+|smalltt\noncenteredtables
+\tablewidth=10cm
+\line{\tenpoint\hfil\vbox{\singlespaced
+  \ruledtable
+  \multispan3\hfill AT\&T Common Stock \hfill\CR
+  Year \dbl Price |VT Dividend \cr
+  1971 \dbl 41-54 |VT \$2.60   \cr
+  ~~~2 \dbl 41-54 |VT \$2.70   \cr
+  ~~~3 \dbl 46-55 |VT \$2.87   \cr
+  ~~~4 \dbl 40-53 |VT \$3.24   \cr
+  ~~~5 \dbl 45-52 |VT \$3.40   \cr
+  ~~~6 \dbl 51-59 |VT  ~~.95\rlap* 
+  \endruledtable
+  \hbox{* (first quarter only)}
+\vss}\hfil}
+|endTeXexample
+\centeredtables         % turn back on!
+\noindent
+If we had not wanted to add the footnote, then the table would have
+been typed the same way as \Tbl{example-II} except for setting
+the \cs{tablewidth}.
+
+        Important note:  \cs{tablewidth} is turned ``off'' after the
+table is made, so  the next table will have its natural width unless
+you explicitly set \cs{tablewidth} again! \index{ruled tables!size}
+\bigskip\goodbreak
+
+        \cs{ruledtable} normally inserts a \cs{quad} of space around each
+item. If you have a very wide table, especially one with many columns,
+you may wish to reduce this.  \cs{TightTables} make this spacing a single
+space, the minimum acceptable.  \cs{LooseTables} restores the default
+spacing.  You can define this space to be something else by
+re-defining \cs{tablespace}, for example as \index{ruled tables!spacing}
+\TeXexample
+\def\tablespace{\ \ }
+|endTeXexample
+\noindent 
+If the table is still too wide with \cs{TightTables}, you will probably
+have to reformat it or print it in landscape mode (tilted 90\degrees on
+the page).
+\bigskip\goodbreak
+
+
+        The careful reader may also have noticed that in the
+examples in \Tbl{example-II} and \Tbl{SiHCl}  we said
+\cs{singlespaced}.  That's
+because the spacing of the rows of a table can be controlled just like
+the spacing of the text with \cs{singlespaced}, \cs{doublespaced},
+etc. \index{ruled tables!spacing}
+The space between the rows of a table is set by a strut called
+\cs{tstrut}, which holds the rows apart.  Its default definition is
+\TeXexample
+\def\tstrut{\vrule height 3.1ex depth 1.2ex width 0pt}
+|endTeXexample
+\noindent
+You can change the spacing between rows by changing the definition of
+this strut.  One of the things \cs{singlespaced}  does is define the
+\cs{tstrut} to be 0.5ex higher and deeper than a parenthesis.
+\cs{doublespaced}, \cs{triplespaced}, and \cs{widenspacing} all increase the
+height and depth of the strut in proportion to the increase in the
+baseline spacing.
+
+        If you put something in a table which is larger than the strut,
+then it will touch the rules above or below.  You can fix this by
+inserting your own strut into that row.  More simply, you can say
+\cs{bigitem}\arg{stuff}, and the ``stuff'' will be positioned correctly
+with a nice amount of space above and below. \index{ruled tables!spacing}
+\medskip
+
+        You can also decide whether or not you want diagnostic messages
+printed when a table is created.  Saying \cs{tableinfotrue} causes a
+message to be printed on your terminal every time a ruled table is
+created.  The message tells you how many rows and columns were in the
+table.  This is useful information, because it can tell you immediately
+if you made a mistake in the table or left out a row or column.
+\cs{tableinfotrue} is the default, but you can turn off these messages
+by saying
+\cs{tableinfofalse}. In any case, you will be warned if a row has a
+different number of columns from the previous one.
+\medskip
+
+        The tables we have demonstrated so far all contain numbers, but
+sometimes it is desirable to have an entry in a table which is a
+paragraph of text.  \index{ruled tables!text} For that purpose, you can
+use \cs{para}\arg{text}.  The width of the paragraph is determined by
+the dimension \cs{parasize}, which defaults to 4 inches.
+\medskip
+
+Tables \use{Tb.tablemac;a} and \use{Tb.tablemac;b} summarize the most
+important commands for making ruled tables.
+
+  Finally, we can discuss how you can change how each column of
+a table is constructed.  The macros which build the table take
+each entry and pass it to a macro called \cs{TableItem}.  The
+default definition of \cs{TableItem} is:
+\vskip 0pt\goodbreak
+\TeXexample
+|smalltt\def\TableItem#1{%              % centers item in ruled table
+   \hfil\tablespace             % left glue
+   #1\killspace                 % item, no space after
+   \tablespace\hfil             % right glue
+    }%
+|endTeXexample
+
+
+%% TABLE A
+
+\bottomtable{tablemac;a}
+\caption{Basic table macros for use with {\tt\bs ruledtable}.}%
+\intablelist{Basic macros for {\tt\bs ruledtable}}%
+\tablewidth=\hsize
+\LeftJustifyTables
+\ruledtable
+\sl Macro name\relax         
+        | \sl Description \relax \crthick
+\tt\bs ruledtable\relax      
+        | \para{Starts a ruled table.}\cr
+\vtop{\noindent\hsize=1.6in\normalbaselines
+  \tt\char124\quad \rm (vertical bar)\hfil\break
+  or \tt\bs vb\hfil}\relax
+        | \para{Separates one column from the next, with a
+        a thin vertical rule between them.}\cr
+\tt\&\ \rm or\tt\ \bs tab \relax
+        | \para{Separates one column from the next, but with
+        no rule between them.}\cr
+\tt\bs cr\relax              
+        | \para{Ends the current row, and starts the next
+        one.  The completed row will be separated from
+        the next with a thin horizontal rule.}\cr
+\vtop{\noindent\hsize=1.6in\normalbaselines
+\tt\bs crthick \hfil\break \rm or \tt\bs CR\hfil }\relax         
+        | \para{Similar to {\tt\bs cr}, but the rows will
+        be separated with a thick horizontal rule.}\cr
+\vtop{\noindent\hsize=1.6in\normalbaselines
+\tt\bs crnorule \hfil\break \rm or \tt\bs nr\hfil }\relax         
+        | \para{Similar to {\tt\bs cr}, but the rows will
+        not be separated by a rule.}\cr
+\tt\bs\char124 \relax        
+        | \para{Same as {\tt\char124}, but with a thick vertical rule.}\cr
+\tt\bs dbl
+        | \para{Same as {\tt\char124}, but with two thin vertical rules.}\cr
+\tt\bs endruledtable\relax        
+        | \para{Ends the ruled table.}%
+\endruledtable
+\line{\hfil {\sl Continued...}}%
+\endtable
+
+%% TABLE B (FULL PAGE)
+
+\fulltable{tablemac;b}
+\caption{Additional macros for use with {\tt\bs ruledtable}.}
+\intablelist{Additional macros for {\tt\bs ruledtable}}
+\tablewidth=\hsize
+\LeftJustifyTables
+\line{{\sl Continued...}\hfil}
+\smallskip
+\ruledtable
+\sl Macro name\relax         
+        | \sl Description \relax \crthick
+\tt\bs multispan\lb{\it n}\rb\relax 
+        | \para{Makes the next entry span the next $n$
+        columns, where $n$ is an integer, $n>0$.
+        See {\tt\bs omit} below.} \cr
+\tt\bs omit \relax           
+        | \para{This \TeX\ primitive causes the normal
+        template for its entry to be omitted, allowing
+        the user to do something else with this entry.} \cr
+\tt\bs para\arg{text}\relax
+        | \para{Formats {\sl text\/} into a neat little
+        paragraph like this one.  The width of the
+        paragraph produced is determined by the dimension 
+        {\tt\bs parasize}.  The default is 4 inches.  } \cr
+\tt\bs parasize=\meta{dimen} \relax
+        | \para{Sets the width of paragraphs for the {\tt\bs para} 
+        macro.} \cr
+\tt\bs TableItem\arg{stuff}\relax     
+        | \para{Used in the standard template, this
+        macro centers its argument in the column.  The
+        user can redefine it for special effects.} \cr
+\tt\bs tablespace
+        | \para{The spacing around each item for {\tt\bs TableItem}.}\cr
+\vtop{\noindent\hsize=1.4in\normalbaselines
+\tt\bs LooseTables \hfil\break
+\tt\bs TightTables\hfil}\relax
+        | \para{Set {\tt\bs tablespace} to {\tt\bs quad} and {\tt\bs\ } 
+        respectively.\hfill\break\ }\cr
+\vtop{\noindent\hsize=1.6in\normalbaselines
+\tt\bs TrailingSpaces \hfil\break
+\tt\bs NoTrailingSpaces \hfil}\relax
+        | \para{Use trailing spaces and glue items in table entries
+        (default) or ignore them. See text.}\cr
+\tt\bs bigitem\arg{stuff}\relax     
+        | \para{Use this for something that would normally
+        not fit in one line of a table to make the spacing
+        between rows large enough for this item.} \cr
+\tt\bs vctr\arg{stuff}\relax     
+        | \para{Centers the item {\sl vertically\/} so that
+        it can appear between two rows.}\cr
+\tt\bs centeredtables\relax  
+        | \para{Turns table centering on.  Each table
+        will be centered left-to-right on the page.
+        This is the default.} \cr
+\tt\bs noncenteredtables\relax
+        | \para{Turns table centering off.  Each table
+        is returned as an {\tt\bs hbox}, and it is up
+        to the user to place it as desired.} \cr
+\vtop{\noindent\hsize=1.6in\normalbaselines
+\tt\bs tableinfotrue \hfil\break
+\tt\bs tableinfofalse\hfil}\relax
+        | \para{Turns on or off the diagnostic message telling
+        you how many rows and columns were found in the
+        table. }\cr
+\tt\bs thicksize=\meta{dimen} \relax
+        | \para{This dimension specifies the thickness
+        of the thick rules in the table.  The default
+        size is 1.5 points.} \cr
+\tt\bs thinsize=\meta{dimen} \relax
+        | \para{This dimension specifies the thickness
+        of thin rules in the table.  The default
+        size is 0.8 points.} \cr
+\tt\bs tablewidth=\meta{dimen} \relax
+        | \para{Specifies how wide to make the next
+        table.  If not specified, the table is made to
+        its natural width.  This value is reset
+        following the construction of each table.} 
+\endruledtable
+\vfill
+\endtable
+
+
+The \cs{hfil} glue on both sides of the argument causes the item to be
+centered in the column, while \cs{tablespace} (which defaults to \cs{quad})
+insures that there will be at least some amount of space between the
+item and the vertical rules on each side. Because of the way that
+\TeX\ handles macro arguments, if you type a table with spaces between
+the text and the next column separator, an extra \cs{space} will be
+inserted into the table. If you first say \cs{NoTrailingSpaces}, then
+\cs{killspace} in the above macro is defined to remove any trailing glue
+items. \cs{hfill} is redefined by the table macros so that if it is the
+last token in an entry, then that entry is properly left justified,
+but to insert any other trailing glue, you must say
+\example
+\meta{text}\meta{glue}|\null|
+\endexample
+\noindent
+The default is \cs{TrailingSpaces}, which does incorporate any trailing
+spaces into the table but which also treats any trailing glue items
+normally. 
+
+
+        You can change the definition of \cs{TableItem} to suit your own
+purpose.  The simplest modification is to omit the \cs{hfil} on the left
+or right so that each entry is right or left justified.  This is so
+commonly used that saying \cs{RightJustifyTables} or
+\cs{LeftJustifyTables} makes the appropriate change for you.  Saying
+\cs{NoJustifyTables} restores \cs{TableItem} to its original centering
+function. \index{ruled tables!customization}
+
+  Since \cs{TableItem} is used to create every column of the table, you
+cannot use it to modify a single column.  To justify just one column
+you can simply put \cs{hfill} to the left or right of each item in the
+column, since \cs{hfill} is infinitely more stretchy than \cs{hfil}. (The
+behavior of glue items other than \cs{hfill} depends on whether
+\cs{NoTrailingSpaces} has been set.)  With a little more work it is
+possible to design special or unusual tables by redefining the
+``preamble'' of the table.  This is possible because \cs{ruledtable}
+uses \cs{halign} with a preamble called \cs{TablePreamble}.  The default
+definition of \cs{TablePreamble} is:
+\TeXexample
+\def\TablePreamble{%                    % \ruledtable preamble
+   \TableItem{####}%                    % the first item
+   \plaintab\plaintab                   % && means repeat this
+   \TableItem{####}%                    % the subsequent items
+   \plaincr}%                           % end of preamble
+|endTeXexample
+\noindent
+The syntax for \cs{TablePreamble} is like an \cs{halign} preamble in Plain
+\TeX\, but with |&| replaced by \cs{plaintab}, \cs{cr} replaced by
+\cs{plaincr}, and |#| replaced by |####|.  If you have read this far and
+want to try changing \cs{TablePreable} then you should read the source
+code and the comments that go with it in the file |TXSruled.tex.|
+
+As a final note we point out that it is also possible for you to create
+your own column separators with the macro \cs{nextcolumn}.  This macro
+takes a single argument which is used to separate one column of the
+table from another. Thus for example, the \cs{dbl} macro for creating a
+double vertical rule between columns is defined as:
+\TeXexample
+\def\dbl{%                               
+   \nextcolumn{\vrule width\thinsize     
+   \hskip\thinsize\vrule width\thinsize}}
+|endTeXexample
+\relax
+\index{ruled tables!customization}
+
+%>>> EOF TXSruled.doc <<<

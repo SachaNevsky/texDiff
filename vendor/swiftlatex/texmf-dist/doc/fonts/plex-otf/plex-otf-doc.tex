@@ -1,0 +1,855 @@
+%% $Id: plex-otf-doc.tex 755 2018-04-13 11:33:43Z herbert $
+% 
+% Copying and distribution of this file, with or without modification,
+% are permitted in any medium, without royalty.
+
+\listfiles
+\documentclass[fontsize=11pt,paper=a4,twoside=on,DIV=13,abstract=on]{scrartcl}
+%\usepackage[a4paper,twoside]{geometry}
+
+\usepackage{unicode-math}
+\usepackage[RM={Scale=0.94},
+            SS={Scale=0.94},
+            SScon={Scale=0.94},
+            TT={Scale=MatchLowercase,FakeStretch=0.9},
+            DefaultFeatures={Ligatures=TeX}]{plex-otf}
+\setmathfont{XITS Math}
+\usepackage[english]{babel}
+\usepackage[autostyle]{csquotes}
+%\DeclareQuoteStyle{polish}{,,}{''}{«}{»}
+
+\usepackage{biblatex}
+\addbibresource{\jobname.bib}
+\usepackage{array,multido}
+\usepackage{metalogo} % for \XeTeX logo
+\usepackage{booktabs} % for examples
+\usepackage{xltabular} % for examples
+\usepackage{dtk-logos} % for Wikipedia W
+\usepackage{dtk-extern} % for examples
+\usepackage{listings}
+\lstset{columns=fixed,basicstyle=\ttfamily\small}
+\usepackage[table]{xcolor}
+\usepackage{filecontents}
+
+\usepackage{luacode}
+\begin{luacode*} 
+function print_glyphs(maxCols,maxChars)	-- Anzahl Spalten und Zeichen
+  local id = font.current()			-- Font ID holen
+  local fnt = font.getfont(id)
+  local col = 1
+  local maxU4 = 15*(16^3+16^2+16+1)
+  a = {}
+  for k, v in pairs(fnt.characters) do
+    a [#a + 1] = k
+  end
+  table.sort(a)
+  for i, k in ipairs(a) do
+    if i >= maxChars then break end
+    if col == 1 then
+      if k > maxU4 then
+        tex.sprint(string.format("U+%06x", k))
+      else
+        tex.sprint(string.format("U+%04x", k))
+      end
+      tex.sprint("&") 
+    end
+    if (i) then
+      tex.sprint(string.format([[\char%i]], k))
+    else
+     tex.sprint("~")
+    end
+    if col == maxCols then				-- Zeile voll?
+      tex.sprint([[\\\cline{2-]] .. maxCols+1 .. "} ")	-- ja, also abschließen
+      col = 1							-- und neu starten
+    else
+      tex.sprint("&")					-- nein, also & ausgeben
+      col = col + 1						-- Spalte inkrementieren
+    end
+  end
+end
+\end{luacode*}
+
+
+\pagestyle{headings}
+
+\usepackage[colorlinks,hyperfootnotes=false]{hyperref}
+% define \code for url-like breaking of typewriter fragments.
+\ifx\nolinkurl\undefined \let\code\url \else \let\code\nolinkurl \fi
+
+% Define \cs to prepend a backslash, and be unbreakable:
+\DeclareRobustCommand\cs[1]{\mbox{\texttt{\char`\\#1}}}
+
+% An environment like quote, but less space above and more below:
+\newenvironment{demoquote}
+   {\tabularx{\dimexpr\linewidth+\marginparwidth}{@{} X >{\ttfamily}l @{}}}
+   {\endtabularx}
+
+
+
+\begin{filecontents*}{demotext0.sty}
+\newcounter{famcnt}\setcounter{famcnt}{0}
+\newcommand\CMD[1]{\texttt{\textbackslash#1}}
+\newcommand\blindtext[1][\rmfamily,\sffamily,\sffamilyCon,\ttfamily]{%
+  \expandafter\@for\expandafter\next\expandafter:\expandafter=#1\do{%
+\next
+\noindent
+\ifcase\thefamcnt \CMD{rmfamily }\or \CMD{sffamily }\or \CMD{sffamilyCon }\or\CMD{ttfamily }\fi
+\CMD{normalfont}: 
+Sphinx of black quartz judge my vow.\par
+\CMD{bfseries}: 
+{\bfseries Voyez le brick géant que j’examine près du wharf.\par}
+\CMD{itshape}: 
+{\itshape Vom Ödipuskomplex maßlos gequält, übt Wilfried zyklisches Jodeln.\par}
+\CMD{slshape}: 
+{\slshape Vom Ödipuskomplex maßlos gequält, übt Wilfried zyklisches Jodeln.\par}
+\CMD{bfseries\textbackslash itshape}: 
+{\bfseries\itshape Pójdźże, kiń tę chmurność w głąb flaszy!\par}
+\CMD{bfseries\textbackslash slshape}: 
+{\bfseries\slshape Pójdźże, kiń tę chmurność w głąb flaszy!\par}\medskip
+\stepcounter{famcnt}}}
+\end{filecontents*}
+
+
+\begin{filecontents*}{demotext1.sty}
+\newcounter{famcnt}\setcounter{famcnt}{0}
+\newcommand\CMD[1]{\texttt{\textbackslash#1}}
+\newcommand\blindtext[1][\rmfamily,\sffamily,\sffamilyCon,\ttfamily]{%
+  \expandafter\@for\expandafter\next\expandafter:\expandafter=#1\do{%
+\next
+\noindent
+\ifcase\thefamcnt \CMD{rmfamily }\or \CMD{sffamily }\or \CMD{sffamilyCon }\or\CMD{ttfamily }\fi
+\CMD{normalfont}: 
+Sphinx of black quartz judge my vow. \par
+\CMD{itshape}: 
+{\itshape Vom Ödipuskomplex maßlos gequält, übt Wilfried zyklisches Jodeln.\par}
+\CMD{slshape}: 
+{\slshape Vom Ödipuskomplex maßlos gequält, übt Wilfried zyklisches Jodeln.\par}
+\medskip
+\stepcounter{famcnt}}}
+\end{filecontents*}
+
+
+\begin{filecontents*}{demotext2.sty}
+\newcounter{famcnt}\setcounter{famcnt}{0}
+\newcommand\CMD[1]{\texttt{\textbackslash#1}}
+\newcommand\blindtext[1][\rmfamily,\sffamily,\sffamilyCon,\ttfamily]{%
+  \expandafter\@for\expandafter\next\expandafter:\expandafter=#1\do{%
+\next
+\noindent
+\ifcase\thefamcnt \CMD{rmfamily }\or \CMD{sffamily }\or \CMD{sffamilyCon }\or\CMD{ttfamily }\fi
+\CMD{normalfont}: 
+Sphinx of black quartz judge my vow.  
+  \ifnum\thefamcnt<2 \textsc{Sphinx of black quartz judge my vow.}\fi\par
+\CMD{bfseries}: 
+{\bfseries Voyez le brick géant que j’examine près du wharf.
+ \ifnum\thefamcnt<2 \textsc{Voyez le brick géant que j’examine près du wharf.}\fi\par}
+\CMD{itshape}: 
+{\itshape Vom Ödipuskomplex maßlos gequält, übt Wilfried zyklisches Jodeln.
+  \ifnum\thefamcnt<2 \textsc{Vom Ödipuskomplex maßlos gequält, übt Wilfried zyklisches Jodeln.}\fi\par}
+{\slshape Vom Ödipuskomplex maßlos gequält, übt Wilfried zyklisches Jodeln.\par}
+\CMD{bfseries\textbackslash itshape}: 
+{\bfseries\itshape Pójdźże, kiń tę chmurność w głąb flaszy!
+  \ifnum\thefamcnt<2 \textsc{Pójdźże, kiń tę chmurność w głąb flaszy!}\fi\par}
+{\bfseries\slshape Vom Ödipuskomplex maßlos gequält, übt Wilfried zyklisches Jodeln.\par}
+\stepcounter{famcnt}}}
+\end{filecontents*}
+
+
+
+
+
+\title{Support for the {\fontsize{30pt}{32pt}\selectfont\IBM} Plex OpenType fonts}
+\author{Herbert Voß}
+\begin{document}
+\maketitle
+\tableofcontents
+
+\begin{abstract}
+»With our new corporate typeface, IBM Plex, comes a new set of guidance and best practices. 
+IBM typography is international and modern to reflect our brand and our design principles.«~\cite{git}
+\end{abstract}
+
+
+\section{Introduction}
+
+
+
+The package \texttt{plex-otf} supports all families with specific optional
+arguments:
+
+\begin{tabular}{@{} >{\ttfamily}l l l @{}}\\\toprule
+\emph{name} & \emph{value} &\emph{meaning}\\\midrule
+mono & true/false & use only the IBM Plex Mono\\
+serif & true/false & use only the IBM Plex Serif\\
+sans & true/false & use only the IBM Plex Sans\\
+RM & code & options for IBM Plex Serif\\
+SS & code &  options for IBM Plex Sans\\
+SScon & code &  options for IBM Plex Sans Condensed\\
+TT & code &  options for IBM Plex Mono\\
+%semibold & true/false & use SemiBold instead of Bold\\
+RMSCfont  & font & font name for small caps\\
+SSSCfont  & font & font name for small caps\\
+DefaultFeatures & code &  for all font styles\\\bottomrule
+\end{tabular}
+
+\bigskip
+For this documentation
+we use instead:
+
+\begin{verbatim}
+\usepackage[usefilenames,%  Important for xelatex
+            RM={Scale=0.94},
+            SS={Scale=0.94},
+            SScon={Scale=0.94},
+            TT={Scale=MatchLowercase,FakeStretch=0.9},
+            DefaultFeatures={Ligatures=Common}]{plex-otf}
+\end{verbatim}
+
+
+%\clearpage
+
+
+\section{The Glyphs}
+\subsection{Default Serif style}
+
+\begingroup
+\color{black!20}
+\begin{longtable}{>{\color{black!50}\ttfamily\footnotesize}r|
+                  *{10}{>{\color{black}}p{1.5em}|}}
+\cline{2-11}
+\endhead
+%\directlua{print_glyphs(10,1360)} \\ \cline{2-11}
+\directlua{print_glyphs(10,65463)} \\ \cline{2-11}
+\end{longtable}
+\endgroup
+
+
+\subsection{Default Sans style}
+
+
+\begingroup
+\color{black!20}\sffamily
+\begin{longtable}{>{\color{black!50}\ttfamily\footnotesize}r|
+                  *{10}{>{\color{black}}p{1.5em}|}}
+\cline{2-11}
+\endhead
+%\directlua{print_glyphs(10,1360)} \\ \cline{2-11}
+\directlua{print_glyphs(10,65463)} \\ \cline{2-11}
+\end{longtable}
+\endgroup
+
+\subsection{Default Sans style Condensed}
+
+
+\begingroup
+\color{black!20}\sffamilyCon
+\begin{longtable}{>{\color{black!50}\ttfamily\footnotesize}r|
+                  *{10}{>{\color{black}}p{1.5em}|}}
+\cline{2-11}
+\endhead
+%\directlua{print_glyphs(10,1360)} \\ \cline{2-11}
+\directlua{print_glyphs(10,65463)} \\ \cline{2-11}
+\end{longtable}
+\endgroup
+
+\subsection{Default Mono style}
+
+\begingroup
+\color{black!20}\ttfamily
+\begin{longtable}{>{\color{black!50}\ttfamily\footnotesize}r|
+                  *{10}{>{\color{black}}p{1.5em}|}}
+\cline{2-11}
+\endhead
+%\directlua{print_glyphs(10,1360)} \\ \cline{2-11}
+\directlua{print_glyphs(10,65463)} \\ \cline{2-11}
+\end{longtable}
+\endgroup
+
+
+\rmfamily
+
+
+
+\section{Features}
+
+
+\subsection{Alternate styles}
+
+The stylistic sets are available for example by 
+
+\begin{verbatim}
+\usepackage[...,
+            RM={StylisticSet=1},
+            ...]{plex-otf}
+\end{verbatim}
+
+
+\subsubsection{StylisticSet=1: simple lowercase a}
+
+{(Default a\multido{\iA=224+1}{6}{\symbol{\iA}}\symbol{257}\symbol{259}\symbol{261}) and 
+\fontspec{IBMPlexSerif-Regular.otf}[StylisticSet=1,Scale=0.94]a%
+\multido{\iA=224+1}{6}{\symbol{\iA}}\symbol{257}\symbol{259}\symbol{261}}
+
+\subsubsection{StylisticSet=2: simple lowercase g}
+
+{(Default g) and \fontspec{IBMPlexSerif-Regular.otf}[StylisticSet=2,Scale=0.94]g}
+
+\subsubsection{StylisticSet=3: slashed zero}
+
+{(Default 0) and \fontspec{IBMPlexSerif-Regular.otf}[StylisticSet=3,Scale=0.94]0}
+
+\subsubsection{StylisticSet=4: dotted zero}
+
+{(Default 0) and \fontspec{IBMPlexSerif-Regular.otf}[StylisticSet=4,Scale=0.94]0}
+
+\subsubsection{StylisticSet=4: special lowercase eszett}
+
+{(Default ß) and \fontspec{IBMPlexSerif-Regular.otf}[StylisticSet=5,Scale=0.94]ß}
+
+
+\subsection{Captital german eszett}
+It is available with \verb|\SS|$\rightarrow$\SS
+
+
+
+
+\subsection{Vertical position}
+
+
+\begin{externalDocument}[
+%  grfOptions={width=\linewidth},
+  frame,
+  compiler=lualatex,
+  crop,
+  force=true,
+  runs=2,code,docType=latex,
+  frame,
+  showFilename,
+  align=\centering,
+  ]{plex-otf}
+\documentclass{article}
+\pagestyle{empty}
+%StartVisiblePreamble
+\usepackage[DefaultFeatures={Scale=0.94}]{plex-otf}
+%StopVisiblePreamble
+\begin{document}
+{\addfontfeature{VerticalPosition=Superior}
+Superior: 1234567890\par}
+{\addfontfeatures{VerticalPosition=Numerator}
+Numerator: 1234567890\par}
+{\addfontfeatures{VerticalPosition=Denominator}
+Denominator: 1234567890\par}
+\addfontfeatures{VerticalPosition=ScientificInferior}
+Scientific Inferior: 1234567890
+\end{document}
+\end{externalDocument}
+
+
+
+\subsection{Fractions}
+
+\begin{externalDocument}[
+%  grfOptions={width=\linewidth},
+  frame,
+  compiler=lualatex,
+  crop,
+  force=true,
+  runs=2,code,docType=latex,
+  frame,
+  showFilename,
+  align=\centering,
+  ]{plex-otf}
+\documentclass{article}
+\usepackage[a4paper]{geometry}
+\pagestyle{empty}
+%StartVisiblePreamble
+\usepackage[DefaultFeatures={Scale=0.94}]{plex-otf}
+%StopVisiblePreamble
+\begin{document}
+1/3 2/3 1/5 2/5 \ldots \par
+\addfontfeatures{Fractions=On}
+1/3 2/3 1/5 2/5 3/5 4/5 1/6 5/6 1/7 1/9 1/8 3/8 5/8 7/8\par
+123456/3215731
+\end{document}
+\end{externalDocument}
+
+
+
+
+\section{Font macros}
+
+The package defines the following macros which sets only the regular and italic font
+or the bold and bold italic font.
+
+\noindent
+\minipage[t]{0.3\linewidth}
+\begin{verbatim}
+Serif:
+	    \PlexExtraLightRM
+	    \PlexLightRM
+	    \PlexThinRM
+	    \PlexMediumRM
+	    \PlexTextRM
+	    \PlexSemiBoldRM
+\end{verbatim}
+\endminipage\hfill
+\minipage[t]{0.3\linewidth}
+\begin{verbatim}
+Sans Serif:
+	    \PlexExtraLightSS
+	    \PlexLightSS
+	    \PlexThinSS
+	    \PlexMediumSS
+	    \PlexTextSS
+	    \PlexSemiBoldSS
+\end{verbatim}
+\endminipage\hfill
+\minipage[t]{0.3\linewidth}
+\begin{verbatim}
+Sans Serif Condensed:
+	    \PlexExtraLightSScon
+	    \PlexLightSScon
+	    \PlexThinSScon
+	    \PlexMediumSScon
+	    \PlexTextSScon
+	    \PlexSemiBoldSScon
+\end{verbatim}
+\endminipage
+
+\begin{verbatim}
+Mono:
+	    \PlexExtraLightTT
+	    \PlexLightTT
+	    \PlexThinTT
+	    \PlexMediumTT
+	    \PlexTextTT
+	    \PlexSemiBoldTT
+\end{verbatim}
+
+
+
+
+\medskip
+These macros refer to the following styles:
+
+\begin{tabular}{@{}l l}
+ExtraLight & Upright, Italic   \\
+Light      & Upright, Italic   \\
+Thin       & Upright, Italic   \\
+Medium     & Upright, Italic   \\
+Text       & Upright, Italic   \\
+SemiBold   & Bold, BoldItalic  
+\end{tabular}
+
+
+\clearpage
+
+
+
+
+\begin{externalDocument}[
+%  grfOptions={width=\linewidth},
+  frame,
+  compiler=lualatex,
+  crop,
+  force=true,
+  runs=2,code,docType=latex,
+  frame,
+  showFilename,
+  align=\centering,
+  ]{plex-otf}
+\documentclass{article}
+\usepackage[a4paper]{geometry}
+\usepackage[ngerman]{babel}
+\usepackage[autostyle]{csquotes}
+\newcommand\demo{Some text in the default font style IBM Plex Serif }
+\pagestyle{empty}
+%StartVisiblePreamble
+\usepackage[DefaultFeatures={Scale=0.94}]{plex-otf}
+%StopVisiblePreamble
+\begin{document}
+\demo\ Regular\par {\PlexTextRM\demo\ Text\par} {\PlexLightRM\demo\ Light\par} 
+{\PlexExtraLightRM\demo\ ExtraLight\par} {\PlexThinRM\demo\ Thin}
+\end{document}
+\end{externalDocument}
+
+
+\section{Special symbols}
+
+\begin{tabular}{@{}l@{ $\rightarrow$ }l @{\qquad} l@{ $\rightarrow$ }l  @{}}
+\verb|\IBM| & \IBM      &      \verb|\upleftarrow|  & \upleftarrow\\
+%\verb|\IBM[1]| & \IBM[1]&     
+\multicolumn{2}{c}{}    &	\verb|\uprightarrow| & \uprightarrow\\
+%\verb|\IBM[2]| & \IBM[2]&  
+\multicolumn{2}{c}{}    &    \verb|\downleftarrow| & \downleftarrow\\
+%\verb|\IBM[3]| & \IBM[3]&  
+\multicolumn{2}{c}{}    &    \verb|\downrightarrow| &   \downrightarrow\\
+%\verb|\IBM[4]| & \IBM[4]& 
+\multicolumn{2}{c}{}    &    \verb|\leftturn| &   \leftturn\\
+\verb|\CE|  & \CE        & \verb|\rightturn| &    \rightturn\\
+\verb|\FCC|  & \FCC     &  \verb|\fullleftturn| & \fullleftturn \\
+\multicolumn{2}{c}{}    & \verb|\fullrightturn|  & \fullrightturn\\  
+\end{tabular}
+
+\clearpage
+
+
+\section{Examples without special Settings}
+
+\subsection{The default}
+
+By default the Plex font family has no small caps and no special slanted version.
+
+\begin{externalDocument}[
+  grfOptions={width=\linewidth},
+  frame,
+  compiler=lualatex,
+  crop,
+  force,
+  runs=2,code,docType=latex,
+  frame,
+  showFilename,
+  align=\centering,
+]{plex-otf}
+\documentclass{article}
+\usepackage[a4paper]{geometry}
+\usepackage[ngerman]{babel}
+\usepackage[autostyle]{csquotes}
+\usepackage{demotext0}
+\pagestyle{empty}
+%StartVisiblePreamble
+\usepackage[DefaultFeatures={Scale=0.94}]{plex-otf}
+%StopVisiblePreamble
+\begin{document}
+\blindtext
+\end{document}
+\end{externalDocument}
+
+\clearpage
+
+\subsection{Semibold}
+
+\begin{externalDocument}[
+  grfOptions={width=\linewidth},
+  frame,
+  compiler=lualatex,
+  crop,
+  force,
+  runs=2,code,docType=latex,
+  frame,
+  showFilename,
+  align=\centering,
+]{plex-otf}
+\documentclass{article}
+\usepackage[a4paper]{geometry}
+\usepackage[ngerman]{babel}
+\usepackage[autostyle]{csquotes}
+\pagestyle{empty}
+\usepackage{demotext0}
+%StartVisiblePreamble
+\usepackage[DefaultFeatures={Scale=0.94},
+  RMstyle=Semibold,
+  SSstyle=Semibold,
+  SSconstyle=Semibold,
+  TTstyle=Semibold]{plex-otf}
+%StopVisiblePreamble
+\begin{document}
+\blindtext
+\end{document}
+\end{externalDocument}
+
+\clearpage
+
+
+
+\subsection{Thin}
+
+This makes only sense with the the \verb|Semibold| feature or not using bold characters.
+
+\begin{externalDocument}[
+  grfOptions={width=\linewidth},
+  frame,
+  compiler=lualatex,
+  crop,
+  force,
+  runs=2,code,docType=latex,
+  frame,
+  showFilename,
+  align=\centering,
+]{plex-otf}
+\documentclass{article}
+\usepackage[a4paper]{geometry}
+\usepackage[ngerman]{babel}
+\usepackage[autostyle]{csquotes}
+\pagestyle{empty}
+\usepackage{demotext1}
+%StartVisiblePreamble
+\usepackage[DefaultFeatures={Scale=0.94},
+  RMstyle=Thin,
+  SSstyle=Thin,
+  SSconstyle=Thin,
+  TTstyle=Thin]{plex-otf}
+%StopVisiblePreamble
+\begin{document}
+\blindtext
+\end{document}
+\end{externalDocument}
+
+\clearpage
+
+
+\subsection{Extra Light}
+
+This makes only sense with the the \verb|Semibold| feature or not using bold characters.
+
+
+
+
+
+\begin{externalDocument}[
+  grfOptions={width=\linewidth},
+  frame,
+  compiler=lualatex,
+  crop,
+  force,
+  runs=2,code,docType=latex,
+  frame,
+  showFilename,
+  align=\centering,
+]{plex-otf}
+\documentclass{article}
+\usepackage[a4paper]{geometry}
+\usepackage[ngerman]{babel}
+\usepackage[autostyle]{csquotes}
+\pagestyle{empty}
+\usepackage{demotext1}
+%StartVisiblePreamble
+\usepackage[DefaultFeatures={Scale=0.94},
+  RMstyle=ExtraLight,
+  SSstyle=ExtraLight,
+  SSconstyle=ExtraLight,
+  TTstyle=ExtraLight]{plex-otf}
+%StopVisiblePreamble
+\begin{document}
+\blindtext
+\end{document}
+\end{externalDocument}
+\clearpage
+
+
+\subsection{Light}
+
+This makes only sense with the the \verb|Semibold| feature or not using bold characters.
+
+\begin{externalDocument}[
+  grfOptions={width=\linewidth},
+  frame,
+  compiler=lualatex,
+  crop,
+  force,
+  runs=2,code,docType=latex,
+  frame,
+  showFilename,
+  align=\centering,
+]{plex-otf}
+\documentclass{article}
+\usepackage[a4paper]{geometry}
+\usepackage[ngerman]{babel}
+\usepackage[autostyle]{csquotes}
+\pagestyle{empty}
+\usepackage{demotext1}
+%StartVisiblePreamble
+\usepackage[DefaultFeatures={Scale=0.94},
+  RMstyle=Light,
+  SSstyle=Light,
+  SSconstyle=Light,
+  TTstyle=Light]{plex-otf}
+%StopVisiblePreamble
+\begin{document}
+\blindtext
+\end{document}
+\end{externalDocument}
+
+%\newpage
+
+\clearpage
+
+\subsection{Medium}
+
+This makes sense with the the \verb|Semibold| feature.
+
+\begin{externalDocument}[
+  grfOptions={width=\linewidth},
+  frame,
+  compiler=lualatex,
+  crop,
+  force,
+  runs=2,code,docType=latex,
+  frame,
+  showFilename,
+  align=\centering,
+]{plex-otf}
+\documentclass{article}
+\usepackage[a4paper]{geometry}
+\usepackage[ngerman]{babel}
+\usepackage[autostyle]{csquotes}
+\pagestyle{empty}
+\usepackage{demotext0}
+%StartVisiblePreamble
+\usepackage[DefaultFeatures={Scale=0.94},
+  RMstyle={Medium,Semibold},
+  SSstyle={Medium,Semibold},
+  SSconstyle={Medium,Semibold},
+  TTstyle={Medium,Semibold}]{plex-otf}
+%StopVisiblePreamble
+\begin{document}
+\blindtext
+\end{document}
+\end{externalDocument}
+
+\newpage
+
+\subsection{Text}
+
+This makes sense with the the \verb|Semibold| feature.
+
+\begin{externalDocument}[
+  grfOptions={width=\linewidth},
+  frame,
+  compiler=lualatex,
+  crop,
+  force,
+  runs=2,code,docType=latex,
+  frame,
+  showFilename,
+  align=\centering,
+]{plex-otf}
+\documentclass{article}
+\usepackage[a4paper]{geometry}
+\usepackage[ngerman]{babel}
+\usepackage[autostyle]{csquotes}
+\pagestyle{empty}
+\usepackage{demotext0}
+%StartVisiblePreamble
+\usepackage[DefaultFeatures={Scale=0.94},
+  RMstyle={Text,Semibold},
+  SSstyle={Text,Semibold},
+  SSconstyle={Text,Semibold},
+  TTstyle={Text,Semibold}]{plex-otf}
+%StopVisiblePreamble
+\begin{document}
+\blindtext
+\end{document}
+\end{externalDocument}
+
+
+\clearpage
+
+\section{Examples with using Small Caps fonts}
+As already mentioned, the Plex font family has no small caps. If you need one then you can define another
+font for the small caps. If the font has to structure like the \TeX\ Gyre fonts:
+
+\begin{verbatim}
+texgyreheros-regular.otf
+texgyreheros-bold.otf
+texgyreheros-italic.otf
+texgyreheros-bolditalic.otf
+\end{verbatim}
+
+
+then you have to define all combinations yourself 
+
+\begin{verbatim}
+\usepackage[SS={   SmallCapsFont = texgyreheros-regular,
+     SmallCapsFeatures = {Letters=SmallCaps,Scale=MatchUppercase},
+          BoldFeatures = { SmallCapsFont=texgyreheros-bold},
+        ItalicFeatures = { SmallCapsFont=texgyreheros-italic},
+     BoldItalicFeatures= { SmallCapsFont=texgyreheros-bolditalic}}]{plex-otf}
+\end{verbatim}
+
+
+\clearpage
+
+
+\begin{externalDocument}[
+  grfOptions={width=\linewidth},
+  frame,
+  compiler=lualatex,
+  crop,
+  force,
+  runs=2,code,docType=latex,
+  frame,
+  showFilename,
+  align=\centering,
+]{plex-otf}
+\documentclass{article}
+\usepackage[a4paper]{geometry}
+\usepackage[ngerman]{babel}
+\usepackage[autostyle]{csquotes}
+\usepackage{demotext2}
+\pagestyle{empty}
+%StartVisiblePreamble
+\usepackage[DefaultFeatures={Scale=0.94},
+  RMSCfont=texgyretermes,
+  SSSCfont=texgyreheros]{plex-otf}
+%StopVisiblePreamble
+\begin{document}
+\blindtext
+\end{document}
+\end{externalDocument}
+
+
+
+\iffalse
+\section{Examples with setting the number style}
+
+\begin{externalDocument}[
+  grfOptions={width=\linewidth},
+  frame,
+  compiler=lualatex,
+  crop,
+  force,
+  runs=2,code,docType=latex,
+  frame,
+  showFilename,
+  align=\centering,
+]{plex-otf}
+\documentclass{article}
+\usepackage[a4paper]{geometry}
+\usepackage[ngerman]{babel}
+\usepackage[autostyle]{csquotes}
+\usepackage{demotext0}
+\pagestyle{empty}
+%StartVisiblePreamble
+\usepackage[DefaultFeatures={Scale=0.94},
+  RM={Numbers=OldStyle},
+  SS={Numbers=Lining}]{plex-otf}
+%StopVisiblePreamble
+\begin{document}
+\blindtext
+\end{document}
+\end{externalDocument}
+
+\fi
+
+\section{Closing}
+
+
+The font list of this documentation is:
+%\rightmargin=-1cm
+
+\scriptsize\ttfamily
+\expandafter\IfFileExists\expandafter{\jobname.fonts}%
+  {\lstinputlisting[xrightmargin=-1cm]{\jobname.fonts}}{}
+
+\normalfont\rmfamily
+
+%\rightmargin=0cm
+
+\nocite{*}
+\printbibliography
+
+
+\end{document}
+
+

@@ -1,0 +1,830 @@
+%%% spelling-doc.tex
+%%% Copyright 2012, 2013 Stephan Hennig
+%%
+%% This work may be distributed and/or modified under the conditions of
+%% the LaTeX Project Public License, either version 1.3 of this license
+%% or (at your option) any later version.  The latest version of this
+%% license is in http://www.latex-project.org/lppl.txt
+%% and version 1.3 or later is part of all distributions of LaTeX
+%% version 2005/12/01 or later.
+%%
+%% See file README for more information.
+%%
+\documentclass[11pt]{article}
+\usepackage{fontspec}
+\defaultfontfeatures{Ligatures=TeX}
+\usepackage{multicol}
+\usepackage[rgb, x11names]{xcolor}
+\usepackage{listings}
+\input{\jobname-lst-lua.tex}
+\lstset{
+  basicstyle=\ttfamily,
+  columns=spaceflexible,
+}
+% Short-cut for non-language code snippets.
+\lstMakeShortInline\|
+% Short-cut for LaTeX code snippets.
+\lstMakeShortInline[
+language={[LaTeX]TeX},
+basicstyle=\ttfamily,
+]°
+\lstdefinestyle{Lua}{
+  language=[5.2]Lua,
+  keywordstyle=\bfseries\color{Blue4},
+  keywordstyle=[2]\bfseries\color{RoyalBlue3},
+  keywordstyle=[3]\bfseries\color{Purple3},
+  stringstyle=\bfseries\color{Coral4},
+  commentstyle=\itshape\color{Green4},
+}
+\usepackage{xspace}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage[latin, UKenglish]{babel}
+\usepackage{hyperref}
+\hypersetup{
+  pdftitle={spelling},
+  pdfauthor={Stephan Hennig},
+  pdfkeywords={spell-checking, spelling, TeX, LuaTeX}
+}
+\hypersetup{
+  english,% For \autoref.
+  pdfstartview={XYZ null null null},% Zoom factor is determined by viewer.
+  colorlinks,
+  linkcolor=RoyalBlue3,
+  urlcolor=Chocolate4,
+  citecolor=DeepPink2
+}
+\usepackage{spelling}
+\spellingreadbad{\jobname.bad}
+\newcommand*{\pkg}{\textsf{spelling}}
+\newcommand*{\acr}[1]{\mbox{\scshape#1}}
+\newcommand*{\descr}[1]{〈\emph{#1}〉}
+\newcommand*{\cmd}[1]{\mbox{\ttfamily\textbackslash#1}}
+\newcommand*{\macro}[1]{\cmd{#1}\marginpar{\cmd{#1}}}
+\newcommand*{\latinphrase}[1]{\foreignlanguage{latin}{\emph{#1}}}
+\newcommand*{\lpcf}{\latinphrase{cf.}\xspace}
+\newcommand*{\lpeg}{\latinphrase{e.\,g.}\xspace}
+\newcommand*{\lpetc}{\latinphrase{etc.}\xspace}
+\newcommand*{\lpie}{\latinphrase{i.\,e.}\xspace}
+\begin{document}
+\author{Stephan Hennig\thanks{sh2d@arcor.de}}
+\title{\pkg\thanks{This document describes the \pkg\ package v0.41.}}
+\maketitle
+
+
+\begin{abstract}
+  This package supports spell-checking of \TeX\ documents compiled with
+  the Lua\TeX\ engine.  It can give visual feedback in \acr{pdf} output
+  similar to \acr{wysiwyg} word processors.  The package relies on an
+  external spell-checker application that can check a plain text file
+  and output a list of bad spellings.  The package should work with most
+  spell-checkers, even dumb, \TeX-unaware ones.
+
+  \emph{Warning!  This package is in a very early state.  Everything may
+    change!}
+\end{abstract}
+
+\begin{multicols}{2}
+\small
+% Set toc entries ragged right.  Trick taken from tocloft.pdf.
+\makeatletter
+\renewcommand{\@tocrmarg}{2.55em plus1fil}
+\makeatother
+\tableofcontents
+\end{multicols}
+
+
+\section{Introduction}
+\label{sec:intro}
+
+Ther%
+\footnote{A footnote containing mispellings.}
+%
+are three main approaches to spell-checking \TeX\ documents:
+
+\begin{enumerate}
+
+\item checking spelling in the |.tex| source file,
+
+\item converting a |.tex| file to another format, for which a proved
+  spell-checking solution exists,
+
+\item checking spelling after a |.tex| file has been processed by \TeX.
+
+\end{enumerate}
+
+All of these approaches have their strengths and weaknesses.  This
+package follows the third approach, providing some unique features:
+
+\begin{itemize}
+
+\item In traditional solutions, text is extracted from typeset
+  \acr{dvi}, \acr{ps} or \acr{pdf} files, including hyphenated words.
+  To avoid (lots of) false positives being reported by the
+  spell-checker, hyphenation needs to be switched off during the \TeX\
+  run.  That is, one doesn't work on the original document any more.
+
+  In contrast to that, the \pkg\ package works transparently on the
+  original |.tex| source file.  Text is extracted \emph{during}
+  typesetting, after Lua\TeX\ has applied its catcode and macro
+  machinery, but before hyphenation takes place.
+
+\item The \pkg\ package can highlight words with known incorrect
+  spelling in \acr{pdf} output, giving visual feedback similar to
+  \acr{wysiwyg} word processors.%
+  \footnote{Currently, only colouring words is implemented.}
+
+\end{itemize}
+
+
+\section{Usage}
+\label{sec:usage}
+
+The \pkg\ package requires the Lua\TeX\ engine.  All functionality of
+the package is implemented in Lua.  The \LaTeX\ interface, which is
+described below, is effectively a wrapper around the Lua interface.
+
+\emph{Implementing such wrappers for other formats shouldn't be too
+  difficult.  The author is a \LaTeX-only user, though, and therefore
+  grateful for contributions.  By the way, the \LaTeX\ package needs
+  some polishing, too, \lpeg, a key-value interface is desirable.
+  Patches welcome!}
+
+
+\subsection{Work-flow}
+\label{sec:work-flow}
+
+Here's a short outline of how using the \pkg\ package fits into the
+general process of compiling a document with Lua\TeX:
+
+\begin{enumerate}
+
+\item After loading the package in the preamble of a |.tex| source file,
+  a list of bad spellings is read from a file (if that file exists).
+
+\item During the Lua\TeX\ run, text is extracted from pages and all
+  words are checked against the list of bad spellings.  Words with a
+  known incorrect spelling are highlighted in \acr{pdf} output.
+
+\item At the end of the Lua\TeX\ run, in addition to the \acr{pdf} file,
+  a text file is written, containing most of the text of the typeset
+  document.
+
+\item The text file is then checked by your favourite external
+  spell-checker application, \lpeg, Aspell or Hunspell.  The
+  spell-checker should be able to write a list of bad spellings to a
+  file.  Otherwise, visual feedback in \acr{pdf} output won't work.
+
+\item Visually minded people may now compile their document a second
+  time.  This time, the new list of bad spellings is read-in and words
+  with incorrect spelling found by the spell-checker should now be
+  highlighted in \acr{pdf} output.  Users can then apply the necessary
+  corrections to the |.tex| source file.
+
+\end{enumerate}
+
+Whatever way spell-checker output is employed, users not interested in
+visual feedback (because their spell-checker has an interactive mode
+only or because they prefer grabbing bad spellings from a file directly)
+can also benefit from this package.  Using it, Lua\TeX\ writes a pure
+text file that is particularly well suited as spell-checker input,
+because it contains no hyphenated words (and neither macros, nor active
+characters).  That way, any spell-checker application, even \TeX-unaware
+ones, can be used to check spelling of \TeX\ documents.
+
+
+\subsection{Word lists}
+\label{sec:wordlists}
+
+As described above, after loading the \pkg\ package, a list of bad
+spellings is read from a file \descr{jobname}.|spell.bad|, if that file
+exists.  Words found in this file are stored in an internal list of bad
+spellings and are later used for highlighting spelling mistakes in
+\acr{pdf} output.  Additionally, a list of good spellings is read from a
+file \descr{jobname}|.spell.good|, if that file exists.  Words found in
+the latter file are stored in an internal list of good spellings.  File
+format for both files is one word per line.  Files must be in the
+\acr{utf-8} encoding.  Letter case is significant.
+
+A word in the document is highlighted, if it occurs in the internal list
+of bad spellings, but not in the internal list of good spellings.  That
+is, known good spellings take precedence over known bad spellings.
+
+Users can load additional files containing lists of bad or good
+spellings with macros \macro{spellingreadbad} and
+\macro{spellingreadgood}.  Argument to both macros is a file name.  If a
+file cannot be found, a warning is written to the console and |log| file
+and compilation continues.  As an example, the command
+
+\begin{lstlisting}[language={[LaTeX]TeX}]
+\spellingreadgood{myproject.whitelist}
+\end{lstlisting}
+%
+reads words from a file |myproject.whitelist| and adds them to the list
+of good spellings.
+
+Known good spellings can be used to deal with words wrongly reported as
+bad spellings by the spell-checker (false positives).  But note, most
+spell-checkers also provide means to deal with unknown words via
+additional dictionaries.  It is recommended to configure your
+spell-checker to report as few false positives as possible.
+
+
+\subsection{Match rules}
+\label{sec:matchrules}
+
+\emph{This section describes an advanced feature.  You may safely skip
+  this section upon first reading.}
+
+The \pkg\ package provides an additional way to deal with bad and good
+spellings, match rules.  Match rules can be used to employ regular
+patterns within certain ‘words’.  A typical example are bibliographic
+references like \emph{Lin86}, which are often flagged by spell-checkers,
+but need not be highlighted as they are generated by \TeX.
+
+There are two kinds of rules, bad and good rules.  A rule is a Lua
+function whose boolean return value indicates whether a word
+\emph{matches} the rule.  A bad rule should return a true value for all
+strings identified as bad spellings, otherwise a false value.  A good
+rule should return a true value for all strings identified as good
+spellings, otherwise a false value.  A word in the document is
+highlighted if it matches any bad rule, but no good rule.
+
+Function arguments are a \emph{raw} string and a \emph{stripped} string.
+The raw string is a string representing a word as it is found in the
+document possibly surrounded by punctuation characters.  The stripped
+string is the same string with surrounding punctuation already stripped.
+
+As an example, the rule in \autoref{lst:mr-three-letter-words} matches
+all words consisting of exactly three letters.  The function matches the
+stripped string against the Lua string pattern |^%a%a%a$| via function
+|unicode.utf8.find| from the Selene Unicode library.  The latter
+function is a \acr{utf-8} capable version of Lua's built-in function
+|string.find|.  It returns |nil| (a false value) if there has been no
+match and a number (a true value) if there has been a match.  The
+pattern |%a| represents a character class matching a single letter.
+Characters |^| and |$| are anchors for the beginning and the end of the
+string in question.  Note, pattern |%a%a%a| without anchors would match
+any string containing three letters in a row.  More information about
+Lua string patterns can be found in the Lua reference manual%
+\footnote{\url{http://www.lua.org/manual/5.2/manual.html\#6.4}}%
+%
+, the Selene Unicode library documentation%
+\footnote{\url{https://github.com/LuaDist/slnunicode/blob/master/unitest}}
+%
+and in the Unicode standard%
+\footnote{\url{http://www.unicode.org/Public/4.0-Update1/UCD-4.0.1.html\#General_Category_Values}}%
+.
+
+\suppressfloats[b]
+
+\begin{lstlisting}[style=Lua, float, label=lst:mr-three-letter-words, caption={Matching three-letter words.}]
+function three_letter_words(raw, stripped)
+  return unicode.utf8.find(stripped, '^%a%a%a$')
+end
+\end{lstlisting}
+
+\autoref{lst:mr-double-punctuation} shows a rule matching all ‘words’
+containing double punctuation.  Note, how the raw string is examined
+instead of the stripped one.
+
+\begin{lstlisting}[style=Lua, float, label=lst:mr-double-punctuation, caption={Matching double punctuation.}]
+function double_punctuation(raw, stripped)
+  return unicode.utf8.find(raw, '%p%p')
+end
+\end{lstlisting}
+
+The rule in \autoref{lst:mr-bibtex-alpha} combines the results of three
+string searches to match bibliographic references as generated by the
+Bib\TeX\ style \emph{alpha}.
+
+\begin{lstlisting}[style=Lua, float, label=lst:mr-bibtex-alpha, caption={Matching references generated by the Bib\TeX\ style \emph{alpha}.}]
+function bibtex_alpha(raw, stripped)
+  return unicode.utf8.find(stripped, '^%u%l%l?%d%d$')
+    or unicode.utf8.find(stripped, '^%u%u%u?%u?%d%d$')
+    or unicode.utf8.find(stripped, '^%u%u%u%+%d%d$')
+end
+\end{lstlisting}
+
+Match rules have to be provided by means of a Lua module.  Such modules
+can be loaded with the \macro{spellingmatchrules} command.  Argument is
+a module name.  To tell bad rules from good rules, the table returned by
+the module must follow this convention: Function identifiers
+representing bad and good match rules are prefixed |bad_rule_| and
+|good_rule_|, resp.  The rest of an identifier is actually irrelevant.
+Other and non-function identifiers are ignored.
+
+\autoref{lst:mr-module} shows an example module declaring the rules from
+\autoref{lst:mr-three-letter-words} and
+\autoref{lst:mr-double-punctuation} as \emph{bad} match rules and the
+rule from \autoref{lst:mr-bibtex-alpha} as a \emph{good} match rule.
+Note, how function identifiers are made local and how exported function
+identifiers are prefixed |bad_rule_| and |good_rule_|, while local
+function identifiers have no prefixes.  When the module resides in a
+file named |myproject.rules.lua|, it can be loaded in the preamble of a
+document via
+\begin{lstlisting}[language={[LaTeX]TeX}]
+\spellingmatchrules{myproject.rules}
+\end{lstlisting}
+
+\begin{lstlisting}[style=Lua, float=p, label=lst:mr-module, caption={A Lua module containing two bad and one good match rule.}]
+-- Module table.
+local M = {}
+
+-- Import Selene Unicode library.
+local unicode = require('unicode')
+-- Add short-cut.
+local Ufind = unicode.utf8.find
+
+-- Local function matching three letter words.
+local function three_letter_words(raw, stripped)
+  return Ufind(stripped, '^%a%a%a$')
+end
+-- Make this a bad rule.
+M.bad_rule_three_letter_words = three_letter_words
+
+local function double_punctuation(raw, stripped)
+  return Ufind(raw, '%p%p')
+end
+M.bad_rule_double_punctuation = double_punctuation
+
+local function bibtex_alpha(raw, stripped)
+  return Ufind(stripped, '^%u%l%l?%d%d$')
+    or Ufind(stripped, '^%u%u%u?%u?%d%d$')
+    or Ufind(stripped, '^%u%u%u%+%d%d$')
+end
+M.good_rule_bibtex_alpha = bibtex_alpha
+
+-- Export module table.
+return M
+\end{lstlisting}
+
+How are match rules and lists of bad and good spellings related?
+Internally, the lists of bad and good spellings are referred to by two
+special default match rules, that look-up raw and stripped strings and
+return a true value if either argument has been found in the
+corresponding list.  Since good rules take precedence over bad rules, an
+entry in the list of good spellings takes precedence over any
+user-supplied bad rule.  Likewise, any user-supplied good rule takes
+precedence over an entry in the list of bad spellings.
+
+\paragraph{Some final remarks on match rules} It must be stressed that
+the boolean return value of a match rule \emph{does not} indicate
+whether a spelling is bad or good, but whether a word matches a certain
+rule or not.  Whether it's a bad or a good spelling, depends on the name
+of the match rule in the module table.
+
+Match rules are only called upon the first occurrence of a spelling in a
+document.  The information, whether a spelling needs to be highlighted,
+is stored in a cache table.  Subsequent occurrences of a spelling just
+need a table look-up to determine highlighting status.  For that reason,
+it is safe to do relatively expensive operations within a match rule
+without affecting compilation time too much.  Nevertheless, match rules
+should be stated as efficient as possible.%
+\footnote{Some Lua performance tips can be found in the book \emph{Lua
+    Programming Gems} by Figueiredo, Celes and Ierusalimschy
+  \emph{(eds.)}, 2008, ch.~2.  That chapter is also available online at
+  \url{http://www.lua.org/gems/}.}
+
+When written without care, match rules can easily produce false
+positives as well as false negatives.  While false positives in bad
+rules and false negatives in good rules can easily be spotted due to the
+unexpected highlighting of words, the other cases are more problematic.
+To avoid all kinds of false results, match rules should be stated as
+specific as possible.
+
+
+\subsection{Highlighting spellling mistakes}
+\label{sec:highlight}
+
+\paragraph{Enabling/disabling} Highlighting spelling mistakes (words
+with known incorrect spelling) in \acr{pdf} output can be toggled on and
+off with command \macro{spellinghighlight}.  If the argument is |on|,
+highlighting is enabled.  For other arguments, highlighting is disabled.
+Highlighting is enabled, by default.
+
+\paragraph{Colour} The colour used for highlighting bad spellings can be
+determined by command \cmd{spellinghighlightcolor}.  Argument is a
+colour statement in the \acr{pdf} language.  As an example, the colour
+red in the \acr{rgb} colour space is represented by the statement %
+|1 0 0 rg|.  In the \acr{cmyk} colour space, a reddish colour is
+represented by |0 1 1 0 k|.  Default colour used for highlighting is %
+|1 0 0 rg|, \lpie, red in the \acr{rgb} colour space.
+
+
+\subsection{Text output}
+\label{sec:textoutput}
+
+\paragraph{Text file} After loading the \pkg\ package, at the end of the
+Lua\TeX\ run, a text file is written that contains most of the document
+text.  The text file is no close text rendering of the typeset document,
+but serves as input for your favourite spell-checker application.  It
+contains the document text in a simple format: paragraphs separated by
+blank lines.  A paragraph is anything that, during typesetting, starts
+with a |local_par| whatsit node in the node list representing a typeset
+page of the original document, \lpeg, paragraphs in running text,
+footnotes, marginal notes, (in-lined) °\parbox° commands or cells from
+°p°-like table columns \lpetc
+
+Paragraphs consist of words separated by spaces.  A word is the textual
+representation of a chain of consecutive nodes of type |glyph|, |disc|
+or |kern|.  Boxes are processed transparently.  That is, the \pkg\
+package (highly imperfectly) tries to recognise as a single word what in
+typeset output looks like a single word.  As an example, the \LaTeX\
+code
+
+\begin{center}
+  \begin{tabular}{c}
+\begin{lstlisting}[language={[LaTeX]TeX}]
+foo\mbox{'s bar}s
+\end{lstlisting}
+  \end{tabular}
+\end{center}
+which is typeset as
+
+\begin{center}
+  foo\mbox{'s bar}s
+\end{center}
+is considered two words \textit{foo's} and \textit{bars}, instead of the
+four words \textit{foo}, \textit{'s}, \textit{bar} and~\textit{s}.%
+\footnote{This document has been compiled with a custom list of bad
+  spellings, which is why the word \emph{foo's} should be highlighted.}
+
+\paragraph{Enabling/disabling} Text output can be toggled on and off
+with command \macro{spellingoutput}.  If the argument is |on|, text
+output is enabled.  For other arguments, text output is disabled.  Text
+output is enabled, by default.
+
+\paragraph{File name} \hspace{0pt plus 5em} Text output file name can be
+configured via command \macro{spellingoutputname}.  Argument is the new
+file name.  Default text output file name is
+\descr{jobname}|.spell.txt|.
+
+\paragraph{Line length} In text output, paragraphs can either be put on
+a single line or broken into lines of a fixed length.  The behaviour can
+be controlled via command \macro{spellingoutputlinelength}.  Argument is
+a number.  If the number is less than~1, paragraphs are put on a single
+line.  For larger arguments, the number specifies maximum line length.
+Note, lines are broken at spaces only.  Words longer than maximum line
+length are put on a single line exceeding maximum line length.  Default
+line length is~72.
+
+
+\subsection{Text extraction}
+\label{sec:textextraction}
+
+\paragraph{Enabling/disabling} Text extraction can be enabled and
+disabled in the document via command \macro{spellingextract}.  If the
+argument is |on|, text extraction is enabled.  For other arguments, text
+extraction is disabled.  The command should be used in vertical mode,
+\lpie, outside paragraphs.  If text extraction is disabled in the
+document preamble, an empty text file is written at the end of the
+Lua\TeX\ run.  Text extraction is enabled, by default.
+
+Note, text extraction and visual feedback are orthogonal features.  That
+is, if text extraction is disabled for part of a document, \lpeg, a long
+table, words with a known incorrect spelling are still highlighted in
+that part.
+
+
+\subsection{Code point mapping}
+\label{sec:cp-mapping}
+
+As explained in \autoref{sec:textoutput}, the text file written at the
+end of the Lua\TeX\ run is in the \acr{utf-8} encoding.  Unicode
+contains a wealth of code points with a special meaning, such as
+ligatures, alternative letters, symbols \lpetc Unfortunately, not all
+spell-checker applications are smart enough to correctly interpret all
+Unicode code points that may occur in a document.  For that reason, a
+code point mapping feature has been implemented that allows for mapping
+certain Unicode code points that may appear in a node list to arbitrary
+strings in text output.  A typical example is to map ligatures to the
+characters corresponding to their constituting letters.  The default
+mappings applied can be found in \autoref{tab:cp-mapping}.
+
+\begin{table}
+  \begin{minipage}{1.0\linewidth}
+    \centering
+
+    \newcommand*{\coltitle}[2]{%
+      \normalfont%
+      \vbox{
+        \hbox{\strut#1}
+        \hbox{\strut#2}
+      }%
+    }
+
+    \begin{tabular}{>{\ttfamily}l>{\fontspec{Linux Libertine
+            O}}l>{\ttfamily}l>{\ttfamily}l}
+      \normalfont Unicode name & \coltitle{sample}{glyph\footnote{Sample
+          glyphs are taken from font \emph{Linux Libertine~O}.}} &
+      \coltitle{code}{point} & \coltitle{target}{characters}\\
+    \addlinespace
+    \toprule
+    \addlinespace
+
+    LATIN CAPITAL LIGATURE IJ     & ^^^^0132 & 0x0132 & IJ  \\
+    LATIN SMALL LIGATURE IJ       & ^^^^0133 & 0x0133 & ij  \\
+    LATIN CAPITAL LIGATURE OE     & ^^^^0152 & 0x0152 & OE  \\
+    LATIN SMALL LIGATURE OE       & ^^^^0153 & 0x0153 & oe  \\
+    LATIN SMALL LETTER LONG S     & ^^^^017f & 0x017f & s   \\
+    \addlinespace
+    LATIN SMALL LIGATURE FF       & ^^^^fb00 & 0xfb00 & ff  \\
+    LATIN SMALL LIGATURE FI       & ^^^^fb01 & 0xfb01 & fi  \\
+    LATIN SMALL LIGATURE FL       & ^^^^fb02 & 0xfb02 & fl  \\
+    LATIN SMALL LIGATURE FFI      & ^^^^fb03 & 0xfb03 & ffi \\
+    LATIN SMALL LIGATURE FFL      & ^^^^fb04 & 0xfb04 & ffl \\
+    LATIN SMALL LIGATURE LONG S T & ^^^^fb05 & 0xfb05 & st  \\
+    LATIN SMALL LIGATURE ST       & ^^^^fb06 & 0xfb06 & st  \\
+  \end{tabular}
+
+  \caption{Default code point mappings.}
+  \label{tab:cp-mapping}
+
+  \end{minipage}
+\end{table}
+
+Additional mappings can be declared by command \macro{spellingmapping}.
+This command takes two arguments, a number that refers to the Unicode
+code point, and a sequence of arbitrary characters that is the mapping
+target.  The code point number must be in a format that can be parsed by
+Lua.  The characters must be in the \acr{utf-8} encoding.
+
+New mappings only have effect on the following document text.  The
+command should therefore be used in the document preamble.  As an
+example, the character |A| can be mapped to |Z| and \latinphrase{vice
+  versa} with the following code:
+
+\begin{lstlisting}[language={[LaTeX]TeX}]
+\spellingmapping{65}{Z}% A => Z
+\spellingmapping{90}{A}% Z => A
+\end{lstlisting}
+
+Another command \macro{spellingclearallmappings} can be used to remove
+all existing code point mappings.
+
+
+\subsection{Tables}
+\label{sec:tables}
+
+How do tables fit into the simple text file format that has only
+paragraphs and blank lines as described in \autoref{sec:textoutput}?
+What is a paragraph with regards to tables?  A whole table?  A row?  A
+single cell?
+
+By default, only text from cells in °p°(aragraph)-like columns is put on
+their own paragraph, because the corresponding node list branches
+contain a |local_par| whatsit node (\lpcf \autoref{sec:textoutput}).
+The behaviour can be changed with the \macro{spellingtablepar} command.
+This command takes as argument a number.  If the argument is~0, the
+behaviour is described as above.  If the argument is~1, a blank line is
+inserted before and after every table row (but at most once between
+table rows).  If the argument is~2, a blank line is inserted before and
+after every table cell.  By default, no blank lines are inserted.
+
+
+\section{LanguageTool support}
+\label{sec:languagetool}
+
+Installing spell-checkers and dictionaries can be a difficult task if
+there are no pre-built packages available for an architecture.  That's
+one reason the \pkg\ package is rather spell-checker agnostic and the
+manual doesn't recommend a particular spell-checker application.
+Another reason is, there is no best spell-checker.  The only
+recommendation the author makes is not to trust in one spell-checker,
+but to use multiple spell-checkers at the same time, with different
+dictionaries or, better yet, different checking engines under the hood.
+
+Among the set of options available, LanguageTool%
+\footnote{\url{http://www.languagetool.org/}}%
+%
+, a style and grammar checker that can also check spelling since
+version~1.8, deserves some notice for its portability, ease of
+installation and active development.  For these reasons, the \pkg\
+package provides explicit LanguageTool support.  LanguageTool uses
+Hunspell as the spell-checking engine, augmenting results with a rule
+based engine and a morphological analyser (depending on the language).
+The \pkg\ package can parse LanguageTool's error reports in the
+\acr{xml} format, pick those errors that are spelling related and use
+them to highlight bad spellings.%
+\footnote{Highlighting style and grammar errors found by LanguageTool
+  should be possible, but requires major restructuring of the \pkg\
+  package.}
+
+
+\subsection{Installation}
+\label{sec:lt-installation}
+
+Here are some brief installation instructions for the stand-alone
+version of LanguageTool (tested with LanguageTool~2.1).  The stand-alone
+version contains a \acr{gui} as well as a command-line interface.  For
+the \pkg\ package, the latter is needed.
+
+\begin{enumerate}
+
+\item LanguageTool is primarily written in Java.  Make sure a recent
+  Java Runtime Environment (\acr{jre}) is installed.
+
+\item\label{enum:run-java} Open a command-line and type
+
+\begin{lstlisting}
+java -version
+\end{lstlisting}
+%
+  If you get an error message, find out the full path to the Java
+  executable (called |java.exe| on Windows) for later reference.
+
+\item Download the stand-alone version of LanguageTool (should be a
+  \acr{zip} archive).
+
+\item Uncompress the downloaded archive to a location of your choice.
+
+\item Open a command-line in the directory containing file
+  |languagetool-commandline.jar| and type
+
+\begin{lstlisting}[escapeinside=°°]
+°\descr{path to}°/java -jar languagetool-commandline.jar --help
+\end{lstlisting}
+%
+  Prepending the path to the Java executable is optional, depending on
+  the result in step~\ref{enum:run-java}.  If you now see a list of
+  LanguageTool's command-line options rush by, all is well.
+
+\item For easier access to LanguageTool, create a small batch script and
+  put that somewhere into the |PATH|.
+
+  \begin{itemize}
+
+  \item For users of unixoide systems, the script might look like
+
+\begin{lstlisting}[escapeinside=°°]
+#!/bin/sh
+°\descr{path to}°/java -jar °\descr{path to}°/languagetool-commandline.jar $*
+\end{lstlisting}
+%
+    where \texttt{\descr{path to}} should point to the Java executable
+    (optional) and file |languagetool-commandline.jar| (mandatory).  If
+    the script is named |lt.sh|, you should be able to run LanguageTool
+    on the command shell by typing, \lpeg,
+
+\begin{lstlisting}
+sh lt.sh --version
+\end{lstlisting}
+%
+    Don't forget to put the script into the |PATH|!  For other ways of
+    making scripts executable, please consult the operating system
+    documentation.
+
+  \item For Windows users, the script might look like
+
+\begin{lstlisting}[escapeinside=°°]
+@echo off
+°\descr{path to}°\java -jar °\descr{path to}°\languagetool-commandline.jar %*
+\end{lstlisting}
+%
+    where \texttt{\descr{path to}} should point to the Java executable
+    (optional) and file |languagetool-commandline.jar| (mandatory).  If
+    the script is named |lt.bat|, you should be able to run LanguageTool
+    on the command-line by typing, \lpeg,
+
+\begin{lstlisting}
+lt --version
+\end{lstlisting}
+%
+    Don't forget to put the script into the |PATH|!
+
+  \end{itemize}
+
+\end{enumerate}
+
+
+\subsection{Usage}
+\label{sec:lt-usage}
+
+The results of checking a text file with LanguageTool are written to an
+error report, either in a human readable format or in a machine friendly
+\acr{xml} format.  The \pkg\ package can only parse the latter format.
+When it was said in \autoref{sec:wordlists} that the \pkg\ package reads
+files \descr{jobname}|.spell.bad| and \descr{jobname}|.spell.good|, if
+they exist, that was not the whole truth.  Additionally, a file
+\descr{jobname}|.spell.xml| is read, if it exists.  This file should
+contain a LanguageTool error report in the \acr{xml} format.  Additional
+LanguageTool \acr{xml} error reports can be loaded via the
+\macro{spellingreadLT} command.  Argument is a file name.  Macros
+|\spellingreadLT|, |\spellingreadbad| and |\spellingreadgood| can be
+used in combination in a \TeX\ file.
+
+To check a text file and create an error report in the \acr{xml} format,
+LanguageTool can be called on the command-line like this
+\begin{lstlisting}[escapeinside=°°]
+lt °\descr{options}° °\descr{input file}° > °\descr{error report}°
+\end{lstlisting}
+where \texttt{\descr{options}} is a list of options described below,
+\texttt{\descr{input file}} is the text file written by the \pkg\
+package in the first Lua\TeX\ run and \texttt{\descr{error report}} is
+the file containing the error report.  Note, how standard output is
+redirected to a file via the |>| operator.  By default, LanguageTool
+writes error reports to standard output, that is, the command-line.
+Redirection is a feature most operating systems provide.
+
+\begin{itemize}
+
+\item Option |-l| determines the language (variant) of the file to
+  check.  As an example, language variant US English can be selected via
+  |-l en-US|.  The full list of languages supported by LanguageTool can
+  be requested via option |--list|.
+
+\item Option |-c| determines the encoding of the input file.  Since the
+  text file written by the \pkg\ package is in the \acr{utf-8} encoding,
+  this part should be |-c utf-8|.
+
+\item By default, LanguageTool outputs error reports in a human readable
+  format.  The \pkg\ package can only parse error reports in the
+  \acr{xml} format.  If the |--api| option is present, LanguageTool
+  outputs \acr{xml} data.
+
+\item Users that don't want to highlight bad spellings, but prefer to
+  study the list of bad spellings themselves, should refer to the |-u|
+  option.  But note, that with the latter option present, LanguageTool
+  doesn't output pure \acr{xml} any more, even if the |--api| option is
+  present.  Make sure such error reports aren't read by the \pkg\
+  package.
+
+\item If the |--help| option is present, LanguageTool shows more
+  information about command-line options.
+
+\end{itemize}
+
+As an example, to compile a \LaTeX\ file |myletter.tex| written in
+French that uses the \pkg\ package with standard settings to highlight
+bad spellings and to use LanguageTool as a spell-checker, the following
+commands should be typed on the command-line:
+
+\begin{lstlisting}
+lualatex myletter
+lt --api -c utf-8 -l fr myletter.spell.txt > myletter.spell.xml
+lualatex myletter
+\end{lstlisting}
+
+
+\section{Bugs}
+\label{sec:bugs}
+
+Note, this package is in a very early state.  Expect bugs!  Package
+development is hosted at
+\href{http://github.com/sh2d/spelling/}{\bfseries GitHub}.  The full
+list of known bugs and feature requests can be found in the
+\href{http://github.com/sh2d/spelling/issues/}{\bfseries issue tracker}.
+New bugs should be reported there.
+
+The most user-visible issues are listed below:
+
+\begin{itemize}
+
+\item There's no support for the Plain \TeX\ or Con\TeX\ formats other
+  than the \acr{API} of the package's Lua modules, yet
+  (\href{https://github.com/sh2d/spelling/issues/1}{issue~1}).
+
+\item Macros provided by the \LaTeX\ package have very long names.  A
+  \emph{key-value} package option interface would be much more
+  user-friendly
+  (\href{https://github.com/sh2d/spelling/issues/2}{issue~2}).
+
+\item There are a couple of issues with text extraction and highlighting
+  incorrect spellings:
+
+  \begin{itemize}
+
+  \item Text in head and foot lines is neither extracted nor highlighted
+    (\href{https://github.com/sh2d/spelling/issues/7}{issue~7}).
+
+  \item The first word starting right after an |hlist|, \lpeg, the first
+    word within an |\mbox|, is never highlighted.  It is extracted and
+    written to the text file, though.  This might affect acronyms, names
+    \lpetc (\href{https://github.com/sh2d/spelling/issues/6}{issue~6}).
+
+  \item Bad spellings that are hyphenated at a page break are not
+    highlighted
+    (\href{https://github.com/sh2d/spelling/issues/10}{issue~10}).
+
+  \end{itemize}
+
+
+\end{itemize}
+
+Patches welcome!
+
+\bigskip
+\emph{Happy \TeX ing!}
+
+
+\end{document}
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-PDF-mode: t
+%%% TeX-master: t
+%%% coding: utf-8
+%%% End: 

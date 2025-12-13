@@ -1,0 +1,93 @@
+\documentclass[a4paper]{article}
+\usepackage{pstricks-add,pst-geo}
+\usepackage{animate}
+
+\makeatletter
+\newdimen\pssizeStar
+\def\psset@sizeStar#1{\pssetlength\pssizeStar{#1}}
+\psset@sizeStar{1.5pt}
+%% adapté de \psRandom du package pstricks-add
+%% pour rendre aléatoire la taille des étoiles
+\def\psRandomStar{\pst@object{psRandomStar}}%
+\def\psRandomStar@i{\@ifnextchar({\psRandomStar@ii}{\psRandomStar@iii(0,0)(1,1)}}
+\def\psRandomStar@ii(#1){\@ifnextchar({\psRandomStar@iii(#1)}{\psRandomStar@iii(0,0)(#1)}}
+\def\psRandomStar@iii(#1)(#2)#3{%
+	\def\pst@tempA{#3}%
+	\ifx\pst@tempA\pst@empty\psclip{\psframe(#2)}\else\psclip{#3}\fi
+	\pst@getcoor{#1}\pst@tempA
+	\pst@getcoor{#2}\pst@tempB
+	\begin@SpecialObj
+	\addto@pscode{
+		\pst@tempA\space /yMin exch def
+		/xMin exch def
+		\pst@tempB\space /yMax exch def
+		/xMax exch def
+		/dy yMax yMin sub def
+		/dx xMax xMin sub def
+		rrand srand                 % initializes the random generator
+		/getRandReal { rand 2147483647 div } def
+		\psk@randomPoints {
+			/DS \pst@number\pssizeStar\space getRandReal mul def
+			\@nameuse{psds@\psk@dotstyle}
+			\ifPst@color getRandReal 1 1 sethsbcolor \fi
+			getRandReal dx mul xMin add
+			getRandReal dy mul yMin add
+			Dot
+			\ifx\psk@fillstyle\psfs@solid fill \fi stroke
+		} repeat
+	}%
+	\end@SpecialObj
+	\endpsclip
+	\ignorespaces
+}
+\makeatother
+\definecolor{BlueDark}{cmyk}{1,1,0,0.5}
+\newpsstyle{Globe}{circles=true,gridmap=true,daynight=false}
+\newpsstyle{night}{fillstyle=solid,fillcolor=BlueDark,linecolor=BlueDark,opacity=0.8}
+\pagestyle{empty}
+\begin{document}
+
+\begin{animateinline}[controls,autoplay,loop,
+  begin={\psset{path=../data,Radius=5,Decran=100,Dobs=100,unit=0.5}\begin{pspicture}(-7,-7)(7,7)},
+  end={\end{pspicture}}]{8}
+%		% Generate frames for -2 ... 2
+  \multiframe{12}{i=0+2,ih=1+2}{%
+    \psframe*[linecolor=BlueDark](-7,-7)(7,7)%
+    \psRandomStar[linecolor=yellow!50,randomPoints=100](-7,-7)(7,7){\psframe(-7,-7)(7,7)}
+    \expandafter\ifodd\i
+      \psGlobeTellure[hour=\i,Day=24,Month=12,Year=2016,borders,all](15.28,37.07){Syracuse}
+    \else
+      \psGlobeTellure[hour=\ih,Day=24,Month=12,Year=2016,borders,all](15.28,37.07){Syracuse}
+    \fi
+  }
+\end{animateinline}
+
+
+\bigskip
+\begin{verbatim}
+\definecolor{BlueDark}{cmyk}{1,1,0,0.5}
+\newpsstyle{Globe}{circles=true,gridmap=true,daynight=false}
+\newpsstyle{night}{fillstyle=solid,fillcolor=BlueDark,linecolor=BlueDark,opacity=0.8}
+[...]
+\begin{animateinline}[controls,autoplay,loop,
+  begin={\psset{path=../data,Radius=5,Decran=100,Dobs=100,unit=0.5}%
+         \begin{pspicture}(-7,-7)(7,7)},
+  end={\end{pspicture}}]{8}
+%		% Generate frames for -2 ... 2
+  \multiframe{12}{i=0+2,ih=1+2}{%
+    \psframe*[linecolor=BlueDark](-7,-7)(7,7)%
+    \psRandomStar[linecolor=yellow!50,randomPoints=100]%
+              (-7,-7)(7,7){\psframe(-7,-7)(7,7)}
+    \expandafter\ifodd\i
+      \psGlobeTellure[hour=\i,Day=24,Month=12,Year=2016,
+            borders,all](15.28,37.07){Syracuse}
+    \else
+      \psGlobeTellure[hour=\ih,Day=24,Month=12,Year=2016,
+            borders,all](15.28,37.07){Syracuse}
+    \fi
+  }
+\end{animateinline}
+\end{verbatim}
+
+\end{document}
+

@@ -1,0 +1,1467 @@
+%#!make ptex-manual.pdf
+\documentclass[a4paper,11pt,nomag]{jsarticle}
+\usepackage[textwidth=42zw,lines=40,truedimen,centering]{geometry}
+
+%%%%%%%%%%%%%%%%
+% additional packages
+\usepackage{amsmath}
+\usepackage{array}\usepackage[all]{xy}
+\SelectTips{cm}{}
+%\usepackage[dvipdfmx]{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage{booktabs,enumitem,multicol}
+\usepackage[defaultsups]{newpxtext}
+\usepackage[zerostyle=c,straightquotes]{newtxtt}
+\usepackage{newpxmath}
+\usepackage[dvipdfmx,hyperfootnotes=false]{hyperref}
+\usepackage{pxjahyper}
+\usepackage{hologo}
+\usepackage{makeidx}\makeindex
+
+% common
+\usepackage{ptex-manual}
+
+\def\code#1{\texttt{#1}}
+
+%%%%%%%%%%%%%%%%
+\makeatletter
+\setlist{leftmargin=2zw}
+\setlist[description]{labelwidth=2zw,labelindent=1zw,topsep=\medskipamount}
+
+\def\>{\ifhmode\hskip\xkanjiskip\fi}
+
+\def\tsp{_{\mbox{\fontsize\sf@size\z@\ttfamily \char32}}}
+\def\tpar{_{\mbox{\fontsize\sf@size\z@\ttfamily \string\par}}}
+\def\tign{_{\mbox{\fontsize\sf@size\z@\selectfont --}}}
+
+\def\tableautorefname{表}
+\def\figureautorefname{図}
+\def\HyRef@autoref#1#2{%
+  \begingroup
+    \Hy@safe@activestrue
+    \expandafter\HyRef@autosetref\csname r@#2\endcsname{#2}{#1}%
+  \endgroup\textcompwordmark %欧文ゴースト
+}
+\makeatother
+
+\usepackage{shortvrb}
+\MakeShortVerb*{|}
+%%%%%%%%%%%%%%%%
+
+% logos
+\def\epTeX{$\varepsilon$-\pTeX}\def\eTeX{$\varepsilon$-\TeX}
+\def\eupTeX{$\varepsilon$-\upTeX}\def\upTeX{u\pTeX}
+\def\pTeX{p\kern-.10em\TeX}
+
+\def\_{\leavevmode\vrule width .45em height -.2ex depth .3ex\relax}
+
+\frenchspacing
+\begin{document}
+\catcode`\<=13
+\title{\emph{\pTeX マニュアル}}
+\author{日本語\TeX 開発コミュニティ\null
+\thanks{\url{https://texjp.org},\ e-mail: \texttt{issue(at)texjp.org}}}
+\date{version p\the\ptexversion.\the\ptexminorversion\ptexrevision，\today}
+\maketitle
+
+本ドキュメントは，日本語\TeX 開発コミュニティ版の
+\pTeX~p\the\ptexversion.\the\ptexminorversion\ptexrevision
+（以下，「コミュニティ版\pTeX 」）についてまとめたものである．
+\pTeX はもともとアスキー株式会社によって開発された\footnote{最新版は
+p3.1.11 (2009/08/17)．\url{https://asciidwango.github.io/ptex/}}ので，
+しばしば「ASCII \pTeX 」と呼ばれる．
+コミュニティ版\pTeX は，ASCII \pTeX に幾つかの改良を加えた
+「ptexenc版\pTeX\footnote{2004年から2011年まで開発されていた，
+UNIX向け日本語\TeX ディストリビューションptetexや後継のptexliveの
+一部であった．なお，バージョン番号はASCII~\pTeX と同じとされた．}」を
+基にしている．そのため，オリジナルのASCII~\pTeX とは
+動作が異なる点もあるので注意されたい．
+\begin{itemize}
+  \item コミュニティ版\pTeX の開発元：\\
+    \url{https://github.com/texjporg/tex-jp-build/}
+  \item 本ドキュメントの開発元：\\
+    \url{https://github.com/texjporg/ptex-manual/}
+\end{itemize}
+
+なお，本ドキュメントで述べる\pTeX のプリミティブや拡張機能は，
+一般に「\pTeX 系列」と呼ばれる\epTeX, \upTeX, \eupTeX でも
+そのまま利用可能である．\upTeX, \eupTeX については
+文字コードや和文文字トークンの扱いが異なるので，簡単に注記してある．
+
+\newpage
+\tableofcontents
+
+\newpage
+
+%%%%%
+\part{\pTeX の日本語組版と追加プリミティブ}
+
+ここでは，\pTeX の日本語組版の概略と，それを実現するために導入された
+プリミティブを説明する．
+
+\section{\pTeX で利用可能な文字}
+\label{sec:ptexchar}
+
+% このマニュアルを英語化する際は以下も参照．
+% http://tutimura.ath.cx/ptexlive/?ptexenc%2FDetails
+% http://ajt.ktug.org/assets/2008/5/1/0201tsuchimura_kuroki.pdf
+% https://oku.edu.mie-u.ac.jp/tex/mod/forum/discuss.php?d=460
+
+\TeX82で扱える文字コードの範囲は0--255であった．
+\pTeX ではこれに加えてJIS~X~0208の文字も利用可能になっている．
+
+\pTeX への入力は\emph{「7ビットASCII文字集合」に
+「ISO-2022-JP (jis)，EUC-JP (euc)，Shift-JIS (sjis)または
+UTF-8 (utf8)のいずれかでエンコードされたJIS~X~0208の文字集合」を
+加えたもの}として解釈される．
+なお，入出力ファイルの文字コードは，起動時のオプション|-kanji=|<encoding>に
+よって指定できる（可能な<encoding>の値は|utf8|，|euc|，|sjis|，|jis|）．
+
+そして，以下の規則により欧文文字と和文文字に区別して取り扱われる．
+なお，内部コードは|-kanji-internal=|<encoding>によって変更できる
+（可能な値は|euc|，|sjis|）が，こちらはini modeでのフォーマット作成時
+に限られ，virtual modeでは不可である（フォーマットの内部コードと実際の
+処理の整合性をとるため，\pTeX\ p3.8.2以降の仕様）．
+\begin{itemize}
+ \item 7ビットASCII文字集合は欧文文字として扱われる．
+ \item 最上位ビットが1の場合，\pTeX はそのバイトで始まる列について
+    EUC-JPまたはShift-JISのいずれかの内部コードへの変換を試みる．
+    和文文字の内部コードとして許される整数は
+    $256c_1+c_2$，但し$c_i\in C_i$であり，ここで
+  \begin{description}
+   \item[内部コードがEUC-JPのとき]
+    $C_1=C_2=\{\hex{a1},\dots,\hex{fe}\}$.
+   \item[内部コードがShift-JISのとき]
+    $C_1=\{\hex{81},\dots,\hex{9f}\}\cup\{\hex{e0},\dots,\hex{fc}\}$,\\
+    $C_2=\{\hex{40},\dots,\hex{7e}\}\cup\{\hex{80},\dots,\hex{fc}\}$.
+  \end{description}
+    である．この内部コードのパターンに合えば和文文字として扱われ，
+    合わなければ8ビット欧文文字のバイト列として扱われる．\footnote{例えば，
+    入力ファイルの文字コードがUTF-8の場合，JIS~X~0208にない文字は
+    UTF-8のバイト列として読み込まれる．}
+\end{itemize}
+% 参考：kanji.c の |is_char_kanji| の実装
+
+% [TODO] 8ビット欧文文字の ^^ab 形式への変換について
+
+\begin{dangerous}
+ 以上で述べた「内部コードの範囲」はJIS~X~0213の漢字集合1面（Shift-JISの場合は2面も）を
+ まるまる含んでいるが，\emph{\pTeX はJIS~X~0213には対応していない．}
+
+ JIS~X~0213で規定された「85区1点」の位置の文字を入力ファイル中に書いた場合，
+ \begin{description}
+  \item[文字コードがEUC,~Shift-JISの場合] DVIには29985~(\texttt{"7521})%"
+    番の文字として出力される．
+  \item[文字コードがJISの場合] 「\verb+! Missing $ inserted.+」というエラーが発生する．
+    これは，\pTeX がJIS~X~0213の1面を指示するエスケープシーケンス
+    \texttt{1B 24 28 4F} (JIS2000), \texttt{1B 24 28 51} (JIS2004)を認識せず，
+    \texttt{24}~(\texttt{\$})を数式モード区切りと解釈してしまうためである．
+  \item[文字コードがUTF-8の場合] UTF-8のバイト列\texttt{E6 93 84}として読み込まれる．
+ \end{description}
+ なお，\.{char}により「\verb+\char\kuten"5521+」%"
+ のようにして区点コードを指定した場合は，DVIには29985~(\texttt{"7521})%"
+ 番の文字として出力される．
+ また，DVIに文字として出力されたからといって，それをPostScriptやPDFに変換したときに
+ 意図通りに出力されるかは全くの別問題である．
+\end{dangerous}
+
+\pTeX の入出力ファイルの文字コードと内部コードは起動時のバナーから分かる．
+例えば
+\begin{verbatim}
+This is pTeX, Version 3.14159265-p3.8.0 (utf8.euc) (TeX Live 2018)
+(preloaded format=ptex)
+\end{verbatim}
+というバナーの場合は，|(utf8.euc)| から
+\begin{itemize}
+ \item 入出力ファイルの（既定）文字コードはUTF-8（但し，JIS~X~0208の範囲内）
+ \item \pTeX の内部コードはEUC-JP
+\end{itemize}
+という情報が見て取れる．入出力ファイルの文字コードと内部コードが同じ場合は，
+\begin{verbatim}
+This is pTeX, Version 3.14159265-p3.8.0 (sjis) (TeX Live 2018)
+(preloaded format=ptex)
+\end{verbatim}
+のように表示される（この例は，入出力ファイルの文字コードと内部コードが
+ともにShift-JISの場合）．
+
+\begin{dangerous}
+上にはこのように書いたが，
+極めて細かい話をすれば，起動時のバナーは時にウソをつくので注意．
+ログファイルには記録されるバナーは常に正しい．これは以下の事情による．
+
+virtual modeでは，起動直後にバナーを表示してから，フォーマットファイル
+読込が行われる．この時点で初めて，起動時の内部コードとフォーマットの
+内部コードの整合性が確認される．ここでもし合致しなかった場合は，\pTeX は
+警告を表示してフォーマットに合った内部コードを選択し，以降の処理を行う．
+ログファイルはこの後にオープンされるため，そこには正しい内部コード
+（フォーマットと同じ内部コード）が書き込まれる\cite{build55}．
+
+このようなウソは，\pTeX に限らず|(preloaded format=***)|でも見られる．
+\end{dangerous}
+
+なお，\pTeX はDVIファイル内の和文文字コードとしてはJISコードを出力する．
+ただし，|\special|命令の文字列は内部コードで符号化されたバイト列として書き出される．
+
+\section{文字コードの取得と指定}
+
+\pTeX でも\TeX82と同様に，
+バッククオート(|`|)を使って「|`あ|」のようにして和文文字の内部コードを
+内部整数として得ることができる．欧文文字については，1文字の制御綴を
+代わりに指定することができた（例えば，「|`b|」と「|`\b|」は同じ意味だった）が，
+同じことを和文文字に対して「|`\あ|」などと行うことはできない．
+
+\pTeX では「文字コードを引数にとるプリミティブ」といっても，状況によって
+\begin{itemize}
+ \item 欧文文字の文字コード0--255をとる（例：|\catcode|）
+ \item 和文文字の内部コードをとる（例：|\inhibitxspcode|）
+ \item 上記2つのどちらでもとれる（例：|\prebreakpenalty|）
+\end{itemize}
+のいずれの場合もありうる．
+
+\medskip
+
+本ドキュメントでは上のどれかを明示するために，以下のような記法を採用する．
+\begin{description}
+ \item[<8-bit number>] 0--255の範囲内の整数
+ \item[<kanji code>] 和文文字の内部コード
+ \item[<character code>] 0--255の範囲内の整数，および和文文字の内部コード
+ \item[<16-bit number>] 0--65535の範囲内の整数
+\end{description}
+
+\section{和文文字と\.{kcatcode}}
+\TeX82では，各文字に0--15のカテゴリーコードを割り当てており，
+\TeX82の入力プロセッサは「どのカテゴリーコードの文字が来たか」で状態が遷移する
+有限オートマトンとして記述できる(\cite{topic})．
+\pTeX では，和文文字には
+16~($\mathit{kanji}$), 17~($\mathit{kana}$), 18~($\mathit{other\_kchar}$)の
+カテゴリーコードの3つのいずれかが
+割り当てられており，\pTeX の入力プロセッサの状態遷移図は
+\autoref{fig:ptex_input}のように\TeX82のそれを拡張したものになっている．
+
+\autoref{fig:ptex_input}を見れば分かるように，
+（欧文文字直後の改行は空白文字扱いされるのと対照的に）
+\emph{和文文字直後の改行は何も発生しない}．和文文字の直後にグループ開始・終了が来て
+行が終わった場合も同様である．
+
+\begin{figure}[b]
+\small
+\[
+\entrymodifiers={++[o][F-]}
+\xymatrix{%
+  *\txt{}&*\txt{}&*\txt{}&*\txt{}\\
+  *\txt{}\ar[r]&
+  \textit{N} \ar@(ur,ul)[rr]^{1,2,7,13,E}
+  \ar[u]^{5\tpar, 14}
+  \ar@(d,l)[]^{9\tign,10\tign}
+  \ar@/_3em/[ddrr]^(0.55){J}
+  \ar[dr]^(0.4){0}&*\txt{}
+  &\textit{M}
+  \ar[u]^-{5\tsp,14}\ar@/_.5em/[dd]_(0.7){J}
+  \ar@/_3em/[lldd]_(0.85){10}
+  \ar@(u,r)[]^{1,2,7,9\tign,13,E}
+  \ar@/_1ex/[dl]_0&*\txt{}\\
+  *\txt{}&*\txt{}&*+[F-]\txt{\mbox{制御綴読み取り}}
+  \ar@{-->}@/^.5em/[dl]\ar@{-->}@/_1ex/[ur]\\
+  *\txt{}&
+  \textit{S}\ar@/^.5em/[ur]^-(0.4){0}
+  \ar[d]^-{5,14}
+  \ar@(d,l)^{9\tign,10\tign}
+  \ar@(d,d)@/_3em/[rr]_{J}
+  \ar@/_3em/[uurr]_(0.3){1,2,7,13,E}&*\txt{}&
+  \textit{K}\ar[ul]^(0.3){0}\ar@/_.5em/[uu]_{7,13,E}
+  \ar@/^1.5em/[ll]^{10}
+  \ar@(d,r)[]_{1,2,9\tign,J}
+  \ar[d]_-{5,14}
+  &*\txt{}\\
+  *\txt{}&*\txt{}&*\txt{}&*\txt{}
+%
+}
+\]
+\begin{itemize}
+  \item 状態\textit{N} (new line)，状態\textit{M} (middle of line)，
+  状態\textit{S} (skipping spaces)は\TeX82と同じであるが，
+  新たに状態\textit{K} (middle of kanji)が追加されている．
+  \item 矢印の上下に書いた数字はカテゴリーコードを表す．
+  \item ``E''はカテゴリーコード3, 4, 6, 8, 11, 12の文字達を，
+  ``J''は和文文字を表す．
+  \item ``$5\tpar$''のような下付き添字は「挿入するトークン」を表している．
+  但し，``$9\tign$'', ``$10\tign$''はその文字を無視することを示している．
+  \item 図中央の「制御綴読み取り」の後で$S$,~$M$どちらの状態になるかは，
+  次のように決まっている：
+  \begin{itemize}
+    \item 制御綴が「|\ |」のようなカテゴリーコード10の文字
+    からなるコントロールシンボルのときは状態$S$に遷移する．
+    \item 制御綴が「|\#|」「|\】|」のようなその他のコントロールシンボルのときは状態$M$に遷移する．
+    \item 制御綴がコントロールワードのときは状態$S$に遷移する．
+  \end{itemize}
+\end{itemize}
+\caption{\pTeX の入力プロセッサの状態遷移図}
+\label{fig:ptex_input}
+\end{figure}
+
+和文文字のカテゴリーコードの値による動作の違いは次のようになる：
+\begin{itemize}
+  \item \TeX82では，「複数文字からなる命令」（コントロールワード）には
+    カテゴリーコードが11~($\mathit{letter}$)の文字しか使用できないことになっていたが，
+    \pTeX ではカテゴリーコードが16,~17の和文文字も合わせて使用することができる．
+  \item 一方，カテゴリーコードが18の和文文字はコントロールワード中には使用できない．
+    「|\】|」のように一文字命令（コントロールシンボル）に使用することはできる
+    \footnote{「|\】|」のような和文のコントロールシンボルで行が終わった場合，
+    「|\!|」のような欧文コントロールシンボルと同様に改行由来の空白が追加されてしまい，
+    和文文字直後の改行は何も発生しないという原則に反していたが，
+    これは\TeX~Live 2019の\pTeX~p3.8.2で修正された(\cite{build37})．}．
+  \item 後で説明する|\jcharwidowpenalty|は，カテゴリーコードが16,~17の和文文字の前にのみ
+    挿入されうるもので，カテゴリーコードが18の和文文字の前には挿入されない．
+  \item 欧文文字は\TeX82と同様に1つの文字トークンはカテゴリーコード$c$と文字コード$s$の組
+    み合わせ($256c+s$)で表現されていた．\pTeX では和文文字トークンは文字コードのみで表現さ
+    れ，そのカテゴリーコードは随時算出されるようになっている
+    \footnote{\upTeX では和文文字トークンについてもそのカテゴリーコードの情報が
+    含まれるようになった．}．
+\end{itemize}
+
+\begin{cslist}
+  \csitem[\.{kcatcode} <character code>=<16--18>]
+  日本語\TeX 開発コミュニティ版の\pTeX では，和文文字のカテゴリーコード(|\kcatcode|)は
+  DVI中の上位バイトごと（すなわち，JISコードでいう区ごと）に値が設定可能である
+  \footnote{%
+    オリジナルのASCII~\pTeX では，内部コードの上位バイトごとに値が設定可能であった．
+    すなわち，内部コードがEUC-JPのときは区ごとに設定可能であったが，
+    内部コードがShift-JISのときは
+    $2n-1$区・$2n$区($1\leq n\leq 47$)は同一のカテゴリーコードを持つことになる．
+  }．初期状態では，
+  1,~2, 7--15, 85--94区の文字の|\kcatcode|は18，3--6区の文字は17，
+  16--84区の文字は16に設定されている．
+
+  \pTeX においては，|\kcatcode|を上記の初期状態から変更することは想定されていない．
+  また，変更したとしても，（先に述べた通り）和文文字トークンにカテゴリーコードの情報は
+  保存されず，和文文字が処理対象となるたびにその度に値が取得される．
+
+  なお，\upTeX においては，|\kcatcode|は大きく仕様変更されている．
+\end{cslist}
+\begin{dangerous}
+  例えば，以下のコードで定義される|\X|, |\Y|で引数終端をしめす「あ」には
+  カテゴリーコードの情報は格納されない．そのため，|\X|,~|\Y|は全く同じ動作となる．
+  \begin{verbatim}
+  \kcatcode`あ=16
+  \def\X#1あ{\message{X: #1}}
+  \kcatcode`あ=17
+  \def\Y#1あ{\message{X: #1}}
+  \end{verbatim}
+\end{dangerous}
+
+\begin{dangerous}
+  |\kcatcode|では欧文文字の文字コード(0--255)も指定することができるが，
+  その場合「0区扱い」として扱われる．
+  \pTeX の処理でこの「0区」の|\kcatcode|が使われることはないので，
+  事実上は「16--18のどれかを格納可能な追加レジスタ」程度の使い方しかない．
+\end{dangerous}
+
+% [TODO] 和文文字を含む文字列化の挙動
+% "kanji character " になることも明文化したい
+% どの \section に含めるかわからないのでとりあえずここに置く
+|\string|や|\meaning|などの文字トークン列生成については以下の通り：
+\begin{itemize}
+  \item 欧文文字は\TeX82と同様で，（文字コード32の空白を除き）
+    すべてカテゴリーコード12の文字トークンになるが，
+    和文文字は16--18のいずれかのカテゴリーコードを持つ．
+  \item 「コントロールワードの文字列化では後ろに空白文字を補い，
+    コントロールシンボルの文字列化では空白文字を補わない」という点は，
+    和文文字を含む場合も同様である
+    \footnote{「|\】|」のように和文文字からなるコントロールシンボルを文字列化する際に，
+      バージョンp3.7.2以前の\pTeX では「|\】 |」と後ろに余計な空白文字を補ってしまう
+      という問題があった．
+      \TeX~Live 2018の\pTeX~p3.8.1でこの問題は修正された(\cite{build37})．}．
+  \item 和文文字はそのカテゴリーコードによらず，|\meaning|すると
+    \begin{itemize}
+      \item \the\kcatcode`漢:\quad \texttt{\meaning 漢}
+      \item \the\kcatcode`あ:\quad \texttt{\meaning あ}
+      \item \the\kcatcode`）:\quad \texttt{\meaning ）}
+    \end{itemize}
+    となる．
+\end{itemize}
+
+% jtex.tex の「ラインブレーク」を簡略化
+\section{禁則}
+\label{sec:kinsoku}
+欧文と和文の処理で見かけ上最も大きな違いは，行分割処理であろう．
+\begin{itemize}
+\item 欧文中での行分割は，ハイフネーション処理等の
+      特別な場合を除いて，単語中すなわち連続する文字列中は
+      ブレークポイントとして選択されない．
+\item 和文中では禁則（行頭禁則と行末禁則）の例外を除いて，
+      全ての文字間がブレークポイントになり得る．
+\end{itemize}
+しかし，\pTeX の行分割は\TeX 内部の処理からさほど大きな変更を
+加えられてはいない．というのも，\TeX の\emph{ペナルティ}\footnote{%
+ペナルティとは，行分割時やページ分割時に
+「その箇所がブレークポイントとしてどの程度適切であるか」を示す
+一般的な評価値である（適切であれば負値，不適切であれば正値
+とする）．絶対値が10000以上のペナルティは無限大として扱われる．}%
+という概念を和文の禁則処理にも適用しているためである．
+
+行頭禁則と行末禁則を実現する方法として，\pTeX では「禁則テーブル」が
+用意されている．このテーブルには
+\begin{itemize}
+\item 禁則文字
+\item その文字に対応するペナルティ値
+\item ペナルティの挿入位置
+      （その文字の前に挿入するか後に挿入するかの別）
+\end{itemize}
+を登録でき，\pTeX は文章を読み込むたびにその文字が
+テーブルに登録されているかどうかを調べ，登録されていれば
+そのペナルティを文字の前後適切な位置に挿入する．
+
+禁則テーブルに情報を登録する手段として，
+以下のプリミティブが追加されている．
+
+% アスキー公式サイトのプリミティブ一覧から適当にまとめ
+\begin{cslist}
+\csitem[\.{prebreakpenalty} <character code>=<number>]
+  指定した文字の前方にペナルティを挿入する．
+  正の値を与えると行頭禁則の指定にあたる．
+  例えば|\prebreakpenalty`。=10000|とすれば，句点の
+  直前に10000のペナルティが付けられ，行頭禁則文字の対象となる．
+
+\csitem[\.{postbreakpenalty} <character code>=<number>]
+  指定した文字の後方にペナルティを挿入する．
+  正の値を与えると行末禁則の指定にあたる．
+  例えば|\postbreakpenalty`（=10000|とすれば，始め丸括弧の
+  直後に10000のペナルティが付けられ，行末禁則文字の対象となる．
+\end{cslist}
+
+|\prebreakpenalty|, |\postbreakpenalty|は
+和文文字，欧文文字の区別無しに指定できる．
+ただし，欧文文字に設定されたこれらのペナルティが実際に挿入されるのは
+以下の場合に限られる（つまり，欧文組版だけの範囲では挿入されない）．
+\begin{itemize}
+  \item 当該の欧文文字の直後が和文文字（前方に禁則ペナルティを伴っても構わない）の
+    場合に限り，その欧文文字に設定された|\postbreakpenalty|を挿入する．
+  \item 当該の欧文文字の直前が和文文字（後方に禁則ペナルティを伴っても構わない）の
+    場合に限り，その欧文文字に設定された|\prebreakpenalty|を挿入する．
+\end{itemize}
+\iffalse %%%%% TL2019-hack
+\begin{dangerous}
+上記の「欧文文字に設定された禁則ペナルティが挿入される状況」は
+欧文文字と和文文字の境界であり，
+ベースライン補正（\ref{sec:baselineshift}節を参照）を実現する
+|disp_node|の挿入箇所でもある．
+ベースライン補正がゼロでないとき，|penalty_node|と|disp_node|の
+挿入順序は以下のようにしている． % tex-jp-build@2c83eb0
+\begin{itemize}
+  \item 欧文→和文文字間： |disp_node| → |penalty_node| (\.{postbreakpenalty}) の順
+  \item 和文→欧文文字間： |penalty_node| (\.{prebreakpenalty}) → |disp_node| の順
+\end{itemize}
+\end{dangerous}
+\fi %%%%% TL2019-hack
+
+\begin{dangerous}
+禁則ペナルティはリスト構築中に自動的に挿入されるので，\.{showlists}で
+\begin{verbatim}
+\penalty 10000(for kinsoku)
+\end{verbatim}
+のように表示される．
+
+また，和文文字の後方に挿入された\.{postbreakpenalty}は
+\.{lastpenalty}で取得できるし，\.{unpenalty}で取り除くこともできる
+\footnote{以前の\pTeX では，\.{unpenalty}したはずの
+和文文字の後方の\.{postbreakpenalty}が復活してしまう場合があったが，
+2017-04-06のコミット(r43707)で修正された\cite{build11}．}．
+% ただ，JFMグルーが後方に挿入される和文文字では上手くいかない．
+% https://github.com/texjporg/tex-jp-build/issues/67
+しかし，上述のとおり，欧文文字に設定された\.{postbreakpenalty}は
+後に和文文字が連続して初めて挿入されるため，
+\.{lastpenalty}で取得できないし，\.{unpenalty}で取り除くこともできない．
+
+\.{prebreakpenalty}は和文・欧文によらず，その直後に文字ノードを伴うため，
+原理的に\.{lastpenalty}で取得できないし，\.{unpenalty}で取り除くこともできない．
+\end{dangerous}
+
+同一の文字に対して|\prebreakpenalty|と|\postbreakpenalty|の両方を
+同時に与えるような指定はできない
+（もし両方指定された場合，後から指定されたものに置き換えられる）．
+禁則テーブルには256文字分の領域しかないので，
+禁則ペナルティを指定できる文字数は最大で256文字までである．
+
+禁則テーブルからの登録の削除は以下の時に行われる\cite{build26,build57}：
+\begin{itemize}
+ \item ペナルティ値0をグローバルに（つまり，|\global|を用いて）
+  設定した場合．
+ \item ペナルティ値0をローカルに設定した場合でも，その設定が
+  最も外側のグループ（\eTeX 拡張でいう|\currentgrouplevel|が0）の場合
+  \footnote{禁則テーブルのある場所がローカルで0に設定されても，その場所に
+  別の禁則ペナルティ設定がグローバルで行われることのないように，
+  最外グループ以外での0設定ではテーブルから削除されない．}．
+\end{itemize}
+
+\begin{cslist}
+\csitem[\.{jcharwidowpenalty}=<number>]
+  パラグラフの最終行が「す。」のように孤立するのを防ぐための
+  ペナルティを設定する．
+  % このペナルティは，
+  % 「段落が和文文字の1つ以上の連続%
+  % \footnote{%
+  %   正確には，和文文字を1つ以上含むような
+  %   「和文文字，ペナルティ，グルー，カーン，文中数式の境界，\textit{mark\_node},
+  %   \textit{adjust\_node}, \textit{whatsit\_node}, \textit{disp\_node}」の1つ以上の連続．
+  %   ただし，アクセント本体は無視される．
+  % }で終わる場合，
+  % その中の最後にある|\kcatcode|が16（漢字）または17（仮名）の文字%
+  % \footnote{%
+  %   \pTeX の初期値では，1,~2,~7--8区\emph{以外}に含まれる文字．
+  % }の直前」に挿入される．
+  % % 警告：現行の pTeX では，この仕様に沿っていません（欧文が絡んだ場合）．
+  % % 仕様を明確に決めるとしたらこんな感じになるしょうか．
+  % %
+  % また，その位置がすでにペナルティであった場合は，|\jcharwidowpenalty|の値が合算される．
+\end{cslist}
+
+\section{文字間のスペース}
+
+欧文では単語毎にスペースが挿入され，その量を調整することにより行長が調整される．
+一方，和文ではそのような調整ができる箇所がほぼ存在しない代わりに，
+ほとんどの場合は行長を全角幅の整数倍に取ることで，
+（和文文字だけの行では）綺麗に行末が揃うようにして組まれる．
+
+ただし，禁則処理が生じたり，途中に欧文が挿入されたりした場合はやはり調整が必要となる．
+そこで一般に行われるのが，追い込み，欧文間や和欧文間のスペース量の調整，追い出しなどの
+処理である．これらを自動で行うため，\pTeX には下記の機能が備わっている．
+\begin{enumerate}
+\item 連続する和文文字間に自動的にグルー（伸縮する空白）を挿入\label{kanjiskip}
+\item 和欧文間に（ソース中に空白文字を含めずとも）自動的にグルーを挿入\label{xkanjiskip}
+\item 和文の約物類にグルーもしくはカーンを設定\label{jfmglue}
+\end{enumerate}
+上記のうち，\ref{kanjiskip}と\ref{xkanjiskip}についてはそれぞれ
+\.{kanjiskip}, \.{xkanjiskip}というパラメータを設けている．
+\ref{jfmglue}については，\TeX が使うフォントメトリック (TFM) を拡張した
+\pTeX 専用の形式，JFMフォーマットによって実現している．
+
+[TODO] JFMグルーの挿入規則について
+\begin{itemize}
+ \item メトリック由来空白の挿入処理は展開不能トークンが来たら中断
+ \item 展開不能トークンや欧文文字は「文字クラス0」扱い．「\verb+）\relax（+」の例
+ \item 禁則ペナルティ（\.{prebreakpenalty}や\.{postbreakpenalty}）と
+  が同じ箇所に発行される場合は
+  「禁則ペナルティ→JFM由来空白」の順に発行される．
+\iffalse %%%%% TL2019-hack
+ \item より一般に，禁則ペナルティ，JFM由来空白，ベースライン補正，
+  欧文TFM由来カーンが同じ箇所に発行される場合は
+  次の順になる（\ref{sec:kinsoku}節の注意の一般化）．% tex-jp-build/f6f500d or 9e7e21aa
+  \begin{itemize}
+   \item 和文→欧文：禁則ペナルティ→JFM由来空白→ベースライン補正→%
+   欧文TFM由来カーン
+   \item 欧文→和文：ベースライン補正→禁則ペナルティ→JFM由来空白
+   \footnote{[TODO] \TeX~Live~2019の\pTeX~3.8.2では，欧文TFM由来カーンは欧文→和文の
+   切替時には挿入されない．}% tex-jp-build/78c8605 で解決
+  \end{itemize}
+\fi %%%%% TL2019-hack
+ \item もし水平ボックス(\.{hbox})や\.{noindent}で開始された段落がJFM由来グルーで始まった
+   場合は，そのグルーは取り除かれる（カーンは除かれない）．
+   また水平ボックスがJFM由来グルーで終了した場合は，そのグルーは自然長・伸び量・縮み量の
+   すべてが0となる．
+\end{itemize}
+
+\begin{cslist}
+\csitem[\.{kanjiskip}=<skip>]
+  連続する和文文字間に標準で入るグルーを設定する．段落途中でこの値を変えても影響はなく，
+  段落終了時の値が段落全体にわたって用いられる．
+\end{cslist}
+
+\begin{dangerous}
+ 和文文字を表すノードが連続した場合，その間に|\kanjiskip|があるものとして行分割や
+ ボックスの寸法計算が行われる．|\kanjiskip|の大部分はこのように暗黙のうちに挿入
+ されるものであるので，|\lastskip|などで取得することはできないし，
+ |\showlists|や|\showbox|でも表示されない．
+
+  その一方で，ノードの形で明示的に挿入される|\kanjiskip|も存在する．
+  このようになるのは次の場合である：
+ \begin{itemize}
+  \item 水平ボックス(|\hbox|)が和文文字で開始しており，そのボックスの直前が
+    和文文字であった場合，ボックスの直前に|\kanjiskip|が挿入される．
+  \item 水平ボックス(|\hbox|)が和文文字で終了しており，そのボックスの直後が
+    和文文字であった場合，ボックスの直後に|\kanjiskip|が挿入される．
+  \item 連続した和文文字の間にペナルティがあった場合，暗黙の|\kanjiskip|が
+    挿入されないので明示的にノードが作られる．
+ \end{itemize}
+ なお，水平ボックスであっても|\raise|, |\lower|で上下位置をシフトさせた場合は
+ 上記で述べた|\kanjiskip|を前後に挿入処理の対象にはならない．
+\end{dangerous}
+\begin{dangerous}
+  しばしば
+
+  \medskip
+  \begin{minipage}{.6\linewidth}
+  \begin{verbatim}
+  \hbox to 15zw{%
+    \kanjiskip=0pt plus 1fil
+    あ「い」うえ，お}
+  \end{verbatim}
+  \end{minipage}\hfill
+  \begin{minipage}{.3\linewidth}
+  \hbox to 15zw{%
+    \kanjiskip=0pt plus 1fil
+    あ「い」うえ，お}
+  \end{minipage}
+
+  \noindent
+  のように|\kanjiskip|に無限の伸長度を持たせることで均等割付を行おうとする
+  コードを見かけるが，連続する和文文字の間にはメトリック由来の空白と
+  |\kanjiskip|は同時には入らないので，上に書いたコードは不適切である
+ \footnote{実際，開き括弧の前・閉じ括弧（全角コンマを含む）の後には
+ JFMグルーが入っているので半角しかない．
+ }．
+\end{dangerous}
+
+\begin{cslist}
+\csitem[\.{xkanjiskip}=<skip>]
+  和文文字と欧文文字の間に標準で入るグルーを設定する．
+  段落途中でこの値を変えても影響はなく，
+  段落終了時の値が段落全体にわたって用いられる．
+\end{cslist}
+\begin{dangerous}
+  |\kanjiskip|と異なり，|\xkanjiskip|はノードの形で挿入される．
+  この挿入処理は段落の行分割処理の直前や，|\hbox|を閉じるときに行われるので，
+  「どこに|\xkanjiskip|が入っているか」を知るためには現在の段落や|\hbox|を
+  終了させる必要がある．
+\end{dangerous}
+
+\begin{cslist}
+\csitem[\.{xspcode} <8-bit number>=<0--3>]
+  コード番号が<8-bit number>の欧文文字の周囲に|\xkanjiskip|が
+  挿入可能が否かを0--3の値で指定する．それぞれの意味は次の通り：
+  \begin{description}
+    \item[0] 欧文文字の前側，後側ともに|\xkanjiskip|の挿入を禁止する．
+    \item[1] 欧文文字の前側にのみ|\xkanjiskip|の挿入を許可する．後側は禁止．
+    \item[2] 欧文文字の後側にのみ|\xkanjiskip|の挿入を許可する．前側は禁止．
+    \item[3] 欧文文字の前側，後側ともに|\xkanjiskip|の挿入を許可する．
+  \end{description}
+  \pTeX の標準値は，数字0--9と英文字A--Z, a--zに対する値は3（両側許可），
+  その他の文字に対しては0（両側禁止）．
+
+\csitem[\.{inhibitxspcode} <kanji code>=<0--3>]
+  コード番号が<kanji code>の和文文字の周囲に|\xkanjiskip|が
+  挿入可能が否かを0--3の値で指定する．それぞれの意味は次の通り：
+  \begin{description}
+    \item[0] 和文文字の前側，後側ともに|\xkanjiskip|の挿入を禁止する．
+    \item[1] 和文文字の後側にのみ|\xkanjiskip|の挿入を許可する．前側は禁止．
+    \item[2] 和文文字の前側にのみ|\xkanjiskip|の挿入を許可する．後側は禁止．
+    \item[3] 和文文字の前側，後側ともに|\xkanjiskip|の挿入を許可する．
+  \end{description}
+  この|\inhibitxspcode|の設定値の情報は256文字分のテーブルに格納されている，
+  未登録時は3（両側許可）であるとみなされ，またグローバルに3を代入するか，あるいは
+  最も外側のグループで3を代入するとテーブルからの削除が行われる
+  （禁則テーブルからの削除と同様の規則）．
+\end{cslist}
+\begin{dangerous}
+  |\xspcode|と|\inhibitxspcode|では，一見すると
+  設定値1と2の意味が反対のように感じるかもしれない．しかし，実は両者とも
+  \begin{quote}
+    1: 「和文文字→欧文文字」の場合のみ許可．「欧文文字→和文文字」の場合は禁止．\\
+    2: 「欧文文字→和文文字」の場合のみ許可．「和文文字→欧文文字」の場合は禁止．
+  \end{quote}
+  となっている．
+\end{dangerous}
+
+\begin{cslist}
+\csitem[\.{autospacing}, \.{noautospacing}]
+  連続する和文文字間に，標準で|\kanjiskip|で指定されただけのグルーを
+  挿入する(|\autospacing|)か挿入しない(|\noautospacing|)を設定する．
+  段落途中でこの値を変えても影響はなく，段落終了時の値が段落全体にわたって用いられる．
+\csitem[\.{autoxspacing}, \.{noautoxspacing}]
+  和文文字と欧文文字の間に，標準で|\xkanjiskip|で指定されただけのグルーを
+  挿入する(|\autoxspacing|)か挿入しない(|\noautoxspacing|)を設定する．
+  段落途中でこの値を変えても影響はなく，段落終了時の値が段落全体にわたって用いられる．
+\end{cslist}
+
+どちらの設定も標準では有効(|\autospacing|, |\autoxspacing|)である．
+\begin{dangerous}
+  すでに述べたように，|\kanjiskip|の一部と|\xkanjiskip|はノードの形で挿入される．
+  |\noautospacing|や|\noautoxspacing|を指定しても，このノードの形での挿入自体は行われる
+ （ただノードが|\kanjiskip|や|\xkanjiskip|の代わりに長さ0のグルーを表すだけ）．
+
+  これにより，例えば|\noautoxspacing|状況下で「|あa|」と
+  入力しても，間に長さ0のグルーがあるため「あ」と「a」の間で改行可能となることに注意．
+\end{dangerous}
+
+\begin{cslist}
+\csitem[\.{showmode}]
+  |\kanjiskip|の挿入や|\xkanjiskip|の挿入が有効になっているか否かを
+\begin{verbatim}
+> auto spacing mode;
+> no auto xspacing mode.
+\end{verbatim}
+  という形式（上の例では|\autospacing|かつ|\noautoxspacing|の状況）で端末やログに表示する．
+
+\csitem[\.{inhibitglue}]
+  この命令が実行された位置において，メトリック由来の空白の挿入を禁止する．以下の点に注意．
+\begin{itemize}
+ \item メトリック由来の空白が挿入されないだけであり，
+       その代わりに|\kanjiskip|や|\xkanjiskip|が挿入されることは禁止していない．
+ \item 本命令は現在のモードが（非限定，限定問わず）水平モードのときしか効力を発揮しない
+       （数式モードでも効かない）．
+       段落が和文文字「\verb+【+」で始まり，その文字の直前にメトリック由来の空白が入ることを抑止
+       したい場合は，次のように一旦段落を開始してから|\inhibitglue|を実行する必要がある．
+\begin{verbatim}
+\leavevmode\inhibitglue 【
+\end{verbatim}
+\end{itemize}
+  以前の\pTeX では「この命令が実行された位置」が何を指すのか大雑把でわかりにくかったが，
+  \TeX~Live 2019の\pTeX~p3.8.2以降では，明確に\emph{新たなノードが追加されない限り}，と
+  定めた(\cite{build28,forum_2566})．すなわち，
+  \begin{enumerate}
+    \item |\inhibitglue|は，ノード挿入処理を行う命令
+    (|\null|,~|\hskip|, |\kern|, |\vrule|,~\dots)が後ろに来た場合は無効化される．
+    \item 一方，|\relax|やレジスタへの代入などのノードを作らない処理では無効化されない．
+    \item |\inhibitglue|の効果は別レベルのリストには波及しない．
+  \end{enumerate}
+\end{cslist}
+\begin{dangerous}
+  以上の説明の具体例を以下に示す：
+
+  \medskip\noindent
+  \begin{minipage}[t]{.8\linewidth}
+  \begin{verbatim}
+    ）\vrule（\\
+    ）\vrule\inhibitglue（\\
+    ）\inhibitglue\vrule（\\
+    ）\inhibitglue\relax（\\
+    ）\relax\inhibitglue（\\ % 「）」「\relax」間で二分空きが入る
+    あ\setbox0=\hbox{\inhibitglue}（
+  \end{verbatim}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{.1\linewidth}
+    ）\vrule（\\
+    ）\vrule\inhibitglue（\\
+    ）\inhibitglue\vrule（\\
+    ）\inhibitglue\relax（\\
+    ）\relax\inhibitglue（\\
+    あ\setbox0=\hbox{\inhibitglue}（
+  \end{minipage}
+\end{dangerous}
+\begin{dangerous}
+  p\LaTeX~2017-10-28以降では，|\inhibitglue|の短縮として|\<|が次のように
+  定義されている（|\protected|は\eTeX 拡張の機能だが，現在では\LaTeX 自体が
+  \eTeX 拡張を要求している）．
+\begin{verbatim}
+\protected\def\<{\ifvmode\leavevmode\fi\inhibitglue}
+\end{verbatim}
+\end{dangerous}
+\begin{cslist}
+\csitem[\.{disinhibitglue}]
+  |\inhibitglue|の効果を無効化（つまり，メトリック由来の空白の挿入を許可）する．
+  \pTeX~p3.8.2で新しく追加された．
+\end{cslist}
+
+
+
+\section{組方向}
+
+% ptexdoc.tex の「ディレクション」を簡略化
+従来の\TeX では，字送り方向が水平右向き（→），行送り方向が垂直下向き（↓）
+に固定されていた．\pTeX では，\TeX の状態として“組方向（ディレクション）”
+を考え，ディレクションによって字送り方向と行送り方向を変えることにしてある．
+なお，行は水平ボックス(horizontal box)，ページは垂直ボックス(vertical box)である
+という点は，\pTeX でも従来の\TeX と同様である．
+
+\pTeX のサポートする組方向は\emph{横組}，\emph{縦組}，そして
+\emph{DtoU方向}\footnote{下から上(Down to Up)であろう．}の3つである．
+また数式モード中で作られたボックスは数式ディレクションというまた別の状態になる．
+横組での数式ディレクション（横数式ディレクション）と
+DtoU方向での数式ディレクションはそれぞれ非数式の場合と区別はないが，
+縦組での数式ディレクション（\emph{縦数式ディレクション}）では横組を時計回りに
+90度回転させたような状態となる．
+従って，\pTeX では縦数式ディレクションまで含めると合計4種類の組方向がサポートされていると
+いえる（\autoref{tab-dir}）．
+
+\begin{table}[tbp]
+\caption{\pTeX のサポートする組方向}
+\label{tab-dir}
+\centering\small
+\def\mathmode{}
+\def\obox#1{%
+  \setbox0=\hbox{\yoko\hbox{#1%
+  \large\tbaselineshift0pt%
+  \vrule height 25pt width 0.4pt depth 15pt\kern-.2pt%
+  \raise25pt\hbox to 0pt{\hss\composite{*r^@{>>}}\hss}%
+  \raise-15pt\hbox to 0pt{\hss\composite{*l^@{>|}}\hss}\kern.2pt%
+  \vrule height.2pt depth.2pt width 60pt\hbox to 0pt{\hss\composite{*d^@{>}}\hss}\kern-60pt
+  \mathmode\hbox to 60pt{\,銀は、Ag\hss}\mathmode}}%
+  \raise\dimexpr 0.5\dp0-0.5\ht0\box0%
+}
+\begin{tabular}{>{\bfseries}lcccc}
+\toprule
+&横組&縦組&DtoU方向&縦数式ディレクション\\
+\midrule
+命令&|\yoko|&|\tate|&|\dtou|&---\\
+字送り方向&水平右向き（→）&垂直下向き（↓）&垂直上向き（↑）&垂直下向き（↓）\\
+行送り方向&垂直下向き（↓）&水平左向き（←）&水平右向き（→）&水平左向き（←）\\
+\parbox[t]{6zw}{使用する和文フォント}&横組用(|\jfont|)&縦組用(|\tfont|)&
+\multicolumn{2}{c}{%
+  横組用(\texttt{\string\jfont})の$90^\circ$回転}\\[\smallskipamount]
+  組版例 &\obox{\yoko}&\obox{\tate}&\obox{\dtou}&\def\mathmode{$}\obox{\tate}\\
+\noalign{\medskip}
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+以下が，組方向の変更や現在の組方向判定に関わるプリミティブの一覧である．
+
+% アスキー公式サイトのプリミティブ一覧から適当にまとめ
+\begin{cslist}
+\csitem[\.{tate}, \.{yoko}, \.{dtou}]
+  組方向をそれぞれ縦組，横組，DtoU方向に変更する．
+  カレントの和文フォントは縦組では縦組用フォント，
+  横組およびDtoU方向では横組用フォントになる．
+
+  組方向の変更は，原則として作成中のリストやボックスに何のノードも作られていない
+  状態でのみ許される．より詳細には，
+\begin{itemize}
+  \item 制限水平モード(|\hbox|)，内部垂直モード(|\vbox|)では，
+  上記に述べた原則通り．
+\begin{verbatim}
+  \hbox{\hsize=20em\tate ……}
+\end{verbatim}
+  のように，ノードが作られない代入文などは組方向変更前に実行しても良い．
+
+  違反すると次のようなエラーが出る．
+\begin{verbatim}
+! Use `\tate' at top of list.
+\end{verbatim}
+
+  \item 非制限水平モード（行分割される段落）や，
+  数式モード（文中数式，ディスプレイ数式問わず）
+  での実行は禁止．
+
+  \item 外部垂直モードの場合は，次の2点が同時に満たされる場合のみ実行可能である
+    \footnote{%
+    \TeX は，外部垂直モードでボックスその他のノードを追加する際に，まず
+    そのノードをrecent contributionsというリストの末尾に追加し，
+    その後recent contributionsの中身が徐々にcurrent pageという別のリストに移される
+    という処理を行っている．
+
+    そのため，単純にcurrent pageまたはrecent contributionsという1つのリストを
+    調べるだけでは「ページが空」か正しく判断できない．
+    }．
+  \begin{itemize}
+    \item current pageの中身にはボックス，罫線(|\hrule|)，
+      insertion~(|\insert|)はない．
+      言い換えれば，current pageの中身はあっても
+      マーク(|\mark|)かwhatsitのみ
+      \footnote{current pageの中身にグルー，カーン，ペナルティがあるのは，
+      それらの前にボックス，罫線，insertionが存在する場合にのみである．}．
+    \item recent contributionsの中身にもボックス，罫線，
+      insertionはない．
+  \end{itemize}
+  違反すると次のようなエラーが出る．
+\begin{verbatim}
+! Use `\tate' at top of the page.
+\end{verbatim}
+
+\end{itemize}
+
+  また，ボックスの中身を|\unhbox|, |\unvbox|等で取り出す
+  場合は，同じ組方向のボックス内でなければならない
+  \footnote{数式ディレクションか否かは異なっていても良い．}．
+  違反した場合，
+\begin{verbatim}
+! Incompatible direction list can't be unboxed.
+\end{verbatim}
+  なるエラーが出る．
+\end{cslist}
+\begin{dangerous}
+ |\discretionary|命令では
+|\discretionary|\texttt{\{<pre>\}\{<post>\}\{<nobreak>\}}と3つの引数を指
+ 定するが，この3引数の中で組方向を変更することはできない（常に周囲の組方向が使われる）．
+\end{dangerous}
+
+\begin{cslist}
+\csitem[\.{iftdir}, \.{ifydir}, \.{ifddir}, \.{ifmdir}]
+  現在の組方向を判定する．|\iftdir|, |\ifydir|, |\ifddir|はそれぞれ
+  縦組，横組，DtoU方向であるかどうかを判定する（数式ディレクションであるかは問わない）．
+  一方，|\ifmdir|は数式ディレクションであるかどうかを判定する．
+
+  従って，\autoref{tab-dir}に示した4つの状況のどれに属するかは以下のようにして判定できることになる．
+  \begin{verbatim}
+\iftdir
+  \ifmdir
+    （縦数式ディレクション）
+  \else
+    （通常の縦組）
+  \fi
+\else\ifydir
+  （横組）
+\else
+  （DtoU方向）
+\fi
+  \end{verbatim}
+
+\csitem[\.{iftbox} <number>, \.{ifybox} <number>, \.{ifdbox} <number>, \.{ifmbox} <number>]
+  <number>番のボックスの組方向を判定する．<number>は有効なboxレジスタでなければならない．
+
+  バージョンp3.7までの\pTeX では，ボックスが一旦ノードとして組まれてしまうと，
+  通常の縦組で組まれているのか，それとも縦数式ディレクションで組まれているのか
+  という情報が失われていた．しかし，それでは後述の「ベースライン補正の戻し量」を
+  誤り，欧文の垂直位置が揃わないという問題が生じた(\cite{tatemath})．
+  この問題を解決する副産物として，バージョンp3.7.1で|\ifmbox|プリミティブが実装された．
+\end{cslist}
+
+\section{ベースライン補正}
+\label{sec:baselineshift}
+
+和文文字のベースラインと欧文文字のベースラインが一致した状態で組むと，
+行がずれて見えてしまう場合がある．特に縦組の状況が典型的である
+（\autoref{tab-dir}の「組版例」参照）．
+
+この状況を解決するため，\pTeX では欧文文字のベースラインを行送り方向に移動させる
+ことができる：
+
+\begin{cslist}
+\csitem[\.{tbaselineshift}=<dimen>, \.{ybaselineshift}=<dimen>]
+ 指定した箇所以降の欧文文字のベースラインシフト量を格納する．両者の使い分けは
+ \begin{description}
+  \item[\texttt{\string\tbaselineshift}]
+         縦組用和文フォントが使われるとき（つまり組方向が縦組のとき），
+  \item[\texttt{\string\ybaselineshift}]
+         横組用和文フォントが使われるとき（横組，DtoU方向，縦数式ディレクション）
+ \end{description}
+ となっている．
+ どちらの命令においても，
+ 正の値を指定すると行送り方向（横組ならば下，縦組ならば左）にずらすことになる．
+\end{cslist}
+
+\begin{dangerous}
+ |disp_node|
+\end{dangerous}
+
+欧文文字だけでなく，文中数式(|$...$|)もベースライン補正の対象である．
+文中数式は全体に|\tbaselineshift|（もしくは|\ybaselineshift|）だけの
+ベースライン補正がかかるが，それだけでは
+\begin{quote}
+ 数式中のボックスの欧文は（文中数式全体にかかる分も合わせて）
+ 二重にベースライン補正がされる
+\end{quote}
+という問題が起きてしまう．この問題を解決するための命令が以下の3つの命令であり，
+\pTeX~p3.7\footnote{\TeX~Live 2016，厳密には2016-03-05のコミット(r39938)．}で追加された．
+\begin{cslist}
+ \csitem[\.{textbaselineshiftfactor}=<number>,
+  \.{scriptbaselineshiftfactor}=<number>]\vspace{-\itemsep}
+ \csitem[\.{scriptscriptbaselineshiftfactor}=<number>]
+  文中数式全体にかかるベースライン補正量に対し，
+  文中数式内の明示的なボックスを逆方向に移動させる割合を指定する．
+  1000が1倍（ベースライン補正をちょうど打ち消す）に相当する．
+
+  プリミティブが3つあるのは，数式のスタイルが
+  |\textstyle|以上（|\displaystyle|含む），|\scriptstyle|,
+  |\scriptscriptstyle|のときにそれぞれ
+  適用される値を変えられるようにするためである．
+  既定値はそれぞれ1000（1倍），700（0.7倍），500（0.5倍）である．
+\end{cslist}
+
+\TeX~Live 2015以前の動作に戻すには，上記の3プリミティブに全て0を指定すれば良い．
+
+\begin{dangerous}
+|\scriptbaselineshiftfactor|を設定するときには，|\scriptstyle|下で追加するボックス内の
+ベースライン補正量をどうするかを常に気にしないといけない．
+例えば次のコードを考える：
+\begin{verbatim}
+ \ybaselineshift=10pt\scriptbaselineshiftfactor=700
+ 漢字pqr$a\hbox{xあ}^{%
+  b\hbox{\scriptsize yう}
+   \hbox{\scriptsize\ybaselineshift=7pt zえ}
+ }$か%$
+\end{verbatim}
+組版結果は以下のようになる：
+\begin{quote}
+ \ybaselineshift=10pt\scriptbaselineshiftfactor=700
+ 漢字pqr$a\hbox{xあ}^{%
+  b\hbox{\scriptsize yう}
+   \hbox{\scriptsize\ybaselineshift=7pt zえ}
+ }$か%$
+\end{quote}
+
+この例で，ボックス|\hbox{\scriptsize yう}|内ではベースライン補正量は10\,ptのままである
+\footnote{|\scriptsize|などのフォントサイズ変更命令では，標準では|\ybaselineshift|の値は
+変更しない（|\tbaselineshift|の値はその都度変更する）．}．
+それが添字内に配置された場合，このボックスは
+\[
+ (\text{文中数式全体のシフト量})
+ \times\frac{\text{\texttt{\string\scriptbaselineshiftfactor}}}{1000}
+ = 7\,\mathrm{pt}
+\]
+だけ上に移動するので，結果として「y」は添字内に直書きした「$b$」と上下位置が
+$10\,\mathrm{pt}-7\,\mathrm{pt}=3\,\mathrm{pt}$だけ上に配置されてしまっている．
+
+なお，|\scriptscriptbaselineshiftfactor|についても全く同様の注意が当てはまる．
+\end{dangerous}
+
+\section{和文フォント}
+\label{sec:ptexfont}
+
+\TeX は組版を行うとき，文字の情報をTFMファイルから参照する．
+\pTeX も同様で，欧文文字についてはTFMファイルを参照するが，
+和文文字についてはJFMファイルを参照する．
+ファイル名はどちらも\code{フォント名.tfm}である．
+
+TFMファイルには，大別すると
+\begin{itemize}
+ \item それぞれの文字に関する事柄
+   （各文字の幅，高さ，深さなど）
+ \item そのTFMファイルに収められている文字に共通する事柄
+   （文字の傾き，デザインサイズ，そのフォントの基準値(em, ex)など）
+ \item 特定の文字の組み合わせのときの事柄
+   （合字やカーニングなど）
+\end{itemize}
+の3種類の情報が設定されている．
+JFMファイルもTFMファイルと同様の情報を持つが，
+\begin{itemize}
+ \item 日本語の文字は数が多いので，
+   文字を単位とするのではなく，共通する性質を持つ文字を
+   一つにまとめてタイプ別の設定を行う
+ \item 横組み用と縦組み用の区別がある
+\end{itemize}
+という点が異なる．JFMフォーマットの詳細は，
+この文書と同じディレクトリにある\cite{jfm}を参照されたい．
+
+% [TODO] 一つの文書で用いることができるフォント数の上限は？
+
+\begin{cslist}
+\csitem[\.{jfont}, \.{tfont}]
+  欧文フォントを定義したり，現在の欧文フォントを取得したりする|\font|の和文版である．
+  一応|\jfont|が「和文の横組用フォント」の，|\tfont|が「和文の縦組用フォント」のために
+  用いる命令である．
+\begin{itemize}
+ \item フォントを定義する際は，欧文フォント・和文の横組用フォント・
+       和文の縦組用フォントのいずれも
+       |\font|, |\jfont|, |\tfont|のどれを用いても定義できる
+       （要求された実際のTFM/JFMに応じて，自動的にアサインされる）．
+ \item |\the|等で「現在のフォント」を取得する際には，
+       |\jfont|で「和文の横組用フォント」を，
+       |\tfont|で「和文の縦組用フォント」を返す．
+ \item |\nullfont|は全ての文字が未定義な「空フォント」を指すが，
+  これは欧文フォントであり，和文版|\nullfont|という概念は存在しない．
+  これは，\pTeX では「全ての和文フォントには，和文文字コードとして有効な
+  全ての文字が存在する」という扱いになっているためである．
+\end{itemize}
+\end{cslist}
+
+\begin{dangerous}
+  細かい話をすれば，\pTeX のフォーマット作成時に和文フォントを
+  何も選択しなければ，|\fontname\jfont|が|\nullfont|となり，
+  また和文文字を入力してもノードは作られないので，
+  「和文版|\nullfont|が選択されている」と言えなくもない．
+  ただ，いったん実際の和文フォントを選択した後に
+  「和文版|\nullfont|を選択する」という制御綴は作れないと思われる．
+  % つまり，tikzpicture 環境のように|\selectfont|を|\nullfont|に
+  % 再定義した状態では，和文文字だけ消えずに残る．
+  % https://tex.stackexchange.com/questions/18602/
+  % https://twitter.com/doraTeX/status/1098584763277824000
+  % https://twitter.com/zr_tex8r/status/1098594165573722112
+\end{dangerous}
+
+\begin{cslist}
+\csitem[\.{ifjfont} <\,font>, \.{iftfont} <\,font>]
+  |\ifjfont|は<font>が和文の横組用フォントかどうか，
+  |\iftfont|は和文の縦組用フォントかどうかを判定する．
+  2020-02-05のコミット(r53681)で追加され，
+  \TeX~Live 2020の\pTeX~(p3.8.3)で利用可能である．
+
+  これにより，例えば\.{HOGE}が和文フォントか否かは
+\begin{verbatim}
+\ifjfont\HOGE
+  （和文の横組用フォント）
+\else\iftfont\HOGE
+  （和文の縦組用フォント）
+\else
+  （欧文フォント）
+\fi
+\end{verbatim}
+  として判定できる．
+\end{cslist}
+
+\begin{dangerous}
+  上述のとおり，欧文フォント・和文の横組用フォント・
+  和文の縦組用フォントのいずれも|\font|一つで定義可能だが，
+  定義したフォントが実際にどの種類だったかを知る手段は
+  バージョンp3.8.2までの\pTeX には存在しなかった．
+  % https://github.com/texjporg/tex-jp-build/pull/97
+\end{dangerous}
+
+\begin{dangerous}
+  ちなみに，\epTeX, \eupTeX には\.{iffontchar}プリミティブが存在する．
+  しかし，<\,font>が和文フォントか否かを判定するために
+  \texttt{\.{iffontchar}~<\,font>~256}などと第二引数に256以上の値を指定することはできない．
+  なぜなら，欧文フォントに対し第二引数に0--255以外の値を指定すると
+  「\verb+! Bad character code (...).+」エラーが発生するからである．
+\end{dangerous}
+
+
+\begin{cslist}
+\csitem[\.{jfam}=<number>]
+  現在の和文数式フォントファミリの番号を格納する
+  \footnote{\pTeX,~\upTeX では0--15の範囲が許される．
+  \epTeX, \eupTeX では欧文の|\fam|と共に0--255に範囲が拡張されている．}．
+  現在の欧文数式ファミリの番号を格納する|\fam|と原理的に同じ番号を指定することは
+  原理的には可能だが，数式ファミリは和文・欧文共用であるので実際には
+  異なる値を指定することになる．
+
+  欧文フォントが設定されている数式ファミリの番号を|\jfam|に指定し，
+  数式中で和文文字を記述すると
+\begin{verbatim}
+! Not two-byte family.
+\end{verbatim}
+  というエラーが発生する．逆に，和文フォントが設定されているファミリの番号を
+  |\fam|に指定し，数式中に欧文文字を記述すると
+\begin{verbatim}
+! Not one-byte family.
+\end{verbatim}
+  というエラーが発生する．
+\end{cslist}
+
+\section{文字コード変換，漢数字}
+
+\pTeX の内部コードは環境によって異なる．そこで，異なる文字コード間で同じ文字を
+表現するため，文字コードから内部コードへの変換プリミティブが用意されている．
+また，漢数字を出力するプリミティブも用意されている\footnote{%
+実は|\kansuji|, |\kansujichar|プリミティブはp3.1.1でいったん削除され，
+p3.1.2で復活したという経緯がある．}．
+
+% jtexdoc.tex の「追加されたプリミティブ」を簡略化
+\begin{cslist}
+\csitem[\.{kuten} <16-bit number>]
+  区点コードから内部コードへの変換を行う．
+  16進4桁の上2桁が区，下2桁が点であると解釈する．
+  たとえば，|\char\kuten"253C|は，「\char\kuten"253C」（37区60点）である．
+
+\csitem[\.{jis} <16-bit number>, \.{euc} <16-bit number>, \.{sjis} <16-bit number>]
+  それぞれJISコード，EUCコード，Shift-JISコードから内部コードへの変換を行う．
+  たとえば，|\char\jis"346E|，|\char\euc"B0A5|，|\char\sjis"8A79|は，
+  それぞれ「\char\jis"346E」，「\char\euc"B0A5」，「\char\sjis"8A79」である．
+\end{cslist}
+
+\begin{dangerous}
+ \ref{sec:ptexchar}節でも述べたように，
+ \emph{\pTeX はJIS~X~0213には対応せず，JIS~X~0208の範囲のみ扱える}．
+
+ [TODO] \.{kuten}, \.{jis}, \.{sjis}, \.{euc}が$-1$とならない範囲はどこ？
+\end{dangerous}
+
+\begin{cslist}
+\csitem[\.{kansuji} <number>, \.{kansujichar} <0--9>=<kanji code>]
+  |\kansuji|は，続く数値<number>を漢数字の文字列で出力する．
+  出力される文字は|\kansujichar|で指定できる（デフォルトは「〇一二三四五六七八九」）．
+  たとえば
+\begin{verbatim}
+\kansuji 1978年
+\end{verbatim}
+  は「\kansuji 1978年」と出力され，
+\begin{verbatim}
+\kansujichar1=`壱
+\kansujichar2=\euc"C6F5\relax
+\kansujichar3=\jis"3B32\relax
+\kansuji 1234
+\end{verbatim}
+  は「{\kansujichar1=`壱 \kansujichar2=\euc"C6F5\relax
+       \kansujichar3=\jis"3B32\relax \kansuji 1234}」と出力される．
+  なお，|\kansuji|に続く数値<number>が負の場合は，空文字列になる
+  （ちょうど|\romannumeral|にゼロまたは負の値を与えた場合と同様）．
+
+  |\kansujichar|で指定できるのは「和文文字の内部コードとして有効な値」であり，
+  例えば\pTeX で|\kansujichar1=`A|のように無効な値（\pTeX において|`A|は
+  欧文文字コードであり，和文文字コードではない）を指定すると
+\begin{verbatim}
+! Invalid KANSUJI char ("41).
+\end{verbatim}
+  というエラーが発生する\footnote{\upTeX では0--127も含め，
+  Unicodeの文字コードすべてが和文文字コードとして有効であり
+  （|\kchar|で任意の文字コードを和文文字ノードに変換して出力できる），
+  基本的にこのエラーは発生しない．}．
+  また，|\kansujichar|の引数に許される値は0--9に限られ，
+  例えば|\kansujichar10=`拾|とすると
+\begin{verbatim}
+! Invalid KANSUJI number (10).
+\end{verbatim}
+  というエラーが発生する．
+  % エラーからのリカバリで，他の TeX82 プリミティブが
+  %   I changed this one to zero.
+  % とするのに対し，\kansujichar では
+  %   I'm skipping this control sequences.
+  % とスキップされ，値の代入は行われない．
+\end{cslist}
+
+\begin{dangerous}
+  |\kansujichar|は整数値パラメータであるが，p3.8.2までは
+  「代入できるが取得はできない」という挙動であった
+  （例えば|\count255=\kansujichar1|はエラー）．
+  \pTeX~p3.8.3で取得もできるように修正された(\cite{build93})が，
+  以前の\pTeX も考慮すると，値の取得は以下のようにするのが安全である：
+  |\count255=\expandafter`\kansuji1|
+  % \count123=\kansujichar45 のように \kansujichar の引数が不正な場合は，
+  % ! Invalid KANSUJI number (45).
+  % のエラーを出し，リカバリは \kansujichar を無視した \count123=45 と同義になる．
+  % これは \kansujichar の代入時の挙動に合わせたものである．
+\end{dangerous}
+
+% luatexja.dtx より pTeX 用に移植
+\begin{dangerous}
+  以上に挙げたプリミティブ(|\kuten|, |\jis|, |\euc|, |\sjis|, |\kansuji|)は
+  展開可能(expandable)であり，
+  内部整数を引数にとるが，実行結果は\emph{文字列}であることに注意
+  （\TeX82の|\number|, |\romannumeral|と同様）．
+
+\medskip\noindent
+\begin{minipage}{.6\linewidth}
+\begin{verbatim}
+    \newcount\hoge
+    \hoge="2423
+    \the\hoge, \kansuji\hoge\\
+    \jis\hoge, \char\jis\hoge\\
+    \kansuji1701
+\end{verbatim}
+\end{minipage}
+\begin{minipage}{.3\linewidth}
+    \newcount\hoge
+    \hoge="2423
+    \the\hoge, \kansuji\hoge\\
+    \jis\hoge, \char\jis\hoge\\
+    \kansuji1701
+\end{minipage}\medskip
+
+  以上の挙動から，|\kansuji|を
+  「整数値をその符号値をもつ和文文字トークンに変換する」という目的に
+  用いることもでき\footnote{ただし，\upTeX で
+  0--127の文字コードを|\kansujichar|で指定した場合のみ，
+  |\kansuji|で生成されるトークンは欧文文字トークンになる\cite{build36}．}，
+  これは時に“|\kansuji|トリック”と呼ばれる．例えば
+\begin{verbatim}
+  \kansujichar1=\jis"2422 \edef\X{\kansuji1}
+\end{verbatim}
+  としておけば，|\expandafter\meaning\X|は「\texttt{%
+  \kansujichar1=\jis"2422 \edef\X{\kansuji1}%
+  \expandafter\meaning\X}」であるし，
+\begin{verbatim}
+  \begingroup \kansujichar5=\jis"467C\relax \kansujichar6=\jis"4B5C\relax
+  \expandafter\gdef\csname\kansuji56\endcsname{test}
+  \endgroup
+\end{verbatim}
+  とすれば，|\日本|という和文の制御綴をASCII文字だけで定義できる．
+\end{dangerous}
+
+\section{長さ単位}
+
+\pTeX では\TeX82に加えて以下の単位が使用可能である：
+\begin{cslist}
+ \csitem[\texttt{zw}\index{zw=\texttt{zw}}]
+  現在の和文フォント（通常の縦組のときは縦組用フォント，それ以外のときは横組用フォント）
+  における「全角幅」．例えばこの文書の本文では
+  $1\,\mathrm{zw} = \makeatletter\strip@pt\dimexpr 1zw\,\mathrm{pt}$である．
+
+ \csitem[\texttt{zh}\index{zh=\texttt{zh}}]
+  現在の和文フォント（通常の縦組のときは縦組用フォント，それ以外のときは横組用フォント）
+  における「全角高さ」．例えばこの文書の本文では
+  $1\,\mathrm{zh} = \makeatletter\strip@pt\dimexpr 1zh\,\mathrm{pt}$である．
+\end{cslist}
+
+\begin{dangerous}
+  より正確に言えば，\texttt{zw}, \texttt{zh}はそれぞれ
+  標準の文字クラス（文字クラス0）に属する和文文字の幅，高さと深さの和を表す．
+
+  {\makeatletter\jfont\test=min10\test\xdef\mzw{\strip@pt\dimexpr1zw}\xdef\mzh{\strip@pt\dimexpr1zh}}%
+  ただ，\pTeX の標準和文フォントメトリックの一つである\texttt{min10.tfm}では，
+  $1\,\mathrm{zw}=\mzw\,\mathrm{pt}$, $1\,\mathrm{zh}=\mzh\,\mathrm{pt}$と
+  なっており，両者の値は一致していない．
+  JISフォントメトリックでも同様の寸法となっている．
+  一方，実際の表示に使われる和文フォントの多くは，$1\,\mathrm{zw}=1\,\mathrm{zh}$，
+  すなわち正方形のボディに収まるようにデザインされているから，これと合致しない．
+  したがって，単位\texttt{zh}はあまり意味のある値とはいえない．
+
+  なお，japanese-otf（OTFパッケージ）が用いているフォントメトリックは
+  $1\,\mathrm{zw}=1\,\mathrm{zh}$である．
+\end{dangerous}
+
+\begin{cslist}
+\csitem[\texttt{Q}\index{Q=\texttt{Q}}, \texttt{H}\index{H=\texttt{H}}]
+  両者とも$0.25\,\mathrm{mm}$~($7227/10160\,\mathrm{sp}$)を意味する．
+  写植機における文字の大きさの単位であるQ数（級数）と，字送り量や行送り量の単位である歯数に由来する．
+\end{cslist}
+
+\section{バージョン番号}
+
+\begin{cslist}
+\csitem[\.{ptexversion}, \.{ptexminorversion}, \.{ptexrevision}]
+  \pTeX のバージョン番号はp$x{.}y{.}z$の形式となっており，それらを取得するための命令である．
+  |\ptexversion|, |\ptexminorversion|は
+  それぞれ$x$,~$y$の値を内部整数で返し，|\ptexrevision|はその後ろの「${.}z$」を文字列で返す．
+  従って，全部合わせた\pTeX のバージョン番号は
+\begin{verbatim}
+\number\ptexversion.\number\ptexminorversion\ptexrevision
+\end{verbatim}
+  で取得できる．\pTeX~p3.8.0で導入された．
+\end{cslist}
+
+\newpage
+
+%%%%%
+\part{オリジナルの\TeX 互換プリミティブの動作}
+
+オリジナルの\TeX に存在したプリミティブの2バイト以上のコードへの
+対応状況を説明する．
+% 海外の LaTeX パッケージ作者にとってはこちらの情報が大事なはず．
+
+\section{和文に未対応のプリミティブ}
+以下のプリミティブでは，文字コードに指定可能な値は0--255の範囲に限られている：
+\begin{quote}
+ |\catcode|,
+ |\sfcode|,
+ |\mathcode|,
+ |\delcode|,
+ |\lccode|,
+ |\uccode|
+\end{quote}
+違反すると
+\begin{verbatim}
+! Bad character code (42146).
+\end{verbatim}
+というエラーが発生する．
+\begin{dangerous}
+以前の\pTeX では，
+これらの命令の文字コード部分に和文文字の内部コードを指定することもでき，
+その場合は「引数の上位バイトの値に対する操作」として扱われていた：
+\begin{verbatim}
+\catcode"E0=1 \message{\the\catcode"E0E1}% ==> 1
+\end{verbatim}
+しかしこの挙動は2016-09-06のコミット(r41998)により禁止され，
+\TeX~Live 2017の\pTeX~(p3.7.1)で反映されている．
+\end{dangerous}
+
+また，下記のプリミティブは名称が|\...char|であるが，値は0--255の範囲のみ
+有効であり，256以上あるいは負の値を指定すると無効である
+（オリジナルの\TeX 同様，エラーにはならない）．
+\begin{quote}
+ |\endlinechar|,
+ |\newlinechar|,
+ |\escapechar|,\\
+ |\defaulthyphenchar|,
+ |\defaultskewchar|
+\end{quote}
+
+% 他にもあるか？
+
+\section{和文に対応したプリミティブ}
+\begin{cslist}
+ \csitem[\.{char} <character code>,
+   \.{chardef} <control sequence>=<character code>]
+  引数として0--255に加えて和文文字の内部コードも指定できる．
+  和文文字の内部コードを指定した場合は和文文字を出力する．
+
+ \csitem[\.{font}, \.{fontname}, \.{fontdimen}]
+  |\font|については\ref{sec:ptexfont}節を参照．
+  |\fontname|は和文フォントからもフォント名を取得でき，
+  |\fontdimen|は和文フォントのパラメータ表（JFMで定義される\node{param}テーブル）からも
+  値を取得できる．
+  % [TODO] pTeX が内部処理で param テーブルを使うことはある？
+  % 少なくとも，zw と zh は使われていないんですよね？
+
+ \csitem[\.{accent} <character code>=<character>]
+  |\accent|プリミティブにおいても，アクセントの部分に和文文字の内部コードを指定できるほか，
+  アクセントのつく親文字を和文文字にすることもできる．
+ \begin{itemize}
+  \item 和文文字をアクセントにした場合，その上下位置が期待されない結果になる
+    可能性が大きい．
+    これは，アクセントの上下位置補正で用いる|\fontdimen5|の値が和文フォントでは
+    特に意味を持たない\footnote{欧文フォントではx-heightである．}ためである．
+  \item 和文文字にアクセントをつけた場合，
+    \begin{itemize}
+     \item 前側にはJFMグルーや|\kanjiskip|は挿入されない
+           （ただし|\xkanjiskip|は挿入されうる）．
+     \item 後側にはJFMグルーは挿入されない
+           （ただし|\kanjiskip|, |\xkanjiskip|は挿入されうる）．
+    \end{itemize}
+ \end{itemize}
+
+ \csitem[\.{if} <token$_1$> <token$_2$>, \.{ifcat} <token$_1$> <token$_2$>]
+  文字トークンを指定する場合，その文字コードは\TeX82では0--255のみが許されるが，
+  \pTeX では和文文字トークンも指定することができる．
+
+  |\if|による判定では，欧文文字トークン・和文文字トークンともに
+  その文字コードが比較される．
+  |\ifcat|による判定では，欧文文字トークンについては|\catcode|，
+  和文文字トークンについては|\kcatcode|が比較される．
+  % [TODO] TeX Live 2018 の upTeX では，
+  % ^^ab 形式での文字コード指定は欧文扱いされるので，
+  % \ifcat 判定では \catcode が読み出される．
+  % 例えば \showthe\kcatcode`^^b0 では 18 が返るが，
+  % 和文扱いはされないことに注意．
+  % https://github.com/texjporg/tex-jp-build/issues/68
+\end{cslist}
+
+\begin{dangerous}
+\TeX bookには，オリジナルの\TeX における|\if|と|\ifcat|の説明として
+\begin{quote}
+If either token is a control sequence,
+\TeX\ considers it to have character code 256 and category code 16,
+unless the current equivalent of that control sequence
+has been |\let| equal to a non-active character token.
+\end{quote}
+とある．すなわち
+\begin{quote}
+|\if|や|\ifcat|の判定では（実装の便宜上）
+コントロールシークエンスは文字コード256，
+カテゴリーコード16を持つとみなされる
+\end{quote}
+というのである．ところが，tex.webの実装はこの通りでなく，
+コントロールシークエンスをカテゴリーコード0とみなしている．
+そのため，\pTeX 系列において和文文字トークンの|\kcatcode|の値が
+16である場合も，|\ifcat|判定でコントロールシークエンスと混同されることはない．
+
+一方，文字コードについては，確かにtex.webは|\if|判定において
+コントロールシークエンスを256とみなしている．しかし，\upTeX では
+文字コード256の和文文字と衝突するので，2019-05-06のコミット(r51021)で
+「原理的に文字コードが取り得ない値」に変更した(\cite{build68})．
+\end{dangerous}
+
+\begin{thebibliography}{99}
+ \bibitem{topic} Victor Eijkhout, \textit{\TeX\ by Topic, A \TeX nician's Reference},
+  Addison-Wesley, 1992.\\
+  \url{https://www.eijkhout.net/texbytopic/texbytopic.html}
+ \bibitem{jfm} ASCII Corporation \& Japanese \TeX\ Development Community, 「JFMファイルフォーマット」，
+  \texttt{./jfm.pdf}
+ \bibitem{tatemath} aminophen, 「縦数式ディレクションとベースライン補正」，
+  2016/09/05,\\
+  \url{https://github.com/texjporg/platex/issues/22}
+ \bibitem{build26} h-kitagawa, 「禁則テーブル，|\inhibitxspcode| 情報テーブルからのエントリ削除」，
+  2017/09/10,\\
+  \url{https://github.com/texjporg/tex-jp-build/pull/26}
+ \bibitem{build57} Man-Ting-Fang, \textit{[upTeX] Unexpected behaviour in kinsoku processing},
+  2018/04/13,\\
+  \url{https://github.com/texjporg/tex-jp-build/issues/57}
+ \bibitem{build11} aminophen, 「pTeX の後禁則ペナルティ」，
+  2017/04/05,\\
+  \url{https://github.com/texjporg/tex-jp-build/issues/11}
+ \bibitem{build28} h-kitagawa, 「[ptex] |\inhibitglue|の効力」，
+  2017/09/20,\\
+  \url{https://github.com/texjporg/tex-jp-build/issues/28}
+ \bibitem{build36} aminophen, 「欧文文字の|\kansujichar|，|\inhibitxspcode|」，
+  2017/11/26,\\
+  \url{https://github.com/texjporg/tex-jp-build/issues/36}
+ \bibitem{build93} aminophen, 「[ptex] reading |\kansujichar|」，
+  2019/10/14,\\
+  \url{https://github.com/texjporg/tex-jp-build/issues/93}
+ \bibitem{build37} aminophen, 「和文のコントロールシンボル」，
+  2017/11/29,\\
+  \url{https://github.com/texjporg/tex-jp-build/issues/37}
+ \bibitem{build55} aminophen, 「[(u)pTeX] 内部コードの -kanji-internal オプション」，
+  2018/04/03,\\
+  \url{https://github.com/texjporg/tex-jp-build/issues/55}
+ \bibitem{forum_2566} aminophen, 「\TeX~Live 2019 での |\inhibitglue| の挙動変更【予定】」，
+  2019/02/06,\\
+  \url{https://oku.edu.mie-u.ac.jp/tex/mod/forum/discuss.php?d=2566}
+ \bibitem{build68} aminophen, 「upTeX の |\if| と |\ifcat|」，
+  2019/01/17,\\
+  \url{https://github.com/texjporg/tex-jp-build/issues/68}
+\end{thebibliography}
+
+\newpage
+\printindex
+
+
+\end{document}

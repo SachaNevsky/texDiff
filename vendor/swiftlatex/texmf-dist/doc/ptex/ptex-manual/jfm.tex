@@ -1,0 +1,504 @@
+\documentclass[a4paper,11pt,nomag]{jsarticle}
+\usepackage[textwidth=42zw,lines=40,truedimen,centering]{geometry}
+\usepackage{amsmath}
+\usepackage[defaultsups]{newpxtext}
+\usepackage[zerostyle=c,straightquotes]{newtxtt}
+\usepackage{newpxmath}
+
+% common
+\usepackage{ptex-manual}
+
+\usepackage{shortvrb}
+\MakeShortVerb*{|}
+
+\def\size#1{\mathit{#1}}
+\def\code#1{\texttt{#1}}
+
+% logos
+\def\pTeX{p\kern-.10em\TeX}\def\upTeX{u\pTeX}
+\def\OMEGA{$\Omega$}
+
+\title{\emph{JFMファイルフォーマット}}
+\author{ASCII Corporation \& Japanese \TeX\ Development Community}
+\begin{document}
+\maketitle
+
+\emph{JFM (Japanese Font Metric)}は，
+\pTeX で和文フォントを扱うためのフォントメトリックであり，
+オリジナルの\TeX のTFM (\TeX\ Font Metric)に相当する．
+\pTeX と同じく株式会社アスキーによって開発され，
+この文書も\pTeX に付属していたものであるが，ここでは2018年に
+日本語\TeX 開発コミュニティによって拡張されたJFMフォーマットに
+基づいて説明する．
+
+なお，\pTeX の内部コードをUnicode化した\upTeX でも，
+JFMフォーマットの仕様は全く同じであり，ただ
+\node{char\_type}テーブルに文字コードを格納するときに
+JISコードを用いる（\pTeX の場合）か，
+UCS-4の下位3バイトを用いる（\upTeX の場合）かだけが異なる．
+
+\tableofcontents
+\clearpage
+
+\section{JFMファイルの構成}\label{jfm-format}
+
+JFMファイルのフォーマットは，
+基本的にはTFMファイルのフォーマットに準拠しており，
+TFMを拡張した形になっている．
+ここでは，主にその拡張部分について説明を行い，
+その他の部分に関しては，
+\TeX\ the program等のTFMの説明を参照してもらいたい．
+
+JFMファイル全体の構成は，
+表\ref{構成}（\pageref{構成}ページ）に示すとおりである．
+ここでTFMと異なるのは次の点である．
+\begin{enumerate}
+\item \node{char\_type}のテーブルが付け加えられたこと．
+\item \node{exten}の換わりに\node{glue}のテーブルが設けられたこと．
+\item 2に関連して，\node{lig\_kern}から\node{glue\_kern}テーブルへ変更されたこと．
+\item これらに伴い，先頭のファイル内の各部分を規定するパラメータ表が変更されている．
+  また，オリジナルのTFMとの区別のために$\size{id}$を付加しており，
+  先頭の半ワード（2バイト）が横組用は11，縦組用は9である
+  \footnote{欧文TFMの半ワードは$\size{lf}$すなわちファイルサイズであり，
+  11や9になることはない．}．
+\end{enumerate}
+最初の7ワードは半ワード（＝2バイト）ずつに区切られ，
+JFMファイルを構成する14個の要素のサイズが収められている
+\footnote{欧文TFMでは12個だが，JFMでは$\size{id}$と$\size{nt}$が増え，
+$\size{ne}$が$\size{ng}$に置き換わったため14個である．}．
+これらの値は，すべて$2^{15}$よりも小さい非負の値で，
+次の条件を満たしていなければならない：
+\begin{align*}
+\size{bc} &= 0 \\
+0 &\leq \size{ec} \leq 255 \\
+\size{lf} &= 7+\size{nt}+\size{lh}+(\size{ec}-\size{bc}+1)+\size{nw}+\size{nh}
+               +\size{nd}+\size{ni}+\size{nl}+\size{nk}+\size{ng}+\size{np}
+\end{align*}
+ここで，$\size{bc}$と$\size{ec}$は最小・最大の文字タイプ番号，
+$\size{nt}$は\node{char\_type}テーブルに登録された文字の数（文字タイプ0も含む），
+$\size{nl}$と$\size{ng}$はそれぞれは\node{glue\_kern}テーブルと
+\node{glue}テーブルのサイズであり，その他の値はTFMを踏襲する．
+
+JFMファイルでもTFMファイルと同じく，拡張子は\code{.tfm}が用いられる．
+
+\subsection{\node{char\_type}テーブル}
+\pTeX では欧文\TeX よりはるかに多くの文字を扱う必要があるが，
+そのほとんどは漢字であり，それらは全て同一の寸法（全角幅）を持つ．
+また，括弧や句読点などの約物も種類が増えるが，こちらも
+幾つかのパターンに分類すれば済む（例えば ``「'' と ``（'' は同様に扱える）．
+
+そこで，JFMフォーマットでは，
+同一の文字幅，高さ，前後に挿入されるグルー等，「その文字が持つ属性全てが
+同じもの」を1つの\emph{文字タイプ} (\node{char\_type})として，
+欧文フォントの1文字と同様にして扱うようにしている．
+そして，文字コードと文字タイプとの対応付けを，
+この\node{char\_type}テーブルを使って行う．
+
+このテーブルの各エントリーは1ワード（＝4バイト）で構成され，
+上位3バイトに文字コード（符合位置），下位1バイトに文字タイプを持つ
+\footnote{日本語\TeX{}開発コミュニティによる新仕様；
+詳細は第\ref{jfm-new}節を参照．}．
+文字コードは，それが16進数24bit（3バイト）で\code{0xABcdef}と表されるとき，
+\node{char\_type}テーブルには\code{cd ef AB}として格納される．
+テーブル内にはコードの値の順番に収められていなければならない．
+またこのテーブルの先頭には，デフォルトのインデックスとして
+文字コード及び文字タイプの項が0のものが，
+必ず1つ存在しなければならず，このテーブルに登録されていない文字は，
+文字タイプが0として扱う．
+つまり，このデフォルト以外の文字幅，カーン等の属性を持つキャラクタ
+のコードとタイプが2番目以降のエントリーとして存在しなければならない．
+
+\subsection{\node{char\_info}テーブル}
+\node{char\_type}をインデックスとしてこのテーブルを
+参照することにより，各\node{char\_type}の属性を検索する．
+各テーブルへのインデックス等の情報を次の順番でパッキング
+して1ワードに収めてある．
+\begin{description}\itemindent=2zw
+  \item[\node{width\_index} (8bits)]
+    \node{width\_table}へのインデックス
+  \item[\node{height\_index} (4bits)]
+    \node{height\_table}へのインデックス
+  \item[\node{depth\_index} (4bits)]
+    \node{depth\_table}へのインデックス
+  \item[\node{italic\_index} (6bits)]
+    \node{italic\_table}へのインデックス
+  \item[\node{tag} (2bits)]
+    \node{remainder}をどのような目的で使うかを示す．
+    \begin{description}\itemindent=1zw
+      \item[$\size{tag}=0$]
+        \node{remainder}の項は無効であり使用しないことを示す．
+      \item[$\size{tag}=1$]
+        \node{remainder}の項が\node{glue\_kern}への有効なインデックスであることを示す．
+      \item[$\size{tag}=2, 3$]
+        JFMでは使用していない．
+    \end{description}
+  \item[\node{remainder} (8bits)]
+\end{description}
+
+JFMでは$\size{bc}$は必ずゼロ\footnote{前節にある通り，文字コード及び
+文字タイプの項が0のものが必ず1つ存在するため．}なので，
+1つのJFMに含まれる\node{char\_info}は全部で$\size{ec}+1$ワードになる．
+
+% [TODO] char_info のサイズが ec+1 ということは，
+% 文字タイプは 0 から ec まで連続しなければならないのか？
+% （char_type テーブル内の文字コードの順序については説明があるが，
+%   文字タイプの連続性についてはどこにも明記されていない気がする…）
+
+\subsection{\node{glue\_kern}テーブル}
+特定の文字タイプの組み合せ時に挿入すべき\node{glue}又は\node{kern}を
+簡単なプログラム言語によって指定する．
+各命令は，以下の4バイトで構成される．
+\begin{description}\itemindent=2zw
+\item[第1バイト] (\node{skip\_byte})
+  \begin{itemize}
+  \item 128より大きいとき\\
+    現在のワードが\node{char\_info}から示された最初のワード
+    である場合は，実際の\node{glue\_kern}プログラムが
+    \node{glue\_kern}[$256\times\size{op\_byte}+\size{remainder}$]から
+    収められている（すなわち，再配置されている）ことを示す
+    \footnote{日本語\TeX{}開発コミュニティによって新たにサポート；
+    詳細は第\ref{jfm-new}節を参照．}．
+    最初のワードでない場合（すなわち，既に再配置先あるいは
+    プログラムのステップを開始した後のワードである場合）は，
+    その場でプログラムを終了する．
+  \item 128のとき\\
+    このワードを実行してプログラムを終了する．
+  \item 128より小さいとき\\
+    このワードを実行した後，次のステップまでスキップする
+    ワード数を示す
+    \footnote{日本語\TeX{}開発コミュニティによって新たにサポート；
+    詳細は第\ref{jfm-new}節を参照．}．
+  \end{itemize}
+\item[第2バイト] (\node{char\_type})
+  \begin{itemize}
+  \item 次の文字の文字タイプが，
+    このバイトで示す文字タイプ
+    \footnote{ここに文字タイプが格納されるため，
+    文字タイプの上限は255なのである．}と同じ場合，
+    第3バイトの処理を実行し，プログラム終了．
+  \item そうでなければ次のステップへ．
+  \end{itemize}
+\item[第3バイト] (\node{op\_byte})\\
+  この値によってグルーを扱うかカーンを扱うかを規定する．
+  \begin{itemize}
+  \item 127以下の場合\node{glue}[$\size{remainder}\times 3$]のグルーを挿入．
+  \item 128以上の場合\node{kern}[$\size{remainder}$]のカーンを挿入．
+  \end{itemize}
+\item[第4バイト] (\node{remainder})\\
+  第3バイトにより規定される
+  \node{glue}または\node{kern}へのインデックスを示す．
+\end{description}
+
+\subsection{\node{glue}テーブル}
+自然長，伸び長，縮み長の3ワードで1つのグルーを構成する
+（したがって，$ng$は必ず3の倍数となる）．
+各値は，$\mathrm{design size}\times2^{-20}$を単位として表す．
+\begin{description}\itemindent=2zw
+  \item[第1ワード] width
+  \item[第2ワード] stretch
+  \item[第3ワード] shrink
+\end{description}
+
+\subsection{\node{param}テーブル}
+一応，以下のように定義されている．
+\begin{description}\itemindent=2zw
+  \item[\mbox{param[1]}]
+    文字の傾き (italic slant)．
+  \item[\mbox{param[2][3][4]}]
+    和文文字間に挿入するグルー(|\kanjiskip|)のデフォルト値．
+  \item[\mbox{param[5]}]
+    \pTeX{}でzhで参照される寸法．
+  \item[\mbox{param[6]}]
+    \pTeX{}でzwで参照される寸法．
+  \item[\mbox{param[7][8][9]}]
+    和文文字と欧文文字間に挿入するグルー(|\xkanjiskip|)のデフォルト値．
+\end{description}
+\begin{dangerous}
+このように書かれているが，実際には
+\pTeX のzwは「文字タイプ0の文字の幅」，
+\pTeX のzhは「文字タイプ0の文字の高さと深さの和」である．
+明示的に|\fontdimen|で取得する場合を除くと，JFMの\node{param}テーブルの
+値が用いられる状況は限られている．
+% [TODO] 例えばいつ？
+% ptex-manual によると，\accent で和文文字をアクセントにした場合の
+% 上下位置補正に \fontdimen5 の値が用いられるらしい．他には？
+\end{dangerous}
+
+\subsection{日本語\TeX{}開発コミュニティによる新仕様}\label{jfm-new}
+長らくJFMフォーマットは株式会社アスキーが開発した当初仕様のままであったが，
+2018年1月から2月にかけ，日本語\TeX{}開発コミュニティは下記の3点につき
+JFMフォーマットの仕様を拡張した．
+\begin{enumerate}
+  \item \node{char\_type}テーブルへの3バイトの文字コード格納
+  \item \node{glue\_kern}テーブルでのスキップ(SKIP)コマンド使用
+  \item \node{glue\_kern}テーブルでの再配置(rearrangement)
+\end{enumerate}
+和文JFMでこれらの拡張機能が使われている場合は\pTeX~p3.8.0以上が必要である．
+
+\subsubsection{\node{char\_type}テーブルへの3バイトの文字コード格納}
+\node{char\_type}テーブルの各エントリーは1ワード（＝4バイト）で
+構成されるが，オリジナルの仕様では
+\begin{itemize}
+  \item 上位半ワードに文字コード（符合位置），下位半ワードに文字タイプを持つ
+\end{itemize}
+であった．
+\pTeX{}では内部処理にJISが用いられ，JFMで扱う文字コードは2バイトが
+上限だったため十分であったが，\upTeX{}でBMP超えの3バイトの文字を
+JFMで扱うことができなかった．また，オリジナルの仕様では文字タイプ用に
+下位半ワードが確保されている一方で，文字タイプの上限は255なので
+実はその上位バイトは常に\code{00}であり，勿体なかった．
+
+そこで，日本語\TeX{}開発コミュニティの新仕様（2018年1月）では
+\begin{itemize}
+  \item 上位3バイトに文字コード（符合位置），下位1バイトに文字タイプを持つ
+  \item 文字コードは，それが16進数24bit（3バイト）で\code{0xABcdef}と
+    表されるとき，テーブルには\code{cd ef AB}として格納される
+\end{itemize}
+とした．オリジナルの仕様で常に\code{00}だったバイトが
+「実は文字コードの上位だった」と解釈することにして，
+3バイト（U+10000以上）の文字コードで不足する1バイトを確保したのである．
+これにより，新仕様はオリジナルの仕様の上位互換であることが保証されている．
+
+\subsubsection{\node{glue\_kern}テーブルでのスキップ(SKIP)コマンド使用}
+「スキップ」(\code{SKIP})は，元々アスキーの公式ページ
+\footnote{\texttt{https://asciidwango.github.io/ptex/tfm/jfm.html}}
+% 旧: http://ascii.asciimw.jp/pb/ptex/tfm/jfm.html
+に文書化されてはいたが，実際には(p)PLtoTFは\code{GLUEKERN}プロパティ内で
+\code{SKIP}命令を受け付けず，\pTeX{}もやはりJFMの\code{SKIP}命令を
+サポートしていなかった．2018年2月の日本語\TeX{}開発コミュニティの改修により，
+新たにサポートが開始された．
+
+\subsubsection{\node{glue\_kern}テーブルでの再配置(rearrangement)}
+「再配置」は，サイズが256を超える大きな\node{glue\_kern}テーブルを
+格納するための方策であり，欧文TFMの\node{lig\_kern}テーブルにおける
+それと同様である．2018年2月に日本語\TeX{}開発コミュニティによって，
+\pTeX{}及びpPLtoTFで新たにサポートされた．
+
+
+\section{JPLファイル}\label{jpl-format}
+
+TFMはバイナリ形式であるが，これをプロパティ（特性）という概念を使って
+テキスト形式で視覚化したものがPL (Property List)ファイルである．
+同様に，JFMをテキスト形式で視覚化したものが
+\emph{JPL (Japanese Property List)}ファイルである．
+JPLファイルでもPLファイルと同じく，拡張子は\code{.pl}が用いられる．
+
+
+% -- tables begin
+\DeleteShortVerb{|}
+\begin{table}[tbp]\small
+\caption{JFMファイルの構成\label{構成}}
+\begin{minipage}[b]{2in}
+\begin{tabular}{|c|c|} \hline
+\hbox to.8in{\hfil$\size{id}$\hfil} &
+\hbox to.8in{\hfil$\size{nt}$\hfil} \\ \hline
+$\size{lf}$ & $\size{lh}$ \\ \hline
+$\size{bc}$ & $\size{ec}$ \\ \hline
+$\size{nw}$ & $\size{nh}$ \\ \hline
+$\size{nd}$ & $\size{ni}$ \\ \hline
+$\size{nl}$ & $\size{nk}$ \\ \hline
+$\size{ng}$ & $\size{np}$ \\ \hline
+\multicolumn{2}{|c|}{} \\
+\multicolumn{2}{|c|}{\node{header}} \\ 
+\multicolumn{2}{|c|}{}\\ \hline
+\multicolumn{2}{|c|}{} \\
+\multicolumn{2}{|c|}{\node{char\_type}} \\ 
+\multicolumn{2}{|c|}{}\\ \hline
+\multicolumn{2}{|c|}{}\\
+\multicolumn{2}{|c|}{\node{char\_info}} \\
+\multicolumn{2}{|c|}{}\\ \hline
+\multicolumn{2}{|c|}{}\\
+\multicolumn{2}{|c|}{\node{width}} \\
+\multicolumn{2}{|c|}{}\\ \hline
+\multicolumn{2}{|c|}{}\\
+\multicolumn{2}{|c|}{\node{height}} \\
+\multicolumn{2}{|c|}{}\\ \hline
+\multicolumn{2}{|c|}{}\\
+\multicolumn{2}{|c|}{\node{depth}} \\
+\multicolumn{2}{|c|}{}\\ \hline
+\multicolumn{2}{|c|}{}\\
+\multicolumn{2}{|c|}{\node{italic}} \\
+\multicolumn{2}{|c|}{}\\ \hline
+\multicolumn{2}{|c|}{}\\
+\multicolumn{2}{|c|}{\node{glue\_kern}} \\
+\multicolumn{2}{|c|}{}\\ \hline
+\multicolumn{2}{|c|}{}\\
+\multicolumn{2}{|c|}{\node{kern}} \\
+\multicolumn{2}{|c|}{}\\ \hline
+\multicolumn{2}{|c|}{}\\
+\multicolumn{2}{|c|}{\node{glue}} \\
+\multicolumn{2}{|c|}{}\\ \hline
+\multicolumn{2}{|c|}{}\\
+\multicolumn{2}{|c|}{\node{param}} \\
+\multicolumn{2}{|c|}{}\\ \hline
+\end{tabular}
+\end{minipage}
+\begin{minipage}[b]{3.3in}
+\noindent
+\begin{tabular}{l}
+  $\size{id}=$ JFM\_ID number. ($=11$ for yoko, $9$ for tate) \\
+  $\size{nt}=$ number of words in the character type table. \\
+  $\size{lf}=$ length of the entire file, in words. \\
+  $\size{lh}=$ length of the header data, in words. \\
+  $\size{bc}=$ smallest character type in the font. ($=0$ for JFM) \\
+  $\size{ec}=$ largest character type in the font. \\
+  $\size{nw}=$ number of words in the width table. \\
+  $\size{nh}=$ number of words in the height table. \\
+  $\size{nd}=$ number of words in the depth table. \\
+  $\size{ni}=$ number of words in the italic correction table. \\
+  $\size{nl}=$ number of words in the glue/kern table. \\
+  $\size{nk}=$ number of words in the kern table. \\
+  $\size{ng}=$ number of words in the glue table. \\
+  $\size{np}=$ number of font parameter words. \\
+\end{tabular}
+\end{minipage}
+\end{table}
+\MakeShortVerb*{|}
+% -- tables end
+\clearpage
+
+
+\section{JFMを扱うプログラム}\label{jfm-program}
+
+\pTeX と\upTeX ，あるいはそれらが生成したDVIを扱うプログラムが
+JFMを扱うのは当然であるが，ここではJFMおよび関連するフォントフォーマットを
+扱うことに特化したプログラムの主なものを挙げる．
+
+\subsection{pPLtoTF, upPLtoTF}
+
+テキスト形式のJPLファイルをバイナリ形式のJFMファイルに変換する．いずれも
+欧文\TeX 用の\code{pltotf}の上位互換であり，入力ファイルが欧文用のPLファイルで
+あれば欧文用のTFMを生成し，和文用のJPLファイルであれば和文用のJFMを生成する．
+
+\code{ppltotf}と\code{uppltotf}の違いは，エンコーディングである．
+\begin{itemize}
+  \item \code{ppltotf}: 常に\textbf{JIS}コードでエンコードされたJFMを生成するため，
+    \pTeX 用のJFM生成には多くの場合\code{ppltotf}コマンドが用いられる．
+  \item \code{uppltotf}: デフォルトでは\textbf{Unicode}（UCS-4の下位3バイト）で
+    エンコードされたJFMを生成するため，主に\upTeX 用のJFM生成に用いられる．
+\end{itemize}
+
+\code{ppltotf}においては，\code{-kanji}オプションで
+入力JPLファイルの文字コードを指定できる
+（有効な値は\code{euc}, \code{jis}, \code{sjis}, \code{utf8}）．
+\code{uppltotf}でも\code{-kanji}オプションが同じく使えるが，
+同時にJFMのエンコードもJISになる（従って\code{ppltotf}と同じ挙動を示す）ことに注意
+\footnote{\code{uppltotf}における規定値は\code{uptex}であり，
+この場合はJFMがUnicodeでエンコードされる．}．
+
+\subsection{pTFtoPL, upTFtoPL}
+
+バイナリ形式のJFMファイルをテキスト形式のJPLファイルに変換する．いずれも
+欧文\TeX 用の\code{tftopl}の上位互換であり，入力ファイルが欧文用のTFMであれば
+欧文用のPLファイルを生成し，和文用のJFMであれば和文用のJPLファイルを生成する．
+
+\code{ptftopl}と\code{uptftopl}の違いは，やはりエンコーディングである．
+\begin{itemize}
+  \item \code{ptftopl}: 入力JFMファイルを常に\textbf{JIS}コードで解釈するため，
+    \pTeX 用のJFMデコードには多くの場合\code{ptftopl}コマンドが用いられる．
+  \item \code{uptftopl}: 入力JFMファイルをデフォルトでは\textbf{Unicode}で解釈するため，
+    主に\upTeX 用のJFMデコードに用いられる．
+\end{itemize}
+
+\code{ptftopl}においては，\code{-kanji}オプションで
+出力JPLファイルの文字コードを指定できる
+（有効な値は\code{euc}, \code{jis}, \code{sjis}, \code{utf8}）．
+\code{uptftopl}でも\code{-kanji}オプションが同じく使えるが，
+同時にJFMもJISコードで解釈される（従って\code{ptftopl}と同じ挙動を示す）ことに注意
+\footnote{\code{uptftopl}における規定値は\code{uptex}であり，
+この場合はJFMがUnicodeで解釈される．}．
+
+\subsection{chkdvifont}
+
+\TeX\ Live 2019で追加された比較的新しいコマンドであり，
+TFM/JFMファイルの簡単な情報を表示する機能を持つ（\OMEGA 用のOFMファイルにも対応）．
+
+実行例を示す（注意：ファイル名の拡張子は省略不可．また，ファイルが
+現在のディレクトリにない場合は，フルパスの指定が必要）．
+
+\paragraph{欧文TFMの場合}
+\begin{verbatim}
+$ chkdvifont cmr10.tfm
+    "cmr10" is a tfm file :  0  -> 127
+    checksum        = 4BF16079
+    design size     = 10485760 2^{-20} points = 10 points
+\end{verbatim}
+一行目の表示から，
+欧文TFMであることと$\size{bc}=0$，$\size{ec}=127$であることが読み取れる．
+
+\paragraph{和文横組用JFMの場合}
+\begin{verbatim}
+$ chkdvifont jis.tfm
+    "jis" is a jfm file :  0  ->   5
+    checksum        = 00000000
+    design size     = 10485760 2^{-20} points = 10 points
+\end{verbatim}
+和文（横組用）JFMであることと$\size{bc}=0$，$\size{ec}=5$であることが読み取れる．
+
+\paragraph{和文縦組用JFMの場合}
+\begin{verbatim}
+$ chkdvifont upjisr-v.tfm
+    "upjisr-v" is a jfm(tate) file :  0  ->   5
+    checksum        = 00000000
+    design size     = 10485760 2^{-20} points = 10 points
+\end{verbatim}
+和文縦組用JFMであることと$\size{bc}=0$，$\size{ec}=5$であることが読み取れる
+\footnote{\code{upjisr-v.tfm}は\upTeX 用JFMであるが，
+原理的に\pTeX 用と\upTeX 用のJFMは区別できない．}．
+
+\paragraph{和文JFMの拡張機能が使われている場合}
+第\ref{jfm-new}節で述べたとおり，日本語\TeX 開発コミュニティによって
+下記の3点につきJFMフォーマットの仕様が拡張されている．
+\begin{enumerate}
+  \item \node{char\_type}テーブルへの3バイトの文字コード格納
+  \item \node{glue\_kern}テーブルでのスキップ(SKIP)コマンド使用
+  \item \node{glue\_kern}テーブルでの再配置(rearrangement)
+\end{enumerate}
+和文JFMでこれらの拡張機能が使われている場合は\pTeX~p3.8.0以上が必要であるが，
+この情報も表示される（下の例は再配置あり）：
+\begin{verbatim}
+$ chkdvifont upphiraminw3-h.tfm
+    "upphiraminw3-h" is a jfm file :  0  -> 146
+        New features in pTeX p3.8.0 / JFM 2.0:
+        + rearrangement in glue_kern
+    checksum        = 00000000
+    design size     = 10485760 2^{-20} points = 10 points
+\end{verbatim}
+
+\subsection{makejvf}
+
+JFMファイルを基にして，VF (virtual font)を生成するプログラムである．
+\code{makejvf}が生成する和文VFの目的は以下のとおりである：
+\begin{itemize}
+  \item \pTeX や\upTeX で使われる多くのJFMでは，約物類（かっこ，句読点など）の文字幅を
+    半角幅として定義し，見た目の空白をグルーやカーンの挿入によって実現している．
+    例えば``（''のような左に空きがある括弧類は，左半分は文字の一部として扱わず，
+    「グルーによる半角分の右シフト」と「半角幅の\inhibitglue （」として扱っている．
+  \item 一方，DVIからPostScriptやPDFへ変換時に使われる実際のフォントでは，
+    約物類も全角幅でデザインされている．そのため，DVIに配置された
+    ``（''を実際のフォントの``（''に安直に置き換えると，想定よりも右にずれた
+    位置に出力されてしまう．
+  \item この位置ずれを補正するため，欧文フォントの合成や置換に実用されている
+    VF（仮想フォント）という仕組みを和文フォントにも応用する．
+    例えばVF中に「``（''は左に半角分ずらして置き換える」という記述を追加することで，
+    DVIドライバがそれを解釈して位置補正できるようにする．
+\end{itemize}
+詳細はマニュアル|makejvf.1|（英語版）を参照してほしい．
+
+\subsection{jfmutil}
+
+JFMおよび和文VFを操作する種々の機能を提供するPerlスクリプトである．
+主な機能は以下のとおり：
+\begin{itemize}
+  \item 和文の仮想フォント（VFとJFMの組）に対応する独自仕様の
+    テキスト形式（ZVP形式）と，仮想フォントとの間の相互変換．
+    欧文の仮想フォント（VFとTFMの組）とテキスト形式（VPL形式）との間を
+    相互変換する|vftovp|/|vptovf|の和文版に相当する．
+  \item 和文・欧文問わず，VFそれ単独に対応する独自仕様の
+    テキスト形式（ZVP0形式；ZVP形式のサブセット）と，VFとの間の相互変換．
+  \item 和文の仮想フォント（VFとJFMの組）を別の名前で複製する機能．
+    VF中に記録された参照先のJFM名も適切に変更される．多書体化などに有用．
+\end{itemize}
+詳細は公式ドキュメントを参照してほしい．
+
+\end{document}

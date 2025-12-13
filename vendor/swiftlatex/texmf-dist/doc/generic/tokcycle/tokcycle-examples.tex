@@ -1,0 +1,1359 @@
+\documentclass[10pt]{article}
+\usepackage[margin=1.3in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{tokcycle,xcolor,manfnt}
+\colorlet{bred}{red!90!blue}
+\usepackage{tikz}
+% MACROS: REDEFINE TO ALLOW \cytoks TO ESCAPE SCOPE OF exampleA
+\aftertokcycle{\global\cytoks\expandafter{\the\cytoks}}
+% ENVIRONMENTS: REDEFINE TO ALLOW \cytoks TO ESCAPE SCOPE OF exampleA
+\makeatletter\renewcommand\tcenvscope{\global\cytoks}\makeatother
+
+\def\ddbend{\setbox0=\hbox{\dbend\dbend}\leavevmode\llap{%
+  \raisebox{10pt}{\box0~}}}
+
+\usepackage[skins,listings]{tcolorbox}
+
+\newtcblisting{exampleA}[2][]{%
+  colframe=red!70!yellow!50!black,
+  colback=red!75!yellow!5!white,
+  coltitle=red!50!yellow!3!white,
+  bicolor,colbacklower=white,
+  top=0mm,bottom=0mm,left=0mm,right=0mm,
+  arc=1mm,boxrule=1pt,
+  fonttitle=\sffamily\bfseries,
+  sidebyside,
+  title=#2,#1}
+
+
+\newtcblisting{exampleB}[2][]{%
+  colframe=red!50!yellow!50!black,
+  colback=red!50!yellow!5!white,%white,
+  coltitle=red!50!yellow!3!white,
+  bicolor,colbacklower=white,%red!50!yellow!5!white,
+  fonttitle=\sffamily\bfseries,
+  sidebyside,text and listing,
+  top=0mm,bottom=0mm,left=0mm,right=0mm,
+  arc=1mm,boxrule=1pt,
+  title=#2,#1}
+
+\newtcblisting{exampleC}[2][]{%
+  colframe=cyan!70!yellow!50!black,
+  colback=cyan!30!yellow!5!white,%white,
+  coltitle=cyan!50!yellow!3!white,
+  fonttitle=\sffamily\bfseries,
+  listing only,
+  top=0mm,bottom=0mm,left=0mm,right=0mm,
+  arc=1mm,boxrule=1pt,
+  title=#2,#1}
+
+\def\altdecytoks{\par\medskip\begingroup\noindent\macname{cytoks}
+  \ \textit{alt}detokenization:\\\raggedright\footnotesize\ttfamily
+  \expandafter\altdetokenize\expandafter{\the\cytoks}\par\endgroup}
+\newcommand\TokCycle{\textsf{tokcycle}}
+
+\parindent0pt
+\parskip0pt
+\begin{document}
+{\centering\LARGE \TokCycle{} Package Examples\par\smallskip
+\large\today\par}
+
+\tableofcontents
+
+%%%%%%%%%%%%%% SUPPORT MACRO
+
+\newcommand\macname[1]{\texttt{\char92#1}} 
+
+\newcommand\underdot[1]{\ooalign{#1\cr\hfil{\raisebox{-5pt}{.}}\hfil}}
+
+\newcounter{colorindex}
+
+\newcommand\restorecolor{\setcounter{colorindex}{100}}
+
+\newcommand\reducecolor[1]{%
+  \color{red!\thecolorindex!cyan}%
+  \addtocounter{colorindex}{-#1}%
+  \ifnum\thecolorindex<1\relax\setcounter{colorindex}{1}\fi
+}
+
+\newif\ifmacro
+\newcommand\altdetokenize[1]{\begingroup\stripgroupingtrue\macrofalse
+  \tokcycle
+    {\ifmacro\def\tmp{##1}\ifcat\tmp A\else\unskip\allowbreak\fi\macrofalse\fi
+     \detokenize{##1}}
+    {\ifmacro\unskip\macrofalse\fi\{\processtoks{##1}\ifmacro\unskip\fi\}\allowbreak}
+    {\tctestifx{\\##1}{\\}{\ifmacro\unskip\allowbreak\fi
+     \allowbreak\detokenize{##1}\macrotrue}}
+    { \hspace{0pt plus 3em minus .3ex}}
+    {#1}%
+  \unskip
+\endgroup}
+
+\newcommand\plusl[1]{\char\numexpr`#1+1\relax}
+
+\newcommand\vowelcap[1]{%
+  \ifx a#1A\else
+  \ifx e#1E\else
+  \ifx i#1I\else
+  \ifx o#1O\else
+  \ifx u#1U\else
+  #1\fi\fi\fi\fi\fi
+}
+
+\newcommand\spaceouttext[2]{%
+  \tokcycle
+    {\addcytoks{##1\nobreak\hspace{#1}}}%
+    {\processtoks{##1}}
+    {\addcytoks{##1}}%
+    {\addcytoks{##1\hspace{#1}}}
+    {#2}%
+  \the\cytoks\unskip}
+
+\newcommand\growdim[2]{%
+\tokcycle{\addcytoks{##1}}
+         {\addcytoks{#1\dimexpr##1}}
+         {\addcytoks{##1}}
+         {\addcytoks{##1}}{%
+    #2}%
+\the\cytoks}
+
+\newcommand\nextcap[1]{%
+       \edef\tmp{#1}%
+       \tctestifx{-#1}{\def\capnext{T}}{}%
+       \tctestifcon{\if T\capnext}%
+         {\tctestifcon{\ifcat\tmp A}%
+           {\uppercase{#1}\def\capnext{F}}%
+           {#1}}%
+         {#1}%
+}
+
+\newcommand\TitleCase[1]{%
+  \def\capnext{T}
+  \tokcycle
+    {\addcytoks{\nextcap{##1}}}
+    {\processtoks{##1}}
+    {\addcytoks{##1}}
+    {\addcytoks{##1\def\capnext{T}}}
+    {#1}%
+  \the\cytoks
+}
+
+\tokcycleenvironment\spaceBgone
+    {\addcytoks{##1}}
+    {\processtoks{##1}}
+    {\addcytoks{##1}}
+    {\addcytoks{\hspace{.2pt plus .2pt minus .8pt}}}%
+
+
+\tokcycleenvironment\remaptext
+    {\addcytoks[x]{\tcremap{##1}}}
+    {\processtoks{##1}}
+    {\addcytoks{##1}}
+    {\addcytoks{##1}}
+\newcommand*\tcmapto[2]{\expandafter\def\csname tcmapto#1\endcsname{#2}}
+\newcommand*\tcremap[1]{\ifcsname tcmapto#1\endcsname
+                 \csname tcmapto#1\endcsname\else#1\fi}
+\tcmapto am   \tcmapto bf   \tcmapto cz   \tcmapto de   \tcmapto ey
+\tcmapto fl   \tcmapto gx   \tcmapto hb   \tcmapto ic   \tcmapto jn
+\tcmapto ki   \tcmapto lr   \tcmapto mh   \tcmapto nt   \tcmapto ok
+\tcmapto ps   \tcmapto qa   \tcmapto ro   \tcmapto sq   \tcmapto tw
+\tcmapto uj   \tcmapto vp   \tcmapto wd   \tcmapto xg   \tcmapto yu
+\tcmapto zv
+
+\newcommand\findinstring[2]{\begingroup%
+  \stripgroupingtrue
+  \setcounter{runcount}{0}%
+  \tokcycle
+    {\nextctltok{##1}}
+    {\nextctltok{\opengroup}\processtoks{##1}\nextctltok{\closegroup}}
+    {\nextctltok{##1}}
+    {\nextctltok{\tcspace}}
+    {#1}%
+  \edef\numlet{\theruncount}%
+  \expandafter\def\expandafter\searchword\expandafter{\the\cytoks}%
+%
+  \aftertokcycle{\matchfound}%
+  \setcounter{runcount}{0}%
+  \def\matchfound{F}%
+  \tokcycle
+    {\nextcmptok{##1}}
+    {\nextcmptok{\opengroup}\processtoks{##1}\nextcmptok{\closegroup}}
+    {\nextcmptok{##1}}
+    {\nextcmptok{\tcspace}}
+    {#2}%
+\endgroup}
+\newcounter{runcount}
+\makeatletter
+\newcommand\rotcytoks[1]{\cytoks\expandafter\expandafter\expandafter{%
+  \expandafter\tc@gobble\the\cytoks#1}}
+\makeatother
+\newcommand\testmatch[1]{\ifx#1\searchword\gdef\matchfound{T}\fi}%
+\newcommand\rotoradd[2]{\stepcounter{runcount}%
+  \ifnum\theruncount>\numlet\relax#1\else#2\fi
+  \expandafter\def\expandafter\tmp\expandafter{\the\cytoks}}
+\newcommand\nextcmptok[1]{\rotoradd{\rotcytoks{#1}}{\addcytoks{#1}}\testmatch{\tmp}}
+\newcommand\nextctltok[1]{\stepcounter{runcount}\addcytoks{#1}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Examples, examples, and more examples}
+
+Often, the best way to learn a new tool is to see examples of
+  it being used.
+Here, a number of examples are gathered that span the spectrum 
+  of \TokCycle{} usage.
+
+\subsection{Application basics}
+
+\subsubsection{Using the CGMS directives}
+
+Apply different directives to Characters (under-dot), Groups
+  (visible braces), Macros (boxed, detokenized), and 
+  Spaces (visible space).
+
+\begin{exampleC}[]{The \macname{underdot} macro}
+\newcommand\underdot[1]{\ooalign{#1\cr\hfil{\raisebox{-5pt}{.}}\hfil}}
+\end{exampleC}
+
+
+\begingroup
+\begin{exampleA}[lefthand width=7.8cm]{}
+\tokcycle{\addcytoks{\underdot{#1}}}
+         {\addcytoks{\{}\processtoks{#1}
+          \addcytoks{\}}}
+         {\addcytoks{\fbox{\detokenize{#1}}}}
+         {\addcytoks{\textvisiblespace}}
+{This \textit{is \textbf{a}} test.}
+\the\cytoks
+\end{exampleA}
+
+\endgroup
+
+\subsubsection{Escaping text}
+
+Text between two successive escape characters is bypassed
+  by \TokCycle{} and instead echoed to the output register.
+Default escape character is $|$.  One can change it with
+  \macname{settcEscapechar} macro.
+
+\begingroup
+
+\begin{exampleC}[]{The unexpandable \macname{plusl} macro}
+\newcommand\plusl[1]{\char\numexpr`#1+1\relax}
+\end{exampleC}
+
+\begin{exampleA}[lefthand width=5cm]{Escaping text in the input stream}
+\tokcycle
+{\addcytoks{\plusl{#1}}}
+{\processtoks{#1}}
+{\addcytoks{#1}}
+{\addcytoks{#1}}
+{This \fbox{code is a test 
+  |(I can also escape text)|}
+  of |\rule{1em}{.5em}|
+  {\bfseries mine}.}
+\the\cytoks
+\end{exampleA}
+
+\endgroup
+
+\subsubsection{Unexpandable, unexpanded, and expanded Character 
+  directives}
+
+\begingroup
+This section concerns the issue of whether the characters of the input
+  stream are transformed before or after being placed in the 
+  output token register (\macname{cytoks}).\medskip
+
+\noindent\begin{minipage}[t]{\textwidth}
+Transform characters (+1 ASCII) via unexpandable macro:\medskip
+
+\begin{exampleA}[lefthand width=8.3cm]
+  {Unexpandable Character directive}
+\tokcycle
+{\addcytoks{\plusl{#1}}}
+{\processtoks{#1}}
+{\addcytoks{#1}}
+{\addcytoks{#1}}{%
+  This \textit{code \textup{is} a test} of mine.}
+\the\cytoks
+\end{exampleA}
+
+\altdecytoks
+
+\par\noindent\hrulefill\medskip
+\end{minipage}
+\endgroup
+
+\noindent\begin{minipage}[t]{\textwidth}
+Capitalize vowels (but don't expand the character directive)
+
+\begingroup
+
+\begin{exampleC}[]{The expandable\macname{vowelcap} macro}
+\newcommand\vowelcap[1]{%
+  \ifx a#1A\else
+  \ifx e#1E\else
+  \ifx i#1I\else
+  \ifx o#1O\else
+  \ifx u#1U\else
+  #1\fi\fi\fi\fi\fi
+}
+\end{exampleC}
+
+\begin{exampleA}[lefthand width=8.3cm]
+  {Not expanded Character directive}
+\tokcycle
+{\addcytoks{\vowelcap{#1}}}
+{\processtoks{#1}}
+{\addcytoks{#1}}
+{\addcytoks{#1}}{%
+  This \textit{code \textup{is} a test} of mine.}
+\the\cytoks
+\end{exampleA}
+
+\altdecytoks 
+
+\par\noindent\hrulefill\medskip
+\endgroup
+\end{minipage}
+
+\begingroup
+Capitalize vowels (expanding the character directive)
+
+\begin{exampleA}[lefthand width=8.3cm]
+  {Expanded Character directive}
+\tokcycle
+{\addcytoks[x]{\vowelcap{#1}}}
+{\processtoks{#1}}
+{\addcytoks{#1}}
+{\addcytoks{#1}}{%
+  This \textit{code \textup{is} a test} of mine.}
+\the\cytoks
+\end{exampleA}
+
+\altdecytoks
+
+\endgroup
+
+\subsubsection{Unexpanded vs. pre-expanded input stream}
+
+\begingroup
+\Characterdirective{\addcytoks[x]{\vowelcap{#1}}}
+
+\noindent\begin{minipage}[t]{\textwidth}
+\begin{exampleA}[lefthand width=5.5cm]{Normal token cycle (input stream
+  not pre-expanded)}
+\tokcycle
+{\addcytoks[x]{\vowelcap{#1}}}
+{\processtoks{#1}}
+{\addcytoks{#1}}
+{\addcytoks{#1}}%
+{This \fbox{code 
+  is a test \today} of 
+  {\bfseries mine}.}
+\the\cytoks
+\end{exampleA}
+
+\altdecytoks
+
+\noindent\hrulefill\strut
+\end{minipage}
+
+Note that, when pre-expanding the input stream, one must 
+  \macname{noexpand} the macros that are \textit{not} 
+  to be pre-expanded.
+
+\begin{exampleA}[lefthand width=5.5cm]{Pre-\macname{expanded} token cycle
+  input stream}
+\expandedtokcyclexpress
+{This \noexpand\fbox{code 
+  is a test \today} of 
+  {\noexpand\bfseries mine}.}
+\the\cytoks
+\end{exampleA}
+
+\altdecytoks
+
+\endgroup
+
+\subsection{Grouping}
+
+Differentiating explicit groups, e.g., \{...\}, from
+  implicit groups, e.g. \macname{bgroup}...\macname{egroup},
+  is done automatically by \TokCycle.
+The user has options on how \TokCycle{} should treat these tokens.
+The desired options are to be set prior to the \TokCycle{} invocation.
+
+
+\subsubsection{Treatment options for implicit groups}
+
+\begingroup
+
+The macro
+\macname{stripimplicitgroupingcase} can take three possible
+  integer arguments: 0 (default) to automatically place unaltered
+  implicit group tokens in the output register; 1 to strip
+  implicit group tokens from the output; or $-$1 to instead pass the
+  implicit group tokens to the Character directive (as implicit
+  tokens) for separate processing (typically, when detokenization
+  is desired).
+
+\begin{exampleA}[lefthand width=6cm]{Using 
+  \macname{stripimplicitgroupingcase} to affect treatment of 
+  implicit grouping tokens}
+\resettokcycle
+\Characterdirective{\addcytoks[x]{%
+  \vowelcap{#1}}}
+\def\z{Announcement: 
+  {\bfseries\bgroup\itshape 
+  Today \egroup it is} \today, 
+  a Wednesday}
+\expandafter\tokencyclexpress\z
+\endtokencyclexpress\medskip
+
+\detokenize\expandafter{\the\cytoks}
+\bigskip
+
+\stripimplicitgroupingcase{1}
+\expandafter\tokencyclexpress\z
+\endtokencyclexpress\medskip
+
+\detokenize\expandafter{\the\cytoks}
+\end{exampleA}
+
+%\tokcyclexpress{Announcement: {\bfseries\bgroup\itshape 
+%  Today \egroup it is} \today, a Wednesday.}\the\cytoks
+
+%\detokenize\expandafter{\the\cytoks}
+
+\endgroup
+
+\subsubsection{Treatment options for explicit groups}
+
+\begingroup
+
+For explicit group tokens, e.g., \{ \}, there are only two 
+  options to be had.
+These are embodied in the if-condition \macname{ifstripgrouping} 
+  (default \macname{stripgroupingfalse}).
+Regardless of which condition is set, the tokens within the explicit
+  group are still passed to the Group directive for processing.
+
+
+Permutations of the following code are used in the subsequent examples.
+Group stripping, brought about by \macname{stripgroupingtrue},
+  involves removing the grouping braces from around the group.
+The choice of \macname{processtoks} vs.\@ \macname{addcytoks}
+  affects whether the tokens inside the group are recommitted
+  to \TokCycle{} for processing, or are merely sent to the output
+  register in their original unprocessed form.
+
+Note that, in these examples, underdots and visible spaces
+  will only appear on characters and spaces that have been directed 
+  to the Character and Space directives, respectively.
+Without \macname{processtoks}, that will not occur to tokens
+  \textit{inside} of groups.
+
+\begin{exampleB}[listing only,lefthand width = \dimexpr\textwidth-19pt]
+{Code permutations on group stripping and inner-group token processing}
+\stripgroupingfalse  OR  \stripgroupingtrue
+\tokcycle{\addcytoks{\underdot{#1}}}
+         {\processtoks{#1}}  OR  {\addcytoks{#1}}}
+         {\addcytoks{#1}}
+         {\addcytoks{\textvisiblespace}}
+{This \fbox{is a \fbox{token}} test.}
+\the\cytoks
+\end{exampleB}
+
+
+\begin{exampleB}[text only,  colback=white]%
+{\macname{stripgroupingfalse \string\processtoks} }
+\stripgroupingfalse% RETAIN GROUPING (PACKAGE DEFAULT)
+\tokcycle{\addcytoks{\underdot{#1}}}
+         {\processtoks{#1}}% GROUP TOKENS ARE PROCESSED
+         {\addcytoks{#1}}
+         {\addcytoks{\textvisiblespace}}{%
+This \fbox{is a \fbox{token}} test.}
+\the\cytoks
+\end{exampleB} 
+
+\begin{exampleB}[text only,  colback=white]%
+{\macname{stripgroupingfalse \string\addcytoks} }
+\tokcycle{\addcytoks{\underdot{#1}}}
+         {\addcytoks{#1}}% GROUP TOKENS OUTPUT DIRECTLY
+         {\addcytoks{#1}}
+         {\addcytoks{\textvisiblespace}}{%
+This \fbox{is a \fbox{token}} test.}
+\the\cytoks
+\end{exampleB}
+
+\begin{exampleB}[text only,  colback=white]%
+{\macname{stripgroupingtrue \string\processtoks} }
+\stripgroupingtrue% DANGEROUS AS IT REMOVES GROUPING FROM ARGUMENTS
+\tokcycle{\addcytoks{{\underdot{#1}}}}% EXTRA GROUPING TO COMPENSATE
+         {\processtoks{#1}}% GROUP TOKENS PROCESSED
+         {\addcytoks{#1}}
+         {\addcytoks{\textvisiblespace}}{%
+This \fbox{is a \fbox{token}} test.}
+\the\cytoks
+\end{exampleB}
+
+\begin{exampleB}[text only,  colback=white]%
+{\macname{stripgroupingtrue \string\addcytoks} }
+\stripgroupingtrue% DANGEROUS AS IT REMOVES GROUPING FROM ARGUMENTS
+\tokcycle{\addcytoks{\underdot{#1}}}
+         {\addcytoks{#1}}% GROUP TOKENS OUTPUT DIRECTLY
+         {\addcytoks{#1}}
+         {\addcytoks{\textvisiblespace}}{%
+This \fbox{is a \fbox{token}} test.}
+\the\cytoks
+\end{exampleB} 
+
+Note that the content of groups can be altogether eliminated if 
+  \textit{neither} \macname{processtoks\{\#1\}} nor 
+  \macname{addcytoks\{\#1\}} are used in the Group directive.
+
+
+
+\endgroup
+
+\subsubsection{Group nesting}
+
+\begingroup
+
+\begin{exampleC}[]{The \macname{reducecolor} and \macname{restorecolor}
+  macros}
+\newcounter{colorindex}
+\newcommand\restorecolor{\setcounter{colorindex}{100}}
+\newcommand\reducecolor[1]{%
+  \color{red!\thecolorindex!cyan}%
+  \addtocounter{colorindex}{-#1}%
+  \ifnum\thecolorindex<1\relax\setcounter{colorindex}{1}\fi}
+\end{exampleC}
+
+\begin{exampleA}[lefthand width=6cm]{Group nesting is no impediment to
+  tokcycle}
+\restorecolor
+\tokcycle
+  {\addcytoks{(#1)}}
+  {\addcytoks{\reducecolor{11}}%
+   \addcytoks{[}\processtoks{#1}%
+   \addcytoks{]}}
+  {\addcytoks{#1}}
+  {}{%
+  {1{{3{{5{{7{{9{1{}0}}8}}6}}4}}2}}}
+\the\cytoks
+\end{exampleA}
+
+\endgroup
+
+
+\subsection{Direct use of \TokCycle}
+
+\TokCycle{} (in regular or \texttt{xpress} form) may be invoked 
+  directly from the document, without
+  being first encapsulated within a macro or environment.
+
+\subsubsection{Modifying counters as part of the Character
+  directive}
+
+\begingroup
+
+\begin{exampleA}[lefthand width=8.5cm]{Using a period token (.) to
+  reset a changing color}
+\restorecolor
+\tokencycle
+  {\addcytoks{\bgroup\reducecolor{3}#1\egroup}%
+   \ifx.#1\addcytoks{\restorecolor}\fi}
+  {\processtoks{#1}}
+  {\addcytoks{#1}}
+  {\addcytoks{#1}}%
+This right \textit{here is a sentence in italic}.  
+And \textbf{here we have another sentence in bold}.
+
+{\scshape Now in a new paragraph, the sentence 
+is long.} Now, it is short.
+\endtokencycle
+\end{exampleA}
+
+\endgroup
+
+\subsection{Macro encapsulation of \TokCycle}
+
+\subsubsection{Spacing out text}
+
+\begingroup
+
+\begin{exampleC}[]{The \macname{spaceouttext} macro}
+\newcommand\spaceouttext[2]{%
+  \tokcycle
+    {\addcytoks{##1\nobreak\hspace{#1}}}%
+    {\processtoks{##1}}
+    {\addcytoks{##1}}%
+    {\addcytoks{##1\hspace{#1}}}
+    {#2}%
+  \the\cytoks\unskip}
+\end{exampleC}
+
+\begin{exampleA}[lefthand width=6cm]{\macname{spaceouttext} demo}
+\spaceouttext{3pt plus 3pt}{This 
+  \textit{text \textbf{is} 
+  very} spaced out}. Back 
+  to regular text.
+
+\spaceouttext{1.5pt}{This 
+  \textit{text \textbf{is} 
+  somewhat} spaced out}. 
+  Back to regular text.
+\end{exampleA}
+
+\endgroup
+
+
+\subsubsection{Alternate presentation of detokenized content}
+
+\begingroup
+This macro attempts to give a more natural presentation of 
+  \macname{detokenize}'d material.
+It is \textbf{not} to be confused as a replacement for
+  \macname{detokenize}.
+In certain applications, it may offer a more pleasingly formatted
+  typesetting of detokenized material.
+
+It is an unusual application of \TokCycle{} in that it does not
+  actually use the \macname{cytoks} token register to collect
+  its output.
+This is only possible because all macros in the input stream
+  are detokenized, rather than executed.
+
+\medskip
+
+\begin{exampleC}[]{The \macname{altdetokenize }\ macro}
+\newif\ifmacro
+\newcommand\altdetokenize[1]{\begingroup\stripgroupingtrue\macrofalse
+  \tokcycle
+    {\ifmacro\def\tmp{##1}\ifcat\tmp A\else\unskip\allowbreak\fi\macrofalse\fi
+     \detokenize{##1}}
+    {\ifmacro\unskip\macrofalse\fi\{\processtoks{##1}\ifmacro\unskip\fi\}\allowbreak}
+    {\tctestifx{\\##1}{\\}{\ifmacro\unskip\allowbreak\fi
+     \allowbreak\detokenize{##1}\macrotrue}}
+    { \hspace{0pt plus 3em minus .3ex}}
+    {#1}%
+  \unskip
+\endgroup}
+\end{exampleC}
+
+\let\mac\relax
+\begin{exampleA}[lefthand width=6.3cm]
+  {\macname{altdetokenize} demo}
+\string\altdetokenize: \\
+\texttt{\altdetokenize{a\mac a \mac2 {\mac}\mac{a\mac\mac}\mac}}!
+
+\string\detokenize: \\ 
+   \texttt{\detokenize{a\mac a \mac2 {\mac}\mac{a\mac\mac}\mac}}!
+\end{exampleA}
+\endgroup
+
+
+\subsubsection{Capitalize all words, including compound and 
+  parenthetical words}
+
+\begingroup
+
+\begin{exampleC}[]{The \macname{Titlecase} and \texttt{\string\nextcap} macros}
+\newcommand\TitleCase[1]{%
+  \def\capnext{T}
+  \tokcycle
+    {\addcytoks{\nextcap{##1}}}
+    {\processtoks{##1}}
+    {\addcytoks{##1}}
+    {\addcytoks{##1\def\capnext{T}}}
+    {#1}%
+  \the\cytoks
+}
+\newcommand\nextcap[1]{%
+       \edef\tmp{#1}%
+       \tctestifx{-#1}{\def\capnext{T}}{}%
+       \tctestifcon{\if T\capnext}%
+         {\tctestifcon{\ifcat\tmp A}%
+           {\uppercase{#1}\def\capnext{F}}%
+           {#1}}%
+         {#1}%
+}
+\end{exampleC}
+
+\begin{exampleA}[]{A demo of \macname{Titlecase} showing raw (escaped)
+  input and processed output}
+\TitleCase{%
+|here, {\bfseries\today{}, is [my]}
+  really-big-test  
+  (\textit{capitalizing} words).|
+
+ here, {\bfseries\today{}, is [my]} 
+  really-big-test 
+  (\textit{capitalizing} words).}
+\end{exampleA}
+
+\endgroup
+
+\subsubsection{Scaling rule dimensions}
+\begingroup
+
+\ddbend This example only applies if one can guarantee that
+  the input stream will contain only text and rules...
+
+\begin{exampleC}[]{The \macname{growdim} macro}
+\newcommand\growdim[2]{%
+\tokcycle{\addcytoks{##1}}
+         {\addcytoks{#1\dimexpr##1}}
+         {\addcytoks{##1}}
+         {\addcytoks{##1}}{%
+    #2}%
+\the\cytoks}
+\end{exampleC}
+
+\begin{exampleA}[]{Using \TokCycle{} to change \macname{rule} dimensions}
+\growdim{2}{This rule is exactly 4pt: 
+  \rule|{4pt}{4pt}| , whereas this
+  rule is 2x bigger than 4pt: 
+  \rule{4pt}{4pt} .}\par
+\growdim{4}{This rule is exactly 5pt: 
+  \rule|{5pt}{5pt}| , whereas this
+  rule is 4x bigger than 5pt: 
+  \rule{5pt}{5pt} .}
+\end{exampleA}
+
+\endgroup
+
+\subsubsection{String search, including non-regex material}
+
+\begingroup
+
+\begin{exampleC}[]{The \macname{findinstring} macro for string searches}
+\newcommand\findinstring[2]{\begingroup%
+  \stripgroupingtrue
+  \setcounter{runcount}{0}%
+  \tokcycle
+    {\nextctltok{##1}}
+    {\nextctltok{\opengroup}\processtoks{##1}\nextctltok{\closegroup}}
+    {\nextctltok{##1}}
+    {\nextctltok{\tcspace}}
+    {#1}%
+  \edef\numlet{\theruncount}%
+  \expandafter\def\expandafter\searchword\expandafter{\the\cytoks}%
+%
+  \aftertokcycle{\matchfound}%
+  \setcounter{runcount}{0}%
+  \def\matchfound{F}%
+  \tokcycle
+    {\nextcmptok{##1}}
+    {\nextcmptok{\opengroup}\processtoks{##1}\nextcmptok{\closegroup}}
+    {\nextcmptok{##1}}
+    {\nextcmptok{\tcspace}}
+    {#2}%
+\endgroup}
+\newcounter{runcount}
+\makeatletter
+\newcommand\rotcytoks[1]{\cytoks\expandafter\expandafter\expandafter{%
+  \expandafter\tc@gobble\the\cytoks#1}}
+\makeatother
+\newcommand\testmatch[1]{\ifx#1\searchword\gdef\matchfound{T}\fi}%
+\newcommand\rotoradd[2]{\stepcounter{runcount}%
+  \ifnum\theruncount>\numlet\relax#1\else#2\fi
+  \expandafter\def\expandafter\tmp\expandafter{\the\cytoks}}
+\newcommand\nextcmptok[1]{\rotoradd{\rotcytoks{#1}}{\addcytoks{#1}}\testmatch{\tmp}}
+\newcommand\nextctltok[1]{\stepcounter{runcount}\addcytoks{#1}}
+\end{exampleC}
+
+\begin{exampleA}[lefthand width=11.5cm]{Demo of the 
+  \macname{findinstring} macro}
+1. \findinstring{this}{A test of the times}
+   \findinstring{the} {A test of the times}\par
+2. \findinstring{This is}{Here, This is a test}
+   \findinstring{Thisis} {Here, This is a test}\par
+3. \findinstring{the}        {This is the\bfseries{} test}
+   \findinstring{he\bfseries}{This is the\bfseries{} test}\par
+4. \findinstring{a{bc}} {gf{vf{a{b c}g}gh}hn}
+   \findinstring{a{b c}}{gf{vf{a{b c}g}gh}hn}\par
+5. \findinstring{a\notmymac{b c}}{gf{vf{a\mymac{b c}g}gh}hn}
+   \findinstring{a\mymac{b c}}   {gf{vf{a\mymac{b c}g}gh}hn}\par
+6. \findinstring{\textit{Italic}}{this is an \textit{italic} test}
+   \findinstring{\textit{italic}}{this is an \textit{italic} test}
+\end{exampleA}
+
+\endgroup
+
+
+\subsection{\TokCycle-based environments}
+
+The \macname{tokcycleenvironment} macro allows users to define
+  their own \TokCycle{} environments.  
+Here are some examples.
+
+\subsubsection{``Removing'' spaces, but still breakable/hyphenatable}
+
+\begingroup
+
+\begin{exampleC}[]{The \macname{spaceBgone} environment}
+\tokcycleenvironment\spaceBgone
+    {\addcytoks{##1}}
+    {\processtoks{##1}}
+    {\addcytoks{##1}}
+    {\addcytoks{\hspace{.2pt plus .2pt minus .8pt}}}%
+\end{exampleC}
+
+\begin{exampleA}[lefthand width=6.0cm]{}
+\spaceBgone
+  Here we have a \textit{test} of 
+  whether the spaces are removed.  
+  We are choosing to use the 
+  tokencycle environment.
+
+  We are also testing the use of 
+  paragraph breaks in the 
+  environment.
+\endspaceBgone
+\end{exampleA}
+
+\endgroup
+
+\subsubsection{Remapping text}
+
+\begin{minipage}[t]{\textwidth}
+\begingroup
+
+\begin{exampleC}[]{The \macname{remaptext} environment with
+  supporting macros}
+\tokcycleenvironment\remaptext
+    {\addcytoks[x]{\tcremap{##1}}}
+    {\processtoks{##1}}
+    {\addcytoks{##1}}
+    {\addcytoks{##1}}
+\newcommand*\tcmapto[2]{\expandafter\def\csname tcmapto#1\endcsname{#2}}
+\newcommand*\tcremap[1]{\ifcsname tcmapto#1\endcsname
+                 \csname tcmapto#1\endcsname\else#1\fi}
+\tcmapto am   \tcmapto bf   \tcmapto cz   \tcmapto de   \tcmapto ey
+\tcmapto fl   \tcmapto gx   \tcmapto hb   \tcmapto ic   \tcmapto jn
+\tcmapto ki   \tcmapto lr   \tcmapto mh   \tcmapto nt   \tcmapto ok
+\tcmapto ps   \tcmapto qa   \tcmapto ro   \tcmapto sq   \tcmapto tw
+\tcmapto uj   \tcmapto vp   \tcmapto wd   \tcmapto xg   \tcmapto yu
+\tcmapto zv
+\end{exampleC}
+
+\begin{exampleA}[lefthand width=8.5cm]{Demo of \macname{remaptext}}
+\remaptext
+What can't we \textit{accomplish} if we try?
+
+Let us be of good spirit and put our minds to it!
+\endremaptext
+\end{exampleA}
+
+Because \macname{tcremap} is expandable, the original text is totally absent 
+  from the processed output:
+
+\altdecytoks
+
+\endgroup
+\end{minipage}
+
+\subsection{Advanced topics: implicit tokens and catcode changes}
+
+\subsubsection{Trap Active Characters (catcode 13)}
+
+\begin{minipage}[t]{\textwidth}
+\begingroup
+Active characters in the \TokCycle{} input stream are processed in
+  their original form.
+Their active substitutions arising from \macname{def}s 
+  only occur \textit{afterwards}, when
+  the \TokCycle{} output is typeset.
+They may be identified with the \macname{ifactivetok} test.
+If \macname{let} to a character, they may be identified in the Character
+  directive;
+If \macname{let} to a control sequence or defined via \macname{def},
+  they may be identified in the Macro directive.
+\let\svt T
+\Characterdirective{\tctestifcon\ifactivetok
+  {\addcytoks{\fbox{#1-chr}}}{\addcytoks{#1}}}
+\Macrodirective{\tctestifcon\ifactivetok
+  {\addcytoks{\fbox{#1-mac}}}{\addcytoks{#1}}}
+
+\begin{exampleA}[lefthand width=7.8cm]{Processing active characters}
+\resettokcycle
+\tokencyclexpress 
+This is a test!!\endtokencyclexpress
+
+\catcode`!=\active
+\def !{?}
+\tokencyclexpress 
+This is a test!!\endtokencyclexpress
+
+\Characterdirective{\tctestifcon\ifactivetok
+  {\addcytoks{\fbox{#1-chr}}}{\addcytoks{#1}}}
+\Macrodirective{\tctestifcon\ifactivetok
+  {\addcytoks{\fbox{#1-mac}}}{\addcytoks{#1}}}
+\tokencyclexpress 
+This is a test!!\endtokencyclexpress
+
+\catcode`T=\active
+\let T+
+\tokencyclexpress 
+This is a test!!\endtokencyclexpress
+
+\detokenize\expandafter{\the\cytoks}
+\end{exampleA}
+
+%%%
+
+\ddbend If the input stream is pre-\textit{expanded}, any active 
+  substitutions that are expandable (i.e., those involving \macname{def} 
+  as well as those \macname{let} to something expandable) 
+  are made before reaching \TokCycle{} processing.  
+\svt hey are, thus, no longer detected as active, unless 
+  \macname{noexpand} is applied before the pre-expansion.
+In this example, the \texttt{!} that is not \macname{noexpand}\kern.3pted
+  is converted to a \texttt{?} prior to reaching \TokCycle{}
+  processing (and thus, not detected as \macname{active}):
+
+\catcode`!=\active
+\def !{?}
+\catcode`T=\active
+\let T+
+\begin{exampleA}[lefthand width=7.8cm]{Expanded input stream acts 
+  upon active \macname{def}ed characters unless \macname{noexpand} is applied}
+\expandedtokcyclexpress{This is a test!\noexpand!}
+\the\cytoks\par
+\detokenize\expandafter{\the\cytoks}
+\end{exampleA}
+
+However, pre-tokenization does not suffer this behavior:
+\begin{exampleA}[lefthand width=7.8cm]{Pre-tokenized input stream
+  does not affect active characters}
+\def\tmp{This is a test!!}
+\expandafter\tokcyclexpress\expandafter{\tmp}
+\the\cytoks\par
+\detokenize\expandafter{\the\cytoks}
+\end{exampleA}
+
+%%%
+\endgroup
+\end{minipage}
+
+\begingroup
+\ddbend One aspect of \TeX{} to remember is that catcodes
+  are assigned at tokenization; however, for active characters,
+  the substitution assignment is evaluated only upon execution.
+So, if a cat-13 token is placed into a \macname{def}, it will
+  remain active even if the catcode of that character code is
+  later changed.
+But if the cat-13 active definition is changed prior to the 
+  execution of the \macname{def}'ed token, the revised
+  token assignment will apply.
+
+The following example demonstrates this concept, while showing,
+  without changing the input in any way, that \TokCycle{} 
+  can properly digest active and implicit grouping (cat-1,2) characters:
+
+\begin{exampleA}[lefthand width=8cm]{Active and implicit grouping
+  tokens digestible by \TokCycle}
+\catcode`Y=13
+\catcode`Z=13
+\let Y{
+\let Z}
+\let\Y{
+\let\Z}
+\def\tmp{\textit YabcZ de\Y\itshape f\Zg}%
+
+\def Y{\bgroup[NEW]}% APPLIES AT EXECUTION
+\catcode`Y=11% DOES NOT AFFECT Y IN \tmp
+
+\expandafter\tokcyclexpress\expandafter{\tmp}
+\the\cytoks
+
+\detokenize\expandafter{\the\cytoks}
+\end{exampleA}
+\endgroup
+
+\subsubsection{Trap Catcode 6 (explicit \& implicit) tokens}
+
+\begingroup
+
+\let\myhash#
+
+\medskip
+
+Typically, cat-6 tokens (like \texttt{\#}) are used to designate the
+  following digit (1-9) as a parameter.
+Since they are unlikely to be used in that capacity inside a 
+  \TokCycle{} input stream, the package behavior is to convert them
+  into something cat-12 and set the if-condition \macname{catSIXtrue}.
+In this manner, \macname{ifcatSIX} can be used inside the
+  Character directive to convert cat-6 tokens into something of
+  the user's choosing.
+
+As to this cat-12 conversion, explicit cat-6 characters are converted
+  into the same character with cat-12.  
+On the other hand, implicit cat-6 control sequences (e.g., \verb|\let\myhash#|) 
+  are converted into a fixed-name macro, \macname{implicitsixtok}, 
+  whose cat-12 substitution text is a \macname{string} of the original
+  implicit-macro name.
+
+\resettokcycle
+\Characterdirective{\ifcatSIX
+  \addcytoks{\fbox{#1}}
+  \else\addcytoks{#1}\fi}
+
+%\tokencyclexpress This# isQ \textit{a Q# test\myhash}!\endtokencyclexpress
+
+\begin{exampleA}[lefthand width=6.5cm]{Treatment of cat-6 tokens}
+\resettokcycle
+\Characterdirective{\ifcatSIX
+  \addcytoks{\fbox{#1}}
+  \else\addcytoks{#1}\fi}
+\let\myhash#
+\tokcyclexpress{This# isQ 
+  \textit{a Q# test\myhash}!}
+\the\cytoks\bigskip\par
+\detokenize\expandafter{\the\cytoks}
+\end{exampleA}
+
+%\tokcyclexpress{This# isQ \textit{a Q# t\,e\, s\,t\myhash}!}\the\cytoks{}
+%with 1-character macros
+
+%%%
+%\expandedtokcyclexpress{This# isQ \noexpand\textit{a Q# test\myhash}!}\the\cytoks
+%{} PRE-EXPANDED
+%%%
+
+
+%\tokencyclexpress This# isQ \textit{a Q# test}!\endtokencyclexpress
+
+%\Characterdirective{\ifcatSIX\addcytoks{\fbox{#1}}\else\addcytoks{#1}\fi}
+
+\begin{exampleA}[lefthand width=6.5cm]{Multiple explicit cat-6 tokens are not 
+  a problem}
+\catcode`Q=6
+\tokcyclexpress{This# isQ 
+  \textit{a Q# test\myhash}!}
+\the\cytoks
+\end{exampleA}
+
+\catcode`Q=11
+\hrulefill
+
+\ddbend For what is, perhaps, a rare situation, one can even process input 
+  streams that contain cat-6 macro parameters.
+A package macro, \macname{whennotprocessingparameter\#1\{<}%
+  \textit{directive when not a parameter}\verb|>}|, can be
+  used inside of the Character directive to intercept parameters.
+In this example, a macro is defined and then executed, subject to
+  token replacements brought about by the expandable Character directive.
+
+\Characterdirective{%
+  \whennotprocessingparameter#1{\addcytoks[x]{\vowelcap{#1}}}}
+\aftertokcycle{\global\cytoks\expandafter{\the\cytoks}}
+\def\Characterdirective#1{}
+\begin{exampleA}[lefthand width=7cm]{Preserving parameters (e.g.
+  \texttt{\#1, \#2}) in the \TokCycle{} input stream}
+\Characterdirective{%
+  \whennotprocessingparameter#1{%
+    \addcytoks[x]{\vowelcap{#1}}}}
+\tokcyclexpress{%
+  \def\zQ#1#2{[one:#1](two:#2)}
+  This is a \zQ big test.
+
+  \renewcommand\zQ[2]{\ifx t#1[#1]\fi(#2)}
+  This is a \zQ test.}
+\the\cytoks
+\end{exampleA}
+
+\altdecytoks
+
+\endgroup
+
+\subsubsection{Trap implicit tokens in general}
+
+\begingroup
+
+Implicit control sequences (assigned via \macname{let} to characters) 
+  were already mentioned in the context of cat-6.
+However, implicit control sequences can be of any valid catcode (except
+  for cat-0, which we instead call macros or primitives).
+The condition \macname{ifimplicittok} is used to flag such
+  tokens for special processing, as well as active tokens that
+  are \macname{let} to anything unexpandable.
+
+In the next example, implicit, cat-6 and implicit-cat-6 tokens may
+  all be differentiated, shown here with a multiplicity of 
+  \macname{fbox}es.
+
+\fboxsep=1.5pt
+
+\begin{exampleA}[lefthand width=8cm]{Implicit\ensuremath{{}={}}%
+  single box\char44 \ cat-6\ensuremath{{}={}}double box\char44 \ %
+  implicit-cat-6\ensuremath{{}={}}triple box}
+\catcode`Q=\active \let QN
+\let\littlet=t
+\let\littlel=l
+\let\svhash#
+\Characterdirective{\ifimplicittok
+  \ifcatSIX\addcytoks{\fbox{\fbox{\fbox{#1}}}}%
+  \else\addcytoks{\fbox{#1}}\fi\else\ifcatSIX
+  \addcytoks{\fbox{\fbox{#1}}}\else
+  \addcytoks{#1}\fi\fi}
+
+\tokencyclexpress We wi\littlel\littlel# 
+  \textit{ make a \littlet est #} \littlet
+
+This \textit{is a \textbf{big}} \littlet est.
+
+Qext pa#agraph ending with implicit cat six 
+  \svhash.\endtokencyclexpress
+\end{exampleA}
+
+In the following example, we use both control sequences and active characters
+ in \macname{def} and \macname{let} capacities, to demonstrate how 
+  \TokCycle{} digests things.
+Implicit tokens (tokens \macname{let} to characters) are shown in a box,
+  with both the token name and the implicit value (note that tokens 
+  \macname{let} to macros and primitives are not considered implicit).
+Active tokens processed through the character directive are followed with
+  a \dag, whereas those processed through the macro directive are followed
+  with a \ddag.
+
+
+\begin{exampleA}[lefthand width=7.5cm]{Non-active vs{.} active \macname{def} 
+  \& \macname{let}}
+\Characterdirective{\ifimplicittok
+  \addcytoks{\fbox{\detokenize{#1}:#1}}%
+  \else\addcytoks{#1}\fi\ifactivetok
+  \addcytoks{\rlap{\dag}}\fi\addcytoks{~\,}}
+\Macrodirective{\ifimplicittok
+  \addcytoks{\fbox{\detokenize{#1}}}%
+  \else\addcytoks{#1}\fi\ifactivetok
+  \addcytoks{\rlap{\ddag}}\fi
+  \ifx\par#1\else\addcytoks{~\,}\fi}
+
+\def\A{a}
+\let\B i
+\let\C\today
+\let\D\relax
+\def\E{\relax}
+\catcode`V=13 \def V{a}
+\catcode`W=13 \let Ww
+\catcode`X=13 \let X\today
+\catcode`Y=13 \let Y\relax
+\catcode`Z=13 \def Z{\relax}
+\tokcyclexpress{\A\B\C\D\E ab\par VWXYZab}
+\the\cytoks
+\end{exampleA}
+
+
+\ddbend If the input stream is subject to pre-expansion, one
+  will require \macname{noexpand} for macros where no pre-expansion
+  is desired.\medskip
+
+\ddbend If the input stream is provided pre-tokenized via 
+  \macname{def}, \TeX{} convention requires cat-6 tokens to appear 
+  in the input stream as duplicate, e.g. \texttt{\#\#}.
+
+
+\subsubsection{Changing grouping tokens (catcodes 1,2)}
+
+\begingroup
+
+Changing grouping tokens (catcodes 1,2) may require something more,
+  if the output stream is to be detokenized.  
+In the following examples, pay attention to the
+  detokenized grouping around the argument to \macname{fbox}.
+
+As we will see, the issues raised here only affect the situation
+  when detokenization of the output stream is required.
+\medskip
+
+\begin{exampleA}[]{\TokCycle{} defaults grouping tokens to braces:}
+\tokencycle
+ {\addcytoks{(#1)}}
+ {\processtoks{#1}}
+ {\addcytoks{#1}}
+ {\addcytoks{ }}
+This \fbox{is a} test.
+\endtokencycle\medskip
+
+\detokenize\expandafter{\the\cytoks}
+\end{exampleA}
+
+One can make brackets cat-1,2, redefining bgroup/egroup to [ ].
+However, while one can now use brackets in input stream, braces 
+  will still appear in the detokenized \TokCycle{} output stream:
+
+\begin{exampleA}[lefthand width=6.5cm]
+{\TokCycle{} will not automatically change its grouping tokens}
+\catcode`\[=1
+\catcode`\]=2
+\let\bgroup[
+\let\egroup]
+\tokencycle
+ {\addcytoks{(#1)}}
+ {\processtoks{#1}}
+ {\addcytoks{#1}}
+ {\addcytoks{ }}
+This \fbox[is a] test.
+\endtokencycle\medskip
+
+\detokenize\expandafter{\the\cytoks}
+\end{exampleA}
+
+If it is necessary to reflect revised grouping tokens in the 
+  output stream, the \macname{settcgrouping} macro is 
+  to be used.
+
+\begin{exampleA}[lefthand width=6.5cm]
+{Redefine \TokCycle{} grouping tokens as angle
+  brackets using \macname{settcGrouping}}
+\catcode`\<=1
+\catcode`\>=2
+\catcode`\{=12
+\catcode`\}=12
+\let\bgroup<
+\let\egroup>
+\settcGrouping<<#1>>
+\tokencycle
+ <\addcytoks<(#1)>>
+ <\processtoks<#1>>
+ <\addcytoks<#1>>
+ <\addcytoks< >>
+This \fbox<is a> test.
+\endtokencycle\medskip
+
+\detokenize\expandafter<\the\cytoks>
+\end{exampleA}
+
+Angle brackets are now seen in the above detokenization.
+Until subsequently changed, cat-1,2 angle brackets now appear in 
+  detokenized \TokCycle{} groups, even if other cat-1,2 tokens were
+  used in the input stream.
+Bottom line: 
+\begin{itemize}
+\item adding, deleting, or changing catcode 1,2 explicit 
+  grouping tokens, e.g., \{\}, (in conjunction with their 
+  associated implicit  \macname{bgroup}\macname{egroup}) 
+  tokens will not affect \TokCycle's ability to digest proper 
+  grouping of the input stream, regardless of which tokens 
+  are catcode 1,2 at the moment.
+
+\item The grouping tokens used in \TokCycle's output 
+  default to \verb|{}| braces (with cat-1,2), but can be 
+  changed deliberately  using \macname{settcGrouping}.
+
+\item The package, currently, has no way to reproduce in the
+   output stream the actual grouping tokens that occur in the 
+  input stream, but one should ask, for the particular
+  application, if it really matters, as long as the the 
+  proper catcodes-1,2 are preserved?
+
+\end{itemize}
+
+\endgroup
+
+\subsubsection{Catcode 10 space tokens}
+
+\begingroup
+
+Here we demonstrate that \TokCycle{} can handle arbitrary redesignation
+  of tokens to cat-10, as well as implicit space tokens.
+
+\ddbend While it should seem natural, we note that implicit
+  space tokens are directed to the Space directive rather than
+  the Character directive.
+However, \macname{ifimplicittok} may still be used to 
+  differentiate an explicit space from an implicit one.
+\medskip
+
+Note in the following examples that cat-10 tokens do \textit{not}
+  get under-dots.
+The next three examples all use the same input, but with different
+catcode settings for the space and the underscore.
+
+\fboxsep=1pt
+
+\begin{exampleA}[lefthand width=10cm]{space cat-10{,} underscore cat-12}
+\catcode`\_=12 %
+\catcode`\ =10 %
+
+\tokencycle{\addcytoks{\underdot{#1}}}%
+{\processtoks{#1}}%
+{\addcytoks{#1}}%
+{\addcytoks{#1}}%
+\fbox{a_c d} b_g\itshape f\upshape\endtokencycle
+\end{exampleA}
+%
+\begin{exampleA}[lefthand width=10cm]{space cat-10{,} underscore cat-10}
+\catcode`\_=10 %
+\catcode`\ =10 %
+
+\tokencycle{\addcytoks{\underdot{#1}}}%
+{\processtoks{#1}}%
+{\addcytoks{#1}}%
+{\addcytoks{#1}}%
+\fbox{a_c d} b_g\itshape f\upshape\endtokencycle
+\end{exampleA}
+
+%
+
+\begin{exampleA}[lefthand width=10cm]{space cat-12{,} underscore cat-10}
+\catcode`\_=10 %
+\catcode`\ =12 %
+
+\tokencycle{\addcytoks{\underdot{#1}}}%
+{\processtoks{#1}}%
+{\addcytoks{#1}}%
+{\addcytoks{#1}}%
+\fbox{a_c d} b_g\itshape f\upshape\endtokencycle
+\end{exampleA}
+
+%%%
+\resettokcycle
+\Characterdirective{\addcytoks{\underdot{#1}}}
+
+\begin{exampleA}[lefthand width=10cm]{Implicit spaces work{,} too}
+\resettokcycle
+\Characterdirective{\addcytoks{\underdot{#1}}}
+\def\:{\let\mysptoken= } \: %
+\catcode`\_=10 %
+\catcode`\ =12 %
+
+\tokencyclexpress
+\fbox{a\mysptoken{}c d} b_g\itshape f\upshape
+\endtokencyclexpress
+\end{exampleA}
+
+\endgroup
+
+
+\subsubsection{Changes to catcode 0}
+
+\begingroup
+
+\begin{exampleA}[]{Cat-0 changes are not a hindrance to \TokCycle}
+\let\littlet=t
+\catcode`\! 0 !catcode`!\ 12
+!Characterdirective{!ifimplicittok
+  !addcytoks{!fbox{#1}}!else!ifcatSIX
+  !addcytoks{!fbox{!fbox{#1}}}
+  !else!addcytoks{#1}!fi!fi}
+!tokencyclexpress Here, {!scshape!bgroup 
+  on !today!itshape{} we are !egroup 
+  !littlet es!littlet ing} cat-0 
+  changes{!bgroup}!egroup
+!endtokencyclexpress!medskip
+
+!detokenize!expandafter{!the!cytoks}
+\end{exampleA}
+
+\endgroup
+
+
+\end{document}
+

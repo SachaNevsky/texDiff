@@ -1,0 +1,1010 @@
+%%
+%% This is file `pst-vehicle-doc.tex',
+%%
+%% IMPORTANT NOTICE:
+%%
+%% Package `pst-vehicle.tex'
+%%
+%% Thomas Söll
+%% with the collaboration of
+%% Juergen Gilg
+%% Manuel Luque
+%%
+%% This program can redistributed and/or modified under %%
+%% the terms of the LaTeX Project Public License        %%
+%% Distributed from CTAN archives in directory          %%
+%% macros/latex/base/lppl.txt; either version 1.3c of   %%
+%% the License, or (at your option) any later version.  %%
+%%
+%% DESCRIPTION:
+%%   `pst-vehicle' is a PSTricks package
+%%
+%%
+\documentclass[11pt,english,BCOR10mm,DIV12,bibliography=totoc,parskip=false,fleqn,
+   smallheadings, headexclude,footexclude,oneside,dvipsnames,svgnames,x11names,distiller]{pst-doc}
+%\documentclass[11pt,english,BCOR10mm,DIV12,bibliography=totoc,parskip=false,smallheadings
+%    headexclude,footexclude,oneside,dvipsnames,svgnames,distiller]{pst-doc}
+\listfiles
+\usepackage[autostyle]{csquotes}
+\usepackage{biblatex}%\usepackage[style=dtk]{biblatex}
+\addbibresource{pst-vehicle-doc.bib}
+\usepackage[utf8]{inputenc}
+\let\pstvehicleFV\fileversion
+\usepackage[e]{esvect} % für schönere Vektorpfeile
+\usepackage{pst-vehicle,pst-eucl,pstricks-add,animate}
+\let\belowcaptionskip\abovecaptionskip
+
+
+\usepackage{etex}             % um die Anzahl der Register zu erhöhen (sonst nur 256)
+
+
+\newcommand{\qrq}{\ensuremath{\quad \Rightarrow \quad}}
+\newcommand{\envert}[1]{\left\lvert#1\right\rvert}
+\let\abs=\envert
+\newcommand{\BM}[1]{\ensuremath{\text{\boldmath $#1$\unboldmath}}}
+\newcommand{\Anf}[1]{\glqq{}#1\grqq{}}
+
+\parindent0pt
+
+\makeatletter
+\def\curveVal{\def\pst@par{}\pst@object{curveVal}}%
+\def\curveVal@i#1#2{\@ifnextchar[%
+{\curveVal@ii{#1}{#2}}%
+{\curveVal@ii{#1}{#2}[1]}}%
+\def\curveVal@ii#1#2[#3]{%
+\pst@killglue%
+\begingroup%
+\use@par%
+\begin@SpecialObj%
+\pst@Verb{%
+          /Pi 3.1415926 def
+          /rpn {tx@AlgToPs begin AlgToPs end cvx} def
+          /x0 #1 def
+          /rW #3 def
+          /func (#2) rpn def
+          /Diff (Derive(1,#2)) rpn def
+          /DiffI (Derive(2,#2)) rpn def
+          /dAB (sqrt(1+Diff^2)) rpn def
+          /dABdiff (Derive(1,sqrt(1+(Derive(1,#2))^2))) rpn def
+          /x x0 def func /funcx0 exch def % ----- f(x0)
+          /x x0 def Diff /Diffx0 exch def % ----- f'(x0)
+          /x x0 def DiffI /DiffIx0 exch def % --- f''(x0)
+          /KWRho {DiffI 1 Diff dup mul add 3 exp sqrt div} def
+          /x x0 def KWRho /KWRhox0 exch def % --- f''(x0)
+          /tA 1 1 Diffx0 dup mul add sqrt div def %
+          /deltax0 tA Diffx0 mul neg KWRhox0 div def
+          /deltay0 tA KWRhox0 div def
+          /deltaxW tA Diffx0 mul neg rW mul def
+          /deltayW tA rW mul def
+          /Rho {1 KWRho div} def
+          /x x0 def Rho abs /Rhox0 exch def
+          /alpha deltax0 deltay0 atan def
+          /beta Diffx0 1 atan def
+          /tex beta cos def
+          /tey beta sin def
+          /gamma 90 beta add def
+          /nex gamma cos def
+          /ney gamma sin def
+}%
+\pnode(!x0 funcx0){PC}%
+\pnode(!x0 deltaxW 2 mul add funcx0 deltayW 2 mul add){QC}%
+\pnode(!x0 deltax0 add funcx0 deltay0 add){MC}%
+\pnode(!x0 deltaxW add funcx0 deltayW add){MW}%
+\showpointsfalse%
+\end@SpecialObj%
+\endgroup\ignorespaces%
+}%
+\makeatother
+%3 \cdot f' \cdot (f'')^2 - (f')^2 \cdot f''' - f''' = 0  Stellen maximaler Krümmung!
+
+\psset{arrowlength=2.8,arrowinset=0.1}
+
+
+\def\bgImage{%
+\begin{pspicture}(0,0)(14,8)
+\def\FuncA{0.5*cos(1.5*x)+0.25*x}
+\psplot[plotpoints=500]{0}{16}{\FuncA}
+\psVehicle[vehicle=\HighWheeler,showSlope=false,linecolor=Gold]{0.35}{1.2}{\FuncA}%
+\psVehicle[vehicle=\Bike,style=bike,showSlope=false,linecolor=green!70]{0.5}{6}{\FuncA}%
+\psVehicle[vehicle=\Truck,style=truck,showSlope=false]{0.35}{12.2}{\FuncA}%
+\end{pspicture}
+}
+
+\lstset{language=PSTricks,morekeywords={psVehicle}\footnotesize\ttfamily}
+%
+\psset{labelFontSize=\scriptstyle}% for mathmode
+\psset{algebraic=true}
+\newpsstyle{quadrillage}{subgriddiv=2,gridlabels=5pt,gridwidth=0.3pt,gridcolor=black!50,subgridwidth=0.2pt,subgridcolor=black}
+
+\newcommand{\Epkt}[3]{\ensuremath{{\text{#1}}\left(\,#2\;\vline\;#3\,\right)}}
+
+
+
+\begin{document}
+
+\title{pst-vehicle v 1.2}
+\subtitle{A PSTricks package for slipping/rolling vehicles on curves of any kind of mathematical functions}
+\author{Thomas \textsc{Söll}\\
+avec la collaboration de\\
+Manuel \textsc{Luque} et Jürgen \textsc{Gilg}}
+\date{\today}
+
+\maketitle
+
+\tableofcontents
+\psset{unit=1cm}
+
+
+\clearpage
+
+
+\begin{abstract}
+This package was created to illustrate the notion of slope, the coefficient of the tangent line at a point of a curve. On the road, a rampant way or a dangerous descent due to their slope is indicated by a sign showing the percentage of the slope
+of this section of road, for example 10\,\%. It was therefore quite obvious that the idea of representing a vehicle rolling without slipping on a curve came into our minds. Different types of vehicles are proposed, the shape of the curve is to be
+defined by its equation: $y=f(x)$ in algebraic notation.
+The line connecting the two contact points from the front and the rear wheel with the curve and the sign of the slope can be easily displayed. It is also possible to represent, not a speed-o-meter of the vehicle, but a slope-o-meter was
+introduced as an indicator of the value of the slope of the straight line defined above.
+
+
+\vfill
+This program can redistributed and/or modified under %%
+the terms of the LaTeX Project Public License        %%
+Distributed from CTAN archives in directory          %%
+macros/latex/base/lppl.txt; either version 1.3c of   %%
+the License, or (at your option) any later version.  %%
+
+\end{abstract}
+
+
+\clearpage
+
+
+
+\section{Theory---the mathematical background}
+
+Within the following first sections, we like to show the theory on how we programmed the package. Easy elementary vector geometry with some basic calculus aspects.
+
+
+
+\subsection{Wheels on a curve---equal radii}
+
+\psset{saveNodeCoors,NodeCoorPrefix=n,algebraic}
+\def\myFunk{2-0.25*x^2}
+\def\abl{Derive(1,\myFunk)}
+\begin{pspicture}(-10,-1)(8,3.5)
+\psplot{-3.8}{3.8}{\myFunk}
+\pnode(*-3 {\myFunk}){A}
+\pnode(*nAx {\abl}){A_St}
+\pnode(*-1 {\myFunk}){B}
+\pnode(*nBx {\abl}){B_St}
+\psdot(A)
+\psdot(B)
+\uput*[-90](A){\small$\Epkt{}{x_0}{f(x_0)}$}
+\uput*[-90](B){\small$\Epkt{}{x}{f(x)}$}
+
+\pnode(!nAx nA_Sty 1 nA_Sty dup mul add sqrt div sub nAy 1 1 nA_Sty dup mul add sqrt div add){H}
+\pnode(!nBx nB_Sty 1 nB_Sty dup mul add sqrt div sub nBy 1 1 nB_Sty dup mul add sqrt div add){V}
+\psdot[linecolor=red](H)
+\psdot[linecolor=red](V)
+\pscircle[dimen=outer,linecolor=gray](H){1}
+\pscircle[dimen=outer,linecolor=gray](V){1}
+
+\pcline[linecolor=red](H)(V)\naput*{$R$}
+\pcline[linecolor=blue](H)(A)\naput{$r$}
+\pcline[linecolor=blue](V)(B)\naput{$r$}
+
+\psplotTangent[linestyle=dashed,linecolor=Green]{nAx}{1.5}{\myFunk}
+\psplotTangent[linestyle=dashed,linecolor=Green]{nBx}{1.5}{\myFunk}
+\end{pspicture}
+
+The boundary point of the back wheel (radius $r$ from the back wheel axis) with the curve:
+\begin{equation*}
+\vec{x}_0=
+\begin{pmatrix}
+x_0\\
+f(x_0)
+\end{pmatrix}
+\end{equation*}
+The direction of the tangent line is:
+\begin{equation*}
+\vec{t}_0=
+\begin{pmatrix}
+1\\
+f'(x_0)
+\end{pmatrix}
+\end{equation*}
+The normed normal vector in $x_0$ is:
+\begin{equation*}
+\vec{n}_{0x_0}=\frac{1}{\sqrt{1+f'(x_0)^2}}
+\begin{pmatrix}
+-f'(x_0)\\
+1
+\end{pmatrix}
+\end{equation*}
+The point $H$ -- coordinates of the back wheel axis is:
+\begin{align*}
+\overrightarrow{BW}&=\vec{x}_0+r\cdot \vec{n}_{0x_0}\\
+&=\begin{pmatrix}
+x_0-r\frac{f'(x_0)}{\sqrt{1+f'(x_0)^2}}\\
+f(x_0)+r\frac{1}{\sqrt{1+f'(x_0)^2}}
+\end{pmatrix}
+\end{align*}
+$x$ is the abscissa of the boundary point of the front wheel with the curve.
+
+The normed normal vector in $x$ is:
+\begin{equation*}
+\vec{n}_{0x}=\frac{1}{\sqrt{1+f'(x)^2}}
+\begin{pmatrix}
+-f'(x)\\
+1
+\end{pmatrix}
+\end{equation*}
+The point $V$ -- coordinates of the front wheel axis is:
+\begin{align*}
+\overrightarrow{FW}&=\vec{x}+r\cdot \vec{n}_{0x}\\
+&=\begin{pmatrix}
+x-r\frac{f'(x)}{\sqrt{1+f'(x)^2}}\\
+f(x)+r\frac{1}{\sqrt{1+f'(x)^2}}
+\end{pmatrix}
+\end{align*}
+The distance between the axes is $R$ -- thus:
+\begin{align*}
+|\overrightarrow{FW}-\overrightarrow{BW}|&=R\\
+\left|
+\begin{pmatrix}
+x-r\frac{f'(x)}{\sqrt{1+f'(x)^2}}-\left(x_0-r\frac{f'(x_0)}{\sqrt{1+f'(x_0)^2}}\right)\\
+f(x)+r\frac{1}{\sqrt{1+f'(x)^2}}-\left(f(x_0)+r\frac{1}{\sqrt{1+f'(x_0)^2}}\right)
+\end{pmatrix}
+\right|&=R\\
+\left|\begin{pmatrix}
+x-x_0+r\left(\frac{f'(x_0)}{\sqrt{1+f'(x_0)^2}}-\frac{f'(x)}{\sqrt{1+f'(x)^2}}\right)\\
+f(x)-f(x_0)+r\left(\frac{1}{\sqrt{1+f'(x)^2}}-\frac{1}{\sqrt{1+f'(x_0)^2}}\right)
+\end{pmatrix}
+\right|&=R
+\end{align*}
+This leads to an equation of the variable $x$, where $x$ is the abscissa of the boundary point of the front wheel with the curve.
+\begin{equation*}
+\left(x-x_0+r\left(\frac{f'(x_0)}{\sqrt{1+f'(x_0)^2}}-\frac{f'(x)}{\sqrt{1+f'(x)^2}}\right)\right)^2+\left(f(x)-f(x_0)+r\left(\frac{1}{%
+\sqrt{1+f'(x)^2}}-\frac{1}{\sqrt{1+f'(x_0)^2}}\right)\right)^2=R^2
+\end{equation*}
+
+
+
+\subsection{Wheels on a curve---different radii}
+
+\psset{saveNodeCoors,NodeCoorPrefix=n,algebraic}
+\def\myFunk{2-0.25*x^2}
+\def\abl{Derive(1,\myFunk)}
+\begin{pspicture}(-10,-2)(8,3)
+\psplot{-4}{4}{\myFunk}
+\pnode(*-3 {\myFunk}){A}
+\pnode(*nAx {\abl}){A_St}
+\pnode(*-1 {\myFunk}){B}
+\pnode(*nBx {\abl}){B_St}
+\psdot(A)
+\psdot(B)
+\uput*[-90](A){\small$\Epkt{}{x_0}{f(x_0)}$}
+\uput*[-90](B){\small$\Epkt{}{x}{f(x)}$}
+
+\pnode(!nAx nA_Sty 1 nA_Sty dup mul add sqrt div sub nAy 1 1 nA_Sty dup mul add sqrt div add){H}
+\pnode(!nBx nB_Sty 1 nB_Sty dup mul add sqrt div 0.7 mul sub nBy 1 1 nB_Sty dup mul add sqrt div 0.7 mul add){V}
+\psdot[linecolor=red](H)
+\psdot[linecolor=red](V)
+\pscircle[dimen=outer,linecolor=gray](H){1}
+\pscircle[dimen=outer,linecolor=gray](V){0.7}
+
+\pcline[linecolor=red](H)(V)\naput*{$R$}
+\pcline[linecolor=blue](H)(A)\naput{$r_1$}
+\pcline[linecolor=blue](V)(B)\naput{$r_2$}
+
+\psplotTangent[linestyle=dashed,linecolor=Green]{nAx}{1.5}{\myFunk}
+\psplotTangent[linestyle=dashed,linecolor=Green]{nBx}{1.5}{\myFunk}
+\end{pspicture}
+
+The boundary point of the back wheel (radius $r_1$ from the back wheel axis) with the curve:
+\begin{equation*}
+\vec{x}_0=
+\begin{pmatrix}
+x_0\\
+f(x_0)
+\end{pmatrix}
+\end{equation*}
+The direction of the tangent line is:
+\begin{equation*}
+\vec{t}_0=
+\begin{pmatrix}
+1\\
+f'(x_0)
+\end{pmatrix}
+\end{equation*}
+The normed normal vector in $x_0$ is:
+\begin{equation*}
+\vec{n}_{0x_0}=\frac{1}{\sqrt{1+f'(x_0)^2}}
+\begin{pmatrix}
+-f'(x_0)\\
+1
+\end{pmatrix}
+\end{equation*}
+The point $H$ -- coordinates of the back wheel axis is:
+\begin{align*}
+\overrightarrow{BW}&=\vec{x}_0+r_1\cdot \vec{n}_{0x_0}\\
+&=\begin{pmatrix}
+x_0-r_1\frac{f'(x_0)}{\sqrt{1+f'(x_0)^2}}\\
+f(x_0)+r_1\frac{1}{\sqrt{1+f'(x_0)^2}}
+\end{pmatrix}
+\end{align*}
+$x$ is the abscissa of the boundary point of the front wheel with the curve.
+
+The normed normal vector in $x$ is:
+\begin{equation*}
+\vec{n}_{0x}=\frac{1}{\sqrt{1+f'(x)^2}}
+\begin{pmatrix}
+-f'(x)\\
+1
+\end{pmatrix}
+\end{equation*}
+The point $V$ -- coordinates of the front wheel axis is:
+\begin{align*}
+\overrightarrow{FW}&=\vec{x}+r_2\cdot \vec{n}_{0x}\\
+&=\begin{pmatrix}
+x-r_2\frac{f'(x)}{\sqrt{1+f'(x)^2}}\\
+f(x)+r_2\frac{1}{\sqrt{1+f'(x)^2}}
+\end{pmatrix}
+\end{align*}
+The distance between the axes is $R$ -- thus:
+\begin{align*}
+|\overrightarrow{FW}-\overrightarrow{BW}|&=R\\
+\left|
+\begin{pmatrix}
+x-r_2\frac{f'(x)}{\sqrt{1+f'(x)^2}}-\left(x_0-r_1\frac{f'(x_0)}{\sqrt{1+f'(x_0)^2}}\right)\\
+f(x)+r_2\frac{1}{\sqrt{1+f'(x)^2}}-\left(f(x_0)+r_2\frac{1}{\sqrt{1+f'(x_0)^2}}\right)
+\end{pmatrix}
+\right|&=R\\
+\end{align*}
+This leads to an equation of the variable $x$, where $x$ is the abscissa of the boundary point of the front wheel with the curve.
+\begin{equation*}
+\left(x-x_0+r_1\frac{f'(x_0)}{\sqrt{1+f'(x_0)^2}}-r_2\frac{f'(x)}{\sqrt{1+f'(x)^2}}\right)^2+
+\left(f(x)-f(x_0)+r_2\frac{1}{\sqrt{1+f'(x)^2}}-r_1\frac{1}{\sqrt{1+f'(x_0)^2}}\right)^2=R^2
+\end{equation*}
+
+
+
+\subsection{Inclination angle between back wheel and front wheel axes}
+
+\psset{saveNodeCoors,NodeCoorPrefix=n,algebraic}
+\def\myFunk{0}
+\def\abl{Derive(1,\myFunk)}
+\begin{pspicture}(-10,-0.5)(8,4)
+\psplot{-8}{4}{\myFunk}
+\pnode(*-5 {\myFunk}){A}
+\pnode(*nAx {\abl}){A_St}
+\pnode(*1 {\myFunk}){B}
+\pnode(*nBx {\abl}){B_St}
+
+%\uput*[-90](A){\small$\Epkt{}{x_0}{f(x_0)}$}
+%\uput*[-90](B){\small$\Epkt{}{x}{f(x)}$}
+
+\pnode(!nAx nA_Sty 1 nA_Sty dup mul add sqrt div 2 mul sub nAy 1 1 nA_Sty dup mul add sqrt div 2 mul add){H}
+\pnode(!nBx nB_Sty 1 nB_Sty dup mul add sqrt div 1.4 mul sub nBy 1 1 nB_Sty dup mul add sqrt div 1.4 mul add){V}
+\psdot[linecolor=red](H)
+\psdot[linecolor=red](V)
+\uput[90](H){H}
+\uput[90](V){V}
+\pscircle[dimen=outer,linecolor=gray](H){2}
+\pscircle[dimen=outer,linecolor=gray](V){1.4}
+
+\pcline[linecolor=red](H)(V)\naput{$R$}
+\pcline[linecolor=blue](H)(A)\naput{$r_1$}
+\pcline[linecolor=blue](V)(B)\naput{$r_2$}
+
+\pcline[linecolor=gray,linestyle=dashed](H)(!nHx nVy)\nbput{$r_1-r_2$}
+\pcline[linecolor=gray,linestyle=dashed](!nHx nVy)(!nVx nVy)\nbput{$\sqrt{R^2-(r_1-r_2)^2}$}
+
+\pnode(!nHx nVy){X}
+
+\pstMarkAngle[linecolor=red,arrows=->,MarkAngleRadius=4.5,LabelSep=3.6]{H}{V}{X}{\color{red}$\alpha$}
+\end{pspicture}
+
+The initial inclination angle $\alpha$ of the line between front wheel axis and back wheel axis on a horizontal plane is :
+\begin{equation*}
+  \alpha=\arctan\left(\frac{r_1-r_2}{\sqrt{R^2-(r_1-r_2)^2}}\right)
+\end{equation*}
+If the plane is not horizontal, there is an additional angle $\beta$ given by the function $f(x)$:
+
+\psset{saveNodeCoors,NodeCoorPrefix=n,algebraic}
+\def\myFunk{0}
+\def\abl{Derive(1,\myFunk)}
+\begin{pspicture}(-10,0)(8,5.5)
+\rput{-20}{
+\psplot{-8}{4}{\myFunk}
+\pnode(*-5 {\myFunk}){A}
+\pnode(*nAx {\abl}){A_St}
+\pnode(*1 {\myFunk}){B}
+\pnode(*nBx {\abl}){B_St}
+\psdot(A)
+\psdot(B)
+\uput*[-90](A){\small$\Epkt{}{x_0}{f(x_0)}$}
+\uput*[-90](B){\small$\Epkt{}{x}{f(x)}$}
+
+\pnode(!nAx nA_Sty 1 nA_Sty dup mul add sqrt div 2 mul sub nAy 1 1 nA_Sty dup mul add sqrt div 2 mul add){H}
+\pnode(!nBx nB_Sty 1 nB_Sty dup mul add sqrt div 1.4 mul sub nBy 1 1 nB_Sty dup mul add sqrt div 1.4 mul add){V}
+\psdot[linecolor=red](H)
+\psdot[linecolor=red](V)
+\uput[90](H){H}
+\uput[90](V){V}
+\pscircle[dimen=outer,linecolor=gray](H){2}
+\pscircle[dimen=outer,linecolor=gray](V){1.4}
+
+\pcline[linecolor=red](H)(V)\naput{$R$}
+\pcline[linecolor=blue](H)(A)\naput{$r_1$}
+\pcline[linecolor=blue](V)(B)\naput{$r_2$}
+
+\pcline[linecolor=gray,linestyle=dashed](H)(!nHx nVy)\nbput{$r_1-r_2$}
+\pcline[linecolor=gray,linestyle=dashed](!nHx nVy)(!nVx nVy)\nbput{$\sqrt{R^2-(r_1-r_2)^2}$}
+
+\pnode(!nHx nVy){X}
+
+\pstMarkAngle[linecolor=red,arrows=->,MarkAngleRadius=4.5,LabelSep=3.6]{H}{V}{X}{\color{red}$\alpha$}
+}
+
+\rput(H){%
+\pcline[linestyle=dashed](0,0)(5.5,0)\naput{$x_V-x_H$}
+\pcline[linestyle=dashed](5.5,0)(V)\naput{$y_V-y_H$}
+}
+\uput{1cm}[-13](H){\color{blue}$\beta$}
+\end{pspicture}
+
+The coordinates of the front wheel axis are:
+\begin{equation*}
+\overrightarrow{FW}=\vec{x}+r_2\cdot \vec{n}_{0x}
+=\begin{pmatrix}
+x-r_2\frac{f'(x)}{\sqrt{1+f'(x)^2}}\\
+f(x)+r_2\frac{1}{\sqrt{1+f'(x)^2}}
+\end{pmatrix}
+=\begin{pmatrix}
+x_V\\y_V
+\end{pmatrix}
+\end{equation*}
+The coordinates of the back wheel axis are:
+\begin{equation*}
+\overrightarrow{BW}=\vec{x}_0+r_1\cdot \vec{n}_{0x_0}
+=\begin{pmatrix}
+x_0-r_1\frac{f'(x_0)}{\sqrt{1+f'(x_0)^2}}\\
+f(x_0)+r_1\frac{1}{\sqrt{1+f'(x_0)^2}}
+\end{pmatrix}
+=\begin{pmatrix}
+x_H\\y_H
+\end{pmatrix}
+\end{equation*}
+The angle $\beta$ is:
+\begin{equation*}
+\beta=\arctan\left(\frac{y_V-y_H}{x_V-x_H}\right)
+\end{equation*}
+The total angle $\gamma$ is:
+\begin{equation*}
+  \gamma=-(\alpha+\beta)
+\end{equation*}
+
+
+
+\subsection{Determination of the curvature radius}
+
+A curved curve can be imagined from many small circular arcs. The radius of the respective associated circles is referred to as the radius of curvature. The stronger the curvature of a curve changes, the smaller the intervals have to be chosen in
+order to be able to speak approximately of a circular arc.
+
+To find the radius of such an arc and thus the radius of the curvature of the curve at a point $x_{0}$, the normal in $ x_{0} $ should be intersected with the normal in $x_{0}+\epsilon$. This yields the $x$ value of the center of the curvature circle
+M of the curve. The following drawing is intended to illustrate this.
+
+\begin{pspicture}[showgrid=false,shift=0,saveNodeCoors,NodeCoorPrefix=n](0,-0.6)(18,9.2)
+\def\funkg{0.4*(x-3)*sin(0.2*(x-5))}
+\curveVal{5}{\funkg}[5]
+
+\psplot[algebraic=true,plotpoints=500,linecolor=black,linewidth=2pt,yMaxValue=25,yMinValue=-15]{0}{18}{\funkg}
+%\psplot[algebraic=false,plotpoints=500,linecolor=red,linewidth=2pt,yMaxValue=25,yMinValue=-15]{0}{18}{Rho}
+\pcline[linewidth=1.5pt,nodesepB=-2.6,linecolor=BrickRed](!x0 funcx0)(!x0 deltax0 add funcx0 deltay0 add)
+\pcline[linewidth=1.5pt,nodesepB=-2.6,linecolor=Green](*{x0 0.5 add} {\funkg})(!x0 deltax0 add funcx0 deltay0 add)
+\psdot[dotsize=5pt](!x0 funcx0)
+\psdot[dotsize=5pt](*{x0 0.5 add} {\funkg})
+\psdot[dotsize=5pt](!x0 deltax0 add funcx0 deltay0 add)
+\uput{0.25}[150]{0}(!x0 deltax0 add funcx0 deltay0 add){M}
+\psarc[linewidth=1.5pt,linestyle=dashed,linecolor=cyan](!x0 deltax0 add funcx0 deltay0 add){!1 KWRhox0 div}{230}{380}
+\pcline[offset=-30pt,tbarsize=20pt,linewidth=1.5pt,linecolor=BrickRed]{|<->|}(!x0 funcx0)(!x0 deltax0 add funcx0 deltay0 add)
+\ncput*{\color{BrickRed}$\rho$}
+%\pcline[offset=20pt,tbarsize=20pt,linewidth=1.5pt]{|<->|}(!x0 deltax0 add  funcx0)(!x0 deltax0 add funcx0 deltay0 add)
+%\ncput*{$\Delta y_{m}$}
+\pcline[linecolor=orange,linewidth=1.2pt]{<->}(!x0 deltax0 add  funcx0)(!x0 deltax0 add funcx0 deltay0 add)
+\naput[nrot=:U]{\color{orange}$\Delta y_{m}$}
+\pcline[linecolor=orange,linewidth=1.2pt]{<->}(!x0 deltax0 add  funcx0)(!x0 funcx0)
+\nbput[nrot=:U]{\color{orange}$\Delta x_{m}$}
+\end{pspicture}
+
+\makebox[7cm][l]{\textbf{Normal in \BM{x_{0}}:}} $ n(x)=-\frac{1}{f'(x_{0})}\cdot (x-x_{0})+f(x_{0})$
+
+\makebox[7cm][l]{\textbf{Normal in \BM{x_{0}+\epsilon}:}} $ n_{\epsilon}(x)=-\frac{1}{f'(x_{0}+\epsilon)}\cdot (x-x_{0}-\epsilon)+f(x_{0}+\epsilon)$
+
+\makebox[7cm][l]{\textbf{Intersection point of the normals:}} $n_{\epsilon}(x) - n(x) = 0$
+\begin{alignat*}{2}
+- \frac{x}{f'(x_{0}+\epsilon)} + \frac{x_{0}}{f'(x_{0}+\epsilon)} + \frac{\epsilon}{f'(x_{0}+\epsilon)} + f(x_{0}+\epsilon) + \frac{x}{f'(x_{0})} - \frac{x_{0}}{f'(x_{0})} - f(x_{0}) & = 0&\qquad& \\[4pt]
+\frac{x\cdot \left[f'(x_{0}+\epsilon) - f'(x_{0})\right]}{f'(x_{0}+\epsilon)\cdot f'(x_{0})} - \frac{x_{0}\cdot \left[f'(x_{0}+\epsilon) - f'(x_{0})\right]}{f'(x_{0}+\epsilon)\cdot f'(x_{0})} + \frac{\epsilon}{f'(x_{0}+\epsilon)} + f(x_{0}+\epsilon) - f(x_{0}) & =
+0&\qquad& |:\epsilon\\[4pt]
+\frac{x\cdot \frac{f'(x_{0}+\epsilon) - f'(x_{0})}{\epsilon}}{f'(x_{0}+\epsilon)\cdot f'(x_{0})} - \frac{x_{0}\cdot \frac{f'(x_{0}+\epsilon) - f'(x_{0})}{\epsilon}}{f'(x_{0}+\epsilon)\cdot f'(x_{0})} + \frac{1}{f'(x_{0}+\epsilon)} + \frac{f(x_{0}+\epsilon) -
+f(x_{0})}{\epsilon} & = 0&\qquad&| \lim_{\epsilon\to 0}\\[4pt]
+\frac{x\cdot f''(x_{0})}{f'(x_{0})\cdot f'(x_{0})} - \frac{x_{0}\cdot f''(x_{0})}{f'(x_{0})\cdot f'(x_{0})} + \frac{1}{f'(x_{0})} + f'(x_{0}) & = 0&&
+\end{alignat*}
+Solving for $x$:
+\begin{equation*}
+ x = x_{0} - \frac{f'(x_{0})}{f''(x_{0})} - \frac{\left[f'(x_{0})\right]^{3}}{f''(x_{0})} = x_{0} + \underbrace{\left[-\frac{f'(x_{0})}{f''(x_{0})}\cdot \left\{ 1 + \left[f'(x_{0})\right]^{2} \right\}\right]}_{\Delta x_{m}}
+\end{equation*}
+For the corresponding change $\Delta y_{m}$ of the ordinate $y$, we multiply the slope of the normal with $\Delta x_{m}$:
+\begin{equation*}
+  \Delta y_{m} = -\frac{1}{f'(x_{0})} \cdot \Delta x_{m} =\frac{1}{f''(x_{0})}\cdot \left\{ 1 + \left[f'(x_{0})\right]^{2} \right\}
+\end{equation*}
+With the Pythagorean theorem we get for the curvature radius:
+\begin{equation*}
+  \rho = \sqrt{(\Delta x_{m})^{2} + (\Delta y_{m})^{2}} = \sqrt{(\Delta x_{m})^{2} + \left[-\frac{1}{f'(x_{0})} \cdot \Delta x_{m}\right]^{2}} = \abs{\frac{\Delta x_{m}}{f'(x_{0})}} \cdot \sqrt{\left[f'(x_{0})\right]^{2} + 1}
+\end{equation*}
+Using $\Delta x_{m} = -\frac{f'(x_{0})}{f''(x_{0})}\cdot \left\{ 1 + \left[f'(x_{0})\right]^{2} \right\}$--- this leads to:
+\begin{equation*}
+  \rho = \abs{\frac{\frac{f'(x_{0})}{f''(x_{0})}\cdot \left\{ 1 + \left[f'(x_{0})\right]^{2} \right\}}{f'(x_{0})}} \cdot \sqrt{\left[f'(x_{0}\right]^{2} + 1} =
+  \frac{\sqrt{\left\{1 + \left[f'(x_{0})\right]^{2}\right\}^{3}}}{\abs{f''(x_{0})}}
+\end{equation*}
+
+
+
+\subsection{Rolling without slipping}
+
+\begin{pspicture}[showgrid=false,shift=0,saveNodeCoors,NodeCoorPrefix=n](0,-0.8)(18,11)
+\def\funkg{0.4*(x-3)*sin(0.2*(x-5))}
+\curveVal{7}{\funkg}[3]
+%\psplot[algebraic=true,plotpoints=500,linecolor=black,linewidth=2pt,yMaxValue=25,yMinValue=-15]{0}{18}{\funkg}
+\pcline[linewidth=1.5pt,nodesepB=0,linecolor=BrickRed](PC)(MC)
+\psdot[dotsize=5pt](MC)
+\uput{0.2}[40]{0}(MC){M$_{\text{c}}$}
+\psarc[linewidth=1.5pt,linecolor=cyan](MC){!Rhox0}{255}{340}
+\psdot[dotsize=5pt](PC)
+\uput{0.25}[-60]{0}(PC){P}
+\uput{0.25}[60]{0}(QC){Q}
+\uput{0.3}[-100]{0}(MW){M$_{\text{w}}$}
+\pnode([offset=1.3cm]{MC}PC){PCO}
+\pnode([offset=-1.3cm]{PC}MC){MCO}
+\pnode([offset=-1.3cm]{PC}MW){MWO}
+\psline[linewidth=1.5pt](MWO)(MW)
+\psline[linewidth=1.5pt](MCO)(MC)
+\pcline[offset=-5pt,linewidth=1.5pt,linecolor=BrickRed]{<->}(MWO)(MCO)
+\ncput*{\color{BrickRed}$R=\rho - r$}
+\psdot[dotsize=5pt](QC)
+\psdot[dotsize=5pt](MW)
+\pscircle[linewidth=1.5pt](MW){!rW}
+\psarcn[linewidth=1.5pt,linecolor=BrickRed]{->}(MW){!rW 0.5 add}{180}{150}
+\uput{3.65}[165]{0}(MW){$\omega=\dot{\varphi}$}
+%\multido{\iC=0+1}{11}{%
+%\definecolor[ps]{rainbow}{hsb}{0.9 \iC\space 15 div sub 0.95 0.7 }%
+%\rput{!-90 \iC\space 0.5 mul 180 mul Pi div rW div sub alpha sub}(MW){\psline[linewidth=1.5pt,linecolor=rainbow](!rW 0)(!rW 0.2 sub 0)}
+%\rput{!-90 \iC\space 0.5 mul 180 mul Pi div Rhox0 div sub alpha sub}(MC){\psline[linewidth=1.5pt,linecolor=rainbow](!Rhox0 0)(!Rhox0 0.2 add 0)}
+%}
+%%\rput(MW){\psline[linewidth=1.5pt]{->}(0,0)(!tex 4 mul tey 4 mul)}
+\rput{!beta}(MW){\pcline[linewidth=1.2pt,linecolor=BrickRed]{->}(0,0)(2,0)\nbput[npos=0.7]{\color{BrickRed}$\vv{v_{\text{c}}}$}}
+\rput{0}(MC){\uput{!Rho}[-19]{0}(0,0){\color{cyan}G$_{f}$}}
+\rput{-40}(MC){\pnode(!Rho rW sub 0){MWI}}
+\rput{-40}(MC){\pnode(!Rho 0){PCI}}
+\pscircle[linewidth=1.2pt,linecolor=gray,linestyle=dashed](MWI){!rW}
+\psarc[linewidth=1.5pt,linecolor=gray,linestyle=dashed](MC){!Rhox0 rW sub}{290}{330}
+\pcline[linewidth=1pt,nodesepB=0,linecolor=cyan!60,linestyle=dashed](PCI)(MC)
+\pcline[linewidth=1.5pt,nodesepB=0,linecolor=gray,linestyle=dashed](MWI)(MC)
+\psdot[dotsize=5pt,linecolor=gray](MWI)
+\psdot[dotsize=5pt,linecolor=gray](PCI)
+\uput{0.3}[-20]{0}(PCI){$\text{P}'$}
+\uput{0.3}[0]{0}(MWI){$\text{M}_{\text{w}}'$}
+\multido{\iC=0+1}{11}{%
+\definecolor[ps]{rainbow}{hsb}{0.9 \iC\space 15 div sub 1 \iC\space 11 div sub 0.7 }%
+\rput{!-90 \iC\space 0.5 mul 180 mul Pi div rW div sub -50 sub}(MWI){\psline[linewidth=1.5pt,linecolor=rainbow](!rW 0)(!rW 0.2 sub 0)}
+\rput{!-90 \iC\space 0.5 mul 180 mul Pi div Rhox0 div sub -50 sub}(MC){\psline[linewidth=1.5pt,linecolor=rainbow](!Rhox0 0)(!Rhox0 0.2 add 0)}
+}
+%\multido{\iC=0+1}{11}{%
+%\rput{!-90 \iC\space 0.5 mul 180 mul Pi div rW div sub alpha sub 50 gamma sub Rhox0 mul rW div sub}(MWI){\psline[linewidth=1.5pt,linecolor=gray!50](!rW 0)(!rW 0.2 sub 0)}
+%}
+\rput{!beta}(PC){\pcline[linewidth=2pt,linecolor=Green]{->}(0,0)(1.5,0)\nbput[npos=0.7,nrot={!beta neg}]{\color{Green}$\vv{e_{\text{t}}}$}}
+\rput{!gamma}(PC){\pcline[linewidth=2pt,linecolor=Green]{->}(0,0)(1.5,0)\nbput[npos=0.7,nrot={!gamma neg}]{\color{Green}$\vv{e_{\text{n}}}$}}
+\end{pspicture}
+
+The condition of a rolling wheel without slipping forces, that the center of the wheel needs to make a rotation around the point P. Therefore, the center moves with the velocity:
+\begin{equation*}
+  \vv{v_{\text{c}}} = r\cdot \dot{\varphi}\cdot \vv{e_{\text{t}}} \qquad \text{with normed tangent vector } \vv{e_{\text{t}}}
+\end{equation*}
+Cause the center of the wheel also moves along the circle around M$_{\text{c}}$ with radius $\rho - r$ and therefore the point P moves through the distance $\Delta s$ to the point $\text{P}'$---the velocities in M$_\text{w}$ and in P behave
+like their corresponding radii:
+\begin{equation*}
+  \vv{v_{\text{c}}} = \frac{\rho - r}{\rho}\cdot \frac{\Delta s}{\Delta t}  \cdot \vv{e_{\text{t}}} \qquad \text{with very small intervals, thus }\quad \frac{\Delta s}{\Delta t} = \dot{s}
+\end{equation*}
+Equating the right sides of both equations for the velocity of the center of the wheel finally leads to:
+\begin{equation*}
+  r\cdot \dot{\varphi} = \frac{\rho - r}{\rho}\cdot \dot{s} \qrq \frac{\text{d}\varphi}{\text{d}t} = \frac{\rho - r}{\rho \cdot r}\cdot \frac{\text{d}s}{\text{d}t} \qrq  \text{d}\varphi = \frac{\rho - r}{\rho \cdot r}\cdot \text{d}s =  \frac{\rho - r}{\rho
+  \cdot r}\cdot \sqrt{1+[f'(x)]^{2}} \cdot \text{d}x
+\end{equation*}
+
+
+
+\section{Predefined vehicles}
+
+This package contains a number of predefined vehicles, like \emph{Bike}, \emph{Tractor}, \emph{Highwheeler}, \emph{Truck}, \emph{Segway}, \emph{Unicycle}. The last two of the vehicles only contain one axis, the rest has two axes.
+
+Except the mono-cycles, a vehicle is defined by the radius of each wheel, [\texttt{rB}] for the rear (back) wheel and [\texttt{rF}] for the front wheel and the distance [\texttt{d}] between the axes of the two wheels. Their values must be given
+within the options of the \texttt{\textbackslash psVehicle [options]} command. The cladding of a vehicle, auto body or bicycle frame must of course be adapted to the dimensions indicated above. A number of types of wheels and vehicles have
+been predefined.
+
+We also setup some \verb+\newpsstyle+ for each of the vehicles, where the dimensions and the choice of the wheels are setup like we would choose them.
+\begin{lstlisting}
+\newpsstyle{segway}{rB=1.4,backwheel=\segWheel}%MonoAxis
+\newpsstyle{unicycle}{rB=1.6,backwheel=\SpokesWheelB}%MonoAxis
+\newpsstyle{tractor}{d=4,rB=1.4,rF=1.0}
+\newpsstyle{truck}{backwheel=\TruckWheel,frontwheel=\TruckWheel,d=6.28,rB=1.9,rF=1.9}
+\newpsstyle{bike}{backwheel=\SpokesWheelB,frontwheel=\SpokesWheelB,d=5.8,rB=1.6,rF=1.6}
+\end{lstlisting}
+Here follows a list of the vehicles that come along with the package:
+
+
+
+\subsection{\textbackslash Bike}
+
+\begin{LTXexample}[pos=l,width=4cm]
+\begin{pspicture}(0,0)(4,3)
+\def\FuncA{1*cos(x)+1}
+\psframe*[linecolor=yellow!10](0,0)(4,3)
+\psgrid[style=quadrillage](0,0)(4,3)
+\psplot{0}{4}{\FuncA}
+\psVehicle[vehicle=\Bike,showSlope]{0.25}{1.2}{\FuncA}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash Tractor}
+
+\begin{LTXexample}[pos=l,width=4cm]
+\begin{pspicture}(-1,4)(3,7)
+\def\funkg{sqrt(-x^2+2*x*10+1)}
+\psframe*[linecolor=yellow!10](-1,4)(3,7)
+\psgrid[style=quadrillage](-1,4)(3,7)
+\psplot[plotpoints=500,algebraic]{0.5}{4}{\funkg}
+\psVehicle[vehicle=\Tractor,showSlope=false]{0.5}{1}{\funkg}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash HighWheeler}
+
+\begin{LTXexample}[pos=l,width=4cm]
+\begin{pspicture}(0,-1)(4,3)
+\def\FuncA{-0.25*(x-2)^2+0.5}
+\psframe*[linecolor=yellow!10](0,-1)(4,3)
+\psgrid[style=quadrillage](0,-1)(4,3)
+\psplot[yMinValue=0]{0}{4}{\FuncA}
+\psVehicle[vehicle=\HighWheeler]{0.25}{1.2}{\FuncA}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash Truck}
+
+\begin{LTXexample}[pos=l,width=4cm]
+\begin{pspicture}(0,-1)(4,3)
+\def\FuncA{0.3*1.6^x}
+\psframe*[linecolor=yellow!10](0,-1)(4,3)
+\psgrid[style=quadrillage](0,-1)(4,3)
+\psplot{0}{4}{\FuncA}
+\psVehicle[vehicle=\Truck,style=truck]{0.3}{1.2}{\FuncA}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash Segway}
+
+\begin{LTXexample}[pos=l,width=4cm]
+\begin{pspicture}(0,-1)(4,4)
+\def\FuncA{(x-3)*sin(0.2*(x-1))+1}
+\psframe*[linecolor=yellow!10](0,-1)(4,4)
+\psgrid[style=quadrillage](0,-1)(4,4)
+\psplot{0}{4}{\FuncA}
+\psVehicle[vehicle=\Segway,style=segway]{0.25}{1.2}{\FuncA}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash UniCycle}
+
+\begin{LTXexample}[pos=l,width=4cm]
+\begin{pspicture}(0,0)(4,4)
+\def\FuncA{(x-3)*sin(0.2*(x-1))+1}
+\psframe*[linecolor=yellow!10](0,0)(4,4)
+\psgrid[style=quadrillage](0,0)(4,4)
+\psplot{0}{4}{\FuncA}
+\psVehicle[vehicle=\UniCycle,style=unicycle,showSlope=false]{0.5}{2.2}{\FuncA}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\section{Predefined wheels}
+
+In this section we present $12$ predefined wheels that can be used for the front and/or the back wheel.
+
+
+
+\subsection{\textbackslash wheelA}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\wheelA}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash{}wheelB}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\wheelB}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash wheelC}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\wheelC}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash wheelD}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\wheelD}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash arrowWheel}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\arrowWheel}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash TruckWheel}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\TruckWheel}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash segWheel}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\segWheel}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash SpokesWheelCrossed}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\SpokesWheelCrossed}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash SpokesWheelA}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\SpokesWheelA}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash SpokesWheelB}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\SpokesWheelB}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash TractorFrontWheel}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rF 1 def 0 0){\TractorFrontWheel}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{\textbackslash TractorRearWheel}
+
+\begin{LTXexample}[pos=l,width=2cm]
+\begin{pspicture}(-1,-1)(1,1)
+\rput(!/rB 1 def 0 0){\TractorRearWheel}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\section{How to use the command}
+
+This package offers the following command:
+
+\begin{BDef}
+\Lcs{psVehicle}\OptArgs\Largb{scaling factor}\Largb{abscissa back wheel}\Largb{equation function}
+\end{BDef}
+
+\textbf{Important note:} The function has to be given in algebraic notation and not in RPN.
+
+The package \LPack{pst-vehicle} contains the options \nxLkeyword{epsilon=}, \nxLkeyword{rB=}, \nxLkeyword{rF=}, \nxLkeyword{d=}, \nxLkeyword{gang=}, \nxLkeyword{vehicle=}, \nxLkeyword{ownvehicle=}, \nxLkeyword{backwheel=},
+\nxLkeyword{frontwheel=}, \nxLkeyword{MonoAxis=}, \nxLkeyword{showSlope=} and \nxLkeyword{startPos=}
+\begin{quote}
+\begin{tabularx}{\linewidth}{ @{} l >{\ttfamily}l X @{} }\toprule
+\emph{Name}           & \emph{Default} & \emph{Meaning} \\\midrule
+\Lkeyword{epsilon}     & 1e-6          & Increment\\
+\Lkeyword{rB}    & 1.6             & Radius of the back wheel\\
+\Lkeyword{rF}  & 1.6   & Radius of the front wheel\\
+\Lkeyword{d}  & 5.8   & Distance between front and back wheel axes\\
+\Lkeyword{gang}  & 1   & Transmission between pedals and back wheel\\
+\Lkeyword{vehicle}  & \texttt{\textbackslash Bike}   & The Bike is chosen by default\\
+\Lkeyword{ownvehicle}  &   & Used to generate custom vehicle\\
+\Lkeyword{backwheel}  & \texttt{\textbackslash wheelA}   & wheelA is chosen by default\\
+\Lkeyword{frontwheel}  & \texttt{\textbackslash wheelA}   & wheelA is chosen by default\\
+\Lkeyword{MonoAxis}  & false   & if the vehicle has one axis\\
+\Lkeyword{showSlope}  & true   & showing the slope of the vehicle\\
+\Lkeyword{startPos}  & 0  & synchronizing the initial rotation of the wheels at the start point\\
+\Lkeyword{GravNode}  & dA12 2 div 1 & sets a node near center of gravity by default with name GravC\\
+\bottomrule
+\end{tabularx}
+\end{quote}
+
+
+
+\section{The Slope-o-Meter}
+
+A very nice gadget to show the angle of the slope of the vehicle on the curve. A fine thing for animations as you will see within the section Animation \ldots
+
+This command is shipped with two arguments to customize it with the \emph{color of appearance} and the \emph{angle of the pointer}.
+
+\textbf{Note:} The name \emph{Slope-o-Meter} is not at all an academically correct notation, but we all together had great fun to give it that special name.
+\begin{LTXexample}[pos=l,width=5cm]
+\begin{pspicture}(-2.5,-2.5)(2.5,2.5)
+\pstVerb{/omega 30 def}
+\rput(0,0){\SlopeoMeter{cyan!90}{omega}}
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\section{Examples}
+
+\subsection{Predefined vehicle with custom wheels}
+
+\begin{LTXexample}[pos=l,width=7cm]
+\begin{pspicture}(1,1)(8,6)
+\def\FuncA{0.5*cos(x)+2}
+\psframe*[linecolor=yellow!10](1,1)(8,6)
+\psgrid[style=quadrillage](1,1)(8,6)
+\psplot{1}{8}{\FuncA}
+\psVehicle[vehicle=\Truck,showSlope=false,frontwheel=\wheelC,backwheel=\arrowWheel,rB=1,rF=1]{0.5}{3.2}{\FuncA}
+\psdot(GravC)
+\psline[arrowscale=1.5]{->}(GravC)([offset=-2]GravC)
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{Custom vehicle}
+
+To design your own vehicle, there are just a few rules to follow:
+\begin{itemize}
+\item Choose \nxLkeyword{vehicle=\textbackslash SelfDefinedVehicle}
+\item No need to draw the wheels---just choose one of the predefined---or define your own wheels and then choose them with the options \nxLkeyword{backwheel=} and \nxLkeyword{frontwheel=}
+\item \textbf{Important note:} The axe of the back wheel is hard programmed at: \Epkt{O}{0}{0}
+\item The front wheel position is automatically calculated with the given distance between the two axes \nxLkeyword{d=}
+\item Draw your vehicle as if it stands on a horizontal plane, then define it and set it with i.\,e. \nxLkeyword{ownvehicle=\textbackslash myVeh} as shown in the example below.
+\end{itemize}
+\begin{LTXexample}[pos=l,width=5cm]
+\def\myVeh{\psframe*[linecolor=red](-1,-0.25)(5,2)}
+\begin{pspicture}(2,1)(7,4)
+\def\FuncA{0.5*sin(x)+2}
+\psframe*[linecolor=yellow!10](2,1)(7,4)
+\psgrid[style=quadrillage](2,1)(7,4)
+\psplot{2}{7}{\FuncA}
+\psVehicle[vehicle=\SelfDefinedVehicle,ownvehicle=\myVeh,showSlope=false,frontwheel=\wheelA,backwheel=\wheelB,rB=1,rF=1,d=4]{0.5}{3.2}{\FuncA}
+\end{pspicture}
+\end{LTXexample}
+
+The same body of the vehicle is chosen as within the example above, but the front wheel has a smaller radius.
+
+\begin{LTXexample}[pos=l,width=5cm]
+\def\myVeh{\psframe*[linecolor=red](-1,-0.25)(5,2)}
+\begin{pspicture}(2,1)(7,4)
+\def\FuncA{0.5*sin(x)+2}
+\psframe*[linecolor=yellow!10](2,1)(7,4)
+\psgrid[style=quadrillage](2,1)(7,4)
+\psplot{2}{7}{\FuncA}
+\psVehicle[vehicle=\SelfDefinedVehicle,ownvehicle=\myVeh,showSlope=false,frontwheel=\wheelA,backwheel=\wheelB,rB=1,rF=0.7,d=4]{0.5}{3.2}{\FuncA}
+\end{pspicture}
+\end{LTXexample}
+
+
+\newpage
+
+
+\section{Animation}
+
+In case of animation there is a thing to be said: If tex memory is exceeded, please increase your memory. For \TeX{}Live users this can be done within the \texttt{texmf.cnf}. We chose the following:
+\begin{lstlisting}
+main_memory = 12000000    % words of inimemory available; also applies to inimf&mp
+extra_mem_top = 60000000  % extra high memory for chars, tokens, etc.
+extra_mem_bot = 12000000  % extra low memory for boxes, glue, breakpoints, etc.
+\end{lstlisting}
+
+\begin{LTXexample}[pos=t,width=15cm]
+\def\funkg{0.25*(x-3)*sin(0.2*(x-2))-1}
+\begin{animateinline}[controls,palindrome,
+    begin={\begin{pspicture}(-2,-2)(13,3)},
+    end={\end{pspicture}}]{20}% 20 frames/s (velocity of the animation)
+\multiframe{100}{rB=0+0.05}{% number of frames
+\psframe*[linecolor=cyan!20](-2,-2)(13,4)
+\pscustom[fillstyle=solid,fillcolor={[RGB]{174 137 100}},linestyle=none]{
+\psplot[plotpoints=500,algebraic]{-2}{13}{\funkg}
+\psline(13,-2)(-2,-2)
+\closepath}
+\psplot[plotpoints=500,algebraic]{-2}{13}{\funkg}
+\psVehicle[vehicle=\Bike,style=bike,linecolor=DodgerBlue4]{0.4}{\rB}{\funkg}
+\rput(10.5,0.5){\SlopeoMeter{cyan!90}{omega}}
+}
+\end{animateinline}
+\end{LTXexample}
+
+
+\clearpage
+
+
+\section{List of all optional arguments for \texttt{pst-vehicle}}
+
+\xkvview{family=pst-vehicle,columns={key,type,default}}
+
+
+\clearpage
+
+
+\nocite{*}
+\bgroup
+\RaggedRight
+\printbibliography
+\egroup
+
+
+\printindex
+\end{document}

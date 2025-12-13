@@ -1,0 +1,749 @@
+\documentclass{ltxdoc}
+% \usepackage{tgschola,url}
+\usepackage{url}
+\usepackage[english]{babel}
+\usepackage{hyperref}
+\usepackage{luacode}
+\usepackage{framed}
+% Version is defined in the makefile, use default values when compiled directly
+\ifdefined\version\else
+\def\version{0.1l}
+\let\gitdate\date
+\fi
+\newcommand\modulename[1]{\subsection{#1}\label{sec:#1}}
+\newcommand\modulesummary[1]{#1\\}
+\newcommand\moduleclass[1]{\subsubsection{Class: #1}}
+\newcommand\functionname[2]{\par\noindent\textbf{#1(#2)}\\}
+\newcommand\functionsummary[1]{#1\\\textbf{Parameters:}\\}
+\newcommand\functionparam[2]{\texttt{#1}: #2\\}
+\newcommand\functionreturn[1]{\textbf{Return: }\\#1\\}
+
+\begin{document}
+	\title{The \textsc{LuaXML} library}
+	\author{Paul Chakravarti \and Michal Hoftich}
+	\date{Version \version\\\gitdate}
+	\maketitle
+\tableofcontents
+
+\section{Introduction}
+
+|LuaXML| is pure lua library for processing and serializing of the |xml| files.
+The base code code has been written by Paul Chakravarti, with minor changes
+which brings Lua 5.3 or HTML 5 support. On top of that, new modules for
+accessing the |xml| files using |DOM| like methods or |CSS|
+selectors\footnote{Thanks to Leaf Corcoran for |CSS selector| parsing code.}
+have been added.
+
+The documentation is divided to three parts -- first part deals with the |DOM|
+library, second part describes the low-level libraries and the third part is
+original documentation by Paul Chakravarti.
+% Current release is aimed mainly as support for the odsfile package. 
+% In first release it was included with the odsfile package,
+% but as it is general library which can be used also with other packages, 
+% I decided to distribute it as separate library.
+
+\section{The \texttt{DOM\_Object} library}
+
+This library can process a |xml| sources using |DOM| like functions. To load
+it, you need to require |luaxml-domobject.lua| file. The |parse| function
+provided by the library creates \texttt{DOM\_Object} object, which provides several
+methods for processing the |xml| tree.
+
+\begin{verbatim}
+local dom = require "luaxml-domobject"
+local document = [[
+<html>
+<head><title>sample</title></head>
+<body>
+<h1>test</h1>
+<p>hello</p>
+</body>
+</html>
+  ]]
+
+-- dom.parse returns the DOM_Object
+local obj = dom.parse(document)
+-- it is possible to call methods on the object
+local root_node = obj:root_node()
+for _, x in ipairs(root_node:get_children()) do
+  print(x:get_element_name())
+end
+\end{verbatim}
+
+The details about available methods can be found in the API docs, section
+\ref{sec:luaxml-domobject}. The above code will load a |xml| document, it will
+get the ROOT element and print all it's children element names.  The
+\verb|DOM_Object:get_children| function returns Lua table, so it is possible to
+loop over it using standard table functions.
+
+\begin{framed}
+\begin{luacode*}
+dom = require "luaxml-domobject"
+local document = [[
+<html>
+<head><title>sample</title></head>
+<body>
+<h1>test</h1>
+<p>hello</p>
+</body>
+</html>
+  ]]
+
+-- dom.parse returns the DOM_Object
+obj = dom.parse(document)
+-- it is possible to call methods on the object
+local root_node = obj:root_node()
+for _, x in ipairs(root_node:get_children()) do
+  tex.print(x:get_element_name().. "\\par")
+end
+\end{luacode*}
+\end{framed}
+
+\subsection{Node selection methods}
+There are some other methods for element retrieving. 
+
+\subsubsection{The \texttt{DOM\_Object:get\_path} method}
+If you want to print text content of all child elements of the body element, you can use \verb|DOM_Object:get_path|:
+
+\begin{verbatim}
+local path = obj:get_path("html body")
+for _, el in ipairs(path[1]:get_children()) do
+  print(el:get_text())
+end
+\end{verbatim}
+
+The \verb|DOM_Object:get_path| function always return array with all elements
+which match the requested path, even it there is only one such element. In this
+case, it is possible to use standard Lua table indexing to get the first and
+only one matched element and get it's children using
+\verb|DOM_Object:get_children| method. It the children node is an element, it's
+text content is printed using \verb|DOM_Object:get_text|.
+
+
+
+\begin{framed}
+  \begin{luacode*}
+local path = obj:get_path("html body")
+
+for _, el in ipairs(path[1]:get_children()) do
+  if el:is_element() then
+    tex.print(el:get_text().."\\par")
+  end
+end
+  \end{luacode*}
+\end{framed}
+
+\subsubsection{The \texttt{DOM\_Object:query\_selector} method}
+
+This method uses |CSS selector| syntax to select elements, similarly to JavaScript \textit{jQuery} library.
+
+\begin{verbatim}
+for _, el in ipairs(obj:query_selector("h1,p")) do
+  print(el:get_text())
+end
+\end{verbatim}
+
+
+\begin{framed}
+  \begin{luacode*}
+for _, el in ipairs(obj:query_selector("h1,p")) do
+  tex.print(el:get_text().."\\par")
+end
+  \end{luacode*}
+\end{framed}
+
+It supports also |XML| namespaces, using \verb_namespace|element_ syntax.
+
+\subsection{Element traversing}
+
+\subsubsection{The \texttt{DOM\_Object:traverse\_elements} method}
+
+It may be useful to traverse over all elements and apply a function on all of them. 
+
+\begin{verbatim}
+obj:traverse_elements(function(node)
+  print(node:get_text())
+end)
+\end{verbatim}
+
+\begin{framed}
+  \begin{luacode*}
+obj:traverse_elements(function(node)
+  tex.print(node:get_text().."\\par")
+end)
+  \end{luacode*}
+\end{framed}
+
+The \verb|get_text| method gets text from all children elements, so the first
+line shows all text contained in the \verb|<html>| element, the second one in
+\verb|<head>| element and so on.  
+
+\subsection{DOM modifications}
+
+It is possible to add new elements, text nodes, or to remove them. 
+
+\begin{verbatim}
+local headers = obj:query_selector("h1")
+for _, header in ipairs(headers) do
+  header:remove_node()
+end
+-- query selector returns array, we must retrieve the first element
+-- to get the actual body element
+local body = obj:query_selector("body")[1]
+local paragraph = body:create_element("p", {})
+body:add_child_node(paragraph)
+paragraph:add_child_node(paragraph:create_text_node("This is a second paragraph"))
+
+for _, el in ipairs(body:get_children()) do
+  if el:is_element() then
+    print(el:get_element_name().. ": ".. el:get_text())
+  end
+end
+\end{verbatim}
+
+In this example, \verb|<h1>| element is being removed from the sample document, and new 
+paragraph is added. Two paragraphs should be shown in the output:
+
+\begin{framed}
+  \begin{luacode*}
+local headers = obj:query_selector("h1")
+-- query selector returns array, we must retrieve the first element
+-- to get the actual body element
+local body = obj:query_selector("body")[1]
+local oldbody = body:copy_node()
+for _, header in ipairs(headers) do
+  header:remove_node()
+end
+local paragraph = body:create_element("p", {})
+body:add_child_node(paragraph)
+paragraph:add_child_node(paragraph:create_text_node("This is a second paragraph"))
+
+for _, el in ipairs(body:get_children()) do
+if el:is_element() then
+  tex.print(el:get_element_name().. ": ".. el:get_text() .. "\\par")
+end
+end
+
+body:replace_node(oldbody)
+  \end{luacode*}
+\end{framed}
+
+
+\section{The \texttt{CssQuery} library}
+
+This library serves mainly as a support for the
+\texttt{DOM\_Object:query\_selector} function. It also supports adding
+information to the DOM tree.
+
+\subsection{Example usage}
+
+\begin{verbatim}
+local cssobj = require "luaxml-cssquery"
+local domobj = require "luaxml-domobject"
+
+local xmltext = [[
+<html>
+<body>
+<h1>Header</h1>
+<p>Some text, <i>italics</i></p>
+</body>
+</html>
+]]
+
+local dom = domobj.parse(xmltext)
+local css = cssobj()
+
+css:add_selector("h1", function(obj)
+  print("header found: "  .. obj:get_text())
+end)
+
+css:add_selector("p", function(obj)
+  print("paragraph found: " .. obj:get_text())
+end)
+
+css:add_selector("i", function(obj)
+  print("found italics: " .. obj:get_text())
+end)
+
+dom:traverse_elements(function(el)
+  -- find selectors that match the current element
+  local querylist = css:match_querylist(el)
+  -- add templates to the element
+  css:apply_querylist(el,querylist)
+end)
+\end{verbatim}
+
+\begin{framed}
+  \begin{luacode*}
+local cssobj = require "luaxml-cssquery"
+local domobj = require "luaxml-domobject"
+local print = function(s) tex.print(s .. "\\par") end
+
+local xmltext = [[
+<html>
+<body>
+<h1>Header</h1>
+<p>Some text, <i>italics</i></p>
+</body>
+</html>
+]]
+
+local dom = domobj.parse(xmltext)
+local css = cssobj()
+
+css:add_selector("h1", function(obj)
+  print("header found: "  .. obj:get_text())
+end)
+
+css:add_selector("p", function(obj)
+  print("paragraph found: " .. obj:get_text())
+end)
+
+css:add_selector("i", function(obj)
+  print("found italics: " .. obj:get_text())
+end)
+
+dom:traverse_elements(function(el)
+  -- find selectors that match the current element
+  local querylist = css:match_querylist(el)
+  -- add templates to the element
+  css:apply_querylist(el,querylist)
+end)
+  \end{luacode*}
+\end{framed}
+
+More complete example may be found in the \texttt{examples} directory in the
+\texttt{LuaXML} source code
+repository\footnote{\url{https://github.com/michal-h21/LuaXML/blob/master/examples/xmltotex.lua}}.
+
+\section{The API documentation}
+
+\input{doc/api.tex}
+
+\section{Low-level functions usage}
+
+% The processing is done with several handlers, their usage will be shown in the
+% following section. Full description of handlers is given in the original
+% documentation in section \ref{sec:handlers}.
+
+% \subsection{Usage examples}
+
+The original |LuaXML| library provides some low-level functions for |XML| handling.
+First of all, we need to load the libraries:
+
+\begin{verbatim}
+xml = require('luaxml-mod-xml')
+handler = require('luaxml-mod-handler')
+\end{verbatim} 
+
+
+The |luaxml-mod-xml| file contains the  xml parser and also the serializer. In
+|luaxml-mod-handler|, various handlers for dealing with xml data are defined.
+Handlers transforms the |xml| file to data structures which can be handled from
+the Lua code. More information about handlers can be found in the original
+documentation, section \ref{sec:handlers}.
+
+\subsection{The simpleTreeHandler} 
+\begin{verbatim}
+sample = [[
+<a>
+  <d>hello</d>
+  <b>world.</b>
+  <b at="Hi">another</b>
+</a>]]
+treehandler = handler.simpleTreeHandler()
+x = xml.xmlParser(treehandler)
+x:parse(sample)
+\end{verbatim} 
+
+You have to create handler object, using |handler.simpleTreeHandler()| and xml
+parser object using |xml.xmlParser(handler object)|. |simpleTreehandler|
+creates simple table hierarchy, with top root node in |treehandler.root|
+
+\begin{verbatim}
+-- pretty printing function
+function printable(tb, level)
+  level = level or 1
+  local spaces = string.rep(' ', level*2)
+  for k,v in pairs(tb) do
+    if type(v) ~= "table" then
+      print(spaces .. k..'='..v)
+    else
+      print(spaces .. k)
+      level = level + 1
+      printable(v, level)
+    end
+  end
+end
+
+-- print table
+printable(treehandler.root)
+-- print xml serialization of table
+print(xml.serialize(treehandler.root))
+-- direct access to the element
+print(treehandler.root["a"]["b"][1])
+\end{verbatim}
+
+This code produces the following output:
+
+\begin{verbatim}
+ output:
+   a
+     d=hello
+     b
+       1=world.
+       2
+         1=another
+         _attr
+           at=Hi
+ <?xml version="1.0" encoding="UTF-8"?>
+ <a>
+   <d>hello</d>
+     <b>world.</b>
+     <b at="Hi">
+       another
+     </b>
+ </a>
+ 
+ world.
+\end{verbatim}
+
+First part is pretty-printed dump of Lua table structure contained in the handler, the second
+part is |xml| serialized from that table and the last part demonstrates direct access to particular
+elements.
+
+Note that |simpleTreeHandler| creates tables that can be easily accessed using
+standard lua functions, but if the xml document is of mixed-content type\footnote{%
+This means that element may contain both children elements and text.}:
+
+\begin{verbatim}
+<a>hello
+  <b>world</b>
+</a>	  
+\end{verbatim}
+
+\noindent then it produces wrong results. It is useful mostly for data |xml| files, not for
+text formats like |xhtml|.
+
+\subsection{The domHandler}
+
+% For complex xml documents with mixed content, |domHandler| is capable of representing any valid XML document:
+For complex xml documents, it is best to use the |domHandler|, which creates object which contains all information
+from the |xml| document. 
+
+\begin{verbatim}
+-- file dom-sample.lua
+-- next line enables scripts called with texlua to use luatex libraries
+--kpse.set_program_name("luatex")
+function traverseDom(current,level)
+  local level = level or 0
+  local spaces = string.rep(" ",level)
+  local root= current or current.root
+  local name = root._name or "unnamed"
+  local xtype = root._type or "untyped"
+  local attributes = root._attr  or {} 
+  if xtype == "TEXT" then 
+    print(spaces .."TEXT : " .. root._text)
+  else	 
+    print(spaces .. xtype .. " : " .. name) 
+  end
+  for k, v in pairs(attributes) do
+    print(spaces .. "  ".. k.."="..v)
+  end
+  local children = root._children or {}
+  for _, child in ipairs(children) do
+    traverseDom(child, level + 1)
+  end
+end
+
+local xml = require('luaxml-mod-xml')
+local handler = require('luaxml-mod-handler')
+local x = '<p>hello <a href="http://world.com/">world</a>, how are you?</p>'
+local domHandler = handler.domHandler()
+local parser = xml.xmlParser(domHandler)
+parser:parse(x)
+traverseDom(domHandler.root)
+\end{verbatim}
+
+The ROOT element is stored in |domHandler.root| table, it's child nodes are stored in |_children|
+tables. Node type is saved in |_type| field, if the node type is |ELEMENT|, then |_name| field contains 
+element name, |_attr| table contains element attributes. |TEXT| node contains text content in |_text| 
+field.
+
+The previous code produces following output in the terminal: % after command
+% |texlua dom-sample.lua| running:
+
+\begin{verbatim}
+ROOT : unnamed
+ ELEMENT : p
+  TEXT : hello
+  ELEMENT : a
+    href=http://world.com/
+   TEXT : world
+  TEXT : , how are you?
+\end{verbatim}
+
+% With \verb|domHandler|, you can process documents with mixed content, like
+% \verb|xhtml|, so it is a most powerful handler.
+
+
+\clearpage
+\part{Original \texttt{LuaXML} documentation by Paul Chakravarti}
+\medskip
+
+\noindent This document was created automatically from the original source code comments using Pandoc\footnote{\url{http://johnmacfarlane.net/pandoc/}} 
+
+\section{Overview}
+
+
+This module provides a non-validating XML stream parser in Lua. 
+\section{Features}
+
+\begin{itemize}
+\item
+  Tokenises well-formed XML (relatively robustly)
+\item
+  Flexible handler based event api (see below)
+\item
+  Parses all XML Infoset elements - ie.
+  \begin{itemize}
+  \item
+    Tags
+  \item
+    Text
+  \item
+    Comments
+  \item
+    CDATA
+  \item
+    XML Decl
+  \item
+    Processing Instructions
+  \item
+    DOCTYPE declarations
+  \end{itemize}
+\item
+  Provides limited well-formedness checking (checks for basic syntax \&
+  balanced tags only)
+\item
+  Flexible whitespace handling (selectable)
+\item
+  Entity Handling (selectable)
+\end{itemize}
+\section{Limitations}
+
+\begin{itemize}
+\item
+  Non-validating
+\item
+  No charset handling
+\item
+  No namespace support
+\item
+  Shallow well-formedness checking only (fails to detect most semantic
+  errors)
+\end{itemize}
+\section{API}
+
+The parser provides a partially object-oriented API with functionality
+split into tokeniser and hanlder components.
+
+The handler instance is passed to the tokeniser and receives callbacks
+for each XML element processed (if a suitable handler function is
+defined). The API is conceptually similar to the SAX API but implemented
+differently.
+
+The following events are generated by the tokeniser
+
+\begin{verbatim}
+handler:starttag       - Start Tag
+handler:endtag         - End Tag
+handler:text        - Text
+handler:decl        - XML Declaration
+handler:pi          - Processing Instruction
+handler:comment     - Comment
+handler:dtd         - DOCTYPE definition
+handler:cdata       - CDATA 
+\end{verbatim}
+The function prototype for all the callback functions is
+
+\begin{verbatim}
+callback(val,attrs,start,end)
+\end{verbatim}
+where attrs is a table and val/attrs are overloaded for specific
+callbacks - ie.
+
+\begin{tabular}{llp{5cm}}
+Callback   &  val        &    attrs (table)\\
+\hline
+starttag     &   name &   |{ attributes (name=val).. }|\\
+endtag       &   name   &    nil\\
+text      &   |<text>| &   nil\\
+cdata     &   |<text> |  &   nil\\
+decl      &   "xml"       &   |{ attributes (name=val).. }|\\
+pi        &   pi name     &  \begin{verbatim}{ attributes (if present)..
+  _text = <PI Text>
+}\end{verbatim}\\
+comment   &   |<text>|      &   nil\\     
+dtd       &   root element  & \begin{verbatim}{ _root = <Root Element>,
+  _type = SYSTEM|PUBLIC,
+  _name = <name>,
+  _uri = <uri>,
+  _internal = <internal dtd>
+}\end{verbatim}\\
+\end{tabular}
+
+(starttag \& endtag provide the character positions of the start/end of the
+element)
+
+XML data is passed to the parser instance through the `parse' method
+(Note: must be passed as single string currently)
+
+\section{Options}
+
+Parser options are controlled through the `self.options' table.
+Available options are -
+
+\begin{itemize}
+\item
+  stripWS
+
+  Strip non-significant whitespace (leading/trailing) and do not
+  generate events for empty text elements
+\item
+  expandEntities
+
+  Expand entities (standard entities + single char numeric entities only
+  currently - could be extended at runtime if suitable DTD parser added
+  elements to table (see obj.\_ENTITIES). May also be possible to expand
+  multibyre entities for UTF--8 only
+\item
+  errorHandler
+
+  Custom error handler function
+\end{itemize}
+NOTE: Boolean options must be set to `nil' not `0'
+
+\section{Usage}
+
+Create a handler instance -
+
+\begin{verbatim}
+h = { starttag = function(t,a,s,e) .... end,
+      endtag = function(t,a,s,e) .... end,
+      text = function(t,a,s,e) .... end,
+      cdata = text }
+\end{verbatim}
+(or use predefined handler - see luaxml-mod-handler.lua)
+
+Create parser instance -
+
+\begin{verbatim}
+p = xmlParser(h)
+\end{verbatim}
+Set options -
+
+\begin{verbatim}
+p.options.xxxx = nil
+\end{verbatim}
+Parse XML data -
+
+\begin{verbatim}
+xmlParser:parse("<?xml... ")
+\end{verbatim}
+\section{Handlers}\label{sec:handlers}
+
+\subsection{Overview}
+
+Standard XML event handler(s) for XML parser module (luaxml-mod-xml.lua)
+
+\subsection{Features}
+
+\begin{verbatim}
+printHandler        - Generate XML event trace
+domHandler          - Generate DOM-like node tree
+simpleTreeHandler   - Generate 'simple' node tree
+simpleTeXhandler    - SAX like handler with support for CSS selectros
+\end{verbatim}
+\subsection{API}
+
+Must be called as handler function from xmlParser and implement XML
+event callbacks (see xmlParser.lua for callback API definition)
+
+\subsubsection{printHandler}
+
+printHandler prints event trace for debugging
+
+\subsubsection{domHandler}
+
+domHandler generates a DOM-like node tree  structure with 
+a single ROOT node parent - each node is a table comprising 
+fields below.
+
+\begin{verbatim}
+node = { _name = <Element Name>,
+        _type = ROOT|ELEMENT|TEXT|COMMENT|PI|DECL|DTD,
+        _attr = { Node attributes - see callback API },
+        _parent = <Parent Node>
+        _children = { List of child nodes - ROOT/NODE only }
+      }
+
+\end{verbatim}
+\subsubsection{simpleTreeHandler}
+
+simpleTreeHandler is a simplified handler which attempts to generate a
+more `natural' table based structure which supports many common XML
+formats.
+
+The XML tree structure is mapped directly into a recursive table
+structure with node names as keys and child elements as either a table
+of values or directly as a string value for text. Where there is only a
+single child element this is inserted as a named key - if there are
+multiple elements these are inserted as a vector (in some cases it may
+be preferable to always insert elements as a vector which can be
+specified on a per element basis in the options). Attributes are
+inserted as a child element with a key of `\_attr'.
+
+Only Tag/Text \& CDATA elements are processed - all others are ignored.
+
+This format has some limitations - primarily
+
+\begin{itemize}
+\item  Mixed-Content behaves unpredictably - the relationship between text
+  elements and embedded tags is lost and multiple levels of mixed
+  content does not work
+\item  If a leaf element has both a text element and attributes then the text
+  must be accessed through a vector (to provide a container for the
+  attribute)
+\end{itemize}
+In general however this format is relatively useful.
+
+
+\subsection{Options}
+
+\begin{verbatim}
+simpleTreeHandler.options.noReduce = { <tag> = bool,.. }
+
+    - Nodes not to reduce children vector even if only 
+      one child
+
+domHandler.options.(comment|pi|dtd|decl)Node = bool 
+
+    - Include/exclude given node types
+\end{verbatim}
+\subsection{Usage}
+
+Pased as delegate in xmlParser constructor and called as callback by
+xmlParser:parse(xml) method.
+
+\section{History}
+
+This library is fork of LuaXML library originaly created by Paul
+Chakravarti.  Some files not needed for use with luatex were droped from the distribution.
+Documentation was converted from original comments in the source code.
+
+\section{License}
+
+This code is freely distributable under the terms of the Lua license
+(\url{http://www.lua.org/copyright.html})
+\end{document}

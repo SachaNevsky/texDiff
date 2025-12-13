@@ -1,0 +1,530 @@
+%% $Id: pst-shell-doc.tex 371 2016-12-27 21:30:58Z herbert $
+\documentclass[11pt,english,BCOR10mm,DIV12,bibliography=totoc,parskip=false,
+   smallheadings, headexclude,footexclude,oneside]{pst-doc}
+\usepackage[utf8]{inputenc}
+\usepackage{pst-shell}
+\let\pstShellFV\fileversion
+\usepackage{enumitem}
+\setlist{nosep}
+\renewcommand\bgImage{%
+\begin{pspicture}(-5cm,-5cm)(5cm,1.5cm)
+\psset[pst-solides3d]{lightsrc=viewpoint,viewpoint=1000 -50 20 rtp2xyz,Decran=25}
+\psShell[ngrid=180 60,fillcolor=orange,incolor=yellow!10,base=720 -720 -270 90,linewidth=0.1pt]
+\end{pspicture}}
+
+
+\lstset{language=PSTricks,
+    morekeywords={psShell},basicstyle=\footnotesize\ttfamily}
+
+\begin{document}
+\renewcommand\ResultBox{\fcolorbox{blue}{blue!20!white!60}}
+
+\title{\texttt{pst-shell}}
+\subtitle{Plotting sea shells; v.\pstShellFV}
+\author{Manual Luque \\ Herbert Voß }
+\docauthor{}
+\date{\today}
+\maketitle
+
+\tableofcontents
+\clearpage
+
+\definecolor{beige}{rgb}{0.88 0.8 0.6}
+%\title{Modèle mathématique pour représenter les coquillages avec PSTricks}
+%\author{manuel.luque27@gmail.com}
+%\date{19 décembre 2016}
+
+\section{Les équations}
+La modélisation géométrique des coquillages a été réalisée par M. B. Cortie. Dans le document ``DIGITAL SEASHELLS'' 
+il en donne les équations paramétriques lesquelles sont fonction de 14 paramètres, ceci afin de permettre de 
+modéliser un très grand nombre de coquillages.
+
+\url{https://www.researchgate.net/publication/223141547_Digital_seashells}
+
+\begin{align*}
+\left\{
+\begin{aligned}
+ x &= D[A\sin\beta\cos\theta+R\cos(s+\phi)\cos(\theta+\Omega)-R\sin\mu\sin(s+\phi)\sin(\theta+\Omega)]\mathrm{e}^{\theta\cot\alpha}\\[1em]
+ y &= D[-A\sin\beta\sin\theta-R\cos(s+\phi)\sin(\theta+\Omega)-R\sin\mu\sin(s+\phi)\cos(\theta+\Omega)]\mathrm{e}^{\theta\cot\alpha}\\[1em]
+ z &= [-A\cos\beta+R\sin(s+\phi)\cos\mu]\mathrm{e}^{\theta\cot\alpha}
+\end{aligned}
+\right.
+\end{align*}
+
+\begin{align*}
+R &= R_e+k\\
+R_e &= \dfrac{1}{\sqrt{\dfrac{\cos^2(s)}{a^2}+\dfrac{\sin^2(s)}{b^2}}}\\
+k &= L\mathbf{exp}\left(-\left[\dfrac{2(s-P)}{W_1}\right]^2-\left[\dfrac{2f(\theta)}{W_2}\right]^2\right)\\
+f(\theta) &= \frac{360}{N}\left(\frac{N\theta}{2\pi}-\mathrm{int}\left(\frac{N\theta}{2\pi}\right)\right)\quad \theta(\mathrm{rd})
+\end{align*}
+
+
+
+
+
+La démonstration de ces équations est proposée par Jorge Picado, elle est très complète et joliment illustrée :
+
+\url{http://www.mat.uc.pt/~picado/conchas/index.html}
+
+Jorge Picado rajoute le paramètre $D=\pm 1$ permettant ainsi la représentation des coquillages senestre et dextre. Jorge Picado propose un code pour Mathematica, que je n'ai pas pu tester, cependant les images qui illustrent sa page accompagnées des paramètres d'un grand nombre de coquillages sont très démonstratives. Sur le site de l'American Mathematical Society, Tony Phillips et Stony Brook traitent aussi de la modélisation de divers coquillages avec le code pour une concrétisation avec Maple.
+
+\url{http://www.ams.org/samplings/feature-column/fcarc-shell1}
+
+\section{Le package pst-shell}
+Le package `\textbf{pst-shell}' permet de représenter les coquillages avec \textsf{PSTricks}, c'est donc une adaptation des équations établies par M. B. Cortie. Les paramètres utilisés sont identiques à ceux des documents de M. B. Cortie et Jorge Picado. On se référera donc à ces 2 auteurs pour en connaître la signification. On n'aura pas avec \textsf{PSTricks} la rapidité d'affichage de Mathematica et Maple, ni la qualité de lissage des surfaces possible avec ces logiciels ou POV-Ray, mais sur certains exemples, grâce aux options de \textsf{pst-solides3d}, on peut obtenir des représentations personnalisées que je suppose être beaucoup plus difficiles à réaliser avec Maple ou Mathematica, c'est un point qui sera développé avec comme sujet le \textit{Nautilius} dans un autre fichier. Voici la liste de ces paramètres, je donne les valeurs par défaut qui sont celles du \textit{Natica stellata}, Orange Moon (cf. Jorge Picado)  :
+
+\clearpage
+\begin{itemize}
+  \item D = 1 : A=25
+  \item alpha=83 : beta=42 : mu=10 : Omega=30 : en degrés
+  \item a=12 : b=20
+  \item L=1
+  \item P=1
+  \item W1=1 : W2=1
+  \item N=0
+\end{itemize}
+
+\section{Syntax}
+
+\begin{BDef}
+\Lcs{psShell}\OptArgs\OptArg*{\Largr{$x_0,y_0,z_0$}}
+\end{BDef}
+
+$x_0,y_0,z_0$ is preset to $0,0,0$.
+
+\section{Predefined styles}
+
+\small
+\begin{verbatim}
+\newpsstyle[pst-shell]{Achatina}%
+  {D=1,A=109,alpha=86.6,beta=8.5,mu=0,Omega=0,phi=0,a=32,b=48,L=0,P=0,W1=1,W2=1,N=0}
+\newpsstyle[pst-shell]{Ammonite}%
+  {alpha=83,beta=90,phi=1,mu=1,Omega=1,A=2.5,a=1,b=0.9,L=0.5,W1=100,W2=20,P=10,N=15}
+\newpsstyle[pst-shell]{Argonauta}%
+  {alpha=80,beta=90,phi=0,mu=0,Omega=0,A=2,a=2,b=1.5,L=0.3,W1=150,W2=20,P=5,N=30}%
+\newpsstyle[pst-shell]{Codakia}%
+  {alpha=37,beta=90,phi=0,mu=1,Omega=1,A=10500,a=10000,b=10500,L=0,W1=0,W2=0,P=0,N=0}
+\newpsstyle[pst-shell]{Conus}%
+  {D=1,A=7,alpha=87,beta=7,mu=0,Omega=0,phi=78,a=4.3,b=1,L=0,P=0,W1=0,W2=0,N=0}
+\newpsstyle[pst-shell]{Epiteonium}%
+  {D=1,A=9.5,alpha=85.9,beta=9,mu=0,Omega=0,phi=81,a=2.1,b=1.6,L=1.3,P=-60,W1=200,W2=20,N=8.3}
+\newpsstyle[pst-shell]{Escalaria}%
+  {alpha=86,beta=10,phi=45,mu=5,Omega=1,A=90,a=20,b=20,L=14,W1=180,W2=0.4,P=40,N=180}
+\newpsstyle[pst-shell]{Helcion}%
+  {alpha=18,beta=90,phi=0,mu=0,Omega=-40,A=450,a=400,b=310,L=0,W1=0,W2=0,P=0,N=0}
+\newpsstyle[pst-shell]{Lyria}%
+  {D=1,A=50,alpha=83.9,beta=-19,mu=1,Omega=-2,phi=45,a=40,b=14,L=4,P=0,W1=6,W2=27,N=8}
+\newpsstyle[pst-shell]{Natalina}%
+  {alpha=80,beta=40,phi=55,mu=10,Omega=30,A=25,a=12,b=16,L=0,W1=0,W2=0,P=0,N=0}
+\newpsstyle[pst-shell]{Nautilus}%
+  {D=-1,A=2,alpha=80,beta=90,mu=0,Omega=0,phi=0,a=2,b=1.5,L=0,P=0,W1=0,W2=0,N=0}
+\newpsstyle[pst-shell]{Oxystele}%
+  {D=1,A=47,alpha=84.9,beta=7,mu=0,Omega=0,phi=-36,a=40,b=19,L=0,P=0,W1=1,W2=1,N=0}
+\newpsstyle[pst-shell]{Planorbis}%
+  {alpha=84,beta=85,phi=10,mu=45,Omega=5,A=45,a=20,b=30,L=0,W1=0,W2=0,P=0,N=0}
+\newpsstyle[pst-shell]{Tonna}%
+  {D=1,A=70,alpha=82.4,beta=0,mu=10,Omega=0,phi=0,a=58,b=50,L=0,P=0,W1=1,W2=1,N=0}
+\newpsstyle[pst-shell]{Turritella}%
+  {D=1,A=22.2,alpha=88.9,beta=4,mu=1,Omega=-2,phi=55,a=1.3,b=1.5,L=0,P=0,W1=0,W2=0,N=0}
+\end{verbatim}
+
+\normalsize
+\iffalse
+Note: D is 1 in every case.
++---------+------+----+----+----+----+-----+-----+-----+----+------+----+----+----+----+---+
+ Mollusc  ¦ Alp  ¦Beta¦Phi ¦ mu ¦ ,°¦smin ¦smax ¦ A   ¦ a  ¦ b    ¦ P  ¦ W1 ¦ W2 ¦ N  ¦ L 
++---------+------+----+----+----+----+-----+-----+-----+----+------+----+----+----+----+---+
+Natalina  ¦ 80   ¦ 40 ¦ 55 ¦ 10 ¦ 30 ¦-270 ¦ 62  ¦ 25  ¦ 12 ¦ 16   ¦ 0  ¦ 0  ¦ 0  ¦ 0  ¦ 0 
+Lyria     ¦ 83.9 ¦-19 ¦ 45 ¦ 1  ¦-2  ¦ -51 ¦  9  ¦ 50  ¦ 40 ¦ 14   ¦ 0  ¦ 6  ¦ 27 ¦ 8  ¦ 4 
+Turritella¦ 88.9 ¦ 4  ¦ 55 ¦ 1  ¦-2  ¦-267 ¦ 39  ¦ 22.2¦ 1.3¦ 1.5  ¦ 0  ¦ 0  ¦ 0  ¦ 0  ¦ 0 
+Oxystele  ¦ 84.9 ¦ 7  ¦-36 ¦ 1  ¦-2  ¦ -70 ¦ 70  ¦ 47  ¦ 40 ¦ 19   ¦ 0  ¦ 0  ¦ 0  ¦ 0  ¦ 0 
+Planorbis ¦ 84   ¦ 85 ¦ 10 ¦ 45 ¦ 5  ¦-150 ¦ 130 ¦ 45  ¦ 20 ¦ 30   ¦ 0  ¦ 0  ¦ 0  ¦ 0  ¦ 0 
+Ammonite  ¦ 83   ¦ 90 ¦ 1  ¦ 1  ¦ 1  ¦-170 ¦ 170 ¦ 2.5 ¦ 1.0¦ 0.9  ¦ 10 ¦ 100¦ 20 ¦ 15 ¦ 0.5 
+Conus     ¦ 87   ¦ 7  ¦ 78 ¦ 0  ¦ 0  ¦-180 ¦  2  ¦ 7   ¦ 4.3¦ 1.0  ¦ 0  ¦ 0  ¦ 0  ¦ 0  ¦ 0 
+Helcion   ¦ 18   ¦ 90 ¦ 0  ¦ 0  ¦-40 ¦-180 ¦ 180 ¦ 450 ¦ 400¦ 310  ¦ 0  ¦ 0  ¦ 0  ¦ 0  ¦ 0 
+Nautilus  ¦ 80   ¦ 90 ¦ 0  ¦ 0  ¦ 0  ¦-163 ¦ 163 ¦ 2   ¦ 2  ¦ 1.5  ¦ 0  ¦ 0  ¦ 0  ¦ 0  ¦ 0 
+Codakia   ¦ 37   ¦ 90 ¦ 0  ¦ 1  ¦ 1  ¦-180 ¦ 180 ¦10500¦10000¦10500¦ 0  ¦ 0  ¦ 0  ¦ 0  ¦ 0 
+\fi
+
+
+
+\clearpage
+%
+\section*{Natica stellata, Orange Moon avec les paramètres de base.}
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\psset[pst-solides3d]{viewpoint=1000 -50 20 rtp2xyz,lightsrc=viewpoint, Decran=25}
+\begin{pspicture}(-3,-5)(4,1)
+\psShell[ngrid=180 60,fillcolor=orange,incolor=yellow!10,
+  base=720 -720 -270 90,linewidth=0.01pt]
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\section*{Argonauta}
+
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\begin{pspicture}(-5,-3)(5,3)
+\psset[pst-solides3d]{lightsrc=viewpoint,viewpoint=100 -50 30 rtp2xyz,Decran=120}%
+\psShell[style=Argonauta,ngrid=1080 45,incolor=white,
+         fillcolor=yellow!10,linewidth=0.01,base=0 -3600 -180 180]
+\end{pspicture}
+\end{LTXexample}
+
+\clearpage
+
+\section*{Epiteonium}
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\begin{pspicture}(-5,-12)(5,0)
+\psset[pst-solides3d]{lightsrc=viewpoint,viewpoint=5000 -180 -10 rtp2xyz,Decran=500}
+\psShell[style=Epiteonium,ngrid=360 60,incolor=white,linecolor=black!30,
+         base=1800 -360 -270 20,hue=0.05 0.5 0.5 1,linewidth=0.001pt]
+\end{pspicture}
+\end{LTXexample}
+
+\clearpage
+
+\section*{Lyria}
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\psset{unit=1.25cm}
+\begin{pspicture}(-3,-7)(3,0)
+\psset[pst-solides3d]{lightsrc=viewpoint,viewpoint=10000 -20 10 rtp2xyz,Decran=50}
+\psShell[style=Lyria,base=1800 -360 -51 9,ngrid=360 60,incolor=yellow!50,
+  hue=0.05 0.5 0.5 1,linewidth=0.001pt]
+\end{pspicture}
+\end{LTXexample}
+
+
+\clearpage
+\section*{Turritella}
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\begin{pspicture}(-3,-14)(3,-0.5)
+\psset[pst-solides3d]{lightsrc=viewpoint,viewpoint=1000 -30 10 rtp2xyz,Decran=500}
+\psShell[style=Turritella,base=0 -7200 -267 39,ngrid=720 30,incolor=white,
+  fillcolor=yellow!20,linewidth=0.01pt]
+\end{pspicture}
+\end{LTXexample}
+
+
+\clearpage
+
+\section*{Tonna}
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\begin{pspicture}(-5,-9)(5,1)
+\psset[pst-solides3d]{lightsrc=viewpoint,viewpoint=1000 -10 10 rtp2xyz,Decran=75}
+\psShell[style=Tonna,base=0 -7200 -90 60,ngrid=720 30,incolor=yellow!50!black!50,
+  hue=0.05 0.5 0.5 1,linewidth=0.005]
+\end{pspicture}
+\end{LTXexample}
+
+
+\clearpage
+\section*{Achatina}
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\begin{pspicture}(-5,-10)(5,1)
+\psset[pst-solides3d]{lightsrc=viewpoint,viewpoint=1000 -30 10 rtp2xyz,Decran=60}
+\psShell[style=Achatina,base=0 -7200 -110 65,ngrid=720 36,incolor=yellow!50!black!50,
+  hue=0.05 0.5 0.5 1,linewidth=0.005]
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\clearpage
+\section*{Oxystele}
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\begin{pspicture}(-5,-7)(5,1)
+\psset[pst-solides3d]{lightsrc=viewpoint,viewpoint=1000 -30 10 rtp2xyz,Decran=75}
+\psShell[style=Oxystele,base=0 -7200 -70 70,ngrid=720 36,incolor=yellow!50!black!50,
+  hue=0.05 0.5 0.5 1,linewidth=0.005]
+\end{pspicture}
+\end{LTXexample}
+
+
+\clearpage
+\section*{Conus}
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\begin{pspicture}(-3,-13)(3,1)
+\psset[pst-solides3d]{lightsrc=viewpoint,viewpoint=1000 -10 10 rtp2xyz,Decran=1000}
+\psShell[style=Conus,base=0 -7200 -180 2,ngrid=720 72,incolor=yellow!50!black!50,
+  hue=0.05 0.5 0.5 1,linewidth=0.005]
+\end{pspicture}
+\end{LTXexample}
+
+
+\clearpage
+\section*{Natalina}
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\begin{pspicture}(-3,-7)(6,0)
+\psset[pst-solides3d]{lightsrc=viewpoint,viewpoint=1000 -60 10 rtp2xyz,Decran=200}
+\psShell[style=Natalina,base=0 -7200 -270 62,ngrid=720 30,incolor=yellow!40,
+  fillcolor=yellow!20!blue!10,linewidth=0.01pt]
+\end{pspicture}
+\end{LTXexample}
+%\newpsstyle[pst-shell]{Natalina}{alpha=80,beta=40,phi=55,mu=10,Omega=30,A=25,a=12,b=16,
+%  L=0,W1=150,W2=20,P=0,N=0}
+%Natalina  ¦ 80   ¦ 40 ¦ 55 ¦ 10 ¦ 30 ¦-270 ¦ 62  ¦ 25  ¦ 12 ¦ 16   ¦ 0  ¦ 0  ¦ 0  ¦ 0  ¦ 0 
+
+\clearpage
+\section*{Planorbis}
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\begin{pspicture}[showgrid=false](-4,-3)(6,2)
+\psset[pst-solides3d]{lightsrc=viewpoint,viewpoint=1000 -60 10 rtp2xyz,Decran=80}
+\psShell[style=Planorbis,base=0 -7200 -150 130,ngrid=720 30,incolor=yellow!40,
+  fillcolor=yellow!20!blue!10,linewidth=0.01pt]
+\end{pspicture}
+\end{LTXexample}
+%\newpsstyle[pst-shell]{Planorbis}{alpha=84,beta=85,phi=10,mu=45,Omega=5,A=45,a=20,b=30,
+%  L=0,W1=0,W2=0,P=0,N=0}
+%Planorbis ¦ 84   ¦ 85 ¦ 10 ¦ 45 ¦ 5  ¦-150 ¦ 130 ¦ 45  ¦ 20 ¦ 30   ¦ 0  ¦ 0  ¦ 0  ¦ 0  ¦ 0 
+
+
+\clearpage
+\section*{Ammonite}
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\begin{pspicture}[showgrid=false](-4,-2)(6,3)
+\psset[pst-solides3d]{lightsrc=viewpoint,viewpoint=100 -60 20 rtp2xyz,Decran=150}
+\psShell[style=Ammonite,base=0 -7200 -170 170,ngrid=720 30,incolor=yellow!40,
+  fillcolor=yellow!20!blue!10,linewidth=0.01pt]
+\end{pspicture}
+\end{LTXexample}
+%\newpsstyle[pst-shell]{Ammonite}{alpha=83,beta=90,phi=1,mu=1,Omega=1,A=2.5,a=1,b=0.9,
+%  L=0.5,W1=100,W2=20,P=10,N=15}
+% Mollusc  ¦ ,°  ¦ ,°¦ ,°¦ µ, ¦ ,°¦smin ¦smax ¦ A   ¦ a  ¦ b    ¦ P  ¦ W1 ¦ W2 ¦ N  ¦ L 
+%Ammonite  ¦ 83   ¦ 90 ¦ 1  ¦ 1  ¦ 1  ¦-170 ¦ 170 ¦ 2.5 ¦ 1.0¦ 0.9  ¦ 10 ¦ 100¦ 20 ¦ 15 ¦ 0.5 
+
+
+\clearpage
+\section*{Helcion}
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\begin{pspicture}[showgrid=false](-1,-4)(10,4)
+\psset[pst-solides3d]{lightsrc=viewpoint,viewpoint=4000 -90 20 rtp2xyz,Decran=50}
+\psShell[style=Helcion,base=0 -7200 -180 180,ngrid=720 30,incolor=yellow!40,
+  fillcolor=yellow!20!blue!10,linewidth=0.01pt]
+\end{pspicture}
+\end{LTXexample}
+
+% Mollusc  ¦ ,°  ¦ ,°¦ ,°¦ µ, ¦ ,°¦smin ¦smax ¦ A   ¦ a  ¦ b    ¦ P  ¦ W1 ¦ W2 ¦ N  ¦ L 
+%Helcion   ¦ 18   ¦ 90 ¦ 0  ¦ 0  ¦-40 ¦-180 ¦ 180 ¦ 450 ¦ 400¦ 310  ¦ 0  ¦ 0  ¦ 0  ¦ 0  ¦ 0 
+
+
+
+\clearpage
+\section*{Codakia}
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\begin{pspicture}[showgrid=false](-3,-1)(8,3)
+\psset[pst-solides3d]{lightsrc=viewpoint,viewpoint=1.e6 -30 -10 rtp2xyz,Decran=500}
+\psShell[style=Codakia,base=0 -2000 -180 180,ngrid=720 30,incolor=yellow!40,RotX=90,%RotY=90,
+  fillcolor=yellow!20!blue!10,linewidth=0.01pt]
+\end{pspicture}
+\end{LTXexample}
+
+% Mollusc  ¦ ,°  ¦ ,°¦ ,°¦ µ, ¦ ,°¦smin ¦smax ¦ A   ¦ a  ¦ b    ¦ P  ¦ W1 ¦ W2 ¦ N  ¦ L 
+%+---------+------+----+----+----+----+-----+-----+-----+----+------+----+----+----+----+---+
+%Codakia   ¦ 37   ¦ 90 ¦ 0  ¦ 1  ¦ 1  ¦-180 ¦ 180 ¦10500¦10000¦10500¦ 0  ¦ 0  ¦ 0  ¦ 0  ¦ 0 
+
+
+\clearpage
+\section*{Escalaria}
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\begin{pspicture}[showgrid=false](-3,-7)(3,0)
+\psset[pst-solides3d]{lightsrc=viewpoint,viewpoint=800 -90 20 rtp2xyz,Decran=50}
+\psShell[style=Escalaria,base=0 -7200 -180 180,ngrid=720 30,incolor=yellow!40,
+  fillcolor=yellow!20!blue!10,linewidth=0.01pt]
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\section{Les motifs colorés qui ornent les coquillages}
+Hans Meinhardt a mis au point les équations des réactions de diffusion activateur-inhibiteur permettant la simulation des motifs colorés d'un grand nombre de coquillages. Son livre : ``\textit{The Algorithmic Beauty Of Sea shell}'' contient toutes les équations avec les photographies des coquillages et un CD avec un programme de simulation. C'est évidemment la partie la plus difficile à faire, non pas tellement la réalisation des motifs mais leur application sur la forme du coquillage correspondant. Randolf Schultz a réussi à conjuguer les 2 parties : géométrie et motifs du coquillage :
+
+\centerline{\url{http://www.shelly.de/}}
+
+C'est un shareware, mais le programme est utilisable sans achat, il ne permet pas alors la sauvegarde des réalisations.
+
+L'exemple suivant essaye de se rapprocher des motifs du Nautilius. D'autres façons de représenter le nautile sont étudiées dans le fichier dédié.
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\begin{pspicture}(-3,-3)(4,4)
+\psset[pst-solides3d]{lightsrc=viewpoint,viewpoint=50 -30 60 rtp2xyz,Decran=50}
+\psShell[style=Nautilus,base=0 -3600 180 -180,ngrid=360 36,unit=1,incolor=beige,
+  fillcolor=yellow!5,linewidth=0, fcol=0 72 360 36 2 div mul cvi 36 sub 
+    { dup 1 exch 36 add { (0.8 0.1 0 setrgbcolor)} for} for]
+\end{pspicture}
+\end{LTXexample}
+
+
+
+
+\section{Shells created with a data file}
+
+\begin{verbatim}
+\psShell[file=data/nautile-360-36,...]
+\end{verbatim}
+
+afin de procéder aux transformations souhaitées.\xLkeyword{file}
+
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\psset{unit=1.5}
+\begin{pspicture}(-3.5,-2)(3.5,3)
+\psset{lightsrc=viewpoint,viewpoint=50 -50 40 rtp2xyz,Decran=50,solidmemory}
+\psShell[file=data/nautile-360-36,incolor=white,
+         fcol= 0 72 360 71 mul { dup 2 exch 36 add 
+             { dup (rouge) exch 37 add (blue)} for} for]
+\end{pspicture}
+\end{LTXexample}
+
+\clearpage
+
+Dans de deuxième dessin, on va ajourer la coquille en supprimant une facette sur deux. 
+La commande \textsf{[rm=numéros des faces à supprimer]} de \LPack{pst-solides3d} devrait 
+pouvoir le faire, mais ayant constaté quelques dysfonctionnements avec celle-ci, 
+je supprime directement les facettes avec une macro postscript, puis on enregistre le 
+fichier pour l'utiliser à nouveau sans refaire les calculs :
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\psset{unit=1.5}
+\begin{pspicture}(-4,-2)(3,3)
+\psset{lightsrc=viewpoint,viewpoint=50 -50 30 rtp2xyz,Decran=50,solidmemory}
+\psShell[file=data/testnautile-360-36,deactivatecolor]
+\end{pspicture}
+\end{LTXexample}
+
+\clearpage
+
+On supprime les facettes directement avec la commande [rm], ce qui est bien plus long!
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\psset{unit=1.5}
+\begin{pspicture}(-3,-3)(4,4)
+\psset{lightsrc=viewpoint,viewpoint=50 -30 60 rtp2xyz,Decran=50,solidmemory}
+\psShell[file=data/nautile-360-36,deactivatecolor,rm= 0 72 360 71 mul {/i exch def i 2 i 36 add 
+         {/j exch def j j 37 add} for} for]
+\end{pspicture}
+\end{LTXexample}
+
+\clearpage
+
+On change la définition $180\times24$ et on enregistre le fichier.
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\psset{unit=2cm}
+\begin{pspicture}(-3,-2)(4,3)
+\psset{lightsrc=viewpoint,viewpoint=50 -30 30 rtp2xyz,Decran=50}
+\psShell[file=data/nautile-180-24,deactivatecolor,linewidth=0.001,
+         precode=/n1 180 def /n2 24 def /n1n2 n1 n2 2 mul 1 sub mul def /step n2 2 mul def,
+            rm= 0 step n1n2 { dup 2 exch n2 add 
+                { dup n2 add 1 add} for} for]
+\end{pspicture}
+\end{LTXexample}
+
+\clearpage
+
+D'autres variantes pour coloriser le coquillage.
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\begin{pspicture}(-3,-4)(4,3)
+\psset{lightsrc=viewpoint,viewpoint=50 -30 60 rtp2xyz,Decran=50}
+\psShell[style=Nautilus,D=1,base=0 -3600 -180 180,ngrid=360 36,incolor=red!30,
+         fillcolor=yellow!5,linewidth=0, 
+         fcol=0 72 360 36 2 div mul cvi 36 sub { dup 1 exch 36 add 
+	              { (0.8 0.1 0 setrgbcolor) } for } for]
+\end{pspicture}
+\begin{pspicture}(-3,-4)(4,3)
+\psset{viewpoint=100 -30 50 rtp2xyz,Decran=100}
+\psShell[style=Nautilus,D=1,base=0 -720 -180 180,ngrid=90 36,linewidth=0.01pt,action=draw]
+\end{pspicture}
+\end{LTXexample}
+
+
+\clearpage
+
+\begin{LTXexample}[pos=t,preset=\centering]
+\begin{pspicture}(-3,-3)(4,4)
+\psset{lightsrc=viewpoint,viewpoint=50 -30 60 rtp2xyz,Decran=50}
+\psShell[style=Nautilus,base=0 -3600 180 -180,ngrid=360 36,incolor=beige,
+   fillcolor=yellow!5,linewidth=0,fcol=0 72 360 36 2 div mul cvi 36 sub 
+     { dup 1 exch 36 add { (0.8 0.1 0 setrgbcolor)} for} for]
+\end{pspicture}
+\begin{pspicture}(-3,-3)(4,4)
+\psset{lightsrc=viewpoint,viewpoint=50 -30 60 rtp2xyz,Decran=50}
+\psShell[style=Nautilus,base=0 -3600 180 -180,ngrid=360 36,incolor=beige,
+  fillcolor=yellow!5,linewidth=0,fcol=0 2 360 36 2 div mul cvi 2 sub 
+    { (0.8 0.1 0 setrgbcolor)} for]
+\end{pspicture}
+\end{LTXexample}
+
+
+\section{Saving data to external files}
+
+With the optional argument \Lkeyword{writedata} one can save the data in external files.
+The shell itself is not plotted.
+
+\begin{verbatim}
+\psShell[writedata,file=data/myShell,...]
+\end{verbatim}
+
+Subdirectories must exist, otherwise the package throws  an error on PostScript level.
+The external files are created with either a Ghostscript run \verb|gs <file>.ps| or when
+converting the file to pdf. The example:
+
+\begin{verbatim}
+\begin{pspicture}(-4,-4)(4,4)
+\psset{lightsrc=viewpoint,viewpoint=10 -20 0 rtp2xyz,Decran=10}
+\psset{style=Nautilus,A=0.5,alpha=45,beta=90,a=0.5,b=0.75}
+\psShell[writedata,file=data/cockle,
+   base=0 -3600 -180 200,
+   ngrid=360 36,unit=4cm,linewidth=0.001,RotX=-90,incolor=white,fillcolor=white,
+   fcol=0 2 360 36 2 div mul cvi 2 sub { (0.8 0.1 0 setrgbcolor)} for
+        360 36 mul cvi 2 360 36 mul 2 mul 2 sub { (0 0 0.8 setrgbcolor)} for]
+\end{pspicture}
+\end{verbatim}
+
+creates four files in the subdirectory \verb|data/|:
+
+\begin{verbatim}
+cockle-couleurs.dat
+cockle-faces.dat
+cockle-io.dat
+cockle-sommets.dat
+
+\end{verbatim}
+
+
+\section{List of all optional arguments for \texttt{pst-shell}}
+\xkvview{family=pst-shell,columns={key,type,default}}
+
+\bgroup
+\raggedright
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{pst-shell-doc}
+\egroup
+
+\printindex
+
+
+
+\end{document}
+
+
+
+

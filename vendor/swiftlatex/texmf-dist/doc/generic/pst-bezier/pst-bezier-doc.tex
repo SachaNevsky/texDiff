@@ -1,0 +1,746 @@
+%% $Id: pst-bezier-doc.tex 134 2009-09-27 12:28:50Z herbert $
+\documentclass[11pt,english,bibliography=totoc,parskip=false,smallheadings,
+    oneside]{pst-doc}
+\usepackage[utf8]{inputenc}
+\usepackage{esvect}
+\let\vec\vv
+\usepackage{animate}
+\usepackage{pst-bezier}
+\usepackage{bbold}
+\addbibresource{pst-bezier-doc.bib}
+
+\let\pstBezierFV\fileversion
+\lstset{pos=l,wide=false,language=PSTricks,
+    morekeywords={multidipole,parallel},basicstyle=\footnotesize\ttfamily}
+\definecolor{navy}{rgb}{0 0 0.5}
+%
+\def\bgImage{\pspicture[showgrid](0,1)(5,6)
+\psset{showpoints}
+\psbcurve[linecolor=blue,linewidth=0.01](1,1)%
+  (2,2)(3,1)(4,2)(4,4)(3,5)%
+  (2,4)(1,5)
+\psbcurve(1,1)(2,2)(3,1)(4,2)%
+  T{0.5}(4,4)(3,5)(2,4)(1,5)
+\endpspicture}
+\newtheorem{definition}{Definition}
+\def\dy{\displaystyle}
+\begin{document}
+
+\title{\texttt{pst-bezier}}
+\subtitle{A PSTricks package for drawing Bezier curves; v.\pstBezierFV}
+\author{Jean-Paul Bécar\\Lionel Garnier\\Manuel Luque\\Tobias Nähring \\Herbert Voß}
+\docauthor{Lionel Garnier\\Herbert Voß}
+\date{\today}
+\maketitle
+
+\tableofcontents
+
+\clearpage
+
+\begin{abstract}
+\noindent
+The \LPack{pstricks} package provides (essentially) two main macros for
+drawing curves: \Lcs{pscurve} and \Lcs{psbezier}. Both macros
+employ Bezier \Index{spline}s.
+
+The \Lcs{pscurve} macro takes multiple interpolated points as
+arguments. Thus, it is easy to draw long multiply bent curves. The
+problem with \Lcs{pscurve} is that there is no easy
+way to change the automatically computed
+control points without simultaneously changing the interpolated
+points. Note that some control is possible via the
+\Lkeyword{curvature} option.
+
+The \Lcs{psbcurve} macro gives full control over the
+interpolation points and the control points of one Bezier polynominal
+of degree three (two interpolated points and two control
+points).
+
+\vfill\noindent
+Thanks to: \\
+    Jean-C\^ome Charpentier.
+\end{abstract}
+
+\clearpage
+
+\section{Introduction}
+
+If one demands for the access to certain control points of one
+multiply bent curve one has to use multiple instances of the
+\Lcs{psbezier} macro.  With this approache each inner interpolation
+point of the curve has to be input twice. Furthermore, if one needs
+smooth joints one has to compute control points symmetrically to the
+corresponding interpolation points for every joint even if one does
+not care so much about the exact tangential direction at some of those
+joints.  That can be rather tedious.
+
+The \Lcs{psbcurve} macro of the package \LPack{pst-bezier} is intented to
+demonstrate a way to combine the nice properties of the macros
+\Lcs{pscurve} and \Lcs{psbezier}.  It provides an easy input
+format to describe `arbitrarily' many interpolation points of a curve
+and to fix the control points at some freely selected interpolation
+points.
+
+Note, that \LPack{pst-bezier} is \emph{no final package} (e.g.
+the automatical computation of the control points is not as refined as
+that one for the macro \Lcs{pscurve}).
+
+\section{Installation and usage of \texttt{pst-bezier.tex}}
+\paragraph{Installation:}
+As prerequisites for \LPack{pst-bezier} you need resent working
+versions of \LaTeX{} and \LPack{pstricks}. The files
+\LFile{pst-bezier.tex} and \LFile{pst-bezier.sty} must be somewhere
+in your \TeX-input path. Further more, the file
+\LFile{pst-bezier.pro} must be in some path, where \Lprog{dvips} can
+find it.
+
+\paragraph{Usage:}
+As usual, load the packages \LPack{pstricks} and \LPack{pst-bezier}
+in that order via the \Lcs{usepackage} macro.
+
+Now you are ready to use the \Lcs{psbcurve} macro within your document
+body. This macro is described in the next section with all its options.
+
+Whith the following simple \LaTeX-source code you can test whether you have
+correctly installed the package:
+
+\begin{LTXexample}
+\documentclass{minimal}
+\usepackage{pstricks}
+\usepackage{pst-bezier}
+\begin{document}
+ \begin{pspicture}(0,-0.4)(6,2)
+   \psbcurve(1,2)(5,2) % Draw just one straight line.
+ \end{pspicture}
+\end{document}
+\end{LTXexample}
+
+
+\section{The \nxLcs{psbcurve} macro}
+In the most simple form you can specify any number of interpolation
+points as the argument of \Lcs{psbcurve}.
+
+\begin{LTXexample}
+\begin{pspicture}[showgrid](0,-0.4)(5,3)
+  \psbcurve[showpoints](1,1)(2,2)(3,1)(4,2)
+\end{pspicture}
+\end{LTXexample}
+
+As usual, options can be specified within brackets.
+
+
+\begin{LTXexample}
+\begin{pspicture}[showgrid](0,-0.4)(5,3)
+  \psbcurve[showpoints](1,1)(2,2)(3,1)(4,2)
+\end{pspicture}
+\end{LTXexample}
+
+As you can see in the above example, the \Lkeyword{showpoints} feature works
+(partially) with \Lcs{psbcurve}.
+
+The next figure shows again the curve from the first example. This
+time labels are added to the points (this is just for the following
+description, it is not a feature of \Lcs{psbcurve}).
+
+\begin{LTXexample}
+\begin{pspicture}[showgrid](0,-0.4)(5,3)
+  \psbcurve[showpoints](1,1)(2,2)(3,1)(4,2)
+  \uput[-90](1,1){$\vec{p}_{0}=\vec{l}_{1}$}
+  \uput[90](1.5,2){$\vec{r}_{1}$}
+  \uput[90](2,2){$\vec{p}_{1}$}
+  \uput[90](2.5,2){$\vec{l}_{2}$}
+  \uput[-90](2.5,1){$\vec{r}_{2}$}
+  \uput[-90](3,1){$\vec{p}_{2}$}
+  \uput[-90](3.5,1){$\vec{l}_{3}$}
+  \uput[90](4,2){$\vec{r}_{3}=\vec{p}_{3}$}
+\end{pspicture}
+\end{LTXexample}
+
+The points labeled with $\vec{p}_{k}$ $(k=0,\dots,3)$ are the
+interpolation points, these ones labelled with $\vec{l}_{1},\hdots,\vec{l}_{3}$,
+and these ones labelled with $\vec{r}_{1},\hdots,\vec{r}_{3}$ are the left and
+right control points, respectively.
+
+Between each consecutive pair $\vec{p}_{k-1},\vec{p}_{k}$ of interpolation
+points the \Lcs{psbcurve} macro draws a cubic Bezier spline.
+The control points  $\vec{l}_{k}$ and $\vec{r}_{k}$ determine the tangential
+direction of the bezier spline at the interpolation points. More
+exactly, the bezier spline from $\vec{p}_{k-1}$ to $\vec{p}_{k}$ is tangent to
+the vector $\vec{l}_{k}-\vec{p}_{k-1}$ at the point $\vec{p}_{k-1}$ and tantengial
+to the vektor $\vec{r}_{k}-\vec{p}_{k}$ at the point $\vec{p}_{k}$.
+
+Without any optional modifier arguments (described later in this text)
+the control points are computed automatically
+from the interpolation points by the formulas\footnote{Note that this
+  method is very crude. To compute the curve such that the curvature
+  is continuous would require solving a nonlinear system of
+  equations. That is not implemented yet.}
+%
+\begin{align*}
+  \vec{l}_{1}&= \vec{p}_{0}\\
+  \vec{l}_{k}&= t_{k}(\vec{p}_{k}-\vec{p}_{k-2})&&\text{for }k=2,\hdots,n\\
+  \vec{r}_{k}&= t_{k}(\vec{p}_{k-1}-\vec{p}_{k+1})&&\text{for }k=1,\hdots,n-1\\
+  \vec{r}_{n}&= \vec{p}_{n}
+\end{align*}
+%
+where $t_{k}$ $(k=1,\hdots,n)$ are real coefficients which are called
+tension and which default to the value \Lkeyword{bcurveTension}=0.25.
+
+You can change the appearance of the curve by several modifiers.
+First of all you can directly set the left and right control points
+via the modifiers \Lnotation{l}\Largr{\CAny} and \Lnotation{r}\Largr{\CAny}, resp., as
+shown in the next two examples. The unmodified curve is drawn in the
+background in {\color{blue}blue} color.
+
+
+
+\begin{LTXexample}
+\pspicture[showgrid](0,-0.4)(5,3)
+\psset{showpoints}
+\psbcurve[linecolor=blue,linewidth=0.01](1,1)%
+  (2,2)(3,1)(4,2)
+\psbcurve(1,1)l(2,1)(2,2)(3,1)r(4,1)(4,2)
+\uput[-90](2,1){$\vec{l}_{1}$}
+\uput[-90](4,1){$\vec{r}_{3}$}
+\endpspicture
+\end{LTXexample}
+
+\begin{LTXexample}
+\pspicture[showgrid](0,-0.4)(5,3)
+\psset{showpoints}
+\psbcurve[linecolor=blue,linewidth=0.01](1,1)%
+  (2,2)(3,1)(4,2)
+\psbcurve(1,1)(2,2)l(2,1)(3,1)(4,2)
+\uput[-90](2,1){$\vec{l}_{2}$}
+\endpspicture
+\end{LTXexample}
+
+
+On the right hand side the last example is shown once more without grid and
+with \Lkeyset{showpoints=false}. There, you see that there is a corner at the second
+interpolation point.
+
+
+\begin{LTXexample}
+\pspicture(0,-0.4)(5,3)
+\psbcurve(1,1)(2,2)l(2,1)(3,1)(4,2)
+\endpspicture
+\end{LTXexample}
+
+If you change some left control point $\vec{l}_{k}$ with the help of the
+\Lnotation{L}\Largr{\CAny} modifier then the control point
+$\vec{r}_{k-1}$ is set symmetrically to $\vec{l}_{k}$ with respect to the
+interpolation point $\vec{p}_{k-1}$. In that way you get a smooth joint as
+demonstrated in the next example.
+
+\begin{LTXexample}
+\pspicture[showgrid](0,-0.4)(5,3)
+\psbcurve[linecolor=blue,linewidth=0.01](1,1)%
+  (2,2)(3,1)(4,2)
+\psset{showpoints}
+\psbcurve(1,1)(2,2)L(2,1)(3,1)(4,2)
+\uput[-90](2,1){$\vec{l}_{2}$}
+\uput[0](2,2){$\vec{p}_{1}$}
+\uput[0](2,3){$\vec{r}_{1}$}
+\endpspicture
+\end{LTXexample}
+
+With the \Lnotation{t}\Largb{t} modifier you can change the tension of the
+automatically computed control points of the current Bezier spline.
+
+
+\begin{LTXexample}
+\pspicture[showgrid](0,-0.4)(5,3)
+\psset{showpoints}
+\psbcurve[linecolor=blue,linewidth=0.01](1,1)%
+  (2,2)(3,1)(4,2)
+\psbcurve(1,1)(2,2)t{0.5}(3,1)(4,2)
+\endpspicture
+\end{LTXexample}
+
+
+As you can see from the example both control points of the current
+spline are affected by the \Lnotation{t}\Largb{t} modifier.
+If you want to change the tension of just the left or right control
+point you can use the \Lnotation{tl}\Largb{t} or \Lnotation{tr}\Largb{t} modifier,
+respectively, as demonstrated in the following two examples.
+
+\begin{LTXexample}
+\pspicture[showgrid](0,-0.4)(5,3)
+\psset{showpoints}
+\psbcurve[linecolor=blue,linewidth=0.01](1,1)%
+  (2,2)(3,1)(4,2)
+\psbcurve(1,1)%
+  (2,2)tl{0.5}(3,1)(4,2)
+\endpspicture
+\end{LTXexample}
+
+
+\begin{LTXexample}
+\pspicture[showgrid](0,-0.4)(5,3)
+\psset{showpoints}
+\psbcurve[linecolor=blue,linewidth=0.01](1,1)%
+  (2,2)(3,1)(4,2)
+\psbcurve(1,1)(2,2)tr{0.5}(3,1)(4,2)
+\endpspicture
+\end{LTXexample}
+
+
+The \Lnotation{ts}\Largb{t} modifier changes the tension of the left and right
+control points next to the interpolation point which stands in front
+of the modifier. In the next example a negative tension value leads to
+a rather surprising effect.
+
+\begin{LTXexample}
+\pspicture[showgrid](0,-0.4)(5,3)
+\psset{showpoints}
+\psbcurve[linecolor=blue,linewidth=0.01](1,1)%
+  (2,2)(3,1)(4,2)
+\psbcurve(1,1)(2,2)ts{-0.5}(3,1)(4,2)
+\endpspicture
+\end{LTXexample}
+
+The default value of the tension can be set with the option
+\Lkeyword{bcurveTension} as in the following example.
+
+
+\begin{LTXexample}
+\pspicture[showgrid](0,-0.4)(5,3)
+\psset{showpoints}
+\psbcurve[linecolor=blue,linewidth=0.01](1,1)%
+  (2,2)(3,1)(4,2)
+\psbcurve[bcurveTension=0.5](1,1)%
+  (2,2)(3,1)(4,2)
+\endpspicture
+\end{LTXexample}
+
+You can set this option also with the help of the \Lcs{psset} macro.
+%
+It is even possible to change the value of \Lkeyword{bcurveTension} in the
+middle of a \Lcs{psbcurve}. Just use the modifier \Lnotation{T}\Largb{t} for
+that purpose as shown in the following example.
+
+\begin{LTXexample}
+\pspicture[showgrid](0,0.6)(5,6)
+\psset{showpoints}
+\psbcurve[linecolor=blue,linewidth=0.01](1,1)%
+  (2,2)(3,1)(4,2)(4,4)(3,5)%
+  (2,4)(1,5)
+\psbcurve(1,1)(2,2)(3,1)(4,2)%
+  T{0.5}(4,4)(3,5)(2,4)(1,5)
+\endpspicture
+\end{LTXexample}
+
+Certainly, you can use the \Lnotation{T}\Largb{t} modifier several times in one
+curve. (Try it for yourself.)
+%
+The \texttt{linestyle} and \texttt{fillstyle} options (and several
+more) are respected by \Lcs{psbcurve} as the following example shows.
+
+\begin{LTXexample}
+\pspicture[showgrid](0,-0.4)(5,3)
+\psbcurve[linestyle=dashed,
+  linewidth=3pt,
+  dash=0.5 0.2,
+  fillstyle=solid,
+  fillcolor=blue](1,1)(2,2)(3,1)(4,2)
+\endpspicture
+\end{LTXexample}
+
+\subsection{Things that do not work (`known bugs')}
+As already mentioned this project is something like an experiment. So,
+there are many things that do not work.
+
+\begin{itemize}
+\item new lines inside the argument list are not ignored.
+\item The control points are computed in a rather crude way (see
+  above). The \Lkeyword{curvature} option is not recognised.
+\item If \Lkeyword{fillstyle} is set to \Lkeyword{solid} and
+  \Lkeyword{showpoints} then the fill color covers the interpolation and control points.
+\item arrow heads do not work.
+\end{itemize}
+
+\clearpage
+
+\section{Bezier curve with weighted points}
+
+\subsection{Mathemathical background}
+
+A mass point is a weighted point $\left(P;\omega\right)$ with $\omega \neq 0$ or a vector $\left(\overrightarrow{P};0\right)$ with a weight equal to $0$. A generic mass point is noted $\left(P;\omega\right)$.
+
+Using the quadratic Bernstein polynomials, a rational quadratic B\'ezier curve having three control 
+mass points $\left(P_{0};\omega_{0}\right)$, $\left(P_{1};\omega_{1}\right)$
+and $\left(P_{2};\omega_{2}\right)$, is defined as follow:
+
+\begin{definition}\label{fdef::DefRQBC_Fiorot}: Rational quadratic B\'ezier curve (BR curve)
+
+Let $\omega_{0}$, $\omega_{1}$ and $\omega_{2}$ be three real numbers. 
+Let $\left(P_{0};\omega_{0}\right)$, $\left(P_{1};\omega_{1}\right)$
+and $\left(P_{2};\omega_{2}\right)$ be three mass points, these points are not collinear.
+
+Define two sets $I = \left \{ i    |      \omega_i \neq 0 \right \}$ and 
+$J = \left \{ i      |      \omega_i = 0 \right \}$
+
+
+Define the function $\omega_{f}$ from $\left[0;1\right] $ to $\mathbb{R} $ as follows 
+
+\begin{equation}
+%\begin{array}{cccc}
+%\omega_{f}: & \left[0;1\right] & \longrightarrow & \mathbb{R} \\
+%& t & \longmapsto &\omega_{f}\left(t\right)=\dy\sum_{i\in I}\omega_{i}\times B_{i}\left(t\right)
+%\end{array}
+\omega_{f}\left(t\right)=\dy\sum_{i\in I}\omega_{i}\times B_{i}\left(t\right)
+\label{eq:DenominateurCbreBezier}
+\end{equation}
+
+A mass point $\left(M;\omega\right)$ or $\left(\overrightarrow{u};0\right)$
+belongs to the quadratic B\'ezier curve defined by the three control
+mass points $\left(P_{0};\omega_{0}\right)$, $\left(P_{1};\omega_{1}\right)$
+and $\left(P_{2};\omega_{2}\right)$, 
+if there is a real $t_{0}$ in $\left[0;1\right]$ such that:
+
+\begin{itemize}
+\item [$\bullet$] if $\omega_{f}\left(t_{0}\right)\neq0$ then we have
+
+\hspace*{-0.75cm}\begin{minipage}{1.0\textwidth}
+\begin{equation}
+\overrightarrow{OM}  = \dy \frac{1}{\omega_{f}\left(t_{0}\right)}\left(\dy \sum_{i\in I} \dy \omega_{i}  B_{i}\left(t_{0}\right)
+  \overrightarrow{OP_{i}} \right)
++\vspace{0.2cm}\dy \frac{1}{\omega_{f}\left(t_{0}\right)}\left( \sum_{i\in J}  B_{i}\left(t_{0}\right)  \overrightarrow{P_{i}}\right)
+\label{eq:DefRQBC_FiorotPoint}
+\end{equation}
+\end{minipage}
+
+\item [$\bullet$] if $\omega_{f}\left(t_{0}\right)=0$ then we have
+\begin{equation}
+\overrightarrow{u}=\sum_{i\in I}\omega_{i}B_{i}\left(t_{0}\right)\overrightarrow{OP_{i}}+\sum_{i\in J}B_{i}\left(t_{0}\right)\overrightarrow{P_{i}}\label{eq:DefRQBC_FiorotVecteur}
+\end{equation}
+
+\end{itemize}
+\hrulefill{}\end{definition}
+
+The  reduced discriminant of the denominator $\omega_{f}\left(t_{0}\right)$  is
+\begin{equation}
+\Delta'=\omega_{1}^{2}-\omega_{2} \omega_{0}\label{eq:DiscrimantReduitCBRQnonStandard}
+\end{equation}
+and we can state the following fundamental result:
+\begin{itemize}
+\item[$\star$] 
+if $\omega_{1}^{2}-\omega_{2} \omega_{0}=0$ then the 
+ denominator has one and only one root, the curve is a parabolic arc; 
+\item[$\star$]
+ if  $\omega_{1}^{2}-\omega_{2} \omega_{0}>0$ then the 
+ denominator has two distinct roots, the curve is  a hyperbolic arc;
+\item[$\star$]
+ if $\omega_{1}^{2}-\omega_{2} \omega_{0}<0$ then the 
+ denominator does not vanish,  the curve is  an elliptical arc. 
+\end{itemize}
+
+We can note w.l.o.g.\footnote{We can permute  the role of $P_0$ and $P_2$} that one of the weights can be equal to~$1$. If $\omega_0$ is not equal to $0$, we choose $\omega_0=1$, else, we choose $\omega_1=1$, and we can characterise the type of the conic from the mass points of the BR curve,  see Table~\ref{tab::TypeConicEtcbeBr}.
+
+\begin{table}[!h]
+\begin{center}
+\begin{tabular}{|c||c|c|c|}\hline
+Conic & Three weighted points & Points and vectors \\ \hline \hline
+Parabola & $\left(P_{0};1\right)$, $\left(P_{1};\omega\right)$ 
+ $\left(P_{2};\omega^{2}\right)$ & $\left(P_{0};1\right)$,  $\left(\overrightarrow{P_{1}};0\right)^{\mathstrut^{\mathstrut}}_{\mathstrut_{\mathstrut}}$  $\left(\overrightarrow{P_{2}};0\right)$\\ \hline \hline
+ Ellipse & $\left(P_{0};1\right)$, $\left(P_{1};\omega_{1}\right)$, $\left(P_{2};\omega_{2}\right)$, $ \omega_{2}>\omega_{1}^{2} $ &  $\left(P_{0};1\right)$,   $\left(\overrightarrow{P_{1}};0\right)^{\mathstrut^{\mathstrut}}_{\mathstrut_{\mathstrut}}$  $\left(P_{2};1\right)$ \\ \hline \hline
+  Hyperbola & $\left(P_{0};1\right)$, $\left(P_{1};\omega_{1}\right)$   $\left(P_{2};\omega_{2}\right)$, $\omega_{2}<\omega_{1}^{2}$ & $\left(P_{0};1\right)$, $\left(\overrightarrow{P_{1}};0\right)^{\mathstrut^{\mathstrut}}_{\mathstrut_{\mathstrut}}$  $\left(P_{2};-1\right)$   \\ \cline{3-3}
+&   & $\left(\overrightarrow{P_{0}};0\right)$,   $\left(P_{1};1\right)$  and $\left(\overrightarrow{P_{2}};0\right)^{\mathstrut^{\mathstrut}}_{\mathstrut_{\mathstrut}}$  \\ \hline  \hline
+\end{tabular}
+\end{center}
+\caption{Types of conics defined by B\'ezier curves with control mass points.
+\hrulefill{}
+\label{tab::TypeConicEtcbeBr}}
+\end{table}
+
+From the  access rights used by Unix and Linux, we define a bijection $f$ between $\mathbb{F_2}^3-\left\lbrace\left(0,0,0\right)\right\rbrace$ and the set $\left\lbrace 1 ,2 , 3, 4, 5, 6, 7\right\rbrace$. From $\left(\omega_2,\omega_1,\omega_0\right)$, we define a triplet $\left(b_2,b_1,b_0\right)$ as follow: if $w_i\neq0$ then $b_i=1$ else $b_i=0$. Then 
+$$f\left(\omega_2,\omega_1,\omega_0\right)= b_2 \times 4+ b_1 \times 2+b_0$$
+
+If $f\left(\omega_2,\omega_1,\omega_0\right)=7$, the control points are weighted points: the curve is an elliptical arc, a parabolic arc or a hyperbolic arc. If $\left(\omega_2,\omega_1,\omega_0\right)=\left(1,-1,1\right)$, the parabolic arc is not bounded and for $t=\frac{1}{2}$, the mass point is a direction vector of the parabola axis. If $\left(\omega_2,\omega_1,\omega_0\right)=\left(1,-2,1\right)$, the hyperbolic arc is not bounded and there exists $t$ in $\left]0,1\right[$ such as the mass point is a direction vector of one of the asymptotes of the hyperbola. \\
+If $f\left(\omega_2,\omega_1,\omega_0\right)=1$, the first control point is  a weighted point, the others are vectors: the curve is a parabolic arc. The B\'ezier curve is defined by
+ \begin{equation}
+\begin{cases}
+ \dy \frac{1}{\omega_0\, B_0\left(t_{0}\right)}\left( \omega_{0}\,  B_{0}\left(t_{0}\right) 
+ \overrightarrow{OP_{0}} + B_{1}\left(t_{0}\right)  \overrightarrow{P_{1}}+ B_{2}\left(t_{0}\right)  
+ \overrightarrow{P_{2}}\right) & \text{ if }t_0\in\left[0,1\right[  \\[1ex]
+\overrightarrow{P_2} & \text{ if }t_0=1\\
+ \end{cases}
+\label{eq:parabola}
+\end{equation}
+If $f\left(\omega_2,\omega_1,\omega_0\right)=4$, the B\'ezier curve can be defined in the same way.\\
+If $f\left(\omega_2,\omega_1,\omega_0\right)=2$, the intermediate control point is  a weighted point, the others are vectors: the curve is a branch of a hyperbola. The B\'ezier curve is defined by
+ \begin{equation}
+\begin{cases}
+ \dy \frac{1}{\omega_1\, B_1\left(t_{0}\right)}\left( \omega_{1}\,  B_{1}\left(t_{0}\right) \overrightarrow{OP_{1}}+ B_{0}\left(t_{0}\right)  \overrightarrow{P_{0}}+ B_{2}\left(t_{0}\right)  \overrightarrow{P_{2}}\right) & \text{ if }t_0\in\left]0,1\right[ 
+\\[1ex]
+\overrightarrow{P_0} & \text{ if }t_0=0\\[1ex]
+\overrightarrow{P_2} & \text{ if }t_0=1
+ \end{cases}
+\label{eq:branchHyperbola}
+\end{equation}
+and the centre of the hyperbola is $P_1$. The vector $\overrightarrow{P_0}$ is a direction vector of an asymptote of the hyperbola whereas the vector $\overrightarrow{P_2}$ is a direction vector of the other asymptote.\\
+If $f\left(\omega_2,\omega_1,\omega_0\right)=5$, the intermediate control point is    a vector,   the others are weighted points: the curve is an elliptical arc. The B\'ezier curve is defined by
+ \begin{equation}
+ \dy \frac{1}{\omega_0\, B_0\left(t_{0}\right)+\omega_2\, B_2\left(t_{0}\right)}\left( \omega_{0}\,  B_{0}\left(t_{0}\right) \overrightarrow{OP_{0}} + B_{1}\left(t_{0}\right)  \overrightarrow{P_{1}}+ \omega_2\, B_{2}\left(t_{0}\right)  \overrightarrow{OP_{2}}\right),\;\; t_0\in\left[0,1\right] 
+\label{eq:ellipse}
+\end{equation}
+and the tangent vector to the curve at $P_0$ or $P_2$ is parallel to $\overrightarrow{P_1}$.
+
+\subsection{Syntax}
+
+\begin{BDef}
+\Lcs{psRQBCmasse}\OptArgs\Largr{$x_0,y_0$}\Largr{$x_1,y_1$}\Largr{$x_2,y_2$}\Largb{$w_0,w_1,w_2$}
+\end{BDef}
+
+For the coordinates of the points all possible kinds of coordinates are possible, like polar, PostScript, nodes, \ldots
+
+\subsection{Three weighted orthogonal points}
+\begin{LTXexample}[pos=t]
+\begin{pspicture}[showgrid](-6,-6.4)(3,3)
+\psclip{\psframe(-6,-6)(3,3)}
+  \psRQBCmasse[linecolor=blue](2,0)(2,2)(0,2){1,-1,1}
+  \psRQBCmasse[linecolor=navy,autoTrace](2,0)(2,2)(0,2){1,1,1}
+  \rput(P0){$P_0$}\uput[r](P1){$P_1$}\uput[r](P2){$P_2$}
+\endpsclip%
+\end{pspicture}
+\end{LTXexample}
+
+
+
+\subsection{Half-ellipse}
+\begin{LTXexample}[pos=t]
+\begin{pspicture}[showgrid](-3,-2.4)(3,2)
+\psframe(-3,-2)(3,2)
+\psRQBCmasse[linecolor=red,autoTrace](2,0)(0,1)(-2,0){1,0,1}
+\uput[r](P0P1){$\overrightarrow{P_1}$} \uput[r](P2){$P_2$}
+\rput(P1P2){$\overrightarrow{P_{1}}$} \uput[r](P0){$P_0$}
+\psRQBCmasse[linecolor=orange,autoTrace=false](2,0)(0,-1)(-2,0){1,0,1}
+\end{pspicture}
+\end{LTXexample}
+
+
+\clearpage
+
+\subsection{Half-parabola}
+\subsubsection{Point $P_2$ and two vectors}
+
+\begin{LTXexample}[pos=t]
+\begin{pspicture}[showgrid](-3,-3.4)(3,3)
+\psclip{\psframe(-3,-3)(3,3)}
+  \psRQBCmasse[linecolor=red,autoTrace](2,0)(0,1)(-1,0){0,0,1}
+  \uput[r](P1P2){$\overrightarrow{P_1}$} \uput[r](P2){$P_2$}  
+  \uput[r](P0P2){$\overrightarrow{P_0}$}
+  \psRQBCmasse[linecolor=orange,autoTrace=false](2,0)(0,-1)(-1,0){0,0,1}
+  \uput[r](P1P2){$\overrightarrow{P_1}$} \uput[r](P2){$P_2$}
+  \uput[r](P0P2){$\overrightarrow{P_0}$}
+\endpsclip
+\end{pspicture}
+\end{LTXexample}
+
+\subsubsection{Point $P_0$ and two vectors}
+
+\begin{LTXexample}[pos=t]
+\begin{pspicture}[showgrid](-3,-3.4)(3,3)
+\psclip{\psframe(-3,-3)(3,3)}
+  \psRQBCmasse[linecolor=red,autoTrace](2,0)(0,1)(-1,0){1,0,0}
+  \uput[r](P0P1){$\overrightarrow{P_1}$} \uput[r](P0){$P_0$}
+  \uput[r](P0P2){$\overrightarrow{P_2}$}
+  \psRQBCmasse[linecolor=orange,autoTrace=false](2,0)(0,-1)(-1,0){1,0,0}
+\endpsclip%
+\end{pspicture}
+\end{LTXexample}
+
+\clearpage
+
+\subsection{Branch of a hyperbola}
+\begin{LTXexample}[pos=t]
+\begin{pspicture}[showgrid](-3,-3.4)(3,3)
+\psclip{\psframe(-3,-3)(3,3)}
+  \psRQBCmasse[linecolor=red,autoTrace](1,1)(0,0)(-1,1){0,1,0}
+  \uput[r](P0){$\overrightarrow{P_0}$} \uput[r](0,-0.5){$P_1$}
+  \uput[r](P2){$\overrightarrow{P_2}$}
+  \psRQBCmasse[linecolor=orange,autoTrace=false](1,1)(0,0)(-1,1){0,-1,0}
+\endpsclip%
+\end{pspicture}
+\end{LTXexample}
+
+\subsection{Parabola}
+\begin{LTXexample}[pos=t]
+\psset{unit=0.5}
+\begin{pspicture}(-14,-3.4)(15,10)
+\psclip{\psframe(-14,-3)(15,10)}
+  \psRQBCmasse[linecolor=red,autoTrace](0,6)(-13,0)(-1,-1){1,1,1}
+  \psRQBCmasse[linecolor=orange](0,6)(-13,0)(-1,-1){1,-1,1}
+  \uput[u](P0){$P_0$}\uput[l](P1){$P_1$}\uput[d](P2){$P_2$}
+\endpsclip
+\end{pspicture}
+\end{LTXexample}
+
+
+\clearpage
+
+\subsection{Ellipse}
+\begin{LTXexample}[pos=t]
+\psset{unit=0.5}
+\begin{pspicture}(-14,-3.4)(15,10)
+\psgrid[subgriddiv=0,gridcolor=lightgray,griddots=5,gridlabels=0pt]
+%\psplotImp[linewidth=0.5pt,linecolor=blue,algebraic](-6,-3)(15,10)%
+  %{ -0.044*x^2-0.161*y^2 + 0.075*x*y + 0.074*x + 0.797*y + 1}
+\psRQBCmasse[nPoints=20,autoTrace,showpoints](0,6)(-13,0)(-1,-1){1,0.5,1}
+\psRQBCmasse[nPoints=40,linecolor=red,showpoints](0,6)(-13,0)(-1,-1){1,-0.5,1}
+\psaxes[labelFontSize=\scriptscriptstyle]{->}(0,0)(-14,-3)(15,10)
+\end{pspicture}
+\end{LTXexample}
+
+
+\subsection{Complete circle}
+\begin{LTXexample}[pos=t]
+\psset{unit=1}
+\begin{pspicture}(-4,-4.4)(4,4)
+\psgrid[subgriddiv=0,gridcolor=lightgray,griddots=5,gridlabels=0pt]
+\psRQBCmasse[autoTrace](0,3)(3,3)(3,0){1,1,2}
+\psRQBCmasse[linecolor=red](0,3)(3,3)(3,0){1,-1,2}
+\psaxes[labelFontSize=\scriptscriptstyle]{->}(0,0)(-4,-4)(4,4)
+\end{pspicture}
+\end{LTXexample}
+
+
+\begin{LTXexample}[pos=t]
+\psset{unit=1.5}
+\begin{pspicture}(-4,-4.4)(4,4)
+\psgrid[subgriddiv=0,gridcolor=lightgray,griddots=5,gridlabels=0pt]
+\psRQBCmasse[autoTrace](0,3)(3,0)(0,-3){1,0,1}
+\uput[u](-0.25,3){$P_0$}
+\uput[u](-0.25,-3.5){$P_2$}
+\uput[u](3,3){$\overrightarrow{P_1}$}
+\uput[u](3,-3.5){$\overrightarrow{P_1}$}
+\uput[u](2.5,0){$\overrightarrow{P_1}$}
+\psRQBCmasse[linecolor=red](0,3)(-3,0)(0,-3){1,0,1}
+\psaxes[labelFontSize=\scriptscriptstyle,linewidth=0.01]{->}(0,0)(-4,-4)(4,4)
+\end{pspicture}
+\end{LTXexample}
+We get a circle because we have
+
+\begin{equation}
+\left\lbrace
+\begin{array}{rcl}
+\omega_0\times\omega_2\times P_0 P_2^2 &= &4\times\overrightarrow{P_1}^2 \\[0.2cm]
+\overrightarrow{P_0 P_2} &\perp & \overrightarrow{P_1}
+\end{array}
+\right.
+\end{equation}
+
+\clearpage
+
+
+\subsection{Animations}
+
+\subsubsection{$w_0=1$, $w_2=1$ and a variable $w_1$}
+
+With the beginning of $w_1=0$
+the curves are swapped. In the case of Bezier curves $w_1 = 0$ gives only
+the $[P_0 P_2]$ segment. Using the mass points, the point $P_1$ no longer exists but we get the vector $\overrightarrow{P_1}$.
+
+
+\bigskip
+\begin{center}
+\begin{animateinline}[controls,loop,palindrome,
+                      begin={\begin{pspicture}(-4,-4)(10,4)},
+                     end={\end{pspicture}}]{3}% 3 images/s
+\multiframe{40}{rA=2.0+-0.1,rB=-2.0+0.1}{%
+  \psgrid[subgriddiv=0,gridcolor=lightgray,griddots=5,gridlabels=0pt]
+  \psclip{\psframe(-4,-4)(10,4)}
+    \psRQBCmasse[autoTrace,linewidth=1.5pt](0,-1)(1,0)(0,1){1,\rA,1}
+    \uput[u](P2){$P_2$}\uput[l](P1){$P_1$}\uput[d](P0){$P_0$}
+    \psRQBCmasse[linecolor=red,linewidth=1.5pt](0,-1)(1,0)(0,1){1,\rB,1}
+    \psaxes[labelFontSize=\scriptscriptstyle,linewidth=0.01]{->}(0,0)(-4,-4)(10,4)
+    \rput(8,3){$w_1=\rA$}%
+  \endpsclip
+}
+\end{animateinline}
+\end{center}
+
+\begin{lstlisting}
+\begin{animateinline}[controls,loop,palindrome,
+                      begin={\begin{pspicture}(-4,-4)(10,4)},
+                      end={\end{pspicture}}]{3}% 3 images/s
+\multiframe{40}{rA=2.0+-0.1,rB=-2.0+0.1}{%
+  \psgrid[subgriddiv=0,gridcolor=lightgray,griddots=5,gridlabels=0pt]
+  \psclip{\psframe(-4,-4)(10,4)}
+    \psRQBCmasse[autoTrace,linewidth=1.5pt](0,-1)(1,0)(0,1){1,\rA,1}
+    \uput[u](P2){$P_2$}\uput[l](P1){$P_1$}\uput[d](P0){$P_0$}
+    \psRQBCmasse[linecolor=red,linewidth=1.5pt](0,-1)(1,0)(0,1){1,\rB,1}
+    \psaxes[labelFontSize=\scriptscriptstyle,linewidth=0.01]{->}(0,0)(-4,-4)(10,4)
+    \rput(8,3){$w_1=\rA$}%
+  \endpsclip
+}
+\end{animateinline}
+\end{lstlisting}
+
+
+
+\clearpage
+
+\subsubsection{$w_0=1$, $\left |w_1\right|=1$ and a variable $w_2$}
+
+%L'utilisation de $\left |w_1\right|$ permet d'obtenir les deux arcs et donc toute la conique.
+The use of $\left |w_1\right|$ provides both arcs and the whole cone.
+
+\bigskip
+\begin{center}
+\begin{animateinline}[controls,loop,palindrome,
+                      begin={\begin{pspicture}(-8,-4)(4,4)},
+                      end={\end{pspicture}}]{3}% 3 images/s
+\multiframe{80}{rA=4.0+-0.1}{%
+  \psgrid[subgriddiv=0,gridcolor=lightgray,griddots=5,gridlabels=0pt]
+  \psclip{\psframe(-8,-4)(4,4)}
+    \psRQBCmasse[autoTrace,linewidth=1.5pt](0,-1)(1,0)(0,1){1,1,\rA}
+    \uput[u](P2){$P_2$}\uput[l](P1){$P_1$}\uput[d](P0){$P_0$}
+    \psRQBCmasse[linecolor=red,linewidth=1.5pt](0,-1)(1,0)(0,1){1,-1,\rA}
+    \psaxes[labelFontSize=\scriptscriptstyle,linewidth=0.01]{->}(0,0)(-8,-4)(4,4)
+    \rput[rb](3.5,3){$w_2=\rA$}%
+  \endpsclip
+}
+\end{animateinline}
+\end{center}
+
+\begin{lstlisting}
+\begin{animateinline}[controls,loop,palindrome,
+                      begin={\begin{pspicture}(-8,-4)(4,4)},
+                      end={\end{pspicture}}]{3}% 3 images/s
+\multiframe{80}{rA=4.0+-0.1}{%
+  \psgrid[subgriddiv=0,gridcolor=lightgray,griddots=5,gridlabels=0pt]
+  \psclip{\psframe(-8,-4)(4,4)}
+    \psRQBCmasse[autoTrace,linewidth=1.5pt](0,-1)(1,0)(0,1){1,1,\rA}
+    \uput[u](P2){$P_2$}\uput[l](P1){$P_1$}\uput[d](P0){$P_0$}
+    \psRQBCmasse[linecolor=red,linewidth=1.5pt](0,-1)(1,0)(0,1){1,-1,\rA}
+    \psaxes[labelFontSize=\scriptscriptstyle,linewidth=0.01]{->}(0,0)(-8,-4)(4,4)
+    \rput[rb](3.5,3){$w_2=\rA$}%
+  \endpsclip
+}
+\end{animateinline}
+\end{lstlisting}
+
+
+\clearpage
+
+
+\section{List of all optional arguments for \texttt{pst-bezier}}
+
+\xkvview{family=pst-bezier,columns={key,type,default}}
+
+
+\bgroup
+\raggedright
+\nocite{*}
+\printbibliography
+\egroup
+
+\printindex
+\end{document}
+
+
+
+
+Moreover, we can choose a non Euclidean metric. The use of mass points, Bézier curves, conics and the space of spheres in the Minkowski-Lorentz space permits to realise G1-continous blend between Dupin cyclides : to blend surfaces in R3, we blend Bézier curves in R5. For example, we can build a seahorse (see 09_LorentzHippocampeComplet.png), the article (in French) is here:

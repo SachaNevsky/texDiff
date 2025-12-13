@@ -1,0 +1,588 @@
+%% file: TXSletr.doc - Letters and Memos - TeXsis 2.18
+%% @(#) $Id: TXSletr.doc,v 18.3 2000/06/01 21:54:30 myers Exp $
+%======================================================================*
+% (C) Copyright 1989, 1992, 1994, 1997 by Eric Myers and Frank E. Paige
+% This file is a part of TeXsis.  Distribution and/or modifications
+% are allowed under the terms of the LaTeX Project Public License (LPPL).
+% See the file COPYING or ftp://ftp.texsis.org/texsis/LPPL
+%======================================================================*
+\ifx\undefined\bs \texsis\input TXSdocM.doc\input Manual.aux\draft\fi
+
+
+\section{Letters, Memos and Referee Reports     \label{sect.letr}}
+
+        The commands \CS{letter}, \cs{memo}, \cs{referee} and
+\cs{formLetters} invoke special styles for producing letters or
+memos.
+The letter formats follow closely the letter format given in
+Appendix~E of \TeXbook, although there are some differences and some
+additions.
+\index{letters}
+
+
+\subsection{Letters}
+
+        \CS{letter} is designed for typing basic business-style letters
+on letterhead stationary.  It uses the following commands:
+\description{~closing\qquad}\clump
+
+\itm{\CS{letter}}
+Initialize the letter format.
+
+\itm{\CS{dated}\arg{date}}
+Sets the current date to be \meta{date} rather than today's date.
+This redefines \cs{today} to be the date you give.  If omitted,
+\cs{today} just gives the current date.
+
+\itm{\CS{withEnvelope}}
+Signals that an envelope should also be printed.
+See Section~\use{sect.env} to find out how this works.
+
+\itm{\CS{letterhead}\arg{phone-ext}}
+Puts the date and phone number \<phone-ext> at the top of the page, so
+that it will appear near the letterhead when the letter is printed on
+your institutional stationary.
+
+\itm{\CS{address}}
+The name and address of the recipient should follow, in \cs{obeylines}
+format. The first line is used as the name of the addressee in a running
+headline for pages after the first.
+
+\itm{\CS{body}}
+Begins the body of the letter.  The line immediately below this should
+be the opening salutation, (e.g. ``Dear Ann Landers,'').
+
+\itm{\CS{closing}}
+Begins the closing material, in \cs{obeylines} format. The first line
+following is the closing salutation (e.g.  "Sincerely Yours,") and the
+second is the sender's name.  When the letter is printed, room is left
+for a signature.  Optional additional lines can be added after the name
+for the sender's title, or similar information.
+
+\itm{\CS{annotations}}
+Optional annotations follow, in \cs{obeylines} format.
+
+\itm{\CS{cc}}
+Carbon copy. A "cc:" and the names following are printed,
+properly aligned.
+
+\itm{\CS{Encl}}
+Enclosure.  This is like \CS{cc} but "Encl:" is printed
+for a list of enclosures.
+
+\itm{\CS{ps}}
+Optional postscript follows.  This is not in \cs{obeylines} format.
+
+\itm{\CS{endletter}\qquad}
+Ends the letter.  You can say \cs{bye} instead.
+\enddescription
+
+The \CS{letter} document format automatically sets up a running headline
+for all pages after the first, containing the addressee's name (taken
+from the first line following \cs{address}), the date, and the page
+number. If you wish, you can turn off these running headlines by saying
+\cs{nopagenumbers}.  If you want to change the name of the addressee you
+can simply redefine the macro called \CS{addressee} anytime after
+\cs{address} has been used (using \cs{gdef}, so that the re-definition
+exists outside of the group used to enclose the address).  Or, if you
+don't want the person's name used at all, simply redefine \CS{addressee}
+to be empty, like so: |\gdef\addressee{}|.
+
+\bigskip
+
+        The use of some of these macros is illustrated by the following
+example:
+\TeXexample
+\texsis
+\letter
+\dated{1 April 1999}
+\letterhead{7734}
+\address
+Prof.~D. Knuth
+Stanford University
+Stanford, CA~94305
+\gdef\addressee{Knuth, the \TeX\  God}
+\body
+Dear Prof.~Knuth:
+
+     We enclose the documentation and source code for a \TeX\
+macro package which we have developed for physics papers.
+
+\closing
+Sincerely yours,
+Eric Myers
+Frank E.~Paige
+\ps This stuff is also available by anonymous ftp.
+\endletter
+|endTeXexample
+
+By default the closing material is indented about 3.5 inches. 
+The actual amount is set by \CS{longindent}, which you can change.
+You should put the change on the same line as the \CS{closing},
+like so:\index{letters!adjusting size}
+\TeXexample
+\closing\longindent=0pt
+Sincerely yours, 
+Joe User 
+|endTeXexample 
+\noindent
+This example puts the closing material flush with the left margin.  You
+should not put \CS{longindent}|=0pt| on the line following, because
+\CS{closing} uses that line as the closing salutation (like
+``Sincerely,'').
+
+The default ``letterhead'' created by \CS{letterhead} is pretty plain --
+it just puts the date and phone number at the top of the page.  The
+idea is that you can put your own office letterhead stationary in the
+printer and when you print the letter on this paper the date and phone
+number will be in an appropriate position.\Footnote*{If you can't put
+stationary in your printer you can copy it onto stationary with a
+copying machine.} 
+Alternatively, you can create a different letterhead macro to actually
+print a letterhead at the top of the page.  The physics department at
+Excited State University could have a custom |\ESUletterhead| macro
+which prints their logo and letterhead  (it should still take a phone
+number as an argument, to make it easier to switch between
+|\ESUletterhead| and |\letterhead|.)  These kind of custom macro
+definitions should be put in a local site file, as described in
+Appendix~\use{install}. 
+
+        If a letter is somewhat too short or too long to fit on a page,
+its length can be adjusted indirectly by changing the width of the text.
+To do this insert \CS{letterwidth}\arg{width} immediately after
+\cs{letter} to set the width of the text. 
+Not only does this change the \cs{hsize} to the size you specify, but it
+also adjusts the margins and centers the text appropriately (so it is
+preferable to simply changing the \cs{hsize}). 
+
+\bigskip
+
+A simple Unix shell script called \idx{{\tt letr}} is included with
+the current \TeXsis\ distribution to make it easier to compose
+letters.
+Saying
+\TeXexample
+letr -m Hutu |endTeXexample will create a template file |Hutu.tex|, if
+there is not already a file by that name, and then start you editing
+the file.
+It then automatically runs your file through \TeXsis, and the envelope
+file too if it exists (see the next section).
+The |-m| flag, which is optional, should tell your printer to go into
+``manual feed'' mode to wait for you to feed in your own stationary.
+(Manual feed mode is always selected for an envelope printed by |letr|.)
+
+  Keep in mind that this only works on Unix and the script
+has to be executable and exist in your ``path''.   Ask a local wizard
+for help if you don't know what this means.
+
+
+%======================================================================*
+
+\subsection{Envelopes           \label{sect.env}}
+
+Many laser printers can print on envelopes, as long as you arrange to
+put the address and return address in the right place, and print the
+material in ``landscape'' mode (turned 90\degree\  on the page).
+The simplest way to do this is to simply say \CS{withEnvelope} at the
+beginning of your file, after the \cs{letter}.
+When you run your letter through \TeXsis, it will then create a file
+with the same name but an extension of |.env|, which contains the
+commands to print the envelope.
+Run {\sl that} file through \TeXsis\  and print the output in landscape
+mode and you will get your envelope.
+If you are using |dvips| the appropriate command is
+\example
+|dvips -m -t landscape  myfile.dvi|
+\endexample
+The ``|-t landscape|'' rotates the output, while the ``|-m|'' puts the
+printer in manual feed mode so that you can feed in the envelope.
+
+You will have to figure out how your printer wants the envelopes to be
+fed to it.
+Some take the envelope down the middle, while others want it over to
+one side or another.
+You can adjust for different envelope sizes, or shift the position of
+the printing over a bit to make it easier to feed in the envelope, by
+changing the parameters \CS{EnvlWidth}, \CS{EnvlHeight}, and
+\CS{ENvlVoffset}.  The default values are
+\TeXexample
+\newdimen\EnvlWidth      \EnvlWidth=24cm     
+\newdimen\EnvlHeight     \EnvlHeight=10.5cm  
+\newdimen\EnvlVoffset    \EnvlVoffset=1.25in 
+|endTeXexample
+
+The actual printing of the envelope is done by the macro 
+\CS{MakeEnvelope}, which takes two arguments.
+The first is the address, while the second is the return address.
+Line endings in either are respected, or you can use \cs{n} to cause a
+line break.
+
+Saying \CS{withEnvelope} simply causes a \CS{MakeEnvelope} command to
+be written to the |.env| file when you say \cs{endletter} or \cs{bye}.
+You can edit that file before your run it through \TeXsis\  if you
+don't like the form of the address or return address.
+Alternatively, \CS{withEnvelope} will use the two macros
+\CS{theSignature} and \CS{ReturnAddress} to construct the return
+address.
+The default value for \CS{theSignature} is taken to be the name
+appearing after the closing salutation, below \cs{closing}.
+If you want to change it to something else you should include a new
+definition {\em after} the \cs{closing}, using |\gdef|.
+For example,
+\TeXexample
+\closing
+Sincerely yours, 
+Joe User 
+\gdef\theSignature{Joe's Mamma}
+|endTeXexample 
+This would use ``Joe's Mamma'' as the name on the return address,
+even though ``Joe User'' would appear in the closing of the letter.
+
+
+
+%======================================================================*
+\pagecheck{0.5\vsize}
+
+\subsection{Memos                       \label{sect.memo}}
+
+       Saying \CS{memo} sets up a special format for memoranda,
+including a header at the top of the page with the name of your
+organization and the word "MEMORANDUM". The organization name defaults
+to \cs{ORGANIZATION}, which you can change if you like simply by
+saying \index{memos}
+\example
+|\def|\cs{ORGANIZATION}\arg{name}
+\endexample
+(This can be done once in the file |TXSsite.tex| before compiling
+\TeXsis, as described in
+Appendix~\use{install},\index{memos!customization} or you can explicitly
+put the name of your organization in your file.)  The commands for the
+memo format are:
+\description{Xendmemo\quad}\clump
+%
+\itm{\CS{memo}}
+Initialize \TeXsis\  for memo format.
+%
+\itm{\CS{faxmemo}}
+A document format similar to \CS{memo}, but for faxes.
+Included in the header is a space to enter the number of pages sent.
+A return fax number is also included if it is defined in
+\CS{FaxNumber}.
+%
+\itm{\CS{Date}}
+Prints the word "{\twelvess Date:}" and the date, which must be on the
+same line. If no date is given, then the current date is used, as given
+by \cs{today}.  If you would rather have the date in the upper right hand
+corner, as in a letter, use |\letterdate| instead of \CS{Date}.
+%
+\itm{\CS{To}}
+Prints the word "{\twelvess To:}" and the name(s) which follow.
+%
+\itm{\CS{From}}
+Prints the word "{\twelvess From:}" and the name(s) which follow
+%.
+\itm{\CS{Subj}}
+Prints the word "{\twelvess Subject:}" and the subject which
+follows.  The subject may be several lines long. The first line
+of the subject field is used in a running headline at the top of
+all pages following the first.
+%
+\itm{\CS{FAX}}
+Prints ``{\twelvess FAX \#:},'' for entering a fax telephone number.
+%
+\itm{\cs{n}}
+New line for |\To|, |\From|, or |\Subj|.
+%
+\itm{\CS{nopagenumbers}}
+Turns off the running subject headlines and the page numbers.
+This must be typed after |\memo| since it is redefined by the
+memo format.
+%
+\itm{\CS{Text}}
+Begins the text of the memo.  You can also say \cs{body}.
+%
+\itm{\CS{annotations}\qquad}
+Optional annotations follow, in \cs{obeylines} format.
+%
+\itm{\CS{cc}}
+Carbon copy. A "cc:" and the names following it are printed,
+properly aligned in \cs{obeylines} format.
+%
+\itm{\CS{Distribution}\qquad}
+This is like \CS{cc} but prints "Distribution:" instead.
+%
+\itm{\CS{Encl}}
+This is like \CS{cc} but prints "Encl:" instead, as for letters.
+%
+\itm{\CS{ps}}
+Optional postscript follows.  This is not in \cs{obeylines} format.
+%
+\itm{\CS{endmemo}}
+Ends the memo.  You can say \cs{bye} instead.
+\enddescription
+
+  All of these commands with mixed case names have synonyms which are
+the same name but in all lower case letters.  The use of the \cs{memo}
+format is illustrated by the following example:
+\TeXexample
+|smalltt\memo
+\To   \TeXsis\  Users
+\From E. Myers and F.E. Paige
+\Date
+\Subj \TeXsis\  2.18
+\text
+        \TeXsis\  2.18 is now available. The new version adds
+several features and corrects various bugs. 
+\Distribution 
+A. Blake
+I. Harrity
+B. Nichols
+\endmemo
+|endTeXexample
+
+If the memo is longer than one page a headline containing the subject
+and page number is put across the top of all pages after the first.  If
+the subject is longer than one line only the first line of the subject
+is used in this headline.  You can easily change what is used as this
+subject line  by changing the definition of the macro \CS{subjectline}
+anywhere in the body of the memo.  For example, although the subject of
+your memo might be simply ``Annual Report,'' you might make the headline
+more specific by defining: 
+\TeXexample
+\def\subjectline{Annual Activity Report for Buckaroo Banzai}
+|endTeXexample
+\nobreak\noindent
+Then this longer title will appear with the page number on all pages
+after
+the first.
+
+
+%======================================================================*
+\subsection{Referee Reports}
+
+       The \CS{referee} format creates a document very much like a
+\cs{memo}, although there are some important differences.
+\index{referee reports}
+Referee reports are supposed to be confidential, so instead of
+printing the name of your organization at the top of the first
+page it puts the words ``Referee Report.''   In the
+\CS{referee} format you can use the same commands that are used in
+the \cs{memo} format, such as |\To| and |\Date|, but if you use
+\cs{From} a warning message will be printed on your screen.  (This
+is only a warning, it still does what it has been asked to do!)
+
+\bottomfigure{Referee}
+\begingroup
+\def\resetcounters{\relax} % don't globally change the section number
+\line{\hfil
+\tightboxit{\hbox{\vbox to 11cm{\leftskip=1cm
+\referee\ninepoint\hsize=8.5cm\rightskip=1cm
+\centerline{{\twelvepoint\bf Referee Report}}
+\bigskip
+\memoitem{DATE:}    1 April 2001
+\memoitem{TITLE:}   \TeXsis\  -- \TeX\  Macros for Physicists
+\memoitem{AUTHORS:} E.~Myers and F.E.~Paige
+\memoitem{MANUSCRIPT:} LP-3105
+\text
+This is pretty good, but it's too long
+for Physical Review Letters.
+\vfill}}}
+\hfil}
+\endgroup
+\caption{Sample Referee Report}
+\endfigure
+
+
+       There are also some additional commands for the referee
+report format:
+\description{~authors\qquad}\clump
+%
+\itm{\cs{title}}
+The title of the paper being reviewed should follow this on the
+same line.  This is similar to |\Subj| in the memo format.
+%
+\itm{\cs{author}}
+Prints ``{\twelvess AUTHOR:}'' and the name that follows on the
+same line.
+%
+\itm{\cs{authors}}
+Same as \cs{author} for a paper with more than one author.
+%
+\itm{\CS{MSref}}
+Prints ``{\twelvess MANUSCRIPT:}'' and the manuscript reference number
+which follows.
+\enddescription
+
+       The text of the report should begin with \cs{text} or
+\cs{body}, just as for a memo, and the whole document should end
+with |\endmemo| or \cs{bye}.  An example of the referee report
+format is given by the following:
+\TeXexample
+\referee
+\date    1 April 1999
+\title   \TeXsis\  -- \TeX\  Macros for Physicists
+\authors E.~Myers and F.E.~Paige
+\MSref   LP-3105
+\text
+This is pretty good, but it's too long
+for Physical Review Letters.
+\bye
+|endTeXexample
+This produces a report which looks something like \Fig{Referee}
+
+
+
+%======================================================================*
+\subsection{Form Letters	\label{sect.form}}
+
+        The \CS{formLetters} layout makes it simple to send
+identical or similar letters to a list of people. 
+\index{form letters}\index{letters|see{form letters}}
+\index{mail merge|see{form letters}}
+The body of the form letter is stored in one file using the standard
+\TeXsis\  letter format, while the control commands and a list of
+addresses are put in a second file. The body of the letter should begin
+with \cs{body} and end with \cs{endletter}, and it can contain an
+arbitrary number of control sequences defined for each recipient.  It
+can make use of all the features of the letter format. For example,
+the letter body might contain the following
+
+\TeXexample
+|smalltt\body
+Dear \Whoever:
+
+\if P\Job
+     I wish to apply for a postdoctoral position 
+\else\if F\Job
+     I wish to apply for a faculty position 
+\else
+     I wish to apply for a postdoctoral or faculty position 
+\fi\fi
+at your institution.  Enclosed you will find my curriculum vitae,
+a list of publications, and ...
+
+\closing
+Sincerely yours,
+Joe Postdoc
+\Encl
+Publication list
+Curriculum vita
+\endletter               % don't say \bye here!
+|endTeXexample
+This example addresses the letter to |\Whoever|, and it uses the
+first text if |\Job| is |P|, the second if |\Job| is |F|, and the
+third otherwise.  Thus form letters are very flexible.
+
+        The mailing list file initializes the form letter macros and
+contains the list of addresses. \TeXsis\  should be run on this file, not
+on the file containing the body of the letter!  For the example above it
+would have the form:
+\TeXexample|smalltt
+\texsis
+\formLetters{\letterhead{7734}}{letterbody.tex} 
+
+\BL     Prof.\  John Doe
+        Department of Physics
+        University of Nowhere
+        Nowhere, OK 73019 USA 
+        \V\Whoever{Professor Doe}
+        \V\Job{F}\EL
+
+\BL     Dr.\  Buckaroo Banzai
+        Physics Department
+        The Banzai Institute
+        Grovers Mill, NJ 08544
+        \V\Whoever{Dr.\  Banzai}
+        \V\Job{P}\EL
+...     
+\endform 
+\bye
+|endTeXexample 
+\noindent
+
+  The first argument of \cs{formLetters} is something like the usual
+\cs{letterhead} macro, with your phone number.  Depending on your
+letterhead this might have multiple parameters or might even be several
+control sequences (all enclosed in a set of curly braces, of course).
+The second argument to \cs{formLetters} is the name of the file
+containing the body of the letter.  The idea is that the stuff in the
+first argument gets put into the letter {\it before} the address, while
+the body of the letter (read from the file) is what goes after the
+address.  Each letter begins with \CS{BL} ("Begin Letter") and has the
+name of the addressee on the same line and the address on the following
+lines.  Any ``variables'' used in the letter can be defined using
+\cs{V}, which is just an abbreviation for \cs{gdef}.  Because \cs{V} is
+simply \cs{gdef}, if you omit \cs{V} from an address entry, the value
+defined in a previous entry will be used.  If necessary, variables can
+also be defined before the \CS{BL}.  Each address in the mailing list is
+ended by \CS{EL} ("End Letter").  When the \CS{EL} is executed it reads
+in the file containing the text for the letter and actually produces the
+letter.
+
+        Any address in the list can be ignored simply by replacing the
+\CS{BL} with \CS{IL} ("Ignore Letter").  In particular, this can be done
+by a simple global edit after each batch of letters is made, and the
+same file can then be used to send a second mailing by changing \CS{IL}
+back to \CS{BL} for a select subset of addresses.
+
+In earlier versions of \TeXsis\  the
+\cs{formLetters} command was called \cs{formletters}.
+The first is now prefered, though the second will also be accepted.
+Also, as of \TeXsis\  version 2.17 the form letter macros have actually
+been moved to the style file {\tt Formletr.txs}.
+This style file is \cs{autoload}'ed, so as long as you have that file
+on your system you should not notice a difference.
+
+
+\bigskip
+\nosechead{Mailing Labels}
+
+        The same address file can be used to produce mailing labels
+instead of letters simply by replacing |\formLetters{...}{...}| with
+\CS{formLabels}.  It is assumed that there are three columns of names and
+addresses to fit on standard photocopy machine mailing labels. With the
+default parameters nine labels each 1~in.\  high are printed per column
+with the top and bottom rows left blank. This can be changed, and the
+alignment of the labels can be adjusted, by setting appropriate values
+for the following dimensions:
+\TeXexample
+|smalltt
+\fullHsize=8.500in    % hsize for label page
+\fullVsize=9.999in    % vsize for label page
+\lblHsize=2.833in     % width of standard label
+\lblVsize=1.000in     % height of standard label
+\lblVoffset=0.100in   % vertical starting position
+\lblHoffset=-0.500in  % horizontal starting position
+|endTeXexample
+Choosing appropriate values may require some experimentation with your
+printer and labels. When the correct values are found, they can be
+set in the file |TXSsite.tex| before compiling the format (see Appendix~A).
+
+        Please note that earlier versions of \TeXsis\  used
+\cs{formlabels} rather than \CS{formLabels}, but the latter is now
+prefered.
+
+\bigskip
+\nosechead{Printing Envelopes}
+
+        Instead of printing mailing labels and then peeling these off to
+put them on envelopes, it is possible to print addresses from your
+mailing list directly onto envelopes, if your printer is capable of
+feeding envelopes.  To do this, simply use \CS{formEnvelopes} in place
+of \CS{formLabels}.  Then each address is simply fed into a
+\cs{MakeEnvelope} command.
+To set the return name and address you can define \cs{theSigature}
+and \CS{ReturnAddress}, as in this example:
+\TeXexample
+\texsis
+\def\theSignature{Joe Rockhead}
+\def\ReturnAddress{Department of Physics\n
+                   University of Delphi\n
+                   Oracle, UT 65432}
+\formEnvelopes
+|endTeXexample
+You will probably have to print the output in ``landscape'' mode,
+and you may want to adjust the size or placement of the envelopes, 
+as described in Section~\use{sect.env}.
+
+%>>> EOF TXSletr.doc <<<

@@ -1,0 +1,57 @@
+%% 
+%%  Ein Beispiel der DANTE-Edition
+%%  
+%%  1. Auflage
+%% 
+%% 
+%%  Copyright (C) 2013 Herbert Voss
+%% 
+%%  It may be distributed and/or modified under the conditions
+%%  of the LaTeX Project Public License, either version 1.3
+%%  of this license or (at your option) any later version.
+%% 
+%%  See http://www.latex-project.org/lppl.txt for details.
+%% 
+%% 
+%% ==== 
+% Show page(s) 1
+%% 
+%% 
+\documentclass[]{exaarticle}
+\pagestyle{empty}
+\setlength\textwidth{352.81416pt}
+\setlength\parindent{0pt}
+\usepackage[ngerman]{babel}
+\usepackage{luacode}
+\begin{luacode*}
+function markNode(color)
+ local w=node.new("whatsit","pdf_literal")
+ w.data=string.format("q "..color.."RG 2 w 0 -0.1 m 0 10 l S Q")
+ return w
+end
+\end{luacode*}
+%StartShownPreambleCommands
+
+\begin{luacode*}
+function markList(List)
+ for n in node.traverse(List) do
+  if n.id==1 then markList(List.head)
+  elseif n.id==0 then  -- Zeilenanfang gefunden
+   n.head=node.insert_before(n.head, n.head, markNode("1 0 0"))
+   for m in node.traverse(n.head) do
+    if m.id==10 and m.prev.id==37 then -- Wortende gefunden
+      m=node.insert_before(n.head, m, markNode("0 1 0"))
+ end end end end
+ return true
+end
+\end{luacode*}
+%StopShownPreambleCommands
+\begin{document}
+\parbox{5cm}{%
+\directlua{luatexbase.add_to_callback("post_linebreak_filter",markList,"markList")}%
+Jetzt soll \hbox{hier ein} langer Text angegeben werden, dessen Knotenliste wir
+betrachten.\par
+Rot: Zeilenanfang\par Grun: Wortende\par
+Blau: Absatzende}
+\directlua{luatexbase.remove_from_callback("post_linebreak_filter","markList")}
+\end{document}

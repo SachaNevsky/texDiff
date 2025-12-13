@@ -1,0 +1,154 @@
+======================================================================
+Verwendung von psfrag mit pdflatex
+======================================================================
+
+English version: README
+
+psfrag ist ein LaTeX-Paket, das es erlaubt, in eingebundenen
+EPS-Grafiken Textelemente durch LaTeX-Text zu ersetzen. Dadurch kann man
+erreichen, dass die Beschriftung von Grafiken im Schrifttyp zum übrigen
+Text passt und vor allem auch mathematische Formeln sehr elegant in die
+Grafik einbringen. Bsp.:
+
+\psfrag{x}{$x$}
+\psfrag{y}{$y = x^2$}
+\includegraphics{diagramm}
+
+Benutzt man latex (nicht pdflatex) wird die Datei diagramm.eps
+eingebunden. Die Endung wird automatisch angefügt. Dabei wird jedes
+Vorkommen von "x" im Diagramm durch "x" im Mathe-Font ersetzt und jedes
+"y" durch die Formel "y = x^2". Teilstrings werden dabei übrigens nicht
+ersetzt, sondern nur komplette Strings.
+
+Da psfrag Postscript benutzt, um die Ersetzungen durchzuführen,
+funktioniert es prinzipiell nicht, psfrag mit pdflatex zu verwenden, das
+keinerlei Schnittstellen zu Postscript besitzt.
+
+Einen möglichen Ausweg, wie man das Problem umgehen kann, möchte ich
+hier darstellen:
+
+Die Idee ist, aus der EPS-Grafik eine neue EPS-Grafik zu erzeugen, in
+der die LaTeX-Ersetzungen bereits durchgeführt sind. Diese neue
+EPS-Grafik kann dann samt der Ersetzungen nach PDF konvertiert werden
+und in pdflatex eingebunden werden.
+
+Um das zu erreichen, muss pro Grafik ein neues LaTeX-Dokument für die
+psfrag-Ersetzung angelegt werden und diverse Konvertierungen
+durchgeführt werden. Um das zu vereinfachen, habe ich das
+fragmaster.pl Perlskript geschrieben.
+
+Das Skript benötigt neben perl, latex und dvips zur Konvertierung von
+EPS nach PDF das Programm epstopdf.
+
+Um das Skript zu verwenden legt man je Grafik zwei Dateien an:
+
+    * <grafik>_fm.eps: die EPS-Grafik selbst,
+    * <grafik>_fm: eine fragmaster-Steuerdatei.
+
+Daraus werden dann die Grafiken mit Ersetzung erzeugt:
+
+    * <grafik>.eps,
+    * <grafik>.pdf
+
+Die Steuerdatei ist eine LaTeX-Datei und kann so aussehen:
+
+% Ein normaler Kommentar.
+%
+% Ein spezieller Kommentar:
+% fmopt: width=6cm
+%
+% Ein anderer spezieller Kommentar:
+% head:
+% \usepackage{amsmath}
+% end head
+
+% psfrag-Befehle:
+\psfrag{x}{$x$}
+\psfrag{y}{$y = x^2$}
+
+
+Der spezielle Kommentar fmopt: wird so ausgewertet, dass das
+Nachfolgende als Option an \includegraphics weitergegeben wird. So kann
+z.B. durch width=6cm die Grafik an die Schriftgröße angepasst werden.
+
+Das spezielle Kommentarkonstrukt "head:"/"end head" führt dazu, dass die
+dazwischenliegenden Kommentarzeilen (ohne die voranstehenden
+Kommentarzeichen "%") in die Präambel der LaTeX-Hilfsdatei übernommen
+werden.
+
+fragmaster.pl durchsucht das aktuelle Verzeichnis nach Dateien, die in
+_fm enden und nach den entsprechenden _fm.eps-Dateien. Das Skript
+überprüft anhand des Dateidatums, ob die Grafiken mit Ersetzung neu
+erzeugt werden müssen und erstellt die entsprechenden Dateien
+automatisch (in etwa so wie "make" es tun würde).
+
+Im LaTeX-Dokument kann man diese Dateien dann mit
+
+\includegraphics{<grafik>}
+
+
+ohne die Dateiendung einbinden. latex wählt die EPS-Datei, pdflatex
+wählt die PDF-Datei.
+
+======================================================================
+Beispiel
+======================================================================
+
+Die folgenden Beispieldateien sind beigefügt:
+
+    * parabel_fm.gp
+      Gnuplot-Datei um folgende EPS-Grafik zu erzeugen,
+    * parabel_fm.eps
+      Roh-EPS-Datei ohne psfrag-Ersetzungen,
+    * parabel_fm
+      fragmaster-Datei mit den psfrag-Befehlen,
+    * parabel.eps
+      die fertige EPS-Datei,
+    * parabel.pdf
+      die fertige PDF-Datei,
+    * document.tex
+      LaTeX-Beispiel, das die Grafik einbindet,
+    * document.pdf
+      Beispiel-PDF,
+    * document.ps
+      Beispiel-PS,
+    * parabel_fm.pdf
+      PDF-Version der Roh-EPS-Datei (nur für das Beispiel notwendig!).
+
+
+======================================================================
+Probleme und Lösungen
+======================================================================
+
+Wenn das EPS als Landscape-Grafik erzeugt wird, also im gv oben statt
+"Portrait" "Landscape" steht, und die Grafik im Dokument nachher um 90°
+Grad gedreht erscheint, dann liegt das wahrscheinlich daran, dass das
+Originalbild breiter ist als hoch. Manche (neuere) Versionen von dvips
+schließen dann "clever" darauf, dass das Landscape sei, wobei das Format
+natürlich nichts über die Ausrichtung des Inhalts sagt... Jedenfalls
+kann man das dvips abgewöhnen, indem man folgende Zeile in
+/usr/share/texmf/dvips/config/config.pdf einträgt:
+
+@ custom 0pt 0pt
+
+Wen's genauer interessiert, dem seien die Quellen von dvipsk ans Herz
+gelegt...
+
+Viel Spaß mit dem Skript!
+
+Tilman
+
+=====
+Bemerkung: Bitte lesen auch English README für aktualisiertes info.
+      -- Agustin Martin.
+=====
+
+======================================================================
+Links zu anderen Lösungen
+======================================================================
+
+    * Pdfrack <http://www.enseeiht.fr/~boyer/Pdfrack/>
+    * unpsfrag <http://www.gts.tsc.uvigo.es/~fiz/unpsfrag>
+
+
+Letzte Änderung: Do 19. Mär 20:57:37 CET 2009

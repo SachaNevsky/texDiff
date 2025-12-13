@@ -1,0 +1,298 @@
+%% file: TXSmisc.doc  - Miscellaneious Macros - TeXsis version 2.18
+%% @(#) $Id: TXSmisc.doc,v 18.2 2000/05/17 00:19:46 myers Exp $
+%======================================================================*
+% (C) Copyright 1992 by Eric Myers and Frank E. Paige
+% This file is a part of TeXsis.  Distribution and/or modifications
+% are allowed under the terms of the LaTeX Project Public License (LPPL).
+% See the file COPYING or ftp://ftp.texsis.org/texsis/LPPL
+%======================================================================*
+\ifx\undefined\bs \texsis\input TXSdocM.doc\input Manual.aux\draft\fi
+
+\section{Miscellaneous Macros                  \label{sect.misc}}
+
+There are a number of useful macros in \TeXsis\  which don't fit into any
+of the topics covered in previous sections but which still deserve some
+discussion.  We will simply lump them all together in this final
+section.
+
+\subsection{{\tt\string\draft} mode}
+
+Saying \CS{draft} turns on a number of features which are useful for 
+making a draft copy of a document.  The disclaimer ``{\tt Preliminary
+Draft}'' is added to the bottom of each page of the document, along with
+the page number and a time and date stamp.  The page number will let you
+keep track of the page order even when using a document format which
+does not print page numbers (such as the \cs{nuclproc} or
+\cs{NorthHollandTwo} camera-ready formats).    The date/time stamp
+can help you tell later drafts from earlier versions of the same
+document.  \CS{draft} sets \cs{eqnotracetrue} so that equations
+are marked with their internal labels in the right margin next to
+the equation number (as described in Section~\use{sect.eqns}).
+Other kinds of errors, such as trying to use undefined labels for citations
+equations, are also marked in the right-hand margin.  \CS{draft} also
+sets \cs{overfullrule}|=1em| so that over full \cs{hbox}es are marked
+with a black box.  
+Without \CS{draft}, initializing \TeXsis\  with \cs{texsis} sets
+\cs{overfullrule}|=0pt| so that over-full hboxes don't 
+get these kinds of marks (while with plain \TeX\  you do get these
+marks).
+
+\bigskip
+%======================================================================*
+\subsection{Ignoring blocks of text}
+
+Sometimes you'd really like to take out a whole paragraph or an even 
+larger section of a document, but only temporarily, and you don't want
+to actually delete it from the manuscript file.  Recalling that in
+\TeX\  everything on a line following the comment character ``{\tt\%}'' is
+discarded, you could put a {\tt\%} on each line to be ignored,
+but that could be a lot of work.  Instead, you can use \CS{comment}.
+The syntax is:
+\TeXexample
+\comment/*  anything in here is ignored */
+|endTeXexample
+\noindent
+Everything between the |/*| and the |*/| is completely ignored.  By
+removing the |\comment/*| and the |*/| the text can easily be restored
+to its previous state.  You can include several paragraphs of text in
+the material to be ignored, or even several pages, but with one
+important restriction: All the curly brackets |{| and |}| must match in
+the text to be ignored.  If there is a |{| with no closing |}| in the
+commented text then \TeX\  will skip the |*/| while searching for the
+closing |}|!
+
+Along the same lines is \CS{Ignore}, which will ignore everything
+following it up to \cs{endIgnore} (with the same restrictions above
+about matching grouping brackets).  The useful thing about these is that
+if an \cs{endIgnore} is encountered before an \CS{Ignore} then the
+\cs{endIgnore} is simply ignored.  Is that too confusing?  What this means
+is that if you have a document with a large block of conditional text
+that you may or may not want included you can choose to include the text
+by simply removing (or commenting out) the \CS{Ignore}.  If the block of
+conditional text looks like 
+\smallskip\goodbreak
+\def\1{\meta{unconditional text}}\def\2{\meta{more unconditional text}}
+\TeXexample
+|1
+\Ignore
+Having obtained these eigenvalues we would like to 
+know their degeneracies.  For a given $l$ the ...
+...
+It is relatively easy to show that the number of 
+independent components of such a tensor is ${N+l \choose l}$.
+\endIgnore
+|2
+|endTeXexample
+\noindent
+then even if the block of text to be ignored spans many pages it can be
+restored simply by changing the ``|\Ignore|'' to ``|%\Ignore|.''  Then
+the |\Ignore| is itself ignored, and when \TeX\  reaches the |\endIgnore|
+this also does nothing.  The effect is the same as if these two commands
+were completely removed from the manuscript file, but it is easily
+reversed.
+
+Why are there two ways to ignore blocks of text?  \cs{comment} was
+created first, and some programmer-types may prefer it because of the
+similarity it bears to comments in the C programming language.
+\cs{Ignore} is newer and probably a little more useful, but \cs{comment}
+will remain for those who want to use it.
+
+%======================================================================*
+\subsection{Checkpoint/Restart \label{sect.chkpt}}
+
+   The checkpoint/restart feature allows long documents to be printed in
+pieces.  You can, for example, process and print the first chapter of a
+thesis (or a book) and then later do the same for following chapters.
+Saying \CS{checkpoint}|{NAME}| saves the settings of important counters
+like the current page number and the last equation number in a file
+called |NAME.chk|.  Saying \CS{restart}|{NAME}| reads in this file and
+resets the counters to their previous values.
+\index{checkpoint}\index{restart}\index{restore|see{restart}}
+
+   As an example consider a document with two major chapters.
+Using a Master File you would first process the first chapters
+with the following:
+\TeXexample
+\thesis
+\input chap1
+\checkpoint{chap1}
+\bye
+|endTeXexample
+With this printed you could resume at the next page number with
+the correct subsequent numbers for equations, figures and tables
+by saying:
+\TeXexample
+\thesis
+\restart{chap1}
+\input chap2
+\bye
+|endTeXexample 
+\noindent 
+Normally |\checkpoint| and |\restart| are silent,
+but you can say \CS{endstat} to see the values of the counters
+saved by |\checkpoint|.  The output looks like this:
+\TeXexample
+% Last PAGE      number IS 63.
+% Last CHAPTER   number IS 0.
+% Last EQUATION  number IS 47.
+% Last FIGURE    number IS 1.
+% Last REFERENCE number IS 9.
+% Last SECTION   number IS 13.
+% Last TABLE     number IS 0.
+|endTeXexample
+
+Modern laser printer drivers or filter programs like |dvips|, |dvi2ps|, 
+or QTeX have 
+options that let you select which pages of a document are printed,
+or there is a useful program called |dviselect|, which can select
+certain pages out of a dvi file into a smaller dvi file.  These offer
+other ways to selectively print only part of a document
+and still get the page and equation numbers correct.
+
+%======================================================================*
+\subsection{Other Goodies...}
+
+These macros do various useful things:
+\singlelinetrue                         % make label overhang
+\description{unobeyspaces}\clump                %
+
+
+\itm{\CS{jtem}\arg{label}\arg{dimen}}
+Similar to plain \TeX's |\item|, but sets the label \arg{label} with a
+variable hanging indentation \arg{dimen}.
+
+\itm{\CS{leftpar}\arg{text}}
+Turns the \meta{text} into a paragraph with a ragged {\sl left} margin.
+
+\itm{\CS{pagecheck}\arg{dimen}}
+Checks the amount of space remaining on the current page, and if this is
+less then \meta{dimen} then skips to a new page.
+
+\itm{\CS{topspace}}
+Use this like \cs{vskip} to create a blank space to the top of a page 
+(because any space inserted with \cs{vskip} is thrown out if it appears
+at the top of a page).  Example: |\topspace 2.54cm|.
+
+\itm{\CS{unobeylines}}
+The opposite of \cs{obeylines}, so line endings are no longer respected.
+
+\itm{\CS{unobeyspaces}}
+The opposite of \cs{obeyspaces}, so that spaces in the manuscript file
+are not counted exactly.
+
+\enddescription
+
+%----------------------------------------%
+\pagecheck{3cm}
+
+\subsubsection{Underlines}
+
+These macros let you underline words or create a ``blank'' line:
+\index{underlines}
+
+\description{unobeyspaces}\clump                %
+
+\itm{\CS{undertext}\arg{text}}
+Underlines the \meta{text}, as in this \undertext{example}.  This is
+generally okay for words but not phrases or sentences.
+
+\itm{\CS{theBlank}\arg{length}}
+Creates an underline of the specified length where one can ``fill in the
+blank.''  For example, saying `` |Name: \theBlank{6cm}| produces:
+``\hbox{Name:~\theBlank{6cm}}''.
+
+\enddescription
+
+%----------------------------------------%
+\subsubsection{Boxes}
+
+These macros let you put boxes around text or equations, or 
+something similar:
+\index{boxes}
+
+\description{unobeyspaces}\clump                %
+
+\itm{\CS{tightbox}\arg{box}}
+Puts a ruled box around the argument (which must be a box), with no
+intervening space.
+Example: |\tightbox{\hbox{Boo}}| produces ``\tightbox{\hbox{Boo}}'', 
+
+
+\itm{\CS{loosebox}\arg{box}}
+Puts a ``loose'' box around the \meta{box}, with about one \cs{jot} of
+space between the edge of the \meta{box} and the enclosing box. What you
+do with this resulting box is up to you.  Rules are {\sl not\/} put
+around this outer box, but you can enclose it in a \CS{tightbox} to do
+so, as in |\tightbox{\loosebox{Boo}}|, which gives
+``\tightbox{\loosebox{Boo}}.''  If you want the contents of this box to
+match the baseline of the current line, lower it by a \cs{jot}, as in
+|\lower\jot\tightbox{\loosebox{Boo}}|, which gives
+``\lower\jot\tightbox{\loosebox{Boo}}''.
+
+
+\itm{\CS{spine}\arg{text}}
+Creates a label enclosed in a ruled box, suitable for the spine of a
+3-ring binder.  The box will be at least 15~cm long, but will extend if
+the text requires more space.  The default type size is 24~pt, but can
+be changed in the \meta{text}.  If the label is longer than the width of
+a page then it should be printed in landscape mode.  Instructions for
+installing the label in the spine of a binder are printed (but only once).
+
+\pagecheck{5\baselineskip}
+
+\itm{\CS{eqnbox}\arg{math-expr}}
+Puts a box around the mathematical expression \meta{math-expr}.
+This can be useful for highlighting an important result. 
+You can use this in any kind of math
+mode, but usually you will want to use it in a displayed equation, 
+like so:
+\TeXexample
+$$
+\eqnbox{E=mc^2}
+\EQN 47$$
+|endTeXexample
+which produces:
+$$
+\eqnbox{E=mc^2}
+\EQN 47$$
+In an in-line math expression it appears like so: \eqnbox{E=mc^2}.\n
+Be careful not to over-use this, or its utility is lost!
+
+\itm{\CS{eqnmark}}
+Putting a box around an equation can be to distracting, but it is nice
+to have a way to mark ``important'' results.  This is an alternative
+to \CS{eqnbox}.  Simply put \CS{eqnmark} at the beginning of the
+displayed equation, immediately after the |$$|, and it will put a marker
+defined by \CS{eqnmarker} at the left edge of the equation (the default
+is ``$\eqnmarker$'').
+For example, typing
+\TeXexample
+$$\eqnmark
+E=mc^2  
+\EQN 47$$
+|endTeXexample
+\noindent 
+produces
+$$\eqnmark
+E=mc^2          
+\EQN 47$$
+Note that \CS{eqnmark} does not work with \cs{eqalignno} or \cs{EQNalign} 
+(which is just as well, so that you can't overuse it).
+
+\enddescription
+
+%==================================================*
+
+\subsubsection{Read the Code}
+
+There are a number of other macros in \TeXsis\  which  are not
+described in this manual, either because (a) we didn't have time
+to describe everything, or (b) they are works in progress.
+In either case, if you are familiar enough with \TeX\  to write
+some simple macros for yourself, then you are familar enough to
+read through the code and find other useful goodies, or learn some new
+tricks.  Just keep in mind that anything not described in the manual
+may be subject to change in a future release.  And let us know if you
+find any mistakes.
+
+%>>> EOF TXSmisc.doc <<<

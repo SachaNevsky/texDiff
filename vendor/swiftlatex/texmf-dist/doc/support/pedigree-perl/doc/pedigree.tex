@@ -1,0 +1,1153 @@
+\documentclass{article}
+\usepackage[koi8-r]{inputenc}
+\usepackage[russian, english]{babel}
+\usepackage{pst-pdgr}
+\usepackage{pstricks-add}
+\usepackage{url}
+\usepackage{fancyvrb}
+\usepackage{listings}
+\lstset{language=Perl, captionpos=b, basicstyle=\ttfamily,
+abovecaptionskip=\abovedisplayskip,
+belowcaptionskip=\belowdisplayskip}
+\renewcommand{\lstlistlistingname}{List of Listings}
+\usepackage{graphicx}
+\usepackage{paralist}
+\psset{descarmA=1}
+\newcommand{\program}[1]{\textsf{#1}}
+\usepackage[breaklinks,colorlinks,linkcolor=black,citecolor=black,
+            pagecolor=black,urlcolor=black]{hyperref}
+\DefineShortVerb{\|}
+\begin{document}
+\selectlanguage{english}
+\title{A Program For Automatic Pedigree Construction With \path{pst-pdgr}\\
+  User Manual and Algorithm Description}
+\author{Boris Veytsman, \path{borisv@lk.net} \and Leila Akhmadeeva}
+\date{March 2012}
+\maketitle
+\begin{abstract}
+  The set of macros in \path{pst-pdgr} package allows to typeset
+  complex pedigrees.  However, a manual placement of pedigree symbols
+  on a canvas is a time-consuming task.  This program produces \TeX{}
+  files from spreadsheets with the data on inheritance for a large
+  class of pedigrees.  It has a simple interface and can be used for
+  quite complex pedigrees.
+\end{abstract}
+
+\begin{center}
+  \input{english1.tex}
+\end{center}
+
+\clearpage
+
+\tableofcontents
+\listoffigures
+\listoftables
+\lstlistoflistings
+\clearpage
+
+
+\part{User Manual}
+\label{part:manual}
+
+
+\section{Introduction}
+\label{sec:intro}
+
+Medical pedigree is a very important tool for clinicians, genetic
+researchers and educators.  As stated
+in~\cite{PedigreeNomenclature95}, ``The construction of an accurate
+family pedigree is a fundamental component of a clinical genetic
+evaluation and of human genetic research.''  The package
+\path{pst-pdgr}~\cite{pst-pdgr06} provides a set of PSTricks macros
+(see~\cite{PSTricks93}) to typeset pedigrees.  In the framework of
+\path{pst-pdgr} the user manually chooses coordinates for each
+pedigree node on the diagram.  While this is relatively easy for small
+pedigrees, this task becomes increasingly time-consuming for larger
+ones.  There may be several approaches to automate it.  For example,
+one may have data about the patients and their families in a
+spreadsheet or database.  Then it would be useful to generate
+pedigrees from such data.  This is the aim of the program
+\path{pedigree} described in this manual.
+
+Spreadsheets and databases can export the data as separated
+values files (``csv'' files for Comma Separated Values).  Our program
+reads these files and outputs LaTeX{} code with \path{pst-pdgr}
+macros.  We tried to make this code readable, so a user might tweak it
+if necessary.
+
+Of course, manually produced \LaTeX{} code is more versatile than the
+automatically generated one.  There are certain limitations for the
+program: 
+\begin{inparaenum}
+\item only persons having common genes with the proband or the
+  ``starting person'' are included in the
+  pedigree;
+\item no adopted children, sperm donors or surrogate
+  mothers are shown on the pedigree;
+\item only one disease is shown on the chart;
+\item the support for consanguinic unions and inbreeding is rather
+  experimental (see Section~\ref{sec:consanguinic}).
+\end{inparaenum}
+Subsequent versions of the program may ease some of these
+limitations. 
+
+\section{Installation}
+\label{sec:install}
+
+\subsection{System Requirements}
+\label{sec:reqs}
+
+The program requires \program{Perl} version~5 or newer (it was tested
+with \program{Perl} v5.8.8, but should work with any
+\program{Perl-5}).  The \LaTeX{} macros require \path{pst-pdgr}
+version~0.3 (July 2007) or newer.
+
+\subsection{Unix/Linux Installation}
+\label{sec:install_unix}
+
+If your system has a working \program{make} program, which is the
+usual case for Unix-like environments, the supplied \path{Makefile}
+installs the executable \path{pedigree} in \path{/usr/local/bin}, the
+libraries in \path{/usr/local/lib/site_perl} and the manual pages in
+\path{/usr/local/man}.  This is done by the usual command
+|make install|.  Optionally you can install files in the
+\path{doc} and \path{examples} subdirectories in the proper places in
+your system.
+
+\subsection{Installation in Other Systems}
+\label{sec:other}
+
+If your system does not have \program{make}, you need to manually
+perform the following:
+\begin{enumerate}
+\item Install the executable \path{pedigree.pl} to the place your
+  system can find it.
+\item Install the libraries: \path{Pedigree.pm}, directory
+  \path{Pedigree} and all files in it to the \program{Perl} search
+  path.  The latter is listed in the array \path{@INC}, which can be
+  checked by the command |perl -V| or its equivalent.
+\end{enumerate}
+
+\section{Configuration}
+\label{sec:config}
+
+
+\subsection{Configuration Variables and Location of Configuration File}
+\label{sec:conf_file}
+
+The program defaults are sufficient for most cases.  However, if you
+want to draw pedigrees in a language other than English, or to tweak
+the layout of the pedigrees, you need to change the program
+configuration. 
+
+The behavior of the program \program{pedigree} is determined by
+\emph{configuration variables.}  There are several sources of
+configuration variables.  They are (in the order of increasing
+priority): 
+\begin{enumerate}
+\item Program defaults.
+\item The system configuration file\footnote{On Unix-like systems,
+    where \path{/etc} exists} \path{/etc/pedigree.cfg}.  On \TeX Live
+  the system coniguration files are 
+  \path{$TEXMFHOME/texmf-config/pedigree/pedigree.cfg} and
+  \path{$TEXMFLOCAL/pedigree/pedigree.cfg}. 
+\item User configuration file\footnote{On Unix-like systems, where
+    \path{$HOME} exists} \path{$HOME/.pedigreerc}.
+\item The file specified by the |-c| option (see
+  Section~\ref{sec:invocation}).
+\end{enumerate}
+If a file mentioned in this list does not exists, the program
+silently\footnote{Unless \path{-d} option is selected, see
+  Section~\ref{sec:invocation}} continues.  
+
+Note that even if a configuration file with higher priority exists,
+the program reads the files with lower priority first.  The former
+\emph{overrides} the latter, but not precludes it from reading. In
+other words, if \path{/etc/pedigree.cfg} defines variables
+\lstinline|$foo| and \lstinline|$bar|, and \path{$HOME/.pedigreerc}
+defines \lstinline|$bar| and \lstinline|$baz|, the program takes
+\lstinline|$foo| from the first file, and \lstinline|$bar| and
+\lstinline|$baz| from the second one.
+
+
+\subsection{Configuration File Format}
+\label{sec:conf_file_format}
+
+All configuration files mentioned in Section~\ref{sec:conf_file}, have
+the same format.  They are actually snippets of \program{Perl} code,
+executed by the program \program{pedigree}.  This means, by the way,
+that all precautions usually taken with respect to programs and
+scripts, are relevant for configuration files as well.  In particular,
+it is a bad idea to have world-writable system-wide configuration
+file \path{/etc/pedigree.cfg}.  
+
+The code in configuration files is very simple, and one does not need
+to know \program{Perl} to edit configuration files.  There are several
+simple rules which are enough to understand these files:
+\begin{enumerate}
+\item All text after \lstinline|#| to the end of the line is a
+  comments.  In particular, the lines starting with \lstinline|#|, are
+  comment lines.
+\item \program{Perl} commands must end by semicolon \lstinline|;|.
+\item The commands like
+  \begin{lstlisting}
+    $xdist=1.5;
+  \end{lstlisting}
+  or 
+  \begin{lstlisting}
+    @fieldsforprint=qw(Name DoB);
+  \end{lstlisting}
+  assign values to the variables.
+\item Variables starting with \lstinline|$| are scalars and
+  take numerical or string values.  Variables starting with
+  \lstinline|@| are arrays and take list of values.
+\item A backslash in single quotes stands for itself, A backslash in
+  double quotes or inside \lstinline|<<END|\dots\lstinline|END|
+  construction must be doubled.  Compare the commands
+  \begin{lstlisting}
+    $foo='\documentclass';
+    $bar="\\documentclass";
+  \end{lstlisting}
+\item The last command in the file must be
+  \begin{lstlisting}
+    1;
+  \end{lstlisting}
+\end{enumerate}
+
+A number of commented configuration files can be found in the
+\path{examples} subdirectory of the distribution.
+
+In the remaining parts of this section we describe the configuration
+variables in detail.
+
+\subsection{\TeX{} Output Setup}
+\label{sec:conf_tex}
+
+A number of variables determine what kind of \TeX{} file is produced.
+An example of their usage is shown on Listing~\ref{lst:tex}.  
+
+The variable \lstinline|$fulldoc| determines whether the program
+produces a full \LaTeX{} file with header and preamble (when
+\lstinline|$fulldoc=1|), or just a snippet to be included in a larger
+document (when \lstinline|$fulldoc=0|). The default is 1.
+
+The variable \lstinline|$documentheader| is used when
+\lstinline|$fulldoc| is 1.  It determines the document class of the
+resulting \LaTeX{} file.  The default is |article| class, set by
+|\documentclass{article}|.
+
+By default the preamble of the \LaTeX{} file created when
+\lstinline|$fulldoc| is 1, contains only the line
+|\usepackage{pst-pdgr}| and, if the language chosen is not English
+(see Section~\ref{sec:conf_lang}), the calls of \program{babel} and
+\program{inputenc} packages.  The variable \lstinline|$addtopreamble|,
+if set, may contain any other \LaTeX{} code you might wish to add to
+the preamble.
+
+The variable \lstinline|$printlegend| determines whether to add legend
+to the pedigree.  The default value is 1, and the legend is printed.
+
+\begin{lstlisting}[float, caption={Configuration File: Setting \TeX{} Output}, 
+  label=lst:tex]
+# Do we want to have a full LaTeX 
+# file or just a fragment?
+#
+$fulldoc=1;
+
+# What kind of document do we want
+#
+$documentheader='\documentclass{article}';
+
+# Define additional packages here
+#
+$addtopreamble=<<END;
+\\usepackage{pst-pdgr}
+END
+
+# Do we want to print a legend?
+#
+$printlegend=1;  
+\end{lstlisting}
+
+
+\subsection{What to Print}
+\label{sec:what_to_print}
+
+The next groups of configuration variables sets the information to be
+printed in the legend and on the pedigree.  It consists of two arrays:
+array \lstinline|@fieldsforlegend| is the list of fields (see
+Section~\ref{sec:data_file}) which are included in the legend, and
+array \lstinline|@fieldsforchart| is the list of fields to print near
+each node in the pedigree (Listing~\ref{lst:what_to_print}).  Setting
+\lstinline|@fieldsforchart| to empty array:
+\begin{lstlisting}
+@fieldsforchart = ();
+\end{lstlisting}
+prevents putting additional information on the pedigrees.
+
+The field names are described in Section~\ref{sec:data_file}.  Note
+that |AgeAtDeath| is a special field:  it is the age at death (or
+empty) calculated as the difference between the death date and the
+birth date.  
+
+\begin{lstlisting}[float, caption={Configuration File:  Choosing
+Fields to Print}, label=lst:what_to_print]
+# Fields to include in the legend.  
+# Delete Name for privacy protection. 
+#
+@fieldsforlegend = qw(Name DoB DoD Comment);
+
+#
+# Fields to put at the node.  
+# Delete Name for privacy protection. 
+#
+@fieldsforchart = qw(Name);
+\end{lstlisting}
+
+\subsection{Language and Encoding}
+\label{sec:conf_lang}
+
+The next group of variables describes the language and encoding of
+the data file input and the \LaTeX{} output.  They are shown in
+Listing~\ref{lst:lang_enc}.  The variable \lstinline|$language| at
+present can have one of two values: |english| (the default) or
+|russian|.  If the value is |russian|, the output document preamble
+includes the line
+\begin{lstlisting}[language=tex]
+\usepackage[russian]{babel}
+\end{lstlisting}
+The variable \lstinline|$encoding| sets the encoding of the \LaTeX{}
+file if the language is not English.  By default it is |cp1251|, if
+the language is Russian.  Set it to |koi8-r| to choose KOI8 encoding.
+It is worth to note that the data file and the output \LaTeX{} file
+are assumed to have the same language and encoding.
+
+
+\begin{lstlisting}[float, caption={Configuration File: Choosing
+Language and Encoding}, label=lst:lang_enc]
+#
+# Language
+#
+# $language="russian";
+$language="english";
+
+#
+# Override the encoding
+#
+# $encoding="koi8-r";
+\end{lstlisting}
+
+If |$language| is not |english|, the program recognizes both English
+and native names of the fields in the data file (see
+Section~\ref{sec:data_file}). 
+
+\subsection{Fonts}
+\label{sec:fonts}
+
+There are two kinds of text on the chart:  the text above a node
+and the text below a node\footnote{The \TeX{}
+  package~\cite{pst-pdgr06} also allows to place text at both sides of
+the node, but the program \program{pedigree} currently does not use
+this feature.}.  The fonts for them are set by the variables
+\lstinline|$belowtextfont| (by default |\small|) and
+\lstinline|$abovetextfont| (by default |\scriptsize|).  Any \LaTeX{}
+font declaration like |\sffamily| or |\itshape| is allowed here.  See
+Listing~\ref{lst:fonts} for an example of usage.
+
+\begin{lstlisting}[float, caption={Configuration File: Choosing
+Fonts}, label=lst:fonts]
+#
+# Fonts for the chart
+#
+$belowtextfont='\small';
+$abovetextfont='\scriptsize';
+\end{lstlisting}
+
+\subsection{Lengths}
+\label{sec:conf_dist}
+
+The next group of variables (Listing~\ref{lst:dist}) sets the
+distances between the key elements of the chart.  All lengths are in
+centimeters (actually, in |unit|s, are defined in
+PSTricks~\cite{PSTricks93}).
+
+\begin{lstlisting}[float, caption={Configuration File: Choosing
+Lengths}, label=lst:dist]
+#
+#  descarmA in cm
+#
+$descarmA = 0.8;
+
+#
+# Distances between nodes (in cm)
+#
+$xdist=2;
+$ydist=2;
+\end{lstlisting}
+
+The variable \lstinline|$descarmA| sets the length of the first
+segment of the descent line:  from the parent node to the sibs line,
+as measured from the center of the parent (see~\cite{pst-pdgr06} for
+more details).  By default it is 0.8.
+
+The variables \lstinline|$xdist| and \lstinline|$ydist| set the
+distances between the nodes along horizontal and vertical axes
+correspondingly.  The default for both is 2.
+
+\subsection{Scaling and Rotation}
+\label{sec:scaling_rotation}
+
+Complex pedigrees might be too large to fit on a page.  In this case a
+scaling and (or) rotation might be necessary to print the chart.  Of
+course, changing the lengths described in Section~\ref{sec:conf_dist}
+might also help, but the scaling described here also changed the size
+of the pedigree symbols.
+
+There are three variables controlling the scaling and rotation of
+pedigrees: \lstinline|$maxW|, \lstinline|$maxH| and
+\lstinline|$rotate| (see Listing~\ref{lst:scaling_rotation}).  The
+variables \lstinline|$maxW| and \lstinline|$maxH| are the maximal
+width and height of the chart in centimeters.  Setting any of them to
+zero disables scaling.  
+
+The scaling works as follows.  If both height and width of the
+pedigree are smaller than the limits, no scaling is done.  In the other
+case the chart is scaled while preserving the aspect ratio (by
+changing the value of |unit|, see~\cite{PSTricks93}) to fit into the
+limits.
+
+The variable |$rotate| sets the orientation of the chart.  If it is
+|no|, the pedigree is never rotated, while if it |yes|, it is always
+rotated ninety degrees counterclockwise.  If this variable is set to
+|maybe| (the default), the program compares the scaling for
+the non-rotated and rotated pedigrees, and chooses the orientation for
+which the scaling is closer to one.
+
+\begin{lstlisting}[float, caption={Configuration File: Choosing
+Scaling and Rotation}, label=lst:scaling_rotation]
+#
+# Maximal width and height of the pedigree in cm.
+# Set this to 0 to switch off scaling
+#
+$maxW = 15;
+$maxH = 19;
+
+#
+# Whether to rotate the page.  The values are 
+# 'yes', 'no' and 'maybe'
+# If 'maybe' is chosen, the pedigree is rotated 
+# if this provides better scaling
+#
+$rotate = 'maybe';
+\end{lstlisting}
+
+\section{Running the Program}
+\label{sec:runnning}
+
+
+
+\subsection{Program Invocation And Options}
+\label{sec:invocation}
+
+The program \path{pedigree} is a command line program.  It reads the
+data from a text file \path{input_file} and produces an output file
+with \LaTeX{} macros.  The format of the input file is described in
+Section~\ref{sec:data_file}.  The program invocation is:
+\begin{verbatim}
+pedigree [-c configuration_file] [-d] [-o output_file] 
+         [-s start] input_file 
+\end{verbatim}
+(the square brackets show optional arguments). 
+
+All arguments but |input_file| are optional.  They are described
+below.
+
+The option |-c| selects a \emph{configuration file.}  The format
+of the configuration file is described in
+Section~\ref{sec:conf_file}.  If this option is absent, the program
+uses its own default parameters, or system-wide or user's defaults, as
+explained in Section~\ref{sec:conf_file}. 
+
+
+The option \path{-d} selects debugging mode.  In this mode a lot of
+debugging messages are dumped to \path{stderr}.
+
+The parameter |-o| provides the name of the output file. Both
+\path{input_file} and \path{output_file} can be ``-'', which means
+\path{stdin} for the input and \path{stdout} for the output.  If the
+parameter |-o| is absent, the program tries to guess the name of
+the output file from the name of the input file. If the input file is
+|foo.csv|, the output file will be |foo.tex|.  On the other
+hand, if the input file is \path{stdin}, the output file is
+\path{stdout}.
+
+Usually pedigrees are built starting from the proband\footnote{The
+  proband is the first person among the relatives who came to a
+  geneticist; he or she is the primary patient.}.  Only the people
+that share genes with the proband, are shown on the pedigree.
+However, in some cases, for example  when there is no proband, or
+where there are several probands, it is neccessary to override this
+default and tell the program from which person to start.  This is done
+using the option |-s|.  If it is present, it must be followed by the
+Id of a person in the data file (see Section~\ref{sec:data_file} for
+the discussion of Id).
+
+The option |-v| is special.  The invocation |pedigree -v|
+outputs the version and license information.
+
+
+\subsection{Data File}
+\label{sec:data_file}
+
+The input for the program is a separated values file.  Usually such
+files are called CSV for ``comma separated values''.  However, this
+program uses the vertical bar (``pipe'') \verb+|+ as a separator.
+Each line of this file is a \emph{record}.  The lines are separated by
+pipes into \emph{fields.}  Most SQL programs produce such files by
+default.  Spreadsheet programs will make them if you choose ``Save
+As\dots'' option, and select \verb+|+ as the field separator, and
+empty text delimiter.  We sometimes will call the records ``rows'' and
+the fields ``columns'' to use the familiar spreadsheet metaphor.
+Normally each row corresponds to a person in a pedigree.  We will call
+this person \emph{the current person} when describing the fields.
+
+The width of the fields may not be the same in all rows (or, in other
+words, the pipes \verb+|+ may be disaligned).  We make them aligned in
+the examples included in this manual just to make the text more
+readable.  
+
+The first line of the data file contains the names of the fields
+(``column headers'').  The fields in the subsequent lines must match
+the order of the headers.  An empty field must be still included (as
+\verb+||+ or \verb+| |+).  Otherwise the order of columns is arbitrary
+as long as it is the same for all rows (i.e. matches the order of
+``column headers'' in the first line).
+
+All fields but |Id| are optional.  If the value is empty for all rows,
+the corresponding column can be dropped. If applicable, the default
+values for this field will be substituted by the program.
+
+On the other hand the data file can include any additional columns as
+long as their names do not clash with the names listed below and the
+special name |AgeAtDeath|.  These additional columns can be included
+in the chart or legend as described in
+Section~\ref{sec:what_to_print}.
+
+Here is the list of columns and explanation of their meaning:
+\begin{description}
+\item[Id:] Each line (including the special lines described below)
+  must have a unique |Id|.  The |Id| may contain only Latin letters
+  and numbers, and start with a letter.
+\item[Name:] The name of the person described in the current row.
+  There are also \emph{special names} when the current row describes
+  abortions or infertility.  They are described below.  The names
+  should not contain ``special symbols'' like \#, \$, \%, \_,
+  \textasciicircum, etc.
+\item[Sex:] The gender of a person.  This column may have one of two
+  values: |male| or |female|.  The empty value corresponds to a person
+  with unknown gender.
+\item[DoB:] The date of birth for the current person.  The format is
+  |YYYY.MM.DD|.  If the date of birth is not known, the field may be
+  empty or the keyword |unknown| may be used.
+\item[DoD:] The date of death for current person.  The format is the
+  same as for |DoB|:  |YYYY.MM.DD|.  If this field is empty, the
+  corresponding person is alive.  For deceased persons with an unknown
+  date of death use the keyword |unknown|.  Note the subtle difference
+  between the fields |DoB| and |DoD|:  an empty value for |DoB| is
+  means ``unknown birth date'' while for |DoD| it means that there is
+  no date of death at all.
+\item[Mother:] The |Id| of the mother of the person (or empty).
+\item[Father:] The |Id| of the father of the person (or empty).
+\item[Proband] This field can be either |yes| for the probands, or
+  empty (or |no|) for other persons.  Note that if a pedigree has no
+  probands or several probands, the program does not know, from which
+  node to start the pedigree.  Therefore in this case the option |-s|
+  must be used to explicitly set the |Id| of the starting chart node
+  (see Section~\ref{sec:invocation}).
+\item[Condition:] This column can have the values |normal|,
+  |obligatory|, |asymptomatic| or |affected|.  If it is empty, the
+  default value |normal| is assumed.
+\item[Comment:] A comment about the person.
+\item[Twins:] If the current person has twins, they are listed in this
+  column separated by spaces and (or) commas.  See
+  Section~\ref{sec:twins} for more details.
+\item[Type:] This column is used in certain special cases.  For
+  abortions it shows the type of the abortion
+  (Section~\ref{sec:abortions}), for childless people and marriages it
+  shows the type of childnessness (Section~\ref{sec:childless}), and
+  for twins it shows the type of twins (Section~\ref{sec:twins}).
+\item[SortOrder:] This column is used when the algorithm for sorting
+  siblings and unions gives a wrong result, and a manual correction is
+  needed.  See Section~\ref{sec:sorting} for the explanation and
+  examples. 
+\end{description}
+
+Examples of data files (in English and Russian) are shown in
+Listing~\ref{lst:data_examples} (the Russian keywords are discussed in
+Section~\ref{sec:language}).  
+
+\begin{lstlisting}[float, caption={Examples of Data Files (English and
+Russian)}, label=lst:data_examples, escapeinside={`'}]
+`  
+\rotatebox{90}{%
+    \begin{minipage}{1.5\linewidth}
+      \small
+      \VerbatimInput{../examples/english.csv}
+      \bigskip
+      \selectlanguage{russian}
+      \VerbatimInput{../examples/russian.csv}
+    \end{minipage}}
+'
+\end{lstlisting}
+
+\begin{figure}
+  \centering
+  \input{english.tex}
+  \caption{Example of the Typeset Pedigree in English (Data File from
+    Listing~\ref{lst:data_examples})}  
+  \label{fig:example-english-typeset}
+\end{figure}
+
+\begin{figure}
+  \centering
+  {\selectlanguage{russian}
+  \input{russian.tex}}
+  \caption{Example of the Typeset Pedigree in Russian (Data File from
+    Listing~\ref{lst:data_examples})} 
+  \label{fig:example-russian-typeset}
+\end{figure}
+
+
+\subsection{Twins}
+\label{sec:twins}
+
+The column |Twins| (see Section~\ref{sec:twins}) lists all |Id|s of
+all twins of the given person.  The column |Type| can be used to show
+the type of the twins.  The empty value means polyzygotic twins,
+|monozygotic| means monozygotic twins, and |qzygotic| is used in the
+case when the type of twins is under doubt.  An example of a data file
+with twins is shown on Listing~\ref{lst:twins}, and the corresponding
+pedigree on Figure~\ref{fig:twins}.  
+
+
+\begin{lstlisting}[float, caption={Example of Data File with Twins},
+label=lst:twins, escapeinside={`'}] 
+`  
+      \small
+      \VerbatimInput{../examples/twins.csv}
+'
+\end{lstlisting}
+
+\begin{figure}
+  \centering
+  \input{twins.tex}
+  \caption{Example of a Pedigree with Twins (Data File from
+    Listing~\ref{lst:twins})}  
+  \label{fig:twins}
+\end{figure}
+
+\subsection{Abortions}
+\label{sec:abortions}
+
+Aborted pregnancies are described by a special entry in the data file.
+The field |Name| has the value |#abortion|; the symbol |#| is used to
+show that this is a special value.  The columns |Sex|, |DoB|,
+|Mother|, |Father| and |Condition| have the usual meaning.  The
+special column |Type| is either empty or be equal to |sab| for
+self-abortions.  
+
+\begin{lstlisting}[float, caption={Example of Data File with Abortions},
+label=lst:abortions, escapeinside={`'}] 
+`  
+      \small
+      \VerbatimInput{../examples/abortions.csv}
+'
+\end{lstlisting}
+
+\begin{figure}
+  \centering
+  \input{abortions.tex}
+  \caption{Example of a Pedigree with Abortions (Data File from
+    Listing~\ref{lst:abortions})}  
+  \label{fig:abortions}
+\end{figure}
+
+\subsection{Childlessness and Infertility}
+\label{sec:childless}
+
+Childlessness is can be a property of a person or a union between two
+persons.  Therefore in this implementation we use a special row rather
+than a column to report it.  As other rows, this one has a unique
+|Id|.  The |Name| column should have a special entry |#childless|.
+Like |#abortion| (Section~\ref{sec:abortions}), this special name
+starts with |#| to distinguish it from ``real'' names.  There are four
+other columns that have meaning for this row:
+\begin{description}
+\item[Mother:] The |Id| of the childless female.
+\item[Father:] The |Id| of the childless male.  If both |Mother| and
+  |Father| columns are not empty, the entry describes the union
+  between the |Father| and |Mother|.  Of only |Mother| or |Father| is
+  not empty, the entry describes the state of the corresponding
+  person.
+\item[Type:] This column might be either empty or have a keyword
+  |infertile|.  In the latter case the childlessness of the person or
+  union is caused by a proven infertility.
+\item[Comment:] The vaule of this column is shown under the
+  childlessness symbol on the chart.  Put there a short description of
+  the cause of childlessness, like |anospermia| or |vasectomy|.
+\end{description}
+An example of a pedigree with childlessness is shown on
+Listing~\ref{lst:childless} and Figure~\ref{fig:childless}. 
+
+\begin{lstlisting}[float, caption={Example of Data File with
+Childlessness},  label=lst:childless, escapeinside={`'}] 
+`  
+      \small
+      \VerbatimInput{../examples/childlessness.csv}
+'
+\end{lstlisting}
+
+\begin{figure}
+  \centering
+  \input{childlessness.tex}
+  \caption{Example of a Pedigree with Childlessness (Data File from
+    Listing~\ref{lst:childless})}  
+  \label{fig:childless}
+\end{figure}
+
+\subsection{Ordering Siblings and Marriage Partners}
+\label{sec:sorting}
+
+The generations in pedigrees are ordered in vertical direction, from
+up do down.  How should we order the people on the same generation,
+i.e. siblings and marriage partners?
+
+Usually two rules are used:
+\begin{enumerate}
+\item The siblings are ordered from the oldest on the left to the
+  youngest to the right.\label{item:sibling_order}
+\item In marriage or other union the male is to the left, and the
+  female is to the right.
+\end{enumerate}
+However, the combination of these rules might lead to the situation
+when marriage lines intersect the parental lines.  Therefore the
+rule~\ref{item:sibling_order} is usually implicitly modified:
+\begin{enumerate}
+\item[\ref{item:sibling_order}a.] The are ordered from the oldest on
+  the left to the youngest to the right.  However, if a sibling's
+  marriage is shown on a pedigree, this sibling is always the
+  rightmost (male) or the leftmost (female).
+\end{enumerate}
+The program follows these rules.  It is enough to draw pedigrees in
+most cases.  In particular, they always produce correct pedigrees if
+there is only one marriage shown.  However, in complex cases these
+rules fail, as shown on Listing~\ref{lst:sort1} and
+Figure~\ref{fig:sort1}.  It is possible to extend the rules
+above to account for these cases, however we chose another solution:
+to provide a facility for the manual intervention in the sorting and
+ordering algorithm.  For this purpose a special column |SortOrder| is
+used.  It can have positive numbers greater than 1 or negative numbers
+smaller than -1.  If the value of this column is positive, the
+corresponding person is moved to the left when sorting siblings and
+to the right when sorting marriage partners.  If it is negative, the
+opposite sorting rule is applied (see Section~\ref{sec:alg_sorting}
+for more detailed discussion).  Note that sibling sorting and marriage
+partners sorting must work in opposite directions, otherwise marriage
+lines intersect paternal lines.
+
+\begin{lstlisting}[float, caption={A Data File with a Sorting
+Problem},  label=lst:sort1, escapeinside={`'}] 
+`  
+      \small
+      \VerbatimInput{../examples/sort1.csv}
+'
+\end{lstlisting}
+
+\begin{figure}
+  \centering
+  \input{sort1.tex}
+  \caption{Pedigree from Listing~\ref{lst:sort2}}  
+  \label{fig:sort1}
+\end{figure}
+
+Let us return to the pedigree on Listing~\ref{lst:sort1}.  To improve
+Figure~\ref{fig:sort1} we can either move Peter to the right or Lucy to
+the left.  The first solution is shown on Listing~\ref{lst:sort2} and
+Figure~\ref{fig:sort2}.  The second is shown on Listing~\ref{lst:sort3} and
+Figure~\ref{fig:sort3}.
+
+\begin{lstlisting}[float, caption={First Solution to the Problem in
+Listing~\ref{lst:sort1} },  label=lst:sort2, escapeinside={`'}] 
+`  
+      \small
+      \VerbatimInput{../examples/sort2.csv}
+'
+\end{lstlisting}
+
+\begin{figure}
+  \centering
+  \input{sort2.tex}
+  \caption{Pedigree from Listing~\ref{lst:sort2}}  
+  \label{fig:sort2}
+\end{figure}
+
+\begin{lstlisting}[float, caption={Second Solution to the Problem in
+Listing~\ref{lst:sort1} },  label=lst:sort3, escapeinside={`'}] 
+`  
+      \small
+      \VerbatimInput{../examples/sort3.csv}
+'
+\end{lstlisting}
+
+\begin{figure}
+  \centering
+  \input{sort3.tex}
+  \caption{Pedigree from Listing~\ref{lst:sort3}}  
+  \label{fig:sort3}
+\end{figure}
+
+
+Of course sometimes a pedigree cannot be drawn without
+self-intersections with any sorting of siblings.  An example of such
+pedigree is shown on Listing~\ref{lst:badsort} and
+Figure~\ref{fig:badsort}.  Obviously no amount of shuffling the
+siblngs can help in his case. 
+
+\begin{lstlisting}[float, caption={A Pedigree with Unavoidable
+Self-Intersections},  label=lst:badsort, escapeinside={`'}]
+`  
+      \small
+      \VerbatimInput{../examples/badsort.csv}
+'
+\end{lstlisting}
+
+\begin{figure}
+  \centering
+  \input{badsort.tex}
+  \caption{Pedigree from Listing~\ref{lst:badsort}}  
+  \label{fig:badsort}
+\end{figure}
+
+
+If the program cannot avoid self-intersection of marriage lines and
+parental lines despite automatics sorting and manual intervention, as
+the last resort it creates a multi-segment marriage line, as shown on
+Figures~\ref{fig:sort1} and~\ref{fig:badsort}.
+
+
+\subsection{Consanguinic Unions}
+\label{sec:consanguinic}
+
+Consanguinic unions present a technical problem for the program (see
+the discussion in Section~\ref{sec:alg_consanguinic}).  Therefore the
+support of consanguinicity is experimental for this release.
+
+There is a number of limitations for consanguinic unions in the data
+file at present. First, the consanguinic unions should not in the
+direct lineage of the proband or the person from which the pedigree
+starts.  In many cases this limitation can eliminated by using |-s|
+option (see Section~\ref{sec:invocation}) to choose a different
+starting point for the pedigree.  Second, the children of consanguinic
+unions might appear not centerd on the charts.   An example of a
+pedigree with consanguinic marriages is shown on
+Listing~\ref{lst:consanguinic}, and the corresponding chart is shown
+on Figure~\ref{fig:consanguinic}.  The drawbacks of the program are
+evident from the positions of Laura nad Jack on these charts.
+
+\begin{lstlisting}[float, caption={A Pedigree with Consanguinic
+Unions},   label=lst:consanguinic, escapeinside={`'}]
+`  
+      \small
+      \VerbatimInput{../examples/consanguinic.csv}
+'
+\end{lstlisting}
+
+\begin{figure}
+  \centering
+  \input{consanguinic.tex}
+  \caption{Pedigree from Listing~\ref{lst:consanguinic}}  
+  \label{fig:consanguinic}
+\end{figure}
+
+
+
+\subsection{Language-Dependent Keywords}
+\label{sec:language}
+
+At present the program \program{pedigree} can work with English and
+Russian languages.  As discussed in Section~\ref{sec:conf_lang}, the
+language options chooses \emph{both} the languages of input and output
+files.  It is easy to add new languages to the scheme by expanding the
+library |Pedigree::Language.pm| in the distribution.
+
+The English language is the default.  Moreover, if the Russian option
+is chosen, English keywords are still recognized in the input file.  
+
+The English and Russian keywords are listed in
+Table~\ref{tab:keywords}.   Note that some keywords have variants;
+they are listed in the table as well.
+
+\begin{table}
+  \centering
+  \begin{tabular}{lll}
+    \hline
+    English keyword  &  English variants & Russian keywords  \\
+    \hline
+    \multicolumn{3}{l}{\textbf{Field Names}}\\
+    Id   & & \foreignlanguage{russian}{Идент}\\
+    Name   & & \foreignlanguage{russian}{ФИО}\\
+    Sex   & & \foreignlanguage{russian}{Пол}\\
+    DoB   & & \foreignlanguage{russian}{Рожд}\\
+    DoD   & & \foreignlanguage{russian}{Умер}\\
+    Mother   & & \foreignlanguage{russian}{Мать}\\
+    Father   & & \foreignlanguage{russian}{Отец}\\
+    Proband   & & \foreignlanguage{russian}{Пробанд}\\
+    Condition   & & \foreignlanguage{russian}{Состояние}\\
+    Comment   & & \foreignlanguage{russian}{Комментарий}\\
+    Type  &   &  \foreignlanguage{russian}{Тип}\\
+    Twins  &   &  \foreignlanguage{russian}{Близнецы}\\
+    SortOrder  & Sort  &  \foreignlanguage{russian}{ПорядокСортировки,
+      Сорт}\\
+    \multicolumn{3}{l}{\textbf{Field Values}}\\
+    male   & & \foreignlanguage{russian}{муж, м}\\
+    female   & & \foreignlanguage{russian}{жен, ж}\\
+    unknown   & & \foreignlanguage{russian}{неизв, неизвестно}\\
+    yes   & & \foreignlanguage{russian}{да}\\
+    no   & & \foreignlanguage{russian}{нет}\\
+    normal   & & \foreignlanguage{russian}{норм, здоров}\\
+    obligatory   & obligat & \foreignlanguage{russian}{облигат}\\
+    asymptomatic   & asymp & \foreignlanguage{russian}{асимп}\\
+    affected   & affect & \foreignlanguage{russian}{больн, болен}\\
+    infertile   &  & \foreignlanguage{russian}{бесплодн}\\
+    sab   &  & \foreignlanguage{russian}{выкидыш}\\
+    monozygotic   & monzygot & \foreignlanguage{russian}{монозиготн,
+      монозиг, однояйцев}\\
+    qzygotic   & qzygot, ? & \foreignlanguage{russian}{?}\\
+    \multicolumn{3}{l}{\textbf{Special Names}}\\
+    |#|abortion   &  & |#|\foreignlanguage{russian}{аборт}\\
+    |#|childless   &  & |#|\foreignlanguage{russian}{бездетн}\\
+    \hline
+  \end{tabular}
+  \caption{Keywords in Different Languages}
+  \label{tab:keywords}
+\end{table}
+
+
+
+
+
+\clearpage
+
+\part{Algorithm Description}
+\label{part:algortihm}
+
+
+\section{Introduction}
+\label{sec:alg_intro}
+
+This part is intended for advanced users and is not neccessary for
+runnuing the program.
+
+The problem of nicely typesetting graphs is one of the classical
+problems in the Computer Science~\cite{GraphDrawing99}.  One of the
+earliest algorithms here is the classical algorithm for layered rooted
+trees by Reingold and Tilford~\cite[\S~3.1]{GraphDrawing99}.  This
+algorithm was implemented by |PSTricks|~\cite{PSTricks93}.  However,
+many pedigrees are not trees~\cite{pst-pdgr06}.  If we consider a
+subset of pedigrees where inbreeding is absent, the pedigrees become
+trees.  However, even in this case the the tree is not necessary
+layered, as can be seen from
+Figure~\ref{fig:example-english-typeset}.  Therefore a new approach
+generalizing  Reingold-Tilford algorithm is necessary.  This approach
+is based on the analysis of the structure of pedigrees and is
+sketched in the remainder of this manual.
+
+\section{Main Algorithm}
+\label{sec:alg}
+
+
+A pedigree consists of nodes (vertices), connected by lines (edges).
+If there is no inbreeding, the graph is acyclic.  There are two kinds
+of nodes in the graph: person nodes (squares and circles on
+Figures~\ref{fig:example-english-typeset}
+and~\ref{fig:example-russian-typeset}) and \emph{marriage nodes},
+which are nameless on the figures.  We will use the notation ``male
+spouse-female spouse'' for such nodes, so the marriage nodes on
+Figure~\ref{fig:example-english-typeset} are I:1-I:2, I:3-I:4 and
+II:2-II:3.  A node has a \emph{precedessor} and \emph{children}.  A
+marriage node does not have a precedessor, but has \emph{male spouse}
+and \emph{female spouse} (it is customary to put male spouses to the
+left and female spouses to the right on pedigrees).  Any node has a
+\emph{downward tree} of its children, grandchildren etc.  The downward
+tree may be empty.
+
+Any node in an acyclic graph can be a root.  However, in layered
+trees there is a special root:  the one that has no precedessor.
+Similarly we will call a \emph{local root} a node that has no
+predecessor.  All marriage nodes are local roots.  Some person nodes
+can be local roots as well.  
+
+Let us first discuss the case where cobnsanguinic marriages are
+absent.  In this case a pedigree is a tree.
+
+The proposed algorithm is recursive and starts from a local root.
+Strictly speaking, it can start from any local root, but medical
+pedigrees have a special person:  \emph{proband,}  the person who was
+the first to be examined by genetic specialists (the proband is shown by an
+arrow drawn near the node on
+Figures~\ref{fig:example-english-typeset}
+and~\ref{fig:example-russian-typeset}).  Therefore it makes sense to
+start from the local root which has proband in its downward tree.  
+
+If this local root is a person node, the pedigree is the layered tree,
+and Reingold-Tilford algorithm is sufficient.  Therefore we should
+consider only the case when the local root is a marriage node.  In
+this case we can typeset the downward tree using Reingold-Tilford
+algorithm.  The spouses do not belong to this tree.  However, each of
+them belongs to each own subpedigree.  We will call them \emph{left
+  subpedigree} and \emph{right subpedigree}.  We recursively apply our
+algorithm to typeset left and right subpedigrees.  Then we move the
+left subpedigree to the right and right subpedigree to the left as far
+as we can without intersection between them and the downward tree.
+
+This process is shown on Figure~\ref{fig:subpedigrees}.  Obviously
+this algorithm converges and leads to typesetting the pedigree without
+intersections between the subtrees and subpedigrees.
+
+\begin{figure}
+  \centering
+  \begin{pspicture}(-7,-4)(5.5,4)
+%    \psgrid(-8,-4)(6,4)
+    \rput(-6, 2){\pstPerson[male, normal, belowtext=I:1, deceased]{GF1}}
+    \rput(-4, 2){\pnode{GF1_m_GM1}}
+    \rput(-2, 2){\pstPerson[female, asymptomatic, belowtext=I:2, deceased]{GM1}}
+    \rput(0, 2){\pstPerson[male, normal, belowtext=I:3]{GF2}}
+    \rput(2, 2){\pnode{GF2_m_GM2}}
+    \rput(4, 2){\pstPerson[female, normal, belowtext=I:4]{GM2}}
+    \rput(-5, 0){\pstPerson[female, obligatory, belowtext=II:1]{A1}}
+    \rput(-3, 0){\pstPerson[male, affected, belowtext=II:2]{F1}}
+    \rput(0, 0){\pnode{F1_m_M1}}
+    \rput(2, 0){\pstPerson[female, normal, belowtext=II:3]{M1}}
+    \rput(-5, -2){\pstPerson[female, affected, belowtext=III:1]{C1}}
+    \rput(-2, -2){\pstPerson[male, affected, belowtext=III:2, proband]{P}}
+    \rput(0, -2){\pstPerson[female, affected, belowtext=III:3]{S1}}
+    \rput(2, -2){\pstPerson[male, normal, belowtext=III:4]{S2}}
+    \pstDescent{GF1_m_GM1}{A1}
+    \pstDescent{GF1_m_GM1}{F1}
+    \ncline{GF1_m_GM1}{GM1}
+    \ncline{GF1_m_GM1}{GF1}
+    \pstDescent{GF2_m_GM2}{M1}
+    \ncline{GF2_m_GM2}{GM2}
+    \ncline{GF2_m_GM2}{GF2}
+    \pstDescent{A1}{C1}
+    \pstDescent{F1_m_M1}{P}
+    \pstDescent{F1_m_M1}{S1}
+    \pstDescent{F1_m_M1}{S2}
+    \ncline{F1_m_M1}{M1}
+    \ncline{F1_m_M1}{F1}
+    \ncbox[linestyle=none, boxsize=1, nodesepA=0.7, nodesepB=0.7,
+    boxdepth=0.7, style=TBlue]{GF1}{GM1}
+    \ncbox[linestyle=none, boxsize=1.3, nodesepA=0.7, nodesepB=0.7,
+    boxdepth=0.7, style=TBlue]{A1}{F1}
+    \ncbox[linestyle=none, boxsize=1.3, nodesepA=0.7, nodesepB=0.7,
+    boxdepth=0.7, style=TBlue]{C1}{C1}
+    \rput(-4,3.2){\textcolor{blue}{Left subpedigree}}
+    \ncbox[linestyle=none, boxsize=1, nodesepA=0.7, nodesepB=0.7,
+    boxdepth=0.7, style=TRed]{GF2}{GM2}
+    \ncbox[linestyle=none, boxsize=1.3, nodesepA=0.7, nodesepB=0.7,
+    boxdepth=0.7, style=TRed]{M1}{M1}
+    \rput(2,3.2){\textcolor{red}{Right subpedigree}}
+    \ncbox[linestyle=none, boxsize=1.3, nodesepA=0.7, nodesepB=0.7,
+    boxdepth=0.7, style=TGreen]{P}{S2}
+    \rput(0,-3){\textcolor{green}{Downward tree}}
+    \rput(0,0){\psdot}
+    \rput(0,0.2){Local root}
+  \end{pspicture}
+  \caption{Subpedigrees and Downward Tree}
+  \label{fig:subpedigrees}
+\end{figure}
+
+
+\section{Algorithm for Sorting Siblings and Marriage Partners}
+\label{sec:alg_sorting}
+
+When we create a marriage node, we want to put the male to the left
+and the female to the right.  When we then sort siblings, we want this
+male to be the rightmost, and the female to be the leftmost.  To do
+so, we assign to each node the special quantity |SortOrder|.
+Initially all nodes have |SortOrder| equal to zero, unless
+specifically set by the user in the input file (see
+Section~\ref{sec:sorting}).  Then we use the following rules:
+\begin{enumerate}
+\item When creating the the marriage node:
+  \begin{enumerate}
+  \item If both spouses have equal |SortOrder| field, the male goes to
+    the left, the female goes to the right.
+  \item Otherwise, the spouse with greater |SortOrder| goes to the left.
+  \item If |SortOrder| of a spouse is 0, we set it to 1 (the
+    spouse on the left) or -1 (the spouse on the right).
+  \end{enumerate}
+\item When sorting siblings:
+  \begin{enumerate}
+  \item The sibling with smaller |SortOrder| goes to the left.
+  \item If both siblings have the same |SortOrder|, the oldest one
+    goes to the left.
+  \end{enumerate}
+\end{enumerate}
+
+\section{Modifications for Consangunic Unions}
+\label{sec:alg_consanguinic}
+
+Consanguinic unions present a problem for the described algorithm,
+because pedigrees with them are no longer trees (see
+Figure~\ref{fig:consanguinic}). 
+
+In this release of the program we use the following hack.  The direct
+lineage of the proband (or, more generally, the starting node) may have
+both mothers and fathers in the pedigree because they share genes from
+the starting node.  If any other person has both mother and father in
+the chart, his or her parents both shared their genes with the
+starting node.  Therefore they formed a consanguinic union.  In this
+case the children of this node appear in two subtrees:  their mother's
+and their father's.
+
+We delete them from one of the subtrees (the one with lower generation
+number), connect their parents with a double line (consanguinic union)
+and put the descent line from the middle of the union to them.  
+
+There are two problems with this hack (see
+Section~\ref{sec:consanguinic}):  the children of consanguinic unions
+are not centered on the diagaram, and the hack fails if the starting
+node itself is a descendant of a consanguinic union.
+
+Probably the next releases will employ better algorithms for
+consanguinic unions.
+
+\section{Conclusion}
+\label{sec:concl}
+
+The algorithm seems to be efficient and producing nicely typeset
+pedigrees.  Since the input file format is simple, it may be used by
+the people without special skills in \LaTeX.  On the other hand, the
+\TeX{} files produces are easy to understand and edit manually if the
+need arises.
+
+\clearpage
+
+\section{Acknowledgements}
+\label{sec:ack}
+
+The authors are grateful to Herbert Vo\ss{} for help with
+|PSTricks| code.  The support of \TeX{} User Group is gratefully
+acknowledged.  One of the authors (LA) was supported by Russian
+Foundation for Fundamental Research (travel grant 06-04-58811),
+Russian Federation President Council for Grants Supporting Young
+Scientists and Flagship Science Schools (grant MD-4245.2006.7)
+
+
+\bibliographystyle{unsrt}
+\bibliography{pedigree}
+
+\end{document}
+
+% $Id: pedigree.tex,v 2.18 2012-03-16 01:29:03 boris Exp $

@@ -1,0 +1,2734 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                                                                          %%
+%%                      Macros définies dans le livre                       %%
+%%                    « Apprendre à programmer en TeX »                     %%
+%%                     et nécessaires à sa compilation                      %%
+%%                                                                          %%
+%%                           Encodage ISO 8859-1                            %%
+%%                                   _____                                  %%
+%%                                                                          %%
+%%                        © 2014 Christian Tellechea                        %%
+%%                                                                          %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                                                                          %%
+%%  Ce fichier contient celles des macros définies dans le livre qui sont   %%
+%%  nécessaires à sa compilation.                                           %%
+%%                                                                          %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Les codes et les macros donnés dans ce fichier sont diffusés sous licence
+% libre « Creative Commons "BY-SA" ».
+%
+% https://creativecommons.org/licenses/by-sa/4.0/
+% https://creativecommons.org/licenses/by-sa/4.0/legalcode
+%
+% Vous êtes autorisé à
+%
+%   * partager : copier, distribuer et communiquer le matériel par tous moyens
+%     et sous tous formats ;
+%   * adapter : remixer, transformer et créer à partir du matériel pour toute
+%     utilisation, y compris commerciale
+%
+% selon les conditions suivantes
+%
+%   * paternité : vous devez citer le nom de l'auteur de façon appropriée,
+%     fournir un lien vers la licence, et indiquer si des modifications ont
+%     été apportées. Vous pouvez le faire de manière raisonnable, mais pas
+%     d'une façon qui suggère le donneur de licence vous approuve ou approuve
+%     l'utilisation que vous en faites ;
+%   * partage dans les mêmes conditions : dans le cas où vous effectuez un
+%     remix, que vous transformez, ou créez à partir du matériel composant
+%     l'Oeuvre originale, vous devez diffuser l'Oeuvre modifiée dans les mêmes
+%     conditions, c'est-à-dire avec la même licence avec laquelle l'Oeuvre
+%     originale a été diffusée.
+%
+%
+% Les commentaires dont sont assorties les macros dans le livre ne sont pas
+% sous licence libre et ne sont pas reproduits dans ce fichier.
+
+\edef\restoreatcoatcode{\catcode`\noexpand\@=\the\catcode`\@}
+\catcode`\@11
+{\def\:{\let\sptoken= }\expandafter}\: %
+
+\long\def\gobone#1{}
+
+\long\def\identity#1{#1}
+
+\long\def\firstoftwo#1#2{#1}
+
+\long\def\secondoftwo#1#2{#2}
+
+\def\gobtwo#1#2{}%
+
+\def\defactive#1{%
+    \catcode`#1=13
+    \begingroup
+    \lccode`~=`#1
+    \lowercase{\endgroup\def~}}
+
+\def\letactive#1{%
+    \catcode`#1=13
+    \begingroup
+    \lccode`~=`#1
+    \lowercase{\endgroup\let~}}
+
+\def\litterate#1{% #1=lit le token frontière choisi
+	\begingroup% ouvre un groupe pour y faire les modifications
+		\def\do##1{\catcode`##1=12 }%
+		\dospecials% rend inoffensifs tous les tokens spéciaux
+		\defactive\^^M{\leavevmode\par}%
+		\defactive\ {\space}%
+		\defactive<{\string<{}}\defactive>{\string>{}}%
+		\defactive-{\string-{}}\defactive`{\string`{}}%
+		\defactive,{\string,{}}\defactive'{\string'{}}%
+		\defactive#1{\endgroup}% #1 sera un \endgroup
+		\tt% passe en police à chasse fixe
+}
+
+\long\def\firstto@nil#1#2\@nil{#1}
+
+\long\def\remainto@nil#1#2\@nil{#2}
+
+\def\rightofsc#1#2{%
+	\exparg\ifin{#1}{#2}%
+		{% si #1 contient le #2
+		\def\right@of##1#2##2\@nil{\def#1{##2}}% définit la macro auxiliaire
+		\expandafter\right@of#1\@nil% appelle la macro auxiliaire
+		}%
+		{\let#1=\empty}% sinon, ne rien faire
+}
+
+\def\defname#1{\expandafter\def\csname#1\endcsname}
+
+\def\letname#1{\expandafter\let\csname#1\endcsname}
+
+\long\def\addtomacro#1#2{\expandafter\def\expandafter#1\expandafter{#1#2}}
+
+\long\def\eaddtomacro#1#2{\expandafter\addtomacro\expandafter#1\expandafter{#2}}
+
+\long\def\addtotoks#1#2{#1\expandafter{\the#1#2}}
+
+\long\def\eaddtotoks#1#2{\expandafter\addtotoks\expandafter#1\expandafter{#2}}
+
+\long\def\swaparg#1#2{#2{#1}}
+
+\long\def\expsecond#1#2{\expandafter\swaparg\expandafter{#2}{#1}}
+\let\exparg\expsecond
+
+\def\exptwoargs#1#2{\expsecond{\expsecond{#1}{#2}}}
+
+\def\sgn#1{\ifnum#1<0 -\fi}
+
+\def\abs#1{\sgn{#1}#1 }
+
+\def\truncdiv#1#2{%
+	\exptwoargs\truncdiv@i{\number\numexpr#1\relax}{\number\numexpr#2\relax}%
+}
+\def\truncdiv@i#1#2{%
+	\numexpr(2*\sgn{#1}#1-\sgn{#2}#2+1)/(\sgn{#1}2*#2)\relax
+}
+
+\def\ifinside#1[#2,#3]{%
+	\ifnum\sgn{\dimexpr#1pt-#2pt\relax}\sgn{\dimexpr#1pt-#3pt}1=1
+		\expandafter\secondoftwo
+	\else
+		\expandafter\firstoftwo
+	\fi
+}
+
+\def\absval#1{\expandafter\absval@i\expandafter{\number\numexpr#1\relax}}
+\def\absval@i#1{\number\ifnum#1<\z@-\fi#1 }
+
+\edef\saved@catcode{\number\catcode`\:}% sauvegarde du catcode de ":"
+\catcode`\:12 % ":" est désormais un caractère non actif normal
+\def\hdif{%
+	\begingroup% ouvrir un groupe semi-simple
+		\catcode`\:12 % modifier le catcode de ":"
+		\hdif@i% aller lire les deux arguments
+}
+
+\def\hdif@i#1#2{% lit les 2 arguments
+		\hdif@ii#1-#2\@nil% et les transmet à la macro à argument délimités
+}
+
+\def\hdif@ii#1:#2:#3-#4:#5:#6\@nil{%
+		%%%%%% calcul des nombres à afficher %%%%%%
+		\edef\nb@hrs{\number\numexpr#1-#4\relax}% différence des heures
+		\edef\nb@min{\number\numexpr#2-#5\relax}% différence des minutes
+		\edef\nb@sec{\number\numexpr#3-#6\relax}% différence des secondes
+		\ifnum\nb@sec<\z@ % si la différence des secondes est <0
+			\edef\nb@sec{\number\numexpr\nb@sec+60\relax}% ajouter 60 sec
+			\edef\nb@min{\number\numexpr\nb@min-1\relax}% enlever 1 aux minutes
+		\fi
+		\ifnum\nb@min<\z@ % si les minutes sont <0
+			\edef\nb@min{\number\numexpr\nb@min+60\relax}% ajouter 60 min
+			\edef\nb@hrs{\number\numexpr\nb@hrs-1\relax}% enlever 1 aux heures
+		\fi
+		%%%%%% affichage du résultat %%%%%%
+		\let\inter@space\empty% pas d'espace avant un nombre pour l'instant
+		\ifnum\nb@hrs>\z@ % si les heures sont >0
+			\nb@hrs h% afficher les heures et "h"
+			\let\inter@space\space% espace pour plus tard
+		\fi
+		\ifnum\nb@min>\z@ % si les minutes sont >0
+			\inter@space% afficher une espace éventuelle
+			\nb@min min% afficher les minutes et "min"
+			\let\inter@space\space
+		\fi
+		\ifnum\nb@sec>\z@ % si les secondes sont >0
+			\inter@space% afficher une espace éventuelle
+			\nb@sec s% afficher les secondes et "s"
+		\fi
+	\endgroup% fermer le groupe ouvert au début
+}
+\catcode`\:=\saved@catcode\relax% restaure le code de catégorie de ":"
+
+\long\def\afterfi#1#2\fi{#2\fi#1}
+
+\long\def\antefi#1\fi{\fi#1}
+
+\def\for#1=#2to#3\do#4#{%
+	\edef\temp@increment{\number\numexpr0#4}% lit et normalise l'argument optionnel
+	\ifnum\temp@increment=\z@% s'il est nul,
+		\edef\temp@increment{% le redéfinir à -1 (si #3<#2) et 1 sinon
+			\ifnum\numexpr#3-#2\relax<\z@ -1\else 1\fi
+		}% \temp@increment vaut donc 1 ou -1
+	\fi
+	\ifnum\numexpr\temp@increment*(#3-#2)\relax<\z@
+		\expandafter\gobone% si argument optionnel incompatible, manger le {<code>}
+	\else
+		\edef#1{\number\numexpr#2}% initialise la variable
+		\edef\macro@args{% définit et développe les arguments de la macro
+			%#1=nom de la macro à définir :
+			\expandafter\noexpand\csname for@ii@\string#1\endcsname
+			\ifnum\temp@increment<\z@ <\else >\fi% #2=signe de comparaison
+			{\temp@increment}% #3=incrément
+			\noexpand#1% #4=variable
+			{\number\numexpr#3\relax}% #5=entier max
+		}%
+		\antefi
+		\expandafter\for@i\macro@args
+	\fi
+}
+
+% #1=nom de la macro récursive de type "\for@ii@<variable>"
+% #2=signe de comparaison  % #3=incrément
+% #4=variable  % #5=entier max  % #6=code à exécuter
+\long\def\for@i#1#2#3#4#5#6{%
+	\def#1{% dfinit la sous macro récursive
+		\unless\ifnum#4#2#5\relax% tant que la variable n'a pas dépassé l'entier max
+			\afterfi{% rendre la récursivité terminale
+				#6% exécute le code
+				\edef#4{\number\numexpr#4+#3\relax}% incrémente la variable #1
+				#1% recommence
+			}%
+		\fi
+	}%
+	#1% appelle la sous-macro récursive
+}
+
+\def\exitfor#1{% #1=variable correspondant à la boucle de laquelle on veut sortir
+	\expandafter\let\csname for@ii@\string#1\endcsname\empty
+}
+
+\def\quark{\quark}
+
+\long\def\ifempty#1{%
+	\expandafter\ifx\expandafter\relax\detokenize{#1}\relax
+		\expandafter\firstoftwo
+	\else
+		\expandafter\secondoftwo
+	\fi}
+
+\def\reverse#1{%
+	\ifempty{#1}
+		{}% s'il n'y a rien à inverse, ne rien faire
+		{\reverse@i#1\@nil\@nil}% initialisation des réservoirs et appeler \reverse@i
+}
+\def\reverse@i#1#2\@nil#3\@nil{% #1 est le 1er caractère du réservoir A
+	\ifempty{#2}% si ce qui reste après ce 1er caractère est vide
+		{#1#3}% renvoyer #1#3 qui est le résultat final
+		{\reverse@i#2\@nil#1#3\@nil}% sinon, recommencer en déplaçant #1
+		                            % en 1re position du réservoir B
+}
+\long\def\ifin#1#2{%
+	\long\def\ifin@i##1#2##2\@nil{% définit la macro auxiliaire
+		\ifempty{##2}% si ce qu'il y a derrière le motif est vide
+			\secondoftwo% aller à "faux"
+			\firstoftwo% sinon à "vrai"
+	}%
+	\ifin@i#1#2\@nil% appel de la macro auxiliaire
+}
+
+\def\ifstart#1#2{%
+	\def\if@start##1#2##2\@nil{\ifempty{##1}}%
+	\ifempty{#2}\firstoftwo{\if@start#1\relax#2\@nil}}
+
+\def\substin#1#2#3{%
+	\def\substin@i##1{%
+		\ifempty{##1}% si le code est vide
+			\relax% ne rien faire -> fin du processus
+			{\ifin{##1}{#2}% sinon, si le code contient motif1
+				{\substin@ii##1\@nil}% appeler la macro à argument délimités
+				{##1}% sinon, afficher le code
+			}%
+	}%
+	\def\substin@ii##1#2##2\@nil{%
+		##1#3% afficher ##1 et #3 (qui est <motif2>)
+		\substin@i{##2}% et recommencer avec ce qui reste
+	}%
+	\substin@i{#1}%
+}
+
+\def\substtocs#1#2#3#4{%
+	\def\substtocs@i##1{%
+		\ifempty{##1}% si le code est vide
+			\relax% ne rien faire -> fin du processus
+			{\ifin{##1}{#3}% sinon, si le code contient motif1
+				{\substtocs@ii##1\@nil}% appeler la macro à argument délimités
+				{\addtomacro#1{##1}}% sinon, ajouter le code
+			}%
+	}%
+	\def\substtocs@ii##1#3##2\@nil{%
+		\addtomacro#1{##1#4}% ajouter ##1#4
+		\substtocs@i{##2}% et recommencer avec ce qui reste
+	}%
+	\let#1=\empty% initialise la macro à vide
+	\substtocs@i{#2}%
+}
+
+\long\def\cnttimestocs#1#2#3{% #3=macro recevant le résultat
+	\long\def\cnttimestocs@i##1\@nil##2#2##3\@nil{%
+		% ##1=nb d'occurrences rencontrées jusqu'alors
+		% ##2 et ##3=ce qui est avant/après le <motif>
+		\ifin{##3}{#2}% si le <motif> est dans ce qui reste
+			{\expandafter\cnttimestocs@i% appeler la macro récursive
+				\number\numexpr##1+1\relax\@nil% avec une occurrence de plus
+				##3\@nil% et ce qui reste
+			}%
+			{\edef#3{\number\numexpr##1+1\relax}}% sinon, stocker 1 occurrence de plus dans #3
+	}%
+	\ifin{#1}{#2}% si le <motif> est dans le <code>
+		{\cnttimestocs@i 0\@nil#1\@nil}% appeler la macro récursive avec 0 occurrence
+		{\def#3{0}}% sinon, mettre 0 dans #3
+}
+
+\def\ifcs#1{%
+	\begingroup
+		\escapechar=`\@ % prend "@" comme caractère d'échappement
+		\if% les premiers caractères de
+			\expandafter\firstto@nil\string#1a\@nil% "#1a"
+			\expandafter\firstto@nil\string\relax\@nil% et "\relax" sont-ils égaux ?
+			\endgroup\expandafter\firstoftwo% si oui, fermer le groupe et renvoyer "vrai"
+		\else% sinon, fermer le groupe et renvoyer "faux"
+			\endgroup\expandafter\secondoftwo
+		\fi
+}
+
+\def\endif{\endif}\def\elseif{\elseif}
+\def\idto@endif#1\endif{#1}
+\def\firstto@endif#1#2\endif{#1}
+\def\ifxcase#1#2{% #1=<token>   #2=prochain argument
+	\ifx\elseif#2% si #2 est \elseif
+	\expandafter\firstoftwo\else\expandafter\secondoftwo\fi
+		\idto@endif% aller à \idto@endif, sinon :
+		{\ifx\endif#2% si #2 est \endif
+		\expandafter\firstoftwo\else\expandafter\secondoftwo\fi
+			{}% ne rien faire, sinon :
+			{\ifx#1#2% s'il y a égalité
+			\expandafter\firstoftwo\else\expandafter\secondoftwo\fi
+				\firstto@endif% aller à \firstto@endif
+				{\ifxcase@i{#1}}% sinon aller à \ifxcase@i
+			}%
+		}%
+}
+\def\ifxcase@i#1#2{% #1=<nombre>  #2=<code>
+	\ifxcase{#1}% manger le <code> et aller à \ifxcase en transmettant #1
+}
+
+\newcount\cnt@nest \cnt@nest=0 % définit et initialise le compteur d'imbrication
+\def\end@foreach{\end@foreach}
+\long\def\save@macro#1#2{\expandafter\let\csname saved@var@\number\cnt@nest#1\endcsname#2}
+\long\def\save@macro@i#1/#2{\save@macro{a}#1\save@macro{b}#2}
+\long\def\restore@macro#1#2{%
+	\expandafter\let\expandafter#2\csname saved@var@\number\cnt@nest#1\endcsname
+}
+\long\def\restore@macro@i#1/#2{\restore@macro{a}#1\restore@macro{b}#2}
+\def\defseplist#1{%
+	\long\def\doforeach##1\in##2##3{%
+		\global\advance\cnt@nest1 % entrée de boucle : incrémenter le compteur d'imbrication
+		\ifin{##1}{/}% si ##1 contient "/"
+			{\save@macro@i##1% sauvegarde les macros
+			\doforeach@ii% appeler la macro récursive après avoir
+				{##3}%\csname loop@code@\number\cnt@nest\endcsname% formé la macro contenant le code
+				##1% mettre les variables ##1 en 2e position
+				##2#1\end@foreach/\end@foreach#1% puis la liste ##2 suivie de ",\end@foreach,"
+			\restore@macro@i##1% une fois sorti de toutes les boucles, restaurer les macros
+			}% si ##1 ne contient pas "/"
+			{\save@macro{}##1% sauvegarde la macro
+			\doforeach@i% appeler la macro récursive
+				{##3}% mettre en premier le <code>
+				##1% puis la variable ##1 en 2e position
+				##2#1\end@foreach#1% enfin la liste ##2 suivie de ",\end@foreach,"
+			\restore@macro{}##1% une fois sorti de toutes les boucles, restaurer la macro
+			}%
+		\global\advance\cnt@nest-1 % décrémente le compteur d'imbrications
+	}%
+	% ##1 = code à exécuter, ##2= variable, ##3=valeur courante
+	\long\def\doforeach@i##1##2##3#1{%
+		\def##2{##3}% fait l'assignation à la variable
+		\global\let\allow@recurse\identity% permet l'appel récursif plus bas
+		\ifx\end@foreach##2% si la fin est atteinte
+		\expandafter\gobone\else\expandafter\identity\fi% manger sinon exécuter:
+			{##1% le code puis
+			\allow@recurse{\doforeach@i{##1}##2}% recommencer
+			}%
+	}%
+	% ##1 = code à exécuter, ##2/##3= variables, ##4/##5=valeurs courantes
+	\long\def\doforeach@ii##1##2/##3##4/##5#1{%
+		\def##2{##4}\def##3{##5}% fait l'assignation des deux variables
+		\global\let\allow@recurse\identity% permet l'appel récursif plus bas
+		\ifx\end@foreach##2% si la fin est atteinte
+		\expandafter\gobone\else\expandafter\identity\fi% manger sinon exécuter:
+			{##1% le code puis
+			\allow@recurse{\doforeach@ii{##1}##2/##3}% recommencer
+			}%
+	}%
+	% macro qui, si elle remplace \allow@recurse, annule l'appel récursif
+	\long\def\forbid@recurse##1\end@foreach#1{}% tout manger jusqu'à "\end@foreach,"
+}
+% macro pour annuler le prochain appel récursif
+\def\doforeachexit{\global\let\allow@recurse\forbid@recurse}
+\defseplist{,}
+
+\begingroup% ouvrir un groupe
+	\edef\temp{\endgroup\def\noexpand\removept##1.##2\string p\string t}%
+\temp{#1\ifnum#2>0 .#2\fi}% et le fermer avant de définir \removept
+
+\def\dimtodec{\expandafter\removept\the}
+
+\def\FOR#1=#2to#3\do#4#{%
+	\ifempty{#4}
+		{\let\FOR@increment\z@}
+		{\edef\FOR@increment{\the\dimexpr#4pt\relax}}% lit et normalise l'argument optionnel
+	\ifdim\FOR@increment=\z@% s'il est nul,
+		\edef\FOR@increment{% le redéfinir à -1pt (si #3<#2) et 1pt sinon
+			\ifdim\dimexpr#3pt-#2pt\relax<\z@ -1\else 1\fi pt
+		}% \FOR@increment vaut donc 1 ou -1
+	\fi
+	\ifdim\dimtodec\dimexpr#3pt-#2pt\relax\dimexpr\FOR@increment\relax<\z@
+		\expandafter\gobone% si argument optionnel incompatible, manger le {<code>}
+	\else
+		\edef#1{\dimtodec\dimexpr#2pt\relax}% initialise la \<macro>
+		\edef\macro@args{% définit et développe les arguments à passer à \FOR@i
+			%#1=nom de la macro récursive :
+			\expandafter\noexpand\csname FOR@ii@\string#1\endcsname
+			\ifdim\FOR@increment<\z@ <\else >\fi% #2=signe de comparaison
+			{\FOR@increment}% #3=incrément
+			\noexpand#1% #4=\<macro>
+			{\the\dimexpr#3pt\relax}% #5=dimension n2
+		}%
+		\antefi% externalise la ligne ci-dessous de la portée du test
+		\expandafter\FOR@i\macro@args% appelle \FOR@i avec les arguments définis ci-dessus
+	\fi
+}
+
+% #1=nom de la macro récursive de type "\FOR@ii@\<macro>"
+% #2=signe de comparaison  % #3=incrément
+% #4=\<macro>  % #5=dimension n2  % #6=<code> à exécuter
+\long\def\FOR@i#1#2#3#4#5#6{%
+	\def#1{% dfinit la sous macro récursive
+		\unless\ifdim#4pt#2#5\relax% tant que la \<macro> variable n'a pas dépassé n2
+			\afterfi{% rendre la récursivité terminale
+				#6% exécute le code
+				\edef#4{\dimtodec\dimexpr#4pt+#3\relax}% incrémente la \<macro>
+				#1% recommence
+			}%
+		\fi
+	}%
+	#1% appelle la sous-macro récursive
+}%
+\def\exitFOR#1{% #1=\<macro> correspondant à la boucle de laquelle on veut sortir
+	\defname{FOR@ii@\string#1}{}%
+}
+
+\def\ifexitFOR#1{% envoie vrai si on est prématurément sorti de la boucle de \<macro> #1
+	% si la macro récursive est \empty
+	\expandafter\ifx\csname FOR@ii@\string#1\endcsname\empty
+		\expandafter\firstoftwo% c'est qu'on est sortir prématurément, renvoyer "vrai"
+	\else
+		\expandafter\secondoftwo% sinon, renvoyer "faux"
+	\fi
+}
+
+\def\decmul#1#2{\dimtodec\dimexpr#1\dimexpr#2pt\relax\relax}
+
+\def\decdiv#1#2{% divise le décimal #1 par le décimal #2
+	\dimtodec\dimexpr 1pt*\dimexpr#1pt\relax/\dimexpr#2pt\relax\relax
+}
+
+\def\convertunit#1#2{%
+	\dimtodec
+	\dimexpr
+		\numexpr
+			\dimexpr #1 \relax * 65536 / \dimexpr 1#2 \relax
+		\relax
+		sp
+	\relax
+}
+
+\def\vdim#1{\dimexpr\ht#1+\dp#1\relax}% hauteur totale de la boite #1
+
+\def\cbox#1{\setbox0\vbox{#1}\lower\dimexpr(\ht0-\dp0)/2\relax\box0 }
+
+\def\clap#1{\hbox to\z@{\hss#1\hss}}
+
+\def\ifzerodimbox#1{% #1=registre de boite
+% revoie vrai si le registre est vide ou contient une boite vide
+	\csname% former le nom "\firstoftwo" ou "secondoftwo"
+	\ifvoid#1first%% si le registre est vide "first"
+	\else% sinon
+		\ifnum\wd#1=\z@% si la largeur
+			\ifnum\ht#1=\z@% la hauteur
+				\ifnum\dp#1=\z@ first% et la profondeur=0pt, "first"
+				\else second% dans les autres cas "second"
+				\fi
+			\else second%
+			\fi
+		\else second%
+		\fi
+	\fi
+	oftwo% compléter avec "oftwo"
+	\endcsname
+}
+
+\def\ifvoidorempty#1{% teste si le registre de boite #1 est vide ou contient une boite vide
+	\ifvoid#1\relax
+		\expandafter\firstoftwo
+	\else
+		\begingroup% dans un groupe
+			\setbox0=% affecter à la boite 0
+				\ifhbox#1\hbox\bgroup\unhcopy% un boite horizontale
+				\else    \vbox\bgroup\unvcopy% ou verticale
+				\fi% dans laquelle on compose
+				#1\relax% composer #1 en dimensions naturelles
+				\expandafter\egroup% sauter la fin de la boite
+				\expandafter% et le \endgroup
+		\endgroup
+		\ifnum\lastnodetype<0 % pour tester si le dernier noeud est vide
+			\expandafter\expandafter\expandafter\firstoftwo
+		\else
+			\expandafter\expandafter\expandafter\secondoftwo
+		\fi
+	\fi
+}
+
+\def\showdim#1{%
+	\vrule width0.2pt height 1ex depth 0pt
+	\vrule width#1 height0.4pt depth 0pt
+	\vrule width0.2pt height 1ex depth 0pt \relax}
+	
+
+\newdimen\frboxrule \frboxrule0.4pt
+\newdimen\frboxsep \frboxsep5pt
+\def\FRbox#1{% ne pas changer le mode H ou V en cours
+	\hbox{% mettre à la suite horizontalement
+		\vrule width\frboxrule% 1) réglure gauche
+		\vbox{%                 2) un empilement vertical comprenant
+			\hrule height\frboxrule% a) réglure supérieure
+			\kern\frboxsep%          b) espace verticale haute
+			\hbox{%                  c) contenu + espaces en mode H
+				\kern\frboxsep#1\kern\frboxsep
+			}%
+			\kern\frboxsep%          d) espace verticale basse
+			\hrule height\frboxrule% e)réglure inférieure
+			}%
+		\vrule width\frboxrule% 3) réglure droite
+	}%
+}
+\def\frbox#1{% ne pas changer le mode H ou V en cours
+	\hbox{% enferme dans une \hbox
+		\vrule width\frboxrule% réglure gauche
+		\vtop{%
+			\vbox{% 1er élément de la \vtop
+				\hrule height\frboxrule% réglure supérieure
+				\kern\frboxsep% espace haut
+				\hbox{%
+					\kern\frboxsep% espace gauche
+					#1% contenu
+					\kern\frboxsep% espace droite
+					}%
+			}% puis autres éléments de la \vtop, sous la ligne de base
+			\kern\frboxsep% espace bas
+			\hrule height\frboxrule% réglure inférieure
+		}%
+		\vrule width\frboxrule% réglure droite
+	}%
+}
+\def\souligne#1{%
+	\setbox0=\hbox{#1}% stocke le contenu dans le registre no 0
+	\setbox0=\hbox{% puis, dans une \hbox, construit une réglure
+		\vrule width\wd0 % de la longueur du contenu
+			depth\dimexpr\dp0 + 1.4pt\relax % dp = profondeur texte + 1.4pt
+			height\dimexpr-\dp0 - 1pt\relax % ht = -profondeux texte - 1pt
+	}%
+	\wd0=0pt \dp0=0pt \ht0=0pt % annule toutes les dimensions
+	\leavevmode \box0 % affiche la réglure
+	#1% puis le contenu
+}
+
+\def\Souligne#1{%
+	\setbox0=\hbox{#1}%
+	\setbox0=\hbox{\vrule width\wd0 depth1.4pt height-1pt }%
+	\wd0=0pt \dp0=0pt \ht0=0pt
+	\leavevmode \box0 #1%
+}
+
+\newdimen\stackwd \stackwd=3em 
+\catcode`\@11
+\def\stackbox#1{%
+	\par% termine le paragraphe en cours
+	\begingroup% dans un groupe semi-simple
+		\parindent=0pt% pas d'indentation
+		\parskip=0pt% annuler le \parskip
+		\setbox0\hbox{Àgjp}% boite pour le strut
+		\edef\stack@strut{\vrule width\z@ height\the\ht0 depth\the\dp0 }% définit le strut
+		\stackbox@i#1\\\quark\\% ajoute "\\\quark\\" à la fin et appelle \stackbox@i
+		\unkern% annule la dernière compensation verticale
+		\par
+	\endgroup
+}
+\def\stackbox@i#1\\{% #1=ligne courante
+	\def\temp@{#1}% stocke la ligne courante
+	\unless\ifx\quark\temp@% si ce n'est pas la fin
+		\hfill % ressort infini de centrage (passe en mode horizontal)
+		\doforeach\current@item\in{#1}% pour chaque élément dans la ligne courante...
+			{\frbox{% ...encadrer
+				\hbox to\stackwd{% une \hbox de largeur \stackwd contenant
+					\hss%         1) ressort de centrage
+					\stack@strut% 2) strut de dimension verticale
+					\current@item%3) l'élement courant
+					\hss}%        4)ressort de centrage
+				}% fin de la \fbox
+			\kern-\frboxrule% revenir en arrière pour superposer les réglures verticales
+			}% fin de \doforeach
+		\unkern% annuler la dernière compensation horizontale
+		\hfill% ressort infini de centrage
+		\null% fait prendre en compte le dernier ressort
+		\par% termine le paragraphe
+		\nobreak% interdit une coupure de page
+		\nointerlineskip% sinon, ne pas ajouter le ressort interligne
+		\kern-\frboxrule% superposer les réglures horizontales
+		\expandafter\stackbox@i% et recommencer
+	\fi
+}
+
+\def\vlap#1{\vbox to\z@{\vss#1\vss}}
+\newdimen\xunit \newdimen\yunit
+\newdimen\mainrule \newdimen\subrule
+\xunit=1cm \yunit=1cm \mainrule=0.8pt \subrule=0.2pt
+\def\grid#1#2#3#4{% #1=nb xunit #2=nb xsubunit #3=nb yunit #4=nb ysubunit
+	\vbox{%
+		\offinterlineskip
+		\edef\total@wd{\the\dimexpr\xunit*#1\relax}%
+		\edef\sub@unit{\the\dimexpr\yunit/#4\relax}%
+		\for\iii=1to#3\do
+			{\ifnum#4>1
+				\vbox to\z@{%
+					\for\jjj=2to#4\do
+						{\kern\sub@unit
+						\vlap{\hrule width\total@wd height\subrule}%
+						}%
+					\vss
+				}%
+			\fi
+			\vlap{\hrule width\total@wd height\mainrule}%
+			\kern\yunit
+			}%
+		\vlap{\hrule width\total@wd height\mainrule}%
+		\vbox to\z@{%
+			\vss
+			\hbox to\total@wd{%
+				\edef\total@ht{\the\dimexpr\yunit*#3\relax}%
+				\edef\sub@unit{\the\dimexpr\xunit/#2\relax}%
+				\for\iii=1to#1\do
+					{\ifnum#2>1
+						\rlap{%
+							\for\jjj=2to#2\do
+								{\kern\sub@unit
+								\clap{\vrule width\subrule height\total@ht}%
+								}%
+						}%
+					\fi
+					\clap{\vrule width\dimexpr\mainrule height\total@ht}%
+					\kern\xunit
+					}%
+				\clap{\vrule width\mainrule height\total@ht}%
+			}%
+		}%
+	}%
+}
+
+\def\iffileexists#1#2{% #1=canal de lecture  #2=nom du fichier
+	\openin#1=#2 %
+	\ifeof#1% le fichier n'existe pas
+		\closein#1%
+		\expandafter\secondoftwo% renvoyer faux
+	\else
+		\closein#1
+		\expandafter\firstoftwo% sinon renvoyer vrai
+	\fi
+}
+
+\def\xread{% doit être suivie de "<nombre> to \<macro>"
+	\edef\restoreendlinechar{\endlinechar=\the\endlinechar}%
+	\endlinechar=-1 % neutralise \endlinechar
+	\afterassignment\restoreendlinechar% après l'assignation restaurer \endlinechar
+	\read% attend <nombre> to \<macro>
+}
+
+\def\showfilecontent#1#2{% #1=canal de lecture #2=nom de fichier
+	\begingroup
+		\tt% sélectionner la fonte à chasse fixe
+		\openin#1=#2\relax
+		\ifeof#1% si la fin du fichier est déjà atteinte, il n'existe pas et
+			Le fichier n'existe pas% afficher le message
+		\else% le fichier existe
+			\def\do##1{\catcode`##1=12 }%
+			\dospecials% neutraliser tous les tokens spéciaux
+			\obeyspaces% rendre l'espace actif
+			\def\magicpar{\let\magicpar=\par}%
+			\loop
+				\xread#1 to \currline% lire une ligne
+				\unless\ifeof#1% si la fin du fichier n'est pas atteinte
+				\leavevmode\magicpar% former le paragraphe (sauf à la 1er itération)
+				\currline% afficher la ligne
+			\repeat% recommencer
+		\fi
+		\closein#1\relax%
+	\endgroup
+}
+
+\def\exactwrite#1#2{% #1=numéro de canal #2=caractère délimiteur
+	\begingroup
+		\def\canal@write{#1}% sauvegarde le numéro de canal
+		\for\xx=0 to 255\do{\catcode\xx=12 }% donne à tous les octets le catcode 12
+		\expandafter\exactwrite@i\expandafter{\string#2}% rend #2 de catcode 12
+}
+
+\def\exactwrite@i#1{% #1=caractère frontière (de catcode 12)
+		% la macro \exactwrite@ii lit tout jusqu'au caractère #2 et passe
+		% ce qu'elle a lu à la macro \exactwrite@iii en mettant un \@nil à la fin
+		\def\exactwrite@ii##1#1{\exactwrite@iii##1\@nil}%
+		\exactwrite@ii% va lire tout ce qui se trouve jusqu'au prochain #2
+}
+
+{\catcode`\^^M 12 \gdef\EOL@char{^^M}}% définit le caractère <EOL> de catcode 12
+
+\def\exactwrite@iii#1\@nil{% #1 = contenu à écrire
+	\expsecond{\ifin{#1}}\EOL@char% si #1 contient "retour chariot"
+		{\write@line#1\@nil}% écrire la première ligne de #1
+		{\immediate\write\canal@write{#1}% sinon : dernière ligne atteinte, l'écrire
+		\endgroup% puis sortir du groupe
+		}%
+}
+
+% les \expandafter provoquent le 1-développement de \EOL@char :
+\expandafter\def\expandafter\write@line\expandafter#\expandafter1\EOL@char#2\@nil{%
+	\immediate\write\canal@write{#1}% écrit la ligne (ce qui se trouve avant ^^M)
+	\exactwrite@iii#2\@nil% continue avec ce qui se trouve après ^^M
+}
+
+\def\quark@list{\quark@list}% quark de fin de liste
+
+\def\finditemtocs#1#2#3{% #1 = \<macro>  #2=position  #3=macro à définir
+	\def\finditemtocs@iii##1##2\quark@list,{% renvoyer #1 et manger le reste de la liste
+		\expandafter\def\expandafter#3\expandafter{\gobone##1}%
+	}%
+	\let#3=\empty%
+	\exparg\finditemtocs@i{#1}{#2}% 1-développe la \<macro>
+}
+\def\finditemtocs@i#1#2{% #1 = liste   #2=position cherchée
+	\ifnum#2>\z@% ne faire quelque chose que si la position est >0
+		\antefi\finditemtocs@ii{1}{#2}\relax#1,\quark@list,% appelle la macro récursive
+	\fi
+}
+\def\finditemtocs@ii#1#2#3,{%
+% #1=position courante  #2=position cherché  #3=\relax + élément courant
+	\expandafter\ifx\expandafter\quark@list\gobone#3%
+	\expandafter\firstoftwo\else\expandafter\secondoftwo\fi
+		{}% si fin de liste ne rien faire. Sinon, si position bonne
+		{\ifnum#1=#2 \expandafter\firstoftwo\else\expandafter\secondoftwo\fi
+			{\finditemtocs@iii{#3}% renvoyer #3 et manger les éléments restants
+			}% si la position n'est pas la bonne, recommencer en incrémentant #1
+			{\exparg\finditemtocs@ii{\number\numexpr#1+1}{#2}\relax%
+			}%
+		}%
+}
+
+\def\insitem#1#2#3{% #1 = macro   #2=position cherchée   #3=élément à insérer
+	\let\item@list=\empty
+	\ifnum#2<1 \expandafter\firstoftwo\else\expandafter\secondoftwo\fi
+		% si position < 1
+		{\addtomacro\item@list{#3,}% ajouter l'élement à insérer en premier
+		\eaddtomacro\item@list#1% puis la liste entière
+		}
+		% si la position  > 1
+		{% définir la macro récursive
+		\def\insitem@i##1##2,{% ##1 = position courante  ##2=\relax + élément courant
+			\expandafter\ifx\expandafter\quark@list\gobone##2%
+			\expandafter\firstoftwo\else\expandafter\secondoftwo\fi
+				{\addtomacro\item@list{#3}}% si fin de liste, ajouter l'élément en dernier
+				{% sinon, si la position cherchée est atteinte
+				\ifnum##1=#2 \expandafter\firstoftwo\else\expandafter\secondoftwo\fi
+					{\addtomacro\item@list{#3,}% ajouter l'élement
+					\add@remainlist##2,% et ##2 (en supprimant le \relax) et le reste
+					}% si la position n'est pas atteinte
+					{\eaddtomacro\item@list{\gobone##2,}% ajouter l'élément
+					\exparg\insitem@i{\number\numexpr##1+1}\relax% et recommencer
+					}%
+				}%
+			}%
+		% appel de la macro récursive
+		\expandafter\insitem@i\expandafter1\expandafter\relax#1,\quark@list,%
+		}%
+	\let#1=\item@list% rendre #1 égal au résultat
+}
+
+\def\add@remainlist#1,\quark@list,{%
+	\eaddtomacro\item@list{\gobone#1}% ajouter #1 ainsi que les autres
+}
+\def\delitem#1#2{% #1 = macro   #2=position cherchée
+	\ifnum#2>0 % ne faire quelque chose que si la position est >0
+		\def\delitem@i##1##2,{% ##1 = position courante  ##2=\relax + élément courant
+			\expandafter\ifx\expandafter\quark@list\gobone##2%
+			\expandafter\firstoftwo\else\expandafter\secondoftwo\fi
+				{}% si fin de liste, ne rien faire
+				{% sinon, si la position cherchée est atteinte
+				\ifnum##1=#2 \expandafter\firstoftwo\else\expandafter\secondoftwo\fi
+					{\add@reaminingitems% et ##2 (en supprimant le \relax) et le reste
+					}% si la position n'est pas la bonne
+					{\eaddtomacro\item@list{\gobone##2,}% ajouter l'élément
+					\exparg\delitem@i{\number\numexpr##1+1}\relax% et recommencer
+					}%
+				}%
+			}%
+		\let\item@list=\empty% initialiser la macro tempporaire
+		% appel de la macro récursive
+		\expandafter\delitem@i\expandafter1\expandafter\relax#1,\quark@list,%
+		\expandafter\remove@lastcomma\item@list\@nil
+		\let#1=\item@list% rendre #1 égal au résultat
+	\fi
+}
+
+\def\add@reaminingitems#1\quark@list,{%
+	\eaddtomacro\item@list{#1}% ajouter tout jusqu'au quark
+}
+\def\remove@lastcomma#1,\@nil{\def\item@list{#1}}
+
+\def\runlist#1\with#2{% #1=liste #2=macro
+	\def\runlist@i##1,##2\@nil{%
+		\addtomacro\collect@run{#2{##1}}% ajouter "\<macro>{<élément>}""
+		\ifempty{##2}% plus d'élément ?
+			\relax% ne rien faire (donc terminer le processus)
+			{\runlist@i##2\@nil}% sinon, recommencer avec les éléments restants
+	}%
+	\begingroup% fait la collecte dans un groupe
+		\let\collect@run=\empty% initialiser la macro
+		\ifcs{#1}% si #1 est une séquence de contrôle
+			{\expandafter\runlist@i#1,\@nil%% aller à \runlist@i
+			}% sinon, former la sc
+			{\expandafter\expandafter\expandafter\runlist@i\csname#1\endcsname,\@nil
+			}%
+	\expandafter\endgroup% ferme le groupe et détruit \collect@run
+	\collect@run% après l'avoir développé !
+}
+
+\def\ifspacefirst#1{%
+	\expandafter\ifspacefirst@i\detokenize{#1W} \@nil% "W" se prémunit d'un argument vide
+}
+\def\ifspacefirst@i#1 #2\@nil{\ifempty{#1}}
+
+\expandafter\def\expandafter\gobspace\space{}
+
+\def\removefirstspaces{%
+	\romannumeral% lance le développement maximal
+	\removefirstspaces@i% et passe la main à la macro récursive
+}
+
+\def\removefirstspaces@i#1{%
+	\ifspacefirst{#1}% si #1 commence par un espace
+		{\expandafter\removefirstspaces@i\expandafter% recommencer
+			{\gobspace#1}% après avoir supprimé cet espace
+		}
+		{\z@#1}% sinon, renvoyer l'argument où \z@ stoppe l'action de \romannumeral
+}
+
+\edef\catcodezero@saved{\number\catcode0 }% stocke le catcode de ^^00
+\catcode0=12 % le modifie à 12
+\def\removelastspaces#1{%
+	\romannumeral% lance le développement maximal
+	\removelastspaces@i#1^^00 ^^00\@nil% et passe la main à \removelastspaces@i
+}
+\def\removelastspaces@i#1 ^^00{%
+	\removelastspaces@ii#1^^00%
+}
+\def\removelastspaces@ii#1^^00#2\@nil{%
+	\ifspacefirst{#2}% si le reliquat commence par un espace
+		{\removelastspaces@i#1^^00 ^^00\@nil}% recommencer sans passer par \removelastspaces
+		{\z@#1}% sinon "\z@" stoppe l'action de \romannumeral
+}
+\catcode0=\catcodezero@saved\relax% restaure le catcode de ^^00
+
+\def\removetrailspaces#1{%
+	\romannumeral% lance le développement maximal
+		\expandafter\expandafter\expandafter% le pont d'\expandafter
+	\removelastspaces
+		\expandafter\expandafter\expandafter% fait agir \removefirstspaces en premier
+	{%
+		\expandafter\expandafter\expandafter
+	\z@% stoppe le développement initié par \romannumeral
+	\removefirstspaces{#1}%
+	}%
+}
+
+\newcount\test@cnt
+\def\ifinteger#1{%
+	\ifstart{#1}{-}% si "-" est au début de #1
+		{\expandafter\ifinteger\expandafter{\gobone#1}% l'enlever et recommencer
+		}
+		{\ifempty{#1}% sinon, si #1 est vide, lire l'argument <faux>
+			\secondoftwo% lire l'argument <faux>
+			{\afterassignment\after@number% sinon, après l'assignation, aller à \after@number
+			\test@cnt=0#1\relax% faire l'assignation (\relax termine le nombre et n'est pas mangé)
+			}%
+		}%
+}
+\def\after@number#1\relax{% #1 est ce qui reste après l'assignation
+	\ifempty{#1}% teste si #1 est vide et lit l'argument <vrai> ou <faux> qui suit
+}
+
+\newif\iftestspace \testspacefalse
+
+\def\deftok#1#2{\let#1= #2\empty}
+
+\def\ifnexttok#1#2#3{% #1=token #2=code vrai #3=code faux
+	\let\test@tok= #1% stocke le token à tester
+	\def\true@code{#2}\def\false@code{#3}% et les codes à exécuter
+	\iftestspace \def\ifnexttok@i{\futurelet\nxttok\ifnexttok@ii}%
+	\else        \def\ifnexttok@i{\futurelet\nxttok\ifnexttok@iii}%
+	\fi% après avoir défini la macro récursive selon le booléen
+	\ifnexttok@i% l'exécuter
+}
+
+\def\ifnexttok@ii{% macro qui teste aussi les espaces
+	\ifx\nxttok\test@tok \expandafter\true@code% exécuter le code vrai
+	\else                \expandafter\false@code% sinon code faux
+	\fi
+}
+
+\def\ifnexttok@iii{%
+	\ifx\nxttok\sptoken% si le prochain token est un espace
+		\def\donext{%
+			\afterassignment\ifnexttok@i% aller "sentir" le token d'après
+			\let\nxttok= }% après avoir absorbé l'espace
+	\else   \let\donext\ifnexttok@ii% sinon, faire le test
+	\fi
+	\donext% faire l'action décidée ci-dessus
+}
+
+\def\ifstarred#1{\ifnexttok*{\firstoftwo{#1}}}
+
+\def\parsestop{\parsestop}% définit le quark se trouvant en fin de code
+\newtoks\code@toks% alloue le registre contenant le code lu
+\def\parseadd#1{\code@toks\expandafter{\the\code@toks#1}}
+\newif\ifparse@group
+\def\parse{%
+	\code@toks{}% initialise le collecteur de tokens
+	\ifstarred
+		{\parse@grouptrue
+		\ifnexttok{ }% si un espace suit l'étoile
+			{\afterassignment\parse@i \let\nxttok= }% le manger et aller à \parse@i
+			{\parse@i}% sinon, aller à \parse@i
+		}
+		{\parse@groupfalse
+		\parse@i
+		}%
+}
+\def\parse@i{\futurelet\nxttok\parse@ii}% lit le prochain token et va à \parse@ii
+\def\parse@ii{%
+	\ifx\nxttok\parsestop% si la fin va être atteinte, aller à \parsestop@i
+		\let\next@action\parsestop@i
+	\else
+		\ifx\nxttok\@sptoken% si un espace va être lu, aller à \read@space
+			\let\next@action\read@space
+		\else
+			\ifx\nxttok\bgroup% si une accolade ouvrante va être lue
+				\let\next@action\read@bracearg% aller à \read@bracearg
+			\else
+				\let\next@action\testtoken% dans les autres cas, aller à \testtoken
+			\fi
+		\fi
+	\fi
+	\next@action% faire l'action décidée ci-dessus
+}
+\def\parsestop@i{% la fin est atteinte
+	\expandafter\the\expandafter\code@toks% afficher le registre de tokens
+	\gobone% après avoir mangé \parsestop
+}
+\expandafter\def\expandafter\read@space\space{% \read@space mange un espace dans le code
+	\testtoken{ }% et va à \testtoken
+}
+\def\read@bracearg{%
+	\read@bracearg@i\relax% ajoute un \relax avant de passer la main à \read@bracearg@i
+}
+\def\read@bracearg@i#1\parsestop{% l'argument tout jusqu'à \parsestop
+	\expsecond\ifbracefirst{\gobone#1}% retire le \relax et teste si #1 commence par "{"
+		{\expandafter\read@bracearg@ii\gobone#1\parsestop}% lire l'argument entre accolades
+		{\expandafter\testtoken\gobone#1\parsestop}% sinon, tester le token
+}
+\def\read@bracearg@ii#1{% l'argument entre accolades est lu
+	\ifparse@group\expandafter\firstoftwo\else\expandafter\secondoftwo\fi
+		{\begingroup% ouvre un groupe pour parser l'intérieur de l'accolade
+			\def\parsestop@i{% redéfinir localement \parsestop@i pour
+					\expandafter% retarde \endgroup
+				\endgroup%   pour ajouter le contenu local de \code@toks entre accolades
+					\expandafter% au contenu de ce même registre avant le groupe
+				\parseadd
+					\expandafter
+				{\expandafter{\the\code@toks}}%
+				\expandafter\parse@i% puis va lire le token suivant
+				\gobone% après avoir mangé le \parsestop
+			}%
+			\parse*#1\parsestop% <- le \parsestop@i fermera le groupe semi simple
+		}
+		{\parseadd{{#1}}% macro non étoilée, on ajoute #1 tel quel entre accolades
+		\parse@i% puis va lire le token suivant
+		}%
+}
+\def\testtoken#1{% macro qui teste le token
+	\parseadd{#1}% ici, ne rien faire à part ajouter le token
+	\parse@i% aller lire le token suivant
+}
+\def\ifbracefirst#1{% teste si #1 commence par un token de catcode 1
+	\ifspacefirst{#1}% si #1 commence par un espace
+		{\secondoftwo}% renvoyer faux
+		{\ifnum
+			\catcode
+				\expandafter\expandafter\expandafter
+			`%
+				\expandafter
+			\firstto@nil\detokenize{#1W}\@nil=1
+			\expandafter\firstoftwo
+		\else
+			\expandafter\secondoftwo
+		\fi
+		}%
+}
+
+\def\grab@first#1#2{%
+	\ifx#1\empty\expandafter\firstoftwo\else\expandafter\secondoftwo\fi
+		{\let#2\empty% si #1 est vide, ne rien faire et assigner <vide> à #2
+		}% si #1 n'est pas vide
+		{\def\arg@b{#2}% stocke la macro #2 dans \arg@b
+		\exparg\ifbracefirst#1% si le 1er token de #1 est "{"
+			{\expandafter\grab@arg#1\@nil#1% aller lire l'argument avec \grab@arg
+			}
+			{% sinon, développer #1 avant de le regarder avec \futurelet :
+			\expandafter\futurelet\expandafter\nxttok\expandafter\test@nxttok#1\@nil#1%
+			% puis aller à \test@nxttok
+			}%
+		}%
+}
+\def\test@nxttok{% si le premier token de l'arg #1 de \grab@first est
+	\ifx\nxttok\sptoken% un espace
+		\expandafter\grab@spc% aller le lire avec \grab@spc
+	\else
+		\expandafter\grab@tok% sinon, lire le token avec \grab@tok
+	\fi
+}
+\def\grab@arg#1{% assigne l'argument de \grab@first (mis entre accolades)
+	\expandafter\def\arg@b{{#1}}% à #2
+	\assign@tonil\relax% puis, assigne le reste à #1 de \grab@first
+}
+\expandafter\def\expandafter\grab@spc\space{%
+	\expandafter\def\arg@b{ }% assigne un espace à #2 de \grab@first
+	\assign@tonil\relax% puis, assigne le reste à #1 de \grab@first
+}
+\def\grab@tok#1{%% assigne le premier token de l'arg #1 de \grab@first
+	\expandafter\def\arg@b{#1}% à la macro #2 de \grab@first
+	\assign@tonil\relax% puis, assigne le reste à #1 de \grab@first
+}
+% assigne tout ce qui reste à lire (moins le "\relax") à la macro
+% #1 de \grab@first
+\def\assign@tonil#1\@nil#2{\expsecond{\def#2}{\gobone#1}}
+
+\def\ifstartwith#1#2{%
+	\def\startwith@code{#1}\def\startwith@pattern{#2}%
+	\ifempty{#2}
+		\firstoftwo% renvoyer vrai si #2 est vide
+		{\ifempty{#1}
+			\secondoftwo% renvoyer faux si #1 est vide et pas #2
+			\ifstartwith@i% dans les autres cas, aller à \ifstartwith@i
+		}%
+}
+
+\def\ifstartwith@i{%
+	\grab@first\startwith@code\first@code% extrait le premier "argument" de <code>
+	\grab@first\startwith@pattern\first@pattern% et celui de <motif>
+	\ifx\first@code\first@pattern% s'il sont égaux
+		\expandafter\ifempty\expandafter{\startwith@pattern}
+			{\expandafter\firstoftwo}% et que <motif> ne contient plus rien => vrai
+			{\expandafter\ifempty\expandafter{\startwith@code}
+				{\expandafter\secondoftwo}% si <code> ne contient plus rien => faux
+				{\expandafter\ifstartwith@i}% sinon poursuivre les tests
+			}%
+	\else% s'ils ne sont pas égaux
+		\expandafter\secondoftwo% renvoyer faux
+	\fi
+}
+
+\newif\ifin@group
+\def\ifcontain{%
+	\ifstarred
+		{\in@groupfalse\ifcontain@i\ifcontain@star}%
+		{\ifcontain@i\ifcontain@nostar}%
+}
+
+\def\ifcontain@i#1#2#3{% #1 = macro à appeler selon étoile ou pas. #2 = code. #3 = motif
+	\def\main@arg{#2}\def\pattern@arg{#3}%
+	\ifempty{#3}%
+		\firstoftwo
+		{\ifempty{#2}
+			\secondoftwo
+			#1% aller à \ifcontain@star ou \ifcontain@nostar
+		}%
+}
+
+\def\ifcontain@nostar{%
+	\exptwoargs\ifstartwith\main@arg\pattern@arg
+		\firstoftwo% si motif est au début de code => vrai
+		{\expandafter\ifempty\expandafter{\main@arg}
+			\secondoftwo% sinon, si code est vide => faux
+			{\grab@first\main@arg\aux@arg% autrement, manger le 1er "argument" de code
+			\ifcontain@nostar% et recommencer
+			}%
+		}%
+}
+
+\def\ifcontain@star{%
+	\expandafter\ifbracefirst\expandafter{\main@arg}% si code commence par "{"
+		{\grab@first\main@arg\aux@arg% enlever {<sous code>} de main@arg
+		\begingroup% ouvrir un groupe
+			\in@grouptrue% mettre le booléen à vrai
+			\expandafter\assign@main@arg\aux@arg\@nil% assigner "sous code" à \main@arg
+			\ifcontain@star% et recommencer avec ce nouveau \main@arg
+		}% si code ne commence pas par "{"
+		{\exptwoargs\ifstartwith\main@arg\pattern@arg% si motif est au début de code
+			\return@true% renvoyer vrai
+			{\expandafter\ifempty\expandafter{\main@arg}% si code est vide
+				{\ifin@group% et que l'on est dans un groupe
+					\endgroup \expandafter\ifcontain@star% en sortir et recommencer
+				\else% si on n'est pas dans un groupe, le code a été parcouru
+					\expandafter\secondoftwo% sans trouver <motif> => renvoyer faux
+				\fi
+				}% si code n'est pas vide
+				{\grab@first\main@arg\arg@code% manger le 1er "argument" de code
+				\ifcontain@star% et recommencer
+				}%
+			}%
+		}%
+}
+
+\def\return@true{%
+	\ifin@group% tant qu'on est dans un groupe
+		\endgroup \expandafter\return@true% en sortir et recommencer
+	\else
+		\expandafter\firstoftwo% sinon, renvoyer vrai
+	\fi
+}
+
+\def\forcemath#1{% compose #1 en mode math, quel que soit le mode en cours
+	\ifmmode\expandafter\firstoftwo\else\expandafter\secondoftwo\fi
+		{#1}{$#1$}%
+}
+
+\newcount\macro@cnt% numéro à mettre dans le nom des sous macros
+\newcount\arg@cnt% compte le nombre d'arguments
+\newtoks\param@text% texte de paramètre des macros sous forme #x et/ou [#x]
+\newtoks\arg@text% arguments sous forme {#x} et/ou [#x]
+
+\def\newmacro#1{%
+	% stocke le nom de la macro et éventuellement "@[<chiffre romain>]"
+	\def\macro@name##1{\expandafter\gobone\string#1\ifnum##1>0 @[\romannumeral##1]\fi}%
+	\macro@cnt=0 \arg@cnt=0 % initialise les compteurs
+	\param@text{}\arg@text{}% vide les registres de texte de paramètre et d'argument
+	\newmacro@i% va voir le prochain token
+}
+
+\def\newmacro@i{\futurelet\nxttok\newmacro@ii}% met le prochain token dans \nxttok...
+% ...puis va à la macro :
+\def\newmacro@ii{%
+	\ifx\nxttok[% si le prochain token est un crochet
+		\let\donext\newmacro@optarg% aller à \newmacro@optarg
+	\else
+		\ifx\nxttok\bgroup% si c'est un accolade ouvrante
+			% le texte de paramètre est fini et il faut définir la macro
+			\def\donext{%
+				\expandafter\def
+					\csname\macro@name\macro@cnt\expandafter\endcsname
+				\the\param@text}% <- code juste après non encore lu
+		\else% sinon, c'est donc un chiffre
+			\let\donext\newmacro@arg% aller à \newmacro@arg
+		\fi
+	\fi
+	\donext% faire l'action décidée ci-dessus
+}
+
+\def\newmacro@optarg[#1]{% lit la valeur par défaut de l'argument optionnel
+	% définit la macro \<nom>@<nbre> qui lit tous les arguments (optionnels ou pas) jusqu'alors définis
+	% à l'aide de \param@text. Puis, elle testera si le prochain token est un crochet
+	\expandafter\edef\csname\macro@name\macro@cnt\expandafter\endcsname\the\param@text{%
+		\noexpand\ifnexttok[%
+			% si oui : la macro \<nom>@<nbr+1> le lira
+			{\expandafter\noexpand\csname\macro@name{\numexpr\macro@cnt+1}\expandafter\endcsname
+			\the\arg@text}%
+			% si non : transmettre à \<nom>@<nbr+1> l'argument optionnel par défaut lu
+			{\expandafter\noexpand\csname\macro@name{\numexpr\macro@cnt+1}\expandafter\endcsname
+			\the\arg@text[\unexpanded{#1}]}%
+	}%
+	\advance\arg@cnt 1 % incrémenter le numéro d'argument
+	% pour ajouter "[#<x>]" à \param@text et à \arg@text
+	\eaddtotoks\param@text{\expandafter[\expandafter##\number\arg@cnt]}%
+	\eaddtotoks\arg@text{\expandafter[\expandafter##\number\arg@cnt]}%
+	\advance\macro@cnt 1 % incrémenter le numéro de nom de macro
+	\newmacro@i% va voir le token suivant
+}
+
+\def\newmacro@arg#1{% #1=nb arguments obligatoires à ajouter
+	% boucle qui ajoute "#<x>#<x+1>etc" dans \param@text
+	% et "{#<x>}{#<x+1>}etc" dans \arg@text
+	\ifnum#1>0 % tant qu'on n'a pas ajouté le nombre de #x nécessaire
+		\advance\arg@cnt 1 % incrémenter le numéro d'argument
+		% pour ajouter #x à \param@text et {#x} à \arg@text
+		\eaddtotoks\param@text{\expandafter##\number\arg@cnt}%
+		\eaddtotoks\arg@text{\expandafter{\expandafter##\number\arg@cnt}}%
+		\expandafter\newmacro@arg\expandafter{\number\numexpr#1-1\expandafter}% reboucler
+	\else% après avoir rajouté e qu'il fallait à \param@text et à \arg@text
+		\expandafter\newmacro@i% lire le token suivant
+	\fi
+}
+
+% encadrement avec les réglures où l'on veut
+\newmacro\framebox[ULRD]1{% #1 = ULRD (Up, Down, Right, Left)
+% ne pas changer le mode H ou V en cours
+	\hbox{% enferme dans une \hbox
+		\uppercase{\ifin{#1}L}{\vrule width\frboxrule}{}% réglure gauche
+		\vtop{%
+			\vbox{% 1er élément de la \vtop
+				\uppercase{\ifin{#1}U}{% si la réglure sup doit être tracée
+					\hrule height\frboxrule% réglure supérieure
+					\kern\frboxsep% espace haut
+					}
+					{}%
+				\hbox{%
+					\uppercase{\ifin{#1}L}{\kern\frboxsep}{}% espace gauche
+					#2% contenu
+					\uppercase{\ifin{#1}R}{\kern\frboxsep}{}% espace droite
+					}%
+			}% puis autres éléments de la \vtop, sous la ligne de base
+			\uppercase{\ifin{#1}D}{%
+				\kern\frboxsep% espace bas
+				\hrule height\frboxrule% réglure inférieure
+				}%
+				{}%
+		}%
+		\uppercase{\ifin{#1}R}{\vrule width\frboxrule}{}% réglure droite
+	}%
+}
+
+\def\retokenize#1{%
+	\immediate\openout\wtest=retokenize.tex % ouvre le fichier
+	\immediate\write\wtest{\unexpanded{#1}}%  y écrit l'argument
+	\immediate\closeout\wtest% ferme le fichier
+	\input retokenize.tex % lit le fichier selon les catcodes en vigueur
+	\unskip% mange l'espace précédemment ajouté qui provient de la fin du fichier
+}
+
+\newtoks\alter@toks% collecteur de tokens
+
+\def\alter#1#2{% #1= délimiteur  #2 = macro altérée
+	\let\alter@macro#2% sauvegarde la macro
+	\edef\alter@restorecatcode{% restaurera le catcode de #1
+		\catcode`\noexpand#1=\the\catcode`#1 }%
+	\edef\alter@tmp{\let\noexpand\alter@markertoks= \string#1}%
+	\alter@tmp% et sauvegarder le délimiteur après avoir mis son catcode à 12
+	\edef\alter@tmp{\def\noexpand\alter@readlitterate@i\string#1####1\string#1}%
+	% développe les \string#1 pour que les arguments délimités aient
+	% des délimiteurs de catcode 12
+	\alter@tmp{% <- comme si on écrivait "\def\alter@readlitterate@i#1##1#1"
+		\endgroup% après avoir lu ##1 (tokens rendus inoffensifs), fermer le groupe
+		\addtotoks\alter@toks{{\tt##1}}% ajouter ces tokens
+		\alter@i% et aller lire le prochain token
+	}%
+	\alter@toks{}% initialise le collecteur de tokens
+	\afterassignment\alter@i% aller lire le premier token après avoir
+	\let\alter@tmptok= % mangé l'accolade ouvrante de l'argument qui suit
+}
+
+\def\alter@i{% lit le prochain token et va à \alter@ii
+	\futurelet\alter@nxttok\alter@ii}
+
+\def\alter@ii{%
+	% teste le token qui doit être lu (car \futurelet ne l'a pas mangé)
+	\ifx\alter@nxttok\egroup% si la fin va être atteinte
+		\let\alter@next\alter@stop% aller à \alterstop@i
+	\else
+		\ifx\alter@nxttok\@sptoken% si un espace va être lu
+			\let\alter@next\alter@readspc% aller à \alter@readspc
+		\else
+			\ifx\alter@nxttok\bgroup% si une accolade ouvrante av être lue
+				\let\alter@next\alter@readarg% aller à \alter@readarg
+			\else
+				\ifx\alter@nxttok\alter@markertoks% si le délimiteur va être lu
+					\let\alter@next\alter@readlitterate% aller à \alter@readlitterate
+				\else
+					\let\alter@next\alter@readtok% dans les autres cas, aller à \alter@readtok
+				\fi
+			\fi
+		\fi
+	\fi
+	\alter@next% faire l'action décidée ci-dessus
+}
+
+\def\alter@readlitterate{%
+	% le prochain token est le délimiteur
+	\begingroup% ouvrir un groupe
+	\for\alter@tmp=0to255\do{\catcode\alter@tmp=12 }%
+	% mettre tous les catcodes à 12
+	\defactive{ }{\ }% sauf l'espace
+	\doforeach\alter@tmp\in{<,>,-,`,{,},'}% pour chaque motif de ligature
+			{\unless\if\alter@tmp\alter@markertoks% s'il est différent du délimiteur
+			% le définir pour éviter la ligature
+				\expandafter\alter@defligchar\alter@tmp
+			\fi
+			}%
+	\alter@readlitterate@i% puis aller à \alter@readlitterate@i...
+	% ...qui a été définie dans \alter
+}
+
+\def\alter@defligchar#1{% définit le caractère pour ne pas provoquer de ligature
+	\defactive#1{\string#1{}}%
+}
+
+\expandafter\def\expandafter\alter@readspc\space{% \alter@readspc mange un espace dans le code
+	\addtotoks\alter@toks{ }% ajoute l'espace
+	\alter@i% puis lire le token suivant
+}
+
+\def\alter@readarg{%
+	% le token qui suit est "{"
+	\begingroup% ouvrir un groupe
+	\def\alterstop@ii{% et modifier localement la macro appelée à la toute fin,
+	% après que l'accolade fermante ait été mangée (par \alterstop@i)
+		\expandafter\endgroup% retarder la fermeture de groupe ouvert ci-dessus
+		\expandafter\addtotoks\expandafter\alter@toks\expandafter
+			{\expandafter{\the\alter@toks}}%
+		% pour ajouter hors du groupe ce qui a été collecté à l'intérieur,
+		% le tout mis entre accolades
+		\alter@i% puis, lire le token suivant
+	}%
+	\alter@toks{}% au début du groupe, initialiser le collecteur
+	\afterassignment\alter@i% aller lire le prochain token après
+	\let\alter@tmptok= % avoir mangé l'accolade ouvrante
+}
+
+\def\alter@readtok#1{%
+	% le prochain token n'est pas un token demandant une action spéciale
+	\addtotoks\alter@toks{#1}% l'ajouter au collecteur
+	\alter@i% et aller lire le token suivant
+}
+
+\def\alter@stop{%
+	% le token à lire est "}"
+	\afterassignment\alterstop@ii% aller à \alterstop@ii après
+	\let\alter@tmptok= % avoir mangé l'accolade fermante
+}
+
+\def\alterstop@ii{%
+	% donner à la macro #2 de \alter tout ce qui a été récolté
+	\expandafter\alter@macro\expandafter{\the\alter@toks}%
+	\alter@restorecatcode% puis restaure le catcode du délimiteur
+}
+
+\newdimen\pixelsize
+\newdimen\pixelsep
+\pixelsize=.9pt \pixelsep=0pt
+\def\pixel{\vrule height\pixelsize width\pixelsize}
+\def\blankpixel{\vrule height\pixelsize width0pt \vrule height0pt width\pixelsize}
+\def\vblankpixel{\vrule height\pixelsize width0pt}
+\def\gap{\kern\pixelsep}
+
+\newskip\letter@skip
+
+\begingroup% dans ce groupe :
+\expandafter\gdef\csname impact@" "\endcsname{\hskip4\pixelsize plus0.5\pixelsize minus0.5\pixelsize\relax}%
+\catcode`\^^M=13\relax% le retour à la ligne est actif
+\edef^^M{\string,}% et se développe en une virgule (de catcode 12)
+\catcode`\ =12\relax% l'espace devient un "caractère autre"
+\global\deftok\otherspc{ }% définit un espace de catcode 12
+\gdef\impact@alphabet{
+a/
+***
+   *
+ ***
+*  *
+****,
+a`/
+*
+ *
+
+***
+   *
+ ***
+*  *
+****,
+b/
+*
+*
+***
+*  *
+*  *
+*  *
+***,
+c/
+ ***
+*
+*
+*
+ ***,
+d/
+   *
+   *
+ ***
+*  *
+*  *
+*  *
+ ***,
+e/
+ **
+*  *
+***
+*
+ ***,
+e'/
+  *
+ *
+
+ **
+*  *
+***
+*
+ ***,
+e^/
+  *
+ * *
+
+ **
+*  *
+***
+*
+ ***,
+e`/
+ *
+  *
+
+ **
+*  *
+***
+*
+ ***,
+f/
+ **
+*
+***
+*
+*
+*
+*,
+g/
+ ***
+*  *
+*  *
+*  *
+ ***_
+   *
+ **,
+h/
+*
+*
+*
+***
+*  *
+*  *
+*  *
+*  *,
+i/
+*
+
+*
+*
+*
+*
+*,
+j/
+  *
+
+  *
+  *
+  *
+  *
+  *_
+  *
+**,
+k/
+*
+*
+*  *
+* *
+**
+* *
+*  *,
+l/
+*
+*
+*
+*
+*
+*
+ *,
+m/
+** *
+* * *
+* * *
+* * *
+* * *,
+n/
+***
+*  *
+*  *
+*  *
+*  *,
+o/
+ **
+*  *
+*  *
+*  *
+ **,
+o^/
+  *
+ * *
+
+ **
+*  *
+*  *
+*  *
+ **,
+p/
+***
+*  *
+*  *
+*  *
+***_
+*
+*,
+q/
+ ***
+*  *
+*  *
+*  *
+ ***_
+   *
+   *,
+r/
+* **
+**
+*
+*
+*,
+s/
+ ***
+*
+ **
+   *
+***,
+t/
+*
+*
+**
+*
+*
+*
+ **,
+u/
+*   *
+*   *
+*   *
+*   *
+ ***,
+u`/
+ *
+  *
+
+*   *
+*   *
+*   *
+*   *
+ ***,
+v/
+*   *
+*   *
+*   *
+ * *
+  *,
+w/
+*   *
+*   *
+* * *
+* * *
+ * *,
+x/
+*   *
+ * *
+  *
+ * *
+*   *,
+y/
+*  *
+*  *
+ * *
+  **
+   *_
+   *
+ **,
+z/
+****
+  *
+ *
+*
+****,
+TEX/
+*****   *     *
+  *      *   *
+  *       * *
+  * *****  * 
+  * *     * *
+  * *    *   *
+  * *** *     *_
+    *
+    *
+    *****,
+A/
+ ***
+*   *
+*   *
+*   *
+*****
+*   *
+*   *,
+B/
+***
+*  *
+*  *
+****
+*   *
+*   *
+****,
+C/
+ ****
+*
+*
+*
+*
+*
+ ****,
+D/
+****
+*   *
+*   *
+*   *
+*   *
+*   *
+****,
+E/
+*****
+*
+*
+***
+*
+*
+*****,
+F/
+*****
+*
+*
+***
+*
+*
+*,
+G/
+ ***
+*   *
+*
+*  **
+*   *
+*   *
+ ***,
+H/
+*   *
+*   *
+*   *
+*****
+*   *
+*   *
+*   *,
+I/
+*
+*
+*
+*
+*
+*
+*,
+J/
+   *
+   *
+   *
+   *
+   *
+*  *
+ **,
+K/
+*   *
+*  *
+* *
+**
+* *
+*  *
+*   *,
+L/
+*
+*
+*
+*
+*
+*
+****,
+M/
+*   *
+** **
+* * *
+* * *
+*   *
+*   *
+*   *,
+N/
+*   *
+**  *
+**  *
+* * *
+*  **
+*  **
+*   *,
+O/
+ ***
+*   *
+*   *
+*   *
+*   *
+*   *
+ ***,
+P/
+****
+*   *
+*   *
+****
+*
+*
+*,
+Q/
+ ***
+*   *
+*   *
+*   *
+* * *
+*  **
+ ***,
+R/
+****
+*   *
+*   *
+****
+* *
+*  *
+*   *,
+S/
+ ***
+*   *
+ *
+  *
+   *
+*   *
+ ***,
+T/
+*****
+  *
+  *
+  *
+  *
+  *
+  *,
+U/
+*   *
+*   *
+*   *
+*   *
+*   *
+*   *
+ ***,
+V/
+*   *
+*   *
+*   *
+*   *
+*   *
+ * *
+  *,
+W/
+*   *
+*   *
+*   *
+*   *
+* * *
+** **
+*   *,
+X/
+*   *
+*   *
+ * *
+  *
+ * *
+*   *
+*   *,
+Y/
+*   *
+*   *
+ * *
+  *
+  *
+  *
+  *,
+Z/
+*****
+    *
+   *
+  *
+ *
+*
+*****,
+?/
+ ***
+*   *
+   *
+  *
+  *
+
+  *,
+!/
+*
+*
+*
+*
+*
+
+*,
+'/
+ *
+*
+
+
+
+,
+./
+*,
+{,}/
+ *_
+*,
+1/
+  *
+ **
+* *
+  *
+  *
+  *
+  *,
+2/
+ ***
+*   *
+    *
+   *
+  *
+ *
+*****,
+3/
+ ***
+*   *
+    *
+  **
+    *
+*   *
+ ***,
+4/
+   *
+  **
+ * *
+*  *
+*****
+   *
+   *,
+5/
+*****
+*
+****
+    *
+    *
+    *
+****,
+6/
+ ***
+*
+*
+****
+*   *
+*   *
+ ***,
+7/
+*****
+    *
+   *
+  *
+  *
+  *
+  *,
+8/
+ ***
+*   *
+*   *
+ ***
+*   *
+*   *
+ ***,
+9/
+ ***
+*   *
+*   *
+ ****
+    *
+    *
+ ***,
+0/
+ ***
+*   *
+*   *
+* * *
+*   *
+*   *
+ ***,
+@/
+  **
+ *  *
+*  **
+* * *
+*  *
+ *   *
+  ***,
+error/
+* * *
+ * *
+* * *
+ * *
+* * *
+ * *
+* * *}%
+\endgroup%
+
+\def\makecar#1#2{% #1=nom recevant le code final  #2=macro contenant le dessin
+	\let\pixabove\empty \let\pixbelow\empty \let\pix@line\empty% initialise à vide
+	\exparg\ifin{#2}_% si le code contient _
+		{\expandafter\makecar@iii#2\@nil}% aller à \makecar@iii
+		{\exparg\makecar@i{#2}}% sinon, à \makecar@i
+	\edef#1{% définit la macro #1 comme
+		\vtop{% une \vtop contenant :
+			\unexpanded{\offinterlineskip\lineskip\pixelsep}% réglage d'espace inter ligne
+			\vbox{\unexpanded\expandafter{\pixabove}}% \vbox des pixels au-dessus
+			                                         % de la ligne de base
+			\unless\ifx\pixbelow\empty% s'il y a des pixels au-dessous de la baseline
+				\unexpanded\expandafter{\pixbelow}% les ajouter dans la \vtop
+			\fi
+			}%
+		}%
+}
+
+\def\makecar@i#1{% #1 = dessin de la lettre avec les caractères "," "*" et " "
+	\doforeach\current@line\in{#1}% pour chaque ligne dans #1 :
+		{\ifx\empty\current@line% si la ligne est vide
+			\addtomacro\pixabove{\hbox{\vblankpixel}}% ajouter une fausse ligne
+		\else% sinon
+			\let\pix@line\empty% initialiser le code de la ligne à vide
+			\expandafter\makecar@ii\current@line\quark% et la construire
+		\fi
+		}%
+}
+
+\def\makecar@ii#1{% #1=caractère de dessin de la ligne en cours
+	\ifxcase#1% si le caractère est
+		*        {\addtomacro\pix@line\pixel}%
+		\otherspc{\addtomacro\pix@line\blankpixel}%
+	\endif
+	\ifx#1\quark% si la fin est atteinte 
+		\addtomacro\pix@line\unkern% annuler le dernier espace interpixel
+		\eaddtomacro\pixabove{% et encapsuler \pix@line dans une \hbox
+		\expandafter\hbox\expandafter{\pix@line}}%
+	\else% si la fin n'est pas atteinte, ajouter l'espace interpixel
+		\addtomacro\pix@line\gap%
+		\expandafter\makecar@ii% recommencer avec le caractère suivant
+	\fi
+}
+
+\def\makecar@iii#1_,#2\@nil{%
+	\makecar@i{#2}% construit la partie au-dessous de la baseline
+	\let\pixbelow\pixabove% et affecte le code à \pixbelow
+	\let\pixabove\empty \let\pix@line\empty% ré-initialise
+	\makecar@i{#1}% construit la partie au-dessus de la baseline
+}
+
+% On parcourt le texte de remplacement de \impact@alphabet
+\edef\saved@crcatcode{\catcode13=\the\catcode13\relax}%
+\catcode`\^^M=13\relax% le retour à la ligne est actif
+\edef^^M{\string,}% et se développe en une virgule (de catcode 12)
+\expsecond{\doforeach\letter@name/\letter@code\in}\impact@alphabet%
+	{\edef\letter@name{\letter@name}% développe la lettre (^^M devient ",")
+	\edef\letter@code{\letter@code}% développe le code (^^M devient ",")
+	\exparg\ifstart\letter@name,% si la lettre commence par ","
+		{\edef\letter@name{\expandafter\gobone\letter@name}}% la retirer
+		{}%
+	\exparg\ifstart\letter@code,% si le code commence par ","
+		{\edef\letter@code{\expandafter\gobone\letter@code}}% la retirer
+		{}%
+	\expandafter\makecar\csname impact@"\letter@name"\endcsname\letter@code%
+}%
+\saved@crcatcode% redonne le catcode de ^^M
+\def\end@process{\end@process}%
+
+\def\impactend{\endgroup}
+
+\newmacro\impact[0.2ex][0pt]{%
+	\begingroup
+	\pixelsize#1 \pixelsep#2
+	\letter@skip=#1 plus.1pt minus.1pt
+	\catcode`\!12 \catcode`\?12
+	\impact@i
+}
+
+\def\impact@i{\futurelet\nxtletter\impact@ii}
+
+\def\impact@ii{%
+	\ifx\nxtletter\impactend
+		\let\next\unskip
+	\else
+		\leavevmode
+		\ifx\nxtletter\sptoken
+			\let\next\impact@spc
+		\else
+			\let\next\impact@arg
+		\fi
+	\fi
+	\next
+}
+
+\expandafter\def\expandafter\impact@spc\space{%
+	\csname impact@" "\endcsname
+	\impact@i
+}
+
+\def\impact@arg#1{%
+	\ifcsname impact@"#1"\endcsname
+		\csname impact@"#1"\endcsname
+	\else
+		\csname impact@"error"\endcsname
+	\fi
+	\hskip\letter@skip
+	\impact@i
+}
+
+\newdimen\maingraddim \maingraddim=4pt
+\newdimen\maingradwd \maingradwd=0.5pt
+\newdimen\subgraddim \subgraddim=2.5pt
+\newdimen\subgradwd \subgradwd=0.2pt
+\newdimen\axiswd \axiswd=0.5pt
+\newdimen\plotincrement \plotincrement=0.1pt
+\newdimen\tmpdim
+
+\def\maingradx#1{%
+	\lower1.5ex\clap{$\scriptscriptstyle#1$}% afficher l'argument au dessous
+	\clap{\vrule height\maingraddim width\maingradwd depth0pt }% et la réglure
+}
+
+\def\subgradx{\clap{\vrule height\subgraddim width\subgradwd depth0pt }}
+
+% #1= dim entre 2 grad principales #2=nb départ #3=incrément #4=nb arrivée #4=nb intervalles secondaires
+\newmacro\xaxis[1cm]1[1]1[4]{%
+	\hbox{% tout mettre dans une \hbox
+		\setbox0=\hbox{% stocke dans une \hbox les grad secondaires entre 2 unités
+			\edef\dimsubgrad{\the\dimexpr#1/#5\relax}% dimension entre 2 subdivisions
+			\for\xx=1 to #5-1 \do{% insérer #5-1 fois
+				\kern\dimsubgrad% une espace secondaire
+				\subgradx% une graduation secondaire
+				}%
+		}%
+		\rlap{% en débordement à droite :
+			\FOR\xx = #2 to #4 \do #3{% pour chaque graduation principale
+				\maingradx{\xx}% imprimer l'abscisse
+				\ifdim\xx pt<#4pt % et en débordement à droite,
+					\rlap{\copy0 }% les réglures secondaires, sauf pour la dernière
+				\fi
+				\kern#1\relax% se déplacer vers la droite
+			}%
+		}%
+		\vrule% tracer l'axe des abscisses
+			height\axiswd% d'epaisseur \axiswd, de longueur #1*(#4-#2)/#3
+			width\dimexpr#1*\decdiv{\dimtodec\dimexpr#4pt-#2pt\relax}{#3}\relax
+			depth 0pt\relax % et de profondeur nulle
+	}%
+}
+
+\def\maingrady#1{% affiche...
+	\vlap{\llap{$\scriptscriptstyle#1$\kern2pt }}% l'ordonnée...
+	\vbox to0pt{\vss\hrule height\maingradwd width\maingraddim depth0pt }% et la réglure
+}
+
+% affiche une subdiv
+\def\subgrady{\vlap{\hrule height\subgradwd width\subgraddim depth0pt }}
+% #1= dim entre 2 grad principales #2=abscisse départ #3=incrément
+% #4=abscisse arrivée #5=nb intervalles secondaires
+\newmacro\yaxis[1cm]1[1]1[4]{%
+	\vbox{%
+		\offinterlineskip% désactiver le ressort interligne
+		\setbox0=\vbox{% stocke dans une \hbox les grad secondaires entre 2 unités
+			\edef\dimsubgrad{\the\dimexpr#1/#5\relax}% dimension entre 2 subdivisions
+			\for\xx=1 to #5-1 \do{% insérer #5-1 fois
+				\kern\dimsubgrad% une espace secondaire
+				\subgrady% une graduation secondaire
+				}%
+		}%
+		\edef\dimsubgrad{\the\dimexpr#1/#5\relax}% distance entre 2 subdivisions
+		\vbox to 0pt{% en débordement vers le bas
+			\FOR\xx = #4to#2\do-#3{%
+				\maingrady{\xx}% imprimer l'abscisse
+				\ifdim\xx pt>#2pt % et en débordement à droite,
+					\vbox to 0pt{\copy0 \vss}% les réglures secondaires, sauf pour la dernière
+				\fi
+				\kern#1\relax% se déplacer vers la droite
+			}%
+			\vss% assure le débordement vers le bas
+		}%
+		\clap{\vrule% tracer l'axe des abscisses
+			width\axiswd% d'épaisseur \axiwd, et de hauteur (#4-#2)/#3*#1
+			height\decdiv{\dimtodec\dimexpr(#4pt-#2pt)\relax}{#3}\dimexpr#1\relax
+			depth 0pt\relax % profondeur nulle
+		}
+	}%
+}
+
+\newdimen\xunit \xunit=1cm
+\newdimen\yunit \yunit=1cm
+\newmacro\graphzone1[1]1[4]1[1]1[4]{%
+	\quitvmode
+	\begingroup
+		\def\graphxmin{#1}\def\graphxmax{#3}%
+		\def\graphymin{#5}\def\graphymax{#7}%
+		\def\xincrement{#2}\def\yincrement{#6}%
+		\setbox0\hbox{\yaxis[\yunit]{#5}[#6]{#7}[#8]}%
+		\setbox1\hbox{\xaxis[\xunit]{#1}[#2]{#3}[#4]}%
+		\edef\graphboxht{\the\ht0 }%
+		\edef\graphboxwd{\the\wd1 }%
+		\rlap{\box1 \clap{\vrule height\dimexpr\graphboxht+\axiswd\relax width\axiswd depth0pt }}%
+		\rlap{\box0 }%
+		\raise\graphboxht\rlap{\kern-.5\axiswd\vrule height\axiswd width\dimexpr\graphboxwd+\axiswd}%
+		\begingroup
+			\catcode`\^^M=9\relax
+			\graphzone@i
+}
+
+\def\graphzone@i#1{%
+		\endgroup
+		\xunit=\decdiv1\xincrement\xunit
+		\yunit=\decdiv1\yincrement\yunit
+		\setbox0\hbox{#1}%
+		\wd0=\dimexpr\graphboxwd+\axiswd\relax
+		\ht0=\dimexpr\graphboxht+\axiswd\relax
+		\box0
+	\endgroup
+	\ignorespaces
+}
+
+\def\plot(#1,#2){%
+	\edef\x@plot{#1}\edef\y@plot{#2}%
+	\ifinside\x@plot[\graphxmin,\graphxmax]%
+		{\ifinside\y@plot[\graphymin,\graphymax]%
+			{\putat{\dimexpr\x@plot\xunit-\graphxmin\xunit\relax}{\dimexpr\y@plot\yunit-\graphymin\yunit\relax}\plotstuff}%
+			\relax
+		}
+		\relax
+}
+
+\def\showyaxis{%
+	\ifinside0[\graphymin,\graphymax]%
+		{\putat\z@{-\graphymin\yunit}{\vrule width\graphboxwd height\axiswd}}%
+		\relax
+}
+
+\def\showxaxis{%
+	\ifinside0[\graphxmin,\graphxmax]%
+		{\putat{-\graphxmin\xunit}\z@{\clap{\vrule width\axiswd height\graphboxht}}}%
+		\relax
+}
+
+\def\showaxis{\showxaxis\showyaxis}
+
+\def\putat#1#2#3{%
+	\leavevmode\rlap{\kern#1\vbox to0pt{\vss\hbox{#3}\kern#2}}%
+}
+
+\newmacro\cross[2pt][0.2pt]{%
+	\quitvmode
+	\vlap{%
+		\clap{%
+			\vrule height#2 depth0pt width#1
+			\vrule height#1 depth#1 width#2
+			\vrule height#2 depth0pt width#1
+		}%
+	}%
+}
+
+\protected\def\numsep{\kern0.2em }% \numsep est le séparateur mis tous les 3 chiffres
+
+\def\formatdecpart#1{% #1=série de chiffres
+	\ifempty{#1}% si la partie décimale est vide
+		{}% ne rien afficher
+		{{,}\formatdecpart@i1.#1..}% sinon, afficher la virgule et mettre en forme
+}
+
+% #1=compteur de caractères #2= chiffre à déplacer
+% #3= chiffres restants     #4 = chiffres déjà traités
+\def\formatdecpart@i#1.#2#3.#4.{% #1=compteur de caractères #2= chiffres traité #3= chiffres traités
+	\ifempty{#3}% si #2 est le dernier chiffre à traiter
+		{#4#2}% le mettre en dernière position et tout afficher, sinon
+		{\ifnum#1=3 \expandafter\firstoftwo
+		\else\expandafter\secondoftwo
+		\fi% si 3 chiffres sont atteint, rendre #1 égal à 1 et
+			{\formatdecpart@i 1.#3.#4#2\numsep.}% mettre #2\numsep en dernier puis recommencer
+			% sinon, mettre #2 en dernière position et recommencer
+			% tout en incrémentant #1 de 1
+			{\expandafter\formatdecpart@i\number\numexpr#1+1.#3.#4#2.}%
+		}%
+}
+
+\def\formatintpart#1{% #1=série de chiffres
+	\expandafter\formatintpart@i\expandafter1\expandafter.%
+	\romannumeral\reverse{#1\z@}..% appelle la macro récursive
+}
+
+% #1=compteur de caractères #2= chiffre à déplacer
+% #3= chiffres restants     #4 = chiffres déjà traités
+\def\formatintpart@i#1.#2#3.#4.{% #1=compteur de caractères #2= chiffres traité #3= chiffres traités
+	\ifempty{#3}% si #2 est le dernier chiffre à traiter
+		{#2#4}% le mettre en première position et tout afficher, sinon
+		{\ifnum#1=3 \expandafter\firstoftwo
+		\else\expandafter\secondoftwo
+		\fi% si 3 chiffres sont atteint, rendre #1 égal à 1 et
+			{\formatintpart@i 1.#3.\numsep#2#4.}% mettre \numsep#2 en premier puis recommencer
+			% sinon, mettre #2 en dernière position et recommencer
+			% tout en incrémentant #1 de 1
+			{\expandafter\formatintpart@i\number\numexpr#1+1.#3.#2#4.}%
+		}%
+}
+
+\def\removefirstzeros#1{%
+	\removefirstzeros@i#1\removefirstzeros@i
+}
+\def\removefirstzeros@i#1{%
+	\ifx\removefirstzeros@i#1% \removefirstzeros@i est lu donc tout le nombre a été parcouru
+		\expandafter0% laisser un zéro
+	\else
+		\ifx0#1% si le chiffre lu est un 0
+			\expandafter\expandafter\expandafter\removefirstzeros@i% recommencer
+		\else% sinon remettre le chiffre et tout afficher jusqu'à \removefirstzeros@i
+			\expandafter\expandafter\expandafter\removefirstzeros@ii\expandafter\expandafter\expandafter#1%
+		\fi
+	\fi
+}
+\def\removefirstzeros@ii#1\removefirstzeros@i{#1}
+
+\def\ifnodecpart#1{\ifnodecpart@i#1.\@nil}
+\def\ifnodecpart@i#1.#2\@nil{\ifempty{#2}}
+
+\newbox\remainbox% boite contenant le texte total
+\newbox\currentline% boite contenant le ligne en cours
+\newcount\linecnt% compteur pour numéroter les lignes
+
+\newmacro\leftline[0pt]{% définit ce qui se trouve à gauche de chaque ligne
+	\def\wd@left{#1}%
+	\def\stuff@left
+}
+
+\newmacro\rightline[0pt]{% définit ce qui se trouve à droite de chaque ligne
+	\def\wd@right{#1}%
+	\def\stuff@right
+}
+
+\let\formatline=\identity
+
+\leftline[15pt]{$\scriptscriptstyle\number\linecnt$\kern5pt }% numérotation à gauche
+\rightline{}% rien à droite
+
+\def\numlines{%
+	\par\smallskip
+	\begingroup% dans un groupe semi simple
+		\splittopskip=0pt % ne rajouter aucun espace au sommet de la boite restante
+		\savingvdiscards=1 % autorise la sauvagarde des éléments supprimés
+		\linecnt=0 % initialiser le compteur de lignes
+		\setbox\remainbox=\vbox\bgroup% compose la boite...
+			\advance\hsize by% diminuer la \hsize
+			-\dimexpr\wd@left+\wd@right\relax% de la largeur des contenus
+}
+
+\def\endnumlines{%
+	\egroup
+	\offinterlineskip
+	\split@line
+}
+
+\def\split@line{%
+	\ifvoid\remainbox% si la boite est vide
+		\par% fin du processus
+		\endgroup% fermer le groupe ouvert au début
+	\else% sinon
+		\advance\linecnt 1 % incrémente le compteur de lignes
+		\edef\htbefore{\the\vdim\remainbox}%
+		\edef\restorevfuzz{\vfuzz=\the\vfuzz\relax}% sauvegarde le \vfuzz
+		\vfuzz=\maxdimen% annule les avertissements pour débordement
+		\setbox\currentline=\vsplit\remainbox to 0pt % couper la boite à 0pt de hauteur
+		\restorevfuzz
+		\setbox\currentline=\vbox{\unvbox\currentline}% redonner à la boite sa hauteur
+		\let\savedsplitdiscards\splitdiscards
+		\edef\intersplitspace{% calcul de l'espace vertical perdu à la coupure
+			\the\dimexpr\htbefore-(\vdim\remainbox+\vdim\currentline)\relax
+		}%
+		\hbox{% en mode vertical et dans une hbox, afficher :
+			\hbox to\wd@left{\hss\stuff@left}%   1) ce qui est à gauche
+			\formatline{\box\currentline}%       2) la ligne courante
+			\hbox to\wd@right{\stuff@right\hss}% 3) ce qui est à droite
+		}%
+		\splitdiscards% affiche ce qui a été ignoré à la coupure
+		\expandafter\split@line% recommencer
+	\fi
+}
+
+\newskip\interletterskip
+\newskip\interwordskip
+\catcode`\@11
+\newtoks\spacetxt@toks%  le registre qui contient le texte final
+
+\def\spacetxt{%
+	\let\spacetxt@endprocess\spacetxt@endnormal
+	% définit la macro appelée en fin de processus -> à priori : fin normale
+	\ifstarred% si la macro est étoilée
+		{\let\spacetxt@recurse\spacetxt@star% définir la macro récursive
+		\spacetxt@i% et aller à \spacetxt@i
+		}% sinon
+		{\let\spacetxt@recurse\spacetxt@nostar% définir la macro récursive
+		\spacetxt@i% et aller à \spacetxt@i
+		}%
+}
+
+\newmacro\spacetxt@i[0.3em][3\interletterskip]1{%
+% arg optionnel #1 et #2 = ressorts inter-lettre et inter--mot
+% #3 = texte à espacer
+	\interletterskip=#1\relax
+	\interwordskip=#2\relax
+	\def\spacetxt@code{#3}% met le texte à espacer dans \spacetxt@code
+	\spacetxt@toks{}% initialiser le registre contenant le texte final
+	\spacetxt@recurse% aller à la macro récursive précédemment définie
+}
+
+\newif\if@indivifound% booléen qui sera vrai si un motif spécial est rencontré
+
+\def\spacetxt@nostar{%
+	\expandafter\ifempty\expandafter{\spacetxt@code}% si texte restant est vide
+		\spacetxt@endprocess% aller à la fin du processus
+		{\@indivifoundfalse% sinon, à priori, les motifs non réguliers ne sont pas trouvés
+		\expandafter\doforeach\expandafter\indivi@tmp\expandafter\in\expandafter{\indivilist}
+		% pour chaque \indivi@tmp dans \indivilist
+			{\exptwoargs\ifstartwith\spacetxt@code\indivi@tmp
+			% si le code commence par le motif courant
+				{\eaddtotoks\spacetxt@toks{\indivi@tmp\hskip\interletterskip}%
+				% l'ajouter dans le registre ainsi que l'espace inter-lettre
+				\expandafter\rightofsc\expandafter\spacetxt@code\expandafter{\indivi@tmp}%
+				% et enlever le motif du texte restant à lire
+				\@indivifoundtrue
+				% marquer qu'un motif a été trouvé
+				\doforeachexit
+				% et sortir prématurément de la boucle
+				}%
+				\relax
+				% si le code ne commence pas le motif courant -> ne rien faire
+			}%
+		\if@indivifound
+		\else% si aucun motif n'a été trouvé
+			\grab@first\spacetxt@code\spacetxt@temp
+			% retirer le 1er caractère du texte
+% 			\ifcat\noexpand\spacetxt@temp\sptoken
+			\ifx\spacetxt@temp\space
+			% si le 1er caractère est un espace
+				\addtotoks\spacetxt@toks{\hskip\interwordskip}%
+				% ajouter l'espace inter-mot au registre de token
+			\else
+			% si le 1er caractère n'est pas un espace
+				\eaddtotoks\spacetxt@toks{\spacetxt@temp\hskip\interletterskip}%
+				% ajouter ce caractère et l'espace inter-lettre au registre de token
+			\fi
+		\fi
+		\spacetxt@recurse% enfin, continuer le processus
+		}%
+}
+
+\def\spacetxt@star{%
+	\expandafter\ifempty\expandafter{\spacetxt@code}% si texte restant est vide
+		\spacetxt@endprocess% aller à la fin du processus
+		{\expandafter\ifbracefirst\expandafter{\spacetxt@code}%
+		% sinon, si texte commence par "{"
+			{\grab@first\spacetxt@code\spacetxt@temp
+			% mettre {<argument} dans \spacetxt@temp
+			\begingroup% ouvrir un groupe
+			\expandafter\def\expandafter\spacetxt@code\spacetxt@temp
+			% mettre le contenu de l'argument dans \spacetxt@code
+			\let\spacetxt@endprocess\spacetxt@endingroup% changer le processus de fin
+			\spacetxt@toks{}% initialiser
+			\spacetxt@recurse% exécuter le processus avec ce nouveau texte
+			}% si le code ne commence pas par "{", aller à \spacetxt@nostar mais comme
+			\spacetxt@nostar% \spacetxt@recurse vaut \spacetxt@star, n'y faire qu'1 boucle
+		}%
+}
+
+\def\spacetxt@endnormal{% fin de processus normal
+	\the\spacetxt@toks% afficher le registre à token
+	\unskip% et supprimer le dernier ressort
+}
+
+\def\spacetxt@endingroup{% fin du processus dans un groupe :
+	\expandafter\endgroup\expandafter% avant de fermer le groupe
+	\addtotoks\expandafter\spacetxt@toks\expandafter% ajouter au registre hors du groupe
+		{\expandafter{\the\spacetxt@toks}}% ce qui est collecté localement mis entre {}
+	\spacetxt@recurse% puis aller à la macro récursive
+}
+
+\def\indivilist{<<,>>}% liste des motifs spéciaux
+
+\def\insert@blankchar{%
+	\ifstarred\insert@blankchar@ii\insert@blankchar@i
+}
+
+\def\insert@blankchar@i#1{% insère une espace de largeur #1 caractères complets
+	\ifnum\numexpr#1\relax>0
+		\kern\numexpr#1\relax\dimexpr\ttchar@width+\brktt@interletter\relax
+	\fi
+}
+
+\def\insert@blankchar@ii#1{% insère #1-1 caractères complets + 1 largeur de caractère
+	\ifnum\numexpr#1\relax>0
+		\insert@blankchar@i{#1-1}\kern\ttchar@width
+	\fi
+}
+
+\def\restart@hbox#1{%
+	\egroup
+	\hbox\bgroup
+	\expsecond{\def\tt@remaintext}
+		{\romannumeral\removefirstspaces@i{#1}}% initialiser le code à composer
+	\let\previous@char\space% initialise le caractère précédent
+	\line@starttrue% aucun caractère n'a encore été imprimé
+	\brktt@cnt=0\relax% remettre le compteur à 0
+}
+
+\def\print@nchar#1{% affiche #1 caractères pris dans \tt@remaintext
+	\for\xxx= 1 to #1 \do 1{%
+		\ifx\tt@remaintext\empty% si le code restant à composer est vide
+			\exitfor\xxx%sortir de la boucle prématurément
+		\else
+			\@indivifoundfalse% sinon, à priori, les motifs de ligature ne sont pas trouvés
+			% pour chaque \indivi@tmp dans la liste de ligatures
+			\expsecond{\doforeach\indivi@tmp\in}{\liglist}%
+				{% si le code commence par la \idx{ligature} courante
+				\exptwoargs\ifstartwith\tt@remaintext\indivi@tmp%
+					{\let\previous@char\indivi@tmp% prendre le motif pour caractère courant
+					\expsecond{\rightofsc\tt@remaintext}{\indivi@tmp}% et l'enlever du texte restant à lire%
+					\@indivifoundtrue% marquer qu'un motif a été trouvé
+					\doforeachexit% et sortir prématurément de la boucle
+					}%
+					{}% si le code ne commence pas le motif courant -> ne rien faire
+				}%
+			\unless\if@indivifound% si aucun motif trouvé,
+				\grab@first\tt@remaintext\previous@char%  lire le premier caractère
+			\fi
+			\advance\brktt@cnt by 1 % incrémenter le compteur de caractères
+			\hbox to\ttchar@width{\hss\previous@char\hss}% afficher le caractère lu
+			\line@startfalse% nous ne sommes plus au début d'une ligne
+			\ifnum\brktt@cnt<\maxchar@num\relax% si la ligne n'est pas encore remplie
+				\kern\brktt@interletter% insérer le ressort inter-lettre
+			\else
+				\exitfor\xxx% sinon, sortir de la boucle prématurément
+			\fi
+		\fi
+	}%
+}
+
+\newmacro\breakttA[0.3em][\hsize]1{%
+% arg optionnel #1 et #2 = ressorts inter-lettre et dimension horizontale texte
+% #3 = texte à espacer
+	\begingroup% ouvrir un groupe et le fermer à la toute fin
+	\par% commencer un nouveau paragraphe -> passage en mode vertical
+	\parindent=0pt% empêche l'indentation
+	\tt% passer en police à chasse fixe
+	\setbox0 = \hbox{M}% la boite 0 contient un caractère
+	\edef\ttchar@width{\the\wd0 }% largeur de chaque caractère en police \tt
+	\edef\text@width{\the\dimexpr#2\relax}% largeur de composition
+	% les 2 lignes suivantes rendent le compteur égal à E((L-l)/(l+Delta))
+	\brktt@cnt=\numexpr\dimexpr#2-\wd0 \relax\relax% largeur diminuée du 1er caractère
+	\divide\brktt@cnt by \numexpr\dimexpr\wd0 + #1 \relax\relax
+	% le nombre de caractères par ligne est égal à 1 de plus :
+	\edef\maxchar@num{\number\numexpr\brktt@cnt+1\relax}%
+	% calcul de la dimension inter-lettre
+	\brktt@interletter=\dimexpr(\text@width-\ttchar@width*\maxchar@num)/\brktt@cnt\relax
+	\expsecond{\expsecond{\def\tt@remaintext}}{\removetrailspaces{#3}}% met le texte à espacer dans \tt@remaintext
+	\addtomacro\tt@remaintext{ \relax}% ajouter " \relax" à la fin : le code finit donc par " \relax"
+	\def\tt@emptytext{ \relax}% sera le code lorsque tout est composé
+	\unless\ifx\tt@remaintext\tt@emptytext% si le texte à composer n'est pas vide
+		\hbox\bgroup% démarrer la boite horizontale contenant la première ligne
+		\insert@blankchar\ttindent% insérer une espace d'indentation de longueur (l+Delta')*\ttindent
+		\brktt@cnt=\ttindent\relax% tenir compte du nombre de caractères indentés
+		\line@starttrue% il s'agit du début d'une ligne
+		\expandafter\breakttA@i% aller à la macro récursive
+	\fi
+}
+
+\def\leftofsc#1#2{% dans la sc #1, garde ce qui est à gauche de #2
+	\def\leftofsc@i##1#2##2\@nil{\def#1{##1}}%
+	\expandafter\leftofsc@i#1\@nil
+}
+
+\def\len@tonextword{% stocke dans \next@len le nombre de caractères avant
+                    % le prochain point de coupure dans \tt@remaintext
+	\let\next@word\tt@remaintext% copie \tt@remaintext dans la macro temporaire \next@word
+	\leftofsc\next@word{ }% ne prend que ce qui est avant le prochain espace
+	\exparg\ifin{\next@word}{-}% si le mot contient un tiret
+		{\leftofsc\next@word{-}% prendre ce qui est à gauche de ce tiret
+		\def\extra@char{1}% il y a un caractère de plus à loger après le mot
+		}
+		{% sinon, le caractère après le mot est un espace
+		\def\extra@char{0}% qu'il ne faut pas compter
+		}%
+	\setbox0=\hbox{\next@word}% enfermer le mot dans une boite
+	% et en calculer le nombre de caractères
+	\edef\next@len{\number\numexpr\dimexpr\wd0 \relax/\dimexpr\ttchar@width\relax\relax}%
+}
+
+\newmacro\zerocompose[]2{%
+% #1=code à exécuter avant la composition
+% #2=registre de boite recevant le résultat
+% #3= texte à composer en largeur 0pt
+	\setbox#2=\vbox{%
+		#1% code a exécuter (changement de fonte par exemple)
+		\hfuzz=\maxdimen% annule les avertissements pour débordement horizontaux
+		\hbadness=10000 % annule les avertissements pour mauvaise boite horizontale
+		\pretolerance=-1 % désactive la première passe (celle sans coupures)
+		\tolerance=10000 % passe avec coupures acceptée
+		\hyphenpenalty=-10000 % favorise fortement les copures de mots
+		\lefthyphenmin=2 \righthyphenmin=3 % longueur mini des fragments de début et fin
+		\clubpenalty=0 % pas de \idx{pénalité} supplémentaire après la première ligne
+		\interlinepenalty=0 % pas de \idx{pénalité} inter-ligne
+		\widowpenalty=0 % pas de \idx{pénalité} supplémentaire avant la dernière ligne
+		\exhyphenpenalty=0 % ne pas pénaliser une coupure explicite
+		\leftskip=0pt \rightskip=0pt % désactive les éventuels ressorts latéraux
+		\everypar={}% désactive l'éventuel \everypar
+		\parfillskip=0pt plus1fil % règle le \parfillskip par défaut
+		\hsize=0pt % largeur de composition = 0pt
+		\edef\restorehyphenchar{\hyphenchar\font=\number\hyphenchar\font}%
+		\hyphenchar\font=`\- % impose "-" comme caractère de coupure
+		\noindent % pas d'indentation + passage en mode horizontal
+		\hskip0pt \relax% premier noeud horizontal pour permettre la coupure de la suite
+		#3\par% compose #3
+		\restorehyphenchar% restaure le caractère de coupure
+		}%
+}
+
+\def\hyphlengths#1#2{%#2 = macro contenant les longueurs de coupures du mot #1
+	\begingroup
+		\zerocompose
+			[\tt% passer en police à chasse fixe
+			\setbox\z@\hbox{M}\xdef\ttwidth{\the\wd\z@}% mesurer la largeur des caractères
+			\hyphenchar\font=`\- % choisit "-" comme caractère de coupure
+			]\z@{#1}% compose en 0pt dans la boite 0
+		\let#2 = \empty% initialise la macro #2
+		\def\cumul@length{0}%
+		\vfuzz=\maxdimen% annule les avertissements pour débordement
+		\splittopskip=\z@ % ne rajouter aucun espace au sommet de la boite restante
+		\loop
+			\setbox1=\vsplit\z@ to \z@% couper la boite à 0pt de hauteur
+			{\setbox\z@=\vbox{\unvbox1 \unskip\unpenalty\global\setbox1=\lastbox}}%
+			\setbox1=\hbox{\unhbox1 }%
+			\unless\ifvoid\z@% si la boite 0 n'est pas encore vide
+				\edef\cumul@length{% mettre à jour \cumul@length
+					\number\numexpr
+						\cumul@length
+						+% ajouter le quotient "largeur syllabe/largeur d'1 caractère"
+						\wd1/\dimexpr\ttwidth\relax
+						-1% et soustraire 1 (le caractère "-")
+						\relax
+				}%
+				% ajouter à #2 la virgule et le cumul actuel +1
+				\edef#2{% définir la macro #2 :
+					#2% reprendre le contenu de #2
+					\ifx#2\empty\else,\fi% ajouter "," si #2 non vide
+					\number\numexpr\cumul@length+1\relax% et le cumul
+					}%
+		\repeat% et recommencer
+		\expsecond{% avant de fermer le groupe
+	\endgroup
+	\def#2}{#2}% définit #2 hors du groupe
+}
+
+\newif\ifnumalgo
+\newcount\algocnt
+\numalgotrue
+
+\def\algoindent{2em}
+\def\algorule{.4pt}% épaisseur des réglures de début et de fin
+
+\def\algohrulefill{% remplit avec une ligne horizontale
+	\leavevmode
+	\leaders\hrule height\algorule\hfill
+	\kern0pt % rajoute un noeud au cas où la commande est en fin de ligne
+}
+
+\def\algoleftskip{10pt}
+\def\algorightskip{10pt}
+
+\newmacro\algorithm[\\,\#,\{,\}]2{%
+	\medbreak
+	\begingroup% ouvre un groupe (sera fermé à la fin de l'algorithme)
+		\footnotesize
+		\algocnt=1 % initialise le compteur de lignes
+		\leftskip=\algoleftskip \rightskip=\algorightskip% initialise les ressorts latéraux
+		\parindent=0pt % pas d'indentation
+		%%%%%%%%%%%% affichage du titre %%%%%%%
+		\algohrulefill% remplir avec une ligne horizontale
+		\ifempty{#2}% si #2 est vide
+			{}% ne rien insérer
+			{% sinon
+			\lower.5ex\hbox{ #2 }% insérer le titre abaissé de 0.5ex
+			\algohrulefill% insérer une ligne horizontale
+			}%
+		\par% aller à la ligne
+		\nointerlineskip% ne pas insérer le ressort interligne
+		\kern7pt % et sauter 7pt verticalement
+		\nobreak% empêcher une coupure de page
+		%%%%%%%%%%%%%% fin du titre %%%%%%%%%%
+		%
+		%%%%%%%%%%%%%% rend les caractères actifs %%%%%%%%%%%%%%
+		\def~##1~{\begingroup\bf##1\endgroup}%
+		\defactive:{% rend ":" actif
+			\futurelet\nxttok\algoassign% \nxttok = token suivant
+		}%
+		\def\algoassign{% suite du code de ":"
+			\ifx=\nxttok% si ":" est suivi de "="
+				\ifmmode% si mode math
+					\leftarrow% afficher "\leftarrow"
+				\else% si mode texte
+					${}\leftarrow{}$% passer en mode math pour "\leftarrow"
+				\fi
+				\expandafter\gobone% manger le signe "="
+			\else% si ":" n'est pas suivi de "="'
+				\string:% afficher ":"
+			\fi
+		}%
+		\expandafter\def\expandafter\oldeverypar\expandafter% sauvegarder...
+			{\the\everypar}% ... l'action effectuée à chaque paragraphe
+		\ifnumalgo% si la numérotation est demandée,
+			\everypar\expandafter{% à chaque paragraphe
+				\the\everypar% reprendre le contenu précédent
+				\llap{% et à droite du début de la ligne,
+					$\scriptstyle\number\algocnt$% afficher le numéro
+					\kern\dimexpr4pt+\leftskip-\algoleftskip\relax% en tenant compte de l'indentation
+					}%
+			}%
+		\fi
+		\def\algopar{% actions effectués par ^^M
+			\advance\algocnt by 1 % incrémente le compteur de lignes
+			\color{black}% repasse en couleur noire
+			\rm% fonte droite
+			\par% termine le paragraphe
+			\leftskip=\algoleftskip % initialise le ressort gauche
+		}%
+		\doforeach\currentchar\in{#1}{\expandafter\catcode\expandafter`\currentchar=12 }%
+		\defactive\^^I{\advance\leftskip by \algoindent\relax}%
+		\defactive\ {\hskip1.25\fontdimen2\font\relax}% espace = 25% de + que la largeur naturelle
+		\letactive\^^M\algopar
+		\defactive\%{\it\color{gray}\char`\%}% passe en italique et gris puis affiche "%"
+		\defactive_{\ifmmode_\else\string_\fi}%
+		\defactive#3{% rend le token #3 actif (il sera rencontré à la fin de l'algorithme)
+			\everypar\expandafter{\oldeverypar}% restaurer l'ancien \everypar
+			\par% aller à la ligne
+			\nointerlineskip% ne pas insérer le ressort interligne
+			\kern7pt % et sauter 7pt verticalement
+			\nobreak% empêcher une coupure de page
+			\algohrulefill% tracer la ligne de fin
+			\smallbreak% saute un petit espace vertical
+	\endgroup% ferme le groupe ouvert au début de l'algorithme
+		}%
+	%%%%%%%%%%%%%%%%% fin des caractères actifs %%%%%%%%%%%%%%%%
+	%
+	\sanitizealgo% va manger les espaces et les ^^M au début de l'algo
+}
+
+\def\sanitizealgo{\futurelet\nxttok\checkfirsttok}% récupère le prochain token
+
+\def\checkfirsttok{% teste le prochaun token
+	\def\nextaction{% à priori, on considère que la suite est " " ou "^^M" donc
+		\afterassignment\sanitizealgo% aller à \sanitizealgo
+		\let\nexttok= % après avoir mangé ce "^^M" ou cet espace
+	}%
+	\unless\ifx\nxttok\algopar% si le prochain token n'est pas un ^^M
+		\unless\ifx\space\nxttok% et si le prochain token n'est pas un espace
+			\let\nextaction\relax% ne rien faire ensuite
+		\fi
+	\fi
+	\nextaction% faire l'action décidée ci-dessus
+}
+
+\def\true@sgn#1{\ifnum#11<\z@-\fi}
+
+\restoreatcoatcode\relax
+\endinput

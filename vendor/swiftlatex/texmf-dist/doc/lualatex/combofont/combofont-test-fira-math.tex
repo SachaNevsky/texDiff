@@ -1,0 +1,125 @@
+% !Mode:: "TeX:DE:UTF-8:Main"
+%% Date 2017/07/03 Version 0.2 combofont example 
+\documentclass[parskip=full]{scrartcl}
+
+\usepackage{luacode}
+
+%As a test I patch the FraktionNumeratorShift by a large value
+% and add it to the luaotfload patch_font callback:
+\begin{luacode}
+
+local patch_texgyrepagellamath = function (fontdata)
+ local mathconstants = fontdata.MathConstants
+ if mathconstants and fontdata.psname == "TeXGyrePagellaMath-Regular"
+ then
+    mathconstants.FractionNumeratorDisplayStyleShiftUp=5.5*mathconstants.FractionNumeratorDisplayStyleShiftUp
+    mathconstants.FractionNumeratorShiftUp=5.5*mathconstants.FractionNumeratorShiftUp
+ end
+end
+
+
+luatexbase.add_to_callback
+ (
+  "luaotfload.patch_font",
+  patch_texgyrepagellamath,
+  "change_texgyrepagellamath"
+ )
+\end{luacode}
+
+\usepackage[math-style=upright]{unicode-math}
+\usepackage{combofont}
+
+\setmainfont{Fira Sans}
+
+
+\setupcombofont{FiraMath}
+ {%
+ file:texgyrepagella-math.otf:mode=base;script=math;language=DFLT; at #1pt,
+ file:firasans-light.otf at #1pt,
+ file:firasans-lightitalic.otf at #1pt
+ }
+ {%
+ {},
+ 0x30-0x39,
+ 0x61-0x7A*0x03B1-0x03C9
+ }
+
+\setupcombofont{FiraMathScript}
+ {%
+ file:texgyrepagella-math.otf:mode=base;script=math;language=DFLT;+ssty=0 at #1pt,
+ file:firasans-regular.otf at #1pt,
+ file:firasans-italic.otf at #1pt
+ }
+ {%
+ {},
+ 0x30-0x39,
+ 0x61-0x7A*0x03B1-0x03C9
+ }
+
+\setupcombofont{FiraMathScriptScript}
+ {%
+ file:texgyrepagella-math.otf:mode=base;script=math;language=DFLT;+ssty=1 at #1pt,
+ file:firasans-semibold.otf at #1pt,
+ file:firasans-semibolditalic.otf at #1pt
+ }
+ {%
+ {},
+ 0x30-0x39,
+ 0x61-0x7A*0x03B1-0x03C9
+ }
+
+% Mathversion bold need Script and ScriptScript declarations too!
+\setupcombofont{FiraMathBold}
+ {%
+ file:texgyrepagella-math.otf:mode=base;script=math;language=DFLT; at #1pt,
+ file:firasans-regular.otf at #1pt,
+ file:firasans-italic.otf at #1pt
+ }
+ {%
+ {},
+ 0x30-0x39,
+ 0x61-0x7A*0x03B1-0x03C9
+ }
+
+
+\DeclareFontFamily{TU}{FiraMath}{}
+\DeclareFontShape {TU}{FiraMath}{m}{n}
+  {
+    <-7> combo*FiraMathScriptScript
+   <7-10>combo*FiraMathScript
+   <10-> combo*FiraMath
+  }{}
+
+\DeclareFontShape {TU}{FiraMath}{bx}{n} {<->combo*FiraMathBold}{}
+
+% better start with a real math font, so that
+% unicode sets everything up
+\setmathfont{TeX Gyre Pagella Math}%
+
+% Perhaps some other symbol fonts will need setup too
+\SetSymbolFont{operators}{normal}{TU}{FiraMath}{m}{n}
+\SetSymbolFont{operators}{bold}{TU}{FiraMath}{bx}{n}
+
+
+% Map "a" etc to the ascii range. Original values can be found with
+%[\Umathcharclass `\a] [\Umathcharfam `\a] [\Umathcharslot `\a]
+% not needed because of math-style=upright
+%\Umathcode `\a =  "7 "0 "61
+
+
+\begin{document}
+
+\minisec{Test some symbols}
+
+$123 - a^{a^a} + 1^{1^1} abc = \sqrt{hhhhhhhhhhh}$
+
+\minisec{Test patching}
+
+$\frac{1}{9}$
+
+\minisec{Test math version}
+
+\mathversion{bold}
+$123 - a^{a^a} + 1^{1^1} abc = \frac{1}{9} $
+
+\end{document}

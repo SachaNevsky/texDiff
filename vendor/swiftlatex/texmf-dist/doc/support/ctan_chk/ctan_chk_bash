@@ -1,0 +1,28 @@
+#! /bin/sh
+# File: ctan_chk_bash
+# Why:  Creates the ctan_chk.gawk and ctan_chk.pdf from the ctan_chk.w ``literate program''
+# How to run: from bash command-terminal
+#  . ctan_chk_bash
+#
+echo "----------->ctan_chk_bash script<-----------"
+echo "----------->cweave create the pdf doc of ctan_chk<-----------"
+cweave ctan_chk
+pdftex ctan_chk
+echo "----------->ctangle create ctan_chk.gawk program<-----------"
+ctangle -l +e ctan_chk.w
+echo "----------->sed - change section no into a gawk comment<-----------"
+sed 's/^\/\*/# section no/' ctan_chk.gawk>ctan_chk.tmp 
+echo "----------->gawk --- remove empty lines and #line lines<-----------"
+gawk -e '{r=length($0);if(r==0) next; match($0,/^(\#line|;)/);if (RLENGTH > 0) next; print $0;}' ctan_chk.tmp > ctan_chk.tm1 
+echo "----------->cp --- create the gawk edited program<-----------"
+cp ctan_chk.tm1 ctan_chk.gawk 
+echo "----------->remove temporary files<-----------"
+rm ctan_chk.tmp
+rm ctan_chk.tm1
+rm *.idx
+rm *.scn
+rm *.toc
+rm *.tex
+rm *.log
+rm *.c
+	

@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="index.xsl" ?>
+<!DOCTYPE TEI.2 SYSTEM "http://www.oucs.ox.ac.uk/dtds/tei-oucs.dtd"[]>
+<TEI.2>
+   <teiHeader>
+      <fileDesc>
+         <titleStmt>
+            <title>JadeTeX</title>
+            <author>Sebastian Rahtz</author>
+            <author>Simon Pepping</author>
+            <author>Frank Christoph</author>
+         </titleStmt>
+         <publicationStmt>
+            <authority>OUCS</authority>
+            <address>
+               <email>sebastian.rahtz@oucs.ox.ac.uk</email>
+            </address>
+         </publicationStmt>
+         <sourceDesc>
+            <p>This is the master version of an original document.</p>
+         </sourceDesc>
+      </fileDesc>
+      <revisionDesc>
+         <list>
+            <head>Most recent revision. 
+For a full list, see the change management records </head>
+            <item>
+               <date>July 2001</date>
+            </item>
+         </list>
+      </revisionDesc>
+   </teiHeader>
+   <text>
+<body>
+<div>
+<head>JadeTeX</head>
+<p>This is a TeX macro package for processing the output from
+	  Jade/OpenJade in TeX (-t) mode. You can download it
+from Sourceforge; <xptr url="http://sourceforge.net/projects/jadetex/"/>.
+</p>
+</div>
+<div><head>Installation</head>
+    <div>
+      
+      <head>Introduction</head>
+
+      <p>This documents is based on a note by FC describing his
+	experience installing JadeTeX with OpenJade 1.3 and teTeX 1.06
+	(on Unix). It has since been expanded and checked by SR and
+	SP. It is aimed to people who have perhaps some experience
+	using TeX and LaTeX, enough to write up technical reports
+	using simple macros, but know little or nothing about format
+	files or the particulars of the TeX distribution structure,
+	and consequently have a rough time with JadeTeX&#8230;</p>
+	<p>This document relates to JadeTeX version 2.11 or later.</p>
+
+      <p>To use JadeTeX, you first of all should compile and install
+	OpenJade. The  resulting <name>openjade</name> executable, used
+	with the <Value>-t tex</Value> flag, will format an
+	SGML/XML file and yield a TeX output file. Using
+	<name>jadetex</name> or <name>pdfjadetex</name>, you can
+	transform this into DVI or PDF;
+	from DVI, you can use a program like
+	<name>dvips</name> to get PostScript output. This note describes
+	how to build and install the former two programs,
+	<name>jadetex</name> and <name>pdfjadetex</name>.</p>
+    </div>
+
+    <div>
+      <head>Increasing TeX capacities</head>
+
+      <p>The TeX output file uses a macro package, JadeTeX, built on
+      top of LaTeX, just as LaTeX is a macro package sitting on top of
+      plain TeX. It is probably possible to just stick an
+      <Input>\input</Input> at the top of your
+      <Filespec>.tex</Filespec> file and use the JadeTeX macros this
+      way, but that would be slow since TeX would need to parse and
+      compile the macro definitions every time you format your
+      <Filespec>.tex</Filespec> file. So what we do instead is to use
+      TeX (actually, <name>initex</name>) to read in the LaTeX
+      format, followed by the JadeTeX package, once, and dump the
+      compiled image to what is called a <q>format file.</q>
+      This is the same way that LaTeX is usually employed.  Once the
+      format file is built and installed, it is easy to arrange for
+      TeX to read it in quickly and automatically when you process a
+      <Filespec>.tex</Filespec> file.</p>
+
+      <p>But, as ever, there are complications, relating to TeX's
+	capacity restrictions. TeX is designed to use a fixed amount
+	of resources to process documents; for example, there is a
+	maximum number of strings that can be allocated, and a maximum
+	stack size. If a processing run exceeds the default limits,
+	TeX will complain and refuse to continue. Unfortunately,
+	OpenJade's TeX backend tends to exceed these default
+	limits.</p>
+
+      <p>Fortunately, though, there is no need to recompile your TeX
+	binary. If you are using teTeX (or any other Web2c-based
+	distribution) there will be a file called
+	<Filespec>texmf.cnf</Filespec> in your installation which sets
+	the capacity parameters and is consulted every time TeX is
+	run. By adding the right parameter settings here, you can
+	ensure that JadeTeX will be unlikely to run out of memory.</p>
+
+      <p>Where is <Filespec>texmf.cnf</Filespec>? You can find it in the
+	<Filespec>web2c</Filespec> directory under
+	your <Filespec>texmf</Filespec> tree... which begs the question, where
+	is <Filespec>texmf</Filespec>? The most
+	straightforward way to find it is to make sure all the TeX executables
+	are in your <Filespec>PATH</Filespec>; then do:
+	<Input>kpsewhich -expand-var '$TEXMFMAIN'</Input>
+<Output>/usr/share/texmf/web2c/texmf.cnf</Output>
+	and it will
+	respond with the location of your texmf tree. As you can see, it is also
+	known as <Filespec>$TEXMFMAIN</Filespec>, which is how I shall
+	refer to it in the sequel.</p>
+
+      <p> If for some reason <name>kpsewhich</name> is not in your
+	<Filespec>PATH</Filespec>,
+	and you don't know where it is, here are some likely locations:
+	<list>
+	  <item><Filespec>/usr/share/texmf</Filespec></item>
+	  <item><Filespec>/usr/local/share/texmf</Filespec></item>
+	  <item><Filespec>/usr/local/teTeX/texmf</Filespec></item>
+	  <item><Filespec>/usr/local/lib/teTeX/texmf</Filespec></item>
+	  <item><Filespec>/usr/local/lib/texmf</Filespec></item>
+	  <item><Filespec>/usr/lib/texmf</Filespec></item>
+	  <item><Filespec>/usr/lib/teTeX/texmf</Filespec></item>
+	</list></p>
+
+      <p>In a minute we are going to modify <Filespec>texmf.cnf</Filespec> to
+	increase the capacities, then build the JadeTeX format file and install
+	the JadeTeX executable(s). You may have a command
+        <name>hugelatex</name>, a version of latex with greater
+	capacity settings than the usual one, which is named simply
+	<name>latex</name>. If so, build your format file
+	using <name>hugelatex</name> rather than
+      <name>latex</name>, so that JadeTeX inherits the `huge'
+	settings. Otherwise, make sure your latex is big.
+	In addition, if you make any changes to the literate source of the
+	JadeTeX macro package (see below), a normal <name>latex</name>
+	may not do.</p>
+
+      <p>First we need to update texmf.cnf to ensure that
+	<name>latex</name> really is
+	<emph>huge</emph>. Take a look at the top of the file. 
+It will probably say:
+<Program
+>%original texmf.cnf -- runtime path configuration file for kpathsea.
+% (If you change or delete `original' on the previous line, the
+% distribution won't install its version over yours.)
+</Program>
+If it says 
+<Program
+>% TeX Live texmf.cnf
+</Program>
+then you can skip all this and proceed to the next section, as TeX
+      Live is already set up for JadeTeX</p>
+
+<p>
+	If you have an `original',  follow those directions and delete the string
+	<Input>original</Input> to ensure that
+	future upgrades won't obliterate your changes.</p>
+      
+      <p>In the latter half of the file, you will find the capacity settings,
+	which look something like this:
+
+	<Program
+>pool_size = 125000
+pool_size.context = 750000</Program>
+
+	Here, <Input>pool_size</Input> is the name of the parameter in
+	both cases, but the second one is qualified with
+	<Input>.context</Input>, which indicates that this setting will be
+	preferred when using the ConTeXt macro package. We need to make similar
+	accomodations not only for <name>latex</name> but also
+	<name>jadetex</name> and <name>pdfjadetex</name>.
+	Unfortunately, we don't know the minimal required values for every
+	parameter and some of these values are probably
+	ridiculously high, but no matter ...
+
+	<Program
+>% latex settings
+main_memory.latex = 1100000
+param_size.latex = 1500
+stack_size.latex = 1500
+hash_extra.latex = 15000
+string_vacancies.latex = 45000
+pool_free.latex = 47500
+nest_size.latex = 500
+save_size.latex = 5000
+pool_size.latex = 500000
+max_strings.latex = 55000
+font_mem_size.latex= 400000
+
+% jadetex &amp; pdfjadetex
+main_memory.jadetex = 1500000
+param_size.jadetex = 1500
+stack_size.jadetex = 1500
+hash_extra.jadetex = 50000
+string_vacancies.jadetex = 45000
+pool_free.jadetex = 47500
+nest_size.jadetex = 500
+save_size.jadetex = 5000
+pool_size.jadetex = 500000
+max_strings.jadetex = 55000
+
+main_memory.pdfjadetex = 2500000
+param_size.pdfjadetex = 1500
+stack_size.pdfjadetex = 1500
+hash_extra.pdfjadetex = 50000
+string_vacancies.pdfjadetex = 45000
+pool_free.pdfjadetex = 47500
+nest_size.pdfjadetex = 500
+save_size.pdfjadetex = 5000
+pool_size.pdfjadetex = 500000
+max_strings.pdfjadetex = 55000
+</Program>
+
+	Add these to the end of the file, or wherever makes you happy.</p>
+      
+      <p>Now let's build some format files. Under
+	<Filespec>$TEXMFMAIN/tex/latex/config</Filespec>,
+	you will find the files necessary to rebuild <name>latex</name>.
+	Copy them somewhere temporary and go there:
+<Screen>
+cp -R /usr/share/texmf/tex/latex/config /tmp
+cd /tmp/config</Screen>
+
+	Now do this:
+
+	<Screen>tex -ini -progname=latex latex.ini</Screen>
+
+	This will produce a file <Filespec>latex.fmt</Filespec>
+	in the same directory.
+	Become root and put it in
+	<Filespec>$TEXMFMAIN/web2c</Filespec>. This
+	is where all the format files are kept. (You can delete the other copied
+	files from <Filespec>config</Filespec> afterwards.)
+
+	<Screen>mv latex.fmt /usr/share/texmf/web2c</Screen>
+      </p>
+
+      <p>Now just create a symbolic link from <name>tex</name> to
+	<name>latex</name>:
+
+	<Screen>ln -s /usr/bin/tex /usr/local/bin/latex</Screen>
+
+	When <name>tex</name> is invoked, it looks at the name
+	<Filespec>X</Filespec> it was invoked with, then loads the format
+	file <Filespec>X.fmt</Filespec> from
+	<Filespec>$TEXMFMAIN/web2c</Filespec> before
+	it starts processing the document. So creating this symbolic link is all
+	that is needed to create the <name>latex</name>
+	executable.</p>
+    </div>
+
+    <div>
+      <head>Creating the format files</head>
+      <p>Next, take a look at your OpenJade distribution. Under the directory
+	<Filespec>dsssl</Filespec> you will find the files necessary to build
+	jadetex and pdfjadetex, including a Makefile. Now become root and just do:
+
+	<Screen>make  install</Screen>
+
+	This creates <Filespec>jadetex.fmt</Filespec> and
+	<Filespec>pdfjadetex.fmt</Filespec>, puts them in
+	<Filespec>$TEXMFMAIN/web2c</Filespec> for you
+	(using <name>kpsewhich</name> to find
+	<Filespec>$TEXMFMAIN</Filespec>), and installs a few other
+	auxiliary files under
+	<Filespec>$TEXMFMAIN/tex/jadetex</Filespec>.</p>
+      <p>All that's left to do is to create the links:
+
+	<Screen>ln -s /usr/bin/tex /usr/bin/jadetex
+ln -s /usr/bin/pdftex /usr/bin/pdfjadetex</Screen>
+ (changing the location of the binary directory to wherever your TeX is)
+	and run <name>mktexlsr</name> so that your TeX distribution becomes
+	aware of the newly installed files in
+	<Filespec>$TEXMFMAIN/tex/jadetex</Filespec>.
+
+	<Screen>mktexlsr</Screen></p>
+
+    </div>
+
+    <div>
+      <head>Testing the installation</head>
+      <p>Finally, test your installation using the demonstration files in
+	that directory:
+
+	<Screen>openjade -t tex -d demo.dsl demo.sgm
+jadetex demo.tex
+pdfjadetex demo.tex</Screen>
+
+	You're done!</p>
+    </div>
+
+    <div>
+      <head>Frequently Asked Questions</head>
+<list type="gloss">
+	<label>
+	  I installed JadeTeX, but when I run it, it complains that a
+	    file named <Filespec>unicode.sty</Filespec> (or
+	    <Filespec>dsssl.def</Filespec>, etc) can't be found. What did I do
+	    wrong?
+	</label>
+	<item>
+	  You didn't run the <name>mktexlsr</name>, so
+	    <name>kpathsea</name> doesn't know about the newly installed 
+	  files.
+	</item>
+
+	  <label>
+	    I don't like JadeTeX's default behavior in some situations.
+	      How do I modify it?
+	  </label>
+	  <item>
+	  If for some reason you want to modify the JadeTeX macro
+	    package, modify the file <Filespec>jadetex.dtx</Filespec>. This is
+	    the literate source for the format file and other files installed
+	    under
+	    <Filespec>$TEXMFMAIN/tex/jadetex</Filespec>.
+	  To format it, use <name>latex</name>:
+
+      <Screen>latex jadetex.dtx</Screen>
+
+      You will get tons of overfull hboxes but if you are using a nice
+      big latex, it will work.
+
+	  Formatting the batch file <Filespec>jadetex.ins</Filespec>
+	    will produce stripped sources
+	    (<Filespec>dsssl.def</Filespec> and
+	    <Filespec>jadetex.ltx</Filespec>),
+	    which can be compiled into format files as before:
+
+	    <Screen>latex jadetex.ins
+make -f Makefile.jadetex</Screen>
+	  
+	  </item>
+
+	  <label>
+	    What fonts can I use?
+	  </label>
+	  <item>
+	    Following is the names of the font families supported at the
+	      time of writing. Of course you must actually have these fonts
+	      installed to format the document (but not to produce the TeX
+	      output).
+	    <list>
+	      <item>Arial</item>
+	      <item>Helvetica</item>
+	      <item>Palatino</item>
+	      <item>Bookman</item>
+	      <item>Courier</item>
+	      <item>Symbol</item>
+	      <item>Wingdings</item>
+	      <item>WingDings</item>
+	      <item>LucidaSans</item>
+	      <item>LucidaBright</item>
+	      <item>Savoy</item>
+	      <item>ACaslon</item>
+	      <item>Caslon</item>
+	      <item>Formata</item>
+	      <item>FranklinGothic</item>
+	      <item>OCRAbyBT</item>
+	      <item>AGaramond</item>
+	      <item>Avant-Garde</item>
+	      <item>Courier-New</item>
+	      <item>New-Century-Schoolbook</item>
+	      <item>Times-Roman</item>
+	      <item>Trade-Gothic</item>
+	      <item>Times-New-Roman</item>
+	      <item>Times-NR-MT</item>
+	      <item>Courier-New</item>
+	      <item>Zapf-Dingbats</item>
+	      <item>Gill-Sans</item>
+	      <item>iso-serif</item>
+	      <item>iso-sanserif</item>
+	      <item>iso-monocase</item>
+	      <item>LetterGothic12PitchBT</item>
+	      <item>Monospace821</item>
+	      <item>OCRB10PitchBT</item>
+	      <item>OCR-A</item>
+	      <item>OCR-B-10PitchBT</item>
+	      <item>Computer-Modern-Typewriter</item>
+	      <item>Computer-Modern-Sans</item>
+	      <item>Computer-Modern</item>
+	      <item>Computer-Modern-Caps-And-Small-Caps</item>
+	    </list>
+	  </item>
+
+	  <label>
+	    Why doesn't hyphenation work?
+	  </label>
+	  <item>
+	    Remember that your text must be fully justified
+	      (<Input>quadding: #t</Input>), hyphenation must be on,
+	      <Input>hyphenation?: #t</Input>, and a current language must
+	      be selected (e.g., <Input>language: 'EN</Input>) for JadeTeX
+	      to perform hyphenation.
+	  </item>
+
+	  <label>
+	    I'm using Norman Walsh's DocBook stylesheets and my
+	      footnotes are coming up at the end of the document rather than
+	      at the foot of each page. Why?
+	  </label>
+	  <item>
+	    The DocBook stylesheets need to be made aware that you are
+	      using the TeX backend. Add <Value>-V tex-backend</Value> to
+	      your <name>openjade</name> command-line.
+	  </item>
+</list>
+    </div>
+</div>
+</body>
+</text>
+</TEI.2>
+<!--
+.A link to the projects group page on SourceForge. 
+                      2.Mailing list links (we'll create them in a second) 
+                      3.A SourceForge icon and web counter - see the site documentation for this. 
+                      4.A link to the CVS web interface at
+                         
+                      5.Some info about using CVS specific to your project. 
+                      6.Setup mailing lists for your project. 
+-->

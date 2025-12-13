@@ -1,0 +1,109 @@
+% This file produces a description document for the Kana Parser project
+
+\input luaotfload.sty % otf font loader
+\input kanaparser % load the parser package
+
+\font\jp = ipagp % ipagp.otf font is included in the ipafont font package: https://www.internationalphoneticassociation.org/content/ipa-fonts
+\font\hdf = cmbx12 at 18pt
+\font\nmf = cmbx12 at 14pt
+
+% wrapper macros that change font automatically
+\def\jchar#1{{\jp #1}}
+\def\kpth#1{\jchar{\toHiragana{#1}}}
+\def\kptk#1{\jchar{\toKatakana{#1}}}
+\def\kptl#1{\jchar{\toLatin{#1}}}
+
+% styling macros
+\def\hd#1{{\hdf#1}\vskip 10pt}
+\def\nm#1{\vskip 10pt{\nmf#1}\vskip 8pt}
+
+\parserInit % initialize kana parser
+
+\hd{Kana Parser for Lua\TeX}
+
+Greetings, reader. This document will describe this Lua\TeX \kern3pt package in detail, providing all the information you need to start using this package.
+We will analyze the Japanese writing system and see how it relates to the Latin script. Then we will see how this package handles the conversion.
+
+\nm{1. The Japanese writing system}
+
+The modern Japanese uses four distinct character sets: Latin (also known as `romaji' in Japanese), a pair of syllabic sets known as kana and ultimately kanji, the complex ideographic set borrowed from the Chinese. They combine these four sets regularly, a practice usually very confusing for newcomers to the language.
+
+Kanji is based on a subset of Chinese ideograms known as `hanzi' in China and cannot be transliterated to Latin by a simple state automaton, requiring solid context awareness.
+
+Kana, however, is a phonetic system based on syllables which can be directly transliterated to Latin. The two kana sets are known as hiragana and katakana.
+Kana represents a set of roughly 46 syllables (48 including two obsolete ones), each syllable has a hiragana and a katakana character assigned to it.
+There are five vowel characters (a, i, u, e, o), an `n' character and the rest are syllabic compounds of vowels and consonants, such as `wo'.
+
+Hiragana is used for native syntactic and grammatic constructs as well as common words and phrases. It's also used in material intended to be read by juveniles and children who do not yet understand complex kanji.
+
+Katakana is used for loanwords, foreign words and usually onomatopoeia among other uses.
+The two kanas cover the same set of syllables and as such can be freely converted between each other.
+
+\nm{2. Differences between the kanas}
+
+Despite covering the same syllable set, there are certain differences between the systems.
+The most striking difference is in how the sets prolong their syllables.
+Prolongation here means extending a vowel-terminated syllable by a pure vowel, getting a syllable of double length. An example of this is \jchar{ma => maa}.
+
+Hiragana prolongs syllables by explicitly putting a vowel character after a syllable: \kpth{ma => maa}.\break
+Here you can see how an \kpth{a} gets appended to \kpth{ma} to prolong it.
+Syllables ending in o and e are instead prolonged by u and i, respectively: \jchar{mo => mou} (\kpth{mo => mou})
+
+Katakana uses a single prolonging character, \jchar ー, to prolong any vowel-terminated syllable.
+This package ensures this character is always correctly transliterated to its respective hiragana vowel or Latin vowel.\break
+\kptk{mo => mou} in katakana translates correctly to \kpth{\toKatakana{mo => mou}} in hiragana and \kptl{\toKatakana{mo => mou}} in Latin.
+
+Another difference is in katakana's added support for various foreign syllables. These syllables don't exist in native Japanese, such as vu (\kptk{vu}).
+These syllables help in better representing foreign words and as such don't commonly have hiragana counterparts.
+However, thanks to the inter-compatibility of kana character set, even these syllables can be written in hiragana, although such use is very unusual: vu (\kpth{vu}).
+This package supports such conversions to promote learning of the character sets.
+
+\nm{3. Consonant gemination}
+
+Japanese language supports doubling (or gemination) of certain unvoiced consonants (s, t, k, p, ch) when they appear at the beginning of a syllable. An example of this is the syllable `ka' (\kpth{ka}) which turns into `kka' (\kpth{kka}) when geminated. As seen in the example, the kana sets have a special character, \jchar っ, called sokuon (little tsu), a small version of the `tsu' (\kpth{tsu}) character, which is placed in front of the syllable which is to be geminated.
+This package detects correct usage of sokuon and represents it in Latin by doubling the respective consonant.
+In several romanization systems, gemination is represented by using `t' instead in all cases but I find the doubling of the affected consonant a better way to show the true nature of sokuon.
+
+\break\nm{4. Ambiguity of `n'}
+
+N is the only consonant in Japanese with its own kana character, \kpth{n}.
+As such, there is some ambiguity in following it by other characters.
+There are several syllables beginning in `n', such as nya (\kpth{nya}) or nyo (\kpth{nyo}), which could be ambiguously split into `n-ya' (\kpth{n'ya}) and `n-yo' (\kpth{n'yo}) respectively.
+To make sure there is no ambiguity in romanization of these characters, an isoLating delimiter is used: '. To demonstrate its usage, `nyaa' becomes \kptk{nyaa} in katakana but `n'yaa' becomes \kptk{n'yaa} --- ambiguity resolved.
+This works backwards too, where \kpth{ren'youkei} which contains the `nyo' syllable split to `n-yo' transliterates to \kptl{\toHiragana{ren'youkei}}.
+
+\nm{5. Transliteration alternatives}
+
+As expected with completely different writing systems, the conversion between them is not really isomorphic. Several syllables have multiple kana representations and several kana characters have multiple romanization options.
+To tackle this problem, this package tries to be as permissive as possible by letting the user configure alternatives on the go.
+The most frequent alternatives are selected by default and can be viewed in the kanaparser.tex file. There is a switch macro in the package that lets the user choose which kana character(s) will be used in place of the selected syllable if that syllable supports alternatives. There is always at most one alternative to a syllable representation.
+For example, if you wish that `we' is not written as \kptk{we} in katakana but instead as the obsolete \toggleChars{we}\kptk{we}, the package lets you do it.
+On the other hand, `sisi' and `shishi' will both transliterate to \kpth{sisi} although backwards transliteration will always be the closer-sounding \kptl{\toHiragana{sisi}}.
+Romanization of all the alternative kana characters is enabled by default.
+
+\nm{6. Transliterating mixed character sets and special characters}
+
+This package has limited support for this feature. Its three macros always attempt to transliterate as much as they can into the target character set. There is no option to only transliterate hiragana, for example. When targetting Latin, both kana sets will be converted. Same goes for transliterating to the kanas, both Latin and the other kana set will be converted.
+Characters not understood by the used macro (including ") will be left unchanged except for apostrophes ('), which will be consumed (and treated as isolation delimiters) when transLating to kana.
+
+\nm{7. Introducing romanization systems}
+
+There are several systems for romanization of Japanese and this package loosely follows the Hepburn system (\jchar{ヘボン式ローマ字}).
+The first difference is that the package ignores the characters with macron in long syllables (such as \jchar ō).
+This is to stay within the ASCII character set (which simplifies typing on a common keyboard) and lets newcomers to the language get used to the prolongation rules.
+As such, \kpth{koukou} transliterates to \kptl{\toHiragana{koukou}} instead of \jchar{kōkō}.
+Contextual variations are also ignored in this package, such as writing \kpth{ha} as \jchar{wa} when used as a topic particle.
+Another notable deviation from Hepburn is not using `t' for consonant gemination except for syllables beginning in `t'. As such, \jchar{まっちゃ} becomes \kptl{まっちゃ} and not \jchar{matcha}.
+
+\nm{8. Fonts, unicode and implementation}
+
+Kana are multibyte unicode characters, a compatible font is needed to display any of them, hence the bundled macros won't print anything readable without a font with japanese support.
+An example of such font is the ipafont family.
+
+Both Lua and Lua\TeX \kern3pt support unicode characters although Lua only considers them multibyte strings. As such an UTF-8 tokenizer is needed to properly recognize individual characters.
+Once tokenized, conversion both to and from kana sets is possible using a state automaton with a processing buffer.
+
+When converting Latin to kana, a three-character buffer is needed to process characters such as `nya' (\kpth{nya}); the other way around only two-character is required to process multi-character compounds.
+Based on the contents of this buffer the automaton decides what to transliterate, prolong, geminate or print as-is. Conversion between kana sets is implemented as a simple translation table.
+
+\bye
