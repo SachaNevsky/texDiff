@@ -274,10 +274,15 @@ let texlive200_cache = {};
 
 function kpse_find_file_impl(nameptr, format, _mustexist) {
 	const reqname = UTF8ToString(nameptr);
+
+	// Skip paths with slashes
 	if (reqname.includes("/")) {
 		return 0;
 	}
+
 	const cacheKey = format + "/" + reqname;
+
+	// Check caches
 	if (cacheKey in texlive404_cache) {
 		return 0;
 	}
@@ -286,87 +291,112 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 		return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
 	}
 
-	const skipDownload = [
-		'main.aux',           // Generated during compilation
-		'pdftex.map',         // Font map file (optional for basic rendering)
-	];
-
-	if (skipDownload.includes(reqname) ||
-		reqname.endsWith('.vf') ||
-		reqname.endsWith('.pgc') ||
-		reqname.endsWith('.pk')) {
-		console.log(`Skipping download for: ${reqname}`);
+	// Skip generated/optional files
+	if (reqname === 'main.aux' || reqname.endsWith('.vf') || reqname.endsWith('.pgc')) {
 		texlive404_cache[cacheKey] = 1;
 		return 0;
 	}
 
-	// Special handling for format files - try local path first
-	if (reqname === 'swiftlatexpdftex.fmt'
-		|| reqname === 'article.cls'
-		|| reqname === 'size10.clo'
-		|| reqname === 'inputenc.sty'
-		|| reqname === 'color.sty'
-		|| reqname === 'color.cfg'
-		|| reqname === 'pdftex.def'
-		|| reqname === 'l3backend-pdftex.def'
-		|| reqname === 'l3backend-pdfmode.def'
-		|| reqname === "supp-pdf.mkii"
-		|| reqname === "cmss10"
-		|| reqname === "cmr10"
-		|| reqname === "cmr7"
-		|| reqname.endsWith('.fmt') || reqname.endsWith('.sty') || reqname.endsWith('.clo') || reqname.endsWith('.cls') || reqname.endsWith('.cfg') || reqname.endsWith('.def')) {
+	// Map to texmf-dist structure
+	let local_url = "";
 
-		let local_url = "";
-		if (reqname === "cmss10" || reqname === "cmr10" || reqname === "cmr7") {
-			local_url = reqname + ".tfm";
-		} else {
-			local_url = reqname;
+	if (reqname.endsWith('.tfm')) {
+		local_url = `texmf-dist/fonts/tfm/public/cm/${reqname}`;
+	}
+	else if (reqname.endsWith('.pk') || format === 26) {  // format 26 = PK fonts
+		const fontName = reqname.replace('.pk', '');
+		local_url = `texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${fontName}.600pk`;
+	}
+	else if (reqname === 'pdftex.map') {
+		local_url = 'texmf-dist/fonts/map/pdftex/updmap/pdftex.map';
+	}
+	else if (reqname.endsWith('.cls') || reqname.endsWith('.clo')) {
+		local_url = `texmf-dist/tex/latex/base/${reqname}`;
+	}
+	else if (reqname.endsWith('.sty')) {
+		// Try multiple common locations
+		const possiblePaths = [
+			`texmf-dist/tex/latex/base/${reqname}`,
+			`texmf-dist/tex/latex/graphics/${reqname}`,
+			`texmf-dist/tex/latex/graphics-cfg/${reqname}`,
+		];
+
+		for (const path of possiblePaths) {
+			const xhr = new XMLHttpRequest();
+			xhr.open("GET", path, false);
+			xhr.responseType = "arraybuffer";
+			try {
+				xhr.send();
+				if (xhr.status === 200) {
+					const arraybuffer = xhr.response;
+					const savepath = TEXCACHEROOT + "/" + reqname;
+					FS.writeFile(savepath, new Uint8Array(arraybuffer));
+					texlive200_cache[cacheKey] = savepath;
+					return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
+				}
+			} catch { }
 		}
 
-		let xhr = new XMLHttpRequest();
-		xhr.open("GET", local_url, false);
-		xhr.responseType = "arraybuffer";
-		console.log("Trying to load local format file from " + local_url);
-		try {
-			xhr.send();
-			if (xhr.status === 200) {
-				console.log(`Successfully loaded ${local_url}`);
-				let arraybuffer = xhr.response;
-				const savepath = TEXCACHEROOT + "/" + reqname;
-				FS.writeFile(savepath, new Uint8Array(arraybuffer));
-				texlive200_cache[cacheKey] = savepath;
-				return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
-			}
-		} catch (err) {
-			console.log("Local format file load failed: " + err);
+		texlive404_cache[cacheKey] = 1;
+		return 0;
+	}
+	else if (reqname.endsWith('.cfg') || reqname.endsWith('.def')) {
+		const possiblePaths = [
+			`texmf-dist/tex/latex/graphics-cfg/${reqname}`,
+			`texmf-dist/tex/latex/graphics-def/${reqname}`,
+			`texmf-dist/tex/latex/l3backend/${reqname}`,
+		];
+
+		for (const path of possiblePaths) {
+			const xhr = new XMLHttpRequest();
+			xhr.open("GET", path, false);
+			xhr.responseType = "arraybuffer";
+			try {
+				xhr.send();
+				if (xhr.status === 200) {
+					const arraybuffer = xhr.response;
+					const savepath = TEXCACHEROOT + "/" + reqname;
+					FS.writeFile(savepath, new Uint8Array(arraybuffer));
+					texlive200_cache[cacheKey] = savepath;
+					return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
+				}
+			} catch { }
 		}
+
+		texlive404_cache[cacheKey] = 1;
+		return 0;
+	}
+	else if (reqname === 'supp-pdf.mkii') {
+		local_url = 'texmf-dist/tex/generic/context/ppchtex/supp-pdf.mkii';
+	}
+	else if (reqname.endsWith('.fmt')) {
+		local_url = reqname;  // Format files in root
+	}
+	else {
+		// Unknown file type
+		texlive404_cache[cacheKey] = 1;
+		return 0;
 	}
 
-	// Fall back to remote URL for other files
-	const remote_url = self.texlive_endpoint + "pdftex/" + cacheKey;
-	let xhr = new XMLHttpRequest();
-	xhr.open("GET", remote_url, false);
-	xhr.timeout = 15e4;
+	// Load file
+	const xhr = new XMLHttpRequest();
+	xhr.open("GET", local_url, false);
 	xhr.responseType = "arraybuffer";
-	console.log("Start downloading texlive file " + remote_url);
+
 	try {
 		xhr.send();
+		if (xhr.status === 200) {
+			const arraybuffer = xhr.response;
+			const savepath = TEXCACHEROOT + "/" + reqname;
+			FS.writeFile(savepath, new Uint8Array(arraybuffer));
+			texlive200_cache[cacheKey] = savepath;
+			return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
+		}
 	} catch (err) {
-		console.log("TexLive Download Failed " + remote_url);
-		return 0;
+		console.log(`Failed to load: ${local_url}`);
 	}
-	if (xhr.status === 200) {
-		let arraybuffer = xhr.response;
-		const fileid = xhr.getResponseHeader("fileid");
-		const savepath = TEXCACHEROOT + "/" + (fileid || reqname);
-		FS.writeFile(savepath, new Uint8Array(arraybuffer));
-		texlive200_cache[cacheKey] = savepath;
-		return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
-	} else if (xhr.status === 301) {
-		console.log("TexLive File not exists " + remote_url);
-		texlive404_cache[cacheKey] = 1;
-		return 0;
-	}
+
+	texlive404_cache[cacheKey] = 1;
 	return 0;
 }
 
