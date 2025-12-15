@@ -315,6 +315,9 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	else if (reqname === 'hyperref.sty') {
 		local_url = 'texmf-dist/tex/latex/hyperref/hyperref.sty';
 	}
+	else if (reqname === 'ltxcmds.sty') {
+		local_url = 'texmf-dist/tex/generic/ltxcmds/ltxcmds.sty';
+	}
 	else if (reqname.endsWith('.sty')) {
 		const possiblePaths = [
 			`texmf-dist/tex/latex/base/${reqname}`,

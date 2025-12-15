@@ -435,17 +435,27 @@ function ensureWrapped(content) {
   ].join("\n");
 }
 async function runTexCount(content) {
-  if (!content.trim() || !texCount) {
+  if (!content.trim()) {
+    console.log("runTexCount: empty content");
+    return 0;
+  }
+  if (!texCount) {
+    console.log("runTexCount: texCount not initialized yet");
     return 0;
   }
   try {
+    console.log("runTexCount: running count on", content.length, "chars");
     const wrappedContent = ensureWrapped(content);
     const result = await texCount.count({
       input: wrappedContent,
       brief: true
     });
+    console.log("runTexCount: raw output:", result.output);
     const parsed = texCount.parseOutput(result.output);
-    return parsed.words || 0;
+    console.log("runTexCount: parsed result:", parsed);
+    const wordCount = parsed.words || 0;
+    console.log("runTexCount: final word count:", wordCount);
+    return wordCount;
   } catch (error) {
     console.error("Error running texcount:", error);
     return 0;
@@ -453,12 +463,14 @@ async function runTexCount(content) {
 }
 function updateWordCount(element, count) {
   element.textContent = `Words: ${count}`;
+  console.log("Updated word count display to:", count);
 }
 function debouncedCountOld() {
   if (oldCountTimer) {
     clearTimeout(oldCountTimer);
   }
   oldCountTimer = setTimeout(async () => {
+    console.log("Debounced count triggered for old input");
     const count = await runTexCount(oldInput.value);
     updateWordCount(oldWordCount, count);
   }, 500);
@@ -468,6 +480,7 @@ function debouncedCountNew() {
     clearTimeout(newCountTimer);
   }
   newCountTimer = setTimeout(async () => {
+    console.log("Debounced count triggered for new input");
     const count = await runTexCount(newInput.value);
     updateWordCount(newWordCount, count);
   }, 500);
@@ -476,15 +489,19 @@ async function initTools() {
   try {
     setStatus("Loading diff tools...");
     await runner.initialize();
+    console.log("Initializing TexCount...");
     texCount = new TexCount(runner);
+    console.log("TexCount initialized:", texCount);
     setStatus("Initializing SwiftLaTeX...");
     await initSwiftLaTeX();
     setStatus("Ready.");
     if (oldInput.value.trim()) {
+      console.log("Counting initial old input");
       const oldCount = await runTexCount(oldInput.value);
       updateWordCount(oldWordCount, oldCount);
     }
     if (newInput.value.trim()) {
+      console.log("Counting initial new input");
       const newCount = await runTexCount(newInput.value);
       updateWordCount(newWordCount, newCount);
     }
@@ -556,8 +573,9 @@ async function compilePdf(diffTex) {
     downloadTexBtn.style.display = "inline-block";
     console.log("Starting SwiftLaTeX compilation...");
     console.log("LaTeX length:", cleanedTex.length, "characters");
-    pdfEngine.writeMemFSFile("main.tex", cleanedTex);
-    const result = await pdfEngine.compileLaTeX();
+    const engine = pdfEngine;
+    engine.writeMemFSFile("main.tex", cleanedTex);
+    const result = await engine.compileLaTeX();
     console.log("Compilation result:", result);
     if (result.status !== 0) {
       console.error("Compilation failed with status:", result.status);
@@ -571,7 +589,8 @@ async function compilePdf(diffTex) {
       throw new Error("No PDF was generated");
     }
     console.log("PDF generated successfully, size:", pdfData.length, "bytes");
-    const blob = new Blob([pdfData], { type: "application/pdf" });
+    const pdfBytes = new Uint8Array(pdfData);
+    const blob = new Blob([pdfBytes], { type: "application/pdf" });
     return blob;
   } catch (error) {
     console.error("PDF compilation error:", error);

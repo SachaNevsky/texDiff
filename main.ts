@@ -16,7 +16,7 @@ const runner = new WebPerlRunner({
     perlScriptsPath: './vendor/wasm-latex-tools/perl'
 });
 
-let pdfEngine: any = null;
+let pdfEngine: unknown = null;
 let texCount: TexCount | null = null;
 
 let latestDiffTex: string = '';
@@ -32,8 +32,18 @@ let newCountTimer: ReturnType<typeof setTimeout> | null = null;
 
 declare global {
     interface Window {
-        PdfTeXEngine: any;
+        PdfTeXEngine: unknown;
     }
+}
+
+interface SwiftLaTeXEngine {
+    loadEngine(): Promise<void>;
+    writeMemFSFile(filename: string, content: string): void;
+    compileLaTeX(): Promise<{
+        status: number;
+        pdf: Uint8Array<ArrayBuffer>;
+        log?: string;
+    }>;
 }
 
 // ============================================================================
@@ -93,11 +103,19 @@ function ensureWrapped(content: string): string {
 // ============================================================================
 
 async function runTexCount(content: string): Promise<number> {
-    if (!content.trim() || !texCount) {
+    if (!content.trim()) {
+        console.log("runTexCount: empty content");
+        return 0;
+    }
+
+    if (!texCount) {
+        console.log("runTexCount: texCount not initialized yet");
         return 0;
     }
 
     try {
+        console.log("runTexCount: running count on", content.length, "chars");
+
         // Wrap content if needed
         const wrappedContent = ensureWrapped(content);
 
@@ -107,11 +125,18 @@ async function runTexCount(content: string): Promise<number> {
             brief: true
         });
 
+        console.log("runTexCount: raw output:", result.output);
+
         // Parse the output using the parseOutput method
         const parsed = texCount.parseOutput(result.output);
 
+        console.log("runTexCount: parsed result:", parsed);
+
         // Return the word count
-        return parsed.words || 0;
+        const wordCount = parsed.words || 0;
+        console.log("runTexCount: final word count:", wordCount);
+
+        return wordCount;
     } catch (error) {
         console.error('Error running texcount:', error);
         return 0;
@@ -120,6 +145,7 @@ async function runTexCount(content: string): Promise<number> {
 
 function updateWordCount(element: HTMLDivElement, count: number) {
     element.textContent = `Words: ${count}`;
+    console.log("Updated word count display to:", count);
 }
 
 function debouncedCountOld() {
@@ -128,6 +154,7 @@ function debouncedCountOld() {
     }
 
     oldCountTimer = setTimeout(async () => {
+        console.log("Debounced count triggered for old input");
         const count = await runTexCount(oldInput.value);
         updateWordCount(oldWordCount, count);
     }, 500);
@@ -139,6 +166,7 @@ function debouncedCountNew() {
     }
 
     newCountTimer = setTimeout(async () => {
+        console.log("Debounced count triggered for new input");
         const count = await runTexCount(newInput.value);
         updateWordCount(newWordCount, count);
     }, 500);
@@ -154,7 +182,9 @@ async function initTools() {
         await runner.initialize();
 
         // Initialize TexCount
+        console.log("Initializing TexCount...");
         texCount = new TexCount(runner);
+        console.log("TexCount initialized:", texCount);
 
         setStatus("Initializing SwiftLaTeX...");
         await initSwiftLaTeX();
@@ -162,10 +192,12 @@ async function initTools() {
 
         // Initial word counts (trigger immediately for any existing content)
         if (oldInput.value.trim()) {
+            console.log("Counting initial old input");
             const oldCount = await runTexCount(oldInput.value);
             updateWordCount(oldWordCount, oldCount);
         }
         if (newInput.value.trim()) {
+            console.log("Counting initial new input");
             const newCount = await runTexCount(newInput.value);
             updateWordCount(newWordCount, newCount);
         }
@@ -181,10 +213,10 @@ async function initSwiftLaTeX() {
         await waitForSwiftLaTeX();
 
         // Initialize SwiftLaTeX engine
-        pdfEngine = new window.PdfTeXEngine();
+        pdfEngine = new (window.PdfTeXEngine as new () => SwiftLaTeXEngine)();
 
         // Load the engine
-        await pdfEngine.loadEngine();
+        await (pdfEngine as SwiftLaTeXEngine).loadEngine();
 
         console.log("SwiftLaTeX engine loaded successfully");
     } catch (error) {
@@ -272,11 +304,13 @@ async function compilePdf(diffTex: string): Promise<Blob> {
         console.log("Starting SwiftLaTeX compilation...");
         console.log("LaTeX length:", cleanedTex.length, "characters");
 
+        const engine = pdfEngine as SwiftLaTeXEngine;
+
         // Write the main TeX file
-        pdfEngine.writeMemFSFile("main.tex", cleanedTex);
+        engine.writeMemFSFile("main.tex", cleanedTex);
 
         // Compile the LaTeX document
-        const result = await pdfEngine.compileLaTeX();
+        const result = await engine.compileLaTeX();
 
         console.log("Compilation result:", result);
 
@@ -297,8 +331,9 @@ async function compilePdf(diffTex: string): Promise<Blob> {
 
         console.log("PDF generated successfully, size:", pdfData.length, "bytes");
 
-        // Create blob from Uint8Array
-        const blob = new Blob([pdfData], { type: 'application/pdf' });
+        // Create blob from Uint8Array - explicitly create a new Uint8Array to ensure correct type
+        const pdfBytes = new Uint8Array(pdfData);
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
 
         return blob;
     } catch (error) {
