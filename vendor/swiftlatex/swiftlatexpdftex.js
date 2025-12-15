@@ -450,6 +450,9 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 		local_url = `vendor/swiftlatex/${lsrPath}`;
 	}
 	// Fallback to format-based guessing if not in ls-R (only for files without extensions)
+	else if (reqname === "swiftlatexpdftex.fmt") {
+		local_url = `${reqname}`;
+	}
 	else if (reqname.endsWith('.fmt')) {
 		local_url = `vendor/swiftlatex/${reqname}`;
 	}
