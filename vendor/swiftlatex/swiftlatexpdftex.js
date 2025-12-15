@@ -458,15 +458,15 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	}
 	else if (format === 3 && !reqname.includes('.')) {
 		// Format 3 = TFM font metrics (only if no extension)
-		local_url = `vendor/swiftlatex/texmf-dist/fonts/tfm/public/cm/${reqname}.tfm`;
+		local_url = `texmf-dist/fonts/tfm/public/cm/${reqname}.tfm`;
 	}
 	else if (format === 26 && !reqname.includes('.')) {
 		// Format 26 = PK bitmap fonts (only if no extension)
-		local_url = `vendor/swiftlatex/texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${reqname}.600pk`;
+		local_url = `texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${reqname}.600pk`;
 	}
 	else if (format === 32 && !reqname.includes('.')) {
 		// Format 32 = Type 1 fonts (.pfb) (only if no extension)
-		local_url = `vendor/swiftlatex/texmf-dist/fonts/type1/public/amsfonts/cm/${reqname}.pfb`;
+		local_url = `texmf-dist/fonts/type1/public/amsfonts/cm/${reqname}.pfb`;
 	}
 	else {
 		console.log(`! File not found in ls-R database: ${reqname} (format: ${format})`);
