@@ -1,3 +1,9 @@
+// ./vendor/swiftlatex/swiftlatexpdftex.js
+
+let lsRDatabase = null;
+let lsRLoading = false;
+let lsRLoadPromise = null;
+
 var Module = typeof Module !== "undefined" ? Module : {};
 const TEXCACHEROOT = "/tex";
 const WORKROOT = "/work";
@@ -6,7 +12,7 @@ self.memlog = "";
 self.initmem = undefined;
 self.mainfile = "main.tex";
 self.texlive_endpoint = "https://texlive2.swiftlatex.com/";
-// self.texlive_endpoint = "./vendor/swiftlatex/";
+
 Module["print"] = function (a) {
 	self.memlog += a + "\n";
 };
@@ -272,6 +278,101 @@ let texlive200_cache = {};
 // 	return 0;
 // }
 
+// Function to load and parse the ls-R file
+async function loadLsRDatabase() {
+	if (lsRDatabase) return lsRDatabase;
+	if (lsRLoading) return lsRLoadPromise;
+
+	lsRLoading = true;
+	lsRLoadPromise = new Promise((resolve, reject) => {
+		const xhr = new XMLHttpRequest();
+		xhr.open("GET", "./vendor/swiftlatex/texmf-dist/ls-R", false);
+		xhr.responseType = "text";
+
+		try {
+			xhr.send();
+			if (xhr.status === 200) {
+				const database = new Map();
+				const lines = xhr.responseText.split('\n');
+				let currentDir = '';
+
+				for (const line of lines) {
+					// Skip comments and empty lines
+					if (line.startsWith('%') || line.trim() === '') continue;
+
+					// Directory line ends with ':'
+					if (line.endsWith(':')) {
+						currentDir = line.slice(0, -1);
+						// Normalize directory path
+						if (currentDir === '.') {
+							currentDir = '';
+						} else if (currentDir.startsWith('./')) {
+							currentDir = currentDir.slice(2);
+						}
+						continue;
+					}
+
+					// File line
+					const filename = line.trim();
+					if (filename) {
+						// Store all occurrences of a filename
+						if (!database.has(filename)) {
+							database.set(filename, []);
+						}
+						const fullPath = currentDir ? `${currentDir}/${filename}` : filename;
+						database.get(filename).push(fullPath);
+					}
+				}
+
+				lsRDatabase = database;
+				console.log(`Loaded ls-R database with ${database.size} files`);
+				resolve(database);
+			} else {
+				console.error("Failed to load ls-R:", xhr.status);
+				reject(new Error("Failed to load ls-R"));
+			}
+		} catch (err) {
+			console.error("Error loading ls-R:", err);
+			reject(err);
+		} finally {
+			lsRLoading = false;
+		}
+	});
+
+	return lsRLoadPromise;
+}
+
+// Helper function to find file in ls-R database
+function findInLsR(filename) {
+	if (!lsRDatabase) return null;
+
+	const paths = lsRDatabase.get(filename);
+	if (!paths || paths.length === 0) return null;
+
+	// If multiple paths exist, prefer certain directories
+	if (paths.length === 1) {
+		return `texmf-dist/${paths[0]}`;
+	}
+
+	// Priority order for directories
+	const priorities = [
+		'tex/latex/base',
+		'tex/latex/',
+		'tex/generic/',
+		'fonts/tfm/',
+		'fonts/type1/',
+		'fonts/map/',
+	];
+
+	for (const priority of priorities) {
+		const match = paths.find(p => p.includes(priority));
+		if (match) return `texmf-dist/${match}`;
+	}
+
+	// Return first match if no priority matches
+	return `texmf-dist/${paths[0]}`;
+}
+
 function kpse_find_file_impl(nameptr, format, _mustexist) {
 	const reqname = UTF8ToString(nameptr);
 
@@ -289,147 +390,68 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 		return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
 	}
 
+	// Skip certain files that are known to not exist
 	if (reqname === 'main.aux' || reqname.endsWith('.vf') || reqname.endsWith('.pgc')) {
 		texlive404_cache[cacheKey] = 1;
 		return 0;
 	}
 
+	// Ensure ls-R database is loaded (synchronous check)
+	if (!lsRDatabase) {
+		try {
+			// Load synchronously on first use
+			const xhr = new XMLHttpRequest();
+			xhr.open("GET", "./vendor/swiftlatex/texmf-dist/ls-R", false);
+			xhr.responseType = "text";
+			xhr.send();
+
+			if (xhr.status === 200) {
+				const database = new Map();
+				const lines = xhr.responseText.split('\n');
+				let currentDir = '';
+
+				for (const line of lines) {
+					if (line.startsWith('%') || line.trim() === '') continue;
+
+					if (line.endsWith(':')) {
+						currentDir = line.slice(0, -1);
+						if (currentDir === '.') {
+							currentDir = '';
+						} else if (currentDir.startsWith('./')) {
+							currentDir = currentDir.slice(2);
+						}
+						continue;
+					}
+
+					const filename = line.trim();
+					if (filename) {
+						if (!database.has(filename)) {
+							database.set(filename, []);
+						}
+						const fullPath = currentDir ? `${currentDir}/${filename}` : filename;
+						database.get(filename).push(fullPath);
+					}
+				}
+
+				lsRDatabase = database;
+				console.log(`Loaded ls-R database with ${database.size} files`);
+			}
+		} catch (err) {
+			console.error("Failed to load ls-R database:", err);
+		}
+	}
+
 	let local_url = "";
 
-	// Format codes:
-	// 3 = TFM (TeX Font Metrics)
-	// 26 = PK (Packed bitmap fonts)
-	// 32 = Type 1 fonts (.pfb)
-
-	// Check by filename extension first
-	if (reqname.endsWith('.fmt')) {
+	// First, try to find in ls-R database
+	const lsrPath = findInLsR(reqname);
+	if (lsrPath) {
+		local_url = lsrPath;
+	}
+	// Fallback to format-based guessing if not in ls-R
+	else if (reqname.endsWith('.fmt')) {
 		local_url = reqname;
 	}
-	else if (reqname.endsWith('.cls') || reqname.endsWith('.clo')) {
-		local_url = `texmf-dist/tex/latex/base/${reqname}`;
-	}
-	else if (reqname.endsWith('.mkii')) {
-		// ConTeXt MetaPost support file
-		local_url = `texmf-dist/tex/context/base/mkii/${reqname}`;
-	}
-	else if (reqname === 'hyperref.sty') {
-		local_url = 'texmf-dist/tex/latex/hyperref/hyperref.sty';
-	}
-	else if (reqname === 'ltxcmds.sty') {
-		local_url = 'texmf-dist/tex/generic/ltxcmds/ltxcmds.sty';
-	}
-	else if (reqname === 'iftex.sty') {
-		local_url = 'texmf-dist/tex/generic/iftex/iftex.sty';
-	}
-	else if (reqname === 'pdftexcmds.sty') {
-		local_url = 'texmf-dist/tex/latex/pdftexcmds/pdftexcmds.sty';
-	}
-	else if (reqname === 'iftex.sty') {
-		local_url = 'texmf-dist/tex/generic/infwarerr/infwarerr.sty';
-	}
-	else if (reqname.endsWith('.sty')) {
-		const possiblePaths = [
-			`texmf-dist/tex/latex/base/${reqname}`,
-			`texmf-dist/tex/latex/graphics/${reqname}`,
-			`texmf-dist/tex/latex/graphics-cfg/${reqname}`,
-			`texmf-dist/tex/latex/tools/${reqname}`,
-		];
-
-		for (const path of possiblePaths) {
-			const xhr = new XMLHttpRequest();
-			xhr.open("GET", path, false);
-			xhr.responseType = "arraybuffer";
-			try {
-				xhr.send();
-				if (xhr.status === 200) {
-					const arraybuffer = xhr.response;
-					const savepath = TEXCACHEROOT + "/" + reqname;
-					FS.writeFile(savepath, new Uint8Array(arraybuffer));
-					texlive200_cache[cacheKey] = savepath;
-					return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
-				}
-			} catch { }
-		}
-
-		console.log(`! Not found: ${reqname}`);
-		texlive404_cache[cacheKey] = 1;
-		return 0;
-	}
-	else if (reqname.endsWith('.cfg') || reqname.endsWith('.def')) {
-		const possiblePaths = [
-			`texmf-dist/tex/latex/graphics-cfg/${reqname}`,
-			`texmf-dist/tex/latex/graphics-def/${reqname}`,
-			`texmf-dist/tex/latex/l3backend/${reqname}`,
-		];
-
-		for (const path of possiblePaths) {
-			const xhr = new XMLHttpRequest();
-			xhr.open("GET", path, false);
-			xhr.responseType = "arraybuffer";
-			try {
-				xhr.send();
-				if (xhr.status === 200) {
-					const arraybuffer = xhr.response;
-					const savepath = TEXCACHEROOT + "/" + reqname;
-					FS.writeFile(savepath, new Uint8Array(arraybuffer));
-					texlive200_cache[cacheKey] = savepath;
-					return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
-				}
-			} catch { }
-		}
-
-		console.log(`! Not found: ${reqname}`);
-		texlive404_cache[cacheKey] = 1;
-		return 0;
-	}
-	else if (reqname.endsWith('.tfm')) {
-		const possiblePaths = [
-			`texmf-dist/fonts/tfm/public/cm/${reqname}`,
-			`texmf-dist/fonts/tfm/public/latex-fonts/${reqname}`,
-			`texmf-dist/fonts/tfm/jknappen/${reqname}`,
-		];
-
-		for (const path of possiblePaths) {
-			const xhr = new XMLHttpRequest();
-			xhr.open("GET", path, false);
-			xhr.responseType = "arraybuffer";
-			try {
-				xhr.send();
-				if (xhr.status === 200) {
-					const arraybuffer = xhr.response;
-					const savepath = TEXCACHEROOT + "/" + reqname;
-					FS.writeFile(savepath, new Uint8Array(arraybuffer));
-					texlive200_cache[cacheKey] = savepath;
-					return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
-				}
-			} catch { }
-		}
-
-		console.log(`! Not found: ${reqname}`);
-		texlive404_cache[cacheKey] = 1;
-		return 0;
-	}
-	else if (reqname.endsWith('.pfb')) {
-		// Type 1 font files
-		local_url = `texmf-dist/fonts/type1/public/amsfonts/cm/${reqname}`;
-	}
-	else if (reqname.endsWith('.pk')) {
-		const fontName = reqname.replace('.pk', '');
-		local_url = `texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${fontName}.600pk`;
-	}
-	else if (reqname === 'pdftex.map') {
-		local_url = 'texmf-dist/fonts/map/pdftex/updmap/pdftex.map';
-	}
-	else if (reqname === 'color.sty') {
-		local_url = 'texmf-dist/tex/latex/graphics/color.sty';
-	}
-	else if (reqname === 'pdftex.def') {
-		local_url = 'texmf-dist/tex/latex/graphics-def/pdftex.def';
-	}
-	else if (reqname === "l3backend-pdfmode.def") {
-		local_url = "texmf-dist/tex/latex/l3backend/l3backend-pdfmode.def";
-	}
-	// Now check format codes for files without extensions
 	else if (format === 3) {
 		// Format 3 = TFM font metrics
 		local_url = `texmf-dist/fonts/tfm/public/cm/${reqname}.tfm`;
@@ -470,6 +492,205 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	texlive404_cache[cacheKey] = 1;
 	return 0;
 }
+
+// function kpse_find_file_impl(nameptr, format, _mustexist) {
+// 	const reqname = UTF8ToString(nameptr);
+
+// 	if (reqname.includes("/")) {
+// 		return 0;
+// 	}
+
+// 	const cacheKey = format + "/" + reqname;
+
+// 	if (cacheKey in texlive404_cache) {
+// 		return 0;
+// 	}
+// 	if (cacheKey in texlive200_cache) {
+// 		const savepath = texlive200_cache[cacheKey];
+// 		return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
+// 	}
+
+// 	if (reqname === 'main.aux' || reqname.endsWith('.vf') || reqname.endsWith('.pgc')) {
+// 		texlive404_cache[cacheKey] = 1;
+// 		return 0;
+// 	}
+
+// 	let local_url = "";
+
+// 	// Format codes:
+// 	// 3 = TFM (TeX Font Metrics)
+// 	// 26 = PK (Packed bitmap fonts)
+// 	// 32 = Type 1 fonts (.pfb)
+
+// 	// Check by filename extension first
+// 	if (reqname.endsWith('.fmt')) {
+// 		local_url = reqname;
+// 	}
+// 	else if (reqname.endsWith('.cls') || reqname.endsWith('.clo')) {
+// 		local_url = `texmf-dist/tex/latex/base/${reqname}`;
+// 	}
+// 	else if (reqname.endsWith('.mkii')) {
+// 		// ConTeXt MetaPost support file
+// 		local_url = `texmf-dist/tex/context/base/mkii/${reqname}`;
+// 	}
+// 	else if (reqname === 'hyperref.sty') {
+// 		local_url = 'texmf-dist/tex/latex/hyperref/hyperref.sty';
+// 	}
+// 	else if (reqname === 'ltxcmds.sty') {
+// 		local_url = 'texmf-dist/tex/generic/ltxcmds/ltxcmds.sty';
+// 	}
+// 	else if (reqname === 'iftex.sty') {
+// 		local_url = 'texmf-dist/tex/generic/iftex/iftex.sty';
+// 	}
+// 	else if (reqname === 'pdftexcmds.sty') {
+// 		local_url = 'texmf-dist/tex/latex/pdftexcmds/pdftexcmds.sty';
+// 	}
+// 	else if (reqname === 'infwarerr.sty') {
+// 		local_url = 'texmf-dist/tex/generic/infwarerr/infwarerr.sty';
+// 	}
+// 	else if (reqname.endsWith('.sty')) {
+// 		const possiblePaths = [
+// 			`texmf-dist/tex/latex/base/${reqname}`,
+// 			`texmf-dist/tex/latex/graphics/${reqname}`,
+// 			`texmf-dist/tex/latex/graphics-cfg/${reqname}`,
+// 			`texmf-dist/tex/latex/tools/${reqname}`,
+// 		];
+
+// 		for (const path of possiblePaths) {
+// 			const xhr = new XMLHttpRequest();
+// 			xhr.open("GET", path, false);
+// 			xhr.responseType = "arraybuffer";
+// 			try {
+// 				xhr.send();
+// 				if (xhr.status === 200) {
+// 					const arraybuffer = xhr.response;
+// 					const savepath = TEXCACHEROOT + "/" + reqname;
+// 					FS.writeFile(savepath, new Uint8Array(arraybuffer));
+// 					texlive200_cache[cacheKey] = savepath;
+// 					return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
+// 				}
+// 			} catch { }
+// 		}
+
+// 		console.log(`! Not found: ${reqname}`);
+// 		texlive404_cache[cacheKey] = 1;
+// 		return 0;
+// 	}
+// 	else if (reqname.endsWith('.cfg') || reqname.endsWith('.def')) {
+// 		const possiblePaths = [
+// 			`texmf-dist/tex/latex/graphics-cfg/${reqname}`,
+// 			`texmf-dist/tex/latex/graphics-def/${reqname}`,
+// 			`texmf-dist/tex/latex/l3backend/${reqname}`,
+// 		];
+
+// 		for (const path of possiblePaths) {
+// 			const xhr = new XMLHttpRequest();
+// 			xhr.open("GET", path, false);
+// 			xhr.responseType = "arraybuffer";
+// 			try {
+// 				xhr.send();
+// 				if (xhr.status === 200) {
+// 					const arraybuffer = xhr.response;
+// 					const savepath = TEXCACHEROOT + "/" + reqname;
+// 					FS.writeFile(savepath, new Uint8Array(arraybuffer));
+// 					texlive200_cache[cacheKey] = savepath;
+// 					return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
+// 				}
+// 			} catch { }
+// 		}
+
+// 		console.log(`! Not found: ${reqname}`);
+// 		texlive404_cache[cacheKey] = 1;
+// 		return 0;
+// 	}
+// 	else if (reqname.endsWith('.tfm')) {
+// 		const possiblePaths = [
+// 			`texmf-dist/fonts/tfm/public/cm/${reqname}`,
+// 			`texmf-dist/fonts/tfm/public/latex-fonts/${reqname}`,
+// 			`texmf-dist/fonts/tfm/jknappen/${reqname}`,
+// 		];
+
+// 		for (const path of possiblePaths) {
+// 			const xhr = new XMLHttpRequest();
+// 			xhr.open("GET", path, false);
+// 			xhr.responseType = "arraybuffer";
+// 			try {
+// 				xhr.send();
+// 				if (xhr.status === 200) {
+// 					const arraybuffer = xhr.response;
+// 					const savepath = TEXCACHEROOT + "/" + reqname;
+// 					FS.writeFile(savepath, new Uint8Array(arraybuffer));
+// 					texlive200_cache[cacheKey] = savepath;
+// 					return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
+// 				}
+// 			} catch { }
+// 		}
+
+// 		console.log(`! Not found: ${reqname}`);
+// 		texlive404_cache[cacheKey] = 1;
+// 		return 0;
+// 	}
+// 	else if (reqname.endsWith('.pfb')) {
+// 		// Type 1 font files
+// 		local_url = `texmf-dist/fonts/type1/public/amsfonts/cm/${reqname}`;
+// 	}
+// 	else if (reqname.endsWith('.pk')) {
+// 		const fontName = reqname.replace('.pk', '');
+// 		local_url = `texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${fontName}.600pk`;
+// 	}
+// 	else if (reqname === 'pdftex.map') {
+// 		local_url = 'texmf-dist/fonts/map/pdftex/updmap/pdftex.map';
+// 	}
+// 	else if (reqname === 'color.sty') {
+// 		local_url = 'texmf-dist/tex/latex/graphics/color.sty';
+// 	}
+// 	else if (reqname === 'pdftex.def') {
+// 		local_url = 'texmf-dist/tex/latex/graphics-def/pdftex.def';
+// 	}
+// 	else if (reqname === "l3backend-pdfmode.def") {
+// 		local_url = "texmf-dist/tex/latex/l3backend/l3backend-pdfmode.def";
+// 	}
+// 	// Now check format codes for files without extensions
+// 	else if (format === 3) {
+// 		// Format 3 = TFM font metrics
+// 		local_url = `texmf-dist/fonts/tfm/public/cm/${reqname}.tfm`;
+// 	}
+// 	else if (format === 26) {
+// 		// Format 26 = PK bitmap fonts
+// 		local_url = `texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${reqname}.600pk`;
+// 	}
+// 	else if (format === 32) {
+// 		// Format 32 = Type 1 fonts (.pfb)
+// 		local_url = `texmf-dist/fonts/type1/public/amsfonts/cm/${reqname}.pfb`;
+// 	}
+// 	else {
+// 		console.log(`! Unknown file type: ${reqname} (format: ${format})`);
+// 		texlive404_cache[cacheKey] = 1;
+// 		return 0;
+// 	}
+
+// 	// Load file
+// 	const xhr = new XMLHttpRequest();
+// 	xhr.open("GET", local_url, false);
+// 	xhr.responseType = "arraybuffer";
+
+// 	try {
+// 		xhr.send();
+// 		if (xhr.status === 200) {
+// 			const arraybuffer = xhr.response;
+// 			const savepath = TEXCACHEROOT + "/" + reqname;
+// 			FS.writeFile(savepath, new Uint8Array(arraybuffer));
+// 			texlive200_cache[cacheKey] = savepath;
+// 			return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
+// 		}
+// 	} catch (err) {
+// 		console.log(`! Failed to load: ${local_url} - ${err}`);
+// 	}
+
+// 	console.log(`! Not found: ${local_url}`);
+// 	texlive404_cache[cacheKey] = 1;
+// 	return 0;
+// }
 
 
 // here

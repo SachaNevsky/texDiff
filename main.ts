@@ -1,4 +1,5 @@
-// main.ts - SwiftLaTeX version with texcount
+// ./main.ts
+
 import { WebPerlRunner, LatexDiff, TexCount } from "wasm-latex-tools";
 
 const statusEl = document.getElementById("status") as HTMLSpanElement;
