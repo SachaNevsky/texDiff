@@ -312,6 +312,9 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 		// ConTeXt MetaPost support file
 		local_url = `texmf-dist/tex/context/base/mkii/${reqname}`;
 	}
+	else if (reqname === 'hyperref.sty') {
+		local_url = 'texmf-dist/tex/latex/hyperref/hyperref.sty';
+	}
 	else if (reqname.endsWith('.sty')) {
 		const possiblePaths = [
 			`texmf-dist/tex/latex/base/${reqname}`,
