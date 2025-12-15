@@ -297,7 +297,12 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 
 	let local_url = "";
 
-	// Check by filename first (higher priority than format)
+	// Format codes:
+	// 3 = TFM (TeX Font Metrics)
+	// 26 = PK (Packed bitmap fonts)
+	// 32 = Type 1 fonts (.pfb)
+
+	// Check by filename extension first
 	if (reqname.endsWith('.fmt')) {
 		local_url = reqname;
 	}
@@ -305,8 +310,8 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 		local_url = `texmf-dist/tex/latex/base/${reqname}`;
 	}
 	else if (reqname.endsWith('.mkii')) {
-		// MetaPost/ConTeXt support files
-		local_url = `texmf-dist/tex/generic/context/ppchtex/${reqname}`;
+		// ConTeXt MetaPost support file
+		local_url = `texmf-dist/tex/context/base/mkii/${reqname}`;
 	}
 	else if (reqname.endsWith('.sty')) {
 		const possiblePaths = [
@@ -323,7 +328,7 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 			try {
 				xhr.send();
 				if (xhr.status === 200) {
-					console.log(`✓ Loaded: ${path}`);
+					console.log(`Loaded: ${path}`);
 					const arraybuffer = xhr.response;
 					const savepath = TEXCACHEROOT + "/" + reqname;
 					FS.writeFile(savepath, new Uint8Array(arraybuffer));
@@ -351,7 +356,7 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 			try {
 				xhr.send();
 				if (xhr.status === 200) {
-					console.log(`✓ Loaded: ${path}`);
+					console.log(`Loaded: ${path}`);
 					const arraybuffer = xhr.response;
 					const savepath = TEXCACHEROOT + "/" + reqname;
 					FS.writeFile(savepath, new Uint8Array(arraybuffer));
@@ -368,6 +373,10 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	else if (reqname.endsWith('.tfm')) {
 		local_url = `texmf-dist/fonts/tfm/public/cm/${reqname}`;
 	}
+	else if (reqname.endsWith('.pfb')) {
+		// Type 1 font files
+		local_url = `texmf-dist/fonts/type1/public/amsfonts/cm/${reqname}`;
+	}
 	else if (reqname.endsWith('.pk')) {
 		const fontName = reqname.replace('.pk', '');
 		local_url = `texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${fontName}.600pk`;
@@ -381,14 +390,12 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 		local_url = `texmf-dist/fonts/tfm/public/cm/${reqname}.tfm`;
 	}
 	else if (format === 26) {
-		// Format 26 = PK bitmap fonts (only for font names)
-		if (/^cm[a-z]{2,4}\d+$/.test(reqname)) {
-			local_url = `texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${reqname}.600pk`;
-		} else {
-			console.log(`! Non-font file requested as format 26: ${reqname}`);
-			texlive404_cache[cacheKey] = 1;
-			return 0;
-		}
+		// Format 26 = PK bitmap fonts
+		local_url = `texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${reqname}.600pk`;
+	}
+	else if (format === 32) {
+		// Format 32 = Type 1 fonts (.pfb)
+		local_url = `texmf-dist/fonts/type1/public/amsfonts/cm/${reqname}.pfb`;
 	}
 	else {
 		console.log(`! Unknown file type: ${reqname} (format: ${format})`);
