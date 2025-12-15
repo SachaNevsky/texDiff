@@ -74,12 +74,25 @@ console.log = function (...args: unknown[]) {
     originalConsoleLog.apply(console, args);
 };
 
+const originalConsoleWarn = console.warn;
+console.warn = function (...args: unknown[]) {
+    const message = String(args[0] || '');
+    // Suppress filesystem warnings from Perl runner
+    if (message.includes('Could not create /tmp') ||
+        message.includes('Could not create /home') ||
+        message.includes('Could not create /perl') ||
+        message.includes('mkdir failed')) {
+        return;
+    }
+    originalConsoleWarn.apply(console, args);
+};
+
 // ============================================================================
 // APPLICATION CODE
 // ============================================================================
 
 function setStatus(msg: string) {
-    console.log("> ", msg)
+    // console.log("> ", msg)
     if (statusEl) statusEl.textContent = msg;
 }
 
@@ -104,17 +117,17 @@ function ensureWrapped(content: string): string {
 
 async function runTexCount(content: string): Promise<number> {
     if (!content.trim()) {
-        console.log("runTexCount: empty content");
+        // console.log("runTexCount: empty content");
         return 0;
     }
 
     if (!texCount) {
-        console.log("runTexCount: texCount not initialized yet");
+        // console.log("runTexCount: texCount not initialized yet");
         return 0;
     }
 
     try {
-        console.log("runTexCount: running count on", content.length, "chars");
+        // console.log("runTexCount: running count on", content.length, "chars");
 
         // Wrap content if needed
         const wrappedContent = ensureWrapped(content);
@@ -125,7 +138,7 @@ async function runTexCount(content: string): Promise<number> {
             brief: true
         });
 
-        console.log("runTexCount: raw output:", result.output);
+        // console.log("runTexCount: raw output:", result.output);
 
         // Parse the brief output format manually
         // Brief format is: "words+headers+captions (inline/display/headers/floats) File: filename"
@@ -135,15 +148,15 @@ async function runTexCount(content: string): Promise<number> {
         const briefMatch = result.output.match(/^(\d+)\+(\d+)\+(\d+)/);
         if (briefMatch) {
             wordCount = parseInt(briefMatch[1], 10);
-            console.log("runTexCount: parsed word count from brief format:", wordCount);
+            // console.log("runTexCount: parsed word count from brief format:", wordCount);
         } else {
             // Fallback to parseOutput method
             const parsed = texCount.parseOutput(result.output);
-            console.log("runTexCount: parsed result (fallback):", parsed);
+            // console.log("runTexCount: parsed result (fallback):", parsed);
             wordCount = parsed.words || 0;
         }
 
-        console.log("runTexCount: final word count:", wordCount);
+        // console.log("runTexCount: final word count:", wordCount);
 
         return wordCount;
     } catch (error) {
@@ -154,7 +167,7 @@ async function runTexCount(content: string): Promise<number> {
 
 function updateWordCount(element: HTMLDivElement, count: number) {
     element.textContent = `Words: ${count}`;
-    console.log("Updated word count display to:", count);
+    // console.log("Updated word count display to:", count);
 }
 
 function debouncedCountOld() {
@@ -163,7 +176,7 @@ function debouncedCountOld() {
     }
 
     oldCountTimer = setTimeout(async () => {
-        console.log("Debounced count triggered for old input");
+        // console.log("Debounced count triggered for old input");
         const count = await runTexCount(oldInput.value);
         updateWordCount(oldWordCount, count);
     }, 500);
@@ -175,7 +188,7 @@ function debouncedCountNew() {
     }
 
     newCountTimer = setTimeout(async () => {
-        console.log("Debounced count triggered for new input");
+        // console.log("Debounced count triggered for new input");
         const count = await runTexCount(newInput.value);
         updateWordCount(newWordCount, count);
     }, 500);
@@ -191,7 +204,7 @@ async function initTools() {
         await runner.initialize();
 
         // Initialize TexCount
-        console.log("Initializing TexCount...");
+        // console.log("Initializing TexCount...");
         texCount = new TexCount(runner);
         console.log("TexCount initialized:", texCount);
 
@@ -201,12 +214,12 @@ async function initTools() {
 
         // Initial word counts (trigger immediately for any existing content)
         if (oldInput.value.trim()) {
-            console.log("Counting initial old input");
+            // console.log("Counting initial old input");
             const oldCount = await runTexCount(oldInput.value);
             updateWordCount(oldWordCount, oldCount);
         }
         if (newInput.value.trim()) {
-            console.log("Counting initial new input");
+            // console.log("Counting initial new input");
             const newCount = await runTexCount(newInput.value);
             updateWordCount(newWordCount, newCount);
         }
@@ -241,7 +254,7 @@ function waitForSwiftLaTeX(): Promise<void> {
 
         const checkSwiftLaTeX = () => {
             if (window.PdfTeXEngine) {
-                console.log("SwiftLaTeX is ready!");
+                // console.log("SwiftLaTeX is ready!");
                 resolve();
             } else if (attempts >= maxAttempts) {
                 reject(new Error("SwiftLaTeX failed to load. Make sure PdfTeXEngine.js is loaded."));
@@ -310,8 +323,8 @@ async function compilePdf(diffTex: string): Promise<Blob> {
         latestDiffTex = cleanedTex;
         downloadTexBtn.style.display = 'inline-block';
 
-        console.log("Starting SwiftLaTeX compilation...");
-        console.log("LaTeX length:", cleanedTex.length, "characters");
+        // console.log("Starting SwiftLaTeX compilation...");
+        // console.log("LaTeX length:", cleanedTex.length, "characters");
 
         const engine = pdfEngine as SwiftLaTeXEngine;
 
@@ -321,7 +334,7 @@ async function compilePdf(diffTex: string): Promise<Blob> {
         // Compile the LaTeX document
         const result = await engine.compileLaTeX();
 
-        console.log("Compilation result:", result);
+        // console.log("Compilation result:", result);
 
         if (result.status !== 0) {
             console.error("Compilation failed with status:", result.status);
@@ -395,7 +408,11 @@ async function generateDiffPdf() {
             type: "UNDERLINE",
             flatten: true,
             oldContent: oldWrapped,
-            input: newWrapped
+            input: newWrapped,
+            excludeTextcmd: "cite,citet,citep,citealt,citealp,citeauthor,citeyear,citeyearpar,Cite,Citet,Citep,Citealt,Citealp,ref,autoref,eqref,figref,tabref,pageref,nameref,hyperref,cref,Cref,vref,Vref,labelcref,labelcpageref",
+            excludeSafecmd: "label,hypertarget,hyperlink",
+            appendSafecmd: "includegraphics,caption",
+            appendTextcmd: "caption"
         });
 
         setStatus("Compiling PDF with SwiftLaTeX...");

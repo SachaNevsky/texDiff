@@ -417,8 +417,15 @@ console.log = function(...args) {
   }
   originalConsoleLog.apply(console, args);
 };
+var originalConsoleWarn = console.warn;
+console.warn = function(...args) {
+  const message = String(args[0] || "");
+  if (message.includes("Could not create /tmp") || message.includes("Could not create /home") || message.includes("Could not create /perl") || message.includes("mkdir failed")) {
+    return;
+  }
+  originalConsoleWarn.apply(console, args);
+};
 function setStatus(msg) {
-  console.log("> ", msg);
   if (statusEl) statusEl.textContent = msg;
 }
 function ensureWrapped(content) {
@@ -436,32 +443,25 @@ function ensureWrapped(content) {
 }
 async function runTexCount(content) {
   if (!content.trim()) {
-    console.log("runTexCount: empty content");
     return 0;
   }
   if (!texCount) {
-    console.log("runTexCount: texCount not initialized yet");
     return 0;
   }
   try {
-    console.log("runTexCount: running count on", content.length, "chars");
     const wrappedContent = ensureWrapped(content);
     const result = await texCount.count({
       input: wrappedContent,
       brief: true
     });
-    console.log("runTexCount: raw output:", result.output);
     let wordCount = 0;
     const briefMatch = result.output.match(/^(\d+)\+(\d+)\+(\d+)/);
     if (briefMatch) {
       wordCount = parseInt(briefMatch[1], 10);
-      console.log("runTexCount: parsed word count from brief format:", wordCount);
     } else {
       const parsed = texCount.parseOutput(result.output);
-      console.log("runTexCount: parsed result (fallback):", parsed);
       wordCount = parsed.words || 0;
     }
-    console.log("runTexCount: final word count:", wordCount);
     return wordCount;
   } catch (error) {
     console.error("Error running texcount:", error);
@@ -470,14 +470,12 @@ async function runTexCount(content) {
 }
 function updateWordCount(element, count) {
   element.textContent = `Words: ${count}`;
-  console.log("Updated word count display to:", count);
 }
 function debouncedCountOld() {
   if (oldCountTimer) {
     clearTimeout(oldCountTimer);
   }
   oldCountTimer = setTimeout(async () => {
-    console.log("Debounced count triggered for old input");
     const count = await runTexCount(oldInput.value);
     updateWordCount(oldWordCount, count);
   }, 500);
@@ -487,7 +485,6 @@ function debouncedCountNew() {
     clearTimeout(newCountTimer);
   }
   newCountTimer = setTimeout(async () => {
-    console.log("Debounced count triggered for new input");
     const count = await runTexCount(newInput.value);
     updateWordCount(newWordCount, count);
   }, 500);
@@ -496,19 +493,16 @@ async function initTools() {
   try {
     setStatus("Loading diff tools...");
     await runner.initialize();
-    console.log("Initializing TexCount...");
     texCount = new TexCount(runner);
     console.log("TexCount initialized:", texCount);
     setStatus("Initializing SwiftLaTeX...");
     await initSwiftLaTeX();
     setStatus("Ready.");
     if (oldInput.value.trim()) {
-      console.log("Counting initial old input");
       const oldCount = await runTexCount(oldInput.value);
       updateWordCount(oldWordCount, oldCount);
     }
     if (newInput.value.trim()) {
-      console.log("Counting initial new input");
       const newCount = await runTexCount(newInput.value);
       updateWordCount(newWordCount, newCount);
     }
@@ -534,7 +528,6 @@ function waitForSwiftLaTeX() {
     const maxAttempts = 100;
     const checkSwiftLaTeX = () => {
       if (window.PdfTeXEngine) {
-        console.log("SwiftLaTeX is ready!");
         resolve();
       } else if (attempts >= maxAttempts) {
         reject(new Error("SwiftLaTeX failed to load. Make sure PdfTeXEngine.js is loaded."));
@@ -578,12 +571,9 @@ async function compilePdf(diffTex) {
     const cleanedTex = cleanDiffTeX(diffTex);
     latestDiffTex = cleanedTex;
     downloadTexBtn.style.display = "inline-block";
-    console.log("Starting SwiftLaTeX compilation...");
-    console.log("LaTeX length:", cleanedTex.length, "characters");
     const engine = pdfEngine;
     engine.writeMemFSFile("main.tex", cleanedTex);
     const result = await engine.compileLaTeX();
-    console.log("Compilation result:", result);
     if (result.status !== 0) {
       console.error("Compilation failed with status:", result.status);
       if (result.log) {
@@ -643,7 +633,11 @@ async function generateDiffPdf() {
       type: "UNDERLINE",
       flatten: true,
       oldContent: oldWrapped,
-      input: newWrapped
+      input: newWrapped,
+      excludeTextcmd: "cite,citet,citep,citealt,citealp,citeauthor,citeyear,citeyearpar,Cite,Citet,Citep,Citealt,Citealp,ref,autoref,eqref,figref,tabref,pageref,nameref,hyperref,cref,Cref,vref,Vref,labelcref,labelcpageref",
+      excludeSafecmd: "label,hypertarget,hyperlink",
+      appendSafecmd: "includegraphics,caption",
+      appendTextcmd: "caption"
     });
     setStatus("Compiling PDF with SwiftLaTeX...");
     const pdfBlob = await compilePdf(diff.output);
