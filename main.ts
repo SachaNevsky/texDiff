@@ -122,7 +122,7 @@ function updateWordCount(element: HTMLDivElement, count: number) {
     element.textContent = `Words: ${count}`;
 }
 
-async function debouncedCountOld() {
+function debouncedCountOld() {
     if (oldCountTimer) {
         clearTimeout(oldCountTimer);
     }
@@ -133,7 +133,7 @@ async function debouncedCountOld() {
     }, 500);
 }
 
-async function debouncedCountNew() {
+function debouncedCountNew() {
     if (newCountTimer) {
         clearTimeout(newCountTimer);
     }
@@ -160,9 +160,15 @@ async function initTools() {
         await initSwiftLaTeX();
         setStatus("Ready.");
 
-        // Initial word counts
-        debouncedCountOld();
-        debouncedCountNew();
+        // Initial word counts (trigger immediately for any existing content)
+        if (oldInput.value.trim()) {
+            const oldCount = await runTexCount(oldInput.value);
+            updateWordCount(oldWordCount, oldCount);
+        }
+        if (newInput.value.trim()) {
+            const newCount = await runTexCount(newInput.value);
+            updateWordCount(newWordCount, newCount);
+        }
     } catch (e) {
         console.error(e);
         setStatus("Failed to initialize tools.");
@@ -221,6 +227,31 @@ function cleanDiffTeX(diffTex: string): string {
     // Remove problematic font packages if they exist
     cleaned = cleaned.replace(/\\usepackage\[T1\]\{fontenc\}/g, '');
     cleaned = cleaned.replace(/\\usepackage\{lmodern\}/g, '');
+
+    // Add hyperref package if \href is used and hyperref is not already included
+    if (/\\href\{/.test(cleaned) && !/\\usepackage.*\{hyperref\}/.test(cleaned)) {
+        // Find the last \usepackage line and insert hyperref after it
+        const lastUsepackage = cleaned.lastIndexOf('\\usepackage');
+        if (lastUsepackage !== -1) {
+            const nextNewline = cleaned.indexOf('\n', lastUsepackage);
+            if (nextNewline !== -1) {
+                cleaned = cleaned.slice(0, nextNewline + 1) +
+                    '\\usepackage{hyperref}\n' +
+                    cleaned.slice(nextNewline + 1);
+            }
+        } else {
+            // If no usepackage found, add after documentclass
+            const docClass = cleaned.indexOf('\\documentclass');
+            if (docClass !== -1) {
+                const nextNewline = cleaned.indexOf('\n', docClass);
+                if (nextNewline !== -1) {
+                    cleaned = cleaned.slice(0, nextNewline + 1) +
+                        '\\usepackage{hyperref}\n' +
+                        cleaned.slice(nextNewline + 1);
+                }
+            }
+        }
+    }
 
     return cleaned;
 }

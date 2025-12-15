@@ -454,7 +454,7 @@ async function runTexCount(content) {
 function updateWordCount(element, count) {
   element.textContent = `Words: ${count}`;
 }
-async function debouncedCountOld() {
+function debouncedCountOld() {
   if (oldCountTimer) {
     clearTimeout(oldCountTimer);
   }
@@ -463,7 +463,7 @@ async function debouncedCountOld() {
     updateWordCount(oldWordCount, count);
   }, 500);
 }
-async function debouncedCountNew() {
+function debouncedCountNew() {
   if (newCountTimer) {
     clearTimeout(newCountTimer);
   }
@@ -480,8 +480,14 @@ async function initTools() {
     setStatus("Initializing SwiftLaTeX...");
     await initSwiftLaTeX();
     setStatus("Ready.");
-    debouncedCountOld();
-    debouncedCountNew();
+    if (oldInput.value.trim()) {
+      const oldCount = await runTexCount(oldInput.value);
+      updateWordCount(oldWordCount, oldCount);
+    }
+    if (newInput.value.trim()) {
+      const newCount = await runTexCount(newInput.value);
+      updateWordCount(newWordCount, newCount);
+    }
   } catch (e) {
     console.error(e);
     setStatus("Failed to initialize tools.");
@@ -521,6 +527,23 @@ function cleanDiffTeX(diffTex) {
   cleaned = cleaned.replace(/\\RequirePackage\{color\}/g, "\\usepackage{color}");
   cleaned = cleaned.replace(/\\usepackage\[T1\]\{fontenc\}/g, "");
   cleaned = cleaned.replace(/\\usepackage\{lmodern\}/g, "");
+  if (/\\href\{/.test(cleaned) && !/\\usepackage.*\{hyperref\}/.test(cleaned)) {
+    const lastUsepackage = cleaned.lastIndexOf("\\usepackage");
+    if (lastUsepackage !== -1) {
+      const nextNewline = cleaned.indexOf("\n", lastUsepackage);
+      if (nextNewline !== -1) {
+        cleaned = cleaned.slice(0, nextNewline + 1) + "\\usepackage{hyperref}\n" + cleaned.slice(nextNewline + 1);
+      }
+    } else {
+      const docClass = cleaned.indexOf("\\documentclass");
+      if (docClass !== -1) {
+        const nextNewline = cleaned.indexOf("\n", docClass);
+        if (nextNewline !== -1) {
+          cleaned = cleaned.slice(0, nextNewline + 1) + "\\usepackage{hyperref}\n" + cleaned.slice(nextNewline + 1);
+        }
+      }
+    }
+  }
   return cleaned;
 }
 async function compilePdf(diffTex) {
