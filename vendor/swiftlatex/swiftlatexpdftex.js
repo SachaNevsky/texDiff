@@ -370,11 +370,31 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 		texlive404_cache[cacheKey] = 1;
 		return 0;
 	}
-	else if (reqname === "lasy6.tfm") {
-		local_url = `texmf-dist/fonts/tfm/public/latex-fonts/${reqname}`;
-	}
 	else if (reqname.endsWith('.tfm')) {
-		local_url = `texmf-dist/fonts/tfm/public/cm/${reqname}`;
+		const possiblePaths = [
+			`texmf-dist/fonts/tfm/public/cm/${reqname}`,
+			`texmf-dist/fonts/tfm/public/latex-fonts/${reqname}`,
+		];
+
+		for (const path of possiblePaths) {
+			const xhr = new XMLHttpRequest();
+			xhr.open("GET", path, false);
+			xhr.responseType = "arraybuffer";
+			try {
+				xhr.send();
+				if (xhr.status === 200) {
+					const arraybuffer = xhr.response;
+					const savepath = TEXCACHEROOT + "/" + reqname;
+					FS.writeFile(savepath, new Uint8Array(arraybuffer));
+					texlive200_cache[cacheKey] = savepath;
+					return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
+				}
+			} catch { }
+		}
+
+		console.log(`! Not found: ${reqname}`);
+		texlive404_cache[cacheKey] = 1;
+		return 0;
 	}
 	else if (reqname.endsWith('.pfb')) {
 		// Type 1 font files
