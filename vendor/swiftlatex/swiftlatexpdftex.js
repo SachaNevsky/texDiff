@@ -290,7 +290,6 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	}
 
 	if (reqname === 'main.aux' || reqname.endsWith('.vf') || reqname.endsWith('.pgc')) {
-		// console.log(`Skipping: ${reqname}`);
 		texlive404_cache[cacheKey] = 1;
 		return 0;
 	}
@@ -328,7 +327,6 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 			try {
 				xhr.send();
 				if (xhr.status === 200) {
-					// console.log(`Loaded: ${path}`);
 					const arraybuffer = xhr.response;
 					const savepath = TEXCACHEROOT + "/" + reqname;
 					FS.writeFile(savepath, new Uint8Array(arraybuffer));
@@ -356,7 +354,6 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 			try {
 				xhr.send();
 				if (xhr.status === 200) {
-					// console.log(`Loaded: ${path}`);
 					const arraybuffer = xhr.response;
 					const savepath = TEXCACHEROOT + "/" + reqname;
 					FS.writeFile(savepath, new Uint8Array(arraybuffer));
@@ -439,12 +436,10 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	const xhr = new XMLHttpRequest();
 	xhr.open("GET", local_url, false);
 	xhr.responseType = "arraybuffer";
-	console.log(`Loading: ${local_url}`);
 
 	try {
 		xhr.send();
 		if (xhr.status === 200) {
-			console.log(`Loaded: ${local_url}`);
 			const arraybuffer = xhr.response;
 			const savepath = TEXCACHEROOT + "/" + reqname;
 			FS.writeFile(savepath, new Uint8Array(arraybuffer));
