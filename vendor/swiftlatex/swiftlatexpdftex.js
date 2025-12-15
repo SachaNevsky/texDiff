@@ -373,6 +373,7 @@ function findInLsR(filename) {
 	return `texmf-dist/${paths[0]}`;
 }
 
+// Replace the existing kpse_find_file_impl function
 function kpse_find_file_impl(nameptr, format, _mustexist) {
 	const reqname = UTF8ToString(nameptr);
 
@@ -401,7 +402,7 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 		try {
 			// Load synchronously on first use
 			const xhr = new XMLHttpRequest();
-			xhr.open("GET", "./vendor/swiftlatex/texmf-dist/ls-R", false);
+			xhr.open("GET", "vendor/swiftlatex/texmf-dist/ls-R", false);
 			xhr.responseType = "text";
 			xhr.send();
 
@@ -446,26 +447,26 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	// First, try to find in ls-R database
 	const lsrPath = findInLsR(reqname);
 	if (lsrPath) {
-		local_url = lsrPath;
+		local_url = `vendor/swiftlatex/${lsrPath}`;
 	}
-	// Fallback to format-based guessing if not in ls-R
+	// Fallback to format-based guessing if not in ls-R (only for files without extensions)
 	else if (reqname.endsWith('.fmt')) {
-		local_url = reqname;
+		local_url = `vendor/swiftlatex/${reqname}`;
 	}
-	else if (format === 3) {
-		// Format 3 = TFM font metrics
-		local_url = `texmf-dist/fonts/tfm/public/cm/${reqname}.tfm`;
+	else if (format === 3 && !reqname.includes('.')) {
+		// Format 3 = TFM font metrics (only if no extension)
+		local_url = `vendor/swiftlatex/texmf-dist/fonts/tfm/public/cm/${reqname}.tfm`;
 	}
-	else if (format === 26) {
-		// Format 26 = PK bitmap fonts
-		local_url = `texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${reqname}.600pk`;
+	else if (format === 26 && !reqname.includes('.')) {
+		// Format 26 = PK bitmap fonts (only if no extension)
+		local_url = `vendor/swiftlatex/texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${reqname}.600pk`;
 	}
-	else if (format === 32) {
-		// Format 32 = Type 1 fonts (.pfb)
-		local_url = `texmf-dist/fonts/type1/public/amsfonts/cm/${reqname}.pfb`;
+	else if (format === 32 && !reqname.includes('.')) {
+		// Format 32 = Type 1 fonts (.pfb) (only if no extension)
+		local_url = `vendor/swiftlatex/texmf-dist/fonts/type1/public/amsfonts/cm/${reqname}.pfb`;
 	}
 	else {
-		console.log(`! Unknown file type: ${reqname} (format: ${format})`);
+		console.log(`! File not found in ls-R database: ${reqname} (format: ${format})`);
 		texlive404_cache[cacheKey] = 1;
 		return 0;
 	}
