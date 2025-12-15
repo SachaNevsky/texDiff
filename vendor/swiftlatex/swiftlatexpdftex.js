@@ -448,6 +448,7 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	if (lsrPath) {
 		// lsrPath already includes 'texmf-dist/', so just prepend the vendor path
 		local_url = `vendor/swiftlatex/${lsrPath}`;
+		console.log("lsrPath:", lsrPath)
 	}
 	// Fallback to format-based guessing if not in ls-R (only for files without extensions)
 	else if (reqname === "swiftlatexpdftex.fmt") {
