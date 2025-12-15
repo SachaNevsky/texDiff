@@ -445,7 +445,6 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 
 	// First, try to find in ls-R database
 	const lsrPath = findInLsR(reqname);
-	console.log("lsrPath:", lsrPath, "\nreqname:", reqname);
 	if (lsrPath) {
 		local_url = `${lsrPath}`;
 	}

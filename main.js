@@ -556,7 +556,7 @@ function cleanDiffTeX(diffTex) {
       if (docClass !== -1) {
         const nextNewline = cleaned.indexOf("\n", docClass);
         if (nextNewline !== -1) {
-          cleaned = cleaned.slice(0, nextNewline + 1) + "\\usepackage{hyperref}\n" + cleaned.slice(nextNewline + 1);
+          cleaned = cleaned.slice(0, nextNewline + 1) + "\\PassOptionsToPackage{pdftex}{hyperref}\n\\usepackage{hyperref}\n" + cleaned.slice(nextNewline + 1);
         }
       }
     }

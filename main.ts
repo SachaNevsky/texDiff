@@ -301,7 +301,7 @@ function cleanDiffTeX(diffTex: string): string {
                 const nextNewline = cleaned.indexOf('\n', docClass);
                 if (nextNewline !== -1) {
                     cleaned = cleaned.slice(0, nextNewline + 1) +
-                        '\\usepackage{hyperref}\n' +
+                        '\\PassOptionsToPackage{pdftex}{hyperref}\n\\usepackage{hyperref}\n' +
                         cleaned.slice(nextNewline + 1);
                 }
             }
