@@ -474,11 +474,15 @@ async function generateDiffPdf() {
     const oldWrapped = ensureWrapped(oldText);
     const newWrapped = ensureWrapped(newText);
     const diff = await diffTool.diff(oldWrapped, newWrapped, {
-      type: "CFONT",
+      type: "UNDERLINE",
       flatten: true,
       oldContent: oldWrapped,
       input: newWrapped
     });
+    let modifiedDiff = diff.output.replace(
+      /\\providecommand\{\\DIFdel\}\[1\]\{\{\\protect\\color\{red\}\s*\\scriptsize\s*#1\}\}\s*%DIF PREAMBLE/g,
+      "\\providecommand{\\DIFdel}[1]{{\\protect\\color{red}\\sout{#1}}} %DIF PREAMBLE"
+    );
     setStatus("Compiling PDF with SwiftLaTeX...");
     const pdfBlob = await compilePdf(diff.output);
     if (currentPdfBlobUrl) {

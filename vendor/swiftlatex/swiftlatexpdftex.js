@@ -290,7 +290,7 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	}
 
 	if (reqname === 'main.aux' || reqname.endsWith('.vf') || reqname.endsWith('.pgc')) {
-		console.log(`Skipping: ${reqname}`);
+		// console.log(`Skipping: ${reqname}`);
 		texlive404_cache[cacheKey] = 1;
 		return 0;
 	}
@@ -328,7 +328,7 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 			try {
 				xhr.send();
 				if (xhr.status === 200) {
-					console.log(`Loaded: ${path}`);
+					// console.log(`Loaded: ${path}`);
 					const arraybuffer = xhr.response;
 					const savepath = TEXCACHEROOT + "/" + reqname;
 					FS.writeFile(savepath, new Uint8Array(arraybuffer));
@@ -356,7 +356,7 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 			try {
 				xhr.send();
 				if (xhr.status === 200) {
-					console.log(`Loaded: ${path}`);
+					// console.log(`Loaded: ${path}`);
 					const arraybuffer = xhr.response;
 					const savepath = TEXCACHEROOT + "/" + reqname;
 					FS.writeFile(savepath, new Uint8Array(arraybuffer));
@@ -383,6 +383,15 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	}
 	else if (reqname === 'pdftex.map') {
 		local_url = 'texmf-dist/fonts/map/pdftex/updmap/pdftex.map';
+	}
+	else if (reqname === 'color.sty') {
+		local_url = 'texmf-dist/tex/latex/graphics/color.sty';
+	}
+	else if (reqname === 'pdftex.def') {
+		local_url = 'texmf-dist/tex/latex/graphics-def/pdftex.def';
+	}
+	else if (reqname === "l3backend-pdfmode.def") {
+		local_url = "texmf-dist/tex/latex/l3backend/l3backend-pdfmode.def";
 	}
 	// Now check format codes for files without extensions
 	else if (format === 3) {
