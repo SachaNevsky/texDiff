@@ -293,32 +293,30 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 
 	// Skip generated/optional files
 	if (reqname === 'main.aux' || reqname.endsWith('.vf') || reqname.endsWith('.pgc')) {
+		console.log(`Skipping: ${reqname}`);
 		texlive404_cache[cacheKey] = 1;
 		return 0;
 	}
 
-	// Map to texmf-dist structure
+	// Determine local file path based on file extension FIRST
 	let local_url = "";
 
-	if (reqname.endsWith('.tfm')) {
-		local_url = `texmf-dist/fonts/tfm/public/cm/${reqname}`;
-	}
-	else if (reqname.endsWith('.pk') || format === 26) {  // format 26 = PK fonts
-		const fontName = reqname.replace('.pk', '');
-		local_url = `texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${fontName}.600pk`;
-	}
-	else if (reqname === 'pdftex.map') {
-		local_url = 'texmf-dist/fonts/map/pdftex/updmap/pdftex.map';
+	// Check file extension explicitly (order matters!)
+	if (reqname.endsWith('.fmt')) {
+		// Format files stay in root
+		local_url = reqname;
 	}
 	else if (reqname.endsWith('.cls') || reqname.endsWith('.clo')) {
+		// LaTeX class files
 		local_url = `texmf-dist/tex/latex/base/${reqname}`;
 	}
 	else if (reqname.endsWith('.sty')) {
-		// Try multiple common locations
+		// Style files - try multiple locations
 		const possiblePaths = [
 			`texmf-dist/tex/latex/base/${reqname}`,
 			`texmf-dist/tex/latex/graphics/${reqname}`,
 			`texmf-dist/tex/latex/graphics-cfg/${reqname}`,
+			`texmf-dist/tex/latex/tools/${reqname}`,
 		];
 
 		for (const path of possiblePaths) {
@@ -328,6 +326,7 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 			try {
 				xhr.send();
 				if (xhr.status === 200) {
+					console.log(`✓ Loaded: ${path}`);
 					const arraybuffer = xhr.response;
 					const savepath = TEXCACHEROOT + "/" + reqname;
 					FS.writeFile(savepath, new Uint8Array(arraybuffer));
@@ -337,10 +336,12 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 			} catch { }
 		}
 
+		console.log(`✗ Not found: ${reqname}`);
 		texlive404_cache[cacheKey] = 1;
 		return 0;
 	}
 	else if (reqname.endsWith('.cfg') || reqname.endsWith('.def')) {
+		// Config/definition files
 		const possiblePaths = [
 			`texmf-dist/tex/latex/graphics-cfg/${reqname}`,
 			`texmf-dist/tex/latex/graphics-def/${reqname}`,
@@ -354,6 +355,7 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 			try {
 				xhr.send();
 				if (xhr.status === 200) {
+					console.log(`✓ Loaded: ${path}`);
 					const arraybuffer = xhr.response;
 					const savepath = TEXCACHEROOT + "/" + reqname;
 					FS.writeFile(savepath, new Uint8Array(arraybuffer));
@@ -363,29 +365,53 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 			} catch { }
 		}
 
+		console.log(`✗ Not found: ${reqname}`);
 		texlive404_cache[cacheKey] = 1;
 		return 0;
+	}
+	else if (reqname.endsWith('.tfm')) {
+		// TFM font metric files
+		local_url = `texmf-dist/fonts/tfm/public/cm/${reqname}`;
+	}
+	else if (reqname.endsWith('.pk')) {
+		// PK bitmap font files (with explicit .pk extension)
+		const fontName = reqname.replace('.pk', '');
+		local_url = `texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${fontName}.600pk`;
+	}
+	else if (format === 26) {
+		// PK fonts requested without extension (format 26 = PK bitmap fonts)
+		// Only treat as PK if it looks like a font name (cmr10, cmss10, etc.)
+		if (/^cm[a-z]{2,4}\d+$/.test(reqname)) {
+			local_url = `texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${reqname}.600pk`;
+		} else {
+			console.log(`✗ Unknown format 26 file: ${reqname}`);
+			texlive404_cache[cacheKey] = 1;
+			return 0;
+		}
+	}
+	else if (reqname === 'pdftex.map') {
+		local_url = 'texmf-dist/fonts/map/pdftex/updmap/pdftex.map';
 	}
 	else if (reqname === 'supp-pdf.mkii') {
 		local_url = 'texmf-dist/tex/generic/context/ppchtex/supp-pdf.mkii';
 	}
-	else if (reqname.endsWith('.fmt')) {
-		local_url = reqname;  // Format files in root
-	}
 	else {
 		// Unknown file type
+		console.log(`✗ Unknown file type: ${reqname} (format: ${format})`);
 		texlive404_cache[cacheKey] = 1;
 		return 0;
 	}
 
-	// Load file
+	// Load single file
 	const xhr = new XMLHttpRequest();
 	xhr.open("GET", local_url, false);
 	xhr.responseType = "arraybuffer";
+	console.log(`Loading: ${local_url}`);
 
 	try {
 		xhr.send();
 		if (xhr.status === 200) {
+			console.log(`✓ Loaded: ${local_url}`);
 			const arraybuffer = xhr.response;
 			const savepath = TEXCACHEROOT + "/" + reqname;
 			FS.writeFile(savepath, new Uint8Array(arraybuffer));
@@ -393,13 +419,15 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 			return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
 		}
 	} catch (err) {
-		console.log(`Failed to load: ${local_url}`);
+		console.log(`✗ Failed to load: ${local_url} - ${err}`);
 	}
 
 	texlive404_cache[cacheKey] = 1;
 	return 0;
 }
 
+
+// here
 let pk404_cache = {};
 let pk200_cache = {};
 function kpse_find_pk_impl(nameptr, dpi) {
