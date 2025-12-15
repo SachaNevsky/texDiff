@@ -1,5 +1,5 @@
-// main.ts - SwiftLaTeX version
-import { WebPerlRunner, LatexDiff } from "wasm-latex-tools";
+// main.ts - SwiftLaTeX version with texcount
+import { WebPerlRunner, LatexDiff, TexCount } from "wasm-latex-tools";
 
 const statusEl = document.getElementById("status") as HTMLSpanElement;
 const oldInput = document.getElementById("oldInput") as HTMLTextAreaElement;
@@ -8,6 +8,8 @@ const diffBtn = document.getElementById("diffBtn") as HTMLButtonElement;
 const downloadTexBtn = document.getElementById("downloadTexBtn") as HTMLButtonElement;
 const pdfContainer = document.getElementById("pdfContainer") as HTMLDivElement;
 const pdfViewer = document.getElementById("pdfViewer") as HTMLIFrameElement;
+const oldWordCount = document.getElementById("oldWordCount") as HTMLDivElement;
+const newWordCount = document.getElementById("newWordCount") as HTMLDivElement;
 
 const runner = new WebPerlRunner({
     webperlBasePath: './vendor/wasm-latex-tools/webperl',
@@ -15,9 +17,14 @@ const runner = new WebPerlRunner({
 });
 
 let pdfEngine: any = null;
+let texCount: TexCount | null = null;
 
 let latestDiffTex: string = '';
 let currentPdfBlobUrl: string | null = null;
+
+// Debounce timer for word counting
+let oldCountTimer: ReturnType<typeof setTimeout> | null = null;
+let newCountTimer: ReturnType<typeof setTimeout> | null = null;
 
 // ============================================================================
 // SwiftLaTeX Type Definitions
@@ -81,13 +88,81 @@ function ensureWrapped(content: string): string {
     ].join("\n");
 }
 
+// ============================================================================
+// TEXCOUNT FUNCTIONALITY
+// ============================================================================
+
+async function runTexCount(content: string): Promise<number> {
+    if (!content.trim() || !texCount) {
+        return 0;
+    }
+
+    try {
+        // Wrap content if needed
+        const wrappedContent = ensureWrapped(content);
+
+        // Run texcount with brief output
+        const result = await texCount.count({
+            input: wrappedContent,
+            brief: true
+        });
+
+        // Parse the output using the parseOutput method
+        const parsed = texCount.parseOutput(result.output);
+
+        // Return the word count
+        return parsed.words || 0;
+    } catch (error) {
+        console.error('Error running texcount:', error);
+        return 0;
+    }
+}
+
+function updateWordCount(element: HTMLDivElement, count: number) {
+    element.textContent = `Words: ${count}`;
+}
+
+async function debouncedCountOld() {
+    if (oldCountTimer) {
+        clearTimeout(oldCountTimer);
+    }
+
+    oldCountTimer = setTimeout(async () => {
+        const count = await runTexCount(oldInput.value);
+        updateWordCount(oldWordCount, count);
+    }, 500);
+}
+
+async function debouncedCountNew() {
+    if (newCountTimer) {
+        clearTimeout(newCountTimer);
+    }
+
+    newCountTimer = setTimeout(async () => {
+        const count = await runTexCount(newInput.value);
+        updateWordCount(newWordCount, count);
+    }, 500);
+}
+
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
+
 async function initTools() {
     try {
         setStatus("Loading diff tools...");
         await runner.initialize();
+
+        // Initialize TexCount
+        texCount = new TexCount(runner);
+
         setStatus("Initializing SwiftLaTeX...");
         await initSwiftLaTeX();
         setStatus("Ready.");
+
+        // Initial word counts
+        debouncedCountOld();
+        debouncedCountNew();
     } catch (e) {
         console.error(e);
         setStatus("Failed to initialize tools.");
@@ -118,7 +193,7 @@ function waitForSwiftLaTeX(): Promise<void> {
         const maxAttempts = 100;
 
         const checkSwiftLaTeX = () => {
-            if (window.PdfTeXEngine) {  // Changed from PDFTeXEngine
+            if (window.PdfTeXEngine) {
                 console.log("SwiftLaTeX is ready!");
                 resolve();
             } else if (attempts >= maxAttempts) {
@@ -132,6 +207,10 @@ function waitForSwiftLaTeX(): Promise<void> {
         checkSwiftLaTeX();
     });
 }
+
+// ============================================================================
+// PDF GENERATION
+// ============================================================================
 
 function cleanDiffTeX(diffTex: string): string {
     let cleaned = diffTex;
@@ -179,7 +258,6 @@ async function compilePdf(diffTex: string): Promise<Blob> {
         }
 
         // Read the generated PDF from memory filesystem
-        // const pdfData = pdfEngine.readMemFSFile("main.pdf");
         const pdfData = result.pdf;
 
         if (!pdfData || pdfData.length === 0) {
@@ -266,6 +344,10 @@ async function generateDiffPdf() {
     }
 }
 
+// ============================================================================
+// EVENT LISTENERS
+// ============================================================================
+
 let isInitializing = false;
 let isInitialized = false;
 
@@ -294,6 +376,10 @@ downloadTexBtn.addEventListener("click", () => {
         setStatus("No diff available. Generate a diff first.");
     }
 });
+
+// Add input event listeners for live word counting
+oldInput.addEventListener("input", debouncedCountOld);
+newInput.addEventListener("input", debouncedCountNew);
 
 // Initialize on page load
 safeInit();

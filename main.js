@@ -248,6 +248,77 @@ var BaseTool = class {
     return this.runner.runScript(args, inputs, outputs);
   }
 };
+var TexCount = class extends BaseTool {
+  getScriptPath() {
+    return "/texcount.pl";
+  }
+  getDependencyPaths() {
+    return [];
+  }
+  async count(options) {
+    return this.executeScriptWithWorkDir(options);
+  }
+  async executeScriptWithWorkDir(options) {
+    await this.ensureLoaded();
+    const t = Date.now();
+    const workDir = `/tmp/work_${t}`;
+    const inputPath = `${workDir}/main.tex`;
+    const outputPath = `/tmp/output_${t}.tex`;
+    const args = this.buildArguments("main.tex", "", outputPath, options);
+    const inputs = [
+      ...this.preloadedFiles,
+      { fn: inputPath, text: options.input }
+    ];
+    if (options.additionalFiles) {
+      for (const file of options.additionalFiles) {
+        const fullPath = `${workDir}/${file.path}`;
+        inputs.push({ fn: fullPath, text: file.content });
+      }
+    }
+    const outputs = [outputPath];
+    return this.runner.runScript(args, inputs, outputs, workDir);
+  }
+  buildArguments(inputPath, newPath, outputPath, options) {
+    const texOptions = options;
+    const scriptPath = this.getScriptPath();
+    const args = [scriptPath];
+    if (texOptions.brief)
+      args.push("-brief");
+    if (texOptions.total)
+      args.push("-total");
+    if (texOptions.sum)
+      args.push("-sum");
+    if (texOptions.verbose !== void 0)
+      args.push(`-v${texOptions.verbose}`);
+    if (texOptions.includeFiles)
+      args.push("-inc");
+    if (texOptions.merge)
+      args.push("-merge");
+    if (texOptions.args)
+      args.push(...texOptions.args);
+    args.push(inputPath);
+    return args;
+  }
+  parseOutput(output) {
+    const lines = output.trim().split("\n");
+    const result = {
+      words: 0,
+      headers: 0,
+      captions: 0,
+      raw: output
+    };
+    for (const line of lines) {
+      if (line.includes("Words in text:")) {
+        result.words = parseInt(line.split(":")[1].trim(), 10) || 0;
+      } else if (line.includes("Words in headers:")) {
+        result.headers = parseInt(line.split(":")[1].trim(), 10) || 0;
+      } else if (line.includes("Words outside text")) {
+        result.captions = parseInt(line.split(":")[1].trim(), 10) || 0;
+      }
+    }
+    return result;
+  }
+};
 var LatexDiff = class extends BaseTool {
   getScriptPath() {
     return "/latexdiff.pl";
@@ -317,13 +388,18 @@ var diffBtn = document.getElementById("diffBtn");
 var downloadTexBtn = document.getElementById("downloadTexBtn");
 var pdfContainer = document.getElementById("pdfContainer");
 var pdfViewer = document.getElementById("pdfViewer");
+var oldWordCount = document.getElementById("oldWordCount");
+var newWordCount = document.getElementById("newWordCount");
 var runner = new WebPerlRunner({
   webperlBasePath: "./vendor/wasm-latex-tools/webperl",
   perlScriptsPath: "./vendor/wasm-latex-tools/perl"
 });
 var pdfEngine = null;
+var texCount = null;
 var latestDiffTex = "";
 var currentPdfBlobUrl = null;
+var oldCountTimer = null;
+var newCountTimer = null;
 window.addEventListener("error", (event) => {
   const message = event.message || "";
   const filename = event.filename || "";
@@ -358,13 +434,54 @@ function ensureWrapped(content) {
     "\\end{document}"
   ].join("\n");
 }
+async function runTexCount(content) {
+  if (!content.trim() || !texCount) {
+    return 0;
+  }
+  try {
+    const wrappedContent = ensureWrapped(content);
+    const result = await texCount.count({
+      input: wrappedContent,
+      brief: true
+    });
+    const parsed = texCount.parseOutput(result.output);
+    return parsed.words || 0;
+  } catch (error) {
+    console.error("Error running texcount:", error);
+    return 0;
+  }
+}
+function updateWordCount(element, count) {
+  element.textContent = `Words: ${count}`;
+}
+async function debouncedCountOld() {
+  if (oldCountTimer) {
+    clearTimeout(oldCountTimer);
+  }
+  oldCountTimer = setTimeout(async () => {
+    const count = await runTexCount(oldInput.value);
+    updateWordCount(oldWordCount, count);
+  }, 500);
+}
+async function debouncedCountNew() {
+  if (newCountTimer) {
+    clearTimeout(newCountTimer);
+  }
+  newCountTimer = setTimeout(async () => {
+    const count = await runTexCount(newInput.value);
+    updateWordCount(newWordCount, count);
+  }, 500);
+}
 async function initTools() {
   try {
     setStatus("Loading diff tools...");
     await runner.initialize();
+    texCount = new TexCount(runner);
     setStatus("Initializing SwiftLaTeX...");
     await initSwiftLaTeX();
     setStatus("Ready.");
+    debouncedCountOld();
+    debouncedCountNew();
   } catch (e) {
     console.error(e);
     setStatus("Failed to initialize tools.");
@@ -517,4 +634,6 @@ downloadTexBtn.addEventListener("click", () => {
     setStatus("No diff available. Generate a diff first.");
   }
 });
+oldInput.addEventListener("input", debouncedCountOld);
+newInput.addEventListener("input", debouncedCountNew);
 safeInit();
