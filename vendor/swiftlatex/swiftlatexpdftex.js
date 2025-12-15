@@ -321,6 +321,9 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	else if (reqname === 'iftex.sty') {
 		local_url = 'texmf-dist/tex/generic/iftex/iftex.sty';
 	}
+	else if (reqname === 'pdftexcmds.sty') {
+		local_url = 'texmf-dist/tex/latex/pdftexcmds/pdftexcmds.sty';
+	}
 	else if (reqname.endsWith('.sty')) {
 		const possiblePaths = [
 			`texmf-dist/tex/latex/base/${reqname}`,
