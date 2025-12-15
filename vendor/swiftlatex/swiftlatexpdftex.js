@@ -370,6 +370,9 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 		texlive404_cache[cacheKey] = 1;
 		return 0;
 	}
+	else if (reqname === "lasy6.tfm") {
+		local_url = `texmf-dist/fonts/tfm/public/latex-fonts/${reqname}`;
+	}
 	else if (reqname.endsWith('.tfm')) {
 		local_url = `texmf-dist/fonts/tfm/public/cm/${reqname}`;
 	}
