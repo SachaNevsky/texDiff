@@ -390,9 +390,6 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	else if (reqname === 'pdftex.def') {
 		local_url = 'texmf-dist/tex/latex/graphics-def/pdftex.def';
 	}
-	else if (reqname === 'ulem.sty') {
-		local_url = 'texmf-dist/ulem.sty';
-	}
 	else if (reqname === "l3backend-pdfmode.def") {
 		local_url = "texmf-dist/tex/latex/l3backend/l3backend-pdfmode.def";
 	}
