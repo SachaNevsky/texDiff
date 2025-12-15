@@ -179,7 +179,8 @@ async function compilePdf(diffTex: string): Promise<Blob> {
         }
 
         // Read the generated PDF from memory filesystem
-        const pdfData = pdfEngine.readMemFSFile("main.pdf");
+        // const pdfData = pdfEngine.readMemFSFile("main.pdf");
+        const pdfData = result.pdf;
 
         if (!pdfData || pdfData.length === 0) {
             throw new Error("No PDF was generated");

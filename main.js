@@ -426,7 +426,7 @@ async function compilePdf(diffTex) {
       }
       throw new Error(`LaTeX compilation failed with status ${result.status}`);
     }
-    const pdfData = pdfEngine.readMemFSFile("main.pdf");
+    const pdfData = result.pdf;
     if (!pdfData || pdfData.length === 0) {
       throw new Error("No PDF was generated");
     }
