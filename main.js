@@ -451,9 +451,16 @@ async function runTexCount(content) {
       brief: true
     });
     console.log("runTexCount: raw output:", result.output);
-    const parsed = texCount.parseOutput(result.output);
-    console.log("runTexCount: parsed result:", parsed);
-    const wordCount = parsed.words || 0;
+    let wordCount = 0;
+    const briefMatch = result.output.match(/^(\d+)\+(\d+)\+(\d+)/);
+    if (briefMatch) {
+      wordCount = parseInt(briefMatch[1], 10);
+      console.log("runTexCount: parsed word count from brief format:", wordCount);
+    } else {
+      const parsed = texCount.parseOutput(result.output);
+      console.log("runTexCount: parsed result (fallback):", parsed);
+      wordCount = parsed.words || 0;
+    }
     console.log("runTexCount: final word count:", wordCount);
     return wordCount;
   } catch (error) {

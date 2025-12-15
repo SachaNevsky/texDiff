@@ -127,13 +127,22 @@ async function runTexCount(content: string): Promise<number> {
 
         console.log("runTexCount: raw output:", result.output);
 
-        // Parse the output using the parseOutput method
-        const parsed = texCount.parseOutput(result.output);
+        // Parse the brief output format manually
+        // Brief format is: "words+headers+captions (inline/display/headers/floats) File: filename"
+        // Example: "354+0+4 (0/0/0/0) File: main.tex"
+        let wordCount = 0;
 
-        console.log("runTexCount: parsed result:", parsed);
+        const briefMatch = result.output.match(/^(\d+)\+(\d+)\+(\d+)/);
+        if (briefMatch) {
+            wordCount = parseInt(briefMatch[1], 10);
+            console.log("runTexCount: parsed word count from brief format:", wordCount);
+        } else {
+            // Fallback to parseOutput method
+            const parsed = texCount.parseOutput(result.output);
+            console.log("runTexCount: parsed result (fallback):", parsed);
+            wordCount = parsed.words || 0;
+        }
 
-        // Return the word count
-        const wordCount = parsed.words || 0;
         console.log("runTexCount: final word count:", wordCount);
 
         return wordCount;
