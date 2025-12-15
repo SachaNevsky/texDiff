@@ -275,14 +275,12 @@ let texlive200_cache = {};
 function kpse_find_file_impl(nameptr, format, _mustexist) {
 	const reqname = UTF8ToString(nameptr);
 
-	// Skip paths with slashes
 	if (reqname.includes("/")) {
 		return 0;
 	}
 
 	const cacheKey = format + "/" + reqname;
 
-	// Check caches
 	if (cacheKey in texlive404_cache) {
 		return 0;
 	}
@@ -291,27 +289,26 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 		return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
 	}
 
-	// Skip generated/optional files
 	if (reqname === 'main.aux' || reqname.endsWith('.vf') || reqname.endsWith('.pgc')) {
 		console.log(`Skipping: ${reqname}`);
 		texlive404_cache[cacheKey] = 1;
 		return 0;
 	}
 
-	// Determine local file path based on file extension FIRST
 	let local_url = "";
 
-	// Check file extension explicitly (order matters!)
+	// Check by filename first (higher priority than format)
 	if (reqname.endsWith('.fmt')) {
-		// Format files stay in root
 		local_url = reqname;
 	}
 	else if (reqname.endsWith('.cls') || reqname.endsWith('.clo')) {
-		// LaTeX class files
 		local_url = `texmf-dist/tex/latex/base/${reqname}`;
 	}
+	else if (reqname.endsWith('.mkii')) {
+		// MetaPost/ConTeXt support files
+		local_url = `texmf-dist/tex/generic/context/ppchtex/${reqname}`;
+	}
 	else if (reqname.endsWith('.sty')) {
-		// Style files - try multiple locations
 		const possiblePaths = [
 			`texmf-dist/tex/latex/base/${reqname}`,
 			`texmf-dist/tex/latex/graphics/${reqname}`,
@@ -336,12 +333,11 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 			} catch { }
 		}
 
-		console.log(`✗ Not found: ${reqname}`);
+		console.log(`! Not found: ${reqname}`);
 		texlive404_cache[cacheKey] = 1;
 		return 0;
 	}
 	else if (reqname.endsWith('.cfg') || reqname.endsWith('.def')) {
-		// Config/definition files
 		const possiblePaths = [
 			`texmf-dist/tex/latex/graphics-cfg/${reqname}`,
 			`texmf-dist/tex/latex/graphics-def/${reqname}`,
@@ -365,44 +361,42 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 			} catch { }
 		}
 
-		console.log(`✗ Not found: ${reqname}`);
+		console.log(`! Not found: ${reqname}`);
 		texlive404_cache[cacheKey] = 1;
 		return 0;
 	}
 	else if (reqname.endsWith('.tfm')) {
-		// TFM font metric files
 		local_url = `texmf-dist/fonts/tfm/public/cm/${reqname}`;
 	}
 	else if (reqname.endsWith('.pk')) {
-		// PK bitmap font files (with explicit .pk extension)
 		const fontName = reqname.replace('.pk', '');
 		local_url = `texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${fontName}.600pk`;
-	}
-	else if (format === 26) {
-		// PK fonts requested without extension (format 26 = PK bitmap fonts)
-		// Only treat as PK if it looks like a font name (cmr10, cmss10, etc.)
-		if (/^cm[a-z]{2,4}\d+$/.test(reqname)) {
-			local_url = `texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${reqname}.600pk`;
-		} else {
-			console.log(`✗ Unknown format 26 file: ${reqname}`);
-			texlive404_cache[cacheKey] = 1;
-			return 0;
-		}
 	}
 	else if (reqname === 'pdftex.map') {
 		local_url = 'texmf-dist/fonts/map/pdftex/updmap/pdftex.map';
 	}
-	else if (reqname === 'supp-pdf.mkii') {
-		local_url = 'texmf-dist/tex/generic/context/ppchtex/supp-pdf.mkii';
+	// Now check format codes for files without extensions
+	else if (format === 3) {
+		// Format 3 = TFM font metrics
+		local_url = `texmf-dist/fonts/tfm/public/cm/${reqname}.tfm`;
+	}
+	else if (format === 26) {
+		// Format 26 = PK bitmap fonts (only for font names)
+		if (/^cm[a-z]{2,4}\d+$/.test(reqname)) {
+			local_url = `texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${reqname}.600pk`;
+		} else {
+			console.log(`! Non-font file requested as format 26: ${reqname}`);
+			texlive404_cache[cacheKey] = 1;
+			return 0;
+		}
 	}
 	else {
-		// Unknown file type
-		console.log(`✗ Unknown file type: ${reqname} (format: ${format})`);
+		console.log(`! Unknown file type: ${reqname} (format: ${format})`);
 		texlive404_cache[cacheKey] = 1;
 		return 0;
 	}
 
-	// Load single file
+	// Load file
 	const xhr = new XMLHttpRequest();
 	xhr.open("GET", local_url, false);
 	xhr.responseType = "arraybuffer";
@@ -411,7 +405,7 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	try {
 		xhr.send();
 		if (xhr.status === 200) {
-			console.log(`✓ Loaded: ${local_url}`);
+			console.log(`Loaded: ${local_url}`);
 			const arraybuffer = xhr.response;
 			const savepath = TEXCACHEROOT + "/" + reqname;
 			FS.writeFile(savepath, new Uint8Array(arraybuffer));
@@ -419,9 +413,10 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 			return allocate(intArrayFromString(savepath), "i8", ALLOC_NORMAL);
 		}
 	} catch (err) {
-		console.log(`✗ Failed to load: ${local_url} - ${err}`);
+		console.log(`! Failed to load: ${local_url} - ${err}`);
 	}
 
+	console.log(`! Not found: ${local_url}`);
 	texlive404_cache[cacheKey] = 1;
 	return 0;
 }
