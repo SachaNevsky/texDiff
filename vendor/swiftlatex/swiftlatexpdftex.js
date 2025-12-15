@@ -445,17 +445,16 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 
 	// First, try to find in ls-R database
 	const lsrPath = findInLsR(reqname);
+	console.log("lsrPath:", lsrPath, "\nreqname:", reqname);
 	if (lsrPath) {
-		// lsrPath already includes 'texmf-dist/', so just prepend the vendor path
-		local_url = `vendor/swiftlatex/${lsrPath}`;
-		console.log("lsrPath:", lsrPath)
+		local_url = `${lsrPath}`;
 	}
 	// Fallback to format-based guessing if not in ls-R (only for files without extensions)
 	else if (reqname === "swiftlatexpdftex.fmt") {
 		local_url = `${reqname}`;
 	}
 	else if (reqname.endsWith('.fmt')) {
-		local_url = `vendor/swiftlatex/${reqname}`;
+		local_url = `v${reqname}`;
 	}
 	else if (format === 3 && !reqname.includes('.')) {
 		// Format 3 = TFM font metrics (only if no extension)
