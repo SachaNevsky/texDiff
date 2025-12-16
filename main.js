@@ -380,6 +380,182 @@ var LatexDiff = class extends BaseTool {
   }
 };
 
+// cleanDiffTeX.ts
+function cleanDiffTeX(diffTex) {
+  const beginDocMatch = diffTex.match(/\\begin\{document\}/);
+  if (!beginDocMatch) {
+    return diffTex;
+  }
+  const splitIndex = beginDocMatch.index + beginDocMatch[0].length;
+  let preamble = diffTex.substring(0, splitIndex);
+  let body = diffTex.substring(splitIndex);
+  preamble = preamble.replace(/\\RequirePackage\{color\}/g, "\\usepackage{color}");
+  preamble = preamble.replace(/\\usepackage\[T1\]\{fontenc\}/g, "");
+  preamble = preamble.replace(/\\usepackage\{lmodern\}/g, "");
+  preamble = preamble.replace(/\\usepackage\[.*?ps2pdf.*?\]\{hyperref\}/g, "\\usepackage[pdftex]{hyperref}");
+  preamble = preamble.replace(/\\usepackage\{hyperref\}/g, "\\usepackage[pdftex]{hyperref}");
+  function findMatchingBrace(str, startPos) {
+    let braceCount = 1;
+    let pos = startPos;
+    while (pos < str.length && braceCount > 0) {
+      const char = str[pos];
+      const prevChar = pos > 0 ? str[pos - 1] : "";
+      if (char === "{" && prevChar !== "\\") {
+        braceCount++;
+      } else if (char === "}" && prevChar !== "\\") {
+        braceCount--;
+        if (braceCount === 0) {
+          return pos;
+        }
+      }
+      pos++;
+    }
+    return -1;
+  }
+  const citationCommands = [
+    "cite",
+    "citet",
+    "citep",
+    "citealt",
+    "citealp",
+    "citeauthor",
+    "citeyear",
+    "citeyearpar",
+    "Cite",
+    "Citet",
+    "Citep",
+    "Citealt",
+    "Citealp",
+    "citenum",
+    "citetext",
+    "footcite",
+    "footcitet",
+    "footcitep",
+    "parencite",
+    "textcite",
+    "autocite"
+  ];
+  const refCommands = [
+    "ref",
+    "autoref",
+    "eqref",
+    "figref",
+    "tabref",
+    "pageref",
+    "nameref",
+    "cref",
+    "Cref",
+    "vref",
+    "Vref",
+    "labelcref",
+    "labelcpageref"
+  ];
+  const labelCommands = ["label"];
+  const allProblematicCommands = [...citationCommands, ...refCommands, ...labelCommands];
+  for (const cmd of allProblematicCommands) {
+    const cmdPattern = `\\${cmd}`;
+    for (let iter = 0; iter < 3; iter++) {
+      let pos = 0;
+      let result = "";
+      let changed = false;
+      while (pos < body.length) {
+        const idx = body.indexOf(cmdPattern, pos);
+        if (idx === -1) {
+          result += body.substring(pos);
+          break;
+        }
+        const charAfter = body[idx + cmdPattern.length];
+        if (charAfter && /[a-zA-Z]/.test(charAfter)) {
+          result += body.substring(pos, idx + cmdPattern.length);
+          pos = idx + cmdPattern.length;
+          continue;
+        }
+        result += body.substring(pos, idx);
+        let searchPos = idx + cmdPattern.length;
+        while (body[searchPos] === "[") {
+          const closeBracket = body.indexOf("]", searchPos);
+          if (closeBracket !== -1) {
+            searchPos = closeBracket + 1;
+          } else {
+            break;
+          }
+        }
+        if (body[searchPos] === "{") {
+          const closeBrace = findMatchingBrace(body, searchPos + 1);
+          if (closeBrace !== -1) {
+            pos = closeBrace + 1;
+            changed = true;
+            continue;
+          }
+        }
+        pos = searchPos;
+      }
+      body = result;
+      if (!changed) break;
+    }
+  }
+  body = body.replace(/\\addtocounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, "");
+  body = body.replace(/\\setcounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, "");
+  body = body.replace(/%DIFAUXCMD\s*/g, "");
+  body = body.replace(/\\DIFdelbegin\s*\\iffalse[\s\S]*?\\fi\s*\\DIFdelend/g, "");
+  body = body.replace(/\\DIFdelbegin[\s\S]*?\\DIFdelend/g, "");
+  body = body.replace(/%DIFDELCMD < [^\n]*\n/g, "");
+  body = body.replace(/%DIFDELCMD < /g, "");
+  body = body.replace(/%DIF > /g, "");
+  body = body.replace(/%DIF < /g, "");
+  body = body.replace(/\\DIFaddbegin\s*/g, "");
+  body = body.replace(/\\DIFaddend\s*/g, "");
+  for (let iteration = 0; iteration < 10; iteration++) {
+    const before = body;
+    let result = "";
+    let pos = 0;
+    while (pos < body.length) {
+      let handled = false;
+      const addCommands = ["\\DIFadd{", "\\DIFaddFL{"];
+      for (const cmd of addCommands) {
+        if (body.substring(pos).startsWith(cmd)) {
+          const startPos = pos + cmd.length;
+          const endPos = findMatchingBrace(body, startPos);
+          if (endPos !== -1) {
+            result += body.substring(startPos, endPos);
+            pos = endPos + 1;
+            handled = true;
+            break;
+          }
+        }
+      }
+      if (handled) continue;
+      const delCommands = ["\\DIFdel{", "\\DIFdelFL{"];
+      for (const cmd of delCommands) {
+        if (body.substring(pos).startsWith(cmd)) {
+          const startPos = pos + cmd.length;
+          const endPos = findMatchingBrace(body, startPos);
+          if (endPos !== -1) {
+            pos = endPos + 1;
+            handled = true;
+            break;
+          }
+        }
+      }
+      if (handled) continue;
+      result += body[pos];
+      pos++;
+    }
+    body = result;
+    if (body === before) break;
+  }
+  body = body.replace(/\\iffalse/g, "");
+  body = body.replace(/\\fi(?!\w)/g, "");
+  body = body.replace(/\\DIFadd\{\}/g, "");
+  body = body.replace(/\\DIFdel\{\}/g, "");
+  body = body.replace(/\\DIFaddFL\{\}/g, "");
+  body = body.replace(/\\DIFdelFL\{\}/g, "");
+  body = body.replace(/\s{3,}/g, "  ");
+  body = body.replace(/\{\s*\}/g, "");
+  body = body.replace(/\s+([.,;:!?])/g, "$1");
+  return preamble + body;
+}
+
 // main.ts
 var statusEl = document.getElementById("status");
 var oldInput = document.getElementById("oldInput");
@@ -540,167 +716,6 @@ function waitForSwiftLaTeX() {
     };
     checkSwiftLaTeX();
   });
-}
-function cleanDiffTeX(diffTex) {
-  const beginDocMatch = diffTex.match(/\\begin\{document\}/);
-  if (!beginDocMatch) {
-    return diffTex;
-  }
-  const splitIndex = beginDocMatch.index + beginDocMatch[0].length;
-  let preamble = diffTex.substring(0, splitIndex);
-  let body = diffTex.substring(splitIndex);
-  preamble = preamble.replace(/\\RequirePackage\{color\}/g, "\\usepackage{color}");
-  preamble = preamble.replace(/\\usepackage\[T1\]\{fontenc\}/g, "");
-  preamble = preamble.replace(/\\usepackage\{lmodern\}/g, "");
-  preamble = preamble.replace(/\\usepackage\[.*?ps2pdf.*?\]\{hyperref\}/g, "\\usepackage[pdftex]{hyperref}");
-  preamble = preamble.replace(/\\usepackage\{hyperref\}/g, "\\usepackage[pdftex]{hyperref}");
-  body = body.replace(/\\addtocounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, "");
-  body = body.replace(/\\setcounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, "");
-  body = body.replace(/%DIFAUXCMD\s*/g, "");
-  body = body.replace(/\\DIFdelbegin\s*\\iffalse[\s\S]*?\\fi\s*\\DIFdelend/g, "");
-  body = body.replace(/\\DIFdelbegin[\s\S]*?\\DIFdelend/g, "");
-  body = body.replace(/%DIFDELCMD < [^\n]*\n/g, "");
-  body = body.replace(/%DIFDELCMD < /g, "");
-  body = body.replace(/%DIF > /g, "");
-  body = body.replace(/%DIF < /g, "");
-  body = body.replace(/\\DIFaddbegin\s*/g, "");
-  body = body.replace(/\\DIFaddend\s*/g, "");
-  function findMatchingBrace(str, startPos) {
-    let braceCount = 1;
-    let pos = startPos;
-    while (pos < str.length && braceCount > 0) {
-      const char = str[pos];
-      const prevChar = pos > 0 ? str[pos - 1] : "";
-      if (char === "{" && prevChar !== "\\") {
-        braceCount++;
-      } else if (char === "}" && prevChar !== "\\") {
-        braceCount--;
-        if (braceCount === 0) {
-          return pos;
-        }
-      }
-      pos++;
-    }
-    return -1;
-  }
-  const citationCommands = [
-    "cite",
-    "citet",
-    "citep",
-    "citealt",
-    "citealp",
-    "citeauthor",
-    "citeyear",
-    "citeyearpar",
-    "Cite",
-    "Citet",
-    "Citep",
-    "Citealt",
-    "Citealp",
-    "citenum",
-    "citetext",
-    "footcite",
-    "footcitet",
-    "footcitep",
-    "parencite",
-    "textcite",
-    "autocite"
-  ];
-  const refCommands = [
-    "ref",
-    "autoref",
-    "eqref",
-    "figref",
-    "tabref",
-    "pageref",
-    "nameref",
-    "cref",
-    "Cref",
-    "vref",
-    "Vref",
-    "labelcref",
-    "labelcpageref"
-  ];
-  const allCommands = [...citationCommands, ...refCommands];
-  for (let iter = 0; iter < 5; iter++) {
-    const beforeCite = body;
-    for (const cmd of allCommands) {
-      const cmdPattern = `\\${cmd}`;
-      let pos = 0;
-      let result = "";
-      while (pos < body.length) {
-        const idx = body.indexOf(cmdPattern, pos);
-        if (idx === -1) {
-          result += body.substring(pos);
-          break;
-        }
-        result += body.substring(pos, idx);
-        let searchPos = idx + cmdPattern.length;
-        if (body[searchPos] === "[") {
-          const closeBracket = body.indexOf("]", searchPos);
-          if (closeBracket !== -1) {
-            searchPos = closeBracket + 1;
-          }
-        }
-        if (body[searchPos] === "{") {
-          const closeBrace = findMatchingBrace(body, searchPos + 1);
-          if (closeBrace !== -1) {
-            pos = closeBrace + 1;
-            continue;
-          }
-        }
-        pos = searchPos;
-      }
-      body = result;
-    }
-    if (body === beforeCite) break;
-  }
-  for (let iteration = 0; iteration < 10; iteration++) {
-    const before = body;
-    let result = "";
-    let pos = 0;
-    while (pos < body.length) {
-      let handled = false;
-      for (const cmd of ["\\DIFadd{", "\\DIFaddFL{"]) {
-        if (body.substring(pos).startsWith(cmd)) {
-          const startPos = pos + cmd.length;
-          const endPos = findMatchingBrace(body, startPos);
-          if (endPos !== -1) {
-            result += body.substring(startPos, endPos);
-            pos = endPos + 1;
-            handled = true;
-            break;
-          }
-        }
-      }
-      if (handled) continue;
-      for (const cmd of ["\\DIFdel{", "\\DIFdelFL{"]) {
-        if (body.substring(pos).startsWith(cmd)) {
-          const startPos = pos + cmd.length;
-          const endPos = findMatchingBrace(body, startPos);
-          if (endPos !== -1) {
-            pos = endPos + 1;
-            handled = true;
-            break;
-          }
-        }
-      }
-      if (handled) continue;
-      result += body[pos];
-      pos++;
-    }
-    body = result;
-    if (body === before) break;
-  }
-  body = body.replace(/\\iffalse/g, "");
-  body = body.replace(/\\fi(?!\w)/g, "");
-  body = body.replace(/\\DIFadd\{\}/g, "");
-  body = body.replace(/\\DIFdel\{\}/g, "");
-  body = body.replace(/\\DIFaddFL\{\}/g, "");
-  body = body.replace(/\\DIFdelFL\{\}/g, "");
-  body = body.replace(/\s{2,}/g, " ");
-  body = body.replace(/\{\s*\}/g, "");
-  return preamble + body;
 }
 async function compilePdf(diffTex) {
   if (!pdfEngine) {
