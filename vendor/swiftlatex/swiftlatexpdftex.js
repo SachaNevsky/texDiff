@@ -352,7 +352,7 @@ function findInLsR(filename) {
 
 	// If multiple paths exist, prefer certain directories
 	if (paths.length === 1) {
-		return `texmf-dist/${paths[0]}`;
+		return `${paths[0]}`;
 	}
 
 	// Priority order for directories
@@ -367,11 +367,11 @@ function findInLsR(filename) {
 
 	for (const priority of priorities) {
 		const match = paths.find(p => p.includes(priority));
-		if (match) return `texmf-dist/${match}`;
+		if (match) return `${match}`;
 	}
 
 	// Return first match if no priority matches
-	return `texmf-dist/${paths[0]}`;
+	return `${paths[0]}`;
 }
 
 function kpse_find_file_impl(nameptr, format, _mustexist) {
