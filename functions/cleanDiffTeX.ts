@@ -1,5 +1,54 @@
 import { findMatchingBrace } from "./findMatchingBrace"
 
+function removeEnvironment(text: string, envName: string): string {
+    let result = text;
+    let searching = true;
+
+    while (searching) {
+        const beginPattern = `\\begin{${envName}}`;
+        const endPattern = `\\end{${envName}}`;
+
+        const beginIdx = result.indexOf(beginPattern);
+        if (beginIdx === -1) {
+            searching = false;
+            continue;
+        }
+
+        let depth = 1;
+        let searchPos = beginIdx + beginPattern.length;
+        let endIdx = -1;
+
+        while (searchPos < result.length && depth > 0) {
+            const nextBegin = result.indexOf(beginPattern, searchPos);
+            const nextEnd = result.indexOf(endPattern, searchPos);
+
+            if (nextEnd === -1) {
+                break;
+            }
+
+            if (nextBegin !== -1 && nextBegin < nextEnd) {
+                depth++;
+                searchPos = nextBegin + beginPattern.length;
+            } else {
+                depth--;
+                if (depth === 0) {
+                    endIdx = nextEnd + endPattern.length;
+                    break;
+                }
+                searchPos = nextEnd + endPattern.length;
+            }
+        }
+
+        if (endIdx !== -1) {
+            result = result.substring(0, beginIdx) + result.substring(endIdx);
+        } else {
+            searching = false;
+        }
+    }
+
+    return result;
+}
+
 export function cleanDiffTeX(diffTex: string): string {
     const beginDocMatch = diffTex.match(/\\begin\{document\}/);
     if (!beginDocMatch) {
@@ -20,10 +69,12 @@ export function cleanDiffTeX(diffTex: string): string {
     body = body.replace(/\\url\{([^}]*)\}/g, '$1');
     body = body.replace(/\\hyperlink\{[^}]*\}\{([^}]*)\}/g, '$1');
     body = body.replace(/\\hypertarget\{[^}]*\}\{([^}]*)\}/g, '$1');
-    body = body.replace(/\\begin\{figure\*?\}[\s\S]*?\\end\{figure\*?\}/g, '');
-    body = body.replace(/\\begin\{table\*?\}[\s\S]*?\\end\{table\*?\}/g, '');
-    body = body.replace(/\\begin\{wrapfigure\}[\s\S]*?\\end\{wrapfigure\}/g, '');
-    body = body.replace(/\\begin\{wraptable\}[\s\S]*?\\end\{wraptable\}/g, '');
+    body = removeEnvironment(body, 'figure');
+    body = removeEnvironment(body, 'figure*');
+    body = removeEnvironment(body, 'table');
+    body = removeEnvironment(body, 'table*');
+    body = removeEnvironment(body, 'wrapfigure');
+    body = removeEnvironment(body, 'wraptable');
 
     const citationCommands = [
         'cite', 'citet', 'citep', 'citealt', 'citealp', 'citeauthor', 'citeyear', 'citeyearpar',
@@ -107,5 +158,38 @@ export function cleanDiffTeX(diffTex: string): string {
     body = body.replace(/\{\s*\}/g, '');
     body = body.replace(/\s+([.,;:!?])/g, '$1');
 
+    body = body.replace(/\\mbox\{\}/g, '');
+    body = body.replace(/\\mbox\\hskip[^{]*\{\}/g, '');
+
+    const braceBalance = checkBraceBalance(body);
+    if (braceBalance !== 0) {
+        console.warn(`Warning: Unbalanced braces detected (balance: ${braceBalance})`);
+        console.warn('First 1000 chars of body:', body.substring(0, 1000));
+    }
+
     return preamble + body;
+}
+
+function checkBraceBalance(text: string): number {
+    let balance = 0;
+    let inComment = false;
+
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const prevChar = i > 0 ? text[i - 1] : '';
+
+        if (char === '%' && prevChar !== '\\') {
+            inComment = true;
+        } else if (char === '\n') {
+            inComment = false;
+        } else if (!inComment) {
+            if (char === '{' && prevChar !== '\\') {
+                balance++;
+            } else if (char === '}' && prevChar !== '\\') {
+                balance--;
+            }
+        }
+    }
+
+    return balance;
 }
