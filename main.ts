@@ -283,7 +283,6 @@ function cleanDiffTeX(diffTex: string): string {
     // Split into preamble and document body
     const beginDocMatch = diffTex.match(/\\begin\{document\}/);
     if (!beginDocMatch) {
-        // No \begin{document}, just return as is
         return diffTex;
     }
 
@@ -307,10 +306,16 @@ function cleanDiffTeX(diffTex: string): string {
     // ========== CLEAN BODY ==========
 
     // Remove DIFAUXCMD comments and the commands they mark
-    // This fixes the \addtocounter error
     body = body.replace(/\\addtocounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, '');
     body = body.replace(/\\setcounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, '');
     body = body.replace(/%DIFAUXCMD\s*/g, '');
+
+    // Handle DIFdel blocks with \iffalse...\fi wrappers
+    // This pattern matches: \DIFdelbegin \iffalse ... \fi \DIFdelend
+    body = body.replace(/\\DIFdelbegin\s*\\iffalse[\s\S]*?\\fi\s*\\DIFdelend/g, '');
+
+    // Handle remaining DIFdel blocks without iffalse
+    body = body.replace(/\\DIFdelbegin[\s\S]*?\\DIFdelend/g, '');
 
     // Remove DIFDELCMD markers and their content
     body = body.replace(/%DIFDELCMD < [^\n]*\n/g, '');
@@ -320,7 +325,7 @@ function cleanDiffTeX(diffTex: string): string {
     body = body.replace(/%DIF > /g, '');
     body = body.replace(/%DIF < /g, '');
 
-    // Remove citations and refs from body only
+    // Remove citations and refs
     const citationCommands = [
         'cite', 'citet', 'citep', 'citealt', 'citealp', 'citeauthor', 'citeyear', 'citeyearpar',
         'Cite', 'Citet', 'Citep', 'Citealt', 'Citealp',
@@ -338,7 +343,6 @@ function cleanDiffTeX(diffTex: string): string {
 
     // Remove DIFadd/DIFdel/DIFaddFL/DIFdelFL wrappers around citation/ref commands
     allCommands.forEach(cmd => {
-        // Handle all DIF wrapper variants
         const difVariants = ['DIFadd', 'DIFdel', 'DIFaddFL', 'DIFdelFL'];
         difVariants.forEach(difCmd => {
             // Remove \DIFxxx{\cite{...}} and similar (single level)
@@ -346,7 +350,7 @@ function cleanDiffTeX(diffTex: string): string {
                 new RegExp(`\\\\${difCmd}\\{\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}\\}`, 'g'),
                 ''
             );
-            // Also handle nested braces more robustly
+            // Handle nested braces more robustly
             body = body.replace(
                 new RegExp(`\\\\${difCmd}\\{\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^}]*\\{[^}]*\\}[^}]*\\}\\}`, 'g'),
                 ''
@@ -354,7 +358,7 @@ function cleanDiffTeX(diffTex: string): string {
         });
     });
 
-    // Now remove any remaining standalone citation/ref commands
+    // Remove any remaining standalone citation/ref commands
     allCommands.forEach(cmd => {
         body = body.replace(
             new RegExp(`\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}`, 'g'),
@@ -362,25 +366,28 @@ function cleanDiffTeX(diffTex: string): string {
         );
     });
 
-    // Clean up remaining DIF wrappers in body (for other content)
-    // Keep the commands themselves, just remove their effect
+    // Clean up DIFadd blocks (keep the content, remove the wrapper)
+    body = body.replace(/\\DIFaddbegin\s*/g, '');
+    body = body.replace(/\\DIFaddend\s*/g, '');
+
+    // Iteratively remove DIF wrappers
     for (let i = 0; i < 5; i++) {
         const before = body;
 
         // For DIFadd variants, keep the content
-        body = body.replace(/\\DIFaddbegin\s*/g, '');
-        body = body.replace(/\\DIFaddend\s*/g, '');
         body = body.replace(/\\DIFadd\{([^{}]*)\}/g, '$1');
         body = body.replace(/\\DIFaddFL\{([^{}]*)\}/g, '$1');
 
         // For DIFdel variants, remove the content
-        body = body.replace(/\\DIFdelbegin\s*/g, '');
-        body = body.replace(/\\DIFdelend\s*/g, '');
         body = body.replace(/\\DIFdel\{([^{}]*)\}/g, '');
         body = body.replace(/\\DIFdelFL\{([^{}]*)\}/g, '');
 
         if (body === before) break;
     }
+
+    // Clean up any remaining orphaned \iffalse or \fi commands
+    body = body.replace(/\\iffalse/g, '');
+    body = body.replace(/\\fi(?!\w)/g, ''); // \fi not followed by word character
 
     // Clean up empty DIF commands
     body = body.replace(/\\DIFadd\{\}/g, '');

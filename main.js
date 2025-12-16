@@ -557,6 +557,8 @@ function cleanDiffTeX(diffTex) {
   body = body.replace(/\\addtocounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, "");
   body = body.replace(/\\setcounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, "");
   body = body.replace(/%DIFAUXCMD\s*/g, "");
+  body = body.replace(/\\DIFdelbegin\s*\\iffalse[\s\S]*?\\fi\s*\\DIFdelend/g, "");
+  body = body.replace(/\\DIFdelbegin[\s\S]*?\\DIFdelend/g, "");
   body = body.replace(/%DIFDELCMD < [^\n]*\n/g, "");
   body = body.replace(/%DIFDELCMD < /g, "");
   body = body.replace(/%DIF > /g, "");
@@ -619,18 +621,18 @@ function cleanDiffTeX(diffTex) {
       ""
     );
   });
+  body = body.replace(/\\DIFaddbegin\s*/g, "");
+  body = body.replace(/\\DIFaddend\s*/g, "");
   for (let i = 0; i < 5; i++) {
     const before = body;
-    body = body.replace(/\\DIFaddbegin\s*/g, "");
-    body = body.replace(/\\DIFaddend\s*/g, "");
     body = body.replace(/\\DIFadd\{([^{}]*)\}/g, "$1");
     body = body.replace(/\\DIFaddFL\{([^{}]*)\}/g, "$1");
-    body = body.replace(/\\DIFdelbegin\s*/g, "");
-    body = body.replace(/\\DIFdelend\s*/g, "");
     body = body.replace(/\\DIFdel\{([^{}]*)\}/g, "");
     body = body.replace(/\\DIFdelFL\{([^{}]*)\}/g, "");
     if (body === before) break;
   }
+  body = body.replace(/\\iffalse/g, "");
+  body = body.replace(/\\fi(?!\w)/g, "");
   body = body.replace(/\\DIFadd\{\}/g, "");
   body = body.replace(/\\DIFdel\{\}/g, "");
   body = body.replace(/\\DIFaddFL\{\}/g, "");
