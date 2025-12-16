@@ -296,8 +296,7 @@ function cleanDiffTeX(diffTex: string): string {
     // Also catch hyperref without explicit driver
     cleaned = cleaned.replace(/\\usepackage\{hyperref\}/g, '\\usepackage[pdftex]{hyperref}');
 
-    // Remove all citation commands (both regular and latexdiff-wrapped)
-    // List of common citation commands
+    // List of common citation and reference commands to remove
     const citationCommands = [
         'cite', 'citet', 'citep', 'citealt', 'citealp', 'citeauthor', 'citeyear', 'citeyearpar',
         'Cite', 'Citet', 'Citep', 'Citealt', 'Citealp',
@@ -306,38 +305,54 @@ function cleanDiffTeX(diffTex: string): string {
         'parencite', 'textcite', 'autocite'
     ];
 
-    // Remove all citation commands with their arguments (including nested braces)
-    citationCommands.forEach(cmd => {
-        // Match \cmd[...]{...} with optional argument
-        let changed = true;
-        while (changed) {
-            const before = cleaned;
-            cleaned = cleaned.replace(new RegExp(`\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}`, 'g'), '');
-            changed = (before !== cleaned);
-        }
+    const refCommands = [
+        'ref', 'autoref', 'eqref', 'figref', 'tabref', 'pageref', 'nameref',
+        'cref', 'Cref', 'vref', 'Vref', 'labelcref', 'labelcpageref'
+    ];
+
+    const allCommands = [...citationCommands, ...refCommands];
+
+    // Remove DIFadd/DIFdel wrappers around citation/ref commands FIRST
+    // This prevents creating unbalanced braces
+    allCommands.forEach(cmd => {
+        // Remove \DIFadd{\cite{...}} and similar
+        cleaned = cleaned.replace(
+            new RegExp(`\\\\DIFadd\\{\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}\\}`, 'g'),
+            ''
+        );
+        // Remove \DIFdel{\cite{...}} and similar
+        cleaned = cleaned.replace(
+            new RegExp(`\\\\DIFdel\\{\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}\\}`, 'g'),
+            ''
+        );
     });
 
-    // Remove ref commands as well
-    const refCommands = ['ref', 'autoref', 'eqref', 'figref', 'tabref', 'pageref', 'nameref', 'cref', 'Cref', 'vref', 'Vref', 'labelcref', 'labelcpageref'];
-    refCommands.forEach(cmd => {
-        let changed = true;
-        while (changed) {
-            const before = cleaned;
-            cleaned = cleaned.replace(new RegExp(`\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}`, 'g'), '');
-            changed = (before !== cleaned);
-        }
+    // Now remove any remaining standalone citation/ref commands
+    allCommands.forEach(cmd => {
+        cleaned = cleaned.replace(
+            new RegExp(`\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}`, 'g'),
+            ''
+        );
     });
 
-    // Remove DIFadd and DIFdel wrappers around citation/ref commands
+    // Clean up remaining DIF wrappers (for other content)
     // Do this iteratively to handle nested cases
     for (let i = 0; i < 10; i++) {
-        cleaned = cleaned.replace(/\\DIFadd\{([^{}]*)\}/g, '$1');
-        cleaned = cleaned.replace(/\\DIFdel\{([^{}]*)\}/g, '');
+        const before = cleaned;
         cleaned = cleaned.replace(/\\DIFaddbegin\s*/g, '');
         cleaned = cleaned.replace(/\\DIFaddend\s*/g, '');
         cleaned = cleaned.replace(/\\DIFdelbegin\s*/g, '');
         cleaned = cleaned.replace(/\\DIFdelend\s*/g, '');
+        cleaned = cleaned.replace(/\\DIFadd\{([^{}]*)\}/g, '$1');
+        cleaned = cleaned.replace(/\\DIFdel\{([^{}]*)\}/g, '');
+
+        // If nothing changed, we're done
+        if (cleaned === before) break;
     }
+
+    // Clean up empty DIF commands that might be left
+    cleaned = cleaned.replace(/\\DIFadd\{\}/g, '');
+    cleaned = cleaned.replace(/\\DIFdel\{\}/g, '');
 
     // Clean up any double spaces left behind
     cleaned = cleaned.replace(/\s{2,}/g, ' ');

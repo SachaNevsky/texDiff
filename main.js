@@ -571,31 +571,50 @@ function cleanDiffTeX(diffTex) {
     "textcite",
     "autocite"
   ];
-  citationCommands.forEach((cmd) => {
-    let changed = true;
-    while (changed) {
-      const before = cleaned;
-      cleaned = cleaned.replace(new RegExp(`\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}`, "g"), "");
-      changed = before !== cleaned;
-    }
+  const refCommands = [
+    "ref",
+    "autoref",
+    "eqref",
+    "figref",
+    "tabref",
+    "pageref",
+    "nameref",
+    "cref",
+    "Cref",
+    "vref",
+    "Vref",
+    "labelcref",
+    "labelcpageref"
+  ];
+  const allCommands = [...citationCommands, ...refCommands];
+  allCommands.forEach((cmd) => {
+    cleaned = cleaned.replace(
+      new RegExp(`\\\\DIFadd\\{\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}\\}`, "g"),
+      ""
+    );
+    cleaned = cleaned.replace(
+      new RegExp(`\\\\DIFdel\\{\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}\\}`, "g"),
+      ""
+    );
   });
-  const refCommands = ["ref", "autoref", "eqref", "figref", "tabref", "pageref", "nameref", "cref", "Cref", "vref", "Vref", "labelcref", "labelcpageref"];
-  refCommands.forEach((cmd) => {
-    let changed = true;
-    while (changed) {
-      const before = cleaned;
-      cleaned = cleaned.replace(new RegExp(`\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}`, "g"), "");
-      changed = before !== cleaned;
-    }
+  allCommands.forEach((cmd) => {
+    cleaned = cleaned.replace(
+      new RegExp(`\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}`, "g"),
+      ""
+    );
   });
   for (let i = 0; i < 10; i++) {
-    cleaned = cleaned.replace(/\\DIFadd\{([^{}]*)\}/g, "$1");
-    cleaned = cleaned.replace(/\\DIFdel\{([^{}]*)\}/g, "");
+    const before = cleaned;
     cleaned = cleaned.replace(/\\DIFaddbegin\s*/g, "");
     cleaned = cleaned.replace(/\\DIFaddend\s*/g, "");
     cleaned = cleaned.replace(/\\DIFdelbegin\s*/g, "");
     cleaned = cleaned.replace(/\\DIFdelend\s*/g, "");
+    cleaned = cleaned.replace(/\\DIFadd\{([^{}]*)\}/g, "$1");
+    cleaned = cleaned.replace(/\\DIFdel\{([^{}]*)\}/g, "");
+    if (cleaned === before) break;
   }
+  cleaned = cleaned.replace(/\\DIFadd\{\}/g, "");
+  cleaned = cleaned.replace(/\\DIFdel\{\}/g, "");
   cleaned = cleaned.replace(/\s{2,}/g, " ");
   cleaned = cleaned.replace(/\{\s*\}/g, "");
   return cleaned;
