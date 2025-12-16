@@ -512,7 +512,12 @@ function cleanDiffTeX(diffTex) {
   body = body.replace(/%DIFDELCMD < /g, "");
   body = body.replace(/%DIF > /g, "");
   body = body.replace(/%DIF < /g, "");
-  body = body.replace(/\\DIFdelbegin\s*\\iffalse([\s\S]*?)\\fi\s*\\DIFdelend/g, "\\DIFdelbegin$1\\DIFdelend");
+  body = body.replace(/\\DIFdelbegin\s*\\iffalse([\s\S]*?)\\fi\s*\\DIFdelend/g, "");
+  body = body.replace(/\\DIFdelbegin[\s\S]*?\\DIFdelend/g, "");
+  body = body.replace(/\\DIFaddbegin\s*/g, "");
+  body = body.replace(/\\DIFaddend\s*/g, "");
+  body = body.replace(/\\iffalse/g, "");
+  body = body.replace(/\\fi(?!\w)/g, "");
   body = body.replace(/\\DIFadd\{\}/g, "");
   body = body.replace(/\\DIFdel\{\}/g, "");
   body = body.replace(/\\DIFaddFL\{\}/g, "");
