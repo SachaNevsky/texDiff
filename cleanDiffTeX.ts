@@ -209,7 +209,15 @@ export function cleanDiffTeX(diffTex: string): string {
     body = body.replace(/\\DIFaddFL\{\}/g, '');
     body = body.replace(/\\DIFdelFL\{\}/g, '');
 
-    // STEP 9: Clean up excessive whitespace
+    // STEP 9: Fix malformed \mbox commands (e.g., \mbox\hskip -> \mbox{\hskip})
+    // This might be in the original latexdiff output
+    body = body.replace(/\\mbox\\hskip\s*(\d+(?:\.\d+)?)\s*pt/g, '\\mbox{\\hskip $1pt}');
+    body = body.replace(/\\mbox\\hskip\s*(\d+(?:\.\d+)?)\s*em/g, '\\mbox{\\hskip $1em}');
+
+    // More general fix: if we see \mbox followed by something other than {, wrap it
+    body = body.replace(/\\mbox\s+([^{])/g, '\\mbox{} $1');
+
+    // STEP 10: Clean up excessive whitespace
     body = body.replace(/\s{3,}/g, '  '); // Max 2 spaces
     body = body.replace(/\{\s*\}/g, '');
 

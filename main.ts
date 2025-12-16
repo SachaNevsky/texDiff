@@ -385,6 +385,13 @@ async function generateDiffPdf() {
             appendTextcmd: "caption"
         });
 
+        // DEBUGGING: Check what latexdiff returned
+        console.log("=== LATEXDIFF RAW OUTPUT (first 500 chars) ===");
+        console.log(diff.output.substring(0, 500));
+        console.log("=== Has DIFadd? ===", diff.output.includes('DIFadd'));
+        console.log("=== Has DIFdel? ===", diff.output.includes('DIFdel'));
+        console.log("=== Has \\mbox\\hskip? ===", diff.output.includes('\\mbox\\hskip'));
+
         setStatus("Compiling PDF with SwiftLaTeX...");
         const pdfBlob = await compilePdf(diff.output);
 

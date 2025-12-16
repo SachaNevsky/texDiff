@@ -550,6 +550,9 @@ function cleanDiffTeX(diffTex) {
   body = body.replace(/\\DIFdel\{\}/g, "");
   body = body.replace(/\\DIFaddFL\{\}/g, "");
   body = body.replace(/\\DIFdelFL\{\}/g, "");
+  body = body.replace(/\\mbox\\hskip\s*(\d+(?:\.\d+)?)\s*pt/g, "\\mbox{\\hskip $1pt}");
+  body = body.replace(/\\mbox\\hskip\s*(\d+(?:\.\d+)?)\s*em/g, "\\mbox{\\hskip $1em}");
+  body = body.replace(/\\mbox\s+([^{])/g, "\\mbox{} $1");
   body = body.replace(/\s{3,}/g, "  ");
   body = body.replace(/\{\s*\}/g, "");
   body = body.replace(/\s+([.,;:!?])/g, "$1");
@@ -793,6 +796,11 @@ async function generateDiffPdf() {
       appendSafecmd: "includegraphics,caption",
       appendTextcmd: "caption"
     });
+    console.log("=== LATEXDIFF RAW OUTPUT (first 500 chars) ===");
+    console.log(diff.output.substring(0, 500));
+    console.log("=== Has DIFadd? ===", diff.output.includes("DIFadd"));
+    console.log("=== Has DIFdel? ===", diff.output.includes("DIFdel"));
+    console.log("=== Has \\mbox\\hskip? ===", diff.output.includes("\\mbox\\hskip"));
     setStatus("Compiling PDF with SwiftLaTeX...");
     const pdfBlob = await compilePdf(diff.output);
     if (currentPdfBlobUrl) {
