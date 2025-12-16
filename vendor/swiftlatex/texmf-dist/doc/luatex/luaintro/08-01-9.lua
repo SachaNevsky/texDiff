@@ -1,8 +1,0 @@
-print(1 or 2)
-print(1 and 2)
-print(1 or error())
-print(nil or "nil")
-print(nil and 1)
-print(false and error())
-print(false and nil)
-print(false or not nil)

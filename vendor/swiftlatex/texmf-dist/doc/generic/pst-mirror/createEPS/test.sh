@@ -1,1 +1,0 @@
-latex test.tex && dvips test.dvi -o && ps2pdf -dNOSAFER test.ps && rm -f test.aux test.log test.dvi test.ps

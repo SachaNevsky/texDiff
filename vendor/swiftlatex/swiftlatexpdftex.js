@@ -12,6 +12,7 @@ self.memlog = "";
 self.initmem = undefined;
 self.mainfile = "main.tex";
 self.texlive_endpoint = "https://texlive2.swiftlatex.com/";
+const TEXMF_BASE_URL = 'https://cdn.jsdelivr.net/gh/SachaNevsky/latexdiff-texmf-dist@main/';
 
 Module["print"] = function (a) {
 	self.memlog += a + "\n";
@@ -401,7 +402,7 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 		try {
 			// Load synchronously on first use
 			const xhr = new XMLHttpRequest();
-			xhr.open("GET", "texmf-dist/ls-R", false);
+			xhr.open("GET", `${TEXMF_BASE_URL}texmf-dist/ls-R`, false);
 			xhr.responseType = "text";
 			xhr.send();
 
@@ -446,26 +447,26 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	// First, try to find in ls-R database
 	const lsrPath = findInLsR(reqname);
 	if (lsrPath) {
-		local_url = `${lsrPath}`;
+		local_url = `${TEXMF_BASE_URL}${lsrPath}`;
 	}
 	// Fallback to format-based guessing if not in ls-R (only for files without extensions)
 	else if (reqname === "swiftlatexpdftex.fmt") {
-		local_url = `${reqname}`;
+		local_url = `${TEXMF_BASE_URL}${reqname}`;
 	}
 	else if (reqname.endsWith('.fmt')) {
-		local_url = `v${reqname}`;
+		local_url = `${TEXMF_BASE_URL}v${reqname}`;
 	}
 	else if (format === 3 && !reqname.includes('.')) {
 		// Format 3 = TFM font metrics (only if no extension)
-		local_url = `texmf-dist/fonts/tfm/public/cm/${reqname}.tfm`;
+		local_url = `${TEXMF_BASE_URL}texmf-dist/fonts/tfm/public/cm/${reqname}.tfm`;
 	}
 	else if (format === 26 && !reqname.includes('.')) {
 		// Format 26 = PK bitmap fonts (only if no extension)
-		local_url = `texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${reqname}.600pk`;
+		local_url = `${TEXMF_BASE_URL}texmf-dist/fonts/pk/ljfour/public/cm/dpi600/${reqname}.600pk`;
 	}
 	else if (format === 32 && !reqname.includes('.')) {
 		// Format 32 = Type 1 fonts (.pfb) (only if no extension)
-		local_url = `texmf-dist/fonts/type1/public/amsfonts/cm/${reqname}.pfb`;
+		local_url = `${TEXMF_BASE_URL}texmf-dist/fonts/type1/public/amsfonts/cm/${reqname}.pfb`;
 	}
 	else {
 		console.log(`! File not found in ls-R database: ${reqname} (format: ${format})`);
