@@ -380,7 +380,27 @@ var LatexDiff = class extends BaseTool {
   }
 };
 
-// cleanDiffTeX.ts
+// functions/findMatchingBrace.ts
+function findMatchingBrace(str, startPos) {
+  let braceCount = 1;
+  let pos = startPos;
+  while (pos < str.length && braceCount > 0) {
+    const char = str[pos];
+    const prevChar = pos > 0 ? str[pos - 1] : "";
+    if (char === "{" && prevChar !== "\\") {
+      braceCount++;
+    } else if (char === "}" && prevChar !== "\\") {
+      braceCount--;
+      if (braceCount === 0) {
+        return pos;
+      }
+    }
+    pos++;
+  }
+  return -1;
+}
+
+// functions/cleanDiffTeX.ts
 function cleanDiffTeX(diffTex) {
   const beginDocMatch = diffTex.match(/\\begin\{document\}/);
   if (!beginDocMatch) {
@@ -392,30 +412,16 @@ function cleanDiffTeX(diffTex) {
   preamble = preamble.replace(/\\RequirePackage\{color\}/g, "\\usepackage{color}");
   preamble = preamble.replace(/\\usepackage\[T1\]\{fontenc\}/g, "");
   preamble = preamble.replace(/\\usepackage\{lmodern\}/g, "");
-  preamble = preamble.replace(/\\usepackage\[.*?ps2pdf.*?\]\{hyperref\}/g, "\\usepackage[pdftex]{hyperref}");
-  preamble = preamble.replace(/\\usepackage\{hyperref\}/g, "\\usepackage[pdftex]{hyperref}");
+  preamble = preamble.replace(/\\usepackage\[.*?\]\{hyperref\}/g, "");
+  preamble = preamble.replace(/\\usepackage\{hyperref\}/g, "");
   body = body.replace(/~\\mbox\\hskip\s*0\s*pt/g, "~");
   body = body.replace(/\\mbox\\hskip\s*\d+(?:\.\d+)?\s*pt/g, " ");
   body = body.replace(/\\mbox\\hskip\s*\d+(?:\.\d+)?\s*em/g, " ");
   body = body.replace(/\\mbox\\hskip/g, "\\hskip");
-  function findMatchingBrace(str, startPos) {
-    let braceCount = 1;
-    let pos = startPos;
-    while (pos < str.length && braceCount > 0) {
-      const char = str[pos];
-      const prevChar = pos > 0 ? str[pos - 1] : "";
-      if (char === "{" && prevChar !== "\\") {
-        braceCount++;
-      } else if (char === "}" && prevChar !== "\\") {
-        braceCount--;
-        if (braceCount === 0) {
-          return pos;
-        }
-      }
-      pos++;
-    }
-    return -1;
-  }
+  body = body.replace(/\\href\{[^}]*\}\{([^}]*)\}/g, "$1");
+  body = body.replace(/\\url\{([^}]*)\}/g, "$1");
+  body = body.replace(/\\hyperlink\{[^}]*\}\{([^}]*)\}/g, "$1");
+  body = body.replace(/\\hypertarget\{[^}]*\}\{([^}]*)\}/g, "$1");
   const citationCommands = [
     "cite",
     "citet",
@@ -502,55 +508,11 @@ function cleanDiffTeX(diffTex) {
   body = body.replace(/\\addtocounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, "");
   body = body.replace(/\\setcounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, "");
   body = body.replace(/%DIFAUXCMD\s*/g, "");
-  body = body.replace(/\\DIFdelbegin\s*\\iffalse[\s\S]*?\\fi\s*\\DIFdelend/g, "");
-  body = body.replace(/\\DIFdelbegin[\s\S]*?\\DIFdelend/g, "");
   body = body.replace(/%DIFDELCMD < [^\n]*\n/g, "");
   body = body.replace(/%DIFDELCMD < /g, "");
   body = body.replace(/%DIF > /g, "");
   body = body.replace(/%DIF < /g, "");
-  body = body.replace(/\\DIFaddbegin\s*/g, "");
-  body = body.replace(/\\DIFaddend\s*/g, "");
-  for (let iteration = 0; iteration < 10; iteration++) {
-    const before = body;
-    let result = "";
-    let pos = 0;
-    while (pos < body.length) {
-      let handled = false;
-      const addCommands = ["\\DIFadd{", "\\DIFaddFL{"];
-      for (const cmd of addCommands) {
-        if (body.substring(pos, pos + cmd.length) === cmd) {
-          const startPos = pos + cmd.length;
-          const endPos = findMatchingBrace(body, startPos);
-          if (endPos !== -1) {
-            result += body.substring(startPos, endPos);
-            pos = endPos + 1;
-            handled = true;
-            break;
-          }
-        }
-      }
-      if (handled) continue;
-      const delCommands = ["\\DIFdel{", "\\DIFdelFL{"];
-      for (const cmd of delCommands) {
-        if (body.substring(pos, pos + cmd.length) === cmd) {
-          const startPos = pos + cmd.length;
-          const endPos = findMatchingBrace(body, startPos);
-          if (endPos !== -1) {
-            pos = endPos + 1;
-            handled = true;
-            break;
-          }
-        }
-      }
-      if (handled) continue;
-      result += body[pos];
-      pos++;
-    }
-    body = result;
-    if (body === before) break;
-  }
-  body = body.replace(/\\iffalse/g, "");
-  body = body.replace(/\\fi(?!\w)/g, "");
+  body = body.replace(/\\DIFdelbegin\s*\\iffalse([\s\S]*?)\\fi\s*\\DIFdelend/g, "\\DIFdelbegin$1\\DIFdelend");
   body = body.replace(/\\DIFadd\{\}/g, "");
   body = body.replace(/\\DIFdel\{\}/g, "");
   body = body.replace(/\\DIFaddFL\{\}/g, "");
@@ -560,6 +522,41 @@ function cleanDiffTeX(diffTex) {
   body = body.replace(/\{\s*\}/g, "");
   body = body.replace(/\s+([.,;:!?])/g, "$1");
   return preamble + body;
+}
+
+// functions/ensureWrapped.ts
+function ensureWrapped(content) {
+  const hasDocClass = /\\documentclass/.test(content);
+  const hasBeginDoc = /\\begin\{document\}/.test(content);
+  const hasEndDoc = /\\end\{document\}/.test(content);
+  if (hasDocClass && hasBeginDoc && hasEndDoc) return content;
+  const hasChapter = /\\chapter\{/.test(content);
+  const docClass = hasChapter ? "report" : "article";
+  return [
+    `\\documentclass{${docClass}}`,
+    "\\usepackage[utf8]{inputenc}",
+    "\\begin{document}",
+    content,
+    "\\end{document}"
+  ].join("\n");
+}
+
+// functions/downloadTextFile.ts
+function downloadTextFile(content, filename) {
+  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+// functions/updateWordCount.ts
+function updateWordCount(element, count) {
+  element.textContent = `Words: ${count}`;
 }
 
 // main.ts
@@ -582,48 +579,8 @@ var latestDiffTex = "";
 var currentPdfBlobUrl = null;
 var oldCountTimer = null;
 var newCountTimer = null;
-window.addEventListener("error", (event) => {
-  const message = event.message || "";
-  const filename = event.filename || "";
-  if (message.includes("Could not create /tmp") || message.includes("Could not create /home") || message.includes("mkdir failed") || filename.includes("perlrunner.html")) {
-    event.preventDefault();
-    event.stopPropagation();
-    return false;
-  }
-}, true);
-var originalConsoleLog = console.log;
-console.log = function(...args) {
-  const message = String(args[0] || "");
-  if (message.includes("Could not create") || message.includes("mkdir failed")) {
-    return;
-  }
-  originalConsoleLog.apply(console, args);
-};
-var originalConsoleWarn = console.warn;
-console.warn = function(...args) {
-  const message = String(args[0] || "");
-  if (message.includes("Could not create /tmp") || message.includes("Could not create /home") || message.includes("Could not create /perl") || message.includes("mkdir failed")) {
-    return;
-  }
-  originalConsoleWarn.apply(console, args);
-};
 function setStatus(msg) {
   if (statusEl) statusEl.textContent = msg;
-}
-function ensureWrapped(content) {
-  const hasDocClass = /\\documentclass/.test(content);
-  const hasBeginDoc = /\\begin\{document\}/.test(content);
-  const hasEndDoc = /\\end\{document\}/.test(content);
-  if (hasDocClass && hasBeginDoc && hasEndDoc) return content;
-  const hasChapter = /\\chapter\{/.test(content);
-  const docClass = hasChapter ? "report" : "article";
-  return [
-    `\\documentclass{${docClass}}`,
-    "\\usepackage[utf8]{inputenc}",
-    "\\begin{document}",
-    content,
-    "\\end{document}"
-  ].join("\n");
 }
 async function runTexCount(content) {
   if (!content.trim()) {
@@ -651,9 +608,6 @@ async function runTexCount(content) {
     console.error("Error running texcount:", error);
     return 0;
   }
-}
-function updateWordCount(element, count) {
-  element.textContent = `Words: ${count}`;
 }
 function debouncedCountOld() {
   if (oldCountTimer) {
@@ -753,17 +707,6 @@ async function compilePdf(diffTex) {
     console.error("PDF compilation error:", error);
     throw error;
   }
-}
-function downloadTextFile(content, filename) {
-  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
 }
 function openPdfInNewTab(blobUrl) {
   const newWindow = window.open(blobUrl, "_blank");
