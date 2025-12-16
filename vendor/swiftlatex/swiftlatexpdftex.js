@@ -435,7 +435,7 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 				}
 
 				lsRDatabase = database;
-				// console.log(`Loaded ls-R database with ${database.size} files`);
+				console.log(`Loaded ls-R database with ${database.size} files`);
 			}
 		} catch (err) {
 			console.error("Failed to load ls-R database:", err);
@@ -444,34 +444,39 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 
 	let local_url = "";
 
-	// First, try to find in ls-R database
+	// FIRST: Try to find in ls-R database
 	const lsrPath = findInLsR(reqname);
 	if (lsrPath) {
+		// File found in ls-R - use ONLY this path, no fallbacks
 		local_url = `${TEXMF_BASE_URL}${lsrPath}`;
-	}
-	// Fallback to format-based guessing if not in ls-R (only for files without extensions)
-	else if (reqname === "swiftlatexpdftex.fmt") {
-		local_url = `${reqname}`;
-	}
-	else if (reqname.endsWith('.fmt')) {
-		local_url = `${TEXMF_BASE_URL}v${reqname}`;
-	}
-	else if (format === 3 && !reqname.includes('.')) {
-		// Format 3 = TFM font metrics (only if no extension)
-		local_url = `${TEXMF_BASE_URL}fonts/tfm/public/cm/${reqname}.tfm`;
-	}
-	else if (format === 26 && !reqname.includes('.')) {
-		// Format 26 = PK bitmap fonts (only if no extension)
-		local_url = `${TEXMF_BASE_URL}fonts/pk/ljfour/public/cm/dpi600/${reqname}.600pk`;
-	}
-	else if (format === 32 && !reqname.includes('.')) {
-		// Format 32 = Type 1 fonts (.pfb) (only if no extension)
-		local_url = `${TEXMF_BASE_URL}fonts/type1/public/amsfonts/cm/${reqname}.pfb`;
-	}
-	else {
-		console.log(`! File not found in ls-R database: ${reqname} (format: ${format})`);
-		texlive404_cache[cacheKey] = 1;
-		return 0;
+		console.log(`Found in ls-R: ${reqname} -> ${local_url}`);
+	} else {
+		// File NOT in ls-R - now try fallback paths
+		console.log(`Not in ls-R, trying fallbacks for: ${reqname} (format: ${format})`);
+
+		if (reqname === "swiftlatexpdftex.fmt") {
+			local_url = `${reqname}`;
+		}
+		else if (reqname.endsWith('.fmt')) {
+			local_url = `${TEXMF_BASE_URL}${reqname}`;
+		}
+		else if (format === 3 && !reqname.includes('.')) {
+			// Format 3 = TFM font metrics (only if no extension)
+			local_url = `${TEXMF_BASE_URL}fonts/tfm/public/cm/${reqname}.tfm`;
+		}
+		else if (format === 26 && !reqname.includes('.')) {
+			// Format 26 = PK bitmap fonts (only if no extension)
+			local_url = `${TEXMF_BASE_URL}fonts/pk/ljfour/public/cm/dpi600/${reqname}.600pk`;
+		}
+		else if (format === 32 && !reqname.includes('.')) {
+			// Format 32 = Type 1 fonts (.pfb) (only if no extension)
+			local_url = `${TEXMF_BASE_URL}fonts/type1/public/amsfonts/cm/${reqname}.pfb`;
+		}
+		else {
+			console.log(`! File not found in ls-R and no fallback available: ${reqname} (format: ${format})`);
+			texlive404_cache[cacheKey] = 1;
+			return 0;
+		}
 	}
 
 	// Load file
