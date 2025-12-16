@@ -443,13 +443,29 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	}
 
 	let local_url = "";
+	let searchName = reqname;
 
-	// FIRST: Try to find in ls-R database
-	const lsrPath = findInLsR(reqname);
+	// If format indicates a specific file type and filename has no extension, add it
+	if (!reqname.includes('.')) {
+		if (format === 3) {
+			// Format 3 = TFM font metrics
+			searchName = reqname + '.tfm';
+		} else if (format === 26) {
+			// Format 26 = PK bitmap fonts
+			searchName = reqname + '.600pk';
+		} else if (format === 32) {
+			// Format 32 = Type 1 fonts (.pfb)
+			searchName = reqname + '.pfb';
+		}
+	}
+
+	// FIRST: Try to find in ls-R database (with proper extension if applicable)
+	let lsrPath = findInLsR(searchName);
+
 	if (lsrPath) {
 		// File found in ls-R - use ONLY this path, no fallbacks
 		local_url = `${TEXMF_BASE_URL}${lsrPath}`;
-		console.log(`Found in ls-R: ${reqname} -> ${local_url}`);
+		console.log(`Found in ls-R: ${searchName} -> ${local_url}`);
 	} else {
 		// File NOT in ls-R - now try fallback paths
 		console.log(`Not in ls-R, trying fallbacks for: ${reqname} (format: ${format})`);
