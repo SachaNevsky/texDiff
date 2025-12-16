@@ -402,44 +402,9 @@ function findMatchingBrace(str, startPos) {
 
 // functions/cleanDiffTeX.ts
 function removeEnvironment(text, envName) {
-  let result = text;
-  let searching = true;
-  while (searching) {
-    const beginPattern = `\\begin{${envName}}`;
-    const endPattern = `\\end{${envName}}`;
-    const beginIdx = result.indexOf(beginPattern);
-    if (beginIdx === -1) {
-      searching = false;
-      continue;
-    }
-    let depth = 1;
-    let searchPos = beginIdx + beginPattern.length;
-    let endIdx = -1;
-    while (searchPos < result.length && depth > 0) {
-      const nextBegin = result.indexOf(beginPattern, searchPos);
-      const nextEnd = result.indexOf(endPattern, searchPos);
-      if (nextEnd === -1) {
-        break;
-      }
-      if (nextBegin !== -1 && nextBegin < nextEnd) {
-        depth++;
-        searchPos = nextBegin + beginPattern.length;
-      } else {
-        depth--;
-        if (depth === 0) {
-          endIdx = nextEnd + endPattern.length;
-          break;
-        }
-        searchPos = nextEnd + endPattern.length;
-      }
-    }
-    if (endIdx !== -1) {
-      result = result.substring(0, beginIdx) + result.substring(endIdx);
-    } else {
-      searching = false;
-    }
-  }
-  return result;
+  const escapedEnvName = envName.replace(/\*/g, "\\*");
+  const regex = new RegExp(`\\\\begin\\{${escapedEnvName}\\}[\\s\\S]*?\\\\end\\{${escapedEnvName}\\}`, "g");
+  return text.replace(regex, "");
 }
 function checkBraceBalance(text) {
   let balance = 0;
@@ -506,12 +471,6 @@ function cleanDiffTeX(diffTex) {
   body = body.replace(/\\url\{([^}]*)\}/g, "$1");
   body = body.replace(/\\hyperlink\{[^}]*\}\{([^}]*)\}/g, "$1");
   body = body.replace(/\\hypertarget\{[^}]*\}\{([^}]*)\}/g, "$1");
-  body = removeEnvironment(body, "figure");
-  body = removeEnvironment(body, "figure*");
-  body = removeEnvironment(body, "table");
-  body = removeEnvironment(body, "table*");
-  body = removeEnvironment(body, "wrapfigure");
-  body = removeEnvironment(body, "wraptable");
   const citationCommands = [
     "cite",
     "citet",
