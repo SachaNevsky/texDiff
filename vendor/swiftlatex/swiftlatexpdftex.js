@@ -12,7 +12,7 @@ self.memlog = "";
 self.initmem = undefined;
 self.mainfile = "main.tex";
 self.texlive_endpoint = "https://texlive2.swiftlatex.com/";
-const TEXMF_BASE_URL = 'https://cdn.jsdelivr.net/gh/SachaNevsky/latexdiff-texmf-dist@main/';
+const TEXMF_BASE_URL = 'https://raw.githubusercontent.com/SachaNevsky/latexdiff-texmf-dist/main/';
 
 Module["print"] = function (a) {
 	self.memlog += a + "\n";
