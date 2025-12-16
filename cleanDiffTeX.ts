@@ -19,6 +19,19 @@ export function cleanDiffTeX(diffTex: string): string {
 
     // ========== CLEAN BODY ==========
 
+    // STEP 1: Fix latexdiff-specific constructs FIRST before any other processing
+    // These are special constructs that latexdiff inserts that only work with its macros
+
+    // Replace ~\mbox\hskip0pt with just ~ (non-breaking space)
+    body = body.replace(/~\\mbox\\hskip\s*0\s*pt/g, '~');
+
+    // Replace other \mbox\hskip variants
+    body = body.replace(/\\mbox\\hskip\s*\d+(?:\.\d+)?\s*pt/g, ' ');
+    body = body.replace(/\\mbox\\hskip\s*\d+(?:\.\d+)?\s*em/g, ' ');
+
+    // Replace standalone \mbox\hskip (without the tilde prefix)
+    body = body.replace(/\\mbox\\hskip/g, '\\hskip');
+
     // Helper function to find matching brace
     function findMatchingBrace(str: string, startPos: number): number {
         let braceCount = 1;
@@ -42,8 +55,7 @@ export function cleanDiffTeX(diffTex: string): string {
         return -1;
     }
 
-    // STEP 1: Remove problematic commands EARLY (before unwrapping DIF)
-    // This includes citations, references, and labels that would cause errors
+    // STEP 2: Remove problematic commands EARLY (before unwrapping DIF)
 
     const citationCommands = [
         'cite', 'citet', 'citep', 'citealt', 'citealp', 'citeauthor', 'citeyear', 'citeyearpar',
@@ -62,7 +74,7 @@ export function cleanDiffTeX(diffTex: string): string {
 
     const allProblematicCommands = [...citationCommands, ...refCommands, ...labelCommands];
 
-    // Replace problematic commands with placeholders (preserves text flow)
+    // Replace problematic commands with empty string
     for (const cmd of allProblematicCommands) {
         const cmdPattern = `\\${cmd}`;
 
@@ -80,11 +92,14 @@ export function cleanDiffTeX(diffTex: string): string {
                 }
 
                 // Check if this is actually the command (not part of another word)
+                const charBefore = idx > 0 ? body[idx - 1] : '';
                 const charAfter = body[idx + cmdPattern.length];
-                if (charAfter && /[a-zA-Z]/.test(charAfter)) {
-                    // Part of a longer command name, skip it
-                    result += body.substring(pos, idx + cmdPattern.length);
-                    pos = idx + cmdPattern.length;
+
+                // Must not be preceded by backslash or letter, and not followed by letter
+                if ((charBefore === '\\' || /[a-zA-Z]/.test(charBefore)) ||
+                    (charAfter && /[a-zA-Z]/.test(charAfter))) {
+                    result += body.substring(pos, idx + 1);
+                    pos = idx + 1;
                     continue;
                 }
 
@@ -108,8 +123,6 @@ export function cleanDiffTeX(diffTex: string): string {
                 if (body[searchPos] === '{') {
                     const closeBrace = findMatchingBrace(body, searchPos + 1);
                     if (closeBrace !== -1) {
-                        // Replace with empty string (or could use placeholder like "[?]")
-                        // result += '[?]';  // Use this if you want to see where citations were
                         pos = closeBrace + 1;
                         changed = true;
                         continue;
@@ -125,26 +138,26 @@ export function cleanDiffTeX(diffTex: string): string {
         }
     }
 
-    // STEP 2: Remove DIFAUXCMD comments and the commands they mark
+    // STEP 3: Remove DIFAUXCMD comments and the commands they mark
     body = body.replace(/\\addtocounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, '');
     body = body.replace(/\\setcounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, '');
     body = body.replace(/%DIFAUXCMD\s*/g, '');
 
-    // STEP 3: Handle DIFdel blocks with \iffalse...\fi wrappers
+    // STEP 4: Handle DIFdel blocks with \iffalse...\fi wrappers
     body = body.replace(/\\DIFdelbegin\s*\\iffalse[\s\S]*?\\fi\s*\\DIFdelend/g, '');
     body = body.replace(/\\DIFdelbegin[\s\S]*?\\DIFdelend/g, '');
 
-    // STEP 4: Remove DIFDELCMD markers
+    // STEP 5: Remove DIFDELCMD markers
     body = body.replace(/%DIFDELCMD < [^\n]*\n/g, '');
     body = body.replace(/%DIFDELCMD < /g, '');
     body = body.replace(/%DIF > /g, '');
     body = body.replace(/%DIF < /g, '');
 
-    // STEP 5: Remove DIFaddbegin/DIFaddend markers
+    // STEP 6: Remove DIFaddbegin/DIFaddend markers
     body = body.replace(/\\DIFaddbegin\s*/g, '');
     body = body.replace(/\\DIFaddend\s*/g, '');
 
-    // STEP 6: Unwrap DIF commands (now that problematic commands are already removed)
+    // STEP 7: Unwrap DIF commands
     for (let iteration = 0; iteration < 10; iteration++) {
         const before = body;
         let result = '';
@@ -156,7 +169,7 @@ export function cleanDiffTeX(diffTex: string): string {
             // Check for DIFadd or DIFaddFL - keep content
             const addCommands = ['\\DIFadd{', '\\DIFaddFL{'];
             for (const cmd of addCommands) {
-                if (body.substring(pos).startsWith(cmd)) {
+                if (body.substring(pos, pos + cmd.length) === cmd) {
                     const startPos = pos + cmd.length;
                     const endPos = findMatchingBrace(body, startPos);
 
@@ -175,7 +188,7 @@ export function cleanDiffTeX(diffTex: string): string {
             // Check for DIFdel or DIFdelFL - remove content
             const delCommands = ['\\DIFdel{', '\\DIFdelFL{'];
             for (const cmd of delCommands) {
-                if (body.substring(pos).startsWith(cmd)) {
+                if (body.substring(pos, pos + cmd.length) === cmd) {
                     const startPos = pos + cmd.length;
                     const endPos = findMatchingBrace(body, startPos);
 
@@ -199,29 +212,22 @@ export function cleanDiffTeX(diffTex: string): string {
         if (body === before) break;
     }
 
-    // STEP 7: Clean up any remaining orphaned \iffalse or \fi commands
+    // STEP 8: Clean up any remaining orphaned \iffalse or \fi commands
     body = body.replace(/\\iffalse/g, '');
     body = body.replace(/\\fi(?!\w)/g, '');
 
-    // STEP 8: Clean up empty DIF commands (if any remain)
+    // STEP 9: Clean up empty DIF commands (if any remain)
     body = body.replace(/\\DIFadd\{\}/g, '');
     body = body.replace(/\\DIFdel\{\}/g, '');
     body = body.replace(/\\DIFaddFL\{\}/g, '');
     body = body.replace(/\\DIFdelFL\{\}/g, '');
 
-    // STEP 9: Fix malformed \mbox commands (e.g., \mbox\hskip -> \mbox{\hskip})
-    // This might be in the original latexdiff output
-    body = body.replace(/\\mbox\\hskip\s*(\d+(?:\.\d+)?)\s*pt/g, '\\mbox{\\hskip $1pt}');
-    body = body.replace(/\\mbox\\hskip\s*(\d+(?:\.\d+)?)\s*em/g, '\\mbox{\\hskip $1em}');
+    // STEP 10: Final cleanup of any remaining malformed \mbox constructs
+    body = body.replace(/\\mbox\s+(?![{])/g, ' ');
 
-    // More general fix: if we see \mbox followed by something other than {, wrap it
-    body = body.replace(/\\mbox\s+([^{])/g, '\\mbox{} $1');
-
-    // STEP 10: Clean up excessive whitespace
-    body = body.replace(/\s{3,}/g, '  '); // Max 2 spaces
+    // STEP 11: Clean up excessive whitespace
+    body = body.replace(/\s{3,}/g, '  ');
     body = body.replace(/\{\s*\}/g, '');
-
-    // Clean up space before punctuation
     body = body.replace(/\s+([.,;:!?])/g, '$1');
 
     return preamble + body;

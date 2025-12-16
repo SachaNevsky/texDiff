@@ -394,6 +394,10 @@ function cleanDiffTeX(diffTex) {
   preamble = preamble.replace(/\\usepackage\{lmodern\}/g, "");
   preamble = preamble.replace(/\\usepackage\[.*?ps2pdf.*?\]\{hyperref\}/g, "\\usepackage[pdftex]{hyperref}");
   preamble = preamble.replace(/\\usepackage\{hyperref\}/g, "\\usepackage[pdftex]{hyperref}");
+  body = body.replace(/~\\mbox\\hskip\s*0\s*pt/g, "~");
+  body = body.replace(/\\mbox\\hskip\s*\d+(?:\.\d+)?\s*pt/g, " ");
+  body = body.replace(/\\mbox\\hskip\s*\d+(?:\.\d+)?\s*em/g, " ");
+  body = body.replace(/\\mbox\\hskip/g, "\\hskip");
   function findMatchingBrace(str, startPos) {
     let braceCount = 1;
     let pos = startPos;
@@ -464,10 +468,11 @@ function cleanDiffTeX(diffTex) {
           result += body.substring(pos);
           break;
         }
+        const charBefore = idx > 0 ? body[idx - 1] : "";
         const charAfter = body[idx + cmdPattern.length];
-        if (charAfter && /[a-zA-Z]/.test(charAfter)) {
-          result += body.substring(pos, idx + cmdPattern.length);
-          pos = idx + cmdPattern.length;
+        if (charBefore === "\\" || /[a-zA-Z]/.test(charBefore) || charAfter && /[a-zA-Z]/.test(charAfter)) {
+          result += body.substring(pos, idx + 1);
+          pos = idx + 1;
           continue;
         }
         result += body.substring(pos, idx);
@@ -513,7 +518,7 @@ function cleanDiffTeX(diffTex) {
       let handled = false;
       const addCommands = ["\\DIFadd{", "\\DIFaddFL{"];
       for (const cmd of addCommands) {
-        if (body.substring(pos).startsWith(cmd)) {
+        if (body.substring(pos, pos + cmd.length) === cmd) {
           const startPos = pos + cmd.length;
           const endPos = findMatchingBrace(body, startPos);
           if (endPos !== -1) {
@@ -527,7 +532,7 @@ function cleanDiffTeX(diffTex) {
       if (handled) continue;
       const delCommands = ["\\DIFdel{", "\\DIFdelFL{"];
       for (const cmd of delCommands) {
-        if (body.substring(pos).startsWith(cmd)) {
+        if (body.substring(pos, pos + cmd.length) === cmd) {
           const startPos = pos + cmd.length;
           const endPos = findMatchingBrace(body, startPos);
           if (endPos !== -1) {
@@ -550,9 +555,7 @@ function cleanDiffTeX(diffTex) {
   body = body.replace(/\\DIFdel\{\}/g, "");
   body = body.replace(/\\DIFaddFL\{\}/g, "");
   body = body.replace(/\\DIFdelFL\{\}/g, "");
-  body = body.replace(/\\mbox\\hskip\s*(\d+(?:\.\d+)?)\s*pt/g, "\\mbox{\\hskip $1pt}");
-  body = body.replace(/\\mbox\\hskip\s*(\d+(?:\.\d+)?)\s*em/g, "\\mbox{\\hskip $1em}");
-  body = body.replace(/\\mbox\s+([^{])/g, "\\mbox{} $1");
+  body = body.replace(/\\mbox\s+(?![{])/g, " ");
   body = body.replace(/\s{3,}/g, "  ");
   body = body.replace(/\{\s*\}/g, "");
   body = body.replace(/\s+([.,;:!?])/g, "$1");
