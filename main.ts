@@ -280,23 +280,34 @@ function waitForSwiftLaTeX(): Promise<void> {
 // ============================================================================
 
 function cleanDiffTeX(diffTex: string): string {
-    let cleaned = diffTex;
+    // Split into preamble and document body
+    const beginDocMatch = diffTex.match(/\\begin\{document\}/);
+    if (!beginDocMatch) {
+        // No \begin{document}, just return as is
+        return diffTex;
+    }
+
+    const splitIndex = beginDocMatch.index! + beginDocMatch[0].length;
+    let preamble = diffTex.substring(0, splitIndex);
+    let body = diffTex.substring(splitIndex);
+
+    // ========== CLEAN PREAMBLE ==========
+    // Only fix critical issues in preamble, don't remove DIF commands
 
     // Replace \RequirePackage with \usepackage for consistency
-    cleaned = cleaned.replace(/\\RequirePackage\{color\}/g, '\\usepackage{color}');
+    preamble = preamble.replace(/\\RequirePackage\{color\}/g, '\\usepackage{color}');
 
     // Remove problematic font packages if they exist
-    cleaned = cleaned.replace(/\\usepackage\[T1\]\{fontenc\}/g, '');
-    cleaned = cleaned.replace(/\\usepackage\{lmodern\}/g, '');
+    preamble = preamble.replace(/\\usepackage\[T1\]\{fontenc\}/g, '');
+    preamble = preamble.replace(/\\usepackage\{lmodern\}/g, '');
 
     // Fix hyperref driver issue - latexdiff adds hyperref with ps2pdf driver
-    // Replace any hyperref with wrong driver with correct pdftex driver
-    cleaned = cleaned.replace(/\\usepackage\[.*?ps2pdf.*?\]\{hyperref\}/g, '\\usepackage[pdftex]{hyperref}');
+    preamble = preamble.replace(/\\usepackage\[.*?ps2pdf.*?\]\{hyperref\}/g, '\\usepackage[pdftex]{hyperref}');
+    preamble = preamble.replace(/\\usepackage\{hyperref\}/g, '\\usepackage[pdftex]{hyperref}');
 
-    // Also catch hyperref without explicit driver
-    cleaned = cleaned.replace(/\\usepackage\{hyperref\}/g, '\\usepackage[pdftex]{hyperref}');
+    // ========== CLEAN BODY ==========
+    // Remove citations and refs from body only
 
-    // List of common citation and reference commands to remove
     const citationCommands = [
         'cite', 'citet', 'citep', 'citealt', 'citealp', 'citeauthor', 'citeyear', 'citeyearpar',
         'Cite', 'Citet', 'Citep', 'Citealt', 'Citealp',
@@ -312,55 +323,63 @@ function cleanDiffTeX(diffTex: string): string {
 
     const allCommands = [...citationCommands, ...refCommands];
 
-    // Remove DIFadd/DIFdel wrappers around citation/ref commands FIRST
-    // This prevents creating unbalanced braces
+    // Remove DIFadd/DIFdel/DIFaddFL/DIFdelFL wrappers around citation/ref commands
     allCommands.forEach(cmd => {
-        // Remove \DIFadd{\cite{...}} and similar
-        cleaned = cleaned.replace(
-            new RegExp(`\\\\DIFadd\\{\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}\\}`, 'g'),
-            ''
-        );
-        // Remove \DIFdel{\cite{...}} and similar
-        cleaned = cleaned.replace(
-            new RegExp(`\\\\DIFdel\\{\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}\\}`, 'g'),
-            ''
-        );
+        // Handle all DIF wrapper variants
+        const difVariants = ['DIFadd', 'DIFdel', 'DIFaddFL', 'DIFdelFL'];
+        difVariants.forEach(difCmd => {
+            // Remove \DIFxxx{\cite{...}} and similar (single level)
+            body = body.replace(
+                new RegExp(`\\\\${difCmd}\\{\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}\\}`, 'g'),
+                ''
+            );
+            // Also handle nested braces more robustly
+            body = body.replace(
+                new RegExp(`\\\\${difCmd}\\{\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^}]*\\{[^}]*\\}[^}]*\\}\\}`, 'g'),
+                ''
+            );
+        });
     });
 
     // Now remove any remaining standalone citation/ref commands
     allCommands.forEach(cmd => {
-        cleaned = cleaned.replace(
+        body = body.replace(
             new RegExp(`\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}`, 'g'),
             ''
         );
     });
 
-    // Clean up remaining DIF wrappers (for other content)
-    // Do this iteratively to handle nested cases
-    for (let i = 0; i < 10; i++) {
-        const before = cleaned;
-        cleaned = cleaned.replace(/\\DIFaddbegin\s*/g, '');
-        cleaned = cleaned.replace(/\\DIFaddend\s*/g, '');
-        cleaned = cleaned.replace(/\\DIFdelbegin\s*/g, '');
-        cleaned = cleaned.replace(/\\DIFdelend\s*/g, '');
-        cleaned = cleaned.replace(/\\DIFadd\{([^{}]*)\}/g, '$1');
-        cleaned = cleaned.replace(/\\DIFdel\{([^{}]*)\}/g, '');
+    // Clean up remaining DIF wrappers in body (for other content)
+    // Keep the commands themselves, just remove their effect
+    for (let i = 0; i < 5; i++) {
+        const before = body;
 
-        // If nothing changed, we're done
-        if (cleaned === before) break;
+        // For DIFadd variants, keep the content
+        body = body.replace(/\\DIFaddbegin\s*/g, '');
+        body = body.replace(/\\DIFaddend\s*/g, '');
+        body = body.replace(/\\DIFadd\{([^{}]*)\}/g, '$1');
+        body = body.replace(/\\DIFaddFL\{([^{}]*)\}/g, '$1');
+
+        // For DIFdel variants, remove the content
+        body = body.replace(/\\DIFdelbegin\s*/g, '');
+        body = body.replace(/\\DIFdelend\s*/g, '');
+        body = body.replace(/\\DIFdel\{([^{}]*)\}/g, '');
+        body = body.replace(/\\DIFdelFL\{([^{}]*)\}/g, '');
+
+        if (body === before) break;
     }
 
-    // Clean up empty DIF commands that might be left
-    cleaned = cleaned.replace(/\\DIFadd\{\}/g, '');
-    cleaned = cleaned.replace(/\\DIFdel\{\}/g, '');
+    // Clean up empty DIF commands
+    body = body.replace(/\\DIFadd\{\}/g, '');
+    body = body.replace(/\\DIFdel\{\}/g, '');
+    body = body.replace(/\\DIFaddFL\{\}/g, '');
+    body = body.replace(/\\DIFdelFL\{\}/g, '');
 
-    // Clean up any double spaces left behind
-    cleaned = cleaned.replace(/\s{2,}/g, ' ');
+    // Clean up whitespace
+    body = body.replace(/\s{2,}/g, ' ');
+    body = body.replace(/\{\s*\}/g, '');
 
-    // Remove any stray empty braces
-    cleaned = cleaned.replace(/\{\s*\}/g, '');
-
-    return cleaned;
+    return preamble + body;
 }
 
 async function compilePdf(diffTex: string): Promise<Blob> {

@@ -542,12 +542,18 @@ function waitForSwiftLaTeX() {
   });
 }
 function cleanDiffTeX(diffTex) {
-  let cleaned = diffTex;
-  cleaned = cleaned.replace(/\\RequirePackage\{color\}/g, "\\usepackage{color}");
-  cleaned = cleaned.replace(/\\usepackage\[T1\]\{fontenc\}/g, "");
-  cleaned = cleaned.replace(/\\usepackage\{lmodern\}/g, "");
-  cleaned = cleaned.replace(/\\usepackage\[.*?ps2pdf.*?\]\{hyperref\}/g, "\\usepackage[pdftex]{hyperref}");
-  cleaned = cleaned.replace(/\\usepackage\{hyperref\}/g, "\\usepackage[pdftex]{hyperref}");
+  const beginDocMatch = diffTex.match(/\\begin\{document\}/);
+  if (!beginDocMatch) {
+    return diffTex;
+  }
+  const splitIndex = beginDocMatch.index + beginDocMatch[0].length;
+  let preamble = diffTex.substring(0, splitIndex);
+  let body = diffTex.substring(splitIndex);
+  preamble = preamble.replace(/\\RequirePackage\{color\}/g, "\\usepackage{color}");
+  preamble = preamble.replace(/\\usepackage\[T1\]\{fontenc\}/g, "");
+  preamble = preamble.replace(/\\usepackage\{lmodern\}/g, "");
+  preamble = preamble.replace(/\\usepackage\[.*?ps2pdf.*?\]\{hyperref\}/g, "\\usepackage[pdftex]{hyperref}");
+  preamble = preamble.replace(/\\usepackage\{hyperref\}/g, "\\usepackage[pdftex]{hyperref}");
   const citationCommands = [
     "cite",
     "citet",
@@ -588,36 +594,43 @@ function cleanDiffTeX(diffTex) {
   ];
   const allCommands = [...citationCommands, ...refCommands];
   allCommands.forEach((cmd) => {
-    cleaned = cleaned.replace(
-      new RegExp(`\\\\DIFadd\\{\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}\\}`, "g"),
-      ""
-    );
-    cleaned = cleaned.replace(
-      new RegExp(`\\\\DIFdel\\{\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}\\}`, "g"),
-      ""
-    );
+    const difVariants = ["DIFadd", "DIFdel", "DIFaddFL", "DIFdelFL"];
+    difVariants.forEach((difCmd) => {
+      body = body.replace(
+        new RegExp(`\\\\${difCmd}\\{\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}\\}`, "g"),
+        ""
+      );
+      body = body.replace(
+        new RegExp(`\\\\${difCmd}\\{\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^}]*\\{[^}]*\\}[^}]*\\}\\}`, "g"),
+        ""
+      );
+    });
   });
   allCommands.forEach((cmd) => {
-    cleaned = cleaned.replace(
+    body = body.replace(
       new RegExp(`\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}`, "g"),
       ""
     );
   });
-  for (let i = 0; i < 10; i++) {
-    const before = cleaned;
-    cleaned = cleaned.replace(/\\DIFaddbegin\s*/g, "");
-    cleaned = cleaned.replace(/\\DIFaddend\s*/g, "");
-    cleaned = cleaned.replace(/\\DIFdelbegin\s*/g, "");
-    cleaned = cleaned.replace(/\\DIFdelend\s*/g, "");
-    cleaned = cleaned.replace(/\\DIFadd\{([^{}]*)\}/g, "$1");
-    cleaned = cleaned.replace(/\\DIFdel\{([^{}]*)\}/g, "");
-    if (cleaned === before) break;
+  for (let i = 0; i < 5; i++) {
+    const before = body;
+    body = body.replace(/\\DIFaddbegin\s*/g, "");
+    body = body.replace(/\\DIFaddend\s*/g, "");
+    body = body.replace(/\\DIFadd\{([^{}]*)\}/g, "$1");
+    body = body.replace(/\\DIFaddFL\{([^{}]*)\}/g, "$1");
+    body = body.replace(/\\DIFdelbegin\s*/g, "");
+    body = body.replace(/\\DIFdelend\s*/g, "");
+    body = body.replace(/\\DIFdel\{([^{}]*)\}/g, "");
+    body = body.replace(/\\DIFdelFL\{([^{}]*)\}/g, "");
+    if (body === before) break;
   }
-  cleaned = cleaned.replace(/\\DIFadd\{\}/g, "");
-  cleaned = cleaned.replace(/\\DIFdel\{\}/g, "");
-  cleaned = cleaned.replace(/\s{2,}/g, " ");
-  cleaned = cleaned.replace(/\{\s*\}/g, "");
-  return cleaned;
+  body = body.replace(/\\DIFadd\{\}/g, "");
+  body = body.replace(/\\DIFdel\{\}/g, "");
+  body = body.replace(/\\DIFaddFL\{\}/g, "");
+  body = body.replace(/\\DIFdelFL\{\}/g, "");
+  body = body.replace(/\s{2,}/g, " ");
+  body = body.replace(/\{\s*\}/g, "");
+  return preamble + body;
 }
 async function compilePdf(diffTex) {
   if (!pdfEngine) {
