@@ -548,6 +548,50 @@ function cleanDiffTeX(diffTex) {
   cleaned = cleaned.replace(/\\usepackage\{lmodern\}/g, "");
   cleaned = cleaned.replace(/\\usepackage\[.*?ps2pdf.*?\]\{hyperref\}/g, "\\usepackage[pdftex]{hyperref}");
   cleaned = cleaned.replace(/\\usepackage\{hyperref\}/g, "\\usepackage[pdftex]{hyperref}");
+  const citationCommands = [
+    "cite",
+    "citet",
+    "citep",
+    "citealt",
+    "citealp",
+    "citeauthor",
+    "citeyear",
+    "citeyearpar",
+    "Cite",
+    "Citet",
+    "Citep",
+    "Citealt",
+    "Citealp",
+    "citenum",
+    "citetext",
+    "citeyearpar",
+    "footcite",
+    "footcitet",
+    "footcitep",
+    "parencite",
+    "textcite",
+    "autocite"
+  ];
+  cleaned = cleaned.replace(/\\DIFdelbegin[^]*?\\DIFdelend\s*/g, "");
+  cleaned = cleaned.replace(/\\DIFaddbegin[^]*?\\DIFaddend\s*/g, "");
+  citationCommands.forEach((cmd) => {
+    const regex1 = new RegExp(`\\\\${cmd}\\{[^}]*\\}`, "g");
+    const regex2 = new RegExp(`\\\\${cmd}\\[[^\\]]*\\]\\{[^}]*\\}`, "g");
+    cleaned = cleaned.replace(regex2, "");
+    cleaned = cleaned.replace(regex1, "");
+  });
+  cleaned = cleaned.replace(/\\DIFadd\{\\cite[^}]*\{[^}]*\}\}/g, "");
+  cleaned = cleaned.replace(/\\DIFdel\{\\cite[^}]*\{[^}]*\}\}/g, "");
+  const refCommands = ["ref", "autoref", "eqref", "figref", "tabref", "pageref", "nameref", "cref", "Cref", "vref", "Vref", "labelcref", "labelcpageref"];
+  refCommands.forEach((cmd) => {
+    const regex1 = new RegExp(`\\\\${cmd}\\{[^}]*\\}`, "g");
+    const regex2 = new RegExp(`\\\\${cmd}\\[[^\\]]*\\]\\{[^}]*\\}`, "g");
+    cleaned = cleaned.replace(regex2, "");
+    cleaned = cleaned.replace(regex1, "");
+  });
+  cleaned = cleaned.replace(/\s{2,}/g, " ");
+  cleaned = cleaned.replace(/\\DIFadd\{\}/g, "");
+  cleaned = cleaned.replace(/\\DIFdel\{\}/g, "");
   return cleaned;
 }
 async function compilePdf(diffTex) {

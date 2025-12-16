@@ -296,9 +296,53 @@ function cleanDiffTeX(diffTex: string): string {
     // Also catch hyperref without explicit driver
     cleaned = cleaned.replace(/\\usepackage\{hyperref\}/g, '\\usepackage[pdftex]{hyperref}');
 
+    // Remove all citation commands (both regular and latexdiff-wrapped)
+    // List of common citation commands
+    const citationCommands = [
+        'cite', 'citet', 'citep', 'citealt', 'citealp', 'citeauthor', 'citeyear', 'citeyearpar',
+        'Cite', 'Citet', 'Citep', 'Citealt', 'Citealp',
+        'citenum', 'citetext', 'citeyearpar',
+        'footcite', 'footcitet', 'footcitep',
+        'parencite', 'textcite', 'autocite'
+    ];
+
+    // Remove DIFdelbegin...DIFdelend blocks that contain citations
+    cleaned = cleaned.replace(/\\DIFdelbegin[^]*?\\DIFdelend\s*/g, '');
+
+    // Remove DIFaddbegin...DIFaddend blocks that contain citations
+    cleaned = cleaned.replace(/\\DIFaddbegin[^]*?\\DIFaddend\s*/g, '');
+
+    // Remove all citation commands with their arguments
+    citationCommands.forEach(cmd => {
+        // Match \cmd{...} and \cmd[...]{...}
+        const regex1 = new RegExp(`\\\\${cmd}\\{[^}]*\\}`, 'g');
+        const regex2 = new RegExp(`\\\\${cmd}\\[[^\\]]*\\]\\{[^}]*\\}`, 'g');
+        cleaned = cleaned.replace(regex2, '');
+        cleaned = cleaned.replace(regex1, '');
+    });
+
+    // Remove any remaining DIFadd/DIFdel wrappers around citation commands
+    cleaned = cleaned.replace(/\\DIFadd\{\\cite[^}]*\{[^}]*\}\}/g, '');
+    cleaned = cleaned.replace(/\\DIFdel\{\\cite[^}]*\{[^}]*\}\}/g, '');
+
+    // Remove ref commands as well (they might also cause issues)
+    const refCommands = ['ref', 'autoref', 'eqref', 'figref', 'tabref', 'pageref', 'nameref', 'cref', 'Cref', 'vref', 'Vref', 'labelcref', 'labelcpageref'];
+    refCommands.forEach(cmd => {
+        const regex1 = new RegExp(`\\\\${cmd}\\{[^}]*\\}`, 'g');
+        const regex2 = new RegExp(`\\\\${cmd}\\[[^\\]]*\\]\\{[^}]*\\}`, 'g');
+        cleaned = cleaned.replace(regex2, '');
+        cleaned = cleaned.replace(regex1, '');
+    });
+
+    // Clean up any double spaces left behind
+    cleaned = cleaned.replace(/\s{2,}/g, ' ');
+
+    // Clean up any empty DIFadd/DIFdel commands
+    cleaned = cleaned.replace(/\\DIFadd\{\}/g, '');
+    cleaned = cleaned.replace(/\\DIFdel\{\}/g, '');
+
     return cleaned;
 }
-
 async function compilePdf(diffTex: string): Promise<Blob> {
     if (!pdfEngine) {
         throw new Error("PDF engine not initialized");
