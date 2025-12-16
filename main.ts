@@ -103,8 +103,14 @@ function ensureWrapped(content: string): string {
     const hasEndDoc = /\\end\{document\}/.test(content);
     if (hasDocClass && hasBeginDoc && hasEndDoc) return content;
 
+    // Check if content contains chapter commands
+    const hasChapter = /\\chapter\{/.test(content);
+
+    // Use 'report' class if chapters are present, otherwise use 'article'
+    const docClass = hasChapter ? 'report' : 'article';
+
     return [
-        "\\documentclass{article}",
+        `\\documentclass{${docClass}}`,
         "\\usepackage[utf8]{inputenc}",
         "\\begin{document}",
         content,

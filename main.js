@@ -433,8 +433,10 @@ function ensureWrapped(content) {
   const hasBeginDoc = /\\begin\{document\}/.test(content);
   const hasEndDoc = /\\end\{document\}/.test(content);
   if (hasDocClass && hasBeginDoc && hasEndDoc) return content;
+  const hasChapter = /\\chapter\{/.test(content);
+  const docClass = hasChapter ? "report" : "article";
   return [
-    "\\documentclass{article}",
+    `\\documentclass{${docClass}}`,
     "\\usepackage[utf8]{inputenc}",
     "\\begin{document}",
     content,
