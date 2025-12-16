@@ -623,12 +623,64 @@ function cleanDiffTeX(diffTex) {
   });
   body = body.replace(/\\DIFaddbegin\s*/g, "");
   body = body.replace(/\\DIFaddend\s*/g, "");
-  for (let i = 0; i < 5; i++) {
+  function extractBracedContent(str, startPos) {
+    let braceCount = 1;
+    let pos = startPos;
+    let content = "";
+    while (pos < str.length && braceCount > 0) {
+      const char = str[pos];
+      const prevChar = pos > 0 ? str[pos - 1] : "";
+      if (char === "{" && prevChar !== "\\") {
+        braceCount++;
+        content += char;
+      } else if (char === "}" && prevChar !== "\\") {
+        braceCount--;
+        if (braceCount === 0) {
+          return { content, endPos: pos + 1 };
+        }
+        content += char;
+      } else {
+        content += char;
+      }
+      pos++;
+    }
+    return { content, endPos: pos };
+  }
+  for (let iteration = 0; iteration < 10; iteration++) {
     const before = body;
-    body = body.replace(/\\DIFadd\{([^{}]*)\}/g, "$1");
-    body = body.replace(/\\DIFaddFL\{([^{}]*)\}/g, "$1");
-    body = body.replace(/\\DIFdel\{([^{}]*)\}/g, "");
-    body = body.replace(/\\DIFdelFL\{([^{}]*)\}/g, "");
+    let result = "";
+    let pos = 0;
+    while (pos < body.length) {
+      if (body.substring(pos).startsWith("\\DIFadd{")) {
+        const startPos = pos + "\\DIFadd{".length;
+        const { content, endPos } = extractBracedContent(body, startPos);
+        result += content;
+        pos = endPos;
+        continue;
+      }
+      if (body.substring(pos).startsWith("\\DIFaddFL{")) {
+        const startPos = pos + "\\DIFaddFL{".length;
+        const { content, endPos } = extractBracedContent(body, startPos);
+        result += content;
+        pos = endPos;
+        continue;
+      }
+      if (body.substring(pos).startsWith("\\DIFdel{")) {
+        const startPos = pos + "\\DIFdel{".length;
+        const { endPos } = extractBracedContent(body, startPos);
+        pos = endPos;
+        continue;
+      }
+      if (body.substring(pos).startsWith("\\DIFdelFL{")) {
+        const startPos = pos + "\\DIFdelFL{".length;
+        const { endPos } = extractBracedContent(body, startPos);
+        pos = endPos;
+        continue;
+      }
+      result += body[pos];
+      pos++;
+    }
+    body = result;
     if (body === before) break;
   }
   body = body.replace(/\\iffalse/g, "");
