@@ -414,10 +414,6 @@ function cleanDiffTeX(diffTex) {
   preamble = preamble.replace(/\\usepackage\{lmodern\}/g, "");
   preamble = preamble.replace(/\\usepackage\[.*?\]\{hyperref\}/g, "");
   preamble = preamble.replace(/\\usepackage\{hyperref\}/g, "");
-  body = body.replace(/~\\mbox\\hskip\s*0\s*pt/g, "~");
-  body = body.replace(/\\mbox\\hskip\s*\d+(?:\.\d+)?\s*pt/g, " ");
-  body = body.replace(/\\mbox\\hskip\s*\d+(?:\.\d+)?\s*em/g, " ");
-  body = body.replace(/\\mbox\\hskip/g, " ");
   body = body.replace(/\\href\{[^}]*\}\{([^}]*)\}/g, "$1");
   body = body.replace(/\\url\{([^}]*)\}/g, "$1");
   body = body.replace(/\\hyperlink\{[^}]*\}\{([^}]*)\}/g, "$1");
@@ -467,32 +463,39 @@ function cleanDiffTeX(diffTex) {
   const labelCommands = ["label"];
   const allProblematicCommands = [...citationCommands, ...refCommands, ...labelCommands];
   for (const cmd of allProblematicCommands) {
-    const pattern = new RegExp(`\\\\${cmd}(?![a-zA-Z])`, "g");
-    body = body.replace(pattern, (match, offset) => {
-      const afterMatch = body.substring(offset + match.length);
-      const hasArgs = /^\s*(\[.*?\])?\s*\{/.test(afterMatch);
-      if (hasArgs) {
-        let result = cmd;
-        let pos = offset + match.length;
-        while (body[pos] && /\s/.test(body[pos])) pos++;
-        if (body[pos] === "[") {
-          const closeBracket = body.indexOf("]", pos);
-          if (closeBracket !== -1) {
-            pos = closeBracket + 1;
-            while (body[pos] && /\s/.test(body[pos])) pos++;
-          }
-        }
-        if (body[pos] === "{") {
-          const closeBrace = findMatchingBrace(body, pos + 1);
-          if (closeBrace !== -1) {
-            const content = body.substring(pos + 1, closeBrace);
-            const escapedContent = content.replace(/_/g, "\\_");
-            body = body.substring(0, offset) + cmd + "{" + escapedContent + "}" + body.substring(closeBrace + 1);
-          }
+    let pos = 0;
+    while (pos < body.length) {
+      const cmdPattern = `\\${cmd}`;
+      const idx = body.indexOf(cmdPattern, pos);
+      if (idx === -1) break;
+      const charBefore = idx > 0 ? body[idx - 1] : "";
+      const charAfter = body[idx + cmdPattern.length];
+      if (charBefore === "\\" || /[a-zA-Z]/.test(charBefore) || charAfter && /[a-zA-Z]/.test(charAfter)) {
+        pos = idx + 1;
+        continue;
+      }
+      let searchPos = idx + cmdPattern.length;
+      while (body[searchPos] && /\s/.test(body[searchPos])) searchPos++;
+      if (body[searchPos] === "[") {
+        const closeBracket = body.indexOf("]", searchPos);
+        if (closeBracket !== -1) {
+          searchPos = closeBracket + 1;
+          while (body[searchPos] && /\s/.test(body[searchPos])) searchPos++;
         }
       }
-      return cmd;
-    });
+      if (body[searchPos] === "{") {
+        const closeBrace = findMatchingBrace(body, searchPos + 1);
+        if (closeBrace !== -1) {
+          const content = body.substring(searchPos + 1, closeBrace);
+          const escapedContent = content.replace(/_/g, "\\_");
+          body = body.substring(0, idx) + cmd + body.substring(idx + cmdPattern.length, searchPos + 1) + escapedContent + body.substring(closeBrace);
+          pos = idx + cmd.length + (searchPos - idx - cmdPattern.length) + 1 + escapedContent.length + 1;
+          continue;
+        }
+      }
+      body = body.substring(0, idx) + cmd + body.substring(idx + cmdPattern.length);
+      pos = idx + cmd.length;
+    }
   }
   body = body.replace(/\\addtocounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, "");
   body = body.replace(/\\setcounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, "");
@@ -510,7 +513,6 @@ function cleanDiffTeX(diffTex) {
   body = body.replace(/\\DIFdel\{\}/g, "");
   body = body.replace(/\\DIFaddFL\{\}/g, "");
   body = body.replace(/\\DIFdelFL\{\}/g, "");
-  body = body.replace(/\\mbox\s+(?![{])/g, " ");
   body = body.replace(/\s{3,}/g, "  ");
   body = body.replace(/\{\s*\}/g, "");
   body = body.replace(/\s+([.,;:!?])/g, "$1");
