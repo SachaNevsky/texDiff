@@ -301,48 +301,53 @@ function cleanDiffTeX(diffTex: string): string {
     const citationCommands = [
         'cite', 'citet', 'citep', 'citealt', 'citealp', 'citeauthor', 'citeyear', 'citeyearpar',
         'Cite', 'Citet', 'Citep', 'Citealt', 'Citealp',
-        'citenum', 'citetext', 'citeyearpar',
+        'citenum', 'citetext',
         'footcite', 'footcitet', 'footcitep',
         'parencite', 'textcite', 'autocite'
     ];
 
-    // Remove DIFdelbegin...DIFdelend blocks that contain citations
-    cleaned = cleaned.replace(/\\DIFdelbegin[^]*?\\DIFdelend\s*/g, '');
-
-    // Remove DIFaddbegin...DIFaddend blocks that contain citations
-    cleaned = cleaned.replace(/\\DIFaddbegin[^]*?\\DIFaddend\s*/g, '');
-
-    // Remove all citation commands with their arguments
+    // Remove all citation commands with their arguments (including nested braces)
     citationCommands.forEach(cmd => {
-        // Match \cmd{...} and \cmd[...]{...}
-        const regex1 = new RegExp(`\\\\${cmd}\\{[^}]*\\}`, 'g');
-        const regex2 = new RegExp(`\\\\${cmd}\\[[^\\]]*\\]\\{[^}]*\\}`, 'g');
-        cleaned = cleaned.replace(regex2, '');
-        cleaned = cleaned.replace(regex1, '');
+        // Match \cmd[...]{...} with optional argument
+        let changed = true;
+        while (changed) {
+            const before = cleaned;
+            cleaned = cleaned.replace(new RegExp(`\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}`, 'g'), '');
+            changed = (before !== cleaned);
+        }
     });
 
-    // Remove any remaining DIFadd/DIFdel wrappers around citation commands
-    cleaned = cleaned.replace(/\\DIFadd\{\\cite[^}]*\{[^}]*\}\}/g, '');
-    cleaned = cleaned.replace(/\\DIFdel\{\\cite[^}]*\{[^}]*\}\}/g, '');
-
-    // Remove ref commands as well (they might also cause issues)
+    // Remove ref commands as well
     const refCommands = ['ref', 'autoref', 'eqref', 'figref', 'tabref', 'pageref', 'nameref', 'cref', 'Cref', 'vref', 'Vref', 'labelcref', 'labelcpageref'];
     refCommands.forEach(cmd => {
-        const regex1 = new RegExp(`\\\\${cmd}\\{[^}]*\\}`, 'g');
-        const regex2 = new RegExp(`\\\\${cmd}\\[[^\\]]*\\]\\{[^}]*\\}`, 'g');
-        cleaned = cleaned.replace(regex2, '');
-        cleaned = cleaned.replace(regex1, '');
+        let changed = true;
+        while (changed) {
+            const before = cleaned;
+            cleaned = cleaned.replace(new RegExp(`\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}`, 'g'), '');
+            changed = (before !== cleaned);
+        }
     });
+
+    // Remove DIFadd and DIFdel wrappers around citation/ref commands
+    // Do this iteratively to handle nested cases
+    for (let i = 0; i < 10; i++) {
+        cleaned = cleaned.replace(/\\DIFadd\{([^{}]*)\}/g, '$1');
+        cleaned = cleaned.replace(/\\DIFdel\{([^{}]*)\}/g, '');
+        cleaned = cleaned.replace(/\\DIFaddbegin\s*/g, '');
+        cleaned = cleaned.replace(/\\DIFaddend\s*/g, '');
+        cleaned = cleaned.replace(/\\DIFdelbegin\s*/g, '');
+        cleaned = cleaned.replace(/\\DIFdelend\s*/g, '');
+    }
 
     // Clean up any double spaces left behind
     cleaned = cleaned.replace(/\s{2,}/g, ' ');
 
-    // Clean up any empty DIFadd/DIFdel commands
-    cleaned = cleaned.replace(/\\DIFadd\{\}/g, '');
-    cleaned = cleaned.replace(/\\DIFdel\{\}/g, '');
+    // Remove any stray empty braces
+    cleaned = cleaned.replace(/\{\s*\}/g, '');
 
     return cleaned;
 }
+
 async function compilePdf(diffTex: string): Promise<Blob> {
     if (!pdfEngine) {
         throw new Error("PDF engine not initialized");

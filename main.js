@@ -564,7 +564,6 @@ function cleanDiffTeX(diffTex) {
     "Citealp",
     "citenum",
     "citetext",
-    "citeyearpar",
     "footcite",
     "footcitet",
     "footcitep",
@@ -572,26 +571,33 @@ function cleanDiffTeX(diffTex) {
     "textcite",
     "autocite"
   ];
-  cleaned = cleaned.replace(/\\DIFdelbegin[^]*?\\DIFdelend\s*/g, "");
-  cleaned = cleaned.replace(/\\DIFaddbegin[^]*?\\DIFaddend\s*/g, "");
   citationCommands.forEach((cmd) => {
-    const regex1 = new RegExp(`\\\\${cmd}\\{[^}]*\\}`, "g");
-    const regex2 = new RegExp(`\\\\${cmd}\\[[^\\]]*\\]\\{[^}]*\\}`, "g");
-    cleaned = cleaned.replace(regex2, "");
-    cleaned = cleaned.replace(regex1, "");
+    let changed = true;
+    while (changed) {
+      const before = cleaned;
+      cleaned = cleaned.replace(new RegExp(`\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}`, "g"), "");
+      changed = before !== cleaned;
+    }
   });
-  cleaned = cleaned.replace(/\\DIFadd\{\\cite[^}]*\{[^}]*\}\}/g, "");
-  cleaned = cleaned.replace(/\\DIFdel\{\\cite[^}]*\{[^}]*\}\}/g, "");
   const refCommands = ["ref", "autoref", "eqref", "figref", "tabref", "pageref", "nameref", "cref", "Cref", "vref", "Vref", "labelcref", "labelcpageref"];
   refCommands.forEach((cmd) => {
-    const regex1 = new RegExp(`\\\\${cmd}\\{[^}]*\\}`, "g");
-    const regex2 = new RegExp(`\\\\${cmd}\\[[^\\]]*\\]\\{[^}]*\\}`, "g");
-    cleaned = cleaned.replace(regex2, "");
-    cleaned = cleaned.replace(regex1, "");
+    let changed = true;
+    while (changed) {
+      const before = cleaned;
+      cleaned = cleaned.replace(new RegExp(`\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}`, "g"), "");
+      changed = before !== cleaned;
+    }
   });
+  for (let i = 0; i < 10; i++) {
+    cleaned = cleaned.replace(/\\DIFadd\{([^{}]*)\}/g, "$1");
+    cleaned = cleaned.replace(/\\DIFdel\{([^{}]*)\}/g, "");
+    cleaned = cleaned.replace(/\\DIFaddbegin\s*/g, "");
+    cleaned = cleaned.replace(/\\DIFaddend\s*/g, "");
+    cleaned = cleaned.replace(/\\DIFdelbegin\s*/g, "");
+    cleaned = cleaned.replace(/\\DIFdelend\s*/g, "");
+  }
   cleaned = cleaned.replace(/\s{2,}/g, " ");
-  cleaned = cleaned.replace(/\\DIFadd\{\}/g, "");
-  cleaned = cleaned.replace(/\\DIFdel\{\}/g, "");
+  cleaned = cleaned.replace(/\{\s*\}/g, "");
   return cleaned;
 }
 async function compilePdf(diffTex) {
