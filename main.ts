@@ -292,7 +292,6 @@ function cleanDiffTeX(diffTex: string): string {
     let body = diffTex.substring(splitIndex);
 
     // ========== CLEAN PREAMBLE ==========
-    // Only fix critical issues in preamble, don't remove DIF commands
 
     // Replace \RequirePackage with \usepackage for consistency
     preamble = preamble.replace(/\\RequirePackage\{color\}/g, '\\usepackage{color}');
@@ -306,8 +305,22 @@ function cleanDiffTeX(diffTex: string): string {
     preamble = preamble.replace(/\\usepackage\{hyperref\}/g, '\\usepackage[pdftex]{hyperref}');
 
     // ========== CLEAN BODY ==========
-    // Remove citations and refs from body only
 
+    // Remove DIFAUXCMD comments and the commands they mark
+    // This fixes the \addtocounter error
+    body = body.replace(/\\addtocounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, '');
+    body = body.replace(/\\setcounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, '');
+    body = body.replace(/%DIFAUXCMD\s*/g, '');
+
+    // Remove DIFDELCMD markers and their content
+    body = body.replace(/%DIFDELCMD < [^\n]*\n/g, '');
+    body = body.replace(/%DIFDELCMD < /g, '');
+
+    // Remove other DIF comment markers
+    body = body.replace(/%DIF > /g, '');
+    body = body.replace(/%DIF < /g, '');
+
+    // Remove citations and refs from body only
     const citationCommands = [
         'cite', 'citet', 'citep', 'citealt', 'citealp', 'citeauthor', 'citeyear', 'citeyearpar',
         'Cite', 'Citet', 'Citep', 'Citealt', 'Citealp',

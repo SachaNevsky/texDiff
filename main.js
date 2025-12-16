@@ -554,6 +554,13 @@ function cleanDiffTeX(diffTex) {
   preamble = preamble.replace(/\\usepackage\{lmodern\}/g, "");
   preamble = preamble.replace(/\\usepackage\[.*?ps2pdf.*?\]\{hyperref\}/g, "\\usepackage[pdftex]{hyperref}");
   preamble = preamble.replace(/\\usepackage\{hyperref\}/g, "\\usepackage[pdftex]{hyperref}");
+  body = body.replace(/\\addtocounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, "");
+  body = body.replace(/\\setcounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, "");
+  body = body.replace(/%DIFAUXCMD\s*/g, "");
+  body = body.replace(/%DIFDELCMD < [^\n]*\n/g, "");
+  body = body.replace(/%DIFDELCMD < /g, "");
+  body = body.replace(/%DIF > /g, "");
+  body = body.replace(/%DIF < /g, "");
   const citationCommands = [
     "cite",
     "citet",
