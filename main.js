@@ -488,8 +488,8 @@ function cleanDiffTeX(diffTex) {
         if (closeBrace !== -1) {
           const content = body.substring(searchPos + 1, closeBrace);
           const escapedContent = content.replace(/_/g, "\\_");
-          body = body.substring(0, idx) + cmd + body.substring(idx + cmdPattern.length, searchPos + 1) + escapedContent + body.substring(closeBrace);
-          pos = idx + cmd.length + (searchPos - idx - cmdPattern.length) + 1 + escapedContent.length + 1;
+          body = body.substring(0, idx) + escapedContent + body.substring(closeBrace + 1);
+          pos = idx + escapedContent.length;
           continue;
         }
       }

@@ -435,7 +435,6 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 				}
 
 				lsRDatabase = database;
-				console.log(`Loaded ls-R database with ${database.size} files`);
 			}
 		} catch (err) {
 			console.error("Failed to load ls-R database:", err);
@@ -465,7 +464,6 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
 	if (lsrPath) {
 		// File found in ls-R - use ONLY this path, no fallbacks
 		local_url = `${TEXMF_BASE_URL}${lsrPath}`;
-		console.log(`Found in ls-R: ${searchName} -> ${local_url}`);
 	} else {
 		// File NOT in ls-R - now try fallback paths
 		console.log(`Not in ls-R, trying fallbacks for: ${reqname} (format: ${format})`);
