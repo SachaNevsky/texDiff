@@ -491,6 +491,12 @@ function cleanDiffTeX(diffTex) {
   let body = diffTex.substring(splitIndex);
   preamble = sanitizeUnicode(preamble);
   body = sanitizeUnicode(body);
+  body = removeEnvironment(body, "figure");
+  body = removeEnvironment(body, "figure*");
+  body = removeEnvironment(body, "table");
+  body = removeEnvironment(body, "table*");
+  body = removeEnvironment(body, "wrapfigure");
+  body = removeEnvironment(body, "wraptable");
   preamble = preamble.replace(/\\RequirePackage\{color\}/g, "\\usepackage{color}");
   preamble = preamble.replace(/\\usepackage\[T1\]\{fontenc\}/g, "");
   preamble = preamble.replace(/\\usepackage\{lmodern\}/g, "");

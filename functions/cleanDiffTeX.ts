@@ -110,6 +110,13 @@ export function cleanDiffTeX(diffTex: string): string {
     preamble = sanitizeUnicode(preamble);
     body = sanitizeUnicode(body);
 
+    body = removeEnvironment(body, 'figure');
+    body = removeEnvironment(body, 'figure*');
+    body = removeEnvironment(body, 'table');
+    body = removeEnvironment(body, 'table*');
+    body = removeEnvironment(body, 'wrapfigure');
+    body = removeEnvironment(body, 'wraptable');
+
     preamble = preamble.replace(/\\RequirePackage\{color\}/g, '\\usepackage{color}');
     preamble = preamble.replace(/\\usepackage\[T1\]\{fontenc\}/g, '');
     preamble = preamble.replace(/\\usepackage\{lmodern\}/g, '');
@@ -177,7 +184,6 @@ export function cleanDiffTeX(diffTex: string): string {
                 if (closeBrace !== -1) {
                     const content = body.substring(searchPos + 1, closeBrace);
                     const escapedContent = content.replace(/_/g, '\\_');
-
                     body = body.substring(0, idx) + escapedContent + body.substring(closeBrace + 1);
                     pos = idx + escapedContent.length;
                     continue;
