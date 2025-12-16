@@ -441,6 +441,46 @@ function removeEnvironment(text, envName) {
   }
   return result;
 }
+function checkBraceBalance(text) {
+  let balance = 0;
+  let inComment = false;
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const prevChar = i > 0 ? text[i - 1] : "";
+    if (char === "%" && prevChar !== "\\") {
+      inComment = true;
+    } else if (char === "\n") {
+      inComment = false;
+    } else if (!inComment) {
+      if (char === "{" && prevChar !== "\\") {
+        balance++;
+      } else if (char === "}" && prevChar !== "\\") {
+        balance--;
+      }
+    }
+  }
+  return balance;
+}
+function sanitizeUnicode(text) {
+  let result = text;
+  result = result.replace(/[\u2018\u2019]/g, "'");
+  result = result.replace(/[\u201C\u201D]/g, '"');
+  result = result.replace(/\u2013/g, "--");
+  result = result.replace(/\u2014/g, "---");
+  result = result.replace(/\u2026/g, "...");
+  result = result.replace(/\u00A0/g, " ");
+  result = result.replace(/[\uFFFD\uFFFE\uFFFF]/g, "");
+  result = result.replace(/[\uFFE0-\uFFEF]/g, "");
+  result = result.replace(/[\u0080-\u009F]/g, "");
+  result = result.replace(/[^\x00-\x7F\u00A1-\u024F\u0370-\u03FF\u0400-\u04FF]/g, (char) => {
+    const code = char.charCodeAt(0);
+    if (code > 127) {
+      return "";
+    }
+    return char;
+  });
+  return result;
+}
 function cleanDiffTeX(diffTex) {
   const beginDocMatch = diffTex.match(/\\begin\{document\}/);
   if (!beginDocMatch) {
@@ -449,6 +489,8 @@ function cleanDiffTeX(diffTex) {
   const splitIndex = beginDocMatch.index + beginDocMatch[0].length;
   let preamble = diffTex.substring(0, splitIndex);
   let body = diffTex.substring(splitIndex);
+  preamble = sanitizeUnicode(preamble);
+  body = sanitizeUnicode(body);
   preamble = preamble.replace(/\\RequirePackage\{color\}/g, "\\usepackage{color}");
   preamble = preamble.replace(/\\usepackage\[T1\]\{fontenc\}/g, "");
   preamble = preamble.replace(/\\usepackage\{lmodern\}/g, "");
@@ -566,26 +608,6 @@ function cleanDiffTeX(diffTex) {
     console.warn("First 1000 chars of body:", body.substring(0, 1e3));
   }
   return preamble + body;
-}
-function checkBraceBalance(text) {
-  let balance = 0;
-  let inComment = false;
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    const prevChar = i > 0 ? text[i - 1] : "";
-    if (char === "%" && prevChar !== "\\") {
-      inComment = true;
-    } else if (char === "\n") {
-      inComment = false;
-    } else if (!inComment) {
-      if (char === "{" && prevChar !== "\\") {
-        balance++;
-      } else if (char === "}" && prevChar !== "\\") {
-        balance--;
-      }
-    }
-  }
-  return balance;
 }
 
 // functions/ensureWrapped.ts

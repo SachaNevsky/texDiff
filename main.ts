@@ -174,13 +174,11 @@ async function compilePdf(diffTex: string): Promise<Blob> {
         latestDiffTex = cleanedTex;
         downloadTexBtn.style.display = 'inline-block';
 
-        // Debug logging
         console.log("=== CLEANED TEX (first 2000 chars) ===");
         console.log(cleanedTex.substring(0, 2000));
         console.log("=== CLEANED TEX (last 1000 chars) ===");
         console.log(cleanedTex.substring(cleanedTex.length - 1000));
 
-        // Check for common issues
         const figureCount = (cleanedTex.match(/\\begin\{figure/g) || []).length;
         const endFigureCount = (cleanedTex.match(/\\end\{figure/g) || []).length;
         console.log(`Figure environments: ${figureCount} begins, ${endFigureCount} ends`);
@@ -194,7 +192,6 @@ async function compilePdf(diffTex: string): Promise<Blob> {
             if (result.log) {
                 console.error("Compilation log:", result.log);
 
-                // Try to extract the problematic line
                 const lineMatch = result.log.match(/l\.(\d+)/);
                 if (lineMatch) {
                     const lineNum = parseInt(lineMatch[1], 10);
