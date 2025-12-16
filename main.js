@@ -563,6 +563,26 @@ function cleanDiffTeX(diffTex) {
   body = body.replace(/%DIFDELCMD < /g, "");
   body = body.replace(/%DIF > /g, "");
   body = body.replace(/%DIF < /g, "");
+  body = body.replace(/\\DIFaddbegin\s*/g, "");
+  body = body.replace(/\\DIFaddend\s*/g, "");
+  function findMatchingBrace(str, startPos) {
+    let braceCount = 1;
+    let pos = startPos;
+    while (pos < str.length && braceCount > 0) {
+      const char = str[pos];
+      const prevChar = pos > 0 ? str[pos - 1] : "";
+      if (char === "{" && prevChar !== "\\") {
+        braceCount++;
+      } else if (char === "}" && prevChar !== "\\") {
+        braceCount--;
+        if (braceCount === 0) {
+          return pos;
+        }
+      }
+      pos++;
+    }
+    return -1;
+  }
   const citationCommands = [
     "cite",
     "citet",
@@ -602,81 +622,70 @@ function cleanDiffTeX(diffTex) {
     "labelcpageref"
   ];
   const allCommands = [...citationCommands, ...refCommands];
-  allCommands.forEach((cmd) => {
-    const difVariants = ["DIFadd", "DIFdel", "DIFaddFL", "DIFdelFL"];
-    difVariants.forEach((difCmd) => {
-      body = body.replace(
-        new RegExp(`\\\\${difCmd}\\{\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}\\}`, "g"),
-        ""
-      );
-      body = body.replace(
-        new RegExp(`\\\\${difCmd}\\{\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^}]*\\{[^}]*\\}[^}]*\\}\\}`, "g"),
-        ""
-      );
-    });
-  });
-  allCommands.forEach((cmd) => {
-    body = body.replace(
-      new RegExp(`\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}`, "g"),
-      ""
-    );
-  });
-  body = body.replace(/\\DIFaddbegin\s*/g, "");
-  body = body.replace(/\\DIFaddend\s*/g, "");
-  function extractBracedContent(str, startPos) {
-    let braceCount = 1;
-    let pos = startPos;
-    let content = "";
-    while (pos < str.length && braceCount > 0) {
-      const char = str[pos];
-      const prevChar = pos > 0 ? str[pos - 1] : "";
-      if (char === "{" && prevChar !== "\\") {
-        braceCount++;
-        content += char;
-      } else if (char === "}" && prevChar !== "\\") {
-        braceCount--;
-        if (braceCount === 0) {
-          return { content, endPos: pos + 1 };
+  for (let iter = 0; iter < 5; iter++) {
+    const beforeCite = body;
+    for (const cmd of allCommands) {
+      const cmdPattern = `\\${cmd}`;
+      let pos = 0;
+      let result = "";
+      while (pos < body.length) {
+        const idx = body.indexOf(cmdPattern, pos);
+        if (idx === -1) {
+          result += body.substring(pos);
+          break;
         }
-        content += char;
-      } else {
-        content += char;
+        result += body.substring(pos, idx);
+        let searchPos = idx + cmdPattern.length;
+        if (body[searchPos] === "[") {
+          const closeBracket = body.indexOf("]", searchPos);
+          if (closeBracket !== -1) {
+            searchPos = closeBracket + 1;
+          }
+        }
+        if (body[searchPos] === "{") {
+          const closeBrace = findMatchingBrace(body, searchPos + 1);
+          if (closeBrace !== -1) {
+            pos = closeBrace + 1;
+            continue;
+          }
+        }
+        pos = searchPos;
       }
-      pos++;
+      body = result;
     }
-    return { content, endPos: pos };
+    if (body === beforeCite) break;
   }
   for (let iteration = 0; iteration < 10; iteration++) {
     const before = body;
     let result = "";
     let pos = 0;
     while (pos < body.length) {
-      if (body.substring(pos).startsWith("\\DIFadd{")) {
-        const startPos = pos + "\\DIFadd{".length;
-        const { content, endPos } = extractBracedContent(body, startPos);
-        result += content;
-        pos = endPos;
-        continue;
+      let handled = false;
+      for (const cmd of ["\\DIFadd{", "\\DIFaddFL{"]) {
+        if (body.substring(pos).startsWith(cmd)) {
+          const startPos = pos + cmd.length;
+          const endPos = findMatchingBrace(body, startPos);
+          if (endPos !== -1) {
+            result += body.substring(startPos, endPos);
+            pos = endPos + 1;
+            handled = true;
+            break;
+          }
+        }
       }
-      if (body.substring(pos).startsWith("\\DIFaddFL{")) {
-        const startPos = pos + "\\DIFaddFL{".length;
-        const { content, endPos } = extractBracedContent(body, startPos);
-        result += content;
-        pos = endPos;
-        continue;
+      if (handled) continue;
+      for (const cmd of ["\\DIFdel{", "\\DIFdelFL{"]) {
+        if (body.substring(pos).startsWith(cmd)) {
+          const startPos = pos + cmd.length;
+          const endPos = findMatchingBrace(body, startPos);
+          if (endPos !== -1) {
+            pos = endPos + 1;
+            handled = true;
+            break;
+          }
+        }
       }
-      if (body.substring(pos).startsWith("\\DIFdel{")) {
-        const startPos = pos + "\\DIFdel{".length;
-        const { endPos } = extractBracedContent(body, startPos);
-        pos = endPos;
-        continue;
-      }
-      if (body.substring(pos).startsWith("\\DIFdelFL{")) {
-        const startPos = pos + "\\DIFdelFL{".length;
-        const { endPos } = extractBracedContent(body, startPos);
-        pos = endPos;
-        continue;
-      }
+      if (handled) continue;
       result += body[pos];
       pos++;
     }

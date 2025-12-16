@@ -305,27 +305,49 @@ function cleanDiffTeX(diffTex: string): string {
 
     // ========== CLEAN BODY ==========
 
-    // Remove DIFAUXCMD comments and the commands they mark
+    // STEP 1: Remove DIFAUXCMD comments and the commands they mark
     body = body.replace(/\\addtocounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, '');
     body = body.replace(/\\setcounter\{[^}]+\}\{[^}]+\}%DIFAUXCMD\s*/g, '');
     body = body.replace(/%DIFAUXCMD\s*/g, '');
 
-    // Handle DIFdel blocks with \iffalse...\fi wrappers
-    // This pattern matches: \DIFdelbegin \iffalse ... \fi \DIFdelend
+    // STEP 2: Handle DIFdel blocks with \iffalse...\fi wrappers FIRST
     body = body.replace(/\\DIFdelbegin\s*\\iffalse[\s\S]*?\\fi\s*\\DIFdelend/g, '');
-
-    // Handle remaining DIFdel blocks without iffalse
     body = body.replace(/\\DIFdelbegin[\s\S]*?\\DIFdelend/g, '');
 
-    // Remove DIFDELCMD markers and their content
+    // STEP 3: Remove DIFDELCMD markers
     body = body.replace(/%DIFDELCMD < [^\n]*\n/g, '');
     body = body.replace(/%DIFDELCMD < /g, '');
-
-    // Remove other DIF comment markers
     body = body.replace(/%DIF > /g, '');
     body = body.replace(/%DIF < /g, '');
 
-    // Remove citations and refs
+    // STEP 4: Remove DIFaddbegin/DIFaddend markers
+    body = body.replace(/\\DIFaddbegin\s*/g, '');
+    body = body.replace(/\\DIFaddend\s*/g, '');
+
+    // STEP 5: Helper function to find matching brace for a command
+    function findMatchingBrace(str: string, startPos: number): number {
+        let braceCount = 1;
+        let pos = startPos;
+
+        while (pos < str.length && braceCount > 0) {
+            const char = str[pos];
+            const prevChar = pos > 0 ? str[pos - 1] : '';
+
+            if (char === '{' && prevChar !== '\\') {
+                braceCount++;
+            } else if (char === '}' && prevChar !== '\\') {
+                braceCount--;
+                if (braceCount === 0) {
+                    return pos;
+                }
+            }
+            pos++;
+        }
+
+        return -1;
+    }
+
+    // STEP 6: Remove citation and reference commands using proper brace matching
     const citationCommands = [
         'cite', 'citet', 'citep', 'citealt', 'citealp', 'citeauthor', 'citeyear', 'citeyearpar',
         'Cite', 'Citet', 'Citep', 'Citealt', 'Citealp',
@@ -341,101 +363,97 @@ function cleanDiffTeX(diffTex: string): string {
 
     const allCommands = [...citationCommands, ...refCommands];
 
-    // Remove DIFadd/DIFdel/DIFaddFL/DIFdelFL wrappers around citation/ref commands
-    allCommands.forEach(cmd => {
-        const difVariants = ['DIFadd', 'DIFdel', 'DIFaddFL', 'DIFdelFL'];
-        difVariants.forEach(difCmd => {
-            // Remove \DIFxxx{\cite{...}} and similar (single level)
-            body = body.replace(
-                new RegExp(`\\\\${difCmd}\\{\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}\\}`, 'g'),
-                ''
-            );
-            // Handle nested braces more robustly
-            body = body.replace(
-                new RegExp(`\\\\${difCmd}\\{\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^}]*\\{[^}]*\\}[^}]*\\}\\}`, 'g'),
-                ''
-            );
-        });
-    });
+    // Remove citations/refs - iterate multiple times to catch nested cases
+    for (let iter = 0; iter < 5; iter++) {
+        const beforeCite = body;
 
-    // Remove any remaining standalone citation/ref commands
-    allCommands.forEach(cmd => {
-        body = body.replace(
-            new RegExp(`\\\\${cmd}(?:\\[[^\\]]*\\])?\\{[^{}]*\\}`, 'g'),
-            ''
-        );
-    });
+        for (const cmd of allCommands) {
+            const cmdPattern = `\\${cmd}`;
+            let pos = 0;
+            let result = '';
 
-    // Clean up DIFadd blocks (keep the content, remove the wrapper)
-    body = body.replace(/\\DIFaddbegin\s*/g, '');
-    body = body.replace(/\\DIFaddend\s*/g, '');
+            while (pos < body.length) {
+                const idx = body.indexOf(cmdPattern, pos);
 
-    // Helper function to extract content between matching braces
-    function extractBracedContent(str: string, startPos: number): { content: string; endPos: number } {
-        let braceCount = 1;
-        let pos = startPos;
-        let content = '';
-
-        while (pos < str.length && braceCount > 0) {
-            const char = str[pos];
-            const prevChar = pos > 0 ? str[pos - 1] : '';
-
-            if (char === '{' && prevChar !== '\\') {
-                braceCount++;
-                content += char;
-            } else if (char === '}' && prevChar !== '\\') {
-                braceCount--;
-                if (braceCount === 0) {
-                    return { content, endPos: pos + 1 };
+                if (idx === -1) {
+                    result += body.substring(pos);
+                    break;
                 }
-                content += char;
-            } else {
-                content += char;
+
+                // Add everything before this command
+                result += body.substring(pos, idx);
+
+                // Skip past the command name
+                let searchPos = idx + cmdPattern.length;
+
+                // Skip optional argument [...]
+                if (body[searchPos] === '[') {
+                    const closeBracket = body.indexOf(']', searchPos);
+                    if (closeBracket !== -1) {
+                        searchPos = closeBracket + 1;
+                    }
+                }
+
+                // Skip mandatory argument {...}
+                if (body[searchPos] === '{') {
+                    const closeBrace = findMatchingBrace(body, searchPos + 1);
+                    if (closeBrace !== -1) {
+                        pos = closeBrace + 1;
+                        continue;
+                    }
+                }
+
+                // If no braces found, just skip the command name
+                pos = searchPos;
             }
-            pos++;
+
+            body = result;
         }
 
-        return { content, endPos: pos };
+        if (body === beforeCite) break;
     }
 
-    // Process DIF commands by scanning through the string
+    // STEP 7: Now unwrap DIF commands with proper brace matching
     for (let iteration = 0; iteration < 10; iteration++) {
         const before = body;
         let result = '';
         let pos = 0;
 
         while (pos < body.length) {
+            let handled = false;
+
             // Check for DIFadd or DIFaddFL - keep content
-            if (body.substring(pos).startsWith('\\DIFadd{')) {
-                const startPos = pos + '\\DIFadd{'.length;
-                const { content, endPos } = extractBracedContent(body, startPos);
-                result += content;
-                pos = endPos;
-                continue;
+            for (const cmd of ['\\DIFadd{', '\\DIFaddFL{']) {
+                if (body.substring(pos).startsWith(cmd)) {
+                    const startPos = pos + cmd.length;
+                    const endPos = findMatchingBrace(body, startPos);
+
+                    if (endPos !== -1) {
+                        result += body.substring(startPos, endPos);
+                        pos = endPos + 1;
+                        handled = true;
+                        break;
+                    }
+                }
             }
 
-            if (body.substring(pos).startsWith('\\DIFaddFL{')) {
-                const startPos = pos + '\\DIFaddFL{'.length;
-                const { content, endPos } = extractBracedContent(body, startPos);
-                result += content;
-                pos = endPos;
-                continue;
-            }
+            if (handled) continue;
 
             // Check for DIFdel or DIFdelFL - remove content
-            if (body.substring(pos).startsWith('\\DIFdel{')) {
-                const startPos = pos + '\\DIFdel{'.length;
-                const { endPos } = extractBracedContent(body, startPos);
-                pos = endPos;
-                continue;
+            for (const cmd of ['\\DIFdel{', '\\DIFdelFL{']) {
+                if (body.substring(pos).startsWith(cmd)) {
+                    const startPos = pos + cmd.length;
+                    const endPos = findMatchingBrace(body, startPos);
+
+                    if (endPos !== -1) {
+                        pos = endPos + 1;
+                        handled = true;
+                        break;
+                    }
+                }
             }
 
-            if (body.substring(pos).startsWith('\\DIFdelFL{')) {
-                const startPos = pos + '\\DIFdelFL{'.length;
-                const { endPos } = extractBracedContent(body, startPos);
-                pos = endPos;
-                continue;
-            }
+            if (handled) continue;
 
             // Regular character - keep it
             result += body[pos];
@@ -446,17 +464,17 @@ function cleanDiffTeX(diffTex: string): string {
         if (body === before) break;
     }
 
-    // Clean up any remaining orphaned \iffalse or \fi commands
+    // STEP 8: Clean up any remaining orphaned \iffalse or \fi commands
     body = body.replace(/\\iffalse/g, '');
-    body = body.replace(/\\fi(?!\w)/g, ''); // \fi not followed by word character
+    body = body.replace(/\\fi(?!\w)/g, '');
 
-    // Clean up empty DIF commands
+    // STEP 9: Clean up empty DIF commands (if any remain)
     body = body.replace(/\\DIFadd\{\}/g, '');
     body = body.replace(/\\DIFdel\{\}/g, '');
     body = body.replace(/\\DIFaddFL\{\}/g, '');
     body = body.replace(/\\DIFdelFL\{\}/g, '');
 
-    // Clean up whitespace
+    // STEP 10: Clean up whitespace
     body = body.replace(/\s{2,}/g, ' ');
     body = body.replace(/\{\s*\}/g, '');
 
