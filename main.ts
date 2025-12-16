@@ -283,30 +283,12 @@ function cleanDiffTeX(diffTex: string): string {
     cleaned = cleaned.replace(/\\usepackage\[T1\]\{fontenc\}/g, '');
     cleaned = cleaned.replace(/\\usepackage\{lmodern\}/g, '');
 
-    // Add hyperref package if \href is used and hyperref is not already included
-    if (/\\href\{/.test(cleaned) && !/\\usepackage.*\{hyperref\}/.test(cleaned)) {
-        // Find the last \usepackage line and insert hyperref after it
-        const lastUsepackage = cleaned.lastIndexOf('\\usepackage');
-        if (lastUsepackage !== -1) {
-            const nextNewline = cleaned.indexOf('\n', lastUsepackage);
-            if (nextNewline !== -1) {
-                cleaned = cleaned.slice(0, nextNewline + 1) +
-                    '\\usepackage{hyperref}\n' +
-                    cleaned.slice(nextNewline + 1);
-            }
-        } else {
-            // If no usepackage found, add after documentclass
-            const docClass = cleaned.indexOf('\\documentclass');
-            if (docClass !== -1) {
-                const nextNewline = cleaned.indexOf('\n', docClass);
-                if (nextNewline !== -1) {
-                    cleaned = cleaned.slice(0, nextNewline + 1) +
-                        '\\PassOptionsToPackage{pdftex}{hyperref}\n\\usepackage{hyperref}\n' +
-                        cleaned.slice(nextNewline + 1);
-                }
-            }
-        }
-    }
+    // Fix hyperref driver issue - latexdiff adds hyperref with ps2pdf driver
+    // Replace any hyperref with wrong driver with correct pdftex driver
+    cleaned = cleaned.replace(/\\usepackage\[.*?ps2pdf.*?\]\{hyperref\}/g, '\\usepackage[pdftex]{hyperref}');
+
+    // Also catch hyperref without explicit driver
+    cleaned = cleaned.replace(/\\usepackage\{hyperref\}/g, '\\usepackage[pdftex]{hyperref}');
 
     return cleaned;
 }
