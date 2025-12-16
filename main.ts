@@ -173,16 +173,6 @@ async function compilePdf(diffTex: string): Promise<Blob> {
         const cleanedTex = cleanDiffTeX(diffTex);
         latestDiffTex = cleanedTex;
         downloadTexBtn.style.display = 'inline-block';
-
-        console.log("=== CLEANED TEX (first 2000 chars) ===");
-        console.log(cleanedTex.substring(0, 2000));
-        console.log("=== CLEANED TEX (last 1000 chars) ===");
-        console.log(cleanedTex.substring(cleanedTex.length - 1000));
-
-        const figureCount = (cleanedTex.match(/\\begin\{figure/g) || []).length;
-        const endFigureCount = (cleanedTex.match(/\\end\{figure/g) || []).length;
-        console.log(`Figure environments: ${figureCount} begins, ${endFigureCount} ends`);
-
         const engine = pdfEngine as SwiftLaTeXEngine;
         engine.writeMemFSFile("main.tex", cleanedTex);
         const result = await engine.compileLaTeX();
@@ -261,12 +251,6 @@ async function generateDiffPdf() {
             appendSafecmd: "includegraphics,caption",
             appendTextcmd: "caption"
         });
-
-        console.log("=== LATEXDIFF RAW OUTPUT (first 500 chars) ===");
-        console.log(diff.output.substring(0, 500));
-        console.log("=== Has DIFadd? ===", diff.output.includes('DIFadd'));
-        console.log("=== Has DIFdel? ===", diff.output.includes('DIFdel'));
-        console.log("=== Has \\mbox\\hskip? ===", diff.output.includes('\\mbox\\hskip'));
 
         setStatus("Compiling PDF with SwiftLaTeX...");
         const pdfBlob = await compilePdf(diff.output);
