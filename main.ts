@@ -49,6 +49,8 @@ interface SwiftLaTeXEngine {
 function setStatus(msg: string, styles?: Partial<CSSStyleDeclaration>) {
     if (statusEl) {
         statusEl.textContent = msg;
+        statusEl.style.color = "black";
+        statusEl.style.fontWeight = "normal";
         if (styles) {
             Object.assign(statusEl.style, styles);
         }
@@ -185,11 +187,9 @@ async function compilePdf(diffTex: string): Promise<Blob> {
         if (result.status !== 0) {
             console.error("Compilation failed with status:", result.status);
             if (result.log) {
-                // Extract the actual LaTeX error message
                 const errorMatch = result.log.match(/! LaTeX Error: ([^\n]+)/);
                 const errorMessage = errorMatch ? errorMatch[1] : "Unknown error";
 
-                // Extract the problematic line content
                 const lineMatch = result.log.match(/l\.\d+ (.+)/);
                 const errorLocation = lineMatch ? lineMatch[1].trim() : "Unknown location";
 

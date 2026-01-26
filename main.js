@@ -633,6 +633,8 @@ var newCountTimer = null;
 function setStatus(msg, styles) {
   if (statusEl) {
     statusEl.textContent = msg;
+    statusEl.style.color = "black";
+    statusEl.style.fontWeight = "normal";
     if (styles) {
       Object.assign(statusEl.style, styles);
     }
