@@ -180,17 +180,18 @@ async function compilePdf(diffTex: string): Promise<Blob> {
         if (result.status !== 0) {
             console.error("Compilation failed with status:", result.status);
             if (result.log) {
-                console.error("Compilation log:", result.log);
+                // Extract the actual LaTeX error message
+                const errorMatch = result.log.match(/! LaTeX Error: ([^\n]+)/);
+                const errorMessage = errorMatch ? errorMatch[1] : "Unknown error";
 
-                const lineMatch = result.log.match(/l\.(\d+)/);
-                if (lineMatch) {
-                    const lineNum = parseInt(lineMatch[1], 10);
-                    const lines = cleanedTex.split('\n');
-                    console.error(`Problem at line ${lineNum}:`);
-                    console.error(lines[lineNum - 1]);
-                    if (lineNum > 1) console.error('Previous line:', lines[lineNum - 2]);
-                    if (lineNum < lines.length) console.error('Next line:', lines[lineNum]);
-                }
+                // Extract the problematic line content
+                const lineMatch = result.log.match(/l\.\d+ (.+)/);
+                const errorLocation = lineMatch ? lineMatch[1].trim() : "Unknown location";
+
+                console.error(`LaTeX Error: ${errorMessage}`);
+                console.error(`Location: ${errorLocation}`);
+
+                throw new Error(`LaTeX Error: ${errorMessage} at: ${errorLocation}`);
             }
             throw new Error(`LaTeX compilation failed with status ${result.status}`);
         }
