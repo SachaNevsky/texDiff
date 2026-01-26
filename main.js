@@ -630,8 +630,13 @@ var latestDiffTex = "";
 var currentPdfBlobUrl = null;
 var oldCountTimer = null;
 var newCountTimer = null;
-function setStatus(msg) {
-  if (statusEl) statusEl.textContent = msg;
+function setStatus(msg, styles) {
+  if (statusEl) {
+    statusEl.textContent = msg;
+    if (styles) {
+      Object.assign(statusEl.style, styles);
+    }
+  }
 }
 async function runTexCount(content) {
   if (!content.trim()) {
@@ -810,7 +815,7 @@ async function generateDiffPdf() {
   } catch (e) {
     console.error("Error details:", e);
     const errorMsg = e instanceof Error ? e.message : String(e);
-    setStatus(`Error: ${errorMsg}. Download diff.tex for details.`);
+    setStatus(`${errorMsg}`, { color: "#8B0000", fontWeight: "bold" });
   }
 }
 var isInitializing = false;
